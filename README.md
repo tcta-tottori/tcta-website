@@ -22,8 +22,17 @@
 │   ├── css/style.css     デザイントークン＋全コンポーネント（1ファイル）
 │   ├── js/main.js        リビール／ヘッダー／カルーセル／フィルタ／タブ／フォーム
 │   └── img/              画像・ファビコン
+├── docs/                 設計資料（デザイン仕様・原稿仕様・検討ログ）
 └── .nojekyll             GitHub Pages で Jekyll 処理を無効化
 ```
+
+## 設計資料
+
+実装の根拠は [`docs/`](./docs/) にまとめています。
+
+- [`docs/design.md`](./docs/design.md) — ビジュアルデザイン仕様書 v3.1（配色・タイポ・余白・コンポーネント）
+- [`docs/content.md`](./docs/content.md) — 原稿仕様書 v2.0（各ページの実テキストと `要確認` 項目）
+- [`docs/design-chat-log.md`](./docs/design-chat-log.md) — ファーストビュー3案から採用案決定までの検討ログ
 
 ## ローカルでの確認
 
