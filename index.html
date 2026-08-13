@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>鳥取市テニス協会｜つなぐ、広がる、テニスの輪。</title>
+<meta name="description" content="鳥取市テニス協会の公式サイト。年間19の大会と毎週水曜日のテニス教室を運営しています。大会情報・お知らせ・大会カレンダー・コート案内をご覧いただけます。">
+<link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+<a class="skip-link" href="#main">本文へスキップ</a>
+
+<!-- ============ 通知バー ============ -->
+<div class="notice-bar">
+  <div class="container notice-bar__inner">
+    <span class="badge badge--open">受付中</span>
+    <p class="notice-bar__text">第30回エネトピア杯ミックスダブルス｜エントリー締切 10月2日（金）</p>
+    <a class="ghost-link notice-bar__link" href="tournaments.html">大会要項を見る <span class="aw">→</span></a>
+  </div>
+</div>
+
+<!-- ============ ヘッダー ============ -->
+<header class="site-header site-header--overlay">
+  <div class="container site-header__inner">
+    <a class="site-header__logo" href="index.html" aria-label="鳥取市テニス協会 ホーム">
+      <img src="assets/img/logo.png" alt="鳥取市テニス協会 TOTTORI-CITY TENNIS ASSOCIATION" width="140" height="78">
+    </a>
+    <nav class="nav" aria-label="グローバルナビゲーション">
+      <a class="nav__link nav__link--en is-active" href="index.html">HOME</a>
+      <a class="nav__link" href="tournaments.html">大会情報</a>
+      <a class="nav__link" href="about.html">協会について</a>
+      <a class="nav__link" href="membership.html">入会案内</a>
+      <a class="nav__link" href="#courts">コート案内</a>
+      <a class="nav__link" href="#news">お知らせ</a>
+    </nav>
+    <a class="header-contact" href="contact.html">お問い合わせ</a>
+    <button class="hamburger" type="button" aria-expanded="false" aria-controls="mobile-nav">
+      <span></span><span></span><span></span>
+      <span class="visually-hidden">メニューを開く</span>
+    </button>
+  </div>
+</header>
+
+<!-- ============ モバイルナビ ============ -->
+<div class="mobile-nav" id="mobile-nav" aria-hidden="true">
+  <nav aria-label="モバイルナビゲーション">
+    <a class="mobile-nav__link is-active" href="index.html">ホーム <span class="ar">→</span></a>
+    <a class="mobile-nav__link" href="tournaments.html">大会情報 <span class="ar">→</span></a>
+    <a class="mobile-nav__link" href="results.html">大会結果 <span class="ar">→</span></a>
+    <a class="mobile-nav__link" href="club.html">クラブ対抗戦 <span class="ar">→</span></a>
+    <a class="mobile-nav__link" href="lesson.html">水曜テニス教室 <span class="ar">→</span></a>
+    <a class="mobile-nav__link" href="tennis-day.html">テニスの日 <span class="ar">→</span></a>
+    <a class="mobile-nav__link" href="about.html">協会について <span class="ar">→</span></a>
+    <a class="mobile-nav__link" href="membership.html">入会案内（協会登録） <span class="ar">→</span></a>
+    <a class="mobile-nav__link" href="links.html">リンク集 <span class="ar">→</span></a>
+    <a class="btn btn--primary" href="contact.html">お問い合わせ <span class="aw">→</span></a>
+  </nav>
+</div>
+
+<main id="main">
+
+  <!-- ============ ヒーロー ============ -->
+  <section class="hero">
+    <div class="hero__media phv">
+      <img class="hero__photo" src="assets/img/hero.png" alt="青空の下、コートでバックハンドを打つ選手">
+      <div class="hero__scrim" aria-hidden="true"></div>
+      <img class="hero__logo fu" style="animation-delay:.9s" src="assets/img/logo-white.png" alt="" aria-hidden="true">
+    </div>
+    <div class="container hero__body">
+      <div class="hero__inner">
+        <h1 class="hero__title">
+          <span class="hl"><span>つなぐ、広がる、</span></span>
+          <span class="hl"><span style="animation-delay:.14s">テニスの輪。</span></span>
+        </h1>
+        <p class="hero__en fu" style="animation-delay:.4s">TOTTORI-CITY TENNIS ASSOCIATION</p>
+        <p class="hero__lead fu" style="animation-delay:.55s">年間19の大会と、毎週水曜日のテニス教室。鳥取市テニス協会は、市内でテニスを楽しむすべての人のための団体です。はじめての方も、久しぶりの方も、コートでお待ちしています。</p>
+        <a class="btn btn--primary hero__cta fu" style="animation-delay:.7s" href="about.html">協会について見る <span class="aw">→</span></a>
+      </div>
+    </div>
+    <div class="hero__square fu" style="animation-delay:1.05s" aria-hidden="true"></div>
+    <div class="hero__scroll" aria-hidden="true">
+      <span>SCROLL</span>
+      <span class="blink"></span>
+    </div>
+  </section>
+
+  <!-- ============ 大会情報（カルーセル） ============ -->
+  <section class="section" id="tournaments" aria-labelledby="tournaments-title">
+    <span class="ghost" aria-hidden="true">TOURNAMENT</span>
+    <div class="container">
+      <div class="sec-bar rv">
+        <div class="sec-head">
+          <div class="sec-head__row">
+            <span class="sec-head__mark" aria-hidden="true"></span>
+            <div>
+              <p class="sec-head__eyebrow">Tournament</p>
+              <h2 class="sec-head__title" id="tournaments-title">大会情報</h2>
+            </div>
+          </div>
+        </div>
+        <div class="sec-bar__aside">
+          <span class="hint">◀ 終了した大会　／　今後の大会 ▶</span>
+          <a class="ghost-link view-all" href="tournaments.html">
+            <span class="view-all__label">VIEW ALL</span><span class="sqbtn">→</span>
+          </a>
+          <span class="carousel__nav">
+            <button class="circle-btn" type="button" data-carousel-prev aria-label="前の大会へ">←</button>
+            <button class="circle-btn circle-btn--solid" type="button" data-carousel-next aria-label="次の大会へ">→</button>
+          </span>
+        </div>
+      </div>
+
+      <div class="carousel rv" data-carousel tabindex="0" role="group" aria-label="大会カルーセル（横スクロール）">
+
+        <!-- 終了した大会 -->
+        <a class="tcard tcard--past" href="results.html">
+          <div class="tcard__media">
+            <img src="assets/img/t4.png" alt="コートに置かれたラケットとテニスボール" loading="lazy">
+            <span class="badge badge--muted">終了</span>
+          </div>
+          <div class="tcard__body">
+            <p class="tcard__date">2026.05.10</p>
+            <h3 class="tcard__title">令和8年度クラブ対抗戦 前期日程</h3>
+            <div class="meta-list">
+              <div class="meta-row"><span class="meta-row__key">種目</span><span class="meta-row__val">団体戦（男子1部〜8部）</span></div>
+              <div class="meta-row"><span class="meta-row__key">会場</span><span class="meta-row__val">鳥取市千代テニス場</span></div>
+            </div>
+          </div>
+        </a>
+
+        <a class="tcard tcard--past" href="results.html">
+          <div class="tcard__media">
+            <img src="assets/img/t1.png" alt="ネットの手前に置かれたテニスボール" loading="lazy">
+            <span class="badge badge--muted">終了</span>
+          </div>
+          <div class="tcard__body">
+            <p class="tcard__date">2026.07.05</p>
+            <h3 class="tcard__title">鳥取市市民体育祭（BCグループ）</h3>
+            <div class="meta-list">
+              <div class="meta-row"><span class="meta-row__key">種目</span><span class="meta-row__val">校区別対抗戦</span></div>
+              <div class="meta-row"><span class="meta-row__key">会場</span><span class="meta-row__val">鳥取市千代テニス場</span></div>
+            </div>
+          </div>
+        </a>
+
+        <a class="tcard tcard--past" href="results.html">
+          <div class="tcard__media">
+            <img src="assets/img/t2.png" alt="青空へトスを上げてサーブする選手" loading="lazy">
+            <span class="badge badge--muted">終了</span>
+          </div>
+          <div class="tcard__body">
+            <p class="tcard__date">2026.07.12</p>
+            <h3 class="tcard__title">令和8年度クラブ対抗戦 後期日程</h3>
+            <div class="meta-list">
+              <div class="meta-row"><span class="meta-row__key">種目</span><span class="meta-row__val">女子1部〜4部／男女予選会</span></div>
+              <div class="meta-row"><span class="meta-row__key">会場</span><span class="meta-row__val">鳥取市千代テニス場</span></div>
+            </div>
+          </div>
+        </a>
+
+        <a class="tcard tcard--past" href="results.html">
+          <div class="tcard__media">
+            <img src="assets/img/t3.png" alt="ネット際でボレーをする選手" loading="lazy">
+            <span class="badge badge--muted">終了</span>
+          </div>
+          <div class="tcard__body">
+            <p class="tcard__date">2026.08.02</p>
+            <h3 class="tcard__title">第11回気高カップシングルス大会</h3>
+            <div class="meta-list">
+              <div class="meta-row"><span class="meta-row__key">種目</span><span class="meta-row__val">男女シングルス</span></div>
+              <div class="meta-row"><span class="meta-row__key">会場</span><span class="meta-row__val">鳥取市千代テニス場</span></div>
+            </div>
+          </div>
+        </a>
+
+        <!-- TODAY -->
+        <div class="today-marker" data-carousel-today aria-hidden="true">
+          <span class="today-marker__label">TODAY</span>
+          <span class="today-marker__line"></span>
+          <span class="today-marker__date">2026.08.13</span>
+        </div>
+
+        <!-- 今後の大会 -->
+        <a class="tcard" href="tournaments.html">
+          <div class="tcard__media">
+            <img src="assets/img/t3.png" alt="ネット際でボレーをする選手" loading="lazy">
+            <span class="badge badge--muted">受付終了</span>
+          </div>
+          <div class="tcard__body">
+            <p class="tcard__date">2026.08.16</p>
+            <h3 class="tcard__title">サマーミックスダブルス</h3>
+            <div class="meta-list">
+              <div class="meta-row"><span class="meta-row__key">種目</span><span class="meta-row__val">ミックスダブルス</span></div>
+              <div class="meta-row"><span class="meta-row__key">会場</span><span class="meta-row__val">鳥取市千代テニス場</span></div>
+            </div>
+          </div>
+        </a>
+
+        <a class="tcard" href="tournaments.html">
+          <div class="tcard__media">
+            <img src="assets/img/t4.png" alt="コートに置かれたラケットとテニスボール" loading="lazy">
+            <span class="badge badge--muted">受付終了</span>
+          </div>
+          <div class="tcard__body">
+            <p class="tcard__date">2026.08.30</p>
+            <h3 class="tcard__title">第49回ダンロップテニストーナメント</h3>
+            <div class="meta-list">
+              <div class="meta-row"><span class="meta-row__key">種目</span><span class="meta-row__val">男女ダブルス</span></div>
+              <div class="meta-row"><span class="meta-row__key">会場</span><span class="meta-row__val">鳥取市千代テニス場</span></div>
+            </div>
+          </div>
+        </a>
+
+        <a class="tcard" href="tennis-day.html">
+          <div class="tcard__media">
+            <img src="assets/img/t2.png" alt="青空へトスを上げてサーブする選手" loading="lazy">
+            <span class="badge badge--muted">まもなく受付</span>
+          </div>
+          <div class="tcard__body">
+            <p class="tcard__date">2026.10.12</p>
+            <h3 class="tcard__title">鳥取市テニス協会 テニス祭り</h3>
+            <div class="meta-list">
+              <div class="meta-row"><span class="meta-row__key">種目</span><span class="meta-row__val">テニス教室ほか</span></div>
+              <div class="meta-row"><span class="meta-row__key">会場</span><span class="meta-row__val">鳥取産業体育館</span></div>
+            </div>
+          </div>
+        </a>
+
+        <a class="tcard" href="tournaments.html">
+          <div class="tcard__media">
+            <img src="assets/img/t3.png" alt="ネット際でボレーをする選手" loading="lazy">
+            <span class="badge badge--open">受付中</span>
+          </div>
+          <div class="tcard__body">
+            <p class="tcard__date">2026.10.18</p>
+            <h3 class="tcard__title">第30回エネトピア杯ミックスダブルス</h3>
+            <div class="meta-list">
+              <div class="meta-row"><span class="meta-row__key">種目</span><span class="meta-row__val">ミックスダブルス</span></div>
+              <div class="meta-row"><span class="meta-row__key">会場</span><span class="meta-row__val">鳥取市千代テニス場</span></div>
+            </div>
+          </div>
+        </a>
+
+        <a class="tcard" href="tournaments.html">
+          <div class="tcard__media">
+            <img src="assets/img/t1.png" alt="ネットの手前に置かれたテニスボール" loading="lazy">
+            <span class="badge badge--muted">まもなく受付</span>
+          </div>
+          <div class="tcard__body">
+            <p class="tcard__date">2026.11.07</p>
+            <h3 class="tcard__title">第71回鳥取健康テニス（秋期）</h3>
+            <div class="meta-list">
+              <div class="meta-row"><span class="meta-row__key">種目</span><span class="meta-row__val">一般：男女ダブルス／ジュニア：男女シングルス</span></div>
+              <div class="meta-row"><span class="meta-row__key">会場</span><span class="meta-row__val">鳥取市千代テニス場</span></div>
+            </div>
+          </div>
+        </a>
+
+        <a class="tcard" href="tournaments.html">
+          <div class="tcard__media">
+            <img src="assets/img/t4.png" alt="コートに置かれたラケットとテニスボール" loading="lazy">
+            <span class="badge badge--muted">まもなく受付</span>
+          </div>
+          <div class="tcard__body">
+            <p class="tcard__date">2026.11.08</p>
+            <h3 class="tcard__title">鳥取県テニス選手権 シングルス</h3>
+            <div class="meta-list">
+              <div class="meta-row"><span class="meta-row__key">種目</span><span class="meta-row__val">男女シングルス</span></div>
+              <div class="meta-row"><span class="meta-row__key">会場</span><span class="meta-row__val">鳥取市千代テニス場</span></div>
+            </div>
+          </div>
+        </a>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ お知らせ ============ -->
+  <section class="section section--flush-top" id="news" aria-labelledby="news-title">
+    <span class="ghost ghost--above" aria-hidden="true">NEWS</span>
+    <div class="container">
+      <div class="sec-bar rv">
+        <div class="sec-head">
+          <div class="sec-head__row">
+            <span class="sec-head__mark" aria-hidden="true"></span>
+            <div>
+              <p class="sec-head__eyebrow">News</p>
+              <h2 class="sec-head__title" id="news-title">お知らせ</h2>
+            </div>
+          </div>
+        </div>
+        <div class="sec-bar__aside">
+          <a class="ghost-link view-all" href="#news">
+            <span class="view-all__label">VIEW ALL</span><span class="sqbtn">→</span>
+          </a>
+        </div>
+      </div>
+
+      <ul class="news-list">
+        <li><a class="news-row rv" href="tournaments.html">
+          <span class="news-row__date">
+            <span class="news-row__day">08.03</span>
+            <span class="news-row__year">2026</span>
+          </span>
+          <span class="badge badge--outline">大会</span>
+          <span class="news-row__title">サマーミックスダブルス大会のドローを公開しました</span>
+          <span class="sqbtn" aria-hidden="true">→</span>
+        </a></li>
+        <li><a class="news-row rv" style="transition-delay:.08s" href="results.html">
+          <span class="news-row__date">
+            <span class="news-row__day">08.02</span>
+            <span class="news-row__year">2026</span>
+          </span>
+          <span class="badge badge--outline">結果</span>
+          <span class="news-row__title">第11回気高カップサマーシングルスの結果を掲載しました</span>
+          <span class="sqbtn" aria-hidden="true">→</span>
+        </a></li>
+        <li><a class="news-row rv" style="transition-delay:.16s" href="club.html">
+          <span class="news-row__date">
+            <span class="news-row__day">07.21</span>
+            <span class="news-row__year">2026</span>
+          </span>
+          <span class="badge badge--outline">お知らせ</span>
+          <span class="news-row__title">令和9年度クラブ対抗戦の編成表を公開しました</span>
+          <span class="sqbtn" aria-hidden="true">→</span>
+        </a></li>
+        <li><a class="news-row rv" style="transition-delay:.24s" href="club.html">
+          <span class="news-row__date">
+            <span class="news-row__day">07.15</span>
+            <span class="news-row__year">2026</span>
+          </span>
+          <span class="badge badge--outline">結果</span>
+          <span class="news-row__title">令和8年度クラブ対抗戦 後期の結果を掲載しました</span>
+          <span class="sqbtn" aria-hidden="true">→</span>
+        </a></li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ============ 大会カレンダー ============ -->
+  <section class="section section--gray" id="schedule" aria-labelledby="schedule-title">
+    <span class="ghost" aria-hidden="true">SCHEDULE</span>
+    <span class="deco-circle deco-circle--a" aria-hidden="true"></span>
+    <span class="deco-circle deco-circle--b" aria-hidden="true"></span>
+    <div class="container">
+      <div class="sec-head rv">
+        <div class="sec-head__row">
+          <span class="sec-head__mark" aria-hidden="true"></span>
+          <div>
+            <p class="sec-head__eyebrow">Schedule</p>
+            <h2 class="sec-head__title" id="schedule-title">大会カレンダー</h2>
+          </div>
+        </div>
+        <p class="sec-head__lead">年間の大会日程はGoogleカレンダーで公開しています。ご自分のカレンダーに追加しておくと、予定の変更もそのまま反映されます。</p>
+      </div>
+
+      <div class="split">
+        <div class="rv">
+          <ul class="sch-list">
+            <li><a class="sch-item sch-item--next" href="tournaments.html">
+              <span class="date-chip"><span class="date-chip__md">08.16</span><span class="date-chip__dow">SUN</span></span>
+              <span class="sch-item__text">
+                <span class="sch-item__title">サマーミックスダブルス</span>
+                <span class="sch-item__place">鳥取市千代テニス場</span>
+              </span>
+            </a></li>
+            <li><a class="sch-item" href="tournaments.html">
+              <span class="date-chip"><span class="date-chip__md">08.30</span><span class="date-chip__dow">SUN</span></span>
+              <span class="sch-item__text">
+                <span class="sch-item__title">第49回ダンロップテニストーナメント</span>
+                <span class="sch-item__place">鳥取市千代テニス場</span>
+              </span>
+            </a></li>
+            <li><a class="sch-item" href="tennis-day.html">
+              <span class="date-chip"><span class="date-chip__md">10.12</span><span class="date-chip__dow">MON</span></span>
+              <span class="sch-item__text">
+                <span class="sch-item__title">鳥取市テニス協会 テニス祭り</span>
+                <span class="sch-item__place">鳥取産業体育館</span>
+              </span>
+            </a></li>
+            <li><a class="sch-item" href="tournaments.html">
+              <span class="date-chip"><span class="date-chip__md">10.18</span><span class="date-chip__dow">SUN</span></span>
+              <span class="sch-item__text">
+                <span class="sch-item__title">第30回エネトピア杯ミックスダブルス</span>
+                <span class="sch-item__place">鳥取市千代テニス場</span>
+              </span>
+            </a></li>
+            <li><a class="sch-item" href="tournaments.html">
+              <span class="date-chip"><span class="date-chip__md">11.07</span><span class="date-chip__dow">SAT</span></span>
+              <span class="sch-item__text">
+                <span class="sch-item__title">第71回鳥取健康テニス（秋期）</span>
+                <span class="sch-item__place">鳥取市千代テニス場</span>
+              </span>
+            </a></li>
+          </ul>
+          <div class="btn-stack">
+            <a class="btn btn--primary" href="#schedule">Googleカレンダーに追加する <span class="aw">→</span></a>
+            <a class="btn btn--outline" href="tournaments.html">年間の大会日程を見る</a>
+          </div>
+        </div>
+
+        <div class="rv" style="transition-delay:.1s">
+          <div class="embed embed--calendar">
+            <span class="embed__label">Googleカレンダー埋め込み（月表示・大会日程のみ）</span>
+            <span class="embed__note">title属性・loading="lazy" 必須／モバイルでは非表示</span>
+          </div>
+          <p class="embed-caption">パソコンはカレンダー右下の「＋Googleカレンダー」から、スマートフォンは「Googleカレンダーに追加する」ボタンから追加できます（Googleアカウントでのログインが必要です）。追加しておくと、日程の変更や中止も自動で反映されます。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ リンク集 ============ -->
+  <section class="section" id="links" aria-labelledby="links-title">
+    <span class="ghost" aria-hidden="true">LINKS</span>
+    <div class="container">
+      <div class="sec-head rv">
+        <div class="sec-head__row">
+          <span class="sec-head__mark" aria-hidden="true"></span>
+          <div>
+            <p class="sec-head__eyebrow">Links</p>
+            <h2 class="sec-head__title" id="links-title">リンク集</h2>
+          </div>
+        </div>
+        <p class="sec-head__lead">鳥取市テニス協会に関係する団体・施設のサイトです。</p>
+      </div>
+
+      <div class="marquee rv">
+        <div class="marquee__track">
+          <a class="link-card" href="links.html"><span class="link-card__logo" aria-hidden="true">ロゴ</span><span class="link-card__text"><span class="link-card__name">鳥取県テニス協会</span><span class="link-card__desc">県登録・県大会の情報</span></span><span class="link-card__ext" aria-hidden="true">↗</span></a>
+          <a class="link-card" href="links.html"><span class="link-card__logo" aria-hidden="true">ロゴ</span><span class="link-card__text"><span class="link-card__name">鳥取県レディーステニス連盟</span><span class="link-card__desc">レディースの大会・活動</span></span><span class="link-card__ext" aria-hidden="true">↗</span></a>
+          <a class="link-card" href="links.html"><span class="link-card__logo" aria-hidden="true">ロゴ</span><span class="link-card__text"><span class="link-card__name">鳥取市公共施設予約システム</span><span class="link-card__desc">コートの予約はこちら</span></span><span class="link-card__ext" aria-hidden="true">↗</span></a>
+          <a class="link-card" href="links.html"><span class="link-card__logo" aria-hidden="true">ロゴ</span><span class="link-card__text"><span class="link-card__name">米子市テニス協会</span><span class="link-card__desc">鳥取県西部の大会情報</span></span><span class="link-card__ext" aria-hidden="true">↗</span></a>
+          <a class="link-card" href="links.html"><span class="link-card__logo" aria-hidden="true">ロゴ</span><span class="link-card__text"><span class="link-card__name">京丹後テニス協会</span><span class="link-card__desc">京都府北部の大会情報</span></span><span class="link-card__ext" aria-hidden="true">↗</span></a>
+          <a class="link-card" href="links.html"><span class="link-card__logo" aria-hidden="true">ロゴ</span><span class="link-card__text"><span class="link-card__name">琴浦テニスクラブ</span><span class="link-card__desc">東伯郡琴浦町のクラブ</span></span><span class="link-card__ext" aria-hidden="true">↗</span></a>
+          <a class="link-card" href="links.html"><span class="link-card__logo" aria-hidden="true">ロゴ</span><span class="link-card__text"><span class="link-card__name">テニスショップ フラシーノ</span><span class="link-card__desc">テニス専門店（鳥取市）</span></span><span class="link-card__ext" aria-hidden="true">↗</span></a>
+          <a class="link-card" href="links.html"><span class="link-card__logo" aria-hidden="true">ロゴ</span><span class="link-card__text"><span class="link-card__name">上海茶楼</span><span class="link-card__desc">中国上海料理（鳥取市）</span></span><span class="link-card__ext" aria-hidden="true">↗</span></a>
+          <!-- ループ用の複製 -->
+          <div style="display:flex" aria-hidden="true">
+            <a class="link-card" tabindex="-1"><span class="link-card__logo">ロゴ</span><span class="link-card__text"><span class="link-card__name">鳥取県テニス協会</span><span class="link-card__desc">県登録・県大会の情報</span></span><span class="link-card__ext">↗</span></a>
+            <a class="link-card" tabindex="-1"><span class="link-card__logo">ロゴ</span><span class="link-card__text"><span class="link-card__name">鳥取県レディーステニス連盟</span><span class="link-card__desc">レディースの大会・活動</span></span><span class="link-card__ext">↗</span></a>
+            <a class="link-card" tabindex="-1"><span class="link-card__logo">ロゴ</span><span class="link-card__text"><span class="link-card__name">鳥取市公共施設予約システム</span><span class="link-card__desc">コートの予約はこちら</span></span><span class="link-card__ext">↗</span></a>
+            <a class="link-card" tabindex="-1"><span class="link-card__logo">ロゴ</span><span class="link-card__text"><span class="link-card__name">米子市テニス協会</span><span class="link-card__desc">鳥取県西部の大会情報</span></span><span class="link-card__ext">↗</span></a>
+            <a class="link-card" tabindex="-1"><span class="link-card__logo">ロゴ</span><span class="link-card__text"><span class="link-card__name">京丹後テニス協会</span><span class="link-card__desc">京都府北部の大会情報</span></span><span class="link-card__ext">↗</span></a>
+            <a class="link-card" tabindex="-1"><span class="link-card__logo">ロゴ</span><span class="link-card__text"><span class="link-card__name">琴浦テニスクラブ</span><span class="link-card__desc">東伯郡琴浦町のクラブ</span></span><span class="link-card__ext">↗</span></a>
+            <a class="link-card" tabindex="-1"><span class="link-card__logo">ロゴ</span><span class="link-card__text"><span class="link-card__name">テニスショップ フラシーノ</span><span class="link-card__desc">テニス専門店（鳥取市）</span></span><span class="link-card__ext">↗</span></a>
+            <a class="link-card" tabindex="-1"><span class="link-card__logo">ロゴ</span><span class="link-card__text"><span class="link-card__name">上海茶楼</span><span class="link-card__desc">中国上海料理（鳥取市）</span></span><span class="link-card__ext">↗</span></a>
+          </div>
+        </div>
+      </div>
+      <p class="note">※ 掲載団体・ロゴ使用許諾・分類は公開前に要確認（ホバーで停止）</p>
+    </div>
+  </section>
+
+  <!-- ============ コート案内 ============ -->
+  <section class="section section--gray" id="courts" aria-labelledby="courts-title">
+    <span class="ghost" aria-hidden="true">COURT GUIDE</span>
+    <div class="container">
+      <div class="sec-head rv">
+        <div class="sec-head__row">
+          <span class="sec-head__mark" aria-hidden="true"></span>
+          <div>
+            <p class="sec-head__eyebrow">Court Guide</p>
+            <h2 class="sec-head__title" id="courts-title">コート案内</h2>
+          </div>
+        </div>
+      </div>
+
+      <div class="split">
+        <div class="rv">
+          <ul class="sch-list">
+            <li><a class="court-item" href="#courts">
+              <span class="court-pin" aria-hidden="true"></span>
+              <span class="sch-item__text">
+                <span class="sch-item__title">鳥取市千代テニス場</span>
+                <span class="sch-item__place">主会場・令和8年度は19大会中14大会を開催（住所は公開前に確認）</span>
+              </span>
+              <span class="ar" aria-hidden="true">→</span>
+            </a></li>
+            <li><a class="court-item" href="#courts">
+              <span class="court-pin" aria-hidden="true"></span>
+              <span class="sch-item__text">
+                <span class="sch-item__title">布勢総合運動公園テニスコート</span>
+                <span class="sch-item__place">鳥取県鳥取市布勢146-1（「ヤマタ」表記との統一は要確認）</span>
+              </span>
+              <span class="ar" aria-hidden="true">→</span>
+            </a></li>
+            <li><a class="court-item" href="lesson.html">
+              <span class="court-pin" aria-hidden="true"></span>
+              <span class="sch-item__text">
+                <span class="sch-item__title">井原公園テニスコート</span>
+                <span class="sch-item__place">鳥取県鳥取市興南町174（毎週水曜日のテニス教室会場）</span>
+              </span>
+              <span class="ar" aria-hidden="true">→</span>
+            </a></li>
+            <li><a class="court-item" href="tennis-day.html">
+              <span class="court-pin" aria-hidden="true"></span>
+              <span class="sch-item__text">
+                <span class="sch-item__title">鳥取産業体育館・鳥取市民体育館</span>
+                <span class="sch-item__place">冬季の室内大会・テニス祭りの会場（住所は公開前に確認）</span>
+              </span>
+              <span class="ar" aria-hidden="true">→</span>
+            </a></li>
+          </ul>
+          <p class="embed-caption">コートの予約は鳥取市の公共施設予約システムから行えます。協会が管理・貸出を行っているものではありませんのでご注意ください。</p>
+          <a class="ghost-link mt-24" href="links.html">鳥取市公共施設予約システムを開く <span class="aw">↗</span></a>
+        </div>
+
+        <div class="rv embed-wrap" style="transition-delay:.1s">
+          <div class="embed embed--map">
+            <span class="embed__label">Googleマップ埋め込み（掲載4施設のピン表示）</span>
+            <span class="embed__note">title="鳥取市テニス協会 利用コートの地図"</span>
+          </div>
+          <span class="embed-wrap__square" aria-hidden="true"></span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ CTA ============ -->
+  <section class="cta" aria-labelledby="cta-title">
+    <div class="cta__media">
+      <img src="assets/img/cta.png" alt="コートに置かれたテニスボールとラケット" loading="lazy">
+    </div>
+    <div class="cta__body">
+      <div class="cta__inner rv">
+        <div class="cta__head">
+          <span class="sec-head__mark" aria-hidden="true"></span>
+          <h2 class="cta__title" id="cta-title">一緒にテニスを楽しみませんか？</h2>
+        </div>
+        <p class="cta__text">鳥取市テニス協会では、会員を随時募集しています。協会に登録すると、市登録が必要な年8大会にエントリーできます。登録がなくても参加できる大会もありますので、まずはお気軽にどうぞ。</p>
+        <a class="btn btn--primary" href="membership.html">入会案内を見る <span class="aw">→</span></a>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ============ フッター ============ -->
+<footer class="site-footer">
+  <img class="site-footer__mark" src="assets/img/logo-outline.png" alt="" aria-hidden="true" loading="lazy">
+  <div class="container site-footer__grid">
+    <div class="site-footer__brand">
+      <img src="assets/img/logo-white.png" alt="鳥取市テニス協会 TOTTORI-CITY TENNIS ASSOCIATION" width="648" height="240">
+    </div>
+    <div><a class="fw fw--head" href="index.html">ホーム</a></div>
+    <div>
+      <a class="fw fw--head" href="tournaments.html">大会情報</a>
+      <a class="fw fw--head" href="index.html#news">お知らせ</a>
+      <a class="fw fw--head" href="about.html">協会について</a>
+    </div>
+    <div>
+      <a class="fw fw--head fw--head-tight" href="index.html#courts">コート案内</a>
+      <a class="fw fw--sub" href="lesson.html">水曜テニス教室</a>
+      <a class="fw fw--sub" href="tennis-day.html">テニス祭り</a>
+      <a class="fw fw--sub" href="links.html">リンク集</a>
+    </div>
+    <div>
+      <a class="fw fw--head" href="membership.html">入会案内</a>
+      <a class="fw fw--head" href="contact.html">お問い合わせ</a>
+    </div>
+  </div>
+  <div class="container site-footer__bottom">
+    <div class="site-footer__utils">
+      <a class="fw" href="links.html"><span aria-hidden="true" style="font:400 11px/1 var(--flt)">↗</span>鳥取市公共施設予約システム</a>
+      <a class="fw" href="#">プライバシーポリシー</a>
+    </div>
+    <span class="site-footer__copy">© Tottori-City Tennis Association All Rights Reserved.</span>
+  </div>
+</footer>
+
+<script src="assets/js/main.js" defer></script>
+</body>
+</html>
