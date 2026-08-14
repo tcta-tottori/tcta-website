@@ -10,19 +10,64 @@
 //
 // ■ status
 //   'past'   終了（モノクロ表示・TODAY より前に並ぶ）
+//   'live'   開催当日
 //   'closed' 受付終了
 //   'soon'   まもなく受付
 //   'open'   受付中（赤バッジ）
+//
+// ■ リンク先（カードをタップしたときの遷移先）
+//   大会の進み具合に応じて、カード下部のボタンの文言と遷移先が切り替わる。
+//   下ほど優先度が高く、URL が入っているものが採用される。
+//
+//     outlineUrl … 要項。募集中〜開催前はこれ（「要項を見る」）
+//     drawUrl    … ドロー（組み合わせ）。決まったら入れる（「ドローを見る」）
+//     liveUrl    … 大会運用システム。status:'live' の当日だけ使う（「速報・ドローを見る」）
+//     resultUrl  … 結果。status:'past' はこれ（「結果を見る」）
+//
+//   URL を入れていない段階では、その状態を飛ばして1つ前の案内に留まる。
+//   例）ドロー未発表なら「要項を見る」、結果未掲載なら「結果は準備中」と出る。
+//   ※ drawUrl / liveUrl は掲載先が決まりしだい記入すること。外部システムの
+//     URL でも、サイト内のページ（例 'tournaments.html#draw'）でもよい。
 
 // カルーセル中央の「TODAY」マーカー。終了した大会と今後の大会の境目に入る。
 export const TODAY = '2026.08.13';
 
 export const STATUS = {
   past: { label: '終了', badge: 'badge--muted' },
+  live: { label: '本日開催', badge: 'badge--open' },
   closed: { label: '受付終了', badge: 'badge--muted' },
   soon: { label: 'まもなく受付', badge: 'badge--muted' },
   open: { label: '受付中', badge: 'badge--open' },
 };
+
+const DOW = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+
+/** '2026.08.16' → { md: '08.16', dow: 'SUN' }（カード左上の日程チップ用） */
+export function dateChip(date) {
+  const [y, m, d] = date.split('.').map(Number);
+  return {
+    md: `${String(m).padStart(2, '0')}.${String(d).padStart(2, '0')}`,
+    dow: DOW[new Date(y, m - 1, d).getDay()],
+  };
+}
+
+/**
+ * 大会の進み具合から、カードの遷移先とボタンの文言を決める。
+ * 該当する URL が未記入なら、1つ手前の案内へ自動的に下がる。
+ */
+export function cardAction(t) {
+  if (t.status === 'past') {
+    return t.resultUrl
+      ? { label: '結果を見る', href: t.resultUrl }
+      : { label: '結果は準備中', href: null };
+  }
+  if (t.status === 'live' && (t.liveUrl || t.drawUrl)) {
+    return { label: '速報・ドローを見る', href: t.liveUrl || t.drawUrl };
+  }
+  if (t.drawUrl) return { label: 'ドローを見る', href: t.drawUrl };
+  if (t.outlineUrl) return { label: '要項を見る', href: t.outlineUrl };
+  return { label: '詳細を見る', href: t.href ?? null };
+}
 
 export const TOURNAMENTS = [
   {
@@ -31,7 +76,8 @@ export const TOURNAMENTS = [
     event: '団体戦（男子1部〜8部）',
     venue: '鳥取市千代テニス場',
     status: 'past',
-    href: 'results.html',
+    resultUrl: 'results.html',
+    drawUrl: null,
     image: 'assets/img/t4.png',
     imageAlt: 'コートに置かれたラケットとテニスボール',
   },
@@ -41,7 +87,8 @@ export const TOURNAMENTS = [
     event: '校区別対抗戦',
     venue: '鳥取市千代テニス場',
     status: 'past',
-    href: 'results.html',
+    resultUrl: 'results.html',
+    drawUrl: null,
     image: 'assets/img/t1.png',
     imageAlt: 'ネットの手前に置かれたテニスボール',
   },
@@ -51,7 +98,8 @@ export const TOURNAMENTS = [
     event: '女子1部〜4部／男女予選会',
     venue: '鳥取市千代テニス場',
     status: 'past',
-    href: 'results.html',
+    resultUrl: 'results.html',
+    drawUrl: null,
     image: 'assets/img/t2.png',
     imageAlt: '青空へトスを上げてサーブする選手',
   },
@@ -61,7 +109,8 @@ export const TOURNAMENTS = [
     event: '男女シングルス',
     venue: '鳥取市千代テニス場',
     status: 'past',
-    href: 'results.html',
+    resultUrl: 'results.html',
+    drawUrl: null,
     image: 'assets/img/t3.png',
     imageAlt: 'ネット際でボレーをする選手',
   },
@@ -71,7 +120,10 @@ export const TOURNAMENTS = [
     event: 'ミックスダブルス',
     venue: '鳥取市千代テニス場',
     status: 'closed',
-    href: 'tournaments.html',
+    outlineUrl: 'tournaments.html',
+    drawUrl: null,      // 組み合わせが決まったらURLを入れる
+    liveUrl: null,      // 当日の大会運用システムのURLを入れる
+    resultUrl: null,    // 終了後、結果の掲載先を入れる
     image: 'assets/img/t3.png',
     imageAlt: 'ネット際でボレーをする選手',
   },
@@ -81,7 +133,10 @@ export const TOURNAMENTS = [
     event: '男女ダブルス',
     venue: '鳥取市千代テニス場',
     status: 'closed',
-    href: 'tournaments.html',
+    outlineUrl: 'tournaments.html',
+    drawUrl: null,      // 組み合わせが決まったらURLを入れる
+    liveUrl: null,      // 当日の大会運用システムのURLを入れる
+    resultUrl: null,    // 終了後、結果の掲載先を入れる
     image: 'assets/img/t4.png',
     imageAlt: 'コートに置かれたラケットとテニスボール',
   },
@@ -91,7 +146,10 @@ export const TOURNAMENTS = [
     event: 'テニス教室ほか',
     venue: '鳥取産業体育館',
     status: 'soon',
-    href: 'tennis-day.html',
+    outlineUrl: 'tennis-day.html',
+    drawUrl: null,      // 組み合わせが決まったらURLを入れる
+    liveUrl: null,      // 当日の大会運用システムのURLを入れる
+    resultUrl: null,    // 終了後、結果の掲載先を入れる
     image: 'assets/img/t2.png',
     imageAlt: '青空へトスを上げてサーブする選手',
   },
@@ -101,7 +159,10 @@ export const TOURNAMENTS = [
     event: 'ミックスダブルス',
     venue: '鳥取市千代テニス場',
     status: 'open',
-    href: 'tournaments.html',
+    outlineUrl: 'tournaments.html',
+    drawUrl: null,      // 組み合わせが決まったらURLを入れる
+    liveUrl: null,      // 当日の大会運用システムのURLを入れる
+    resultUrl: null,    // 終了後、結果の掲載先を入れる
     image: 'assets/img/t3.png',
     imageAlt: 'ネット際でボレーをする選手',
   },
@@ -111,7 +172,10 @@ export const TOURNAMENTS = [
     event: '一般：男女ダブルス／ジュニア：男女シングルス',
     venue: '鳥取市千代テニス場',
     status: 'soon',
-    href: 'tournaments.html',
+    outlineUrl: 'tournaments.html',
+    drawUrl: null,      // 組み合わせが決まったらURLを入れる
+    liveUrl: null,      // 当日の大会運用システムのURLを入れる
+    resultUrl: null,    // 終了後、結果の掲載先を入れる
     image: 'assets/img/t1.png',
     imageAlt: 'ネットの手前に置かれたテニスボール',
   },
@@ -121,7 +185,10 @@ export const TOURNAMENTS = [
     event: '男女シングルス',
     venue: '鳥取市千代テニス場',
     status: 'soon',
-    href: 'tournaments.html',
+    outlineUrl: 'tournaments.html',
+    drawUrl: null,      // 組み合わせが決まったらURLを入れる
+    liveUrl: null,      // 当日の大会運用システムのURLを入れる
+    resultUrl: null,    // 終了後、結果の掲載先を入れる
     image: 'assets/img/t4.png',
     imageAlt: 'コートに置かれたラケットとテニスボール',
   },

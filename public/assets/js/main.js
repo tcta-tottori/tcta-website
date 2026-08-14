@@ -92,6 +92,25 @@
     });
   }
 
+  /* ---------- 追従する見出し（表示域が長いセクション） ----------
+     見出しが画面上部に貼り付いている間だけ .is-pinned を付ける。
+     貼り付く前から地の色を敷いてしまうと、背後の大きな英字が隠れてしまうため。 */
+  function initStickyHeads() {
+    var heads = document.querySelectorAll('.section--sticky-head > .container > .sec-bar, .section--sticky-head > .container > .sec-head');
+    if (!heads.length || !('IntersectionObserver' in window)) return;
+
+    heads.forEach(function (head) {
+      // sticky の停止位置より 1px 上に判定線を引き、そこを越えたら「貼り付いた」とみなす
+      var top = parseFloat(getComputedStyle(head).top) || 0;
+      var io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (e) {
+          head.classList.toggle('is-pinned', e.intersectionRatio < 1);
+        });
+      }, { threshold: [1], rootMargin: '-' + (top + 1) + 'px 0px 0px 0px' });
+      io.observe(head);
+    });
+  }
+
   /* ---------- ヘッダー（スクロールで影・モバイルメニュー） ---------- */
   function initHeader() {
     var header = document.querySelector('.site-header');
@@ -163,11 +182,14 @@
       });
     });
 
-    // 初期表示：TODAY マーカーの手前に「終了した大会」1枚が見える位置へ
+    // 初期表示：TODAY の線を左に置く。
+    // scroll-padding のぶんだけ手前を空けるので、左には終了した大会の端が覗き、
+    // 線のすぐ右に直近の大会が1枚まるごと入り、その次の大会が右端で少し切れる。
     var marker = track.querySelector('[data-carousel-today]');
     if (marker) {
       var place = function () {
-        track.scrollLeft = Math.max(0, marker.offsetLeft - step());
+        var pad = parseFloat(getComputedStyle(track).scrollPaddingInlineStart) || 0;
+        track.scrollLeft = Math.max(0, marker.offsetLeft - pad);
       };
       place();
       window.addEventListener('load', place);
@@ -320,6 +342,7 @@
   function init() {
     initSplash();
     initReveal();
+    initStickyHeads();
     initHeader();
     initCarousel();
     initFilters();
