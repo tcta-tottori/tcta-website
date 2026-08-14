@@ -2,7 +2,9 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [main]
+    # スマホから調整する間だけ、作業ブランチも公開対象にしている。
+    # main にマージして調整が終わったら claude/** の行は消してよい。
+    branches: [main, 'claude/**']
   # 手動実行
   workflow_dispatch:
   # 段階3で microCMS の Webhook から発火させる
