@@ -1,0 +1,25 @@
+---
+// 大会カード1枚。src/data/tournaments.js の1件をそのまま受け取る。
+import { STATUS } from '../data/tournaments.js';
+
+const { tournament } = Astro.props;
+const { date, title, event, venue, status, href, image, imageAlt } = tournament;
+const badge = STATUS[status];
+---
+
+<a class={`tcard${status === 'past' ? ' tcard--past' : ''}`} href={href}>
+  <div class="tcard__media">
+    {image
+      ? <img src={image} alt={imageAlt ?? ''} loading="lazy">
+      : <span class="tcard__media-empty" aria-hidden="true">{title}</span>}
+    <span class={`badge ${badge.badge}`}>{badge.label}</span>
+  </div>
+  <div class="tcard__body">
+    <p class="tcard__date">{date}</p>
+    <h3 class="tcard__title">{title}</h3>
+    <div class="meta-list">
+      <div class="meta-row"><span class="meta-row__key">種目</span><span class="meta-row__val">{event}</span></div>
+      <div class="meta-row"><span class="meta-row__key">会場</span><span class="meta-row__val">{venue}</span></div>
+    </div>
+  </div>
+</a>

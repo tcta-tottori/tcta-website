@@ -1,8 +1,14 @@
 ---
 import Base from '../layouts/Base.astro';
+import TournamentCard from '../components/TournamentCard.astro';
+import { TOURNAMENTS, TODAY } from '../data/tournaments.js';
 
 const title = "鳥取市テニス協会｜つなぐ、広がる、テニスの輪。";
 const description = "鳥取市テニス協会の公式サイト。年間19の大会と毎週水曜日のテニス教室を運営しています。大会情報・お知らせ・大会カレンダー・コート案内をご覧いただけます。";
+
+// TODAY マーカーを境に、終了した大会と今後の大会に分ける。
+const pastTournaments = TOURNAMENTS.filter((t) => t.status === 'past');
+const upcomingTournaments = TOURNAMENTS.filter((t) => t.status !== 'past');
 ---
 
 <Base
@@ -69,163 +75,17 @@ const description = "鳥取市テニス協会の公式サイト。年間19の大
       <div class="carousel rv" data-carousel tabindex="0" role="group" aria-label="大会カルーセル（横スクロール）">
 
         <!-- 終了した大会 -->
-        <a class="tcard tcard--past" href="results.html">
-          <div class="tcard__media">
-            <img src="assets/img/t4.png" alt="コートに置かれたラケットとテニスボール" loading="lazy">
-            <span class="badge badge--muted">終了</span>
-          </div>
-          <div class="tcard__body">
-            <p class="tcard__date">2026.05.10</p>
-            <h3 class="tcard__title">令和8年度クラブ対抗戦 前期日程</h3>
-            <div class="meta-list">
-              <div class="meta-row"><span class="meta-row__key">種目</span><span class="meta-row__val">団体戦（男子1部〜8部）</span></div>
-              <div class="meta-row"><span class="meta-row__key">会場</span><span class="meta-row__val">鳥取市千代テニス場</span></div>
-            </div>
-          </div>
-        </a>
-
-        <a class="tcard tcard--past" href="results.html">
-          <div class="tcard__media">
-            <img src="assets/img/t1.png" alt="ネットの手前に置かれたテニスボール" loading="lazy">
-            <span class="badge badge--muted">終了</span>
-          </div>
-          <div class="tcard__body">
-            <p class="tcard__date">2026.07.05</p>
-            <h3 class="tcard__title">鳥取市市民体育祭（BCグループ）</h3>
-            <div class="meta-list">
-              <div class="meta-row"><span class="meta-row__key">種目</span><span class="meta-row__val">校区別対抗戦</span></div>
-              <div class="meta-row"><span class="meta-row__key">会場</span><span class="meta-row__val">鳥取市千代テニス場</span></div>
-            </div>
-          </div>
-        </a>
-
-        <a class="tcard tcard--past" href="results.html">
-          <div class="tcard__media">
-            <img src="assets/img/t2.png" alt="青空へトスを上げてサーブする選手" loading="lazy">
-            <span class="badge badge--muted">終了</span>
-          </div>
-          <div class="tcard__body">
-            <p class="tcard__date">2026.07.12</p>
-            <h3 class="tcard__title">令和8年度クラブ対抗戦 後期日程</h3>
-            <div class="meta-list">
-              <div class="meta-row"><span class="meta-row__key">種目</span><span class="meta-row__val">女子1部〜4部／男女予選会</span></div>
-              <div class="meta-row"><span class="meta-row__key">会場</span><span class="meta-row__val">鳥取市千代テニス場</span></div>
-            </div>
-          </div>
-        </a>
-
-        <a class="tcard tcard--past" href="results.html">
-          <div class="tcard__media">
-            <img src="assets/img/t3.png" alt="ネット際でボレーをする選手" loading="lazy">
-            <span class="badge badge--muted">終了</span>
-          </div>
-          <div class="tcard__body">
-            <p class="tcard__date">2026.08.02</p>
-            <h3 class="tcard__title">第11回気高カップシングルス大会</h3>
-            <div class="meta-list">
-              <div class="meta-row"><span class="meta-row__key">種目</span><span class="meta-row__val">男女シングルス</span></div>
-              <div class="meta-row"><span class="meta-row__key">会場</span><span class="meta-row__val">鳥取市千代テニス場</span></div>
-            </div>
-          </div>
-        </a>
+        {pastTournaments.map((t) => <TournamentCard tournament={t} />)}
 
         <!-- TODAY -->
         <div class="today-marker" data-carousel-today aria-hidden="true">
           <span class="today-marker__label">TODAY</span>
           <span class="today-marker__line"></span>
-          <span class="today-marker__date">2026.08.13</span>
+          <span class="today-marker__date">{TODAY}</span>
         </div>
 
         <!-- 今後の大会 -->
-        <a class="tcard" href="tournaments.html">
-          <div class="tcard__media">
-            <img src="assets/img/t3.png" alt="ネット際でボレーをする選手" loading="lazy">
-            <span class="badge badge--muted">受付終了</span>
-          </div>
-          <div class="tcard__body">
-            <p class="tcard__date">2026.08.16</p>
-            <h3 class="tcard__title">サマーミックスダブルス</h3>
-            <div class="meta-list">
-              <div class="meta-row"><span class="meta-row__key">種目</span><span class="meta-row__val">ミックスダブルス</span></div>
-              <div class="meta-row"><span class="meta-row__key">会場</span><span class="meta-row__val">鳥取市千代テニス場</span></div>
-            </div>
-          </div>
-        </a>
-
-        <a class="tcard" href="tournaments.html">
-          <div class="tcard__media">
-            <img src="assets/img/t4.png" alt="コートに置かれたラケットとテニスボール" loading="lazy">
-            <span class="badge badge--muted">受付終了</span>
-          </div>
-          <div class="tcard__body">
-            <p class="tcard__date">2026.08.30</p>
-            <h3 class="tcard__title">第49回ダンロップテニストーナメント</h3>
-            <div class="meta-list">
-              <div class="meta-row"><span class="meta-row__key">種目</span><span class="meta-row__val">男女ダブルス</span></div>
-              <div class="meta-row"><span class="meta-row__key">会場</span><span class="meta-row__val">鳥取市千代テニス場</span></div>
-            </div>
-          </div>
-        </a>
-
-        <a class="tcard" href="tennis-day.html">
-          <div class="tcard__media">
-            <img src="assets/img/t2.png" alt="青空へトスを上げてサーブする選手" loading="lazy">
-            <span class="badge badge--muted">まもなく受付</span>
-          </div>
-          <div class="tcard__body">
-            <p class="tcard__date">2026.10.12</p>
-            <h3 class="tcard__title">鳥取市テニス協会 テニス祭り</h3>
-            <div class="meta-list">
-              <div class="meta-row"><span class="meta-row__key">種目</span><span class="meta-row__val">テニス教室ほか</span></div>
-              <div class="meta-row"><span class="meta-row__key">会場</span><span class="meta-row__val">鳥取産業体育館</span></div>
-            </div>
-          </div>
-        </a>
-
-        <a class="tcard" href="tournaments.html">
-          <div class="tcard__media">
-            <img src="assets/img/t3.png" alt="ネット際でボレーをする選手" loading="lazy">
-            <span class="badge badge--open">受付中</span>
-          </div>
-          <div class="tcard__body">
-            <p class="tcard__date">2026.10.18</p>
-            <h3 class="tcard__title">第30回エネトピア杯ミックスダブルス</h3>
-            <div class="meta-list">
-              <div class="meta-row"><span class="meta-row__key">種目</span><span class="meta-row__val">ミックスダブルス</span></div>
-              <div class="meta-row"><span class="meta-row__key">会場</span><span class="meta-row__val">鳥取市千代テニス場</span></div>
-            </div>
-          </div>
-        </a>
-
-        <a class="tcard" href="tournaments.html">
-          <div class="tcard__media">
-            <img src="assets/img/t1.png" alt="ネットの手前に置かれたテニスボール" loading="lazy">
-            <span class="badge badge--muted">まもなく受付</span>
-          </div>
-          <div class="tcard__body">
-            <p class="tcard__date">2026.11.07</p>
-            <h3 class="tcard__title">第71回鳥取健康テニス（秋期）</h3>
-            <div class="meta-list">
-              <div class="meta-row"><span class="meta-row__key">種目</span><span class="meta-row__val">一般：男女ダブルス／ジュニア：男女シングルス</span></div>
-              <div class="meta-row"><span class="meta-row__key">会場</span><span class="meta-row__val">鳥取市千代テニス場</span></div>
-            </div>
-          </div>
-        </a>
-
-        <a class="tcard" href="tournaments.html">
-          <div class="tcard__media">
-            <img src="assets/img/t4.png" alt="コートに置かれたラケットとテニスボール" loading="lazy">
-            <span class="badge badge--muted">まもなく受付</span>
-          </div>
-          <div class="tcard__body">
-            <p class="tcard__date">2026.11.08</p>
-            <h3 class="tcard__title">鳥取県テニス選手権 シングルス</h3>
-            <div class="meta-list">
-              <div class="meta-row"><span class="meta-row__key">種目</span><span class="meta-row__val">男女シングルス</span></div>
-              <div class="meta-row"><span class="meta-row__key">会場</span><span class="meta-row__val">鳥取市千代テニス場</span></div>
-            </div>
-          </div>
-        </a>
+        {upcomingTournaments.map((t) => <TournamentCard tournament={t} />)}
 
       </div>
     </div>

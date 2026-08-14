@@ -23,11 +23,13 @@
 │   │   └── contact.astro        お問い合わせ（入力検証・送信完了画面）
 │   ├── layouts/Base.astro       <head>・通知バー・ヘッダー・CTA・フッターの土台
 │   ├── components/              共通パーツ（下記「共通パーツ」を参照）
-│   └── config/nav.js            ナビゲーション定義の唯一の正
+│   ├── config/nav.js            ナビゲーション定義の唯一の正
+│   └── data/tournaments.js      トップの大会カルーセルの唯一の正（写真の差し込み口）
 ├── public/               そのまま公開される静的ファイル
 │   ├── assets/css/style.css     デザイントークン＋全コンポーネント（1ファイル）
 │   ├── assets/js/main.js        リビール／ヘッダー／カルーセル／フィルタ／タブ／フォーム
 │   ├── assets/img/              画像・ファビコン
+│   │   └── tournaments/         大会写真の置き場（入稿分をここに追加）
 │   └── .nojekyll                GitHub Pages で Jekyll 処理を無効化
 ├── docs/                 設計資料（構成方針・デザイン仕様・原稿仕様・検討ログ）
 ├── .github/workflows/deploy.yml  ビルドして GitHub Pages へ公開
@@ -89,11 +91,17 @@ npm run build && npm run preview
   ナビの項目と並びは `src/config/nav.js` が唯一の正で、各ページは
   `navActive` / `mobileNavActive` に key を渡して現在地を示します。
 - **通知バーの表示** — トップページと大会情報ページのみ。`Base` に `notice` を渡した場合に出ます。
+- **大会カルーセル** — トップの大会カードは `src/data/tournaments.js` の配列から生成されます。
+  大会の追加・並び替え・状態（受付中／受付終了など）の変更はこのファイルだけで完結します。
+  写真は `public/assets/img/tournaments/` に置き、各大会の `image` にパスを書けば差し込まれます。
+  `image` が `null` の大会は、写真が届くまで大会名だけのプレースホルダーを表示します。
 
 ## 公開前に差し替えが必要なもの
 
 1. **写真** — `public/assets/img/` の hero / cta / t1〜t4 は参考画像から切り出した低解像度の仮素材です。
    実写真（できれば2倍解像度）に差し替えてください。
+   大会写真は `public/assets/img/tournaments/` に置き、`src/data/tournaments.js` の
+   `image` / `imageAlt` を書き換えれば差し込めます（HTMLを触る必要はありません）。
 2. **PDF・外部リンク** — 大会日程、登録用紙、結果PDF、リンク集の各URLは `href="#"` のままです。
 3. **Googleカレンダー／Googleマップ** — 斜線のプレースホルダー部分に iframe を挿入してください。
    カレンダーはモバイル（〜639px）では非表示にしています。

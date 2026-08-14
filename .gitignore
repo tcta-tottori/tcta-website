@@ -2,3 +2,8 @@ node_modules/
 dist/
 .astro/
 .DS_Store
+
+# Claude Code の端末ごとのローカル設定（共有しない）
+.claude/settings.local.json
+# Playwright MCP のスクリーンショット出力
+.playwright-mcp/
