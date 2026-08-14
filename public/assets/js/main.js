@@ -9,7 +9,8 @@
 
   /* ---------- スクロール連動フェード（.rv） ---------- */
   function initReveal() {
-    var targets = document.querySelectorAll('.rv');
+    // .ghost（見出し右の大きな英字）も同じ仕組みで、右からスライドインさせる
+    var targets = document.querySelectorAll('.rv, .ghost');
     if (!targets.length) return;
 
     if (!('IntersectionObserver' in window) || reduceMotion) return; // そのまま表示
@@ -36,13 +37,14 @@
     var header = document.querySelector('.site-header');
     if (!header) return;
 
-    if (!header.classList.contains('site-header--overlay')) {
-      var onScroll = function () {
-        header.classList.toggle('hsh', window.scrollY > 100);
-      };
-      window.addEventListener('scroll', onScroll, { passive: true });
-      onScroll();
-    }
+    // 透過ヘッダー（トップ）はモバイルだけ追従したままなので、
+    // 写真から抜けたら白背景に戻せるよう、こちらでも .hsh を付け外しする。
+    var overlay = header.classList.contains('site-header--overlay');
+    var onScroll = function () {
+      header.classList.toggle('hsh', window.scrollY > (overlay ? 40 : 100));
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
 
     var toggle = document.querySelector('.hamburger');
     var menu = document.getElementById('mobile-nav');

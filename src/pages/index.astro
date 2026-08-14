@@ -14,7 +14,6 @@ const upcomingTournaments = TOURNAMENTS.filter((t) => t.status !== 'past');
 <Base
   title={title}
   description={description}
-  notice
   overlay
   home
   navActive="home"
@@ -26,7 +25,10 @@ const upcomingTournaments = TOURNAMENTS.filter((t) => t.status !== 'past');
     <div class="hero__media phv">
       <img class="hero__photo" src="assets/img/hero.png" alt="青空の下、コートでバックハンドを打つ選手">
       <div class="hero__scrim" aria-hidden="true"></div>
-      <img class="hero__logo fu" style="animation-delay:.9s" src="assets/img/logo-white.png" alt="" aria-hidden="true">
+      <div class="hero__logo" aria-hidden="true">
+        <img src="assets/img/logo-white.png" alt="">
+        <span class="hero__logo-bar"></span>
+      </div>
     </div>
     <div class="container hero__body">
       <div class="hero__inner">

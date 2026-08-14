@@ -1,5 +1,4 @@
 ---
-import NoticeBar from '../components/NoticeBar.astro';
 import SiteHeader from '../components/SiteHeader.astro';
 import MobileNav from '../components/MobileNav.astro';
 import Cta from '../components/Cta.astro';
@@ -8,8 +7,6 @@ import SiteFooter from '../components/SiteFooter.astro';
 interface Props {
   title: string;
   description: string;
-  /** 通知バーを表示するか */
-  notice?: boolean;
   /** ヘッダーをヒーロー写真の上に透過表示するか（トップページのみ） */
   overlay?: boolean;
   /** トップページかどうか。ナビのアンカーがページ内リンクになる */
@@ -23,7 +20,6 @@ interface Props {
 const {
   title,
   description,
-  notice = false,
   overlay = false,
   home = false,
   navActive,
@@ -46,8 +42,6 @@ const {
 </head>
 <body>
 <a class="skip-link" href="#main">本文へスキップ</a>
-
-{notice && <NoticeBar />}
 
 <SiteHeader active={navActive} overlay={overlay} onHome={home} />
 
