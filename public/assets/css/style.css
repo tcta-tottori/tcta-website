@@ -112,16 +112,38 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 }
 .container--narrow { max-width: calc(var(--container-narrow) + var(--gutter) * 2); }
 
+/* --sec-pt / --head-half は背景の大きな英字（.ghost）の位置決めに使う。
+   --sec-pt   … セクション上端から見出しの先頭までの距離
+   --head-half … 見出し2行（赤い英語＋日本語）を合わせた高さの半分
+   この2つを足した位置＝見出しの中心に、.ghost の中心を合わせる。 */
 .section {
   position: relative;
   padding-block: 64px;
   overflow: hidden;
+  --sec-pt: 64px;
+  --head-half: calc((13px * 1.4 + 8px + 26px * 1.4) / 2);
 }
-@media (min-width: 640px) { .section { padding-block: 88px; } }
-@media (min-width: 1024px) { .section { padding-block: 112px; } }
+@media (min-width: 640px) {
+  .section {
+    padding-block: 88px;
+    --sec-pt: 88px;
+    --head-half: calc((13px * 1.4 + 8px + 30px * 1.4) / 2);
+  }
+}
+@media (min-width: 1024px) {
+  .section {
+    padding-block: 112px;
+    --sec-pt: 112px;
+    --head-half: calc((13px * 1.4 + 8px + 34px * 1.4) / 2);
+  }
+}
 
 .section--gray { background: var(--gray-050); }
-.section--flush-top { padding-top: 0; }
+/* お知らせは上を詰める。ただし見出しの中心に合わせた大きな英字が
+   セクション上端からはみ出して切れない分だけは残しておく。 */
+.section--flush-top { padding-top: 8px; --sec-pt: 8px; }
+@media (min-width: 640px) { .section--flush-top { padding-top: 16px; --sec-pt: 16px; } }
+@media (min-width: 1024px) { .section--flush-top { padding-top: 40px; --sec-pt: 40px; } }
 .section--tight-bottom { padding-bottom: 48px; }
 @media (min-width: 1024px) {
   .section--tight-bottom { padding-bottom: 96px; }
@@ -131,7 +153,10 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 .ghost {
   position: absolute;
   right: -8px;
-  top: 24px;
+  /* 赤い英語見出しと日本語見出しを合わせた中心に、この文字の中心を合わせる。
+     自身の高さの半分は transform で戻す（top には自身基準の % が使えないため）。 */
+  top: calc(var(--sec-pt) + var(--head-half));
+  transform: translateY(-50%);
   /* position 指定があるため、そのままだと static な本文より前面に描画され、
      見出し行右側（VIEW ALL・カルーセル操作）を覆ってしまう。背面に固定する。 */
   z-index: 0;
@@ -145,12 +170,11 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 /* 本文は必ず .ghost より前面に置く */
 .section > .container { position: relative; z-index: 1; }
 .section--gray .ghost { color: var(--gray-200); }
-.ghost--above { top: -.19em; }
-@media (min-width: 1024px) { .ghost { top: 44px; } }
 
 /* 横スワイプの演出。
    ・塗りを 90deg のグラデーションにし、左へ流れるほど色を抜く（＝スワイプの尾）
-   ・mask で文字を横切る細い帯を切り抜き、「一度なでた」跡をつくる
+   ・mask で文字を横切る細い帯を等間隔に切り抜き、「何度もなでた」跡をつくる
+     （9% ごとに繰り返すので、文字の高さの中に7本前後の横線が入る）
    background-clip: text が使えない環境では上の単色のまま出るよう @supports で囲む。 */
 @supports ((-webkit-background-clip: text) or (background-clip: text)) {
   .ghost {
@@ -162,8 +186,8 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
     background-clip: text;
     color: transparent;
     -webkit-text-fill-color: transparent;
-    -webkit-mask-image: linear-gradient(180deg, #000 0 40%, transparent 40% 45%, #000 45% 100%);
-    mask-image: linear-gradient(180deg, #000 0 40%, transparent 40% 45%, #000 45% 100%);
+    -webkit-mask-image: repeating-linear-gradient(180deg, #000 0 7.6%, transparent 7.6% 9%);
+    mask-image: repeating-linear-gradient(180deg, #000 0 7.6%, transparent 7.6% 9%);
   }
   .section--gray .ghost {
     background-image: linear-gradient(90deg,
@@ -402,13 +426,15 @@ body.jsrv .rv {
 body.jsrv .rv.on { opacity: 1; transform: none; }
 
 /* 大きな英字は右からスライドインさせる（.section / .page-head は overflow:hidden なので
-   画面外へはみ出さずに、横スワイプのように入ってくる） */
+   画面外へはみ出さずに、横スワイプのように入ってくる）。
+   見出しや本文より少し遅れて出てくるよう、transition-delay で間を置く。
+   translateY(-50%) は見出しの中心に合わせるためのもので、常に効かせたままにする。 */
 body.jsrv .ghost {
   opacity: 0;
-  transform: translateX(15%);
-  transition: opacity .8s var(--ease), transform 1.15s var(--ease);
+  transform: translate(15%, -50%);
+  transition: opacity .8s var(--ease) .3s, transform 1.15s var(--ease) .3s;
 }
-body.jsrv .ghost.on { opacity: 1; transform: none; }
+body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
@@ -545,8 +571,10 @@ body.jsrv .ghost.on { opacity: 1; transform: none; }
    写真をメニューの背面まで見せるため、負のマージンでヒーローを引き上げる。
    ヘッダー帯が白いままだと写真と分断されて見えるので、背景は透過にし、
    写真側の上端に薄いベール（.hero__scrim の縦グラデーション）を敷いて文字を読ませる。 */
+/* z-index は .site-header の 100 のまま下げないこと。
+   モバイルメニュー（.mobile-nav / z-index 90）より下になると、
+   メニューを開いたときに閉じるボタン（ハンバーガー）が覆われて押せなくなる。 */
 .site-header--overlay {
-  z-index: 20;
   margin-bottom: calc(-1 * var(--header-h));
   background: transparent;
   box-shadow: none;
@@ -1214,8 +1242,19 @@ body.jsrv .ghost.on { opacity: 1; transform: none; }
   padding-block: 32px 40px;
   overflow: hidden;
 }
-@media (min-width: 1024px) { .page-head { padding-block: 40px 56px; } }
-.page-head .ghost { top: auto; bottom: -.14em; }
+/* 下層ページも同じ考え方で、英語見出し＋日本語見出しの中心に大きな英字を合わせる。
+   セクションと違い、上端からタイトルまでにパンくず（12px/1.6）とその下の余白が入る。 */
+.page-head {
+  --sec-pt: calc(32px + 12px * 1.6 + 20px);
+  --head-half: calc((12px * 1.4 + 8px + 26px * 1.4) / 2);
+}
+@media (min-width: 1024px) {
+  .page-head {
+    padding-block: 40px 56px;
+    --sec-pt: calc(40px + 12px * 1.6 + 20px);
+    --head-half: calc((12px * 1.4 + 8px + 38px * 1.4) / 2);
+  }
+}
 
 .breadcrumb {
   position: relative;
