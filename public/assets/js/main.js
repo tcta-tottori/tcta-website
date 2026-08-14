@@ -7,6 +7,66 @@
 
   var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+  /* ---------- オープニング（全画面の映像） ----------
+     出すかどうかは Base.astro の <head> 内スクリプトが決め済み（html.splash-on）。
+     ここは「必ず幕を上げる」ことに責任を持つ。再生完了・読み込み失敗・
+     自動再生の拒否（省電力モードなど）・時間切れのどれでも本文へ進める。 */
+  function initSplash() {
+    var root = document.documentElement;
+    if (!root.classList.contains('splash-on')) return;
+
+    var splash = document.querySelector('.splash');
+    if (!splash) { root.classList.remove('splash-on'); return; }
+
+    var video = splash.querySelector('video');
+    var timer;
+    var done = false;
+
+    function finish() {
+      if (done) return;
+      done = true;
+      clearTimeout(timer);
+      try { sessionStorage.setItem('tcta-splash', 'done'); } catch (e) {}
+      splash.classList.add('is-out');
+      // ここで初めてヒーローの登場アニメーションが動き出す
+      root.classList.remove('splash-on');
+      setTimeout(function () {
+        if (splash.parentNode) splash.parentNode.removeChild(splash);
+      }, 700);
+    }
+
+    // 保険。映像が届かない・再生されない場合でも、ここで必ず本文へ進む。
+    // このスクリプトは defer なので、外部CSSの読み込みが遅いと実行自体が遅れる。
+    // そのときは映像が先に進んでいるので、残り時間を見て掛け直す。
+    function armFallback() {
+      clearTimeout(timer);
+      var left = 3.4;
+      if (video && isFinite(video.duration) && video.duration > 0) {
+        left = Math.max(0, video.duration - video.currentTime);
+      }
+      timer = setTimeout(finish, (left + 1) * 1000);
+    }
+    armFallback();
+
+    if (video) {
+      // 実行が遅れて、すでに再生し終えていた場合はすぐ幕を上げる
+      if (video.ended) { finish(); return; }
+
+      video.addEventListener('ended', finish);
+      video.addEventListener('error', finish);
+      video.addEventListener('loadedmetadata', armFallback);
+      video.addEventListener('playing', armFallback);
+
+      var playing = video.play();
+      if (playing && typeof playing.catch === 'function') playing.catch(finish);
+    }
+
+    splash.addEventListener('click', finish);
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' || e.key === 'Enter' || e.key === ' ') finish();
+    });
+  }
+
   /* ---------- スクロール連動フェード（.rv） ---------- */
   function initReveal() {
     // .ghost（見出し右の大きな英字）も同じ仕組みで、右からスライドインさせる
@@ -258,6 +318,7 @@
   }
 
   function init() {
+    initSplash();
     initReveal();
     initHeader();
     initCarousel();

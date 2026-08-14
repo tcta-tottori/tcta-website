@@ -1623,6 +1623,76 @@ body.jsrv .ghost.on { opacity: 1; transform: none; }
 }
 .form-done__text { margin: 0; font: 400 15px/1.9 var(--fjp); color: var(--gray-800); }
 
+/* ============ 15. オープニング（全画面の映像） ============ */
+/* 既定は非表示。Base.astro の <head> 内スクリプトが描画前に html へ .splash-on を
+   付けたときだけ出る。＝JS が無効な環境では最初から本文が見える。 */
+.splash {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 500;
+  overflow: hidden;
+  background: #000;
+}
+.splash-on .splash { display: block; }
+/* 幕が上がるまで背後を動かさない */
+.splash-on body { overflow: hidden; }
+
+/* 正方形の映像を、縦は切らずに横だけ画面からはみ出させる。
+   映像の四隅は真っ黒なので、あふれた分の余白は背景の #000 と地続きに見える。
+   ・縦：100vh を超えない（上から滑り込む文字を切らないため）
+   ・横：ビューポート幅の 1.65 倍まで拡大（スマホでロゴが小さくなりすぎないように） */
+/* 画面より大きくなる（＝横がはみ出す）ので、grid/flex の中央寄せでは端が揃わない。
+   絶対配置＋transform で、はみ出す分を左右へ均等に逃がす。 */
+.splash__video {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: min(150vw, 100vh);
+  height: min(150vw, 100vh);
+  object-fit: cover;
+  background: #000;
+}
+@supports (height: 100svh) {
+  .splash__video { width: min(150vw, 100svh); height: min(150vw, 100svh); }
+}
+
+.splash__skip {
+  position: absolute;
+  right: max(16px, env(safe-area-inset-right));
+  bottom: max(16px, env(safe-area-inset-bottom));
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 20px;
+  border: 1px solid rgba(255, 255, 255, .34);
+  border-radius: 9999px;
+  color: rgba(255, 255, 255, .78);
+  font: 700 12px/1 var(--flt);
+  letter-spacing: .14em;
+  animation: fadeup .6s var(--ease) 1.2s both;
+  transition: color .3s ease, border-color .3s ease;
+}
+.splash__skip:hover { color: #fff; border-color: #fff; }
+.splash__skip .aw { color: var(--red); }
+
+/* 幕を上げる。.splash-on が外れても消えないよう、ここでも display を指定する */
+.splash.is-out {
+  display: block;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .6s var(--ease);
+}
+
+/* オープニング中はヒーローの登場アニメーションを頭出しのまま止めておき、
+   幕が上がってから走らせる（映像の裏で終わってしまうのを防ぐ） */
+.splash-on .phv,
+.splash-on .fu,
+.splash-on .hl > span,
+.splash-on .hero__logo img,
+.splash-on .hero__logo-bar { animation-play-state: paused; }
+
 /* ============ 汎用ユーティリティ ============ */
 .stack-24 > * + * { margin-top: 24px; }
 .stack-40 > * + * { margin-top: 40px; }
