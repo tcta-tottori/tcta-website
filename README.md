@@ -30,6 +30,7 @@
 
 実装の根拠は [`docs/`](./docs/) にまとめています。
 
+- [`docs/architecture.md`](./docs/architecture.md) — サイト構成方針 v1.0（ブロック編集への移行設計・段階計画）
 - [`docs/design.md`](./docs/design.md) — ビジュアルデザイン仕様書 v3.1（配色・タイポ・余白・コンポーネント）
 - [`docs/content.md`](./docs/content.md) — 原稿仕様書 v2.0（各ページの実テキストと `要確認` 項目）
 - [`docs/design-chat-log.md`](./docs/design-chat-log.md) — ファーストビュー3案から採用案決定までの検討ログ

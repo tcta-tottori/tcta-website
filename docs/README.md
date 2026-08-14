@@ -5,6 +5,7 @@
 
 | ファイル | 内容 |
 | --- | --- |
+| [`architecture.md`](./architecture.md) | サイト構成方針 v1.0。ブロック単位でスマホから更新できる構成（Astro + microCMS）への移行設計と段階計画 |
 | [`design.md`](./design.md) | ビジュアルデザイン仕様書 v3.1。カラー、タイポグラフィ、余白、コンポーネント、レスポンシブ、アクセシビリティの規則。`assets/css/style.css` のCSS変数はこの仕様に対応しています |
 | [`content.md`](./content.md) | 原稿仕様書 v2.0。各ページの実テキスト、情報構成、`【要確認】` 項目の一覧 |
 | [`design-chat-log.md`](./design-chat-log.md) | ファーストビュー3案の提案から採用案（3a）決定までの検討ログ。なぜこの構成になったかの経緯 |
