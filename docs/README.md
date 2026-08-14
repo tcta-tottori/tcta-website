@@ -13,7 +13,7 @@
 ## 使い方
 
 - **デザインを変更するとき** — まず `design.md` のトークン表を確認し、
-  `assets/css/style.css` 冒頭の `:root` を変更してください。個別のCSSに直値を書かない方針です。
+  `public/assets/css/style.css` 冒頭の `:root` を変更してください。個別のCSSに直値を書かない方針です。
 - **文言を変更するとき** — `content.md` が原稿の正本です。サイト側だけを直すと、
   次に原稿から作業する人と食い違います。
 - **`要確認` の扱い** — `content.md` の `【要確認】` と、サイト上の赤い「要確認」バッジは対応しています。
@@ -21,5 +21,5 @@
 
 ## 注意
 
-GitHub Pages の公開元（Settings → Pages → Branch）は `/ (root)` を選択してください。
-`/docs` を選ぶとこのフォルダが公開され、サイトが表示されなくなります。
+GitHub Pages の公開元（Settings → Pages → Source）は **GitHub Actions** を選択してください。
+`Deploy from a branch` のままだと、ビルド前のソースが公開されて表示が崩れます。

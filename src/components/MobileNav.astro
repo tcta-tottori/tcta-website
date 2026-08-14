@@ -1,0 +1,22 @@
+---
+import { MOBILE_NAV } from '../config/nav.js';
+
+interface Props {
+  /** 現在地として強調するナビの key */
+  active?: string;
+}
+
+const { active } = Astro.props;
+---
+
+<div class="mobile-nav" id="mobile-nav" aria-hidden="true">
+  <nav aria-label="モバイルナビゲーション">
+    {MOBILE_NAV.map((item) => (
+      <a
+        class:list={['mobile-nav__link', active === item.key && 'is-active']}
+        href={item.href}
+      >{item.label} <span class="ar">→</span></a>
+    ))}
+    <a class="btn btn--primary" href="contact.html">お問い合わせ <span class="aw">→</span></a>
+  </nav>
+</div>

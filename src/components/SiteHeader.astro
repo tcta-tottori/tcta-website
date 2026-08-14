@@ -1,0 +1,39 @@
+---
+import { NAV } from '../config/nav.js';
+
+interface Props {
+  /** 現在地として強調するナビの key */
+  active?: string;
+  /** トップページのみ、ヒーロー写真の上に透過表示する */
+  overlay?: boolean;
+  /** トップページではコート案内・お知らせがページ内アンカーになる */
+  onHome?: boolean;
+}
+
+const { active, overlay = false, onHome = false } = Astro.props;
+
+/** トップページでは index.html#courts → #courts に落とす */
+const resolve = (href: string) =>
+  onHome && href.startsWith('index.html#') ? href.slice('index.html'.length) : href;
+---
+
+<header class:list={['site-header', overlay && 'site-header--overlay']}>
+  <div class="container site-header__inner">
+    <a class="site-header__logo" href="index.html" aria-label="鳥取市テニス協会 ホーム">
+      <img src="assets/img/logo.png" alt="鳥取市テニス協会 TOTTORI-CITY TENNIS ASSOCIATION" width="140" height="78">
+    </a>
+    <nav class="nav" aria-label="グローバルナビゲーション">
+      {NAV.map((item) => (
+        <a
+          class:list={['nav__link', item.en && 'nav__link--en', active === item.key && 'is-active']}
+          href={resolve(item.href)}
+        >{item.label}</a>
+      ))}
+    </nav>
+    <a class="header-contact" href="contact.html">お問い合わせ</a>
+    <button class="hamburger" type="button" aria-expanded="false" aria-controls="mobile-nav">
+      <span></span><span></span><span></span>
+      <span class="visually-hidden">メニューを開く</span>
+    </button>
+  </div>
+</header>

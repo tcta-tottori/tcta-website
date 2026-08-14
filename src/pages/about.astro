@@ -1,0 +1,90 @@
+---
+import Base from '../layouts/Base.astro';
+
+const title = "協会について｜鳥取市テニス協会";
+const description = "鳥取市テニス協会の概要・ごあいさつ・役員名簿・協会規約。";
+---
+
+<Base
+  title={title}
+  description={description}
+  navActive="about"
+  mobileNavActive="about"
+>
+  <!-- ============ ページヘッダー ============ -->
+  <section class="page-head">
+    <span class="ghost" aria-hidden="true">ABOUT</span>
+    <div class="container">
+      <nav class="breadcrumb" aria-label="パンくず">
+        <a href="index.html">ホーム</a><span class="breadcrumb__sep" aria-hidden="true">›</span><span aria-current="page">協会について</span>
+      </nav>
+      <div class="page-title-row fu">
+        <span class="sec-head__mark" aria-hidden="true" style="margin-top:8px"></span>
+        <div>
+          <p class="page-title__en" style="margin:0">About</p>
+          <h1 class="page-title" style="margin-top:8px">協会について</h1>
+        </div>
+      </div>
+      <p class="page-lead fu" style="animation-delay:.15s">鳥取市テニス協会の概要、役員名簿、協会規約を掲載しています。</p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+
+      <div class="rv">
+        <h2 class="sub-head">ごあいさつ</h2>
+        <div class="prose" style="max-width:46em">
+          <p>鳥取市テニス協会のホームページをご覧いただき、ありがとうございます。</p>
+          <p>本協会は、テニスを通じた市民の健康増進と青少年の健全育成、そして競技力の向上と生涯スポーツの普及を目的に活動しています。</p>
+          <p>年間19の大会運営、クラブ対抗戦のリーグ編成、水曜テニス教室での指導、市民体育祭やテニス祭りといった地域イベント。どれも、鳥取市でテニスを続けられる環境を守るための活動です。</p>
+          <p>コートに立つ理由は人それぞれです。勝ちたい方も、体を動かしたい方も、仲間に会いたい方も。そのすべてを受けとめられる協会でありたいと考えています。</p>
+          <p style="text-align:right;font-weight:700;color:var(--ink)">鳥取市テニス協会 会長（氏名は<span class="todo-note">要確認</span>）</p>
+        </div>
+      </div>
+
+      <div class="rv" style="margin-top:56px">
+        <h2 class="sub-head">協会概要</h2>
+        <dl class="deflist">
+          <div class="deflist__row"><dt class="deflist__key">名称</dt><dd class="deflist__val" style="margin:0">鳥取市テニス協会</dd></div>
+          <div class="deflist__row"><dt class="deflist__key">英字名称</dt><dd class="deflist__val" style="margin:0">TOTTORI-CITY TENNIS ASSOCIATION</dd></div>
+          <div class="deflist__row"><dt class="deflist__key">目的</dt><dd class="deflist__val" style="margin:0">協会規約より転記（<span class="todo-note">要確認</span>）</dd></div>
+          <div class="deflist__row"><dt class="deflist__key">所在地</dt><dd class="deflist__val" style="margin:0"><span class="todo-note">要確認</span></dd></div>
+          <div class="deflist__row"><dt class="deflist__key">上部団体</dt><dd class="deflist__val" style="margin:0">鳥取県テニス協会</dd></div>
+          <div class="deflist__row"><dt class="deflist__key">主な活動</dt><dd class="deflist__val" style="margin:0">大会の主催・主管／クラブ対抗戦の運営／テニス教室の開催／普及イベントの実施</dd></div>
+        </dl>
+      </div>
+
+      <div class="rv" style="margin-top:56px">
+        <h2 class="sub-head">役員名簿</h2>
+        <div class="panel panel--gray">
+          <p class="panel__title">令和7・8年度 役員名簿</p>
+          <p class="prose" style="margin:0">役職・氏名・所属をCMS（microCMS）の表形式で管理し、この位置に掲載します。掲載内容は協会の最終確認後に反映します。</p>
+        </div>
+      </div>
+
+      <div class="rv" style="margin-top:56px">
+        <h2 class="sub-head">協会規約</h2>
+        <p class="prose" style="max-width:46em">規約本文はテキスト（HTML）で掲載し、原本PDFを併置します。現行サイトの画像掲載（JPEG5枚）からテキスト化して移行します。</p>
+        <ul class="mt-24">
+          <li><a class="dl-item" href="#">
+            <span class="dl-item__type">PDF</span>
+            <span class="dl-item__text"><span class="dl-item__title">鳥取市テニス協会規約（原本）</span></span>
+            <span class="sqbtn" aria-hidden="true">→</span>
+          </a></li>
+          <li><a class="dl-item" href="#">
+            <span class="dl-item__type">PDF</span>
+            <span class="dl-item__text"><span class="dl-item__title">令和7年度 代議員会議案書</span></span>
+            <span class="sqbtn" aria-hidden="true">→</span>
+          </a></li>
+          <li><a class="dl-item" href="#">
+            <span class="dl-item__type">PDF</span>
+            <span class="dl-item__text"><span class="dl-item__title">フェアプレー推進について（鳥取県テニス協会）</span></span>
+            <span class="sqbtn" aria-hidden="true">→</span>
+          </a></li>
+        </ul>
+      </div>
+
+    </div>
+  </section>
+</Base>

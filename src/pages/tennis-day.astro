@@ -1,0 +1,63 @@
+---
+import Base from '../layouts/Base.astro';
+
+const title = "テニス祭り｜鳥取市テニス協会";
+const description = "鳥取市テニス協会のテニス祭り（テニスの日）。10月12日（祝）鳥取産業体育館で開催。協会登録は不要、どなたでも参加できます。";
+---
+
+<Base
+  title={title}
+  description={description}
+>
+  <!-- ============ ページヘッダー ============ -->
+  <section class="page-head">
+    <span class="ghost" aria-hidden="true">EVENT</span>
+    <div class="container">
+      <nav class="breadcrumb" aria-label="パンくず">
+        <a href="index.html">ホーム</a><span class="breadcrumb__sep" aria-hidden="true">›</span><span aria-current="page">テニス祭り</span>
+      </nav>
+      <div class="page-title-row fu">
+        <span class="sec-head__mark" aria-hidden="true" style="margin-top:8px"></span>
+        <div>
+          <p class="page-title__en" style="margin:0">Event</p>
+          <h1 class="page-title" style="margin-top:8px">テニス祭り</h1>
+        </div>
+      </div>
+      <p class="page-lead fu" style="animation-delay:.15s">10月12日（祝）、鳥取産業体育館で開催します。テニス教室をはじめ、どなたでも参加いただけるプログラムをご用意します。協会登録は不要です。</p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+
+      <div class="rv">
+        <h2 class="sub-head">開催概要</h2>
+        <dl class="deflist">
+          <div class="deflist__row"><dt class="deflist__key">日時</dt><dd class="deflist__val" style="margin:0">2026年10月12日（祝）</dd></div>
+          <div class="deflist__row"><dt class="deflist__key">会場</dt><dd class="deflist__val" style="margin:0">鳥取産業体育館</dd></div>
+          <div class="deflist__row"><dt class="deflist__key">参加資格</dt><dd class="deflist__val" style="margin:0">どなたでも参加できます（協会登録は不要です）</dd></div>
+          <div class="deflist__row"><dt class="deflist__key">内容</dt><dd class="deflist__val" style="margin:0">テニス教室ほか（プログラム・参加費・申込方法は<span class="todo-note">要確認</span>のうえ掲載）</dd></div>
+        </dl>
+      </div>
+
+      <div class="rv" style="margin-top:56px">
+        <h2 class="sub-head">鳥取健康テニス</h2>
+        <p class="prose" style="max-width:46em">春と秋の年2回、一般の部とジュニアの部に分けて開催しています。協会登録がなくても参加できる大会です。一般はダブルス、ジュニアはシングルスで行います。</p>
+        <div class="card-grid card-grid--2 mt-32">
+          <div class="panel">
+            <p style="margin:0;font:700 15px/1.5 var(--fjp);letter-spacing:.02em;color:var(--ink)">第70回（春期）</p>
+            <p style="margin:10px 0 0;font:700 22px/1 var(--flt);letter-spacing:.04em;color:var(--red)">2026.05.02 <span style="font-size:14px">SAT</span></p>
+            <p style="margin:12px 0 0;font:400 14px/1.8 var(--fjp);color:var(--gray-800)">一般：男女ダブルス／ジュニア：男女シングルス</p>
+          </div>
+          <div class="panel">
+            <p style="margin:0;font:700 15px/1.5 var(--fjp);letter-spacing:.02em;color:var(--ink)">第71回（秋期）</p>
+            <p style="margin:10px 0 0;font:700 22px/1 var(--flt);letter-spacing:.04em;color:var(--red)">2026.11.07 <span style="font-size:14px">SAT</span></p>
+            <p style="margin:12px 0 0;font:400 14px/1.8 var(--fjp);color:var(--gray-800)">一般：男女ダブルス／ジュニア：男女シングルス</p>
+          </div>
+        </div>
+        <p class="note">※ 荒天の場合は中止となります（予備日なし）。</p>
+      </div>
+
+    </div>
+  </section>
+</Base>

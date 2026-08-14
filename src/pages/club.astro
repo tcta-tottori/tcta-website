@@ -1,0 +1,92 @@
+---
+import Base from '../layouts/Base.astro';
+
+const title = "クラブ対抗戦｜鳥取市テニス協会";
+const description = "鳥取市テニス協会のクラブ対抗戦。令和9年度の編成表、令和8年度前後期の結果、過去の結果を掲載しています。";
+---
+
+<Base
+  title={title}
+  description={description}
+  navActive="tournaments"
+  mobileNavActive="tournaments"
+>
+  <!-- ============ ページヘッダー ============ -->
+  <section class="page-head">
+    <span class="ghost" aria-hidden="true">CLUB LEAGUE</span>
+    <div class="container">
+      <nav class="breadcrumb" aria-label="パンくず">
+        <a href="index.html">ホーム</a><span class="breadcrumb__sep" aria-hidden="true">›</span><span aria-current="page">クラブ対抗戦</span>
+      </nav>
+      <div class="page-title-row fu">
+        <span class="sec-head__mark" aria-hidden="true" style="margin-top:8px"></span>
+        <div>
+          <p class="page-title__en" style="margin:0">Club League</p>
+          <h1 class="page-title" style="margin-top:8px">クラブ対抗戦</h1>
+        </div>
+      </div>
+      <p class="page-lead fu" style="animation-delay:.15s">市内のクラブが部ごとに分かれて戦う、年2回のリーグ戦です。前期は男子1部〜8部、後期は女子1部〜4部と男女の予選会を行います。一年を通じて成績が積み上がり、上位クラブは翌年度に昇格します。</p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+
+      <div class="rv">
+        <h2 class="sub-head">令和9年度</h2>
+        <ul>
+          <li><a class="dl-item" href="#">
+            <span class="dl-item__type">PDF</span>
+            <span class="dl-item__text">
+              <span class="dl-item__title">令和9年度クラブ対抗戦 編成表</span>
+              <span class="dl-item__note">部ごとの所属クラブと日程を掲載しています。</span>
+            </span>
+            <span class="sqbtn" aria-hidden="true">→</span>
+          </a></li>
+        </ul>
+      </div>
+
+      <div class="rv" style="margin-top:56px">
+        <h2 class="sub-head">令和8年度</h2>
+        <ul>
+          <li><a class="dl-item" href="#">
+            <span class="dl-item__type">PDF</span>
+            <span class="dl-item__text">
+              <span class="dl-item__title">前期結果（男子1部〜8部）</span>
+              <span class="dl-item__note">2026年5月10日（日）開催</span>
+            </span>
+            <span class="sqbtn" aria-hidden="true">→</span>
+          </a></li>
+          <li><a class="dl-item" href="#">
+            <span class="dl-item__type">PDF</span>
+            <span class="dl-item__text">
+              <span class="dl-item__title">後期結果（女子1部〜4部／男女予選会）</span>
+              <span class="dl-item__note">2026年7月12日（日）開催</span>
+            </span>
+            <span class="sqbtn" aria-hidden="true">→</span>
+          </a></li>
+        </ul>
+      </div>
+
+      <div class="rv" style="margin-top:56px">
+        <h2 class="sub-head">過去の結果</h2>
+        <div class="chips">
+          <a class="chip" href="#">令和7年度</a>
+          <a class="chip" href="#">令和6年度</a>
+          <a class="chip" href="#">令和5年度</a>
+          <a class="chip" href="#">令和4年度</a>
+          <a class="chip" href="#">令和3年度</a>
+          <a class="chip" href="#">令和2年度</a>
+          <a class="chip" href="#">令和元年度</a>
+        </div>
+      </div>
+
+      <div class="rv panel panel--gray" style="margin-top:56px">
+        <p class="panel__title">参加について</p>
+        <p class="prose" style="margin:0">クラブ対抗戦への参加には、鳥取市テニス協会への団体登録が必要です。所属クラブがない方は、お問い合わせフォームからご相談ください。</p>
+        <a class="ghost-link mt-24" href="contact.html">お問い合わせフォームへ <span class="aw">→</span></a>
+      </div>
+
+    </div>
+  </section>
+</Base>

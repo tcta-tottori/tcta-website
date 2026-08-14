@@ -1,29 +1,37 @@
 # 鳥取市テニス協会 公式サイト
 
 鳥取市テニス協会（TOTTORI-CITY TENNIS ASSOCIATION）の公式サイトです。
-ビルド工程のない静的サイト（HTML / CSS / JavaScript）で、リポジトリのルートをそのまま公開できます。
+[Astro](https://astro.build/) で静的HTMLを生成し、GitHub Pages で公開しています。
+出力は素の静的HTMLなので、アニメーションの自由度と表示速度は制約を受けません。
 
 ## 構成
 
 ```
 .
-├── index.html            トップページ（ヒーロー／大会カルーセル／お知らせ／
-│                          大会カレンダー／リンク集／コート案内／CTA／フッター）
-├── tournaments.html      大会情報（令和8年度 全19大会＋令和9年度先行案内・状態フィルタ）
-├── results.html          大会結果（年度タブ）
-├── club.html             クラブ対抗戦
-├── lesson.html           水曜テニス教室
-├── tennis-day.html       テニス祭り（テニスの日）
-├── membership.html       協会登録（入会案内）
-├── about.html            協会について
-├── links.html            リンク集
-├── contact.html          お問い合わせ（入力検証・送信完了画面）
-├── assets/
-│   ├── css/style.css     デザイントークン＋全コンポーネント（1ファイル）
-│   ├── js/main.js        リビール／ヘッダー／カルーセル／フィルタ／タブ／フォーム
-│   └── img/              画像・ファビコン
-├── docs/                 設計資料（デザイン仕様・原稿仕様・検討ログ）
-└── .nojekyll             GitHub Pages で Jekyll 処理を無効化
+├── src/
+│   ├── pages/            各ページ。URLはファイル名そのまま（about.astro → /about.html）
+│   │   ├── index.astro          トップ（ヒーロー／大会カルーセル／お知らせ／
+│   │   │                         大会カレンダー／リンク集／コート案内）
+│   │   ├── tournaments.astro    大会情報（令和8年度 全19大会・状態フィルタ）
+│   │   ├── results.astro        大会結果（年度タブ）
+│   │   ├── club.astro           クラブ対抗戦
+│   │   ├── lesson.astro         水曜テニス教室
+│   │   ├── tennis-day.astro     テニス祭り（テニスの日）
+│   │   ├── membership.astro     協会登録（入会案内）
+│   │   ├── about.astro          協会について
+│   │   ├── links.astro          リンク集
+│   │   └── contact.astro        お問い合わせ（入力検証・送信完了画面）
+│   ├── layouts/Base.astro       <head>・通知バー・ヘッダー・CTA・フッターの土台
+│   ├── components/              共通パーツ（下記「共通パーツ」を参照）
+│   └── config/nav.js            ナビゲーション定義の唯一の正
+├── public/               そのまま公開される静的ファイル
+│   ├── assets/css/style.css     デザイントークン＋全コンポーネント（1ファイル）
+│   ├── assets/js/main.js        リビール／ヘッダー／カルーセル／フィルタ／タブ／フォーム
+│   ├── assets/img/              画像・ファビコン
+│   └── .nojekyll                GitHub Pages で Jekyll 処理を無効化
+├── docs/                 設計資料（構成方針・デザイン仕様・原稿仕様・検討ログ）
+├── .github/workflows/deploy.yml  ビルドして GitHub Pages へ公開
+└── dist/                 ビルド出力（Git管理外）
 ```
 
 ## 設計資料
@@ -38,23 +46,33 @@
 ## ローカルでの確認
 
 ```bash
-python3 -m http.server 8000
-# http://localhost:8000 を開く
+npm install     # 初回のみ
+npm run dev     # http://localhost:4321 を開く
 ```
 
-`index.html` をファイルとして直接開いても表示できますが、
-ページ間のリンクを含めて確認する場合は上記のようにサーバー経由が確実です。
+保存すると自動で再読み込みされます。公開されるものと同じ出力を確認する場合は:
+
+```bash
+npm run build && npm run preview
+```
 
 ## 公開（GitHub Pages）
 
-リポジトリの Settings → Pages で **Source: Deploy from a branch**、
-**Branch: `main` / `/ (root)`** を選択すると公開されます。
-独自ドメインを使う場合は、リポジトリのルートに `CNAME` ファイルを追加してください。
+`main` への push で [`.github/workflows/deploy.yml`](./.github/workflows/deploy.yml) が動き、
+ビルド結果が自動で公開されます。
+
+> **初回のみ設定変更が必要です。**
+> リポジトリの Settings → Pages で **Source: GitHub Actions** を選択してください。
+> 以前の **Deploy from a branch** のままだと、ビルド前のソースが公開されて表示が崩れます。
+
+独自ドメインを使う場合は `public/CNAME` を追加してください（`public/` の中身はそのまま公開されます）。
+ページ内のリンクはすべて相対パスなので、プロジェクトページ（`/tcta-website/` 配下）でも
+独自ドメイン（ルート直下）でも設定を変えずに動きます。
 
 ## 実装メモ
 
 - **デザイン基準** — 配色・タイポグラフィ・余白・バッジの規則はデザイン仕様書 v3.1 に準拠。
-  CSS変数は `assets/css/style.css` 冒頭の `:root` に集約しています。
+  CSS変数は `public/assets/css/style.css` 冒頭の `:root` に集約しています。
 - **レスポンシブ** — モバイルファースト。ブレークポイントは `〜639px` / `640〜1023px` / `1024px〜`。
   375px幅で横スクロールが出ないことを確認済みです
   （大会カルーセルの横スワイプと、大会一覧表の横スクロールは仕様どおりの例外）。
@@ -65,13 +83,16 @@ python3 -m http.server 8000
 - **アニメーション** — 見出しの行リビール、写真のマスク表示（clip-path）、
   スクロール連動フェード＋stagger、リンクバナーのマーキー。
   `prefers-reduced-motion` に対応しています。
-- **共通パーツ** — ヘッダー／モバイルナビ／CTA／フッターは各HTMLに同じマークアップを展開しています
-  （テンプレートエンジンなし）。文言やリンクを変更する場合は、各ファイルの
-  `<!-- ============ ヘッダー ============ -->` などのコメント区間をまとめて更新してください。
+- **共通パーツ** — ヘッダー／モバイルナビ／CTA／フッター／通知バーは
+  `src/components/` の各コンポーネントに一本化されています。
+  1箇所を直せば全ページに反映されます（移行前は10ファイルに同じマークアップが重複していました）。
+  ナビの項目と並びは `src/config/nav.js` が唯一の正で、各ページは
+  `navActive` / `mobileNavActive` に key を渡して現在地を示します。
+- **通知バーの表示** — トップページと大会情報ページのみ。`Base` に `notice` を渡した場合に出ます。
 
 ## 公開前に差し替えが必要なもの
 
-1. **写真** — `assets/img/` の hero / cta / t1〜t4 は参考画像から切り出した低解像度の仮素材です。
+1. **写真** — `public/assets/img/` の hero / cta / t1〜t4 は参考画像から切り出した低解像度の仮素材です。
    実写真（できれば2倍解像度）に差し替えてください。
 2. **PDF・外部リンク** — 大会日程、登録用紙、結果PDF、リンク集の各URLは `href="#"` のままです。
 3. **Googleカレンダー／Googleマップ** — 斜線のプレースホルダー部分に iframe を挿入してください。
