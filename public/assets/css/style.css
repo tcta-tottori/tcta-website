@@ -148,6 +148,31 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 .ghost--above { top: -.19em; }
 @media (min-width: 1024px) { .ghost { top: 44px; } }
 
+/* 横スワイプの演出。
+   ・塗りを 90deg のグラデーションにし、左へ流れるほど色を抜く（＝スワイプの尾）
+   ・mask で文字を横切る細い帯を切り抜き、「一度なでた」跡をつくる
+   background-clip: text が使えない環境では上の単色のまま出るよう @supports で囲む。 */
+@supports ((-webkit-background-clip: text) or (background-clip: text)) {
+  .ghost {
+    background-image: linear-gradient(90deg,
+      rgba(242, 242, 242, 0) 0%,
+      rgba(242, 242, 242, .45) 20%,
+      rgb(242, 242, 242) 48%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+    -webkit-mask-image: linear-gradient(180deg, #000 0 40%, transparent 40% 45%, #000 45% 100%);
+    mask-image: linear-gradient(180deg, #000 0 40%, transparent 40% 45%, #000 45% 100%);
+  }
+  .section--gray .ghost {
+    background-image: linear-gradient(90deg,
+      rgba(229, 229, 229, 0) 0%,
+      rgba(229, 229, 229, .45) 20%,
+      rgb(229, 229, 229) 48%);
+  }
+}
+
 /* 装飾の輪（大会カレンダー） */
 .deco-circle {
   position: absolute;
@@ -347,6 +372,21 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 @keyframes blink { 0%, 100% { opacity: .35 } 50% { opacity: 1 } }
 @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 
+/* ヒーローの白ロゴ：赤いバーが左→右に走り抜け、その跡からロゴが現れる。
+   バーが右へ畳まれる区間（55%〜100%＝0.54s）を linear にし、
+   同じ長さ・同じ linear でロゴのクリップを開くことで、
+   「バーの左端が通過した所からロゴが出る」ように見せている。 */
+@keyframes logo-swipe {
+  0%   { transform: scaleX(0); transform-origin: left center; animation-timing-function: cubic-bezier(.7, 0, .25, 1); }
+  45%  { transform: scaleX(1); transform-origin: left center; }
+  55%  { transform: scaleX(1); transform-origin: right center; animation-timing-function: linear; }
+  100% { transform: scaleX(0); transform-origin: right center; }
+}
+@keyframes logo-reveal {
+  from { clip-path: inset(0 100% 0 0); }
+  to   { clip-path: inset(0 0 0 0); }
+}
+
 .fu { animation: fadeup .8s var(--ease) both; }
 .hl { display: block; overflow: hidden; padding-bottom: .08em; margin-bottom: -.08em; }
 .hl > span { display: inline-block; transform: translateY(112%); animation: lineup 1s var(--ease) forwards; }
@@ -361,6 +401,15 @@ body.jsrv .rv {
 }
 body.jsrv .rv.on { opacity: 1; transform: none; }
 
+/* 大きな英字は右からスライドインさせる（.section / .page-head は overflow:hidden なので
+   画面外へはみ出さずに、横スワイプのように入ってくる） */
+body.jsrv .ghost {
+  opacity: 0;
+  transform: translateX(15%);
+  transition: opacity .8s var(--ease), transform 1.15s var(--ease);
+}
+body.jsrv .ghost.on { opacity: 1; transform: none; }
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: .01ms !important;
@@ -371,36 +420,6 @@ body.jsrv .rv.on { opacity: 1; transform: none; }
 }
 
 /* ============ 06. ヘッダー ============ */
-.notice-bar {
-  background: var(--gray-050);
-  border-bottom: 1px solid var(--gray-200);
-}
-.notice-bar__inner {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding-block: 9px;
-  flex-wrap: wrap;
-}
-@media (min-width: 1024px) { .notice-bar__inner { gap: 16px; flex-wrap: nowrap; } }
-.notice-bar__text {
-  margin: 0;
-  min-width: 0;
-  font: 500 13px/1.5 var(--fjp);
-  letter-spacing: .02em;
-  color: var(--ink);
-}
-@media (min-width: 1024px) {
-  .notice-bar__text {
-    font-size: 14px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-}
-.notice-bar__link { margin-left: auto; white-space: nowrap; }
-@media (max-width: 1023px) { .notice-bar__link { display: none; } }
-
 .site-header {
   position: sticky;
   top: 0;
@@ -522,17 +541,28 @@ body.jsrv .rv.on { opacity: 1; transform: none; }
 .mobile-nav__link.is-active { color: var(--red); }
 .mobile-nav .btn { margin-top: 28px; }
 
-/* ヒーロー上に重ねる透過ヘッダー（トップページ・デスクトップのみ）
-   写真をメニューの背面まで見せるため、負のマージンでヒーローを引き上げる */
-@media (min-width: 1024px) {
-  .site-header--overlay {
-    position: relative;
-    z-index: 20;
-    margin-bottom: -96px;
-    background: transparent;
-    box-shadow: none;
+/* ヒーロー上に重ねる透過ヘッダー（トップページ）
+   写真をメニューの背面まで見せるため、負のマージンでヒーローを引き上げる。
+   ヘッダー帯が白いままだと写真と分断されて見えるので、背景は透過にし、
+   写真側の上端に薄いベール（.hero__scrim の縦グラデーション）を敷いて文字を読ませる。 */
+.site-header--overlay {
+  z-index: 20;
+  margin-bottom: calc(-1 * var(--header-h));
+  background: transparent;
+  box-shadow: none;
+}
+/* モバイルではヘッダーが追従したままなので、写真から抜けたら白背景に戻す */
+@media (max-width: 1023px) {
+  .site-header--overlay.hsh {
+    background: var(--white);
+    box-shadow: 0 1px 12px rgba(26, 26, 26, .10);
   }
+}
+@media (min-width: 1024px) {
+  /* デスクトップはヒーローと一緒に流れる（追従しない） */
+  .site-header--overlay { position: relative; margin-bottom: -96px; }
   .site-header--overlay .site-header__inner { height: 96px; }
+  .site-header--overlay.hsh { box-shadow: none; }
 }
 
 /* ============ 07. ヒーロー ============ */
@@ -541,11 +571,12 @@ body.jsrv .rv.on { opacity: 1; transform: none; }
   background: var(--white);
   overflow: hidden;
 }
+/* ヘッダーの背面までせり上がる分だけ写真を高くする */
 .hero__media {
   position: relative;
-  height: 46vw;
-  min-height: 240px;
-  max-height: 420px;
+  height: calc(58vw + var(--header-h));
+  min-height: calc(280px + var(--header-h));
+  max-height: calc(430px + var(--header-h));
   overflow: hidden;
   border-bottom-left-radius: 80px;
 }
@@ -557,16 +588,39 @@ body.jsrv .rv.on { opacity: 1; transform: none; }
 .hero__scrim {
   position: absolute;
   inset: 0;
-  background: linear-gradient(90deg, rgba(255, 255, 255, .55) 0%, rgba(255, 255, 255, 0) 24%);
+  background:
+    /* 上：ヘッダーの文字を読ませるための縦グラデーション（写真は透けたまま） */
+    linear-gradient(180deg, rgba(255, 255, 255, .62) 0%, rgba(255, 255, 255, .22) 55%, rgba(255, 255, 255, 0) 100%)
+      top / 100% calc(var(--header-h) + 32px) no-repeat,
+    /* 下：白ロゴが白いウェアに溶けないよう、足元だけ落とす */
+    linear-gradient(0deg, rgba(14, 36, 62, .56) 0%, rgba(14, 36, 62, .3) 20%, rgba(14, 36, 62, .1) 36%, rgba(14, 36, 62, 0) 52%),
+    /* 左：本文側へのなじませ */
+    linear-gradient(90deg, rgba(255, 255, 255, .55) 0%, rgba(255, 255, 255, 0) 24%);
 }
+
+/* 写真の右下に置く白ロゴ。赤いバーが左→右に走り、その通過跡から現れる */
 .hero__logo {
   position: absolute;
-  top: 12%;
   right: 6%;
-  width: min(48%, 330px);
-  height: auto;
-  filter: drop-shadow(0 2px 16px rgba(30, 80, 140, .35));
+  bottom: 6%;
+  width: min(64%, 300px);
 }
+.hero__logo img {
+  width: 100%;
+  height: auto;
+  filter: drop-shadow(0 2px 8px rgba(10, 30, 60, .6)) drop-shadow(0 0 20px rgba(10, 30, 60, .45));
+  clip-path: inset(0 100% 0 0);
+  animation: logo-reveal .54s linear 1.51s forwards;
+}
+.hero__logo-bar {
+  position: absolute;
+  inset: 0;
+  background: var(--red);
+  transform: scaleX(0);
+  transform-origin: left center;
+  animation: logo-swipe 1.2s .85s both;
+}
+
 .hero__body { padding-block: 40px 56px; }
 .hero__title {
   margin: 0;
@@ -600,7 +654,8 @@ body.jsrv .rv.on { opacity: 1; transform: none; }
     max-height: none;
     border-radius: 0 0 0 280px;
   }
-  .hero__logo { top: 132px; right: 8%; width: 330px; }
+  /* SCROLL インジケーター（right:26px / bottom:36px）とぶつからない位置に置く */
+  .hero__logo { right: 12%; bottom: 9%; width: min(56%, 420px); }
   .hero__body {
     position: relative;
     padding: 196px 0 130px;
@@ -1567,6 +1622,76 @@ body.jsrv .rv.on { opacity: 1; transform: none; }
   color: var(--ink);
 }
 .form-done__text { margin: 0; font: 400 15px/1.9 var(--fjp); color: var(--gray-800); }
+
+/* ============ 15. オープニング（全画面の映像） ============ */
+/* 既定は非表示。Base.astro の <head> 内スクリプトが描画前に html へ .splash-on を
+   付けたときだけ出る。＝JS が無効な環境では最初から本文が見える。 */
+.splash {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 500;
+  overflow: hidden;
+  background: #000;
+}
+.splash-on .splash { display: block; }
+/* 幕が上がるまで背後を動かさない */
+.splash-on body { overflow: hidden; }
+
+/* 正方形の映像を、縦は切らずに横だけ画面からはみ出させる。
+   映像の四隅は真っ黒なので、あふれた分の余白は背景の #000 と地続きに見える。
+   ・縦：100vh を超えない（上から滑り込む文字を切らないため）
+   ・横：ビューポート幅の 1.65 倍まで拡大（スマホでロゴが小さくなりすぎないように） */
+/* 画面より大きくなる（＝横がはみ出す）ので、grid/flex の中央寄せでは端が揃わない。
+   絶対配置＋transform で、はみ出す分を左右へ均等に逃がす。 */
+.splash__video {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: min(150vw, 100vh);
+  height: min(150vw, 100vh);
+  object-fit: cover;
+  background: #000;
+}
+@supports (height: 100svh) {
+  .splash__video { width: min(150vw, 100svh); height: min(150vw, 100svh); }
+}
+
+.splash__skip {
+  position: absolute;
+  right: max(16px, env(safe-area-inset-right));
+  bottom: max(16px, env(safe-area-inset-bottom));
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 20px;
+  border: 1px solid rgba(255, 255, 255, .34);
+  border-radius: 9999px;
+  color: rgba(255, 255, 255, .78);
+  font: 700 12px/1 var(--flt);
+  letter-spacing: .14em;
+  animation: fadeup .6s var(--ease) 1.2s both;
+  transition: color .3s ease, border-color .3s ease;
+}
+.splash__skip:hover { color: #fff; border-color: #fff; }
+.splash__skip .aw { color: var(--red); }
+
+/* 幕を上げる。.splash-on が外れても消えないよう、ここでも display を指定する */
+.splash.is-out {
+  display: block;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .6s var(--ease);
+}
+
+/* オープニング中はヒーローの登場アニメーションを頭出しのまま止めておき、
+   幕が上がってから走らせる（映像の裏で終わってしまうのを防ぐ） */
+.splash-on .phv,
+.splash-on .fu,
+.splash-on .hl > span,
+.splash-on .hero__logo img,
+.splash-on .hero__logo-bar { animation-play-state: paused; }
 
 /* ============ 汎用ユーティリティ ============ */
 .stack-24 > * + * { margin-top: 24px; }

@@ -1,15 +1,15 @@
 ---
-import NoticeBar from '../components/NoticeBar.astro';
 import SiteHeader from '../components/SiteHeader.astro';
 import MobileNav from '../components/MobileNav.astro';
 import Cta from '../components/Cta.astro';
 import SiteFooter from '../components/SiteFooter.astro';
+import SiteSplash from '../components/SiteSplash.astro';
 
 interface Props {
   title: string;
   description: string;
-  /** 通知バーを表示するか */
-  notice?: boolean;
+  /** サイトを開いたときのオープニング映像を出すか（トップページのみ） */
+  splash?: boolean;
   /** ヘッダーをヒーロー写真の上に透過表示するか（トップページのみ） */
   overlay?: boolean;
   /** トップページかどうか。ナビのアンカーがページ内リンクになる */
@@ -23,7 +23,7 @@ interface Props {
 const {
   title,
   description,
-  notice = false,
+  splash = false,
   overlay = false,
   home = false,
   navActive,
@@ -43,11 +43,25 @@ const {
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/css/style.css">
+{splash && (
+  <script is:inline>
+    /* オープニングを出すかどうかを、本文が描かれる前に決める。
+       出す場合だけ html に .splash-on を付ける（＝JS が無効なら決して出ない）。
+       ページを移動するたびに流れると煩わしいので、1セッションにつき1回だけにする。
+       毎回出したい場合は、この sessionStorage の判定を外せばよい。 */
+    (function () {
+      var seen = false;
+      try { seen = sessionStorage.getItem('tcta-splash') === 'done'; } catch (e) {}
+      var calm = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (!seen && !calm) document.documentElement.classList.add('splash-on');
+    })();
+  </script>
+)}
 </head>
 <body>
-<a class="skip-link" href="#main">本文へスキップ</a>
+{splash && <SiteSplash />}
 
-{notice && <NoticeBar />}
+<a class="skip-link" href="#main">本文へスキップ</a>
 
 <SiteHeader active={navActive} overlay={overlay} onHome={home} />
 

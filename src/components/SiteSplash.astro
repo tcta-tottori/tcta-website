@@ -1,0 +1,36 @@
+---
+// サイトを開いたときに全画面で流すオープニング。
+// 正方形（1080×1080）の映像を、縦は切らずに横だけ画面からはみ出させて表示する。
+// 映像の四隅は真っ黒なので、あふれた分の余白には背景の #000 がそのまま続き、
+// スマホ（縦長）でもPC（横長）でも切れ目なく全画面に見える。
+//
+// 表示の可否は Base.astro の <head> 内スクリプトが描画前に決め、
+// html に .splash-on が付いたときだけ表示される（JS 無効時は出ない）。
+// 再生完了・読み込み失敗・自動再生拒否のいずれでも main.js が必ず幕を上げる。
+---
+
+<div class="splash">
+  <video class="splash__video" autoplay muted playsinline preload="auto" aria-hidden="true">
+    <source data-src="assets/video/opening.webm" type="video/webm">
+    <source data-src="assets/video/opening.mp4" type="video/mp4">
+  </video>
+  <button class="splash__skip" type="button">SKIP <span class="aw">→</span></button>
+</div>
+
+<script is:inline>
+  /* 映像の URL は data-src に伏せておき、オープニングを出すときだけ src に移す。
+     2回目以降の表示や JS 無効時に、見えない映像を読みに行かないようにするため。
+     この位置なら .splash は解析済みなので、先読みが走る前に処理できる。 */
+  (function () {
+    var splash = document.querySelector('.splash');
+    if (!splash) return;
+    if (!document.documentElement.classList.contains('splash-on')) {
+      splash.parentNode.removeChild(splash);
+      return;
+    }
+    var video = splash.querySelector('video');
+    var sources = video.querySelectorAll('source');
+    for (var i = 0; i < sources.length; i++) sources[i].src = sources[i].getAttribute('data-src');
+    video.load();
+  })();
+</script>
