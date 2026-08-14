@@ -438,7 +438,6 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 @keyframes lineup { from { transform: translateY(112%); } to { transform: none; } }
 @keyframes phrev { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
 @keyframes blink { 0%, 100% { opacity: .35 } 50% { opacity: 1 } }
-@keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 
 /* ヒーローの白ロゴ：赤いバーが左→右に走り抜け、その跡からロゴが現れる。
    バーが右へ畳まれる区間（55%〜100%＝0.54s）を linear にし、
@@ -802,7 +801,7 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   /* 次の大会が右端で少し覗く幅にしてある（初期表示の見え方に効く） */
   width: 68vw;
   max-width: 357px;
-  aspect-ratio: 5 / 6;
+  aspect-ratio: 1 / 1;
   scroll-snap-align: start;
   display: flex;
   flex-direction: column;
@@ -1109,21 +1108,26 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 }
 
 /* ============ 11. リンク集（マーキー） ============ */
+/* 自動で流れつづけるが、指やホイールで動かせる。
+   触っているあいだは止まり、離れて7秒ほどでまた流れ出す（動きは main.js が担当）。
+   カードは中身を2組並べてあり、半分進んだところで戻すことで継ぎ目なくつながる。 */
 .marquee {
   margin-top: 32px;
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  overscroll-behavior-x: contain;
   /* 画面端まで流す */
   margin-inline: calc(var(--gutter) * -1);
   -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 6%, #000 94%, transparent 100%);
   mask-image: linear-gradient(90deg, transparent 0, #000 6%, #000 94%, transparent 100%);
 }
+.marquee::-webkit-scrollbar { display: none; }
 @media (min-width: 1024px) { .marquee { margin-top: 48px; } }
 .marquee__track {
   display: flex;
   width: max-content;
-  animation: marquee 46s linear infinite;
 }
-.marquee__track:hover { animation-play-state: paused; }
 
 .link-card {
   flex: none;

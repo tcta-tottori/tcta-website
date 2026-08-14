@@ -111,6 +111,60 @@
     });
   }
 
+  /* ---------- リンク集の流れ ----------
+     いつも一定の速さで流しておくが、指でなぞる・ホイールを回すなど
+     触られたらそのぶん素直に動かし、手が離れて7秒ほど経ったらまた流し出す。
+     カードは中身が2組並んでいるので、半分進んだところで戻せば継ぎ目なく回る。 */
+  function initMarquee() {
+    var view = document.querySelector('.marquee');
+    var track = view && view.querySelector('.marquee__track');
+    if (!view || !track || reduceMotion) return;
+
+    var SPEED = 50;       // px/秒
+    var RESUME = 7000;    // 触ったあと、また流れ出すまで
+    var half = 0;
+    var holdUntil = 0;    // この時刻まではこちらから動かさない
+    var hovering = false;
+    var onScreen = true;
+    var last = 0;
+
+    var measure = function () { half = track.scrollWidth / 2; };
+    measure();
+    window.addEventListener('resize', measure);
+
+    // 触られたら止める。ホイールも指も同じ扱い。
+    var hold = function () { holdUntil = performance.now() + RESUME; };
+    ['pointerdown', 'touchstart', 'wheel'].forEach(function (ev) {
+      view.addEventListener(ev, hold, { passive: true });
+    });
+    // マウスを乗せているあいだは止め、離れたらすぐ戻す
+    view.addEventListener('mouseenter', function () { hovering = true; });
+    view.addEventListener('mouseleave', function () { hovering = false; });
+
+    // 画面の外にあるあいだは動かさない
+    if ('IntersectionObserver' in window) {
+      new IntersectionObserver(function (entries) {
+        onScreen = entries[0].isIntersecting;
+      }, { threshold: 0 }).observe(view);
+    }
+
+    var tick = function (now) {
+      var dt = (now - last) / 1000;
+      last = now;
+      // タブを離れていた等で間が空いたフレームは、飛ばさず捨てる
+      if (dt > 0 && dt < .1 && onScreen && !hovering && now >= holdUntil) {
+        view.scrollLeft += SPEED * dt;
+      }
+      // 端に来たら半分ぶん入れ替える（見た目は同じなので継ぎ目が出ない）
+      if (half > 0) {
+        if (view.scrollLeft >= half) view.scrollLeft -= half;
+        else if (view.scrollLeft < 1) view.scrollLeft += half;
+      }
+      requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(function (now) { last = now; requestAnimationFrame(tick); });
+  }
+
   /* ---------- ヘッダー（スクロールで影・モバイルメニュー） ---------- */
   function initHeader() {
     var header = document.querySelector('.site-header');
@@ -343,6 +397,7 @@
     initSplash();
     initReveal();
     initStickyHeads();
+    initMarquee();
     initHeader();
     initCarousel();
     initFilters();
