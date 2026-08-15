@@ -90,6 +90,35 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   border-radius: 2px;
 }
 
+/* ---- 押したときの手ごたえ ----
+   端末まかせの青い網掛けはやめ、押した所へ赤い雫が落ちて波紋が広がるように出す。
+   波紋は main.js が押された要素の中に1枚だけ差し込み、終わったら取り除く。 */
+* { -webkit-tap-highlight-color: transparent; }
+.ripple-host { overflow: hidden; }
+/* すでに position が付いている要素に relative を上書きすると位置が壊れるので、
+   static のものにだけ main.js が --rel を足す。 */
+.ripple-host--rel { position: relative; }
+.ripple {
+  position: absolute;
+  top: 0; left: 0;
+  width: var(--r, 24px);
+  height: var(--r, 24px);
+  margin: calc(var(--r, 24px) / -2) 0 0 calc(var(--r, 24px) / -2);
+  translate: var(--x, 0) var(--y, 0);
+  border-radius: 50%;
+  background: var(--red);
+  pointer-events: none;
+  z-index: 2;
+  animation: ripple .62s cubic-bezier(.22, .61, .36, 1) forwards;
+}
+/* 濃い地の上（赤いボタン・大会カード・フッター）では白い波紋にする */
+.btn--primary .ripple,
+.header-contact .ripple,
+.tcard .ripple,
+.site-footer .ripple,
+.circle-btn--solid .ripple { background: #fff; }
+@media (prefers-reduced-motion: reduce) { .ripple { display: none; } }
+
 .visually-hidden {
   position: absolute;
   width: 1px; height: 1px;
@@ -429,6 +458,17 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 @keyframes lineup { from { transform: translateY(112%); } to { transform: none; } }
 @keyframes phrev { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
 @keyframes blink { 0%, 100% { opacity: .35 } 50% { opacity: 1 } }
+/* 押した所に落ちた雫が、水面に広がって消えていく */
+@keyframes ripple {
+  0%   { opacity: .38; scale: 0; }
+  100% { opacity: 0; scale: 1; }
+}
+/* 2週間以内のお知らせに付く NEW。静かに脈を打たせて目に留める。 */
+@keyframes news-new {
+  0%, 100% { opacity: 1; transform: none; }
+  50%      { opacity: .45; transform: scale(.92); }
+}
+@keyframes news-all-in { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
 
 /* キャッチコピー：薄く浮かび上がったあと、赤いスラッシュが走って黒へ変える。
    62%→6% は「赤が左端に差しかかった所」から「右端を抜け切った所」まで。
@@ -1037,9 +1077,9 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   display: grid;
   grid-template-columns: auto 1fr;
   grid-template-areas:
-    "date badge"
+    "date flag"
     "title title";
-  gap: 8px 16px;
+  gap: 6px 14px;
   align-items: center;
   padding: 20px 8px;
   border-bottom: 1px solid var(--gray-200);
@@ -1064,33 +1104,112 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   letter-spacing: .08em;
   color: var(--gray-500);
 }
-.news-row .badge { grid-area: badge; justify-self: start; }
+.news-row__flag { grid-area: flag; justify-self: start; }
+/* 2週間以内のお知らせに付く印。目に留まるよう、静かに脈を打たせる。 */
+.news-new {
+  display: inline-block;
+  font: 700 12px/1 var(--flt);
+  letter-spacing: .12em;
+  color: var(--red);
+  animation: news-new 1.6s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) { .news-new { animation: none; } }
+
 .news-row__title {
   grid-area: title;
-  font: 700 15px/1.7 var(--fjp);
-  letter-spacing: .02em;
+  font: 700 12px/1.6 var(--fjp);
+  letter-spacing: 0;
   color: var(--gray-800);
   transition: color .3s ease;
+  /* 折り返さず1行に収める。入り切らないときだけ末尾を省略する。 */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
 }
 .news-row .sqbtn { display: none; }
 
 @media (min-width: 768px) {
   .news-row {
-    grid-template-columns: 130px 84px 1fr 44px;
-    grid-template-areas: "date badge title arrow";
-    gap: 24px;
+    grid-template-columns: 130px 52px 1fr 44px;
+    grid-template-areas: "date flag title arrow";
+    gap: 20px;
     padding: 26px 8px;
   }
   .news-row__day { font-size: 26px; }
-  .news-row__title {
-    font-size: 18px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
+  .news-row__title { font-size: 15px; }
   .news-row .sqbtn { display: inline-flex; grid-area: arrow; }
 }
-@media (min-width: 1024px) { .news-row { grid-template-columns: 150px 84px 1fr 44px; } }
+@media (min-width: 1024px) { .news-row { grid-template-columns: 150px 56px 1fr 44px; } }
+@media (min-width: 1024px) { .news-row__title { font-size: 16px; } }
+
+/* 5件目。まだ続きがあることだけ伝えたいので、薄く出して押せなくする。 */
+.news-peek { position: relative; }
+.news-list--peek {
+  margin-top: 0;
+  opacity: .34;
+  -webkit-mask-image: linear-gradient(180deg, #000 0%, transparent 92%);
+  mask-image: linear-gradient(180deg, #000 0%, transparent 92%);
+  pointer-events: none;
+}
+.news-list--peek .news-row { border-bottom: 0; }
+.news-peek__btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  margin-top: 4px;
+  padding: 14px 8px;
+  font: 700 13px/1 var(--fjp);
+  letter-spacing: .04em;
+  color: var(--gray-600);
+  transition: color .3s ease;
+}
+.news-peek__btn:hover { color: var(--red); }
+.news-peek__btn .aw { transition: transform .3s ease; }
+.news-peek__btn:hover .aw { transform: translateY(3px); }
+
+/* VIEW ALL で開く全件表示。画面いっぱいに白い面を出し、右上で閉じる。 */
+.news-all {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  background: var(--white);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  animation: news-all-in .3s var(--ease) both;
+}
+.news-all[hidden] { display: none; }
+@media (prefers-reduced-motion: reduce) { .news-all { animation: none; } }
+.news-all__panel { min-height: 100%; padding-bottom: 64px; }
+.news-all__head {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding-block: 28px 20px;
+  background: var(--white);
+  border-bottom: 1px solid var(--gray-200);
+}
+.news-all__close {
+  flex: none;
+  width: 44px; height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--gray-300);
+  border-radius: 9999px;
+  font: 400 22px/1 var(--flt);
+  color: var(--ink);
+  transition: background .3s ease, border-color .3s ease, color .3s ease;
+}
+.news-all__close:hover { background: var(--red); border-color: var(--red); color: #fff; }
+.news-all__body .news-list { margin-top: 8px; }
+
 
 /* 一行タイプ（下層ページのお知らせ） */
 .news-row--compact { grid-template-areas: "date badge" "title title"; }
@@ -1304,14 +1423,40 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 }
 .link-card__ext { grid-area: ext; font: 400 12px/1 var(--flt); color: var(--gray-300); }
 
-/* トップページのマーキー用。バナーだけを見せる（説明文は出さない） */
+/* トップページのマーキー用。白いカードの枠は出さず、バナーそのものを
+   カードと同じ大きさで見せる。押している間だけ太い赤枠を出す。 */
 .link-card--compact {
+  position: relative;
   display: block;
   width: 232px;
   margin-right: 12px;
-  padding: 10px 12px;
+  padding: 0;
+  background: none;
+  border: 0;
+  border-radius: 8px;
+  overflow: hidden;
 }
 @media (min-width: 1024px) { .link-card--compact { width: 264px; margin-right: 16px; } }
+.link-card--compact .link-card__banner {
+  width: 100%;
+  border-radius: 8px;
+}
+/* 枠はバナーの内側に重ねて描く。バナーが後ろに敷かれているので、
+   要素側の border や inset の影だと画像に隠れて出てこない。 */
+.link-card--compact::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border: 3px solid transparent;
+  border-radius: 8px;
+  pointer-events: none;
+  transition: border-color .18s ease;
+}
+.link-card--compact:hover { border: 0; transform: none; }
+.link-card--compact.is-pressed::after { border-color: var(--red); }
+@media (hover: hover) {
+  .link-card--compact:hover::after { border-color: var(--red); }
+}
 
 /* 静的なリンクカードグリッド（リンク集ページ） */
 .link-grid {

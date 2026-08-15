@@ -2,8 +2,10 @@
 import Base from '../layouts/Base.astro';
 import TournamentCard from '../components/TournamentCard.astro';
 import LinkCard from '../components/LinkCard.astro';
+import NewsRow from '../components/NewsRow.astro';
 import { TOURNAMENTS, TODAY } from '../data/tournaments.js';
 import { LINKS_ASSOC, LINKS_OTHER } from '../data/links.js';
+import { NEWS, NEWS_VISIBLE } from '../data/news.js';
 
 const CATCH = 'PLAY BEYOND.';
 // 英字は左から1文字ずつ出すので、文字に分解しておく。
@@ -145,50 +147,47 @@ const upcomingTournaments = TOURNAMENTS.filter((t) => t.status !== 'past');
           </div>
         </div>
         <div class="sec-bar__aside">
-          <a class="ghost-link view-all" href="#news">
+          <button class="ghost-link view-all" type="button" data-news-open aria-expanded="false" aria-controls="news-all">
             <span class="view-all__label">VIEW ALL</span><span class="sqbtn">→</span>
-          </a>
+          </button>
         </div>
       </div>
 
+      {/* 上から4件だけ出す。5件目があるときは、続きがあることが分かるよう
+          薄く重ねて見せる（押すと VIEW ALL と同じく全件が開く）。 */}
       <ul class="news-list">
-        <li><a class="news-row rv" href="tournaments.html">
-          <span class="news-row__date">
-            <span class="news-row__day">08.03</span>
-            <span class="news-row__year">2026</span>
-          </span>
-          <span class="badge badge--outline">大会</span>
-          <span class="news-row__title">サマーミックスダブルス大会のドローを公開しました</span>
-          <span class="sqbtn" aria-hidden="true">→</span>
-        </a></li>
-        <li><a class="news-row rv" style="transition-delay:.08s" href="results.html">
-          <span class="news-row__date">
-            <span class="news-row__day">08.02</span>
-            <span class="news-row__year">2026</span>
-          </span>
-          <span class="badge badge--outline">結果</span>
-          <span class="news-row__title">第11回気高カップサマーシングルスの結果を掲載しました</span>
-          <span class="sqbtn" aria-hidden="true">→</span>
-        </a></li>
-        <li><a class="news-row rv" style="transition-delay:.16s" href="club.html">
-          <span class="news-row__date">
-            <span class="news-row__day">07.21</span>
-            <span class="news-row__year">2026</span>
-          </span>
-          <span class="badge badge--outline">お知らせ</span>
-          <span class="news-row__title">令和9年度クラブ対抗戦の編成表を公開しました</span>
-          <span class="sqbtn" aria-hidden="true">→</span>
-        </a></li>
-        <li><a class="news-row rv" style="transition-delay:.24s" href="club.html">
-          <span class="news-row__date">
-            <span class="news-row__day">07.15</span>
-            <span class="news-row__year">2026</span>
-          </span>
-          <span class="badge badge--outline">結果</span>
-          <span class="news-row__title">令和8年度クラブ対抗戦 後期の結果を掲載しました</span>
-          <span class="sqbtn" aria-hidden="true">→</span>
-        </a></li>
+        {NEWS.slice(0, NEWS_VISIBLE).map((n, i) => <NewsRow item={n} delay={i * 0.08} />)}
       </ul>
+      {NEWS.length > NEWS_VISIBLE && (
+        <div class="news-peek">
+          <ul class="news-list news-list--peek" aria-hidden="true">
+            <NewsRow item={NEWS[NEWS_VISIBLE]} />
+          </ul>
+          <button class="news-peek__btn" type="button" data-news-open aria-controls="news-all">
+            お知らせをすべて見る（{NEWS.length}件）<span class="aw">↓</span>
+          </button>
+        </div>
+      )}
+    </div>
+
+    {/* VIEW ALL で開く全件表示。閉じるボタンは右上。 */}
+    <div class="news-all" id="news-all" hidden>
+      <div class="news-all__panel" role="dialog" aria-modal="true" aria-labelledby="news-all-title">
+        <div class="container news-all__head">
+          <div>
+            <p class="sec-head__eyebrow">News</p>
+            <h2 class="sec-head__title" id="news-all-title">お知らせ</h2>
+          </div>
+          <button class="news-all__close" type="button" data-news-close aria-label="お知らせを閉じる">
+            <span aria-hidden="true">×</span>
+          </button>
+        </div>
+        <div class="container news-all__body">
+          <ul class="news-list">
+            {NEWS.map((n) => <NewsRow item={n} />)}
+          </ul>
+        </div>
+      </div>
     </div>
   </section>
 

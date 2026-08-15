@@ -1,0 +1,24 @@
+---
+// お知らせ1行。src/data/news.js の1件をそのまま受け取る。
+// 左に日付、その隣が NEW の枠（2週間以内のものだけ赤い NEW が入る）、
+// 右にタイトル。タイトルは折り返さず1行に収める。
+import { newsDate, isNew } from '../data/news.js';
+
+const { item, delay = 0 } = Astro.props;
+const { day, year } = newsDate(item.date);
+const fresh = isNew(item.date);
+---
+
+<li>
+  <a class="news-row rv" style={delay ? `transition-delay:${delay}s` : undefined} href={item.href}>
+    <span class="news-row__date">
+      <span class="news-row__day">{day}</span>
+      <span class="news-row__year">{year}</span>
+    </span>
+    <span class="news-row__flag">
+      {fresh && <span class="news-new">NEW</span>}
+    </span>
+    <span class="news-row__title">{item.title}</span>
+    <span class="sqbtn" aria-hidden="true">→</span>
+  </a>
+</li>

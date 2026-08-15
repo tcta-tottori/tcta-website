@@ -122,7 +122,7 @@
 
   /* ---------- リンク集の流れ ----------
      いつも一定の速さで流しておくが、指でなぞる・ホイールを回すなど
-     触られたらそのぶん素直に動かし、手が離れて7秒ほど経ったらまた流し出す。
+     触られたらそのぶん素直に動かし、手が離れて3秒ほど経ったらまた流し出す。
      カードは中身が2組並んでいるので、半分進んだところで戻せば継ぎ目なく回る。 */
   function initMarquee() {
     if (reduceMotion) return;
@@ -135,7 +135,7 @@
     if (!track) return;
 
     var SPEED = 50;       // px/秒
-    var RESUME = 7000;    // 触ったあと、また流れ出すまで
+    var RESUME = 3000;    // 触ったあと、また流れ出すまで
     var dir = Number(view.getAttribute('data-marquee-dir')) || 1;
     var half = 0;
     var holdUntil = 0;    // この時刻まではこちらから動かさない
@@ -182,6 +182,95 @@
       requestAnimationFrame(tick);
     };
     requestAnimationFrame(function (now) { last = now; requestAnimationFrame(tick); });
+  }
+
+  /* ---------- 押したときの波紋 ----------
+     端末まかせの青い網掛けの代わりに、押した所へ赤い雫を落として広げる。
+     押せるものだけに付け、要素からはみ出さないよう .ripple-host で刈り込む。 */
+  var RIPPLE_SEL = 'a, button, .chip, .tcard, .link-card, .news-row, .sch-item, .court-item, [role="button"]';
+
+  function initRipple() {
+    if (reduceMotion) return;
+    document.addEventListener('pointerdown', function (e) {
+      var host = e.target.closest(RIPPLE_SEL);
+      if (!host || host.hasAttribute('disabled')) return;
+
+      // 波紋は押した所を中心に、要素の隅まで届く大きさにする
+      var box = host.getBoundingClientRect();
+      var x = e.clientX - box.left;
+      var y = e.clientY - box.top;
+      var far = Math.max(x, box.width - x);
+      var tall = Math.max(y, box.height - y);
+      var size = Math.hypot(far, tall) * 2;
+
+      host.classList.add('ripple-host');
+      if (getComputedStyle(host).position === 'static') host.classList.add('ripple-host--rel');
+      var drop = document.createElement('span');
+      drop.className = 'ripple';
+      drop.style.setProperty('--r', size + 'px');
+      drop.style.setProperty('--x', x + 'px');
+      drop.style.setProperty('--y', y + 'px');
+      drop.addEventListener('animationend', function () {
+        if (drop.parentNode) drop.parentNode.removeChild(drop);
+      });
+      host.appendChild(drop);
+    }, { passive: true });
+  }
+
+  /* ---------- リンクのバナー（押している間だけ赤枠） ----------
+     タッチではホバーが押したあとも残るので、押し下げと離しで自前に付け外しする。 */
+  function initPressed() {
+    var pressed = null;
+    var off = function () {
+      if (pressed) pressed.classList.remove('is-pressed');
+      pressed = null;
+    };
+    document.addEventListener('pointerdown', function (e) {
+      var card = e.target.closest('.link-card--compact');
+      if (!card) return;
+      off();
+      pressed = card;
+      card.classList.add('is-pressed');
+    }, { passive: true });
+    ['pointerup', 'pointercancel'].forEach(function (ev) {
+      document.addEventListener(ev, off, { passive: true });
+    });
+    // ページを動かしたら外す。capture で拾うとマーキーの自動送りにも
+    // 反応してしまい、押した瞬間に消えるので window で受けること。
+    window.addEventListener('scroll', off, { passive: true });
+  }
+
+  /* ---------- お知らせの全件表示 ----------
+     VIEW ALL（と5件目の「すべて見る」）で開き、右上の × か Esc で閉じる。 */
+  function initNewsAll() {
+    var panel = document.getElementById('news-all');
+    if (!panel) return;
+
+    var openers = document.querySelectorAll('[data-news-open]');
+    var closer = panel.querySelector('[data-news-close]');
+    var last = null;
+
+    var setOpen = function (open) {
+      panel.hidden = !open;
+      document.body.classList.toggle('is-locked', open);
+      Array.prototype.forEach.call(openers, function (b) {
+        b.setAttribute('aria-expanded', String(open));
+      });
+      if (open) {
+        panel.scrollTop = 0;
+        if (closer) closer.focus();
+      } else if (last) {
+        last.focus();
+      }
+    };
+
+    Array.prototype.forEach.call(openers, function (b) {
+      b.addEventListener('click', function () { last = b; setOpen(true); });
+    });
+    if (closer) closer.addEventListener('click', function () { setOpen(false); });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && !panel.hidden) setOpen(false);
+    });
   }
 
   /* ---------- ヘッダー（スクロールで影・出し入れ・モバイルメニュー） ---------- */
@@ -437,6 +526,9 @@
     initStickyHeads();
     initMarquee();
     initHeader();
+    initRipple();
+    initPressed();
+    initNewsAll();
     initCarousel();
     initFilters();
     initTabs();
