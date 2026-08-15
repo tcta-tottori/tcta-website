@@ -41,6 +41,21 @@ const upcomingTournaments = TOURNAMENTS.filter((t) => t.status !== 'past');
         <img class="hero__photo" src="assets/img/hero.png" alt="青空の下、コートでバックハンドを打つ選手">
         <div class="hero__scrim" aria-hidden="true"></div>
       </div>
+      {/* 冒頭だけの導入。オープニング映像のロゴと同じ組み立て（細いけい線が伸び、
+          赤い角の印が点き、線に沿って文字が現れる）で、右上に PLAY、続けて左下に
+          BEYOND. を1語1秒で出して消す。そのあと下のキャッチコピーが動き出す。 */}
+      <div class="hero__intro" aria-hidden="true">
+        <span class="pbi pbi--play">
+          <span class="pbi__rule"></span>
+          <span class="pbi__tick"></span>
+          <span class="pbi__word">PLAY</span>
+        </span>
+        <span class="pbi pbi--beyond">
+          <span class="pbi__rule"></span>
+          <span class="pbi__tick"></span>
+          <span class="pbi__word">BEYOND.</span>
+        </span>
+      </div>
       <div class="hero__copy">
         <h1 class="hero__title">
           {/* 1文字ずつ白で出したあと、赤いスラッシュが左から右へ抜けて黒に変わる。
@@ -54,22 +69,20 @@ const upcomingTournaments = TOURNAMENTS.filter((t) => t.status !== 'past');
             </span>
             <span class="pb__ink" aria-hidden="true">{CATCH}</span>
           </span>
-          <span class="hero__sub fu" style="animation-delay:3.7s">テニスで、もっとつながろう。</span>
+          <span class="hero__sub fu" style="animation-delay:3.55s">テニスで、もっとつながろう。</span>
         </h1>
-        <p class="hero__en fu" style="animation-delay:4.1s">TOTTORI-CITY TENNIS ASSOCIATION</p>
+        <p class="hero__en fu" style="animation-delay:3.75s">TOTTORI-CITY TENNIS ASSOCIATION</p>
+        <div class="hero__lead fu" style="animation-delay:3.95s">
+          <p>大会やテニス教室を通して、世代や経験をこえて、誰もがテニスを楽しみ、つながれる場所をつくっています。</p>
+        </div>
       </div>
     </div>
     <div class="container hero__body">
       <div class="hero__inner">
-        <div class="hero__lead fu" style="animation-delay:4.6s">
-          <p>年間を通じた大会や毎週水曜日のテニス教室を通して、地域や世代、経験をこえたつながりを育んでいます。</p>
-          <p>はじめての方も、久しぶりの方も、もっと上を目指す方も、それぞれの楽しみ方でテニスをもっと身近に。</p>
-          <p>テニスを楽しみたい、すべての人をコートでお待ちしています。</p>
-        </div>
-        <a class="btn btn--primary hero__cta fu" style="animation-delay:5.2s" href="about.html">協会について見る <span class="aw">→</span></a>
+        <a class="btn btn--primary hero__cta fu" style="animation-delay:4.15s" href="about.html">協会について見る <span class="aw">→</span></a>
       </div>
     </div>
-    <div class="hero__square fu" style="animation-delay:5.6s" aria-hidden="true"></div>
+    <div class="hero__square fu" style="animation-delay:4.35s" aria-hidden="true"></div>
     <div class="hero__scroll" aria-hidden="true">
       <span>SCROLL</span>
       <span class="blink"></span>
