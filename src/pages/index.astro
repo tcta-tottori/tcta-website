@@ -3,9 +3,11 @@ import Base from '../layouts/Base.astro';
 import TournamentCard from '../components/TournamentCard.astro';
 import LinkCard from '../components/LinkCard.astro';
 import NewsRow from '../components/NewsRow.astro';
+import Icon from '../components/Icon.astro';
 import { TOURNAMENTS, TODAY } from '../data/tournaments.js';
 import { LINKS_ASSOC, LINKS_OTHER } from '../data/links.js';
 import { NEWS, NEWS_VISIBLE } from '../data/news.js';
+import { COURTS, mapEmbed, mapLink } from '../data/courts.js';
 
 const CATCH = 'PLAY BEYOND.';
 // 英字は左から1文字ずつ出すので、文字に分解しておく。
@@ -319,46 +321,58 @@ const upcomingTournaments = TOURNAMENTS.filter((t) => t.status !== 'past');
       <div class="split">
         <div class="rv">
           <ul class="sch-list">
-            <li><a class="court-item" href="#courts">
-              <span class="court-pin" aria-hidden="true"></span>
-              <span class="sch-item__text">
-                <span class="sch-item__title">ヤマタスポーツパーク</span>
-                <span class="sch-item__place">主会場・鳥取県立布勢総合運動公園 鳥取県鳥取市布勢146-1</span>
-              </span>
-              <span class="ar" aria-hidden="true">→</span>
-            </a></li>
-            <li><a class="court-item" href="#courts">
-              <span class="court-pin" aria-hidden="true"></span>
-              <span class="sch-item__text">
-                <span class="sch-item__title">鳥取市千代テニス場</span>
-                <span class="sch-item__place">予備会場（住所は公開前に確認）</span>
-              </span>
-              <span class="ar" aria-hidden="true">→</span>
-            </a></li>
-            <li><a class="court-item" href="lesson.html">
-              <span class="court-pin" aria-hidden="true"></span>
-              <span class="sch-item__text">
-                <span class="sch-item__title">井原公園テニスコート</span>
-                <span class="sch-item__place">鳥取県鳥取市興南町174（毎週水曜日のテニス教室会場）</span>
-              </span>
-              <span class="ar" aria-hidden="true">→</span>
-            </a></li>
-            <li><a class="court-item" href="tennis-day.html">
-              <span class="court-pin" aria-hidden="true"></span>
-              <span class="sch-item__text">
-                <span class="sch-item__title">鳥取産業体育館・鳥取市民体育館</span>
-                <span class="sch-item__place">冬季の室内大会・テニス祭りの会場（住所は公開前に確認）</span>
-              </span>
-              <span class="ar" aria-hidden="true">→</span>
-            </a></li>
+            {COURTS.map((c) => (
+              <li><a class="court-item" href={c.href}>
+                <Icon name="pin" class="court-pin" />
+                <span class="sch-item__text">
+                  <span class="sch-item__title">{c.name}</span>
+                  <span class="sch-item__place">{c.note}</span>
+                </span>
+                <span class="ar" aria-hidden="true">→</span>
+              </a></li>
+            ))}
           </ul>
           <p class="embed-caption">コートの予約は鳥取市の公共施設予約システムから行えます。協会が管理・貸出を行っているものではありませんのでご注意ください。</p>
         </div>
 
+        {/* 施設ごとの地図。上のボタンで切り替える（地図は施設名で引くので緯度経度は持たない）。 */}
         <div class="rv embed-wrap" style="transition-delay:.1s">
-          <div class="embed embed--map">
-            <span class="embed__label">Googleマップ埋め込み（掲載4施設のピン表示）</span>
-            <span class="embed__note">title="鳥取市テニス協会 利用コートの地図"</span>
+          <div class="cmap" data-cmap>
+            <div class="cmap__tabs" role="group" aria-label="地図に出す施設">
+              {COURTS.map((c, i) => (
+                <button
+                  class:list={['cmap__tab', i === 0 && 'is-active']}
+                  type="button"
+                  aria-pressed={i === 0 ? 'true' : 'false'}
+                  data-cmap-tab
+                  data-embed={mapEmbed(c.query)}
+                  data-link={mapLink(c.query)}
+                  data-name={c.name}
+                >{c.short}</button>
+              ))}
+            </div>
+            <div class="cmap__frame">
+              <iframe
+                class="cmap__iframe"
+                data-cmap-frame
+                src={mapEmbed(COURTS[0].query)}
+                title="鳥取市テニス協会 利用コートの地図"
+                loading="lazy"
+                referrerpolicy="no-referrer-when-downgrade"
+                allowfullscreen
+              ></iframe>
+              {/* 地図が出せないときの下敷き。iframe が読めない環境ではこれが見える。 */}
+              <div class="cmap__fallback" aria-hidden="true">
+                <Icon name="pin" class="cmap__fallback-pin" />
+                <span class="cmap__fallback-text">地図を読み込んでいます</span>
+              </div>
+            </div>
+            <div class="cmap__bar">
+              <span class="cmap__name" data-cmap-name>{COURTS[0].name}</span>
+              <a class="ghost-link cmap__open" data-cmap-link href={mapLink(COURTS[0].query)} target="_blank" rel="noopener noreferrer">
+                Googleマップで開く <span class="aw">↗</span>
+              </a>
+            </div>
           </div>
           <span class="embed-wrap__square" aria-hidden="true"></span>
         </div>

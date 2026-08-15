@@ -273,6 +273,37 @@
     });
   }
 
+  /* ---------- コート案内の地図 ----------
+     ボタンを押したら、その施設の埋め込みに差し替える。 */
+  function initCourtMap() {
+    var root = document.querySelector('[data-cmap]');
+    if (!root) return;
+
+    var frame = root.querySelector('[data-cmap-frame]');
+    var name = root.querySelector('[data-cmap-name]');
+    var link = root.querySelector('[data-cmap-link]');
+    var tabs = root.querySelectorAll('[data-cmap-tab]');
+    if (!frame || !tabs.length) return;
+
+    // 読み終わってから出す（読み込み中は下敷きが見える）
+    var ready = function () { frame.classList.add('is-ready'); };
+    frame.addEventListener('load', ready);
+    if (frame.complete) ready();
+
+    Array.prototype.forEach.call(tabs, function (tab) {
+      tab.addEventListener('click', function () {
+        Array.prototype.forEach.call(tabs, function (t) {
+          var on = t === tab;
+          t.classList.toggle('is-active', on);
+          t.setAttribute('aria-pressed', String(on));
+        });
+        frame.src = tab.getAttribute('data-embed');
+        if (name) name.textContent = tab.getAttribute('data-name');
+        if (link) link.href = tab.getAttribute('data-link');
+      });
+    });
+  }
+
   /* ---------- ヘッダー（スクロールで影・出し入れ・モバイルメニュー） ---------- */
   function initHeader() {
     var header = document.querySelector('.site-header');
@@ -529,6 +560,7 @@
     initRipple();
     initPressed();
     initNewsAll();
+    initCourtMap();
     initCarousel();
     initFilters();
     initTabs();

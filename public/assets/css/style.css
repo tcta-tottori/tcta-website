@@ -119,6 +119,9 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 .circle-btn--solid .ripple { background: #fff; }
 @media (prefers-reduced-motion: reduce) { .ripple { display: none; } }
 
+/* 文字に添えるアイコン。色は周りの文字から継ぐ。 */
+.ico { display: inline-block; flex: none; vertical-align: -.14em; }
+
 .visually-hidden {
   position: absolute;
   width: 1px; height: 1px;
@@ -998,6 +1001,9 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 .tcard__foot { display: flex; flex-direction: column; gap: 2px; }
 .tcard__event {
   margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 7px;
   font: 700 14px/1.6 var(--fjp);
   letter-spacing: .02em;
   color: #fff;
@@ -1005,16 +1011,24 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 }
 .tcard__venue {
   margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 7px;
   font: 400 12px/1.6 var(--fjp);
   color: rgba(255, 255, 255, .78);
   text-shadow: 0 1px 10px rgba(10, 20, 35, .6);
+}
+/* 写真の上でも埋もれないよう、赤のまま少し明るくして陰を付ける */
+.tcard__ico {
+  width: 14px; height: 14px;
+  color: var(--red);
+  filter: brightness(1.28) drop-shadow(0 1px 6px rgba(10, 20, 35, .75));
 }
 /* ロゴのある会場（ヤマタスポーツパーク）は文字の代わりにロゴを出す。
    白インクの透過 PNG なので、写真の上でもそのまま読める。 */
 .tcard__venue-logo {
   display: block;
-  /* .tcard__foot は縦並びの flex なので、指定しないと横いっぱいに伸びる */
-  align-self: flex-start;
+  flex: none;
   width: auto;
   height: 14px;
   margin-top: 5px;
@@ -1292,6 +1306,84 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   color: var(--gray-500);
 }
 
+/* ---- コート案内の地図 ----
+   施設名でGoogleマップに引いてもらう埋め込み。上のボタンで施設を切り替える。
+   緯度経度は持たない（施設名が正しければ地図側が正しい場所を出す）。 */
+.cmap {
+  background: var(--white);
+  border: 1px solid var(--gray-200);
+  overflow: hidden;
+}
+.cmap__tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 14px;
+  border-bottom: 1px solid var(--gray-200);
+}
+.cmap__tab {
+  padding: 8px 14px;
+  border: 1px solid var(--gray-300);
+  border-radius: 9999px;
+  font: 700 12px/1 var(--fjp);
+  letter-spacing: .04em;
+  color: var(--gray-600);
+  white-space: nowrap;
+  transition: background .3s ease, border-color .3s ease, color .3s ease;
+}
+.cmap__tab:hover { border-color: var(--red); color: var(--red); }
+.cmap__tab.is-active {
+  background: var(--red);
+  border-color: var(--red);
+  color: #fff;
+}
+.cmap__frame {
+  position: relative;
+  height: 300px;
+  background: var(--gray-050);
+}
+@media (min-width: 1024px) { .cmap__frame { height: 420px; } }
+.cmap__iframe {
+  position: relative;
+  z-index: 1;
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  /* 地の色に寄せて、赤の差し色だけが立つようにする */
+  filter: saturate(.86) contrast(1.03);
+  /* 読み終わるまでは下敷きを見せる（白い抜けを出さない） */
+  opacity: 0;
+  transition: opacity .4s ease;
+}
+.cmap__iframe.is-ready { opacity: 1; }
+/* 地図が出せないときの下敷き。iframe が読めた場合はその後ろに隠れる。 */
+.cmap__fallback {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background:
+    repeating-linear-gradient(45deg, var(--gray-050) 0, var(--gray-050) 10px, var(--white) 10px, var(--white) 20px);
+  color: var(--gray-500);
+}
+.cmap__fallback-pin { width: 34px; height: 34px; color: var(--red); opacity: .5; }
+.cmap__fallback-text { font: 500 12px/1.6 var(--fjp); }
+.cmap__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px;
+  border-top: 1px solid var(--gray-200);
+}
+.cmap__name { font: 700 13px/1.5 var(--fjp); letter-spacing: .02em; color: var(--ink); }
+.cmap__open { font-size: 12px; white-space: nowrap; }
+
 /* 埋め込みプレースホルダー */
 .embed {
   position: relative;
@@ -1358,10 +1450,8 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   overflow-y: hidden;
   scrollbar-width: none;
   overscroll-behavior-x: contain;
-  /* 画面端まで流す */
+  /* 画面端まで流す（端は切り落としたままにする。ぼかすとバナーが白く抜ける） */
   margin-inline: calc(var(--gutter) * -1);
-  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 6%, #000 94%, transparent 100%);
-  mask-image: linear-gradient(90deg, transparent 0, #000 6%, #000 94%, transparent 100%);
 }
 .marquee::-webkit-scrollbar { display: none; }
 @media (min-width: 1024px) { .marquee { margin-top: 48px; } }
@@ -1483,11 +1573,8 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 .court-item:hover .sch-item__title { color: var(--red); }
 .court-item:hover .ar { transform: translateX(3px); }
 .court-pin {
-  flex: none;
-  width: 13px; height: 13px;
-  background: var(--red);
-  border-radius: 50% 50% 50% 0;
-  transform: rotate(-45deg);
+  width: 20px; height: 20px;
+  color: var(--red);
 }
 .court-item .ar { margin-left: auto; color: var(--red); }
 

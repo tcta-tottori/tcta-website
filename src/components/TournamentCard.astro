@@ -3,6 +3,7 @@
 // 写真の上に文字を重ねる構成：
 //   左上に日程チップ（上に日付・下に曜日）、その横に大会名、
 //   下に種目・会場、いちばん下に大会の進み具合に応じた案内。
+import Icon from './Icon.astro';
 import { STATUS, VENUE_LOGOS, dateChip, cardAction } from '../data/tournaments.js';
 
 const { tournament } = Astro.props;
@@ -36,18 +37,21 @@ const Tag = action.href ? 'a' : 'div';
   </div>
 
   <div class="tcard__foot">
-    <p class="tcard__event">{event}</p>
-    {venueLogo
-      ? <img
-          class="tcard__venue-logo"
-          src={venueLogo.src}
-          alt={venue}
-          width={venueLogo.width}
-          height={venueLogo.height}
-          loading="lazy"
-          decoding="async"
-        >
-      : <p class="tcard__venue">{venue}</p>}
+    <p class="tcard__event"><Icon name="list" class="tcard__ico" />{event}</p>
+    <p class="tcard__venue">
+      <Icon name="pin" class="tcard__ico" />
+      {venueLogo
+        ? <img
+            class="tcard__venue-logo"
+            src={venueLogo.src}
+            alt={venue}
+            width={venueLogo.width}
+            height={venueLogo.height}
+            loading="lazy"
+            decoding="async"
+          >
+        : venue}
+    </p>
     <div class="tcard__action">
       <span class={`badge ${badge.badge}`}>{badge.label}</span>
       <span class="tcard__go">{action.label}{action.href && <span class="aw">→</span>}</span>

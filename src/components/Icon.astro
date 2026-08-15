@@ -1,0 +1,34 @@
+---
+// 共通のアイコン。線ではなく面で描いてあるので、色は色指定を継ぐ（currentColor）。
+// 大きさは font-size に合わせて 1em で出す（size を渡せば固定もできる）。
+//
+//   list … 箇条書き（種目に添える）
+//   pin  … 地図のピン（会場・コートに添える）
+const { name, size = '1em', class: cls = '' } = Astro.props;
+
+const PATHS = {
+  list: `
+    <circle cx="4.2" cy="6" r="2.4"/>
+    <circle cx="4.2" cy="12" r="2.4"/>
+    <circle cx="4.2" cy="18" r="2.4"/>
+    <rect x="9.6" y="4.7" width="12.2" height="2.6" rx="1.3"/>
+    <rect x="9.6" y="10.7" width="12.2" height="2.6" rx="1.3"/>
+    <rect x="9.6" y="16.7" width="12.2" height="2.6" rx="1.3"/>
+  `,
+  // しずく形の外側と、中をくり抜く円。evenodd で円の内側を抜いている。
+  pin: `
+    <path fill-rule="evenodd" d="M12 22.4c-.3 0-.5-.1-.7-.3C10.6 21.3 4 13.9 4 9.4a8 8 0 1 1 16 0c0 4.5-6.6 11.9-7.3 12.7-.2.2-.4.3-.7.3Zm0-16.5a3.7 3.7 0 1 0 0 7.4 3.7 3.7 0 0 0 0-7.4Z"/>
+  `,
+};
+---
+
+<svg
+  class:list={['ico', cls]}
+  width={size}
+  height={size}
+  viewBox="0 0 24 24"
+  fill="currentColor"
+  aria-hidden="true"
+  focusable="false"
+  set:html={PATHS[name]}
+/>
