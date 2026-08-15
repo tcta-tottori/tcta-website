@@ -1761,24 +1761,32 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 /* 幕が上がるまで背後を動かさない */
 .splash-on body { overflow: hidden; }
 
-/* 正方形の映像を、縦は切らずに横だけ画面からはみ出させる。
-   映像の四隅は真っ黒なので、あふれた分の余白は背景の #000 と地続きに見える。
-   ・縦：100vh を超えない（上から滑り込む文字を切らないため）
-   ・横：ビューポート幅の 1.65 倍まで拡大（スマホでロゴが小さくなりすぎないように） */
-/* 画面より大きくなる（＝横がはみ出す）ので、grid/flex の中央寄せでは端が揃わない。
-   絶対配置＋transform で、はみ出す分を左右へ均等に逃がす。 */
+/* 16:9 の映像の置き方。
+   ・横長の画面：画面幅いっぱいに収め、線が走る演出を端まで見せる
+   ・縦長の画面：そのままだとロゴが小さすぎるので 2.15 倍に拡大し、
+     左右を画面の外へ逃がす。映像の縁は真っ黒なので背景の #000 と地続きに見える
+   ・縦は 100svh を超えない（上下は必ず収まる）
+   画面より大きくなる場合があるので、grid/flex ではなく絶対配置＋transform で
+   中央に置き、はみ出す分を左右へ均等に逃がす。 */
 .splash__video {
   position: absolute;
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
-  width: min(150vw, 100vh);
-  height: min(150vw, 100vh);
+  --splash-vh: 100vh;
+  --splash-k: 100;   /* 画面幅に対する倍率（%） */
+  width: min(calc(var(--splash-k) * 1vw), calc(var(--splash-vh) * 16 / 9));
+  aspect-ratio: 16 / 9;
+  height: auto;
   object-fit: cover;
   background: #000;
+  transition: transform 1s var(--ease);
 }
 @supports (height: 100svh) {
-  .splash__video { width: min(150vw, 100svh); height: min(150vw, 100svh); }
+  .splash__video { --splash-vh: 100svh; }
+}
+@media (max-aspect-ratio: 1 / 1) {
+  .splash__video { --splash-k: 215; }
 }
 
 .splash__skip {
@@ -1800,13 +1808,17 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 .splash__skip:hover { color: #fff; border-color: #fff; }
 .splash__skip .aw { color: var(--red); }
 
-/* 幕を上げる。.splash-on が外れても消えないよう、ここでも display を指定する */
+/* 幕を上げる。.splash-on が外れても消えないよう、ここでも display を指定する。
+   映像を少しだけ寄せながら溶かすことで、ロゴがそのままトップページへ
+   入っていくように見せる。 */
 .splash.is-out {
   display: block;
   opacity: 0;
   pointer-events: none;
-  transition: opacity .6s var(--ease);
+  transition: opacity .8s var(--ease);
 }
+.splash.is-out .splash__video { transform: translate(-50%, -50%) scale(1.06); }
+.splash.is-out .splash__skip { opacity: 0; transition: opacity .2s ease; }
 
 /* オープニング中はヒーローの登場アニメーションを頭出しのまま止めておき、
    幕が上がってから走らせる（映像の裏で終わってしまうのを防ぐ） */

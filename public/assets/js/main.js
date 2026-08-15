@@ -21,6 +21,9 @@
     var video = splash.querySelector('video');
     var timer;
     var done = false;
+    // 溶かし始めを終わりより少し手前に取り、映像＋切り替えでちょうど6秒に収める。
+    // 映像の終盤はロゴが静止しているため、早めに始めても見た目は変わらない。
+    var LEAD = .6;
 
     function finish() {
       if (done) return;
@@ -30,9 +33,10 @@
       splash.classList.add('is-out');
       // ここで初めてヒーローの登場アニメーションが動き出す
       root.classList.remove('splash-on');
+      // 溶け終わってから取り除く（CSS の .splash.is-out の 0.8 秒に合わせる）
       setTimeout(function () {
         if (splash.parentNode) splash.parentNode.removeChild(splash);
-      }, 700);
+      }, 900);
     }
 
     // 保険。映像が届かない・再生されない場合でも、ここで必ず本文へ進む。
@@ -42,7 +46,7 @@
       clearTimeout(timer);
       var left = 3.4;
       if (video && isFinite(video.duration) && video.duration > 0) {
-        left = Math.max(0, video.duration - video.currentTime);
+        left = Math.max(0, video.duration - video.currentTime - LEAD);
       }
       timer = setTimeout(finish, (left + 1) * 1000);
     }
@@ -52,6 +56,11 @@
       // 実行が遅れて、すでに再生し終えていた場合はすぐ幕を上げる
       if (video.ended) { finish(); return; }
 
+      // 終わり際まで来たら、再生完了を待たずに溶かし始める
+      video.addEventListener('timeupdate', function () {
+        if (isFinite(video.duration) && video.duration > 0 &&
+            video.currentTime >= video.duration - LEAD) finish();
+      });
       video.addEventListener('ended', finish);
       video.addEventListener('error', finish);
       video.addEventListener('loadedmetadata', armFallback);
