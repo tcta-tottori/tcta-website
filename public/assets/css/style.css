@@ -679,21 +679,26 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 .pbi {
   position: absolute;
   display: block;
-  max-width: 84%;
-  font: 700 clamp(38px, 9.6vw, 96px)/1 var(--fdisp);
+  font: 700 clamp(46px, 12vw, 112px)/1 var(--fdisp);
   color: var(--ink);
   white-space: nowrap;
   animation: pbi-word 1s var(--ease) var(--pbi-d) both;
 }
-.pbi--play { --pbi-d: 0s; top: 10%; right: 7%; }
-.pbi--beyond { --pbi-d: 1s; bottom: 20%; left: 7%; }
+/* 拡大は角の側から広がるよう、置いた側に基点を寄せる。
+   出はじめは字間を開くので、その分だけ横に伸びる。写真からはみ出すと
+   切れてしまうので、字間と拡大は控えめにしてある。 */
+.pbi--play { --pbi-d: 0s; top: 8%; right: 6%; transform-origin: right center; }
+.pbi--beyond { --pbi-d: 1s; bottom: 17%; left: 7%; transform-origin: left center; }
+
+/* デスクトップの写真は画面幅の55%しかないので、その幅を基準に置き直す */
+@media (min-width: 1024px) { .pbi { font-size: clamp(46px, 6.6vw, 112px); } }
 
 @keyframes pbi-word {
-  0%   { opacity: 0; letter-spacing: .3em; clip-path: inset(0 100% 0 0); }
-  16%  { opacity: 1; }
-  46%  { opacity: 1; letter-spacing: .02em; clip-path: inset(0 0 0 0); }
-  74%  { opacity: 1; letter-spacing: .02em; clip-path: inset(0 0 0 0); }
-  100% { opacity: 0; letter-spacing: 0; clip-path: inset(0 0 0 46%); }
+  0%   { opacity: 0; letter-spacing: .18em; transform: scale(1.1); clip-path: inset(0 100% 0 0); }
+  14%  { opacity: 1; }
+  44%  { opacity: 1; letter-spacing: 0; transform: none; clip-path: inset(0 0 0 0); }
+  72%  { opacity: 1; letter-spacing: 0; transform: none; clip-path: inset(0 0 0 0); }
+  100% { opacity: 0; letter-spacing: -.03em; transform: scale(.9); clip-path: inset(0 0 0 52%); }
 }
 
 /* 動きを減らす設定では導入そのものを出さない */
@@ -707,7 +712,7 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
    2枚重ねると字がわずかにずれて立体的に見えてしまうので、重ねないこと。 */
 .pb {
   display: block;
-  font: 700 clamp(27px, 6.4vw, 52px)/1.12 var(--fdisp);
+  font: 700 clamp(31px, 7.4vw, 62px)/1.12 var(--fdisp);
   letter-spacing: .06em;
   white-space: nowrap;
 }
@@ -789,11 +794,12 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 }
 .hero__lead p { margin: 0; }
 .hero__lead p + p { margin-top: .9em; }
-/* 本文の全域を囲む赤い枠。左から現れ、そのまま右へ抜けて消える。 */
+/* 本文の全域を覆う赤い面。左から現れて文字をいったん隠し、
+   そのまま右へ抜けながら文字を出していく。 */
 .hero__lead-frame {
   position: absolute;
   inset: -10px -12px;
-  border: 2px solid var(--red);
+  background: var(--red);
   pointer-events: none;
   animation: lead-frame 1.25s cubic-bezier(.45, .05, .4, 1)
              calc(var(--intro-end) + 1.75s) both;
