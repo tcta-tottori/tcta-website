@@ -1,8 +1,25 @@
 ---
 import Base from '../layouts/Base.astro';
+import { RESULTS, resultUrl, summarize } from '../data/results.js';
 
 const title = "クラブ対抗戦｜鳥取市テニス協会";
-const description = "鳥取市テニス協会のクラブ対抗戦。令和9年度の編成表、令和8年度前後期の結果、過去の結果を掲載しています。";
+const description = "鳥取市テニス協会のクラブ対抗戦。令和9年度の編成表と、平成26年度からの各部の優勝クラブを掲載しています。";
+
+// 大会結果アーカイブからクラブ対抗戦だけを取り出し、年度ごとにまとめる。
+// id が club-taiko / clubtaiko を含むものがクラブ対抗戦。
+const isClub = (t) => /club-?taiko/.test(t.id);
+const clubYears = RESULTS
+  .map((y) => ({ ...y, tournaments: y.tournaments.filter(isClub) }))
+  .filter((y) => y.tournaments.length > 0);
+
+// 「男子1部 → ウィング」のように、部と優勝クラブだけを抜き出す
+const champions = (t) =>
+  t.categories
+    .map((c) => ({
+      div: c.category,
+      club: (c.places.find((p) => p.award === '優勝') || {}).name,
+    }))
+    .filter((x) => x.div && x.club);
 ---
 
 <Base
@@ -25,7 +42,7 @@ const description = "鳥取市テニス協会のクラブ対抗戦。令和9年�
           <h1 class="page-title" style="margin-top:8px">クラブ対抗戦</h1>
         </div>
       </div>
-      <p class="page-lead fu" style="animation-delay:.15s">市内のクラブが部ごとに分かれて戦う、年2回のリーグ戦です。前期は男子1部〜8部、後期は女子1部〜4部と男女の予選会を行います。一年を通じて成績が積み上がり、上位クラブは翌年度に昇格します。</p>
+      <p class="page-lead fu" style="animation-delay:.15s">市内のクラブが部ごとに分かれて戦う、年2回のリーグ戦です。前期は男子1部〜8部、後期は女子1部〜5部と男女の予選会を行います。一年を通じて成績が積み上がり、上位クラブは翌年度に昇格します。</p>
     </div>
   </section>
 
@@ -35,11 +52,11 @@ const description = "鳥取市テニス協会のクラブ対抗戦。令和9年�
       <div class="rv">
         <h2 class="sub-head">令和9年度</h2>
         <ul>
-          <li><a class="dl-item" href="#">
+          <li><a class="dl-item" href="assets/pdf/club/r9-club-league-lineup.pdf" target="_blank" rel="noopener noreferrer">
             <span class="dl-item__type">PDF</span>
             <span class="dl-item__text">
               <span class="dl-item__title">令和9年度クラブ対抗戦 編成表</span>
-              <span class="dl-item__note">部ごとの所属クラブと日程を掲載しています。</span>
+              <span class="dl-item__note">部ごとの所属クラブと日程を掲載しています。別タブで開きます。</span>
             </span>
             <span class="sqbtn" aria-hidden="true">→</span>
           </a></li>
@@ -48,37 +65,40 @@ const description = "鳥取市テニス協会のクラブ対抗戦。令和9年�
 
       <div class="rv" style="margin-top:56px">
         <h2 class="sub-head">令和8年度</h2>
-        <ul>
-          <li><a class="dl-item" href="#">
-            <span class="dl-item__type">PDF</span>
-            <span class="dl-item__text">
-              <span class="dl-item__title">前期結果（男子1部〜8部）</span>
-              <span class="dl-item__note">2026年5月10日（日）開催</span>
-            </span>
-            <span class="sqbtn" aria-hidden="true">→</span>
-          </a></li>
-          <li><a class="dl-item" href="#">
-            <span class="dl-item__type">PDF</span>
-            <span class="dl-item__text">
-              <span class="dl-item__title">後期結果（女子1部〜4部／男女予選会）</span>
-              <span class="dl-item__note">2026年7月12日（日）開催</span>
-            </span>
-            <span class="sqbtn" aria-hidden="true">→</span>
-          </a></li>
-        </ul>
+        <div class="panel panel--gray">
+          <p class="panel__title">結果を準備しています</p>
+          <p class="prose" style="margin:0">前期（2026年5月10日・男子1部〜8部）と後期（2026年7月12日・女子1部〜4部／男女予選会）の結果は、まとまりしだい掲載します。</p>
+        </div>
       </div>
 
       <div class="rv" style="margin-top:56px">
-        <h2 class="sub-head">過去の結果</h2>
-        <div class="chips">
-          <a class="chip" href="#">令和7年度</a>
-          <a class="chip" href="#">令和6年度</a>
-          <a class="chip" href="#">令和5年度</a>
-          <a class="chip" href="#">令和4年度</a>
-          <a class="chip" href="#">令和3年度</a>
-          <a class="chip" href="#">令和2年度</a>
-          <a class="chip" href="#">令和元年度</a>
-        </div>
+        <h2 class="sub-head">これまでの優勝クラブ</h2>
+        <p class="sec-head__lead" style="margin-top:8px">旧サイトから引き継いだ記録です。年度をひらくと、その年の各部の優勝クラブが出ます。大会名からは当日の写真もご覧いただけます。</p>
+
+        {clubYears.map((y, i) => (
+          <details class="champ" open={i === 0}>
+            <summary class="champ__year">{y.label}<span class="champ__count">{y.tournaments.length}件</span></summary>
+            <div class="champ__body">
+              {y.tournaments.map((t) => {
+                const list = champions(t);
+                return (
+                  <div class="champ__block">
+                    <a class="champ__title" href={resultUrl(t)}>{t.title}<span class="aw">→</span></a>
+                    {list.length > 0 ? (
+                      <ul class="champ__list">
+                        {list.map((c) => (
+                          <li><span class="champ__div">{c.div}</span><span class="champ__club">{c.club}</span></li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p class="champ__none">{t.photos.length > 0 ? `当日の写真 ${t.photos.length}枚` : '記録は写真のみです'}</p>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </details>
+        ))}
       </div>
 
       <div class="rv panel panel--gray" style="margin-top:56px">
