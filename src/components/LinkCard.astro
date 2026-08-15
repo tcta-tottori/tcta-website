@@ -1,0 +1,34 @@
+---
+// リンクカード1枚。src/data/links.js の1件をそのまま受け取る。
+// 横長のバナーを上に敷き、その下に一言説明を置く。
+// 団体名はバナーに描かれているので文字としては出さず、画像の代替テキストに回す。
+// バナーがまだ無いものは、代わりに団体名だけの枠を出す。
+//
+// clone: マーキーのループ用に同じカードを2組並べるときの後ろ側。
+//        読み上げと Tab 移動から外したいので、リンクではなく span で描く。
+const { link, clone = false } = Astro.props;
+const { name, desc, url, banner } = link;
+
+const Tag = clone ? 'span' : 'a';
+const attrs = clone
+  ? { 'aria-hidden': 'true' }
+  : { href: url, target: '_blank', rel: 'noopener noreferrer' };
+---
+
+<Tag class="link-card" {...attrs}>
+  {banner
+    ? <img
+        class="link-card__banner"
+        src={banner}
+        alt={clone ? '' : name}
+        loading="lazy"
+        decoding="async"
+        width="1018"
+        height="168"
+      >
+    : <span class="link-card__banner link-card__banner--empty" aria-hidden="true">{name}</span>}
+  <span class="link-card__text">
+    <span class="link-card__desc">{desc}</span>
+  </span>
+  <span class="link-card__ext" aria-hidden="true">↗</span>
+</Tag>

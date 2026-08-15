@@ -1,7 +1,9 @@
 ---
 import Base from '../layouts/Base.astro';
 import TournamentCard from '../components/TournamentCard.astro';
+import LinkCard from '../components/LinkCard.astro';
 import { TOURNAMENTS, TODAY } from '../data/tournaments.js';
+import { LINKS } from '../data/links.js';
 
 // キャッチコピーは1文字ずつ出すので、文字に分解しておく。
 // 空白はそのままだと潰れるので、幅を持つ空白に置き換える。
@@ -268,28 +270,15 @@ const upcomingTournaments = TOURNAMENTS.filter((t) => t.status !== 'past');
 
       <div class="marquee rv">
         <div class="marquee__track">
-          <a class="link-card" href="links.html"><span class="link-card__logo" aria-hidden="true">ロゴ</span><span class="link-card__text"><span class="link-card__name">鳥取県テニス協会</span><span class="link-card__desc">県登録・県大会の情報</span></span><span class="link-card__ext" aria-hidden="true">↗</span></a>
-          <a class="link-card" href="links.html"><span class="link-card__logo" aria-hidden="true">ロゴ</span><span class="link-card__text"><span class="link-card__name">鳥取県レディーステニス連盟</span><span class="link-card__desc">レディースの大会・活動</span></span><span class="link-card__ext" aria-hidden="true">↗</span></a>
-          <a class="link-card" href="links.html"><span class="link-card__logo" aria-hidden="true">ロゴ</span><span class="link-card__text"><span class="link-card__name">鳥取市公共施設予約システム</span><span class="link-card__desc">コートの予約はこちら</span></span><span class="link-card__ext" aria-hidden="true">↗</span></a>
-          <a class="link-card" href="links.html"><span class="link-card__logo" aria-hidden="true">ロゴ</span><span class="link-card__text"><span class="link-card__name">米子市テニス協会</span><span class="link-card__desc">鳥取県西部の大会情報</span></span><span class="link-card__ext" aria-hidden="true">↗</span></a>
-          <a class="link-card" href="links.html"><span class="link-card__logo" aria-hidden="true">ロゴ</span><span class="link-card__text"><span class="link-card__name">京丹後テニス協会</span><span class="link-card__desc">京都府北部の大会情報</span></span><span class="link-card__ext" aria-hidden="true">↗</span></a>
-          <a class="link-card" href="links.html"><span class="link-card__logo" aria-hidden="true">ロゴ</span><span class="link-card__text"><span class="link-card__name">琴浦テニスクラブ</span><span class="link-card__desc">東伯郡琴浦町のクラブ</span></span><span class="link-card__ext" aria-hidden="true">↗</span></a>
-          <a class="link-card" href="links.html"><span class="link-card__logo" aria-hidden="true">ロゴ</span><span class="link-card__text"><span class="link-card__name">テニスショップ フラシーノ</span><span class="link-card__desc">テニス専門店（鳥取市）</span></span><span class="link-card__ext" aria-hidden="true">↗</span></a>
-          <a class="link-card" href="links.html"><span class="link-card__logo" aria-hidden="true">ロゴ</span><span class="link-card__text"><span class="link-card__name">上海茶楼</span><span class="link-card__desc">中国上海料理（鳥取市）</span></span><span class="link-card__ext" aria-hidden="true">↗</span></a>
-          <!-- ループ用の複製 -->
+          {LINKS.map((l) => <LinkCard link={l} />)}
+          {/* ループ用の複製。main.js が scrollWidth の半分で巻き戻すので、
+              前半とまったく同じ枚数・同じ順で並べること。 */}
           <div style="display:flex" aria-hidden="true">
-            <a class="link-card" tabindex="-1"><span class="link-card__logo">ロゴ</span><span class="link-card__text"><span class="link-card__name">鳥取県テニス協会</span><span class="link-card__desc">県登録・県大会の情報</span></span><span class="link-card__ext">↗</span></a>
-            <a class="link-card" tabindex="-1"><span class="link-card__logo">ロゴ</span><span class="link-card__text"><span class="link-card__name">鳥取県レディーステニス連盟</span><span class="link-card__desc">レディースの大会・活動</span></span><span class="link-card__ext">↗</span></a>
-            <a class="link-card" tabindex="-1"><span class="link-card__logo">ロゴ</span><span class="link-card__text"><span class="link-card__name">鳥取市公共施設予約システム</span><span class="link-card__desc">コートの予約はこちら</span></span><span class="link-card__ext">↗</span></a>
-            <a class="link-card" tabindex="-1"><span class="link-card__logo">ロゴ</span><span class="link-card__text"><span class="link-card__name">米子市テニス協会</span><span class="link-card__desc">鳥取県西部の大会情報</span></span><span class="link-card__ext">↗</span></a>
-            <a class="link-card" tabindex="-1"><span class="link-card__logo">ロゴ</span><span class="link-card__text"><span class="link-card__name">京丹後テニス協会</span><span class="link-card__desc">京都府北部の大会情報</span></span><span class="link-card__ext">↗</span></a>
-            <a class="link-card" tabindex="-1"><span class="link-card__logo">ロゴ</span><span class="link-card__text"><span class="link-card__name">琴浦テニスクラブ</span><span class="link-card__desc">東伯郡琴浦町のクラブ</span></span><span class="link-card__ext">↗</span></a>
-            <a class="link-card" tabindex="-1"><span class="link-card__logo">ロゴ</span><span class="link-card__text"><span class="link-card__name">テニスショップ フラシーノ</span><span class="link-card__desc">テニス専門店（鳥取市）</span></span><span class="link-card__ext">↗</span></a>
-            <a class="link-card" tabindex="-1"><span class="link-card__logo">ロゴ</span><span class="link-card__text"><span class="link-card__name">上海茶楼</span><span class="link-card__desc">中国上海料理（鳥取市）</span></span><span class="link-card__ext">↗</span></a>
+            {LINKS.map((l) => <LinkCard link={l} clone />)}
           </div>
         </div>
       </div>
-      <p class="note">※ 掲載団体・ロゴ使用許諾・分類は公開前に要確認（ホバーで停止）</p>
+      <p class="note">※ バナーの使用許諾・掲載団体・分類は公開前に要確認（ホバーで停止）</p>
     </div>
   </section>
 
