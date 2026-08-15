@@ -5,6 +5,12 @@
 //   緯度経度は持たない（施設名が正しければ地図側が正しい場所を出す）。
 //   施設名を変えたら、地図の出方もここで変わる。
 //
+// ■ 「すべて」の地図（MAP_ALL）
+//   1枚で全コートを見せるための、地域の絞り込み検索。Googleの検索結果が
+//   そのままピンになるので、協会が使う3施設以外が混ざることがある。
+//   3施設だけを正確に出したい場合は、各施設の緯度経度をもらって
+//   ピンを打つ作りに差し替えること（下の COURTS に lat/lng を足す想定）。
+//
 // ■ href
 //   一覧の行を押したときの遷移先。サイト内に説明ページがあるものはそこへ。
 //
@@ -34,9 +40,17 @@ export const COURTS = [
   },
 ];
 
+/** 1枚で全コートを見せるときの検索語（地域の絞り込み） */
+export const MAP_ALL = {
+  name: '鳥取市周辺のテニスコート',
+  short: 'すべて',
+  query: '鳥取市 テニスコート',
+  zoom: 12,
+};
+
 /** 埋め込み地図のURL（APIキー不要の検索埋め込み） */
-export const mapEmbed = (query) =>
-  `https://maps.google.com/maps?q=${encodeURIComponent(query)}&z=15&hl=ja&output=embed`;
+export const mapEmbed = (query, zoom = 15) =>
+  `https://maps.google.com/maps?q=${encodeURIComponent(query)}&z=${zoom}&hl=ja&output=embed`;
 
 /** 別タブで開くときのURL */
 export const mapLink = (query) =>

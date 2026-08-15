@@ -1475,6 +1475,16 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   transition: background .3s ease, border-color .3s ease, color .3s ease;
 }
 .cmap__tab:hover { border-color: var(--red); color: var(--red); }
+/* 「すべて」だけは、1枚で見渡す用だと分かるよう区切って置く */
+.cmap__tab--all { margin-right: 6px; position: relative; }
+.cmap__tab--all::after {
+  content: "";
+  position: absolute;
+  top: 50%; right: -6px;
+  width: 1px; height: 16px;
+  margin-top: -8px;
+  background: var(--gray-200);
+}
 .cmap__tab.is-active {
   background: var(--red);
   border-color: var(--red);

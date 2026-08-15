@@ -7,7 +7,7 @@ import Icon from '../components/Icon.astro';
 import { TOURNAMENTS, TODAY } from '../data/tournaments.js';
 import { LINKS_ASSOC, LINKS_OTHER } from '../data/links.js';
 import { NEWS, NEWS_VISIBLE } from '../data/news.js';
-import { COURTS, mapEmbed, mapLink } from '../data/courts.js';
+import { COURTS, MAP_ALL, mapEmbed, mapLink } from '../data/courts.js';
 
 const CATCH = 'PLAY BEYOND.';
 // 英字は左から1文字ずつ出すので、文字に分解しておく。
@@ -303,13 +303,13 @@ const upcomingTournaments = TOURNAMENTS.filter((t) => t.status !== 'past');
         <div class="rv embed-wrap" style="transition-delay:.1s">
           <div class="cmap" data-cmap>
             <div class="cmap__tabs" role="group" aria-label="地図に出す施設">
-              {COURTS.map((c, i) => (
+              {[MAP_ALL, ...COURTS].map((c, i) => (
                 <button
-                  class:list={['cmap__tab', i === 0 && 'is-active']}
+                  class:list={['cmap__tab', i === 0 && 'is-active', i === 0 && 'cmap__tab--all']}
                   type="button"
                   aria-pressed={i === 0 ? 'true' : 'false'}
                   data-cmap-tab
-                  data-embed={mapEmbed(c.query)}
+                  data-embed={mapEmbed(c.query, c.zoom)}
                   data-link={mapLink(c.query)}
                   data-name={c.name}
                 >{c.short}</button>
@@ -319,7 +319,7 @@ const upcomingTournaments = TOURNAMENTS.filter((t) => t.status !== 'past');
               <iframe
                 class="cmap__iframe"
                 data-cmap-frame
-                src={mapEmbed(COURTS[0].query)}
+                src={mapEmbed(MAP_ALL.query, MAP_ALL.zoom)}
                 title="鳥取市テニス協会 利用コートの地図"
                 loading="lazy"
                 referrerpolicy="no-referrer-when-downgrade"
@@ -332,8 +332,8 @@ const upcomingTournaments = TOURNAMENTS.filter((t) => t.status !== 'past');
               </div>
             </div>
             <div class="cmap__bar">
-              <span class="cmap__name" data-cmap-name>{COURTS[0].name}</span>
-              <a class="ghost-link cmap__open" data-cmap-link href={mapLink(COURTS[0].query)} target="_blank" rel="noopener noreferrer">
+              <span class="cmap__name" data-cmap-name>{MAP_ALL.name}</span>
+              <a class="ghost-link cmap__open" data-cmap-link href={mapLink(MAP_ALL.query)} target="_blank" rel="noopener noreferrer">
                 Googleマップで開く <span class="aw">↗</span>
               </a>
             </div>
