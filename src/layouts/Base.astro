@@ -10,8 +10,6 @@ interface Props {
   description: string;
   /** サイトを開いたときのオープニング映像を出すか（トップページのみ） */
   splash?: boolean;
-  /** ヘッダーをヒーロー写真の上に透過表示するか（トップページのみ） */
-  overlay?: boolean;
   /** トップページかどうか。ナビのアンカーがページ内リンクになる */
   home?: boolean;
   /** ヘッダーナビの現在地 */
@@ -24,7 +22,6 @@ const {
   title,
   description,
   splash = false,
-  overlay = false,
   home = false,
   navActive,
   mobileNavActive,
@@ -62,12 +59,12 @@ const {
   </script>
 )}
 </head>
-<body class:list={[overlay && 'body--overlay-header']}>
+<body>
 {splash && <SiteSplash />}
 
 <a class="skip-link" href="#main">本文へスキップ</a>
 
-<SiteHeader active={navActive} overlay={overlay} onHome={home} />
+<SiteHeader active={navActive} onHome={home} />
 
 <MobileNav active={mobileNavActive} />
 

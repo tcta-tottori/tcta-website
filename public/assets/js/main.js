@@ -179,11 +179,8 @@
     var header = document.querySelector('.site-header');
     if (!header) return;
 
-    // 透過ヘッダー（トップ）はモバイルだけ追従したままなので、
-    // 写真から抜けたら白背景に戻せるよう、こちらでも .hsh を付け外しする。
-    var overlay = header.classList.contains('site-header--overlay');
     var onScroll = function () {
-      header.classList.toggle('hsh', window.scrollY > (overlay ? 40 : 100));
+      header.classList.toggle('hsh', window.scrollY > 100);
     };
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();

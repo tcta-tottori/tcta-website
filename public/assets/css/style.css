@@ -200,11 +200,6 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   top: var(--header-h);
   z-index: 3;
 }
-/* トップページのデスクトップはヘッダーが一緒に流れていくので、その分を引く */
-@media (min-width: 1024px) {
-  .body--overlay-header .section--sticky-head > .container > .sec-bar,
-  .body--overlay-header .section--sticky-head > .container > .sec-head { top: 16px; }
-}
 /* 貼り付いている間だけ地の色を敷く（貼り付く前は背景の大きな英字を隠さない）。
    .is-pinned は main.js が付け外しする。 */
 .section--sticky-head > .container > .sec-bar,
@@ -481,6 +476,8 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   top: 0;
   z-index: 100;
   background: var(--white);
+  /* 本文との境目に薄く細い黒線を引く（帯の白と地の白を分ける） */
+  border-bottom: 1px solid rgba(26, 26, 26, .14);
   transition: box-shadow .3s ease;
 }
 .site-header.hsh { box-shadow: 0 1px 12px rgba(26, 26, 26, .10); }
@@ -494,8 +491,8 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   height: var(--header-h);
 }
 .site-header__logo { display: inline-flex; }
-.site-header__logo img { height: 40px; width: auto; }
-@media (min-width: 1024px) { .site-header__logo img { height: 52px; } }
+.site-header__logo img { height: 27px; width: auto; }
+@media (min-width: 1024px) { .site-header__logo img { height: 35px; } }
 
 .nav { display: none; }
 @media (min-width: 1024px) {
@@ -597,44 +594,17 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 .mobile-nav__link.is-active { color: var(--red); }
 .mobile-nav .btn { margin-top: 28px; }
 
-/* ヒーロー上に重ねる透過ヘッダー（トップページ）
-   写真をメニューの背面まで見せるため、負のマージンでヒーローを引き上げる。
-   ヘッダー帯が白いままだと写真と分断されて見えるので、背景は透過にし、
-   写真側の上端に薄いベール（.hero__scrim の縦グラデーション）を敷いて文字を読ませる。 */
-/* z-index は .site-header の 100 のまま下げないこと。
-   モバイルメニュー（.mobile-nav / z-index 90）より下になると、
-   メニューを開いたときに閉じるボタン（ハンバーガー）が覆われて押せなくなる。 */
-.site-header--overlay {
-  margin-bottom: calc(-1 * var(--header-h));
-  background: transparent;
-  box-shadow: none;
-}
-/* モバイルではヘッダーが追従したままなので、写真から抜けたら白背景に戻す */
-@media (max-width: 1023px) {
-  .site-header--overlay.hsh {
-    background: var(--white);
-    box-shadow: 0 1px 12px rgba(26, 26, 26, .10);
-  }
-}
-@media (min-width: 1024px) {
-  /* デスクトップはヒーローと一緒に流れる（追従しない） */
-  .site-header--overlay { position: relative; margin-bottom: -96px; }
-  .site-header--overlay .site-header__inner { height: 96px; }
-  .site-header--overlay.hsh { box-shadow: none; }
-}
-
 /* ============ 07. ヒーロー ============ */
 .hero {
   position: relative;
   background: var(--white);
   overflow: hidden;
 }
-/* ヘッダーの背面までせり上がる分だけ写真を高くする */
 .hero__media {
   position: relative;
-  height: calc(58vw + var(--header-h));
-  min-height: calc(280px + var(--header-h));
-  max-height: calc(430px + var(--header-h));
+  height: 58vw;
+  min-height: 280px;
+  max-height: 430px;
   overflow: hidden;
   border-bottom-left-radius: 80px;
 }
@@ -657,9 +627,6 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   position: absolute;
   inset: 0;
   background:
-    /* 上：ヘッダーの文字を読ませるための縦グラデーション（写真は透けたまま） */
-    linear-gradient(180deg, rgba(255, 255, 255, .62) 0%, rgba(255, 255, 255, .22) 55%, rgba(255, 255, 255, 0) 100%)
-      top / 100% calc(var(--header-h) + 32px) no-repeat,
     /* 下：キャッチコピーを載せる帯。写真が下へいくほど白へ溶け、
        黒い文字をそのまま読ませる（面で覆わず、下端からの一方向で自然に見せる） */
     linear-gradient(0deg,

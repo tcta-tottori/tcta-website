@@ -4,20 +4,18 @@ import { NAV } from '../config/nav.js';
 interface Props {
   /** 現在地として強調するナビの key */
   active?: string;
-  /** トップページのみ、ヒーロー写真の上に透過表示する */
-  overlay?: boolean;
   /** トップページではコート案内・お知らせがページ内アンカーになる */
   onHome?: boolean;
 }
 
-const { active, overlay = false, onHome = false } = Astro.props;
+const { active, onHome = false } = Astro.props;
 
 /** トップページでは index.html#courts → #courts に落とす */
 const resolve = (href: string) =>
   onHome && href.startsWith('index.html#') ? href.slice('index.html'.length) : href;
 ---
 
-<header class:list={['site-header', overlay && 'site-header--overlay']}>
+<header class="site-header">
   <div class="container site-header__inner">
     <a class="site-header__logo" href="index.html" aria-label="鳥取市テニス協会 ホーム">
       <img src="assets/img/logo.png" alt="鳥取市テニス協会 TOTTORI-CITY TENNIS ASSOCIATION" width="701" height="240">
