@@ -151,19 +151,6 @@ export const TOURNAMENTS = [
     imageAlt: 'コート番号の看板が立つコートでの試合',
   },
   {
-    date: '2026.10.12',
-    title: '鳥取市テニス協会 テニス祭り',
-    event: 'テニス教室ほか',
-    venue: '鳥取産業体育館',
-    status: 'soon',
-    outlineUrl: 'tennis-day.html',
-    drawUrl: null,      // 組み合わせが決まったらURLを入れる
-    liveUrl: null,      // 当日の大会運用システムのURLを入れる
-    resultUrl: null,    // 終了後、結果の掲載先を入れる
-    image: 'assets/img/results/2024/2024sasaki-hai-033.webp',
-    imageAlt: 'ダブルスの試合中のコートを外から見たところ',
-  },
-  {
     date: '2026.10.18',
     title: '第30回エネトピア杯ミックスダブルス',
     event: 'ミックスダブルス',

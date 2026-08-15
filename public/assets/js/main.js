@@ -184,23 +184,45 @@
     requestAnimationFrame(function (now) { last = now; requestAnimationFrame(tick); });
   }
 
-  /* ---------- ヘッダー（スクロールで影・モバイルメニュー） ---------- */
+  /* ---------- ヘッダー（スクロールで影・出し入れ・モバイルメニュー） ---------- */
   function initHeader() {
     var header = document.querySelector('.site-header');
     if (!header) return;
 
+    var toggle = document.querySelector('.hamburger');
+    var menu = document.getElementById('mobile-nav');
+
+    /* 下へ読み進めているあいだは引っ込め、上へ戻したら出す。
+       ・ページ上部（ヘッダー1枚ぶん）では常に出しておく
+       ・行きつ戻りつでちらつかないよう、向きが変わっても少し動くまでは反応しない
+       ・モバイルメニューを開いているあいだは引っ込めない（閉じるボタンが消えるため） */
+    var THRESHOLD = 8;
+    var lastY = window.scrollY;
     var onScroll = function () {
-      header.classList.toggle('hsh', window.scrollY > 100);
+      var y = window.scrollY;
+      header.classList.toggle('hsh', y > 100);
+
+      var menuOpen = toggle && toggle.getAttribute('aria-expanded') === 'true';
+      var top = y <= header.offsetHeight;
+      if (menuOpen || top) {
+        header.classList.remove('site-header--hidden');
+      } else if (Math.abs(y - lastY) > THRESHOLD) {
+        header.classList.toggle('site-header--hidden', y > lastY);
+      }
+      if (Math.abs(y - lastY) > THRESHOLD) lastY = y;
+      // 貼り付く見出しはヘッダーの真下に置いているので、引っ込めたら一緒に上げる
+      document.body.classList.toggle('hdr-off', header.classList.contains('site-header--hidden'));
     };
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
 
-    var toggle = document.querySelector('.hamburger');
-    var menu = document.getElementById('mobile-nav');
     if (!toggle || !menu) return;
 
     var setOpen = function (open) {
       if (open) {
+        // 開くときは必ずヘッダーを出しておく（閉じるボタンが画面から消えないように）
+        header.classList.remove('site-header--hidden');
+        document.body.classList.remove('hdr-off');
         // ヘッダー（通知バーの有無で高さが変わる）の真下から始める
         menu.style.paddingTop = (header.getBoundingClientRect().bottom + 24) + 'px';
       }

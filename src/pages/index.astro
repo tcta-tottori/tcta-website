@@ -5,10 +5,11 @@ import LinkCard from '../components/LinkCard.astro';
 import { TOURNAMENTS, TODAY } from '../data/tournaments.js';
 import { LINKS_ASSOC, LINKS_OTHER } from '../data/links.js';
 
-// キャッチコピーは1文字ずつ出すので、文字に分解しておく。
-// 空白はそのままだと潰れるので、幅を持つ空白に置き換える。
 const CATCH = 'PLAY BEYOND.';
-const CATCH_CHARS = [...CATCH];
+// 英字は左から1文字ずつ出すので、文字に分解しておく。
+// 空白はそのままだと潰れるので、幅を持つ空白に置き換える。
+const EN = 'TOTTORI-CITY TENNIS ASSOCIATION';
+const EN_CHARS = [...EN];
 
 const title = "鳥取市テニス協会｜つなぐ、広がる、テニスの輪。";
 const description = "鳥取市テニス協会の公式サイト。年間19の大会と毎週水曜日のテニス教室を運営しています。大会情報・お知らせ・大会カレンダー・コート案内をご覧いただけます。";
@@ -41,48 +42,43 @@ const upcomingTournaments = TOURNAMENTS.filter((t) => t.status !== 'past');
         <img class="hero__photo" src="assets/img/hero.png" alt="青空の下、コートでバックハンドを打つ選手">
         <div class="hero__scrim" aria-hidden="true"></div>
       </div>
-      {/* 冒頭だけの導入。オープニング映像のロゴと同じ組み立て（細いけい線が伸び、
-          赤い角の印が点き、線に沿って文字が現れる）で、右上に PLAY、続けて左下に
-          BEYOND. を1語1秒で出して消す。そのあと下のキャッチコピーが動き出す。 */}
+      {/* 冒頭だけの導入。写真の右上に PLAY、続けて左下に BEYOND. を大きく出して消す
+          （飾りは付けない）。消えたところで下のキャッチコピーが動き出す。 */}
       <div class="hero__intro" aria-hidden="true">
-        <span class="pbi pbi--play">
-          <span class="pbi__rule"></span>
-          <span class="pbi__tick"></span>
-          <span class="pbi__word">PLAY</span>
-        </span>
-        <span class="pbi pbi--beyond">
-          <span class="pbi__rule"></span>
-          <span class="pbi__tick"></span>
-          <span class="pbi__word">BEYOND.</span>
-        </span>
+        <span class="pbi pbi--play">PLAY</span>
+        <span class="pbi pbi--beyond">BEYOND.</span>
       </div>
       <div class="hero__copy">
         <h1 class="hero__title">
-          {/* 1文字ずつ白で出したあと、赤いスラッシュが左から右へ抜けて黒に変わる。
-              下の pb__base（白）と pb__ink（黒＋スラッシュ）を重ねて作っている。 */}
+          {/* 文字は1枚だけ。背景のグラデーションを文字型に切り抜いて流し、
+              薄いグレー → 赤いスラッシュ → 黒と、面の色だけを変えていく。
+              2枚重ねると字がわずかにずれて立体的に見えるので、重ねないこと。 */}
           <span class="pb">
             <span class="visually-hidden">{CATCH}</span>
-            <span class="pb__base" aria-hidden="true">
-              {CATCH_CHARS.map((c, i) => (
-                <span class="pb__ch" style={`--i:${i}`}>{c === ' ' ? ' ' : c}</span>
-              ))}
-            </span>
             <span class="pb__ink" aria-hidden="true">{CATCH}</span>
           </span>
-          <span class="hero__sub fu" style="animation-delay:3.55s">テニスで、もっとつながろう。</span>
+          <span class="hero__sub fu" style="animation-delay:3.15s">テニスで、もっとつながろう。</span>
         </h1>
-        <p class="hero__en fu" style="animation-delay:3.75s">TOTTORI-CITY TENNIS ASSOCIATION</p>
-        <div class="hero__lead fu" style="animation-delay:3.95s">
+        {/* 左から1文字ずつ、静かに浮かび上がらせる */}
+        <p class="hero__en">
+          <span class="visually-hidden">{EN}</span>
+          {EN_CHARS.map((c, i) => (
+            <span class="hero__en-ch" style={`--i:${i}`} aria-hidden="true">{c === ' ' ? ' ' : c}</span>
+          ))}
+        </p>
+        <div class="hero__lead fu" style="animation-delay:3.75s">
+          {/* 本文の全域を囲む赤い枠が、左から右へ一度だけ駆け抜ける */}
+          <span class="hero__lead-frame" aria-hidden="true"></span>
           <p>大会やテニス教室を通して、世代や経験をこえて、誰もがテニスを楽しみ、つながれる場所をつくっています。</p>
         </div>
       </div>
     </div>
     <div class="container hero__body">
       <div class="hero__inner">
-        <a class="btn btn--primary hero__cta fu" style="animation-delay:4.15s" href="about.html">協会について見る <span class="aw">→</span></a>
+        <a class="btn btn--primary hero__cta fu" style="animation-delay:3.95s" href="about.html">協会について見る <span class="aw">→</span></a>
       </div>
     </div>
-    <div class="hero__square fu" style="animation-delay:4.35s" aria-hidden="true"></div>
+    <div class="hero__square fu" style="animation-delay:4.15s" aria-hidden="true"></div>
     <div class="hero__scroll" aria-hidden="true">
       <span>SCROLL</span>
       <span class="blink"></span>

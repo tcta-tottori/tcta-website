@@ -196,9 +196,17 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 .section--sticky-head > .container > .sec-bar,
 .section--sticky-head > .container > .sec-head {
   position: sticky;
-  /* 追従ヘッダーの真下に貼り付ける（隙間を空けると本文が覗いて見苦しい） */
+  /* 追従ヘッダーの真下に貼り付ける（隙間を空けると本文が覗いて見苦しい）。
+     ヘッダーが引っ込んでいるあいだ（.hdr-off）は、その分だけ上へ寄せる。 */
   top: var(--header-h);
   z-index: 3;
+  transition: top .35s ease;
+}
+.hdr-off .section--sticky-head > .container > .sec-bar,
+.hdr-off .section--sticky-head > .container > .sec-head { top: 16px; }
+@media (prefers-reduced-motion: reduce) {
+  .section--sticky-head > .container > .sec-bar,
+  .section--sticky-head > .container > .sec-head { transition: none; }
 }
 /* 貼り付いている間だけ地の色を敷く（貼り付く前は背景の大きな英字を隠さない）。
    .is-pinned は main.js が付け外しする。 */
@@ -422,15 +430,23 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 @keyframes phrev { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
 @keyframes blink { 0%, 100% { opacity: .35 } 50% { opacity: 1 } }
 
-/* キャッチコピー：1文字ずつ置く／赤いスラッシュを走らせて黒へ変える */
-@keyframes pb-in { to { opacity: 1; transform: none; } }
-/* 62%→6% は「赤が左端に差しかかった所」から「右端を抜け切った所」まで。
+/* キャッチコピー：薄く浮かび上がったあと、赤いスラッシュが走って黒へ変える。
+   62%→6% は「赤が左端に差しかかった所」から「右端を抜け切った所」まで。
    0→100% で振ると前後に赤が見えない間ができ、走っている時間が半分になる。 */
-@keyframes pb-slash {
-  0%   { opacity: 1; background-position: 62% 0; }
+@keyframes pb-color {
+  0%   { opacity: 0; background-position: 62% 0; }
+  22%  { opacity: 1; background-position: 62% 0; }
   100% { opacity: 1; background-position: 6% 0; }
 }
-@keyframes pb-base-out { to { opacity: 0; } }
+/* 英字（TOTTORI-CITY…）：左から1文字ずつ、静かに浮かび上がらせる */
+@keyframes en-in { to { opacity: 1; transform: none; } }
+/* 本文を囲む赤い枠が、左から右へ一度だけ駆け抜ける */
+@keyframes lead-frame {
+  0%   { clip-path: inset(0 100% 0 0); }
+  38%  { clip-path: inset(0 0 0 0); }
+  62%  { clip-path: inset(0 0 0 0); }
+  100% { clip-path: inset(0 0 0 100%); }
+}
 
 
 .fu { animation: fadeup .8s var(--ease) both; }
@@ -479,7 +495,14 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   background: var(--white);
   /* 本文との境目に薄く細い黒線を引く（帯の白と地の白を分ける） */
   border-bottom: 1px solid rgba(26, 26, 26, .20);
-  transition: box-shadow .3s ease;
+  transition: box-shadow .3s ease, transform .35s ease;
+}
+/* 下へスクロールしているあいだは引っ込め、上へ戻したら出す。
+   モバイルメニューを開いているあいだは引っ込めない（閉じるボタンが消えるため）。 */
+.site-header--hidden { transform: translateY(-100%); }
+@media (prefers-reduced-motion: reduce) {
+  .site-header { transition: box-shadow .3s ease; }
+  .site-header--hidden { transform: none; }
 }
 .site-header.hsh { box-shadow: 0 1px 12px rgba(26, 26, 26, .10); }
 
@@ -492,8 +515,8 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   height: var(--header-h);
 }
 .site-header__logo { display: inline-flex; }
-.site-header__logo img { height: 22px; width: auto; }
-@media (min-width: 1024px) { .site-header__logo img { height: 28px; } }
+.site-header__logo img { height: 24px; width: auto; }
+@media (min-width: 1024px) { .site-header__logo img { height: 31px; } }
 
 .nav { display: none; }
 @media (min-width: 1024px) {
@@ -603,9 +626,9 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 }
 .hero__media {
   position: relative;
-  height: 74vw;
-  min-height: 360px;
-  max-height: 500px;
+  height: 108vw;
+  min-height: 448px;
+  max-height: 560px;
   overflow: hidden;
   border-bottom-left-radius: 80px;
 }
@@ -644,10 +667,9 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 .hero__title { margin: 0; }
 
 /* ---- 冒頭の導入「PLAY」→「BEYOND.」----
-   オープニング映像のロゴと同じ組み立て。細いけい線が縦横に伸び、交点に赤い角の印が
-   点いて、その線に沿って字間が詰まりながら文字が現れる。出て消えるまでで1語1秒。
-   PLAY を写真の右上、続けて BEYOND. を左下に出し、消えたところで下の
-   キャッチコピー（.pb）が動き出す。時刻の基準は .hero の --intro-end。 */
+   写真の右上に PLAY、続けて左下に BEYOND. を大きく出して消す。飾りは付けない。
+   字間が詰まりながら左から現れ、そのまま静かに引いていく。出て消えるまでで1語1秒。
+   消えたところで下のキャッチコピー（.pb）が動き出す。基準は .hero の --intro-end。 */
 .hero__intro {
   position: absolute;
   inset: 0;
@@ -657,74 +679,21 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 .pbi {
   position: absolute;
   display: block;
-  font: 700 clamp(20px, 4.2vw, 34px)/1 var(--fdisp);
+  max-width: 84%;
+  font: 700 clamp(38px, 9.6vw, 96px)/1 var(--fdisp);
   color: var(--ink);
   white-space: nowrap;
-}
-.pbi--play { --pbi-d: 0s; top: 13%; right: 8%; }
-.pbi--beyond { --pbi-d: 1s; bottom: 24%; left: 8%; }
-
-/* 文字。字間を詰めながら左から現れ、最後は左へ抜けるように消える */
-.pbi__word {
-  display: block;
   animation: pbi-word 1s var(--ease) var(--pbi-d) both;
 }
-/* 文字の下を走る横のけい線 */
-.pbi__rule {
-  position: absolute;
-  left: -16%; right: -16%;
-  bottom: -.42em;
-  height: 1px;
-  background: var(--ink);
-  transform-origin: left center;
-  animation: pbi-rule 1s var(--ease) var(--pbi-d) both;
-}
-/* けい線と交わる縦のけい線 */
-.pbi::after {
-  content: "";
-  position: absolute;
-  left: -16%;
-  top: -70%; bottom: -70%;
-  width: 1px;
-  background: var(--ink);
-  transform-origin: center top;
-  animation: pbi-vrule 1s var(--ease) var(--pbi-d) both;
-}
-/* 交点に打つ赤い角の印 */
-.pbi__tick {
-  position: absolute;
-  left: -16%;
-  bottom: calc(-.42em - 3px);
-  width: 7px; height: 7px;
-  margin-left: -3px;
-  background: var(--red);
-  animation: pbi-tick 1s var(--ease) var(--pbi-d) both;
-}
+.pbi--play { --pbi-d: 0s; top: 10%; right: 7%; }
+.pbi--beyond { --pbi-d: 1s; bottom: 20%; left: 7%; }
 
 @keyframes pbi-word {
-  0%   { opacity: 0; letter-spacing: .5em; clip-path: inset(0 100% 0 0); }
+  0%   { opacity: 0; letter-spacing: .3em; clip-path: inset(0 100% 0 0); }
   16%  { opacity: 1; }
-  46%  { opacity: 1; letter-spacing: .1em; clip-path: inset(0 0 0 0); }
-  74%  { opacity: 1; letter-spacing: .1em; clip-path: inset(0 0 0 0); }
-  100% { opacity: 0; letter-spacing: .04em; clip-path: inset(0 0 0 46%); }
-}
-@keyframes pbi-rule {
-  0%   { opacity: .85; transform: scale3d(0, 1, 1); }
-  26%  { opacity: .85; transform: none; }
-  74%  { opacity: .85; transform: none; }
-  100% { opacity: 0; transform: scale3d(0, 1, 1); }
-}
-@keyframes pbi-vrule {
-  0%   { opacity: .45; transform: scale3d(1, 0, 1); }
-  26%  { opacity: .45; transform: none; }
-  74%  { opacity: .45; transform: none; }
-  100% { opacity: 0; transform: scale3d(1, 0, 1); }
-}
-@keyframes pbi-tick {
-  0%, 20% { opacity: 0; transform: scale(.2); }
-  32%     { opacity: 1; transform: none; }
-  74%     { opacity: 1; transform: none; }
-  100%    { opacity: 0; transform: scale(.2); }
+  46%  { opacity: 1; letter-spacing: .02em; clip-path: inset(0 0 0 0); }
+  74%  { opacity: 1; letter-spacing: .02em; clip-path: inset(0 0 0 0); }
+  100% { opacity: 0; letter-spacing: 0; clip-path: inset(0 0 0 46%); }
 }
 
 /* 動きを減らす設定では導入そのものを出さない */
@@ -733,43 +702,22 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 }
 
 /* ---- キャッチコピー「PLAY BEYOND.」----
-   白い背景に、白い文字を1文字ずつ置いていき（うっすら陰で見える）、
-   少し置いてから赤いスラッシュが左→右に抜け、通った先が黒に変わる。
-   ・pb__base … 白い文字。1文字ずつ出す担当
-   ・pb__ink  … 同じ文字を重ね、背景グラデーションを文字型に切り抜いて
-                「黒｜赤いスラッシュ｜白」を横に流す担当
-   2枚重ねているので、字送りは必ず同じ字形・同じ大きさにしておくこと。 */
+   文字は1枚だけ。「黒｜赤｜薄いグレー」の帯を文字の形に切り抜いて右から左へ流し、
+   見た目は赤いスラッシュが左から右へ走って、通った所が黒く変わるようにしている。
+   2枚重ねると字がわずかにずれて立体的に見えてしまうので、重ねないこと。 */
 .pb {
-  position: relative;
   display: block;
   font: 700 clamp(27px, 6.4vw, 52px)/1.12 var(--fdisp);
   letter-spacing: .06em;
   white-space: nowrap;
 }
-.pb__base, .pb__ink { display: block; }
-.pb__ink { position: absolute; inset: 0; }
 
-/* 影は付けない。文字の面だけを塗り替える平面的な表現にする。
-   出はじめは薄いグレー（＝白地の上でかろうじて見える）、
-   赤いスラッシュが通ったところから黒へ変わる。 */
 /* 導入（PLAY → BEYOND.）が終わる時刻。ここから下の動きが始まる。
    導入を止めるときは、この値を 0s にすれば全体がそのまま前へ詰まる。 */
 .hero { --intro-end: 2s; }
 
-.pb__ch {
-  display: inline-block;
-  color: var(--gray-200);
-  opacity: 0;
-  transform: translateY(.16em);
-  /* 導入で1度見せているので、ここは間を置かず一気に流す */
-  animation: pb-in .3s var(--ease) both;
-  animation-delay: calc(var(--intro-end) + var(--i) * .04s);
-}
-
-/* 黒｜赤｜白 の帯を、文字の形に切り抜いて右から左へ流す。
-   ＝見た目は赤いスラッシュが左から右へ走り、通った所が黒く変わる。 */
 .pb__ink {
-  /* まだ通っていない側は下地と同じ薄いグレーにして、層の入れ替わりを見せない */
+  display: block;
   background-image: linear-gradient(100deg,
     var(--ink) 0 40%,
     var(--red) 40% 45.5%,
@@ -780,22 +728,16 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   background-clip: text;
   color: transparent;
   -webkit-text-fill-color: transparent;
-  opacity: 0;
   /* var(--ease) は減速が強すぎてスラッシュが一瞬で走り抜けるので、
      ここは行き渡る速さが揃う曲線を使う */
-  animation: pb-slash .7s cubic-bezier(.45, .05, .4, 1) calc(var(--intro-end) + .8s) forwards;
+  animation: pb-color 1.15s cubic-bezier(.45, .05, .4, 1) var(--intro-end) both;
 }
-/* 走り終わったら白い下地を消す（黒い文字に陰が残らないように） */
-.pb__base { animation: pb-base-out .25s linear calc(var(--intro-end) + 1.55s) forwards; }
 
-/* 動きを減らす設定では、2枚重ねをやめて黒い文字だけを最初から出す。
+/* 動きを減らす設定では、色を変えずに黒い文字だけを最初から出す。
    （このブロックは .pb の定義より後に置くこと。同じ詳細度なので順序で決まる） */
 @media (prefers-reduced-motion: reduce) {
-  .pb__base { display: none; }
   .pb__ink {
-    /* 下地を消すので、重ねるのをやめて自分で行の高さを持たせる
-       （absolute のままだと .pb がつぶれ、下の一文と重なる） */
-    position: static;
+    animation: none;
     opacity: 1;
     background-image: none;
     color: var(--ink);
@@ -804,7 +746,13 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 }
 /* 切り抜きが使えない環境では、スラッシュは出さず黒い文字だけを出す */
 @supports not ((-webkit-background-clip: text) or (background-clip: text)) {
-  .pb__ink { background-image: none; color: var(--ink); -webkit-text-fill-color: var(--ink); }
+  .pb__ink {
+    animation: none;
+    opacity: 1;
+    background-image: none;
+    color: var(--ink);
+    -webkit-text-fill-color: var(--ink);
+  }
 }
 
 .hero__sub {
@@ -820,9 +768,20 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   letter-spacing: .18em;
   color: var(--red);
 }
-/* 英字（TOTTORI-CITY…）のすぐ下。キャッチコピーと同じく写真の上に載る */
+/* 左から1文字ずつ浮かび上がる。間隔を詰めてあるので、全体では
+   さっと左から流れたように見える。 */
+.hero__en-ch {
+  display: inline-block;
+  opacity: 0;
+  transform: translateY(.35em);
+  animation: en-in .45s var(--ease) both;
+  animation-delay: calc(var(--intro-end) + 1.35s + var(--i) * .022s);
+}
+/* 英字（TOTTORI-CITY…）の下。1行ぶん空けてから置く。
+   キャッチコピーと同じく写真の上に載る。 */
 .hero__lead {
-  margin: 10px 0 0;
+  position: relative;
+  margin: 40px 0 0;
   max-width: 34em;
   font: 400 15px/2 var(--fjp);
   letter-spacing: .03em;
@@ -830,6 +789,18 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 }
 .hero__lead p { margin: 0; }
 .hero__lead p + p { margin-top: .9em; }
+/* 本文の全域を囲む赤い枠。左から現れ、そのまま右へ抜けて消える。 */
+.hero__lead-frame {
+  position: absolute;
+  inset: -10px -12px;
+  border: 2px solid var(--red);
+  pointer-events: none;
+  animation: lead-frame 1.25s cubic-bezier(.45, .05, .4, 1)
+             calc(var(--intro-end) + 1.75s) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero__lead-frame { display: none; }
+}
 .hero__cta { margin-top: 32px; }
 .hero__square, .hero__scroll { display: none; }
 
@@ -855,7 +826,7 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   }
   .hero__inner { max-width: 520px; }
   .hero__en { margin-top: 22px; font-size: 14px; }
-  .hero__lead { margin-top: 12px; }
+  .hero__lead { margin-top: 42px; }
   .hero__cta { margin-top: 40px; }
   .hero__square {
     display: block;
@@ -2145,13 +2116,10 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 .splash-on .phv,
 .splash-on .fu,
 .splash-on .hl > span,
-.splash-on .pb__ch,
-.splash-on .pb__base,
 .splash-on .pb__ink,
-.splash-on .pbi__word,
-.splash-on .pbi__rule,
-.splash-on .pbi__tick,
-.splash-on .pbi::after { animation-play-state: paused; }
+.splash-on .pbi,
+.splash-on .hero__en-ch,
+.splash-on .hero__lead-frame { animation-play-state: paused; }
 
 /* ============ 汎用ユーティリティ ============ */
 .stack-24 > * + * { margin-top: 24px; }
