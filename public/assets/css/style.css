@@ -36,6 +36,8 @@
 
   --fjp: "Noto Sans JP", "Hiragino Sans", "Yu Gothic", sans-serif;
   --flt: "Barlow", system-ui, -apple-system, sans-serif;
+  /* 見出し用。ロゴの角ばった骨格に寄せた四角いグロテスク */
+  --fdisp: "Saira", "Barlow", system-ui, -apple-system, sans-serif;
 
   --shadow-hover: 0 6px 20px rgba(26, 26, 26, .10);
 
@@ -439,6 +441,16 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 @keyframes phrev { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
 @keyframes blink { 0%, 100% { opacity: .35 } 50% { opacity: 1 } }
 
+/* キャッチコピー：1文字ずつ置く／赤いスラッシュを走らせて黒へ変える */
+@keyframes pb-in { to { opacity: 1; transform: none; } }
+/* 62%→6% は「赤が左端に差しかかった所」から「右端を抜け切った所」まで。
+   0→100% で振ると前後に赤が見えない間ができ、走っている時間が半分になる。 */
+@keyframes pb-slash {
+  0%   { opacity: 1; background-position: 62% 0; }
+  100% { opacity: 1; background-position: 6% 0; }
+}
+@keyframes pb-base-out { to { opacity: 0; } }
+
 /* ヒーローの白ロゴ：赤いバーが左→右に走り抜け、その跡からロゴが現れる。
    バーが右へ畳まれる区間（55%〜100%＝0.54s）を linear にし、
    同じ長さ・同じ linear でロゴのクリップを開くことで、
@@ -482,6 +494,9 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: .01ms !important;
+    /* 遅らせたままだと、動きを消しても「出てくるまで待たされる」ことに変わりがない。
+       負の遅延で最初から終わった状態にする。 */
+    animation-delay: -1ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: .01ms !important;
     scroll-behavior: auto !important;
@@ -681,7 +696,7 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   height: auto;
   filter: drop-shadow(0 2px 8px rgba(10, 30, 60, .6)) drop-shadow(0 0 20px rgba(10, 30, 60, .45));
   clip-path: inset(0 100% 0 0);
-  animation: logo-reveal .54s linear 1.51s forwards;
+  animation: logo-reveal .54s linear 6.26s forwards;
 }
 .hero__logo-bar {
   position: absolute;
@@ -689,29 +704,98 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   background: var(--red);
   transform: scaleX(0);
   transform-origin: left center;
-  animation: logo-swipe 1.2s .85s both;
+  animation: logo-swipe 1.2s 5.6s both;
 }
 
 .hero__body { padding-block: 40px 56px; }
-.hero__title {
-  margin: 0;
-  font: 700 clamp(30px, 8vw, 40px)/1.5 var(--fjp);
-  letter-spacing: .02em;
+.hero__title { margin: 0; }
+
+/* ---- キャッチコピー「PLAY BEYOND.」----
+   白い背景に、白い文字を1文字ずつ置いていき（うっすら陰で見える）、
+   少し置いてから赤いスラッシュが左→右に抜け、通った先が黒に変わる。
+   ・pb__base … 白い文字。1文字ずつ出す担当
+   ・pb__ink  … 同じ文字を重ね、背景グラデーションを文字型に切り抜いて
+                「黒｜赤いスラッシュ｜白」を横に流す担当
+   2枚重ねているので、字送りは必ず同じ字形・同じ大きさにしておくこと。 */
+.pb {
+  position: relative;
+  display: block;
+  font: 700 clamp(34px, 6.4vw, 58px)/1.12 var(--fdisp);
+  letter-spacing: .012em;
+  white-space: nowrap;
+}
+.pb__base, .pb__ink { display: block; }
+.pb__ink { position: absolute; inset: 0; }
+
+.pb__ch {
+  display: inline-block;
+  color: #fff;
+  text-shadow: 0 2px 6px rgba(26, 26, 26, .26), 0 0 1px rgba(26, 26, 26, .38);
+  opacity: 0;
+  transform: translateY(.16em);
+  animation: pb-in .5s var(--ease) both;
+  animation-delay: calc(.15s + var(--i) * .085s);
+}
+
+/* 黒｜赤｜白 の帯を、文字の形に切り抜いて右から左へ流す。
+   ＝見た目は赤いスラッシュが左から右へ走り、通った所が黒く変わる。 */
+.pb__ink {
+  background-image: linear-gradient(100deg,
+    var(--ink) 0 40%,
+    var(--red) 40% 45.5%,
+    #fff 45.5% 100%);
+  background-size: 300% 100%;
+  background-position: 100% 0;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  opacity: 0;
+  /* var(--ease) は減速が強すぎてスラッシュが一瞬で走り抜けるので、
+     ここは行き渡る速さが揃う曲線を使う */
+  animation: pb-slash 1.4s cubic-bezier(.45, .05, .4, 1) 2.05s forwards;
+}
+/* 走り終わったら白い下地を消す（黒い文字に陰が残らないように） */
+.pb__base { animation: pb-base-out .4s linear 3.5s forwards; }
+
+/* 動きを減らす設定では、2枚重ねをやめて黒い文字だけを最初から出す。
+   （このブロックは .pb の定義より後に置くこと。同じ詳細度なので順序で決まる） */
+@media (prefers-reduced-motion: reduce) {
+  .pb__base { display: none; }
+  .pb__ink {
+    opacity: 1;
+    background-image: none;
+    color: var(--ink);
+    -webkit-text-fill-color: var(--ink);
+  }
+}
+/* 切り抜きが使えない環境では、スラッシュは出さず黒い文字だけを出す */
+@supports not ((-webkit-background-clip: text) or (background-clip: text)) {
+  .pb__ink { background-image: none; color: var(--ink); -webkit-text-fill-color: var(--ink); }
+}
+
+.hero__sub {
+  display: block;
+  margin-top: .55em;
+  font: 700 clamp(19px, 3.6vw, 26px)/1.6 var(--fjp);
+  letter-spacing: .03em;
   color: var(--ink);
 }
 .hero__en {
-  margin: 20px 0 0;
-  font: 700 13px/1.4 var(--flt);
-  letter-spacing: .1em;
-  color: var(--red);
+  margin: 18px 0 0;
+  font: 600 13px/1.5 var(--fdisp);
+  letter-spacing: .14em;
+  color: var(--ink);
 }
 .hero__lead {
-  margin: 20px 0 0;
-  max-width: 29em;
+  margin: 22px 0 0;
+  max-width: 30em;
   font: 400 15px/2 var(--fjp);
   letter-spacing: .03em;
   color: var(--gray-800);
 }
+.hero__lead p { margin: 0; }
+.hero__lead p + p { margin-top: .9em; }
 .hero__cta { margin-top: 32px; }
 .hero__square, .hero__scroll { display: none; }
 
@@ -731,9 +815,8 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
     position: relative;
     padding: 196px 0 130px;
   }
-  .hero__inner { max-width: 470px; }
-  .hero__title { font-size: 52px; }
-  .hero__en { margin-top: 24px; font-size: 15px; }
+  .hero__inner { max-width: 520px; }
+  .hero__en { margin-top: 22px; font-size: 14px; }
   .hero__lead { margin-top: 24px; }
   .hero__cta { margin-top: 40px; }
   .hero__square {
@@ -1825,6 +1908,9 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 .splash-on .phv,
 .splash-on .fu,
 .splash-on .hl > span,
+.splash-on .pb__ch,
+.splash-on .pb__base,
+.splash-on .pb__ink,
 .splash-on .hero__logo img,
 .splash-on .hero__logo-bar { animation-play-state: paused; }
 

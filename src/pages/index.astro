@@ -3,6 +3,11 @@ import Base from '../layouts/Base.astro';
 import TournamentCard from '../components/TournamentCard.astro';
 import { TOURNAMENTS, TODAY } from '../data/tournaments.js';
 
+// キャッチコピーは1文字ずつ出すので、文字に分解しておく。
+// 空白はそのままだと潰れるので、幅を持つ空白に置き換える。
+const CATCH = 'PLAY BEYOND.';
+const CATCH_CHARS = [...CATCH];
+
 const title = "鳥取市テニス協会｜つなぐ、広がる、テニスの輪。";
 const description = "鳥取市テニス協会の公式サイト。年間19の大会と毎週水曜日のテニス教室を運営しています。大会情報・お知らせ・大会カレンダー・コート案内をご覧いただけます。";
 
@@ -34,15 +39,30 @@ const upcomingTournaments = TOURNAMENTS.filter((t) => t.status !== 'past');
     <div class="container hero__body">
       <div class="hero__inner">
         <h1 class="hero__title">
-          <span class="hl"><span>つなぐ、広がる、</span></span>
-          <span class="hl"><span style="animation-delay:.14s">テニスの輪。</span></span>
+          {/* 1文字ずつ白で出したあと、赤いスラッシュが左から右へ抜けて黒に変わる。
+              下の pb__base（白）と pb__ink（黒＋スラッシュ）を重ねて作っている。 */}
+          <span class="pb">
+            <span class="visually-hidden">{CATCH}</span>
+            <span class="pb__base" aria-hidden="true">
+              {CATCH_CHARS.map((c, i) => (
+                <span class="pb__ch" style={`--i:${i}`}>{c === ' ' ? ' ' : c}</span>
+              ))}
+            </span>
+            <span class="pb__ink" aria-hidden="true">{CATCH}</span>
+          </span>
+          <span class="hero__sub fu" style="animation-delay:3.7s">テニスで、もっとつながろう。</span>
         </h1>
-        <p class="hero__en fu" style="animation-delay:.4s">TOTTORI-CITY TENNIS ASSOCIATION</p>
-        <p class="hero__lead fu" style="animation-delay:.55s">年間19の大会と、毎週水曜日のテニス教室。鳥取市テニス協会は、市内でテニスを楽しむすべての人のための団体です。はじめての方も、久しぶりの方も、コートでお待ちしています。</p>
-        <a class="btn btn--primary hero__cta fu" style="animation-delay:.7s" href="about.html">協会について見る <span class="aw">→</span></a>
+        <p class="hero__en fu" style="animation-delay:4.1s">TOTTORI-CITY TENNIS ASSOCIATION</p>
+        <div class="hero__lead fu" style="animation-delay:4.6s">
+          <p>年間を通じた大会の開催と、毎週水曜日のテニス教室。鳥取市テニス協会は、地域や世代、経験をこえて、テニスを楽しむ人が集い、つながる場所をつくっています。</p>
+          <p>はじめてラケットを握る人も。久しぶりにコートへ戻る人も。もっと上を目指したい人も。</p>
+          <p>それぞれの楽しみ方で、テニスをもっと身近に。</p>
+          <p>テニスを楽しみたい、すべての人へ。コートでお待ちしています。</p>
+        </div>
+        <a class="btn btn--primary hero__cta fu" style="animation-delay:5.2s" href="about.html">協会について見る <span class="aw">→</span></a>
       </div>
     </div>
-    <div class="hero__square fu" style="animation-delay:1.05s" aria-hidden="true"></div>
+    <div class="hero__square fu" style="animation-delay:5.6s" aria-hidden="true"></div>
     <div class="hero__scroll" aria-hidden="true">
       <span>SCROLL</span>
       <span class="blink"></span>
