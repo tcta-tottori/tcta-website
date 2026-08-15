@@ -472,6 +472,11 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   50%      { opacity: .45; transform: scale(.92); }
 }
 @keyframes news-all-in { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+/* 横並びから縦並びへ。右から滑り込んで、少し縮んだ状態から等倍に収まる。 */
+@keyframes tall-in {
+  from { opacity: 0; transform: translate3d(34px, 10px, 0) scale(.96); }
+  to   { opacity: 1; transform: none; }
+}
 
 /* キャッチコピー：薄く浮かび上がったあと、赤いスラッシュが走って黒へ変える。
    62%→6% は「赤が左端に差しかかった所」から「右端を抜け切った所」まで。
@@ -1018,11 +1023,11 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   color: rgba(255, 255, 255, .78);
   text-shadow: 0 1px 10px rgba(10, 20, 35, .6);
 }
-/* 写真の上でも埋もれないよう、赤のまま少し明るくして陰を付ける */
+/* 写真の上に載るので白。埋もれないよう陰を付ける。 */
 .tcard__ico {
   width: 14px; height: 14px;
-  color: var(--red);
-  filter: brightness(1.28) drop-shadow(0 1px 6px rgba(10, 20, 35, .75));
+  color: #fff;
+  filter: drop-shadow(0 1px 8px rgba(10, 20, 35, .8));
 }
 /* ロゴのある会場（ヤマタスポーツパーク）は文字の代わりにロゴを出す。
    白インクの透過 PNG なので、写真の上でもそのまま読める。 */
@@ -1045,6 +1050,61 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   justify-content: space-between;
   gap: 12px;
 }
+/* カルーセルの位置を示す点。押すとその大会まで送る。 */
+.cdots {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 20px;
+}
+.cdot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--gray-300);
+  transition: background .3s ease, width .3s ease;
+}
+.cdot:hover { background: var(--gray-600); }
+.cdot.is-active { width: 22px; border-radius: 9999px; background: var(--red); }
+@media (prefers-reduced-motion: reduce) { .cdot { transition: none; } }
+
+/* VIEW ALL で開く全件表示。横並びだったカードが、縦に並び直して出てくる。 */
+.tall {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  background: var(--white);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  animation: news-all-in .3s var(--ease) both;
+}
+.tall[hidden] { display: none; }
+.tall__panel { min-height: 100%; padding-bottom: 64px; }
+.tall__head {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding-block: 28px 20px;
+  background: var(--white);
+  border-bottom: 1px solid var(--gray-200);
+}
+.tall__body { padding-top: 28px; }
+.tall__list {
+  display: grid;
+  gap: 16px;
+}
+@media (min-width: 768px) { .tall__list { grid-template-columns: repeat(2, 1fr); gap: 20px; } }
+@media (min-width: 1200px) { .tall__list { grid-template-columns: repeat(3, 1fr); } }
+/* 横から流れ込んで縦に落ち着く。順番に遅らせて、並び替わって見えるようにする。 */
+.tall__item { animation: tall-in .5s var(--ease) both; animation-delay: calc(var(--i) * .06s); }
+.tall__item .tcard { width: 100%; max-width: none; }
+@media (prefers-reduced-motion: reduce) { .tall, .tall__item { animation: none; } }
+.tall__more { margin-top: 32px; }
+
 .tcard__go {
   display: inline-flex;
   align-items: center;
@@ -1305,6 +1365,89 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   font: 400 13px/1.5 var(--fjp);
   color: var(--gray-500);
 }
+
+/* ---- 月ごとのカレンダー（大会情報ページ）----
+   大会のある月だけを並べ、開催日のマスを赤くする。
+   マスの下にその月の大会を出すので、カレンダーを見たまま中身も分かる。 */
+.cal {
+  display: grid;
+  gap: 20px;
+  margin-top: 32px;
+}
+@media (min-width: 640px) { .cal { grid-template-columns: repeat(2, 1fr); gap: 24px; } }
+@media (min-width: 1024px) { .cal { grid-template-columns: repeat(3, 1fr); margin-top: 48px; } }
+
+.cal__month {
+  background: var(--white);
+  border: 1px solid var(--gray-200);
+  padding: 20px;
+}
+.cal__head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--gray-200);
+}
+.cal__num { font: 700 30px/1 var(--flt); letter-spacing: .02em; color: var(--ink); }
+.cal__meta { display: flex; flex-direction: column; gap: 3px; }
+.cal__en { font: 700 11px/1 var(--flt); letter-spacing: .14em; color: var(--red); }
+.cal__year { font: 500 11px/1 var(--flt); letter-spacing: .08em; color: var(--gray-500); }
+.cal__count { margin-left: auto; font: 500 12px/1 var(--fjp); color: var(--gray-500); }
+
+.cal__grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 3px;
+  margin-top: 14px;
+}
+.cal__dow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-bottom: 4px;
+  font: 700 10px/1 var(--fjp);
+  letter-spacing: .04em;
+  color: var(--gray-500);
+}
+.cal__dow.is-sun { color: var(--red); }
+.cal__dow.is-sat { color: #3B6FB5; }
+.cal__cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 1 / 1;
+  border-radius: 3px;
+  font: 500 12px/1 var(--flt);
+  color: var(--gray-800);
+}
+.cal__cell--empty { visibility: hidden; }
+.cal__cell.is-sun { color: var(--red); }
+.cal__cell.is-sat { color: #3B6FB5; }
+/* 開催日 */
+.cal__cell.is-on {
+  background: var(--red);
+  color: #fff;
+  font-weight: 700;
+}
+
+.cal__list { margin-top: 16px; display: flex; flex-direction: column; }
+.cal__item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-top: 1px solid var(--gray-200);
+}
+.cal__item-day { flex: none; font: 700 15px/1 var(--flt); color: var(--red); }
+.cal__item-body { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.cal__item-name {
+  font: 700 12px/1.5 var(--fjp);
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+.cal__item-sub { font: 400 11px/1.5 var(--fjp); color: var(--gray-500); }
+.cal__item-badge { margin-left: auto; flex: none; min-width: 0; height: 22px; font-size: 11px; padding: 0 8px; }
 
 /* ---- コート案内の地図 ----
    施設名でGoogleマップに引いてもらう埋め込み。上のボタンで施設を切り替える。

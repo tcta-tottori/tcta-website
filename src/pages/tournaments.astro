@@ -1,5 +1,6 @@
 ---
 import Base from '../layouts/Base.astro';
+import ScheduleCalendar from '../components/ScheduleCalendar.astro';
 
 const title = "大会情報｜鳥取市テニス協会";
 const description = "令和8年度（2026年度）に鳥取市テニス協会が主催・主管する全19大会の一覧。エントリー締切・会場・登録区分を掲載しています。";
@@ -26,6 +27,29 @@ const description = "令和8年度（2026年度）に鳥取市テニス協会が
         </div>
       </div>
       <p class="page-lead fu" style="animation-delay:.15s">令和8年度（2026年度）に鳥取市テニス協会が主催・主管する大会の一覧です。エントリー締切、会場、必要な登録区分をあわせて掲載しています。日程は天候等により変更になる場合があります。</p>
+    </div>
+  </section>
+
+  <!-- ============ 月ごとのカレンダー ============ -->
+  <section class="section section--gray" id="calendar" aria-labelledby="cal-title">
+    <span class="ghost" aria-hidden="true">CALENDAR</span>
+    <div class="container">
+      <div class="sec-head rv">
+        <div class="sec-head__row">
+          <span class="sec-head__mark" aria-hidden="true"></span>
+          <div>
+            <p class="sec-head__eyebrow">Calendar</p>
+            <h2 class="sec-head__title" id="cal-title">大会カレンダー</h2>
+          </div>
+        </div>
+      </div>
+      <p class="sec-head__lead rv">令和8年度の大会を月ごとに並べています。赤いマスが開催日です。年間の日程はGoogleカレンダーでも公開しています。</p>
+
+      <ScheduleCalendar />
+
+      <div class="btn-stack rv mt-40">
+        <a class="btn btn--primary" href="#calendar">Googleカレンダーに追加する <span class="aw">→</span></a>
+      </div>
     </div>
   </section>
 
@@ -240,7 +264,7 @@ const description = "令和8年度（2026年度）に鳥取市テニス協会が
 
       <div class="rv mt-40" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:20px">
         <a class="btn btn--outline" href="#">令和8年度 大会日程をダウンロード（PDF / 85.8KB）<span aria-hidden="true" class="text-red">↓</span></a>
-        <p style="margin:0;font:400 14px/1.8 var(--fjp);color:var(--gray-600)">大会日程はGoogleカレンダーでも公開しています。<a class="ghost-link" href="index.html#schedule" style="border-bottom:1px solid var(--gray-300)">カレンダーに追加する</a></p>
+        <p style="margin:0;font:400 14px/1.8 var(--fjp);color:var(--gray-600)">大会日程はGoogleカレンダーでも公開しています。<a class="ghost-link" href="#calendar" style="border-bottom:1px solid var(--gray-300)">カレンダーに追加する</a></p>
       </div>
 
       <div class="rv" style="margin-top:64px">

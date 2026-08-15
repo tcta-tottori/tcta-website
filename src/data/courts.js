@@ -32,13 +32,6 @@ export const COURTS = [
     query: '井原公園テニスコート 鳥取市興南町174',
     href: 'lesson.html',
   },
-  {
-    name: '鳥取産業体育館・鳥取市民体育館',
-    short: '体育館',
-    note: '冬季の室内大会・テニス祭りの会場（住所は公開前に確認）',
-    query: '鳥取産業体育館',
-    href: 'tennis-day.html',
-  },
 ];
 
 /** 埋め込み地図のURL（APIキー不要の検索埋め込み） */

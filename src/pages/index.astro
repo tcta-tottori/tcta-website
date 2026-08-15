@@ -16,7 +16,7 @@ const EN = 'TOTTORI-CITY TENNIS ASSOCIATION';
 const EN_CHARS = [...EN];
 
 const title = "鳥取市テニス協会｜つなぐ、広がる、テニスの輪。";
-const description = "鳥取市テニス協会の公式サイト。年間19の大会と毎週水曜日のテニス教室を運営しています。大会情報・お知らせ・大会カレンダー・コート案内をご覧いただけます。";
+const description = "鳥取市テニス協会の公式サイト。年間19の大会と毎週水曜日のテニス教室を運営しています。大会情報・お知らせ・コート案内をご覧いただけます。";
 
 // マーキーは中身を2組並べ、半分進んだところで巻き戻して継ぎ目なく回している。
 // 1組が画面幅に足りないと隙間が空くので、1組あたり8枚以上になるまで並べ直す。
@@ -105,9 +105,9 @@ const upcomingTournaments = TOURNAMENTS.filter((t) => t.status !== 'past');
         </div>
         <div class="sec-bar__aside">
           <span class="hint">◀ 終了した大会　／　今後の大会 ▶</span>
-          <a class="ghost-link view-all" href="tournaments.html">
+          <button class="ghost-link view-all" type="button" data-tall-open aria-expanded="false" aria-controls="tournaments-all">
             <span class="view-all__label">VIEW ALL</span><span class="sqbtn">→</span>
-          </a>
+          </button>
           <span class="carousel__nav">
             <button class="circle-btn" type="button" data-carousel-prev aria-label="前の大会へ">←</button>
             <button class="circle-btn circle-btn--solid" type="button" data-carousel-next aria-label="次の大会へ">→</button>
@@ -130,6 +130,36 @@ const upcomingTournaments = TOURNAMENTS.filter((t) => t.status !== 'past');
         <!-- 今後の大会 -->
         {upcomingTournaments.map((t) => <TournamentCard tournament={t} />)}
 
+      </div>
+
+      {/* いま何枚目を見ているか。点を押すとその大会まで送る。 */}
+      <div class="cdots rv" role="tablist" aria-label="大会カードの位置">
+        {TOURNAMENTS.map((t, i) => (
+          <button class="cdot" type="button" data-cdot={i} aria-label={`${t.date} ${t.title}`}></button>
+        ))}
+      </div>
+    </div>
+
+    {/* VIEW ALL で開く全件表示。横並びのカードが縦に並び直して出てくる。 */}
+    <div class="tall" id="tournaments-all" hidden>
+      <div class="tall__panel" role="dialog" aria-modal="true" aria-labelledby="tall-title">
+        <div class="container tall__head">
+          <div>
+            <p class="sec-head__eyebrow">Tournament</p>
+            <h2 class="sec-head__title" id="tall-title">大会情報</h2>
+          </div>
+          <button class="news-all__close" type="button" data-tall-close aria-label="大会情報を閉じる">
+            <span aria-hidden="true">×</span>
+          </button>
+        </div>
+        <div class="container tall__body">
+          <div class="tall__list">
+            {TOURNAMENTS.map((t, i) => (
+              <div class="tall__item" style={`--i:${i}`}><TournamentCard tournament={t} /></div>
+            ))}
+          </div>
+          <a class="btn btn--outline tall__more" href="tournaments.html">年間の大会日程・カレンダーを見る <span class="aw">→</span></a>
+        </div>
       </div>
     </div>
   </section>
@@ -193,90 +223,24 @@ const upcomingTournaments = TOURNAMENTS.filter((t) => t.status !== 'past');
     </div>
   </section>
 
-  <!-- ============ 大会カレンダー ============ -->
-  <section class="section section--gray section--sticky-head" id="schedule" aria-labelledby="schedule-title">
-    <span class="ghost" aria-hidden="true">SCHEDULE</span>
-    <span class="deco-circle deco-circle--a" aria-hidden="true"></span>
-    <span class="deco-circle deco-circle--b" aria-hidden="true"></span>
-    <div class="container">
-      <div class="sec-head rv">
-        <div class="sec-head__row">
-          <span class="sec-head__mark" aria-hidden="true"></span>
-          <div>
-            <p class="sec-head__eyebrow">Schedule</p>
-            <h2 class="sec-head__title" id="schedule-title">大会カレンダー</h2>
-          </div>
-        </div>
-      </div>
-      <p class="sec-head__lead rv">年間の大会日程はGoogleカレンダーで公開しています。ご自分のカレンダーに追加しておくと、予定の変更もそのまま反映されます。</p>
-
-      <div class="split">
-        <div class="rv">
-          <ul class="sch-list">
-            <li><a class="sch-item sch-item--next" href="tournaments.html">
-              <span class="date-chip"><span class="date-chip__md">08.16</span><span class="date-chip__dow">SUN</span></span>
-              <span class="sch-item__text">
-                <span class="sch-item__title">サマーミックスダブルス</span>
-                <span class="sch-item__place">ヤマタスポーツパーク</span>
-              </span>
-            </a></li>
-            <li><a class="sch-item" href="tournaments.html">
-              <span class="date-chip"><span class="date-chip__md">08.30</span><span class="date-chip__dow">SUN</span></span>
-              <span class="sch-item__text">
-                <span class="sch-item__title">第49回ダンロップテニストーナメント</span>
-                <span class="sch-item__place">ヤマタスポーツパーク</span>
-              </span>
-            </a></li>
-            <li><a class="sch-item" href="tennis-day.html">
-              <span class="date-chip"><span class="date-chip__md">10.12</span><span class="date-chip__dow">MON</span></span>
-              <span class="sch-item__text">
-                <span class="sch-item__title">鳥取市テニス協会 テニス祭り</span>
-                <span class="sch-item__place">鳥取産業体育館</span>
-              </span>
-            </a></li>
-            <li><a class="sch-item" href="tournaments.html">
-              <span class="date-chip"><span class="date-chip__md">10.18</span><span class="date-chip__dow">SUN</span></span>
-              <span class="sch-item__text">
-                <span class="sch-item__title">第30回エネトピア杯ミックスダブルス</span>
-                <span class="sch-item__place">ヤマタスポーツパーク</span>
-              </span>
-            </a></li>
-            <li><a class="sch-item" href="tournaments.html">
-              <span class="date-chip"><span class="date-chip__md">11.07</span><span class="date-chip__dow">SAT</span></span>
-              <span class="sch-item__text">
-                <span class="sch-item__title">第71回鳥取健康テニス（秋期）</span>
-                <span class="sch-item__place">ヤマタスポーツパーク</span>
-              </span>
-            </a></li>
-          </ul>
-          <div class="btn-stack">
-            <a class="btn btn--primary" href="#schedule">Googleカレンダーに追加する <span class="aw">→</span></a>
-            <a class="btn btn--outline" href="tournaments.html">年間の大会日程を見る</a>
-          </div>
-        </div>
-
-        <div class="rv" style="transition-delay:.1s">
-          <div class="embed embed--calendar">
-            <span class="embed__label">Googleカレンダー埋め込み（月表示・大会日程のみ）</span>
-            <span class="embed__note">title属性・loading="lazy" 必須／モバイルでは非表示</span>
-          </div>
-          <p class="embed-caption">パソコンはカレンダー右下の「＋Googleカレンダー」から、スマートフォンは「Googleカレンダーに追加する」ボタンから追加できます（Googleアカウントでのログインが必要です）。追加しておくと、日程の変更や中止も自動で反映されます。</p>
-        </div>
-      </div>
-    </div>
-  </section>
-
   <!-- ============ リンク集 ============ -->
   <section class="section" id="links" aria-labelledby="links-title">
     <span class="ghost" aria-hidden="true">LINKS</span>
     <div class="container">
-      <div class="sec-head rv">
-        <div class="sec-head__row">
-          <span class="sec-head__mark" aria-hidden="true"></span>
-          <div>
-            <p class="sec-head__eyebrow">Links</p>
-            <h2 class="sec-head__title" id="links-title">リンク集</h2>
+      <div class="sec-bar rv">
+        <div class="sec-head">
+          <div class="sec-head__row">
+            <span class="sec-head__mark" aria-hidden="true"></span>
+            <div>
+              <p class="sec-head__eyebrow">Links</p>
+              <h2 class="sec-head__title" id="links-title">リンク集</h2>
+            </div>
           </div>
+        </div>
+        <div class="sec-bar__aside">
+          <a class="ghost-link view-all" href="links.html">
+            <span class="view-all__label">VIEW ALL</span><span class="sqbtn">→</span>
+          </a>
         </div>
       </div>
       {/* 2段組み。上段（テニス協会・連盟のHP）は右から左へ、下段（施設・クラブ・

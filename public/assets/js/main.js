@@ -187,13 +187,15 @@
   /* ---------- 押したときの波紋 ----------
      端末まかせの青い網掛けの代わりに、押した所へ赤い雫を落として広げる。
      押せるものだけに付け、要素からはみ出さないよう .ripple-host で刈り込む。 */
-  var RIPPLE_SEL = 'a, button, .chip, .tcard, .link-card, .news-row, .sch-item, .court-item, [role="button"]';
+  // 押せるものだけ。遷移先のない <a>（結果待ちのカードなど）や、
+  // マーキーの複製（aria-hidden の span）には出さない。
+  var RIPPLE_SEL = 'a[href], button:not([disabled]), [role="button"]';
 
   function initRipple() {
     if (reduceMotion) return;
     document.addEventListener('pointerdown', function (e) {
       var host = e.target.closest(RIPPLE_SEL);
-      if (!host || host.hasAttribute('disabled')) return;
+      if (!host || host.closest('[aria-hidden="true"]')) return;
 
       // 波紋は押した所を中心に、要素の隅まで届く大きさにする
       var box = host.getBoundingClientRect();
@@ -240,14 +242,14 @@
     window.addEventListener('scroll', off, { passive: true });
   }
 
-  /* ---------- お知らせの全件表示 ----------
-     VIEW ALL（と5件目の「すべて見る」）で開き、右上の × か Esc で閉じる。 */
-  function initNewsAll() {
-    var panel = document.getElementById('news-all');
+  /* ---------- 全画面表示（お知らせ・大会情報） ----------
+     VIEW ALL で開き、右上の × か Esc で閉じる。開いている間は背面を止める。 */
+  function initFullPanel(id, openSel, closeSel) {
+    var panel = document.getElementById(id);
     if (!panel) return;
 
-    var openers = document.querySelectorAll('[data-news-open]');
-    var closer = panel.querySelector('[data-news-close]');
+    var openers = document.querySelectorAll(openSel);
+    var closer = panel.querySelector(closeSel);
     var last = null;
 
     var setOpen = function (open) {
@@ -258,6 +260,12 @@
       });
       if (open) {
         panel.scrollTop = 0;
+        // 開くたびに並び直しの動きを流し直す
+        panel.querySelectorAll('[style*="--i"]').forEach(function (el) {
+          el.style.animation = 'none';
+          void el.offsetWidth;
+          el.style.animation = '';
+        });
         if (closer) closer.focus();
       } else if (last) {
         last.focus();
@@ -393,6 +401,34 @@
         track.scrollBy({ left: step(), behavior: reduceMotion ? 'auto' : 'smooth' });
       });
     });
+
+    /* いま何枚目を見ているかを点で示す。押すとその大会まで送る。 */
+    var dots = document.querySelectorAll('[data-cdot]');
+    if (dots.length) {
+      var cards = track.querySelectorAll('.tcard');
+      var mark = function () {
+        // 左端にいちばん近いカードを「いま見ている1枚」とみなす
+        var pad = parseFloat(getComputedStyle(track).scrollPaddingInlineStart) || 0;
+        var here = track.scrollLeft + pad;
+        var near = 0;
+        var best = Infinity;
+        for (var i = 0; i < cards.length; i++) {
+          var d = Math.abs(cards[i].offsetLeft - here);
+          if (d < best) { best = d; near = i; }
+        }
+        for (var j = 0; j < dots.length; j++) dots[j].classList.toggle('is-active', j === near);
+      };
+      track.addEventListener('scroll', mark, { passive: true });
+      window.addEventListener('resize', mark);
+      Array.prototype.forEach.call(dots, function (dot, i) {
+        dot.addEventListener('click', function () {
+          if (!cards[i]) return;
+          var pad = parseFloat(getComputedStyle(track).scrollPaddingInlineStart) || 0;
+          track.scrollTo({ left: Math.max(0, cards[i].offsetLeft - pad), behavior: reduceMotion ? 'auto' : 'smooth' });
+        });
+      });
+      mark();
+    }
 
     // 初期表示：TODAY の線を左に置く。
     // scroll-padding のぶんだけ手前を空けるので、左には終了した大会の端が覗き、
@@ -559,7 +595,8 @@
     initHeader();
     initRipple();
     initPressed();
-    initNewsAll();
+    initFullPanel('news-all', '[data-news-open]', '[data-news-close]');
+    initFullPanel('tournaments-all', '[data-tall-open]', '[data-tall-close]');
     initCourtMap();
     initCarousel();
     initFilters();

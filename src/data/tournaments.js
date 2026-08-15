@@ -30,7 +30,10 @@
 //     URL でも、サイト内のページ（例 'tournaments.html#draw'）でもよい。
 
 // カルーセル中央の「TODAY」マーカー。終了した大会と今後の大会の境目に入る。
-export const TODAY = '2026.08.13';
+// ビルドした日の日本時間。公開のたびに更新されるので、手で書き換えない。
+export const TODAY = new Intl.DateTimeFormat('ja-JP', {
+  timeZone: 'Asia/Tokyo', year: 'numeric', month: '2-digit', day: '2-digit',
+}).format(new Date()).replace(/\//g, '.');
 
 export const STATUS = {
   past: { label: '終了', badge: 'badge--muted' },
