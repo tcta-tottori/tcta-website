@@ -28,16 +28,14 @@ const upcomingTournaments = TOURNAMENTS.filter((t) => t.status !== 'past');
 
   <!-- ============ ヒーロー ============ -->
   <section class="hero">
-    <div class="hero__media phv">
-      <img class="hero__photo" src="assets/img/hero.png" alt="青空の下、コートでバックハンドを打つ選手">
-      <div class="hero__scrim" aria-hidden="true"></div>
-      <div class="hero__logo" aria-hidden="true">
-        <img src="assets/img/logo-white.png" alt="">
-        <span class="hero__logo-bar"></span>
+    <div class="hero__media">
+      {/* 写真とベールだけを左から右へ払う。キャッチコピーは払いの対象に含めない
+          （含めると1文字ずつの登場が払いに隠れてしまう） */}
+      <div class="hero__shot phv">
+        <img class="hero__photo" src="assets/img/hero.png" alt="青空の下、コートでバックハンドを打つ選手">
+        <div class="hero__scrim" aria-hidden="true"></div>
       </div>
-    </div>
-    <div class="container hero__body">
-      <div class="hero__inner">
+      <div class="hero__copy">
         <h1 class="hero__title">
           {/* 1文字ずつ白で出したあと、赤いスラッシュが左から右へ抜けて黒に変わる。
               下の pb__base（白）と pb__ink（黒＋スラッシュ）を重ねて作っている。 */}
@@ -53,6 +51,10 @@ const upcomingTournaments = TOURNAMENTS.filter((t) => t.status !== 'past');
           <span class="hero__sub fu" style="animation-delay:3.7s">テニスで、もっとつながろう。</span>
         </h1>
         <p class="hero__en fu" style="animation-delay:4.1s">TOTTORI-CITY TENNIS ASSOCIATION</p>
+      </div>
+    </div>
+    <div class="container hero__body">
+      <div class="hero__inner">
         <div class="hero__lead fu" style="animation-delay:4.6s">
           <p>年間を通じた大会の開催と、毎週水曜日のテニス教室。鳥取市テニス協会は、地域や世代、経験をこえて、テニスを楽しむ人が集い、つながる場所をつくっています。</p>
           <p>はじめてラケットを握る人も。久しぶりにコートへ戻る人も。もっと上を目指したい人も。</p>

@@ -36,8 +36,8 @@
 
   --fjp: "Noto Sans JP", "Hiragino Sans", "Yu Gothic", sans-serif;
   --flt: "Barlow", system-ui, -apple-system, sans-serif;
-  /* 見出し用。ロゴの角ばった骨格に寄せた四角いグロテスク */
-  --fdisp: "Saira", "Barlow", system-ui, -apple-system, sans-serif;
+  /* 見出し用。幾何学的で字幅の広いサンセリフ（字間を広めに取って使う） */
+  --fdisp: "Jost", "Barlow", system-ui, -apple-system, sans-serif;
 
   --shadow-hover: 0 6px 20px rgba(26, 26, 26, .10);
 
@@ -451,20 +451,6 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 }
 @keyframes pb-base-out { to { opacity: 0; } }
 
-/* ヒーローの白ロゴ：赤いバーが左→右に走り抜け、その跡からロゴが現れる。
-   バーが右へ畳まれる区間（55%〜100%＝0.54s）を linear にし、
-   同じ長さ・同じ linear でロゴのクリップを開くことで、
-   「バーの左端が通過した所からロゴが出る」ように見せている。 */
-@keyframes logo-swipe {
-  0%   { transform: scaleX(0); transform-origin: left center; animation-timing-function: cubic-bezier(.7, 0, .25, 1); }
-  45%  { transform: scaleX(1); transform-origin: left center; }
-  55%  { transform: scaleX(1); transform-origin: right center; animation-timing-function: linear; }
-  100% { transform: scaleX(0); transform-origin: right center; }
-}
-@keyframes logo-reveal {
-  from { clip-path: inset(0 100% 0 0); }
-  to   { clip-path: inset(0 0 0 0); }
-}
 
 .fu { animation: fadeup .8s var(--ease) both; }
 .hl { display: block; overflow: hidden; padding-bottom: .08em; margin-bottom: -.08em; }
@@ -666,6 +652,16 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   overflow: hidden;
   border-bottom-left-radius: 80px;
 }
+/* 写真とベール。払いのアニメーション（.phv）はここに掛ける */
+.hero__shot { position: absolute; inset: 0; }
+/* 写真の上に置くキャッチコピー。下からの白いぼかしで黒い文字を読ませる */
+.hero__copy {
+  position: absolute;
+  left: var(--gutter);
+  right: var(--gutter);
+  bottom: 22px;
+  z-index: 1;
+}
 .hero__media img.hero__photo {
   width: 100%; height: 100%;
   object-fit: cover;
@@ -678,34 +674,17 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
     /* 上：ヘッダーの文字を読ませるための縦グラデーション（写真は透けたまま） */
     linear-gradient(180deg, rgba(255, 255, 255, .62) 0%, rgba(255, 255, 255, .22) 55%, rgba(255, 255, 255, 0) 100%)
       top / 100% calc(var(--header-h) + 32px) no-repeat,
-    /* 下：白ロゴが白いウェアに溶けないよう、足元だけ落とす */
-    linear-gradient(0deg, rgba(14, 36, 62, .56) 0%, rgba(14, 36, 62, .3) 20%, rgba(14, 36, 62, .1) 36%, rgba(14, 36, 62, 0) 52%),
+    /* 下：キャッチコピーを載せる帯。写真が下へいくほど白へ溶け、
+       黒い文字をそのまま読ませる（面で覆わず、下端からの一方向で自然に見せる） */
+    linear-gradient(0deg,
+      rgba(255, 255, 255, .97) 0%,
+      rgba(255, 255, 255, .9) 16%,
+      rgba(255, 255, 255, .6) 30%,
+      rgba(255, 255, 255, 0) 50%),
     /* 左：本文側へのなじませ */
     linear-gradient(90deg, rgba(255, 255, 255, .55) 0%, rgba(255, 255, 255, 0) 24%);
 }
 
-/* 写真の右下に置く白ロゴ。赤いバーが左→右に走り、その通過跡から現れる */
-.hero__logo {
-  position: absolute;
-  right: 6%;
-  bottom: 6%;
-  width: min(64%, 300px);
-}
-.hero__logo img {
-  width: 100%;
-  height: auto;
-  filter: drop-shadow(0 2px 8px rgba(10, 30, 60, .6)) drop-shadow(0 0 20px rgba(10, 30, 60, .45));
-  clip-path: inset(0 100% 0 0);
-  animation: logo-reveal .54s linear 6.26s forwards;
-}
-.hero__logo-bar {
-  position: absolute;
-  inset: 0;
-  background: var(--red);
-  transform: scaleX(0);
-  transform-origin: left center;
-  animation: logo-swipe 1.2s 5.6s both;
-}
 
 .hero__body { padding-block: 40px 56px; }
 .hero__title { margin: 0; }
@@ -720,17 +699,19 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 .pb {
   position: relative;
   display: block;
-  font: 700 clamp(34px, 6.4vw, 58px)/1.12 var(--fdisp);
-  letter-spacing: .012em;
+  font: 700 clamp(27px, 6.4vw, 52px)/1.12 var(--fdisp);
+  letter-spacing: .06em;
   white-space: nowrap;
 }
 .pb__base, .pb__ink { display: block; }
 .pb__ink { position: absolute; inset: 0; }
 
+/* 影は付けない。文字の面だけを塗り替える平面的な表現にする。
+   出はじめは薄いグレー（＝白地の上でかろうじて見える）、
+   赤いスラッシュが通ったところから黒へ変わる。 */
 .pb__ch {
   display: inline-block;
-  color: #fff;
-  text-shadow: 0 2px 6px rgba(26, 26, 26, .26), 0 0 1px rgba(26, 26, 26, .38);
+  color: var(--gray-200);
   opacity: 0;
   transform: translateY(.16em);
   animation: pb-in .5s var(--ease) both;
@@ -740,10 +721,11 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 /* 黒｜赤｜白 の帯を、文字の形に切り抜いて右から左へ流す。
    ＝見た目は赤いスラッシュが左から右へ走り、通った所が黒く変わる。 */
 .pb__ink {
+  /* まだ通っていない側は下地と同じ薄いグレーにして、層の入れ替わりを見せない */
   background-image: linear-gradient(100deg,
     var(--ink) 0 40%,
     var(--red) 40% 45.5%,
-    #fff 45.5% 100%);
+    var(--gray-200) 45.5% 100%);
   background-size: 300% 100%;
   background-position: 100% 0;
   -webkit-background-clip: text;
@@ -776,16 +758,16 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 
 .hero__sub {
   display: block;
-  margin-top: .55em;
+  margin-top: .6em;
   font: 700 clamp(19px, 3.6vw, 26px)/1.6 var(--fjp);
-  letter-spacing: .03em;
+  letter-spacing: .08em;
   color: var(--ink);
 }
 .hero__en {
   margin: 18px 0 0;
   font: 600 13px/1.5 var(--fdisp);
-  letter-spacing: .14em;
-  color: var(--ink);
+  letter-spacing: .18em;
+  color: var(--red);
 }
 .hero__lead {
   margin: 22px 0 0;
@@ -809,11 +791,15 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
     max-height: none;
     border-radius: 0 0 0 280px;
   }
-  /* SCROLL インジケーター（right:26px / bottom:36px）とぶつからない位置に置く */
-  .hero__logo { right: 12%; bottom: 9%; width: min(56%, 420px); }
+  /* 左下の丸み（280px）を避けた位置に置く */
+  .hero__copy { left: 11%; right: 7%; bottom: 14%; }
+  /* キャッチコピーが写真側へ移ったぶん左が軽くなるので、上下中央に置き直す */
   .hero__body {
     position: relative;
-    padding: 196px 0 130px;
+    display: flex;
+    align-items: center;
+    min-height: 780px;
+    padding-block: 120px;
   }
   .hero__inner { max-width: 520px; }
   .hero__en { margin-top: 22px; font-size: 14px; }
@@ -1910,9 +1896,7 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 .splash-on .hl > span,
 .splash-on .pb__ch,
 .splash-on .pb__base,
-.splash-on .pb__ink,
-.splash-on .hero__logo img,
-.splash-on .hero__logo-bar { animation-play-state: paused; }
+.splash-on .pb__ink { animation-play-state: paused; }
 
 /* ============ 汎用ユーティリティ ============ */
 .stack-24 > * + * { margin-top: 24px; }
