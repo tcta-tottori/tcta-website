@@ -125,19 +125,29 @@
      触られたらそのぶん素直に動かし、手が離れて7秒ほど経ったらまた流し出す。
      カードは中身が2組並んでいるので、半分進んだところで戻せば継ぎ目なく回る。 */
   function initMarquee() {
-    var view = document.querySelector('.marquee');
-    var track = view && view.querySelector('.marquee__track');
-    if (!view || !track || reduceMotion) return;
+    if (reduceMotion) return;
+    Array.prototype.forEach.call(document.querySelectorAll('.marquee'), startMarquee);
+  }
+
+  /* 1段ぶんを流す。data-marquee-dir が 1 なら右から左、-1 なら左から右。 */
+  function startMarquee(view) {
+    var track = view.querySelector('.marquee__track');
+    if (!track) return;
 
     var SPEED = 50;       // px/秒
     var RESUME = 7000;    // 触ったあと、また流れ出すまで
+    var dir = Number(view.getAttribute('data-marquee-dir')) || 1;
     var half = 0;
     var holdUntil = 0;    // この時刻まではこちらから動かさない
     var hovering = false;
     var onScreen = true;
     var last = 0;
 
-    var measure = function () { half = track.scrollWidth / 2; };
+    var measure = function () {
+      half = track.scrollWidth / 2;
+      // 左へ流す段は、巻き戻せるよう後半の先頭から始める
+      if (dir < 0 && view.scrollLeft < 1) view.scrollLeft = half;
+    };
     measure();
     window.addEventListener('resize', measure);
 
@@ -162,7 +172,7 @@
       last = now;
       // タブを離れていた等で間が空いたフレームは、飛ばさず捨てる
       if (dt > 0 && dt < .1 && onScreen && !hovering && now >= holdUntil) {
-        view.scrollLeft += SPEED * dt;
+        view.scrollLeft += SPEED * dt * dir;
       }
       // 端に来たら半分ぶん入れ替える（見た目は同じなので継ぎ目が出ない）
       if (half > 0) {

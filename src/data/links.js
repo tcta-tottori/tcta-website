@@ -15,6 +15,11 @@
 //
 // ■ group
 //   links ページの見出し分け。GROUPS の並び順がそのままページの並び順になる。
+//
+// ■ row
+//   トップページのマーキーは2段組み。'assoc'（テニス協会・連盟のHP）が上段、
+//   'other'（施設・予約・クラブ・協賛など）が下段に並ぶ。上段は右から左へ、
+//   下段は左から右へ流れる。段を移したいときはこの値だけ書き換えればよい。
 
 export const GROUPS = [
   { id: 'official', title: '協会の公式アカウント' },
@@ -28,6 +33,7 @@ export const LINKS = [
   {
     group: 'official',
     name: '鳥取市テニス協会 LINE公式アカウント',
+    row: 'other',
     desc: '大会・教室のお知らせを配信中',
     url: 'https://lin.ee/sius2Li',
     banner: 'assets/img/banners/line-official.png',
@@ -35,6 +41,7 @@ export const LINKS = [
   {
     group: 'org',
     name: '鳥取県テニス協会',
+    row: 'assoc',
     desc: '県登録・県大会に関する情報はこちら',
     url: 'https://tottoritennis.sakura.ne.jp/wp/',
     banner: 'assets/img/banners/tottori-ken-tennis.png',
@@ -42,6 +49,7 @@ export const LINKS = [
   {
     group: 'org',
     name: 'JLTF鳥取県支部',
+    row: 'assoc',
     desc: '日本レディーステニス連盟の県支部',
     url: 'https://jltftottori.fc2.page/',
     banner: 'assets/img/banners/jltf-tottori.png',
@@ -49,6 +57,7 @@ export const LINKS = [
   {
     group: 'facility',
     name: 'とっとり施設予約サービス',
+    row: 'other',
     desc: '市内のテニスコートの予約はこちらから',
     url: 'https://p-kashikan.jp/tottori/',
     banner: 'assets/img/banners/tottori-yoyaku.jpg',
@@ -56,6 +65,7 @@ export const LINKS = [
   {
     group: 'facility',
     name: 'ヤマタスポーツパーク',
+    row: 'other',
     desc: '鳥取県立布勢総合運動公園（大会会場）',
     url: 'https://www.fuse-sportspark.com/',
     banner: 'assets/img/banners/yamata-sportspark.png',
@@ -63,6 +73,7 @@ export const LINKS = [
   {
     group: 'nearby',
     name: '米子市テニス協会',
+    row: 'assoc',
     desc: '鳥取県西部の大会情報',
     url: 'https://yonago-tta.sfnc.jp/index.html',
     banner: 'assets/img/banners/yonago-tennis.png',
@@ -70,6 +81,7 @@ export const LINKS = [
   {
     group: 'nearby',
     name: '京丹後市テニス協会',
+    row: 'assoc',
     desc: '京都府北部の大会情報',
     url: 'https://kyotangotennis.sakura.ne.jp/',
     banner: 'assets/img/banners/kyotango-tennis.png',
@@ -77,6 +89,7 @@ export const LINKS = [
   {
     group: 'nearby',
     name: '琴浦テニスクラブ',
+    row: 'other',
     desc: '東伯郡琴浦町のテニスクラブ',
     url: 'https://kotouratennisclub.1web.jp/',
     banner: 'assets/img/banners/kotoura-tc.png',
@@ -84,6 +97,7 @@ export const LINKS = [
   {
     group: 'sponsor',
     name: 'テニスショップ フラシーノ',
+    row: 'other',
     desc: '鳥取市南吉方のテニス専門店',
     url: 'https://frassino.jp/',
     banner: 'assets/img/banners/frassino.png',
@@ -91,11 +105,17 @@ export const LINKS = [
   {
     group: 'sponsor',
     name: '上海茶楼',
+    row: 'other',
     desc: '鳥取市の中国上海料理店',
     url: 'https://www.shanghai-charo.com/',
     banner: 'assets/img/banners/shanghai-charo.png',
   },
 ];
+
+/** トップページのマーキー上段（テニス協会・連盟のHP） */
+export const LINKS_ASSOC = LINKS.filter((l) => l.row === 'assoc');
+/** トップページのマーキー下段（施設・クラブ・協賛など） */
+export const LINKS_OTHER = LINKS.filter((l) => l.row !== 'assoc');
 
 // group ごとにまとめ直したもの（links ページで使う）。
 // 中身が空のグループは落とすので、LINKS を減らしても見出しだけ残らない。

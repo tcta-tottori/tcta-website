@@ -260,13 +260,13 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 }
 .sec-head__eyebrow {
   margin: 0;
-  font: 700 13px/1.4 var(--flt);
+  font: 700 13px/1.2 var(--flt);
   letter-spacing: .12em;
   color: var(--red);
   text-transform: uppercase;
 }
 .sec-head__title {
-  margin: 8px 0 0;
+  margin: 2px 0 0;
   font: 700 26px/1.4 var(--fjp);
   letter-spacing: .04em;
   color: var(--ink);
@@ -477,7 +477,7 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   z-index: 100;
   background: var(--white);
   /* 本文との境目に薄く細い黒線を引く（帯の白と地の白を分ける） */
-  border-bottom: 1px solid rgba(26, 26, 26, .14);
+  border-bottom: 1px solid rgba(26, 26, 26, .20);
   transition: box-shadow .3s ease;
 }
 .site-header.hsh { box-shadow: 0 1px 12px rgba(26, 26, 26, .10); }
@@ -491,8 +491,8 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   height: var(--header-h);
 }
 .site-header__logo { display: inline-flex; }
-.site-header__logo img { height: 27px; width: auto; }
-@media (min-width: 1024px) { .site-header__logo img { height: 35px; } }
+.site-header__logo img { height: 22px; width: auto; }
+@media (min-width: 1024px) { .site-header__logo img { height: 28px; } }
 
 .nav { display: none; }
 @media (min-width: 1024px) {
@@ -822,8 +822,8 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   flex: none;
   /* 次の大会が右端で少し覗く幅にしてある（初期表示の見え方に効く） */
   width: 68vw;
-  max-width: 357px;
-  aspect-ratio: 1 / 1;
+  max-width: 380px;
+  aspect-ratio: 3 / 2;
   scroll-snap-align: start;
   display: flex;
   flex-direction: column;
@@ -836,8 +836,8 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   transition: box-shadow .3s ease, transform .3s ease;
   cursor: pointer;
 }
-@media (min-width: 640px) { .tcard { width: 320px; padding: 20px; } }
-@media (min-width: 1024px) { .tcard { width: 357px; } }
+@media (min-width: 640px) { .tcard { width: 340px; padding: 20px; } }
+@media (min-width: 1024px) { .tcard { width: 380px; } }
 .tcard:hover { transform: translateY(-4px); box-shadow: var(--shadow-hover); color: inherit; }
 /* 遷移先が決まっていないカード（結果待ちなど） */
 .tcard--nolink { cursor: default; }
@@ -873,7 +873,7 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   color: #fff;
   text-shadow: 0 1px 10px rgba(10, 20, 35, .6);
   display: -webkit-box;
-  -webkit-line-clamp: 3;
+  -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
@@ -893,9 +893,22 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   color: rgba(255, 255, 255, .78);
   text-shadow: 0 1px 10px rgba(10, 20, 35, .6);
 }
+/* ロゴのある会場（ヤマタスポーツパーク）は文字の代わりにロゴを出す。
+   白インクの透過 PNG なので、写真の上でもそのまま読める。 */
+.tcard__venue-logo {
+  display: block;
+  /* .tcard__foot は縦並びの flex なので、指定しないと横いっぱいに伸びる */
+  align-self: flex-start;
+  width: auto;
+  height: 14px;
+  margin-top: 5px;
+  opacity: .9;
+  filter: drop-shadow(0 1px 10px rgba(10, 20, 35, .6));
+}
+@media (min-width: 1024px) { .tcard__venue-logo { height: 16px; } }
 .tcard__action {
-  margin-top: 14px;
-  padding-top: 12px;
+  margin-top: 10px;
+  padding-top: 10px;
   border-top: 1px solid rgba(255, 255, 255, .28);
   display: flex;
   align-items: center;
@@ -1132,7 +1145,18 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 /* ============ 11. リンク集（マーキー） ============ */
 /* 自動で流れつづけるが、指やホイールで動かせる。
    触っているあいだは止まり、離れて7秒ほどでまた流れ出す（動きは main.js が担当）。
-   カードは中身を2組並べてあり、半分進んだところで戻すことで継ぎ目なくつながる。 */
+   カードは中身を2組並べてあり、半分進んだところで戻すことで継ぎ目なくつながる。
+   トップページは2段組みで、上段と下段を逆向きに流している
+   （向きは data-marquee-dir、1 が右から左・-1 が左から右）。 */
+.marquee-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 32px;
+}
+@media (min-width: 1024px) { .marquee-rows { gap: 16px; margin-top: 48px; } }
+.marquee-rows .marquee { margin-top: 0; }
+
 .marquee {
   margin-top: 32px;
   overflow-x: auto;
@@ -1204,6 +1228,15 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 }
 .link-card__ext { grid-area: ext; font: 400 12px/1 var(--flt); color: var(--gray-300); }
 
+/* トップページのマーキー用。バナーだけを見せる（説明文は出さない） */
+.link-card--compact {
+  display: block;
+  width: 232px;
+  margin-right: 12px;
+  padding: 10px 12px;
+}
+@media (min-width: 1024px) { .link-card--compact { width: 264px; margin-right: 16px; } }
+
 /* 静的なリンクカードグリッド（リンク集ページ） */
 .link-grid {
   display: grid;
@@ -1272,6 +1305,7 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 .cta .btn { margin-top: 28px; }
 
 .site-footer { position: relative; background: var(--ink); overflow: hidden; }
+/* 背景に薄く敷く協会マーク。ぼかさず、下へ向かうほど地の黒に溶かして消す。 */
 .site-footer__mark {
   position: absolute;
   right: -30px;
@@ -1279,7 +1313,8 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   width: min(660px, 120%);
   height: auto;
   opacity: .18;
-  filter: blur(7px);
+  -webkit-mask-image: linear-gradient(180deg, #000 0%, rgba(0, 0, 0, .5) 50%, rgba(0, 0, 0, .14) 82%, transparent 100%);
+  mask-image: linear-gradient(180deg, #000 0%, rgba(0, 0, 0, .5) 50%, rgba(0, 0, 0, .14) 82%, transparent 100%);
   pointer-events: none;
 }
 .site-footer__grid {

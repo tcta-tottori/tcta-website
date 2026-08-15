@@ -3,7 +3,7 @@ import Base from '../layouts/Base.astro';
 import TournamentCard from '../components/TournamentCard.astro';
 import LinkCard from '../components/LinkCard.astro';
 import { TOURNAMENTS, TODAY } from '../data/tournaments.js';
-import { LINKS } from '../data/links.js';
+import { LINKS_ASSOC, LINKS_OTHER } from '../data/links.js';
 
 // キャッチコピーは1文字ずつ出すので、文字に分解しておく。
 // 空白はそのままだと潰れるので、幅を持つ空白に置き換える。
@@ -12,6 +12,11 @@ const CATCH_CHARS = [...CATCH];
 
 const title = "鳥取市テニス協会｜つなぐ、広がる、テニスの輪。";
 const description = "鳥取市テニス協会の公式サイト。年間19の大会と毎週水曜日のテニス教室を運営しています。大会情報・お知らせ・大会カレンダー・コート案内をご覧いただけます。";
+
+// マーキーは中身を2組並べ、半分進んだところで巻き戻して継ぎ目なく回している。
+// 1組が画面幅に足りないと隙間が空くので、1組あたり8枚以上になるまで並べ直す。
+const marqueeHalf = (items) =>
+  Array.from({ length: Math.ceil(8 / items.length) }, () => items).flat();
 
 // TODAY マーカーを境に、終了した大会と今後の大会に分ける。
 const pastTournaments = TOURNAMENTS.filter((t) => t.status === 'past');
@@ -202,14 +207,14 @@ const upcomingTournaments = TOURNAMENTS.filter((t) => t.status !== 'past');
               <span class="date-chip"><span class="date-chip__md">08.16</span><span class="date-chip__dow">SUN</span></span>
               <span class="sch-item__text">
                 <span class="sch-item__title">サマーミックスダブルス</span>
-                <span class="sch-item__place">鳥取市千代テニス場</span>
+                <span class="sch-item__place">ヤマタスポーツパーク</span>
               </span>
             </a></li>
             <li><a class="sch-item" href="tournaments.html">
               <span class="date-chip"><span class="date-chip__md">08.30</span><span class="date-chip__dow">SUN</span></span>
               <span class="sch-item__text">
                 <span class="sch-item__title">第49回ダンロップテニストーナメント</span>
-                <span class="sch-item__place">鳥取市千代テニス場</span>
+                <span class="sch-item__place">ヤマタスポーツパーク</span>
               </span>
             </a></li>
             <li><a class="sch-item" href="tennis-day.html">
@@ -223,14 +228,14 @@ const upcomingTournaments = TOURNAMENTS.filter((t) => t.status !== 'past');
               <span class="date-chip"><span class="date-chip__md">10.18</span><span class="date-chip__dow">SUN</span></span>
               <span class="sch-item__text">
                 <span class="sch-item__title">第30回エネトピア杯ミックスダブルス</span>
-                <span class="sch-item__place">鳥取市千代テニス場</span>
+                <span class="sch-item__place">ヤマタスポーツパーク</span>
               </span>
             </a></li>
             <li><a class="sch-item" href="tournaments.html">
               <span class="date-chip"><span class="date-chip__md">11.07</span><span class="date-chip__dow">SAT</span></span>
               <span class="sch-item__text">
                 <span class="sch-item__title">第71回鳥取健康テニス（秋期）</span>
-                <span class="sch-item__place">鳥取市千代テニス場</span>
+                <span class="sch-item__place">ヤマタスポーツパーク</span>
               </span>
             </a></li>
           </ul>
@@ -264,19 +269,28 @@ const upcomingTournaments = TOURNAMENTS.filter((t) => t.status !== 'past');
           </div>
         </div>
       </div>
-      <p class="sec-head__lead rv">鳥取市テニス協会に関係する団体・施設のサイトです。</p>
-
-      <div class="marquee rv">
-        <div class="marquee__track">
-          {LINKS.map((l) => <LinkCard link={l} />)}
-          {/* ループ用の複製。main.js が scrollWidth の半分で巻き戻すので、
-              前半とまったく同じ枚数・同じ順で並べること。 */}
-          <div style="display:flex" aria-hidden="true">
-            {LINKS.map((l) => <LinkCard link={l} clone />)}
+      {/* 2段組み。上段（テニス協会・連盟のHP）は右から左へ、下段（施設・クラブ・
+          協賛など）は左から右へ流れる。振り分けは src/data/links.js の row。 */}
+      <div class="marquee-rows rv">
+        <div class="marquee" data-marquee data-marquee-dir="1">
+          <div class="marquee__track">
+            {marqueeHalf(LINKS_ASSOC).map((l) => <LinkCard link={l} compact />)}
+            {/* ループ用の複製。main.js が scrollWidth の半分で巻き戻すので、
+                前半とまったく同じ枚数・同じ順で並べること。 */}
+            <div style="display:flex" aria-hidden="true">
+              {marqueeHalf(LINKS_ASSOC).map((l) => <LinkCard link={l} compact clone />)}
+            </div>
+          </div>
+        </div>
+        <div class="marquee" data-marquee data-marquee-dir="-1">
+          <div class="marquee__track">
+            {marqueeHalf(LINKS_OTHER).map((l) => <LinkCard link={l} compact />)}
+            <div style="display:flex" aria-hidden="true">
+              {marqueeHalf(LINKS_OTHER).map((l) => <LinkCard link={l} compact clone />)}
+            </div>
           </div>
         </div>
       </div>
-      <p class="note">※ バナーの使用許諾・掲載団体・分類は公開前に要確認（ホバーで停止）</p>
     </div>
   </section>
 
@@ -300,16 +314,16 @@ const upcomingTournaments = TOURNAMENTS.filter((t) => t.status !== 'past');
             <li><a class="court-item" href="#courts">
               <span class="court-pin" aria-hidden="true"></span>
               <span class="sch-item__text">
-                <span class="sch-item__title">鳥取市千代テニス場</span>
-                <span class="sch-item__place">主会場・令和8年度は19大会中14大会を開催（住所は公開前に確認）</span>
+                <span class="sch-item__title">ヤマタスポーツパーク</span>
+                <span class="sch-item__place">主会場・鳥取県立布勢総合運動公園 鳥取県鳥取市布勢146-1</span>
               </span>
               <span class="ar" aria-hidden="true">→</span>
             </a></li>
             <li><a class="court-item" href="#courts">
               <span class="court-pin" aria-hidden="true"></span>
               <span class="sch-item__text">
-                <span class="sch-item__title">布勢総合運動公園テニスコート</span>
-                <span class="sch-item__place">鳥取県鳥取市布勢146-1（「ヤマタ」表記との統一は要確認）</span>
+                <span class="sch-item__title">鳥取市千代テニス場</span>
+                <span class="sch-item__place">予備会場（住所は公開前に確認）</span>
               </span>
               <span class="ar" aria-hidden="true">→</span>
             </a></li>
@@ -331,7 +345,6 @@ const upcomingTournaments = TOURNAMENTS.filter((t) => t.status !== 'past');
             </a></li>
           </ul>
           <p class="embed-caption">コートの予約は鳥取市の公共施設予約システムから行えます。協会が管理・貸出を行っているものではありませんのでご注意ください。</p>
-          <a class="ghost-link mt-24" href="links.html">鳥取市公共施設予約システムを開く <span class="aw">↗</span></a>
         </div>
 
         <div class="rv embed-wrap" style="transition-delay:.1s">

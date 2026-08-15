@@ -69,12 +69,22 @@ export function cardAction(t) {
   return { label: '詳細を見る', href: t.href ?? null };
 }
 
+/**
+ * 会場ロゴ（背景透過・白抜き）。大会カードは写真の上に文字を載せるので、
+ * ロゴがある会場はカード下部を文字ではなくロゴで見せる。
+ * ここに無い会場は venue の文字がそのまま出る。
+ * 画像を足すときは、白インク＋背景透過の PNG を public/assets/img/ に置くこと。
+ */
+export const VENUE_LOGOS = {
+  'ヤマタスポーツパーク': { src: 'assets/img/venue-yamata.png', width: 770, height: 80 },
+};
+
 export const TOURNAMENTS = [
   {
     date: '2026.05.10',
     title: '令和8年度クラブ対抗戦 前期日程',
     event: '団体戦（男子1部〜8部）',
-    venue: '鳥取市千代テニス場',
+    venue: 'ヤマタスポーツパーク',
     status: 'past',
     resultUrl: 'results.html',
     drawUrl: null,
@@ -85,7 +95,7 @@ export const TOURNAMENTS = [
     date: '2026.07.05',
     title: '鳥取市市民体育祭（BCグループ）',
     event: '校区別対抗戦',
-    venue: '鳥取市千代テニス場',
+    venue: 'ヤマタスポーツパーク',
     status: 'past',
     resultUrl: 'results.html',
     drawUrl: null,
@@ -96,7 +106,7 @@ export const TOURNAMENTS = [
     date: '2026.07.12',
     title: '令和8年度クラブ対抗戦 後期日程',
     event: '女子1部〜4部／男女予選会',
-    venue: '鳥取市千代テニス場',
+    venue: 'ヤマタスポーツパーク',
     status: 'past',
     resultUrl: 'results.html',
     drawUrl: null,
@@ -107,7 +117,7 @@ export const TOURNAMENTS = [
     date: '2026.08.02',
     title: '第11回気高カップシングルス大会',
     event: '男女シングルス',
-    venue: '鳥取市千代テニス場',
+    venue: 'ヤマタスポーツパーク',
     status: 'past',
     resultUrl: 'results.html',
     drawUrl: null,
@@ -118,7 +128,7 @@ export const TOURNAMENTS = [
     date: '2026.08.16',
     title: 'サマーミックスダブルス',
     event: 'ミックスダブルス',
-    venue: '鳥取市千代テニス場',
+    venue: 'ヤマタスポーツパーク',
     status: 'closed',
     outlineUrl: 'tournaments.html',
     drawUrl: null,      // 組み合わせが決まったらURLを入れる
@@ -131,7 +141,7 @@ export const TOURNAMENTS = [
     date: '2026.08.30',
     title: '第49回ダンロップテニストーナメント',
     event: '男女ダブルス',
-    venue: '鳥取市千代テニス場',
+    venue: 'ヤマタスポーツパーク',
     status: 'closed',
     outlineUrl: 'tournaments.html',
     drawUrl: null,      // 組み合わせが決まったらURLを入れる
@@ -157,7 +167,7 @@ export const TOURNAMENTS = [
     date: '2026.10.18',
     title: '第30回エネトピア杯ミックスダブルス',
     event: 'ミックスダブルス',
-    venue: '鳥取市千代テニス場',
+    venue: 'ヤマタスポーツパーク',
     status: 'open',
     outlineUrl: 'tournaments.html',
     drawUrl: null,      // 組み合わせが決まったらURLを入れる
@@ -170,7 +180,7 @@ export const TOURNAMENTS = [
     date: '2026.11.07',
     title: '第71回鳥取健康テニス（秋期）',
     event: '一般：男女ダブルス／ジュニア：男女シングルス',
-    venue: '鳥取市千代テニス場',
+    venue: 'ヤマタスポーツパーク',
     status: 'soon',
     outlineUrl: 'tournaments.html',
     drawUrl: null,      // 組み合わせが決まったらURLを入れる
@@ -183,7 +193,7 @@ export const TOURNAMENTS = [
     date: '2026.11.08',
     title: '鳥取県テニス選手権 シングルス',
     event: '男女シングルス',
-    venue: '鳥取市千代テニス場',
+    venue: 'ヤマタスポーツパーク',
     status: 'soon',
     outlineUrl: 'tournaments.html',
     drawUrl: null,      // 組み合わせが決まったらURLを入れる

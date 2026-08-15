@@ -1,12 +1,12 @@
 ---
 // リンクカード1枚。src/data/links.js の1件をそのまま受け取る。
-// 横長のバナーを上に敷き、その下に一言説明を置く。
-// 団体名はバナーに描かれているので文字としては出さず、画像の代替テキストに回す。
-// バナーがまだ無いものは、代わりに団体名だけの枠を出す。
+// 横長のバナーを敷くだけの作り。団体名はバナーに描かれているので文字としては
+// 出さず、画像の代替テキストに回す。バナーがまだ無いものは団体名だけの枠を出す。
 //
-// clone: マーキーのループ用に同じカードを2組並べるときの後ろ側。
-//        読み上げと Tab 移動から外したいので、リンクではなく span で描く。
-const { link, clone = false } = Astro.props;
+// compact: トップページのマーキー用。説明文と外部リンク記号を落とし、バナーだけ見せる。
+// clone:   マーキーのループ用に同じカードを2組並べるときの後ろ側。
+//          読み上げと Tab 移動から外したいので、リンクではなく span で描く。
+const { link, clone = false, compact = false } = Astro.props;
 const { name, desc, url, banner } = link;
 
 const Tag = clone ? 'span' : 'a';
@@ -15,7 +15,7 @@ const attrs = clone
   : { href: url, target: '_blank', rel: 'noopener noreferrer' };
 ---
 
-<Tag class="link-card" {...attrs}>
+<Tag class:list={['link-card', compact && 'link-card--compact']} {...attrs}>
   {banner
     ? <img
         class="link-card__banner"
@@ -27,8 +27,12 @@ const attrs = clone
         height="168"
       >
     : <span class="link-card__banner link-card__banner--empty" aria-hidden="true">{name}</span>}
-  <span class="link-card__text">
-    <span class="link-card__desc">{desc}</span>
-  </span>
-  <span class="link-card__ext" aria-hidden="true">↗</span>
+  {!compact && (
+    <>
+      <span class="link-card__text">
+        <span class="link-card__desc">{desc}</span>
+      </span>
+      <span class="link-card__ext" aria-hidden="true">↗</span>
+    </>
+  )}
 </Tag>
