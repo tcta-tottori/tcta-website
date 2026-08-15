@@ -88,8 +88,8 @@ export const TOURNAMENTS = [
     status: 'past',
     resultUrl: 'results.html',
     drawUrl: null,
-    image: 'assets/img/t4.png',
-    imageAlt: 'コートに置かれたラケットとテニスボール',
+    image: 'assets/img/results/2023/2023club-taiko-5-7-gallery-001.webp',
+    imageAlt: 'クラブ対抗戦のコート。ネットをはさんで打ち合う選手たち',
   },
   {
     date: '2026.07.05',
@@ -99,8 +99,8 @@ export const TOURNAMENTS = [
     status: 'past',
     resultUrl: 'results.html',
     drawUrl: null,
-    image: 'assets/img/t1.png',
-    imageAlt: 'ネットの手前に置かれたテニスボール',
+    image: 'assets/img/results/2023/2023club-taiko-5-7-gallery-033.webp',
+    imageAlt: '芝生ごしに見える試合中のテニスコート',
   },
   {
     date: '2026.07.12',
@@ -110,8 +110,8 @@ export const TOURNAMENTS = [
     status: 'past',
     resultUrl: 'results.html',
     drawUrl: null,
-    image: 'assets/img/t2.png',
-    imageAlt: '青空へトスを上げてサーブする選手',
+    image: 'assets/img/results/2023/2023club-taiko-7-16-gallery-036.webp',
+    imageAlt: '大会当日のコート。奥のコートまで試合が続いている',
   },
   {
     date: '2026.08.02',
@@ -121,8 +121,8 @@ export const TOURNAMENTS = [
     status: 'past',
     resultUrl: 'results.html',
     drawUrl: null,
-    image: 'assets/img/t3.png',
-    imageAlt: 'ネット際でボレーをする選手',
+    image: 'assets/img/results/2023/2023club-taiko-7-16-gallery-071.webp',
+    imageAlt: 'コートでストロークを打つ選手',
   },
   {
     date: '2026.08.16',
@@ -134,8 +134,8 @@ export const TOURNAMENTS = [
     drawUrl: null,      // 組み合わせが決まったらURLを入れる
     liveUrl: null,      // 当日の大会運用システムのURLを入れる
     resultUrl: null,    // 終了後、結果の掲載先を入れる
-    image: 'assets/img/t3.png',
-    imageAlt: 'ネット際でボレーをする選手',
+    image: 'assets/img/results/2024/2024summer-mix-040.webp',
+    imageAlt: '主審台の置かれたコートと、試合の準備をする選手たち',
   },
   {
     date: '2026.08.30',
@@ -147,8 +147,8 @@ export const TOURNAMENTS = [
     drawUrl: null,      // 組み合わせが決まったらURLを入れる
     liveUrl: null,      // 当日の大会運用システムのURLを入れる
     resultUrl: null,    // 終了後、結果の掲載先を入れる
-    image: 'assets/img/t4.png',
-    imageAlt: 'コートに置かれたラケットとテニスボール',
+    image: 'assets/img/results/2024/2024summer-mix-050.webp',
+    imageAlt: 'コート番号の看板が立つコートでの試合',
   },
   {
     date: '2026.10.12',
@@ -160,8 +160,8 @@ export const TOURNAMENTS = [
     drawUrl: null,      // 組み合わせが決まったらURLを入れる
     liveUrl: null,      // 当日の大会運用システムのURLを入れる
     resultUrl: null,    // 終了後、結果の掲載先を入れる
-    image: 'assets/img/t2.png',
-    imageAlt: '青空へトスを上げてサーブする選手',
+    image: 'assets/img/results/2024/2024sasaki-hai-033.webp',
+    imageAlt: 'ダブルスの試合中のコートを外から見たところ',
   },
   {
     date: '2026.10.18',
@@ -173,8 +173,8 @@ export const TOURNAMENTS = [
     drawUrl: null,      // 組み合わせが決まったらURLを入れる
     liveUrl: null,      // 当日の大会運用システムのURLを入れる
     resultUrl: null,    // 終了後、結果の掲載先を入れる
-    image: 'assets/img/t3.png',
-    imageAlt: 'ネット際でボレーをする選手',
+    image: 'assets/img/results/2023/2023enetpia-hai-020.webp',
+    imageAlt: '日暮れどきのコートで続くダブルスの試合',
   },
   {
     date: '2026.11.07',
@@ -186,8 +186,8 @@ export const TOURNAMENTS = [
     drawUrl: null,      // 組み合わせが決まったらURLを入れる
     liveUrl: null,      // 当日の大会運用システムのURLを入れる
     resultUrl: null,    // 終了後、結果の掲載先を入れる
-    image: 'assets/img/t1.png',
-    imageAlt: 'ネットの手前に置かれたテニスボール',
+    image: 'assets/img/results/2023/2023enetpia-hai-040.webp',
+    imageAlt: 'フェンスごしに見えるコートと、サーブを打つ選手',
   },
   {
     date: '2026.11.08',
@@ -199,7 +199,7 @@ export const TOURNAMENTS = [
     drawUrl: null,      // 組み合わせが決まったらURLを入れる
     liveUrl: null,      // 当日の大会運用システムのURLを入れる
     resultUrl: null,    // 終了後、結果の掲載先を入れる
-    image: 'assets/img/t4.png',
-    imageAlt: 'コートに置かれたラケットとテニスボール',
+    image: 'assets/img/results/2023/2023enetpia-hai-010.webp',
+    imageAlt: 'ナイター照明のついたコートでの試合',
   },
 ];
