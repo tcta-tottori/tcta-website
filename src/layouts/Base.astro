@@ -38,7 +38,11 @@ const {
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{title}</title>
 <meta name="description" content={description}>
-<link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
+{/* 協会ロゴ（白地・黒文字）をそのままアイコンに使っている。
+    差し替えるときは public/assets/img/ の3枚をまとめて作り直すこと。 */}
+<link rel="icon" href="assets/img/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="icon" href="assets/img/favicon-192.png" sizes="192x192" type="image/png">
+<link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&family=Jost:wght@500;600;700&display=swap" rel="stylesheet">
