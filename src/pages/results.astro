@@ -1,8 +1,15 @@
 ---
 import Base from '../layouts/Base.astro';
+import { RESULTS, resultUrl, summarize, counts } from '../data/results.js';
 
 const title = "大会結果｜鳥取市テニス協会";
-const description = "鳥取市テニス協会が主催・主管した大会の結果一覧。令和8年度の9大会の結果を掲載しています。";
+const description = "鳥取市テニス協会が主催・主管した大会の結果。平成16年度から令和6年度まで、年度ごとの優勝・準優勝と大会写真を掲載しています。";
+
+// 年度タブは新しい順。旧サイトから引き継いだ分をそのまま並べる。
+const years = RESULTS;
+const totalTournaments = years.reduce((n, y) => n + y.tournaments.length, 0);
+const totalPhotos = years.reduce(
+  (n, y) => n + y.tournaments.reduce((m, t) => m + t.photos.length, 0), 0);
 ---
 
 <Base
@@ -25,125 +32,58 @@ const description = "鳥取市テニス協会が主催・主管した大会の�
           <h1 class="page-title" style="margin-top:8px">大会結果</h1>
         </div>
       </div>
-      <p class="page-lead fu" style="animation-delay:.15s">令和8年度（2026年度）の大会結果です。過去の年度は年度切り替えからご覧いただけます。</p>
+      <p class="page-lead fu" style="animation-delay:.15s">これまでの大会結果です。年度を選ぶと、その年に行われた大会が並びます。大会名をひらくと、種目ごとの成績と当日の写真をご覧いただけます。</p>
     </div>
   </section>
 
   <section class="section" aria-labelledby="results-title">
     <div class="container">
       <h2 class="visually-hidden" id="results-title">年度別の大会結果</h2>
+
       <div class="tabs" role="tablist" aria-label="年度の切り替え">
-        <button class="tab is-active" type="button" role="tab" id="tab-r8" aria-controls="panel-r8" aria-selected="true">令和8年度</button>
-        <button class="tab" type="button" role="tab" id="tab-r7" aria-controls="panel-r7" aria-selected="false" tabindex="-1">令和7年度</button>
-        <button class="tab" type="button" role="tab" id="tab-r6" aria-controls="panel-r6" aria-selected="false" tabindex="-1">令和6年度</button>
-        <button class="tab" type="button" role="tab" id="tab-old" aria-controls="panel-old" aria-selected="false" tabindex="-1">過去の結果</button>
+        {years.map((y, i) => (
+          <button
+            class:list={['tab', i === 0 && 'is-active']}
+            type="button"
+            role="tab"
+            id={`tab-${y.nendo}`}
+            aria-controls={`panel-${y.nendo}`}
+            aria-selected={i === 0 ? 'true' : 'false'}
+            tabindex={i === 0 ? 0 : -1}
+          >{y.label}</button>
+        ))}
       </div>
 
-      <div class="tabpanel" id="panel-r8" role="tabpanel" aria-labelledby="tab-r8">
-        <ul class="sch-list">
-        <li><a class="sch-item rv" style="transition-delay:0.00s" href="#">
-          <span class="date-chip" aria-hidden="true"><span class="date-chip__md">08.02</span><span class="date-chip__dow">2026</span></span>
-          <span class="sch-item__text">
-            <span class="sch-item__title">第11回気高カップシングルス大会<span style="font-weight:400;color:var(--gray-500)">｜男女シングルス</span></span>
-            <span class="sch-item__place">鳥取市千代テニス場</span>
-          </span>
-          <span class="dl-item__type" style="margin-left:auto">PDF</span>
-          <span class="sqbtn" aria-hidden="true">→</span>
-        </a></li>
-        <li><a class="sch-item rv" style="transition-delay:0.05s" href="#">
-          <span class="date-chip" aria-hidden="true"><span class="date-chip__md">07.12</span><span class="date-chip__dow">2026</span></span>
-          <span class="sch-item__text">
-            <span class="sch-item__title">令和8年度クラブ対抗戦 後期日程<span style="font-weight:400;color:var(--gray-500)">｜女子1部〜4部／男女予選会</span></span>
-            <span class="sch-item__place">鳥取市千代テニス場</span>
-          </span>
-          <span class="dl-item__type" style="margin-left:auto">PDF</span>
-          <span class="sqbtn" aria-hidden="true">→</span>
-        </a></li>
-        <li><a class="sch-item rv" style="transition-delay:0.10s" href="#">
-          <span class="date-chip" aria-hidden="true"><span class="date-chip__md">07.05</span><span class="date-chip__dow">2026</span></span>
-          <span class="sch-item__text">
-            <span class="sch-item__title">鳥取市市民体育祭（BCグループ）<span style="font-weight:400;color:var(--gray-500)">｜校区別対抗戦</span></span>
-            <span class="sch-item__place">鳥取市千代テニス場</span>
-          </span>
-          <span class="dl-item__type" style="margin-left:auto">PDF</span>
-          <span class="sqbtn" aria-hidden="true">→</span>
-        </a></li>
-        <li><a class="sch-item rv" style="transition-delay:0.15s" href="#">
-          <span class="date-chip" aria-hidden="true"><span class="date-chip__md">05.10</span><span class="date-chip__dow">2026</span></span>
-          <span class="sch-item__text">
-            <span class="sch-item__title">令和8年度クラブ対抗戦 前期日程<span style="font-weight:400;color:var(--gray-500)">｜男子1部〜8部</span></span>
-            <span class="sch-item__place">鳥取市千代テニス場</span>
-          </span>
-          <span class="dl-item__type" style="margin-left:auto">PDF</span>
-          <span class="sqbtn" aria-hidden="true">→</span>
-        </a></li>
-        <li><a class="sch-item rv" style="transition-delay:0.20s" href="#">
-          <span class="date-chip" aria-hidden="true"><span class="date-chip__md">05.02</span><span class="date-chip__dow">2026</span></span>
-          <span class="sch-item__text">
-            <span class="sch-item__title">第70回鳥取健康テニス（春期）<span style="font-weight:400;color:var(--gray-500)">｜一般：男女複／ジュニア：男女単</span></span>
-            <span class="sch-item__place">鳥取市千代テニス場</span>
-          </span>
-          <span class="dl-item__type" style="margin-left:auto">PDF</span>
-          <span class="sqbtn" aria-hidden="true">→</span>
-        </a></li>
-        <li><a class="sch-item rv" style="transition-delay:0.25s" href="#">
-          <span class="date-chip" aria-hidden="true"><span class="date-chip__md">04.29</span><span class="date-chip__dow">2026</span></span>
-          <span class="sch-item__text">
-            <span class="sch-item__title">第61回鳥取市テニス協会会長杯（春季）<span style="font-weight:400;color:var(--gray-500)">｜団体戦</span></span>
-            <span class="sch-item__place">鳥取市千代テニス場</span>
-          </span>
-          <span class="dl-item__type" style="margin-left:auto">PDF</span>
-          <span class="sqbtn" aria-hidden="true">→</span>
-        </a></li>
-        <li><a class="sch-item rv" style="transition-delay:0.30s" href="#">
-          <span class="date-chip" aria-hidden="true"><span class="date-chip__md">04.05</span><span class="date-chip__dow">2026</span></span>
-          <span class="sch-item__text">
-            <span class="sch-item__title">佐々木杯テニス大会<span style="font-weight:400;color:var(--gray-500)">｜ミックスダブルス</span></span>
-            <span class="sch-item__place">鳥取市千代テニス場</span>
-          </span>
-          <span class="dl-item__type" style="margin-left:auto">PDF</span>
-          <span class="sqbtn" aria-hidden="true">→</span>
-        </a></li>
-        <li><a class="sch-item rv" style="transition-delay:0.30s" href="#">
-          <span class="date-chip" aria-hidden="true"><span class="date-chip__md">03.29</span><span class="date-chip__dow">2026</span></span>
-          <span class="sch-item__text">
-            <span class="sch-item__title">第56回東部地区テニス選手権<span style="font-weight:400;color:var(--gray-500)">｜男女ダブルス</span></span>
-            <span class="sch-item__place">鳥取市千代テニス場</span>
-          </span>
-          <span class="dl-item__type" style="margin-left:auto">PDF</span>
-          <span class="sqbtn" aria-hidden="true">→</span>
-        </a></li>
-        <li><a class="sch-item rv" style="transition-delay:0.30s" href="#">
-          <span class="date-chip" aria-hidden="true"><span class="date-chip__md">03.22</span><span class="date-chip__dow">2026</span></span>
-          <span class="sch-item__text">
-            <span class="sch-item__title">第56回東部地区テニス選手権<span style="font-weight:400;color:var(--gray-500)">｜男女シングルス</span></span>
-            <span class="sch-item__place">鳥取市千代テニス場</span>
-          </span>
-          <span class="dl-item__type" style="margin-left:auto">PDF</span>
-          <span class="sqbtn" aria-hidden="true">→</span>
-        </a></li>
-        </ul>
-        <p class="note">※ 結果PDFの容量は移行時に明記します。掲載する選手名の範囲は協会の個人情報の取扱い方針にあわせて確定してください（<span class="todo-note">要確認</span>）。</p>
-      </div>
+      {years.map((y, i) => (
+        <div class="tabpanel" id={`panel-${y.nendo}`} role="tabpanel" aria-labelledby={`tab-${y.nendo}`} hidden={i !== 0}>
+          <ul class="sch-list">
+            {y.tournaments.map((t) => {
+              const c = counts(t);
+              const wins = summarize(t);
+              return (
+                <li><a class="sch-item" href={resultUrl(t)}>
+                  <span class="sch-item__text">
+                    <span class="sch-item__title">{t.title}</span>
+                    <span class="sch-item__place">
+                      {wins.length > 0
+                        ? `優勝 ${wins.join('／')}${c.places > wins.length ? ' ほか' : ''}`
+                        : c.photos > 0 ? '写真で結果を掲載しています' : '結果を掲載しています'}
+                    </span>
+                  </span>
+                  <span class="result-tags" aria-hidden="true">
+                    {c.places > 0 && <span class="badge badge--outline">{c.places}件</span>}
+                    {c.photos > 0 && <span class="badge badge--tint">写真{c.photos}</span>}
+                    {c.pdfs > 0 && <span class="dl-item__type">PDF</span>}
+                  </span>
+                  <span class="sqbtn" aria-hidden="true">→</span>
+                </a></li>
+              );
+            })}
+          </ul>
+        </div>
+      ))}
 
-      <div class="tabpanel" id="panel-r7" role="tabpanel" aria-labelledby="tab-r7" hidden>
-        <div class="panel panel--gray">
-          <p style="margin:0;font:700 16px/1.7 var(--fjp);color:var(--ink)">この年度の結果はまだ掲載されていません。</p>
-          <p style="margin:8px 0 0;font:400 14px/1.8 var(--fjp);color:var(--gray-600)">令和7年度の結果は現行サイトから移行予定です。</p>
-        </div>
-      </div>
-      <div class="tabpanel" id="panel-r6" role="tabpanel" aria-labelledby="tab-r6" hidden>
-        <div class="panel panel--gray">
-          <p style="margin:0;font:700 16px/1.7 var(--fjp);color:var(--ink)">この年度の結果はまだ掲載されていません。</p>
-          <p style="margin:8px 0 0;font:400 14px/1.8 var(--fjp);color:var(--gray-600)">令和6年度の結果は現行サイトから移行予定です。</p>
-        </div>
-      </div>
-      <div class="tabpanel" id="panel-old" role="tabpanel" aria-labelledby="tab-old" hidden>
-        <div class="panel panel--gray">
-          <p style="margin:0;font:700 16px/1.7 var(--fjp);color:var(--ink)">過去の結果はまだ掲載されていません。</p>
-          <p style="margin:8px 0 0;font:400 14px/1.8 var(--fjp);color:var(--gray-600)">令和5年度以前の結果は現行サイトから移行予定です。</p>
-        </div>
-      </div>
+      <p class="note">※ 旧サイト（{totalTournaments}大会・写真{totalPhotos}枚）から引き継いだ内容です。種目名や氏名は当時の掲載をそのまま載せています。誤りや掲載の取り下げのご依頼は<a href="contact.html">お問い合わせ</a>からお知らせください。</p>
     </div>
   </section>
 </Base>

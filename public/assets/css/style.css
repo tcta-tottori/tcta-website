@@ -1910,7 +1910,163 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 }
 .form-done__text { margin: 0; font: 400 15px/1.9 var(--fjp); color: var(--gray-800); }
 
-/* ============ 15. オープニング（全画面の映像） ============ */
+/* ============ 15. 大会結果（一覧・詳細） ============ */
+/* 一覧の行の右端に付く「12件」「写真14」「PDF」の並び */
+.result-tags {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+  flex: none;
+}
+@media (max-width: 639px) {
+  /* 幅が足りないので、狭い画面では件数だけ残す */
+  .result-tags .badge--tint, .result-tags .dl-item__type { display: none; }
+}
+
+/* 種目ごとの順位。「優勝　◯◯ペア」を1行ずつ */
+.place-list { list-style: none; margin: 0; padding: 0; }
+.place-list li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+  padding: 3px 0;
+}
+.place-list__award {
+  flex: none;
+  min-width: 4.5em;
+  font: 700 13px/1.8 var(--fjp);
+  letter-spacing: .04em;
+  color: var(--red);
+}
+.place-list__name { font: 400 15px/1.8 var(--fjp); color: var(--ink); }
+.place-list__note { font: 400 12px/1.8 var(--fjp); color: var(--gray-500); }
+
+/* 大会写真。枚数が多いので、小さめに敷き詰める */
+.gallery {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin-top: 24px;
+}
+@media (min-width: 640px) { .gallery { grid-template-columns: repeat(3, 1fr); gap: 12px; } }
+@media (min-width: 1024px) { .gallery { grid-template-columns: repeat(4, 1fr); } }
+.gallery__item {
+  display: block;
+  overflow: hidden;
+  background: var(--gray-050);
+  border: 1px solid var(--gray-200);
+  border-radius: 6px;
+}
+.gallery__item img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  /* 表彰の写真だけでなく、細長いドロー表やスコア表も混ざっている。
+     cover で切ると何の紙か分からなくなるので、全体を収める。 */
+  object-fit: contain;
+  background: var(--white);
+  transition: transform .4s var(--ease);
+}
+.gallery__item:hover img { transform: scale(1.04); }
+.gallery__count {
+  margin-left: 10px;
+  font: 400 13px/1 var(--flt);
+  color: var(--gray-500);
+}
+
+/* 前後の大会への行き来 */
+.page-nav {
+  display: grid;
+  grid-template-columns: 1fr;
+  align-items: center;
+  gap: 16px;
+  margin-top: 64px;
+  padding-top: 32px;
+  border-top: 1px solid var(--gray-200);
+  text-align: center;
+}
+@media (min-width: 768px) {
+  .page-nav { grid-template-columns: 1fr auto 1fr; gap: 24px; text-align: left; }
+  .page-nav__link--next { text-align: right; }
+}
+.page-nav__link { display: block; min-width: 0; }
+.page-nav__link:hover .page-nav__title { color: var(--red); }
+.page-nav__dir {
+  display: block;
+  font: 700 12px/1.6 var(--flt);
+  letter-spacing: .06em;
+  color: var(--gray-500);
+}
+.page-nav__title {
+  display: block;
+  margin-top: 4px;
+  font: 500 14px/1.6 var(--fjp);
+  color: var(--ink);
+  transition: color .25s ease;
+}
+
+/* ---- クラブ対抗戦の年度別アコーディオン ---- */
+.champ { border-bottom: 1px solid var(--gray-200); }
+.champ:first-of-type { border-top: 1px solid var(--gray-200); }
+.champ__year {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 18px 4px;
+  font: 700 16px/1.6 var(--fjp);
+  color: var(--ink);
+  cursor: pointer;
+  list-style: none;
+}
+.champ__year::-webkit-details-marker { display: none; }
+.champ__year::after {
+  content: "＋";
+  margin-left: auto;
+  font: 400 15px/1 var(--flt);
+  color: var(--red);
+}
+.champ[open] > .champ__year::after { content: "－"; }
+.champ__count { font: 400 12px/1 var(--flt); color: var(--gray-500); }
+.champ__body { padding: 0 4px 24px; }
+.champ__block + .champ__block { margin-top: 24px; }
+.champ__title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font: 500 14px/1.6 var(--fjp);
+  color: var(--gray-600);
+}
+.champ__title:hover { color: var(--red); }
+.champ__list {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0;
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+}
+@media (min-width: 640px) { .champ__list { grid-template-columns: repeat(2, 1fr); column-gap: 32px; } }
+@media (min-width: 1024px) { .champ__list { grid-template-columns: repeat(3, 1fr); } }
+.champ__list li {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--gray-100);
+}
+.champ__div {
+  flex: none;
+  min-width: 5.5em;
+  font: 700 13px/1.7 var(--fjp);
+  letter-spacing: .04em;
+  color: var(--red);
+}
+.champ__club { font: 400 15px/1.7 var(--fjp); color: var(--ink); }
+.champ__none { margin: 8px 0 0; font: 400 13px/1.7 var(--fjp); color: var(--gray-500); }
+
+/* ============ 16. オープニング（全画面の映像） ============ */
 /* 既定は非表示。Base.astro の <head> 内スクリプトが描画前に html へ .splash-on を
    付けたときだけ出る。＝JS が無効な環境では最初から本文が見える。 */
 .splash {
