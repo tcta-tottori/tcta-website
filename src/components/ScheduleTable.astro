@@ -1,10 +1,11 @@
 ---
 // 大会一覧の表。src/data/schedule.js の配列をそのまま受け取る。
 // 列は 日付／大会名・種目／会場／予備日／予備会場／締切／登録区分 の順。
-// 予備会場は原稿に無いので、入るまでは「—」を出す。
-import { REG_LABEL } from '../data/schedule.js';
+// 期日はトップページの大会カードと同じ「08.16 ＋ 改行 ＋ SUN」の形で出す。
+import { REG_LABEL, dateCell } from '../data/schedule.js';
 
 const { items, id, caption } = Astro.props;
+const rows = items.map((t) => ({ t, date: dateCell(t) }));
 ---
 
 <div class="table-scroll rv">
@@ -22,9 +23,15 @@ const { items, id, caption } = Astro.props;
       </tr>
     </thead>
     <tbody>
-      {items.map((t) => (
+      {rows.map(({ t, date }) => (
         <tr class:list={[t.status === 'done' && 'is-ended', t.status === 'open' && 'is-open']} data-tags={`${t.status} ${t.reg}`}>
-          <td class="col-date">{t.label}</td>
+          <td class="col-date">
+            <span class="date-cell">
+              <span class="date-cell__md">{date.md}</span>
+              <span class="date-cell__dow">{date.dow}</span>
+            </span>
+            {date.note && <span class="date-cell__note">{date.note}</span>}
+          </td>
           <td>
             <span class="name">{t.name}</span><br>
             <span class="data-table__sub">{t.event}</span>

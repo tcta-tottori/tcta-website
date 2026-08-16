@@ -72,7 +72,7 @@ const upcomingTournaments = TOURNAMENTS.filter((t) => t.status !== 'past');
               <span class="visually-hidden">{CATCH}</span>
               <span class="pb__ink" aria-hidden="true">{CATCH}</span>
             </span>
-            <span class="hero__sub fu" style="animation-delay:3.15s">テニスで、もっとつながろう。</span>
+            <span class="hero__sub fu" style="animation-delay:var(--copy-end)">テニスで、もっとつながろう。</span>
           </h1>
           {/* 左から1文字ずつ、静かに浮かび上がらせる */}
           <p class="hero__en">
@@ -91,10 +91,10 @@ const upcomingTournaments = TOURNAMENTS.filter((t) => t.status !== 'past');
             </p>
           </div>
         </div>
-        <a class="btn btn--primary hero__cta fu" style="animation-delay:5.6s" href="about.html">協会について見る <span class="aw">→</span></a>
+        <a class="btn btn--primary hero__cta fu" style="animation-delay:calc(var(--copy-end) + 2.45s)" href="about.html">協会について見る <span class="aw">→</span></a>
       </div>
     </div>
-    <div class="hero__square fu" style="animation-delay:5.9s" aria-hidden="true"></div>
+    <div class="hero__square fu" style="animation-delay:calc(var(--copy-end) + 2.75s)" aria-hidden="true"></div>
     <div class="hero__scroll" aria-hidden="true">
       <span>SCROLL</span>
       <span class="blink"></span>

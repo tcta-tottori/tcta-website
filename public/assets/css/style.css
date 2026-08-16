@@ -53,6 +53,15 @@
 
   --header-h: 64px;
   --ease: cubic-bezier(.22, 1, .36, 1);
+
+  /* 見出しの塗り替え（グレー → 赤いスラッシュ → 黒）の時間。
+     出たあと 1.2秒 はグレーのまま置き、そこから 0.9秒 かけてスラッシュが走る。
+     合計 2.1秒。@keyframes 側の 57% がちょうど 1.2秒 にあたるので、
+     時間を変えるときは --sweep-dur と keyframes の 57% をそろえて直すこと。
+     （--sweep-ease は var(--ease) より減速がゆるく、スラッシュが一定の速さで
+       行き渡って見える曲線。--ease だと一瞬で走り抜けてしまう） */
+  --sweep-dur: 2.1s;
+  --sweep-ease: cubic-bezier(.45, .05, .4, 1);
 }
 
 @media (min-width: 640px) {
@@ -440,10 +449,21 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 /* キャッチコピー：薄く浮かび上がったあと、赤いスラッシュが走って黒へ変える。
    62%→6% は「赤が左端に差しかかった所」から「右端を抜け切った所」まで。
    0→100% で振ると前後に赤が見えない間ができ、走っている時間が半分になる。 */
+/* 文字の塗り替え。薄いグレーで出したあと 1.2秒（＝57%）そのまま置き、
+   残りの 0.9秒 で赤いスラッシュが左から右へ走り、通ったところが黒くなる。
+   72% は文字全体がグレーに収まる位置、6% は全体が黒に収まる位置。
+   72% より手前（62% など）で止めると、1文字目に赤が掛かったまま待つことになる。 */
 @keyframes pb-color {
-  0%   { opacity: 0; background-position: 62% 0; }
-  22%  { opacity: 1; background-position: 62% 0; }
+  0%   { opacity: 0; background-position: 72% 0; }
+  10%  { opacity: 1; background-position: 72% 0; }
+  57%  { opacity: 1; background-position: 72% 0; }
   100% { opacity: 1; background-position: 6% 0; }
+}
+/* 上と同じ動きの、透明度を触らない版（見出しの出方は .rv / .fu 側に任せる） */
+@keyframes title-slash {
+  0%   { background-position: 72% 0; }
+  57%  { background-position: 72% 0; }
+  100% { background-position: 6% 0; }
 }
 /* 英字（TOTTORI-CITY…）：小さく出て → 少し大きく → 通常の大きさへ */
 @keyframes en-in {
@@ -727,8 +747,13 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 }
 
 /* 導入（PLAY → BEYOND.）が終わる時刻。ここから下の動きが始まる。
-   導入を止めるときは、この値を 0s にすれば全体がそのまま前へ詰まる。 */
-.hero { --intro-end: 2s; }
+   導入を止めるときは、この値を 0s にすれば全体がそのまま前へ詰まる。
+   --copy-end はキャッチコピーが黒く塗り終わる時刻。サブコピー以下は
+   これを起点に並べているので、塗り替えの時間を変えても順番が崩れない。 */
+.hero {
+  --intro-end: 2s;
+  --copy-end: calc(var(--intro-end) + var(--sweep-dur));
+}
 
 .pb__ink {
   display: block;
@@ -742,9 +767,8 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   background-clip: text;
   color: transparent;
   -webkit-text-fill-color: transparent;
-  /* var(--ease) は減速が強すぎてスラッシュが一瞬で走り抜けるので、
-     ここは行き渡る速さが揃う曲線を使う */
-  animation: pb-color 1.15s cubic-bezier(.45, .05, .4, 1) var(--intro-end) both;
+  /* 導入が終わってから薄いグレーで出て、1.2秒 そのまま置き、スラッシュで黒へ */
+  animation: pb-color var(--sweep-dur) var(--sweep-ease) var(--intro-end) both;
 }
 
 /* 動きを減らす設定では、色を変えずに黒い文字だけを最初から出す。
@@ -789,7 +813,7 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   opacity: 0;
   transform-origin: 50% 100%;
   animation: en-in .42s var(--ease) both;
-  animation-delay: calc(var(--intro-end) + 1.35s + var(--i) * .02s);
+  animation-delay: calc(var(--copy-end) + .2s + var(--i) * .02s);
 }
 /* 英字（TOTTORI-CITY…）の下。1行ぶん空けてから置く。
    キャッチコピーと同じく写真の上に載る。 */
@@ -804,7 +828,7 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 .hero__lead p { margin: 0; }
 .hero__lead p + p { margin-top: .9em; }
 /* 英字が出終わって 0.3 秒後から動き出す */
-.hero__lead { --lead-in: calc(var(--intro-end) + 2.65s); }
+.hero__lead { --lead-in: calc(var(--copy-end) + 1.5s); }
 .hero__lead-p { margin: 0; }
 
 /* 行ごとに、下のライン（枠は出さない）から起き上がる。
@@ -1745,12 +1769,17 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 .cta .btn { margin-top: 28px; }
 
 /* ---- 見出しの塗り替え（ヒーロー以外）----
-   出たときはグレーで、左から右へなめらかに黒へ変わる。
+   「PLAY BEYOND.」と同じ作り。「黒｜赤｜グレー」の帯を文字の形に切り抜いて流す。
+   出たあと 1.2秒 はグレーのまま置き、そこから赤いスラッシュが左から右へ走って、
+   通ったところがなめらかに黒へ変わる。
    最初に出るときだけ動かす（.rv は一度 .on が付いたら外れないので自然に1回きり）。 */
 .sec-head__title, .page-title, .sub-head {
-  background-image: linear-gradient(90deg, var(--ink) 0 50%, var(--gray-500) 50% 100%);
-  background-size: 200% 100%;
-  background-position: 0 0;
+  background-image: linear-gradient(100deg,
+    var(--ink) 0 40%,
+    var(--red) 40% 45.5%,
+    var(--gray-500) 45.5% 100%);
+  background-size: 300% 100%;
+  background-position: 6% 0;
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -1758,16 +1787,11 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 }
 /* JS が動くときだけ、出る前をグレーにしておく */
 body.jsrv .rv .sec-head__title,
-body.jsrv .rv .sub-head { background-position: 100% 0; }
+body.jsrv .rv .sub-head { background-position: 72% 0; }
 body.jsrv .rv.on .sec-head__title,
-body.jsrv .rv.on .sub-head { animation: title-sweep .9s var(--ease) .1s both; }
+body.jsrv .rv.on .sub-head { animation: title-slash var(--sweep-dur) var(--sweep-ease) .1s both; }
 /* ページ見出しは読み込み時に出るので、そのまま走らせる */
-.page-title { animation: title-sweep .9s var(--ease) .2s both; }
-
-@keyframes title-sweep {
-  from { background-position: 100% 0; }
-  to   { background-position: 0 0; }
-}
+.page-title { animation: title-slash var(--sweep-dur) var(--sweep-ease) .2s both; }
 
 @media (prefers-reduced-motion: reduce) {
   .sec-head__title, .page-title, .sub-head,
@@ -1808,9 +1832,9 @@ body.jsrv .rv.on .sub-head { animation: title-sweep .9s var(--ease) .1s both; }
   -webkit-text-fill-color: transparent;
 }
 /* JS が動くときだけ、出る前を薄いグレーにしておく */
-body.jsrv .ink-sweep { background-position: 100% 0; opacity: 0; }
+body.jsrv .ink-sweep { background-position: 72% 0; opacity: 0; }
 body.jsrv .rv.on .ink-sweep {
-  animation: pb-color 1.15s cubic-bezier(.45, .05, .4, 1) .15s both;
+  animation: pb-color var(--sweep-dur) var(--sweep-ease) .15s both;
 }
 /* 動きを減らす設定と、切り抜きが使えない環境では、黒い文字をそのまま出す */
 @media (prefers-reduced-motion: reduce) {
@@ -2144,7 +2168,17 @@ body.jsrv .rv.on .ink-sweep {
   white-space: nowrap;
 }
 .data-table tbody tr:hover { background: var(--gray-050); }
-.data-table .col-date { width: 104px; white-space: nowrap; font-family: var(--flt); font-weight: 500; letter-spacing: .04em; }
+.data-table .col-date { width: 96px; white-space: nowrap; font-family: var(--flt); font-weight: 500; letter-spacing: .04em; }
+/* 期日欄。トップページの大会カードと同じ「08.16 ＋ 改行 ＋ SUN」で出す。
+   カードの日程チップと違い、表では枠を持たせず文字だけを2段に置く。 */
+.date-cell { display: flex; flex-direction: column; gap: 3px; }
+.date-cell__md { font: 700 19px/1 var(--flt); letter-spacing: .02em; color: var(--ink); }
+.date-cell__dow { font: 700 11px/1 var(--flt); letter-spacing: .1em; color: var(--red); }
+/* 1日で終わらない大会・祝日開催の一言。チップの下に小さく添える。 */
+.date-cell__note { display: block; margin-top: 6px; font: 400 12px/1.5 var(--fjp); letter-spacing: 0; color: var(--gray-500); white-space: normal; }
+/* 終了した大会は行ごと薄くしているので、日付の黒と赤もそれに合わせる */
+.data-table tr.is-ended .date-cell__md,
+.data-table tr.is-ended .date-cell__dow { color: var(--gray-500); }
 .data-table .col-place { width: 180px; }
 .data-table .col-spare { width: 96px; white-space: nowrap; font-family: var(--flt); font-weight: 500; letter-spacing: .04em; }
 .data-table .col-note { width: 96px; font-family: var(--flt); font-weight: 500; letter-spacing: .04em; }
