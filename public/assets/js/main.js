@@ -389,6 +389,48 @@
     });
   }
 
+  /* ---------- フッターの四角（スクロールで動かす） ----------
+     漂う動きは CSS の transform、こちらは translate に書き込むので打ち消し合わない。
+     フッターが画面を通り過ぎるあいだの進み具合を、そのまま上下の量にしている。 */
+  function initFooterDeco() {
+    var deco = document.querySelector('.footer-deco');
+    if (!deco || reduceMotion) return;
+
+    var RANGE = 140;   // 端から端までで動かす量（px）
+    var ticking = false;
+
+    var place = function () {
+      ticking = false;
+      var box = deco.getBoundingClientRect();
+      var span = window.innerHeight + box.height;
+      if (span <= 0) return;
+      // 下から入ってくるとき 0、抜け切るとき 1
+      var seen = (window.innerHeight - box.top) / span;
+      seen = Math.min(Math.max(seen, 0), 1);
+      deco.style.setProperty('--sy', ((seen - .5) * RANGE).toFixed(1) + 'px');
+    };
+    var onScroll = function () {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(place);
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll);
+    place();
+  }
+
+  /* ---------- TODAY の日付（見ている時点の日本時間） ----------
+     ビルド時の日付を書き出してあるので、JS が動く環境だけ今日の日付に差し替える。 */
+  function initToday() {
+    var el = document.querySelector('.today-marker__date');
+    if (!el) return;
+    try {
+      el.textContent = new Intl.DateTimeFormat('ja-JP', {
+        timeZone: 'Asia/Tokyo', year: 'numeric', month: '2-digit', day: '2-digit',
+      }).format(new Date()).replace(/\//g, '.');
+    } catch (e) { /* 対応していない環境では、書き出したままの日付を使う */ }
+  }
+
   /* ---------- ヘッダー（スクロールで出し入れ・モバイルメニュー） ---------- */
   function initHeader() {
     var header = document.querySelector('.site-header');
@@ -676,6 +718,8 @@
     initFullPanel('tournaments-all', '[data-tall-open]', '[data-tall-close]');
     initCourtMap();
     initCalendar();
+    initFooterDeco();
+    initToday();
     initCarousel();
     initFilters();
     initTabs();

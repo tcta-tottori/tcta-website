@@ -452,21 +452,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   62%  { transform: scale(1.22); }
   100% { opacity: 1; transform: none; }
 }
-/* 本文の下の赤い面が、左から右へ一度だけ駆け抜ける */
-@keyframes lead-frame {
-  0%   { clip-path: inset(0 100% 0 0); }
-  38%  { clip-path: inset(0 0 0 0); }
-  62%  { clip-path: inset(0 0 0 0); }
-  100% { clip-path: inset(0 0 0 100%); }
-}
-/* 上と同じ動きで、赤の上に来た文字だけを白にする。
-   100%→50% で白が左から入り、50%→0% で左から抜けていく。 */
-@keyframes lead-ink {
-  0%   { background-position: 100% 0; }
-  38%  { background-position: 50% 0; }
-  62%  { background-position: 50% 0; }
-  100% { background-position: 0% 0; }
-}
+
 
 
 .fu { animation: fadeup .8s var(--ease) both; }
@@ -813,7 +799,7 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   max-width: 34em;
   font: 400 15px/2 var(--fjp);
   letter-spacing: .03em;
-  color: var(--gray-800);
+  color: var(--ink);
 }
 .hero__lead p { margin: 0; }
 .hero__lead p + p { margin-top: .9em; }
@@ -822,65 +808,16 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 .hero__lead-p { margin: 0; }
 
 /* 行ごとに、下のライン（枠は出さない）から起き上がる。
-   中の span は block にして行の箱いっぱいに広げる。
-   （inline-block のままだと、下の切り抜きが親から効かず文字が出ない。
-     また幅が行ごとに変わり、色の切り替わる位置が行でずれてしまう） */
+   中の span は block にして行の箱いっぱいに広げる。 */
 .hero__lead-line > span {
   display: block;
   transform: translateY(112%);
-}
-
-/* 本文の下に敷く赤い面。左から現れて右へ抜けていく。
-   文字より下に置く（z-index:-1 は、位置指定のない子＝本文より先に描かれる）ので、
-   面が通っているあいだも文字は隠れない。
-   行が起き上がり終わってから、以前の 2/3 の速さ（1.25s → 1.875s）で走らせる。 */
-.hero__lead-frame {
-  position: absolute;
-  z-index: -1;
-  inset: -10px -12px;
-  background: var(--red);
-  pointer-events: none;
-  animation: lead-frame 1.875s cubic-bezier(.45, .05, .4, 1)
-             calc(var(--lead-in) + .65s) both;
-}
-/* 赤が通っているところだけ文字を白にし、抜けたあとは黒で落ち着く。
-   「黒｜白｜元の色」の帯を文字型に切り抜き、赤い面と同じ速さで動かす。
-   帯は行の箱（＝どの行も同じ幅）に敷くので、行がそろって切り替わる。
-   （文字を2枚重ねるとわずかにずれて縁取りに見えるので、1枚で色だけ変える） */
-.hero__lead-line > span {
-  background-image: linear-gradient(90deg,
-    var(--ink) 0 33.334%,
-    #fff 33.334% 66.667%,
-    var(--gray-800) 66.667% 100%);
-  background-size: 300% 100%;
-  background-position: 100% 0;
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  -webkit-text-fill-color: transparent;
-  animation:
-    lineup .6s var(--ease) calc(var(--lead-in) + var(--i) * .08s) both,
-    lead-ink 1.875s cubic-bezier(.45, .05, .4, 1) calc(var(--lead-in) + .65s) both;
+  animation: lineup .6s var(--ease) calc(var(--lead-in) + var(--i) * .08s) both;
 }
 @media (prefers-reduced-motion: reduce) {
-  .hero__lead-frame { display: none; }
-  .hero__lead-line > span {
-    animation: none;
-    transform: none;
-    background-image: none;
-    color: var(--ink);
-    -webkit-text-fill-color: var(--ink);
-  }
+  .hero__lead-line > span { animation: none; transform: none; }
 }
-/* 切り抜きが使えない環境では、色を変えずにそのまま出す */
-@supports not ((-webkit-background-clip: text) or (background-clip: text)) {
-  .hero__lead-line > span {
-    animation: lineup .6s var(--ease) calc(var(--lead-in) + var(--i) * .08s) both;
-    background-image: none;
-    color: var(--ink);
-    -webkit-text-fill-color: var(--ink);
-  }
-}
+
 .hero__cta { margin-top: 32px; }
 .hero__square, .hero__scroll { display: none; }
 
@@ -1913,7 +1850,12 @@ body.jsrv .rv.on .ink-sweep {
   margin: calc(var(--s) / -2) 0 0 calc(var(--s) / -2);
   background: var(--c);
   border-radius: 3px;
+  /* ゆっくり漂う動き。transform を使う。 */
   animation: footer-drift var(--d) ease-in-out var(--delay) infinite alternate;
+  /* スクロールに合わせた上下。transform とは別枠の translate なので、
+     上の漂いと打ち消し合わない。--sy は main.js がフッターに書き込む。 */
+  translate: 0 calc(var(--sy, 0px) * var(--depth, .5));
+  will-change: translate;
 }
 @keyframes footer-drift {
   from { transform: none; }
@@ -2708,8 +2650,7 @@ body.jsrv .rv.on .ink-sweep {
 .splash-on .hl > span,
 .splash-on .pb__ink,
 .splash-on .pbi,
-.splash-on .hero__en-ch,
-.splash-on .hero__lead-frame { animation-play-state: paused; }
+.splash-on .hero__en-ch { animation-play-state: paused; }
 
 /* ============ 汎用ユーティリティ ============ */
 .stack-24 > * + * { margin-top: 24px; }

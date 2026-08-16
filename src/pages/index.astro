@@ -81,11 +81,9 @@ const upcomingTournaments = TOURNAMENTS.filter((t) => t.status !== 'past');
               <span class="hero__en-ch" style={`--i:${i}`} aria-hidden="true">{c === ' ' ? ' ' : c}</span>
             ))}
           </p>
-          {/* 行ごとに下から起き上がったあと、本文の下を赤い面が駆け抜ける。
-              面の上に来た文字は白くなり、抜けたあとは黒で落ち着く。
+          {/* 行ごとに下から起き上がる。
               行はあらかじめ分けてある（画面幅まかせの折り返しでは行ごとに動かせないため）。 */}
           <div class="hero__lead">
-            <span class="hero__lead-frame" aria-hidden="true"></span>
             <p class="hero__lead-p">
               {LEAD_LINES.map((line, i) => (
                 <span class="hl hero__lead-line" style={`--i:${i}`}><span>{line}</span></span>
