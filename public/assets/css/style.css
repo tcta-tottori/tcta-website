@@ -509,11 +509,21 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 
 /* ============ 06. ヘッダー ============ */
 .site-header {
-  position: relative;
+  position: sticky;
+  top: 0;
   z-index: 100;
   background: var(--white);
   /* 本文との境目に薄く細い黒線を引く（帯の白と地の白を分ける） */
   border-bottom: 1px solid rgba(26, 26, 26, .20);
+  transition: transform .35s var(--ease), box-shadow .3s ease;
+}
+/* 下へ読み進めているあいだは引っ込め、上へ戻したら出す。
+   ページ上部と、モバイルメニューを開いているあいだは常に出しておく。 */
+.site-header--hidden { transform: translateY(-100%); }
+/* 本文の上に重なるので、少しスクロールしたら影をつけて浮かせる */
+.site-header.hsh { box-shadow: 0 1px 12px rgba(26, 26, 26, .10); }
+@media (prefers-reduced-motion: reduce) {
+  .site-header { transition: box-shadow .3s ease; }
 }
 
 /* 位置指定はしない：右上の赤ブロックは .site-header（画面幅）を基準にする */
@@ -1286,19 +1296,26 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   background: var(--white);
   border-bottom: 1px solid var(--gray-200);
 }
-.news-all__close {
+/* 閉じるボタン。ハンバーガーが開いているときと同じ×にそろえている。 */
+.close-x {
   flex: none;
   width: 44px; height: 44px;
   display: inline-flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  border: 1px solid var(--gray-300);
-  border-radius: 9999px;
-  font: 400 22px/1 var(--flt);
-  color: var(--ink);
-  transition: background .3s ease, border-color .3s ease, color .3s ease;
+  gap: 6px;
 }
-.news-all__close:hover { background: var(--red); border-color: var(--red); color: #fff; }
+.close-x span {
+  display: block;
+  width: 22px; height: 2px;
+  background: var(--ink);
+  transition: background .3s ease;
+}
+.close-x span:nth-child(1) { transform: translateY(8px) rotate(45deg); }
+.close-x span:nth-child(2) { opacity: 0; }
+.close-x span:nth-child(3) { transform: translateY(-8px) rotate(-45deg); }
+.close-x:hover span { background: var(--red); }
 .news-all__body .news-list { margin-top: 8px; }
 
 
@@ -1346,7 +1363,7 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   gap: 2px;
 }
 .date-chip__md { font: 700 20px/1 var(--flt); letter-spacing: .02em; color: var(--ink); white-space: nowrap; }
-.date-chip__dow { font: 500 11px/1 var(--flt); letter-spacing: .1em; color: var(--gray-500); white-space: nowrap; }
+.date-chip__dow { font: 700 11px/1 var(--flt); letter-spacing: .1em; color: var(--red); white-space: nowrap; }
 
 /* 写真の上に置く日程チップ（大会カード左上）。中身の作りは上と同じ。 */
 .date-chip--on-photo {
@@ -1794,7 +1811,7 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
    出たときはグレーで、左から右へなめらかに黒へ変わる。
    最初に出るときだけ動かす（.rv は一度 .on が付いたら外れないので自然に1回きり）。 */
 .sec-head__title, .page-title, .sub-head {
-  background-image: linear-gradient(90deg, var(--ink) 0 50%, var(--gray-300) 50% 100%);
+  background-image: linear-gradient(90deg, var(--ink) 0 50%, var(--gray-500) 50% 100%);
   background-size: 200% 100%;
   background-position: 0 0;
   -webkit-background-clip: text;
