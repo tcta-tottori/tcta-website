@@ -2083,6 +2083,44 @@ body.jsrv .rv.on .ink-sweep {
 @media (min-width: 1024px) { .panel { padding: 32px; } }
 .panel--tint { background: var(--red-tint); border-color: rgba(216, 35, 42, .2); }
 .panel--gray { background: var(--gray-050); border-color: var(--gray-200); }
+/* 見落としてほしくない注意（左に赤い罫を立てる） */
+.panel--accent { background: var(--red-tint); border-color: transparent; border-left: 4px solid var(--red); }
+
+/* 登録費の表。区分ごとに市登録・県登録を並べて見せる。 */
+.fee-table {
+  width: 100%;
+  min-width: 440px;
+  border-collapse: collapse;
+  font: 400 14px/1.6 var(--fjp);
+}
+.fee-table th, .fee-table td {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--gray-200);
+  text-align: left;
+  vertical-align: middle;
+}
+.fee-table thead th {
+  background: var(--gray-050);
+  border-bottom: 1px solid var(--gray-300);
+  font: 700 13px/1.5 var(--fjp);
+  letter-spacing: .04em;
+  color: var(--ink);
+  white-space: nowrap;
+}
+.fee-table tbody th {
+  width: 32%;
+  font: 700 14px/1.6 var(--fjp);
+  color: var(--ink);
+}
+.fee-table__free { background: var(--gray-050); }
+.fee {
+  font: 700 22px/1 var(--flt);
+  letter-spacing: .02em;
+  color: var(--ink);
+  white-space: nowrap;
+}
+.fee__yen { font: 700 13px/1 var(--fjp); margin-left: 3px; }
+.fee--free { font: 700 18px/1 var(--fjp); color: var(--red); }
 .panel__title {
   margin: 0 0 12px;
   font: 700 17px/1.5 var(--fjp);

@@ -25,7 +25,7 @@ const description = "鳥取市テニス協会の入会案内。登録の種類�
           <h1 class="page-title" style="margin-top:8px">協会登録（入会案内）</h1>
         </div>
       </div>
-      <p class="page-lead fu" style="animation-delay:.15s">鳥取市テニス協会の登録は年度ごとの更新制です。登録すると、市登録が必要な大会（年8大会）にエントリーできます。クラブ対抗戦や水曜テニス教室への参加にも登録が必要です。</p>
+      <p class="page-lead fu" style="animation-delay:.15s">鳥取市テニス協会の登録は年度ごとの更新制です。登録すると、市登録が必要な大会（年8大会）にエントリーできます。クラブ対抗戦や水曜テニス教室への参加にも登録が必要です。登録費は市登録・県登録で異なり、70歳以上の方は登録費がかかりません（手続きは必要です）。</p>
     </div>
   </section>
 
@@ -76,12 +76,57 @@ const description = "鳥取市テニス協会の入会案内。登録の種類�
 
       <div class="rv" style="margin-top:56px">
         <h2 class="sub-head">登録費</h2>
-        <div class="card-grid card-grid--3">
-          <div class="panel panel--gray"><p style="margin:0;font:500 14px/1.6 var(--fjp);color:var(--gray-600)">一般</p><p style="margin:6px 0 0;font:700 30px/1 var(--flt);letter-spacing:.02em;color:var(--ink)">1,500<span style="font:700 14px/1 var(--fjp);margin-left:4px">円</span></p></div>
-          <div class="panel panel--gray"><p style="margin:0;font:500 14px/1.6 var(--fjp);color:var(--gray-600)">学生</p><p style="margin:6px 0 0;font:700 30px/1 var(--flt);letter-spacing:.02em;color:var(--ink)">1,000<span style="font:700 14px/1 var(--fjp);margin-left:4px">円</span></p></div>
-          <div class="panel panel--gray"><p style="margin:0;font:500 14px/1.6 var(--fjp);color:var(--gray-600)">高校生以下</p><p style="margin:6px 0 0;font:700 30px/1 var(--flt);letter-spacing:.02em;color:var(--ink)">500<span style="font:700 14px/1 var(--fjp);margin-left:4px">円</span></p></div>
+        <p class="prose" style="margin:0 0 20px">市登録（鳥取市テニス協会）と県登録（鳥取県テニス協会）では登録費が異なります。出場したい大会に必要な区分をご確認のうえ、お申し込みください。</p>
+        <div class="table-scroll">
+          <table class="fee-table">
+            <caption class="visually-hidden">区分ごとの登録費</caption>
+            <thead>
+              <tr>
+                <th scope="col">区分</th>
+                <th scope="col"><span class="reg reg--shi">市登録</span></th>
+                <th scope="col"><span class="reg reg--ken">県登録</span></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th scope="row">一般</th>
+                <td><span class="fee">1,500<span class="fee__yen">円</span></span></td>
+                <td><span class="todo-note">要確認</span></td>
+              </tr>
+              <tr>
+                <th scope="row">学生</th>
+                <td><span class="fee">1,000<span class="fee__yen">円</span></span></td>
+                <td><span class="todo-note">要確認</span></td>
+              </tr>
+              <tr>
+                <th scope="row">高校生以下</th>
+                <td><span class="fee">500<span class="fee__yen">円</span></span></td>
+                <td><span class="todo-note">要確認</span></td>
+              </tr>
+              <tr class="fee-table__free">
+                <th scope="row">70歳以上</th>
+                <td><span class="fee fee--free">無料</span></td>
+                <td><span class="todo-note">要確認</span></td>
+              </tr>
+            </tbody>
+          </table>
         </div>
-        <p class="note">※ 市登録・県登録それぞれの金額、および年度更新の締切日は<span class="todo-note">要確認</span>です。</p>
+
+        <div class="panel panel--gray" style="margin-top:24px">
+          <p class="panel__title">70歳以上の方へ</p>
+          <p class="prose" style="margin:0">登録費はかかりませんが、<strong>登録の手続きは必要です</strong>。登録がないと、市登録・県登録が必要な大会にはエントリーできません。用紙の記入・提出の方法は、ほかの方と同じです。<span class="todo-note">要確認</span>（対象となる登録区分・年齢の基準日）</p>
+        </div>
+
+        <p class="note">※ 県登録の金額と、年度更新の締切日は<span class="todo-note">要確認</span>です。</p>
+      </div>
+
+      <div class="rv" style="margin-top:56px">
+        <h2 class="sub-head">登録の有効期間</h2>
+        <p class="prose" style="margin:0 0 20px">登録は年度ごとの更新制です。年度が替わると、あらためて登録の手続きが必要になります。</p>
+        <div class="panel panel--accent">
+          <p class="panel__title">3月の大会にご注意ください</p>
+          <p class="prose" style="margin:0">協会の年度は<strong>3月に始まります</strong>。3月に開催する東部地区テニス選手権は、暦の上では年度末に見えますが、<strong>新しい年度の最初の大会</strong>です。前の年度の登録では出場できませんので、3月の大会に出場される方は、年度が替わる前に新年度の登録を済ませてください。<span class="todo-note">要確認</span>（年度の始まり月と、新年度登録の受付開始日）</p>
+        </div>
       </div>
 
       <div class="rv" style="margin-top:56px">
@@ -115,7 +160,15 @@ const description = "鳥取市テニス協会の入会案内。登録の種類�
           </div>
           <div class="qa__item">
             <p class="qa__q">登録はいつまで有効ですか？</p>
-            <p class="qa__a">年度ごとの更新制です。有効期間の正確な記載は<span class="todo-note">要確認</span>です。</p>
+            <p class="qa__a">年度ごとの更新制です。協会の年度は3月に始まるため、3月開催の東部地区テニス選手権は新しい年度の登録が必要です。前の年度の登録では出場できませんのでご注意ください。<span class="todo-note">要確認</span>（年度の区切りと新年度登録の受付開始日）</p>
+          </div>
+          <div class="qa__item">
+            <p class="qa__q">70歳以上ですが、登録は必要ですか？</p>
+            <p class="qa__a">登録費はかかりませんが、登録の手続きは必要です。登録がないと、市登録・県登録が必要な大会にはエントリーできません。</p>
+          </div>
+          <div class="qa__item">
+            <p class="qa__q">市登録と県登録で登録費は違いますか？</p>
+            <p class="qa__a">はい、区分ごとに金額が異なります。上の「登録費」の表でご確認ください。両方の大会に出場される場合は、それぞれの登録が必要です。</p>
           </div>
         </div>
       </div>
