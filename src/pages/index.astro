@@ -15,6 +15,14 @@ const CATCH = 'PLAY BEYOND.';
 const EN = 'TOTTORI-CITY TENNIS ASSOCIATION';
 const EN_CHARS = [...EN];
 
+// 本文は行ごとに動かすので、あらかじめ行に分けておく。
+// 画面幅まかせの折り返しでは「行ごと」の動きが作れないため、ここで区切る。
+const LEAD_LINES = [
+  '大会やテニス教室を通して、',
+  '世代や経験をこえて誰もがテニスを楽しみ、',
+  '新しいつながりや交流が生まれる場所をつくっています。',
+];
+
 const title = "鳥取市テニス協会｜つなぐ、広がる、テニスの輪。";
 const description = "鳥取市テニス協会の公式サイト。年間19の大会と毎週水曜日のテニス教室を運営しています。大会情報・お知らせ・コート案内をご覧いただけます。";
 
@@ -73,16 +81,22 @@ const upcomingTournaments = TOURNAMENTS.filter((t) => t.status !== 'past');
               <span class="hero__en-ch" style={`--i:${i}`} aria-hidden="true">{c === ' ' ? ' ' : c}</span>
             ))}
           </p>
-          <div class="hero__lead fu" style="animation-delay:3.75s">
-            {/* 本文の全域を囲む赤い枠が、左から右へ一度だけ駆け抜ける */}
+          {/* 行ごとに下から起き上がったあと、本文の下を赤い面が駆け抜ける。
+              面の上に来た文字は白くなり、抜けたあとは黒で落ち着く。
+              行はあらかじめ分けてある（画面幅まかせの折り返しでは行ごとに動かせないため）。 */}
+          <div class="hero__lead">
             <span class="hero__lead-frame" aria-hidden="true"></span>
-            <p>大会やテニス教室を通して、世代や経験をこえて誰もがテニスを楽しみ、新しいつながりや交流が生まれる場所をつくっています。</p>
+            <p class="hero__lead-p">
+              {LEAD_LINES.map((line, i) => (
+                <span class="hl hero__lead-line" style={`--i:${i}`}><span>{line}</span></span>
+              ))}
+            </p>
           </div>
         </div>
-        <a class="btn btn--primary hero__cta fu" style="animation-delay:3.95s" href="about.html">協会について見る <span class="aw">→</span></a>
+        <a class="btn btn--primary hero__cta fu" style="animation-delay:5.6s" href="about.html">協会について見る <span class="aw">→</span></a>
       </div>
     </div>
-    <div class="hero__square fu" style="animation-delay:4.15s" aria-hidden="true"></div>
+    <div class="hero__square fu" style="animation-delay:5.9s" aria-hidden="true"></div>
     <div class="hero__scroll" aria-hidden="true">
       <span>SCROLL</span>
       <span class="blink"></span>

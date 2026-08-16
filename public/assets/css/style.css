@@ -445,8 +445,13 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   22%  { opacity: 1; background-position: 62% 0; }
   100% { opacity: 1; background-position: 6% 0; }
 }
-/* 英字（TOTTORI-CITY…）：左から1文字ずつ、静かに浮かび上がらせる */
-@keyframes en-in { to { opacity: 1; transform: none; } }
+/* 英字（TOTTORI-CITY…）：小さく出て → 少し大きく → 通常の大きさへ */
+@keyframes en-in {
+  0%   { opacity: 0; transform: scale(.45); }
+  35%  { opacity: 1; }
+  62%  { transform: scale(1.22); }
+  100% { opacity: 1; transform: none; }
+}
 /* 本文の下の赤い面が、左から右へ一度だけ駆け抜ける */
 @keyframes lead-frame {
   0%   { clip-path: inset(0 100% 0 0); }
@@ -781,14 +786,14 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   letter-spacing: .18em;
   color: var(--red);
 }
-/* 左から1文字ずつ浮かび上がる。間隔を詰めてあるので、全体では
-   さっと左から流れたように見える。 */
+/* 左から1文字ずつ。小さく出て、少し大きくなってから通常の大きさに落ち着く。
+   30文字を 0.02s ずつずらし、最後の文字が出終わるまででちょうど1秒。 */
 .hero__en-ch {
   display: inline-block;
   opacity: 0;
-  transform: translateY(.35em);
-  animation: en-in .45s var(--ease) both;
-  animation-delay: calc(var(--intro-end) + 1.35s + var(--i) * .022s);
+  transform-origin: 50% 100%;
+  animation: en-in .42s var(--ease) both;
+  animation-delay: calc(var(--intro-end) + 1.35s + var(--i) * .02s);
 }
 /* 英字（TOTTORI-CITY…）の下。1行ぶん空けてから置く。
    キャッチコピーと同じく写真の上に載る。 */
@@ -802,24 +807,39 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 }
 .hero__lead p { margin: 0; }
 .hero__lead p + p { margin-top: .9em; }
+/* 英字が出終わって 0.3 秒後から動き出す */
+.hero__lead { --lead-in: calc(var(--intro-end) + 2.65s); }
+.hero__lead-p { margin: 0; }
+
+/* 行ごとに、下のライン（枠は出さない）から起き上がる。
+   中の span は block にして行の箱いっぱいに広げる。
+   （inline-block のままだと、下の切り抜きが親から効かず文字が出ない。
+     また幅が行ごとに変わり、色の切り替わる位置が行でずれてしまう） */
+.hero__lead-line > span {
+  display: block;
+  transform: translateY(112%);
+}
+
 /* 本文の下に敷く赤い面。左から現れて右へ抜けていく。
    文字より下に置く（z-index:-1 は、位置指定のない子＝本文より先に描かれる）ので、
-   面が通っているあいだも文字は隠れない。 */
+   面が通っているあいだも文字は隠れない。
+   行が起き上がり終わってから、以前の 2/3 の速さ（1.25s → 1.875s）で走らせる。 */
 .hero__lead-frame {
   position: absolute;
   z-index: -1;
   inset: -10px -12px;
   background: var(--red);
   pointer-events: none;
-  animation: lead-frame 1.25s cubic-bezier(.45, .05, .4, 1)
-             calc(var(--intro-end) + 1.75s) both;
+  animation: lead-frame 1.875s cubic-bezier(.45, .05, .4, 1)
+             calc(var(--lead-in) + .65s) both;
 }
-/* 赤が通っているところだけ文字を白にする。
-   「地の色｜白｜地の色」の帯を文字型に切り抜き、赤い面と同じ速さで動かす。
+/* 赤が通っているところだけ文字を白にし、抜けたあとは黒で落ち着く。
+   「黒｜白｜元の色」の帯を文字型に切り抜き、赤い面と同じ速さで動かす。
+   帯は行の箱（＝どの行も同じ幅）に敷くので、行がそろって切り替わる。
    （文字を2枚重ねるとわずかにずれて縁取りに見えるので、1枚で色だけ変える） */
-.hero__lead p {
+.hero__lead-line > span {
   background-image: linear-gradient(90deg,
-    var(--gray-800) 0 33.334%,
+    var(--ink) 0 33.334%,
     #fff 33.334% 66.667%,
     var(--gray-800) 66.667% 100%);
   background-size: 300% 100%;
@@ -828,25 +848,27 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   background-clip: text;
   color: transparent;
   -webkit-text-fill-color: transparent;
-  animation: lead-ink 1.25s cubic-bezier(.45, .05, .4, 1)
-             calc(var(--intro-end) + 1.75s) both;
+  animation:
+    lineup .6s var(--ease) calc(var(--lead-in) + var(--i) * .08s) both,
+    lead-ink 1.875s cubic-bezier(.45, .05, .4, 1) calc(var(--lead-in) + .65s) both;
 }
 @media (prefers-reduced-motion: reduce) {
   .hero__lead-frame { display: none; }
-  .hero__lead p {
+  .hero__lead-line > span {
     animation: none;
+    transform: none;
     background-image: none;
-    color: var(--gray-800);
-    -webkit-text-fill-color: var(--gray-800);
+    color: var(--ink);
+    -webkit-text-fill-color: var(--ink);
   }
 }
 /* 切り抜きが使えない環境では、色を変えずにそのまま出す */
 @supports not ((-webkit-background-clip: text) or (background-clip: text)) {
-  .hero__lead p {
-    animation: none;
+  .hero__lead-line > span {
+    animation: lineup .6s var(--ease) calc(var(--lead-in) + var(--i) * .08s) both;
     background-image: none;
-    color: var(--gray-800);
-    -webkit-text-fill-color: var(--gray-800);
+    color: var(--ink);
+    -webkit-text-fill-color: var(--ink);
   }
 }
 .hero__cta { margin-top: 32px; }
@@ -1767,6 +1789,52 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 }
 @media (min-width: 1024px) { .cta__close { font-size: 17px; } }
 .cta .btn { margin-top: 28px; }
+
+/* ---- 見出しの塗り替え（ヒーロー以外）----
+   出たときはグレーで、左から右へなめらかに黒へ変わる。
+   最初に出るときだけ動かす（.rv は一度 .on が付いたら外れないので自然に1回きり）。 */
+.sec-head__title, .page-title, .sub-head {
+  background-image: linear-gradient(90deg, var(--ink) 0 50%, var(--gray-300) 50% 100%);
+  background-size: 200% 100%;
+  background-position: 0 0;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+/* JS が動くときだけ、出る前をグレーにしておく */
+body.jsrv .rv .sec-head__title,
+body.jsrv .rv .sub-head { background-position: 100% 0; }
+body.jsrv .rv.on .sec-head__title,
+body.jsrv .rv.on .sub-head { animation: title-sweep .9s var(--ease) .1s both; }
+/* ページ見出しは読み込み時に出るので、そのまま走らせる */
+.page-title { animation: title-sweep .9s var(--ease) .2s both; }
+
+@keyframes title-sweep {
+  from { background-position: 100% 0; }
+  to   { background-position: 0 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sec-head__title, .page-title, .sub-head,
+  body.jsrv .rv .sec-head__title, body.jsrv .rv .sub-head,
+  body.jsrv .rv.on .sec-head__title, body.jsrv .rv.on .sub-head {
+    animation: none;
+    background-image: none;
+    color: var(--ink);
+    -webkit-text-fill-color: var(--ink);
+  }
+}
+@supports not ((-webkit-background-clip: text) or (background-clip: text)) {
+  .sec-head__title, .page-title, .sub-head,
+  body.jsrv .rv .sec-head__title, body.jsrv .rv .sub-head,
+  body.jsrv .rv.on .sec-head__title, body.jsrv .rv.on .sub-head {
+    animation: none;
+    background-image: none;
+    color: var(--ink);
+    -webkit-text-fill-color: var(--ink);
+  }
+}
 
 /* ---- 見出しの塗り替え（「PLAY BEYOND.」と同じ作り）----
    「黒｜赤｜薄いグレー」の帯を文字の形に切り抜いて右から左へ流す。
