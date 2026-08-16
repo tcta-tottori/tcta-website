@@ -101,25 +101,6 @@
     });
   }
 
-  /* ---------- 追従する見出し（表示域が長いセクション） ----------
-     見出しが画面上部に貼り付いている間だけ .is-pinned を付ける。
-     貼り付く前から地の色を敷いてしまうと、背後の大きな英字が隠れてしまうため。 */
-  function initStickyHeads() {
-    var heads = document.querySelectorAll('.section--sticky-head > .container > .sec-bar, .section--sticky-head > .container > .sec-head');
-    if (!heads.length || !('IntersectionObserver' in window)) return;
-
-    heads.forEach(function (head) {
-      // sticky の停止位置より 1px 上に判定線を引き、そこを越えたら「貼り付いた」とみなす
-      var top = parseFloat(getComputedStyle(head).top) || 0;
-      var io = new IntersectionObserver(function (entries) {
-        entries.forEach(function (e) {
-          head.classList.toggle('is-pinned', e.intersectionRatio < 1);
-        });
-      }, { threshold: [1], rootMargin: '-' + (top + 1) + 'px 0px 0px 0px' });
-      io.observe(head);
-    });
-  }
-
   /* ---------- リンク集の流れ ----------
      いつも一定の速さで流しておくが、指でなぞる・ホイールを回すなど
      触られたらそのぶん素直に動かし、手が離れて3秒ほど経ったらまた流し出す。
@@ -281,6 +262,39 @@
     });
   }
 
+  /* ---------- 大会カレンダーの月送り ----------
+     月ぶんのマス目は全部書き出してあるので、出す1枚を切り替えるだけ。 */
+  function initCalendar() {
+    var root = document.querySelector('[data-calendar]');
+    if (!root) return;
+
+    var months = root.querySelectorAll('[data-cal-month]');
+    var prev = root.querySelector('[data-cal-prev]');
+    var next = root.querySelector('[data-cal-next]');
+    var label = root.querySelector('[data-cal-label]');
+    var count = root.querySelector('[data-cal-count]');
+    if (!months.length || !prev || !next) return;
+
+    var at = 0;
+    var show = function (i) {
+      at = Math.min(Math.max(i, 0), months.length - 1);
+      for (var j = 0; j < months.length; j++) months[j].hidden = j !== at;
+      var m = months[at];
+      if (label) {
+        label.innerHTML = '<span class="cal__num">' + m.getAttribute('data-month') + '</span>' +
+          '<span class="cal__meta"><span class="cal__en">' + m.getAttribute('data-en') + '</span>' +
+          '<span class="cal__year">' + m.getAttribute('data-year') + '</span></span>';
+      }
+      if (count) count.textContent = m.getAttribute('data-count');
+      prev.disabled = at === 0;
+      next.disabled = at === months.length - 1;
+    };
+
+    prev.addEventListener('click', function () { show(at - 1); });
+    next.addEventListener('click', function () { show(at + 1); });
+    show(0);
+  }
+
   /* ---------- コート案内の地図 ----------
      ボタンを押したら、その施設の埋め込みに差し替える。 */
   function initCourtMap() {
@@ -312,45 +326,17 @@
     });
   }
 
-  /* ---------- ヘッダー（スクロールで影・出し入れ・モバイルメニュー） ---------- */
+  /* ---------- ヘッダー（モバイルメニュー） ---------- */
   function initHeader() {
     var header = document.querySelector('.site-header');
     if (!header) return;
 
     var toggle = document.querySelector('.hamburger');
     var menu = document.getElementById('mobile-nav');
-
-    /* 下へ読み進めているあいだは引っ込め、上へ戻したら出す。
-       ・ページ上部（ヘッダー1枚ぶん）では常に出しておく
-       ・行きつ戻りつでちらつかないよう、向きが変わっても少し動くまでは反応しない
-       ・モバイルメニューを開いているあいだは引っ込めない（閉じるボタンが消えるため） */
-    var THRESHOLD = 8;
-    var lastY = window.scrollY;
-    var onScroll = function () {
-      var y = window.scrollY;
-      header.classList.toggle('hsh', y > 100);
-
-      var menuOpen = toggle && toggle.getAttribute('aria-expanded') === 'true';
-      var top = y <= header.offsetHeight;
-      if (menuOpen || top) {
-        header.classList.remove('site-header--hidden');
-      } else if (Math.abs(y - lastY) > THRESHOLD) {
-        header.classList.toggle('site-header--hidden', y > lastY);
-      }
-      if (Math.abs(y - lastY) > THRESHOLD) lastY = y;
-      // 貼り付く見出しはヘッダーの真下に置いているので、引っ込めたら一緒に上げる
-      document.body.classList.toggle('hdr-off', header.classList.contains('site-header--hidden'));
-    };
-    window.addEventListener('scroll', onScroll, { passive: true });
-    onScroll();
-
     if (!toggle || !menu) return;
 
     var setOpen = function (open) {
       if (open) {
-        // 開くときは必ずヘッダーを出しておく（閉じるボタンが画面から消えないように）
-        header.classList.remove('site-header--hidden');
-        document.body.classList.remove('hdr-off');
         // ヘッダー（通知バーの有無で高さが変わる）の真下から始める
         menu.style.paddingTop = (header.getBoundingClientRect().bottom + 24) + 'px';
       }
@@ -595,7 +581,6 @@
   function init() {
     initSplash();
     initReveal();
-    initStickyHeads();
     initMarquee();
     initHeader();
     initRipple();
@@ -603,6 +588,7 @@
     initFullPanel('news-all', '[data-news-open]', '[data-news-close]');
     initFullPanel('tournaments-all', '[data-tall-open]', '[data-tall-close]');
     initCourtMap();
+    initCalendar();
     initCarousel();
     initFilters();
     initTabs();

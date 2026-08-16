@@ -1,0 +1,43 @@
+---
+// 大会一覧の表。src/data/schedule.js の配列をそのまま受け取る。
+// 列は 日付／大会名・種目／会場／予備日／予備会場／締切／登録区分 の順。
+// 予備会場は原稿に無いので、入るまでは「—」を出す。
+import { REG_LABEL } from '../data/schedule.js';
+
+const { items, id, caption } = Astro.props;
+---
+
+<div class="table-scroll rv">
+  <table class="data-table" id={id}>
+    <caption class="visually-hidden">{caption}</caption>
+    <thead>
+      <tr>
+        <th scope="col" class="col-date">期日</th>
+        <th scope="col">大会名・種目</th>
+        <th scope="col" class="col-place">会場</th>
+        <th scope="col" class="col-spare">予備日</th>
+        <th scope="col" class="col-place">予備会場</th>
+        <th scope="col" class="col-note">締切</th>
+        <th scope="col" class="col-reg">登録区分</th>
+      </tr>
+    </thead>
+    <tbody>
+      {items.map((t) => (
+        <tr class:list={[t.status === 'done' && 'is-ended', t.status === 'open' && 'is-open']} data-tags={`${t.status} ${t.reg}`}>
+          <td class="col-date">{t.label}</td>
+          <td>
+            <span class="name">{t.name}</span><br>
+            <span class="data-table__sub">{t.event}</span>
+          </td>
+          <td class="col-place">{t.place}</td>
+          <td class="col-spare">
+            {t.spareDate || (t.spareNote ? <span class="data-table__sub">{t.spareNote}</span> : '—')}
+          </td>
+          <td class="col-place">{t.spareVenue || '—'}</td>
+          <td class="col-note">{t.due}</td>
+          <td class="col-reg"><span class={`reg reg--${t.reg}`}>{REG_LABEL[t.reg]}</span></td>
+        </tr>
+      ))}
+    </tbody>
+  </table>
+</div>

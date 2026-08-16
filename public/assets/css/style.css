@@ -230,46 +230,6 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 .section--gray .ghost,
 .page-head .ghost { color: var(--ghost-on-gray); }
 
-/* ---- 表示域が長いセクションは、見出しを画面上部に残す ---- */
-.section--sticky-head > .container > .sec-bar,
-.section--sticky-head > .container > .sec-head {
-  position: sticky;
-  /* 追従ヘッダーの真下に貼り付ける（隙間を空けると本文が覗いて見苦しい）。
-     ヘッダーが引っ込んでいるあいだ（.hdr-off）は、その分だけ上へ寄せる。 */
-  top: var(--header-h);
-  z-index: 3;
-  transition: top .35s ease;
-}
-.hdr-off .section--sticky-head > .container > .sec-bar,
-.hdr-off .section--sticky-head > .container > .sec-head { top: 16px; }
-@media (prefers-reduced-motion: reduce) {
-  .section--sticky-head > .container > .sec-bar,
-  .section--sticky-head > .container > .sec-head { transition: none; }
-}
-/* 貼り付いている間だけ地の色を敷く（貼り付く前は背景の大きな英字を隠さない）。
-   .is-pinned は main.js が付け外しする。 */
-.section--sticky-head > .container > .sec-bar,
-.section--sticky-head > .container > .sec-head {
-  border-radius: 8px;
-  /* opacity / transform も併記しておくこと。
-     ここで transition を上書きすると .rv（スクロール連動フェード）が効かなくなる。 */
-  transition:
-    background-color .25s ease, box-shadow .25s ease,
-    opacity .7s var(--ease), transform .7s var(--ease);
-}
-.section--sticky-head > .container > .is-pinned {
-  background: var(--white);
-  box-shadow: 0 6px 18px -12px rgba(26, 26, 26, .5);
-}
-.section--gray.section--sticky-head > .container > .is-pinned { background: var(--gray-050); }
-/* 貼り付いたときだけ、左右に少し余白をつけて地の色を広げる */
-.section--sticky-head > .container > .is-pinned {
-  margin-inline: -12px;
-  padding-inline: 12px;
-  padding-block: 10px;
-  margin-block: -10px;
-}
-
 /* 装飾の輪（大会カレンダー） */
 .deco-circle {
   position: absolute;
@@ -544,22 +504,12 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 
 /* ============ 06. ヘッダー ============ */
 .site-header {
-  position: sticky;
-  top: 0;
+  position: relative;
   z-index: 100;
   background: var(--white);
   /* 本文との境目に薄く細い黒線を引く（帯の白と地の白を分ける） */
   border-bottom: 1px solid rgba(26, 26, 26, .20);
-  transition: box-shadow .3s ease, transform .35s ease;
 }
-/* 下へスクロールしているあいだは引っ込め、上へ戻したら出す。
-   モバイルメニューを開いているあいだは引っ込めない（閉じるボタンが消えるため）。 */
-.site-header--hidden { transform: translateY(-100%); }
-@media (prefers-reduced-motion: reduce) {
-  .site-header { transition: box-shadow .3s ease; }
-  .site-header--hidden { transform: none; }
-}
-.site-header.hsh { box-shadow: 0 1px 12px rgba(26, 26, 26, .10); }
 
 /* 位置指定はしない：右上の赤ブロックは .site-header（画面幅）を基準にする */
 .site-header__inner {
@@ -678,18 +628,21 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   position: relative;
   display: grid;
   grid-template-columns: 1fr;
+  /* ヘッダーは追従しないので、その高さを引いた残り＝ちょうど1画面ぶん。
+     ここで次のセクションが覗かないようにしている。 */
+  min-height: calc(100svh - var(--header-h) - 1px);
   background: var(--white);
   overflow: hidden;
 }
+@supports not (height: 100svh) { .hero { min-height: calc(100vh - var(--header-h) - 1px); } }
 /* モバイルは写真の上に文字とボタンを重ねる（同じマスに置く） */
 .hero__media, .hero__body { grid-area: 1 / 1; }
 .hero__body { align-self: end; z-index: 1; }
 .hero__media {
   position: relative;
-  /* モバイルは写真の上に文字とボタンを重ねるので、その分の高さを見ておく */
-  height: 132vw;
-  min-height: 528px;
-  max-height: 640px;
+  /* 写真はヒーロー（1画面ぶん）いっぱいに広げる。
+     モバイルはこの上に文字とボタンを重ねる。 */
+  height: auto;
   overflow: hidden;
   border-bottom-left-radius: 80px;
 }
@@ -901,18 +854,12 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 
 @media (min-width: 1024px) {
   /* 文字とボタンは左の列、写真は右の列。重ねずに横に並べる。 */
-  .hero {
-    min-height: 560px;
-    grid-template-columns: 50% 50%;
-  }
+  .hero { grid-template-columns: 50% 50%; }
   /* 左の列に収まる大きさにする。列幅は「画面の半分 − コンテナの左余白」なので、
      画面が広くなっても content の幅はほぼ一定になる。 */
   .hero .pb { font-size: clamp(38px, 4.6vw, 58px); }
   .hero__media {
     grid-area: 1 / 2;
-    height: auto;
-    min-height: 0;
-    max-height: none;
     border-radius: 0 0 0 280px;
   }
   .hero__body {
@@ -924,7 +871,7 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
     max-width: none;
     margin-inline: 0;
     padding-inline: max(var(--gutter), calc((100vw - var(--container-max)) / 2 + var(--gutter))) 24px;
-    padding-block: 88px 40px;
+    padding-block: 72px 40px;
   }
   .hero__inner { max-width: none; }
   .hero__en { margin-top: 22px; font-size: 14px; }
@@ -1417,37 +1364,42 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 /* ---- 月ごとのカレンダー（大会情報ページ）----
    大会のある月だけを並べ、開催日のマスを赤くする。
    マスの下にその月の大会を出すので、カレンダーを見たまま中身も分かる。 */
-.cal {
-  display: grid;
-  gap: 20px;
-  margin-top: 32px;
-}
-@media (min-width: 640px) { .cal { grid-template-columns: repeat(2, 1fr); gap: 24px; } }
-@media (min-width: 1024px) { .cal { grid-template-columns: repeat(3, 1fr); margin-top: 48px; } }
+.cal { margin-top: 32px; }
+@media (min-width: 1024px) { .cal { margin-top: 48px; } }
 
+/* 月送り */
+.cal__bar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding-bottom: 16px;
+}
+.cal__label {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin: 0;
+  min-width: 8em;
+}
 .cal__month {
   background: var(--white);
   border: 1px solid var(--gray-200);
   padding: 20px;
 }
-.cal__head {
-  display: flex;
-  align-items: baseline;
-  gap: 10px;
-  padding-bottom: 14px;
-  border-bottom: 1px solid var(--gray-200);
+.cal__month[hidden] { display: none; }
+@media (min-width: 768px) {
+  .cal__month { padding: 28px; display: grid; grid-template-columns: minmax(0, 360px) minmax(0, 1fr); gap: 32px; align-items: start; }
 }
-.cal__num { font: 700 30px/1 var(--flt); letter-spacing: .02em; color: var(--ink); }
+.cal__num { font: 700 34px/1 var(--flt); letter-spacing: .02em; color: var(--ink); }
 .cal__meta { display: flex; flex-direction: column; gap: 3px; }
 .cal__en { font: 700 11px/1 var(--flt); letter-spacing: .14em; color: var(--red); }
 .cal__year { font: 500 11px/1 var(--flt); letter-spacing: .08em; color: var(--gray-500); }
-.cal__count { margin-left: auto; font: 500 12px/1 var(--fjp); color: var(--gray-500); }
+.cal__count { margin-left: auto; font: 500 13px/1 var(--fjp); color: var(--gray-500); }
 
 .cal__grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 3px;
-  margin-top: 14px;
+  gap: 4px;
 }
 .cal__dow {
   display: flex;
@@ -1465,8 +1417,8 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   align-items: center;
   justify-content: center;
   aspect-ratio: 1 / 1;
-  border-radius: 3px;
-  font: 500 12px/1 var(--flt);
+  border-radius: 4px;
+  font: 500 14px/1 var(--flt);
   color: var(--gray-800);
 }
 .cal__cell--empty { visibility: hidden; }
@@ -1479,7 +1431,13 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   font-weight: 700;
 }
 
-.cal__list { margin-top: 16px; display: flex; flex-direction: column; }
+.cal__list { margin-top: 20px; display: flex; flex-direction: column; }
+@media (min-width: 768px) { .cal__list { margin-top: 0; } }
+.cal__list:empty::after {
+  content: "この月の大会はありません。";
+  font: 400 13px/1.8 var(--fjp);
+  color: var(--gray-500);
+}
 .cal__item {
   display: flex;
   align-items: center;
@@ -1490,11 +1448,11 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 .cal__item-day { flex: none; font: 700 15px/1 var(--flt); color: var(--red); }
 .cal__item-body { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
 .cal__item-name {
-  font: 700 12px/1.5 var(--fjp);
+  font: 700 14px/1.5 var(--fjp);
   color: var(--ink);
   overflow-wrap: anywhere;
 }
-.cal__item-sub { font: 400 11px/1.5 var(--fjp); color: var(--gray-500); }
+.cal__item-sub { font: 400 12px/1.5 var(--fjp); color: var(--gray-500); }
 .cal__item-badge { margin-left: auto; flex: none; min-width: 0; height: 22px; font-size: 11px; padding: 0 8px; }
 
 /* ---- コート案内の地図 ----
@@ -2046,8 +2004,6 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   vertical-align: middle;
 }
 .data-table thead th {
-  position: sticky;
-  top: 0;
   background: var(--gray-050);
   font: 700 13px/1.5 var(--fjp);
   letter-spacing: .04em;
@@ -2057,9 +2013,28 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 }
 .data-table tbody tr:hover { background: var(--gray-050); }
 .data-table .col-date { width: 104px; white-space: nowrap; font-family: var(--flt); font-weight: 500; letter-spacing: .04em; }
-.data-table .col-badge { width: 108px; }
-.data-table .col-place { width: 190px; }
-.data-table .col-note { width: 120px; }
+.data-table .col-place { width: 180px; }
+.data-table .col-spare { width: 96px; white-space: nowrap; font-family: var(--flt); font-weight: 500; letter-spacing: .04em; }
+.data-table .col-note { width: 96px; font-family: var(--flt); font-weight: 500; letter-spacing: .04em; }
+.data-table .col-reg { width: 108px; }
+.data-table__sub { font: 400 13px/1.6 var(--fjp); color: var(--gray-500); }
+
+/* 登録区分。県＝白地に赤、市＝赤地に白、不要＝グレー地に白。 */
+.reg {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 76px;
+  height: 26px;
+  padding: 0 10px;
+  border-radius: 2px;
+  font: 700 12px/1 var(--fjp);
+  letter-spacing: .06em;
+  white-space: nowrap;
+}
+.reg--ken { background: var(--white); border: 1px solid var(--red); color: var(--red); }
+.reg--shi { background: var(--red); color: #fff; }
+.reg--free { background: var(--gray-600); color: #fff; }
 .data-table .name { font-weight: 700; color: var(--ink); }
 .data-table tr.is-open { background: var(--red-tint); }
 .data-table tr.is-open:hover { background: #f9e2e4; }

@@ -1,28 +1,42 @@
 ---
 // 令和8年度の大会を、月ごとのカレンダーで見せる。
-// 大会のある月だけを並べ、開催日のマスを赤くする。マスの下にその月の大会を出すので、
-// 「いつ・何があるか」がカレンダーを見たまま分かる。
+// 出すのは1か月ぶんだけ。前後のボタンで月を移す（main.js の initCalendar）。
+// 全月ぶんのマス目は最初から書き出しておき、表示の切り替えだけをJSが行うので、
+// JSが動かない環境でも先頭の月は読める。
 import { SCHEDULE, STATUS_LABEL, byMonth, monthGrid } from '../data/schedule.js';
 
 const DOW = ['日', '月', '火', '水', '木', '金', '土'];
 const months = byMonth(SCHEDULE).map((m) => ({ ...m, ...monthGrid(m) }));
 ---
 
-<div class="cal">
-  {months.map((m) => (
-    <section class="cal__month rv" aria-label={`${m.year}年${m.month}月の大会`}>
-      <header class="cal__head">
-        <span class="cal__num">{String(m.month).padStart(2, '0')}</span>
-        <span class="cal__meta">
-          <span class="cal__en">{m.en}</span>
-          <span class="cal__year">{m.year}</span>
-        </span>
-        <span class="cal__count">{m.items.length}大会</span>
-      </header>
+<div class="cal" data-calendar>
+  <div class="cal__bar">
+    <button class="circle-btn" type="button" data-cal-prev aria-label="前の月へ" disabled>←</button>
+    <p class="cal__label" data-cal-label aria-live="polite">
+      <span class="cal__num">{String(months[0].month).padStart(2, '0')}</span>
+      <span class="cal__meta">
+        <span class="cal__en">{months[0].en}</span>
+        <span class="cal__year">{months[0].year}</span>
+      </span>
+    </p>
+    <button class="circle-btn circle-btn--solid" type="button" data-cal-next aria-label="次の月へ">→</button>
+    <span class="cal__count" data-cal-count>{months[0].items.length}大会</span>
+  </div>
 
+  {months.map((m, i) => (
+    <section
+      class="cal__month"
+      data-cal-month={i}
+      data-month={String(m.month).padStart(2, '0')}
+      data-en={m.en}
+      data-year={m.year}
+      data-count={`${m.items.length}大会`}
+      aria-label={`${m.year}年${m.month}月の大会`}
+      hidden={i !== 0}
+    >
       <div class="cal__grid" role="presentation">
-        {DOW.map((d, i) => (
-          <span class:list={['cal__dow', i === 0 && 'is-sun', i === 6 && 'is-sat']}>{d}</span>
+        {DOW.map((d, j) => (
+          <span class:list={['cal__dow', j === 0 && 'is-sun', j === 6 && 'is-sat']}>{d}</span>
         ))}
         {m.cells.map((c) => (
           c === null
@@ -45,7 +59,7 @@ const months = byMonth(SCHEDULE).map((m) => ({ ...m, ...monthGrid(m) }));
             <span class="cal__item-day">{String(Number(t.date.slice(8))).padStart(2, '0')}</span>
             <span class="cal__item-body">
               <span class="cal__item-name">{t.name}</span>
-              <span class="cal__item-sub">{t.event}</span>
+              <span class="cal__item-sub">{t.event}／{t.place}</span>
             </span>
             <span class={`badge ${STATUS_LABEL[t.status].badge} cal__item-badge`}>{STATUS_LABEL[t.status].label}</span>
           </li>
