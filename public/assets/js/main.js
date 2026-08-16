@@ -384,6 +384,14 @@
     var track = document.querySelector('[data-carousel]');
     if (!track) return;
 
+    /* 止まる位置の左余白。scroll-padding は calc のまま返ってきて読めないので、
+       実際に px で返る padding と、覗かせ幅の変数から組み立てる。 */
+    var padStart = function () {
+      var cs = getComputedStyle(track);
+      return (parseFloat(cs.paddingInlineStart) || 0) +
+             (parseFloat(cs.getPropertyValue('--carousel-peek')) || 0);
+    };
+
     var step = function () {
       var card = track.querySelector('.tcard');
       if (!card) return 320;
@@ -408,8 +416,7 @@
       var cards = track.querySelectorAll('.tcard');
       var mark = function () {
         // 左端にいちばん近いカードを「いま見ている1枚」とみなす
-        var pad = parseFloat(getComputedStyle(track).scrollPaddingInlineStart) || 0;
-        var here = track.scrollLeft + pad;
+        var here = track.scrollLeft + padStart();
         var near = 0;
         var best = Infinity;
         for (var i = 0; i < cards.length; i++) {
@@ -423,8 +430,7 @@
       Array.prototype.forEach.call(dots, function (dot, i) {
         dot.addEventListener('click', function () {
           if (!cards[i]) return;
-          var pad = parseFloat(getComputedStyle(track).scrollPaddingInlineStart) || 0;
-          track.scrollTo({ left: Math.max(0, cards[i].offsetLeft - pad), behavior: reduceMotion ? 'auto' : 'smooth' });
+          track.scrollTo({ left: Math.max(0, cards[i].offsetLeft - padStart()), behavior: reduceMotion ? 'auto' : 'smooth' });
         });
       });
       mark();
@@ -436,8 +442,7 @@
     var marker = track.querySelector('[data-carousel-today]');
     if (marker) {
       var place = function () {
-        var pad = parseFloat(getComputedStyle(track).scrollPaddingInlineStart) || 0;
-        track.scrollLeft = Math.max(0, marker.offsetLeft - pad);
+        track.scrollLeft = Math.max(0, marker.offsetLeft - padStart());
       };
       place();
       window.addEventListener('load', place);

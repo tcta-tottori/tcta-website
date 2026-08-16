@@ -669,27 +669,27 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 /* ============ 07. ヒーロー ============ */
 .hero {
   position: relative;
+  display: grid;
+  grid-template-columns: 1fr;
   background: var(--white);
   overflow: hidden;
 }
+/* モバイルは写真の上に文字とボタンを重ねる（同じマスに置く） */
+.hero__media, .hero__body { grid-area: 1 / 1; }
+.hero__body { align-self: end; z-index: 1; }
 .hero__media {
   position: relative;
-  height: 108vw;
-  min-height: 448px;
-  max-height: 560px;
+  /* モバイルは写真の上に文字とボタンを重ねるので、その分の高さを見ておく */
+  height: 132vw;
+  min-height: 528px;
+  max-height: 640px;
   overflow: hidden;
   border-bottom-left-radius: 80px;
 }
 /* 写真とベール。払いのアニメーション（.phv）はここに掛ける */
 .hero__shot { position: absolute; inset: 0; }
-/* 写真の上に置くキャッチコピー。下からの白いぼかしで黒い文字を読ませる */
-.hero__copy {
-  position: absolute;
-  left: var(--gutter);
-  right: var(--gutter);
-  bottom: 22px;
-  z-index: 1;
-}
+/* キャッチコピーの一式。ボタンと同じ器に入れて、左側にまとめて置く。 */
+.hero__copy { position: relative; }
 .hero__media img.hero__photo {
   width: 100%; height: 100%;
   object-fit: cover;
@@ -703,15 +703,15 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
        黒い文字をそのまま読ませる（面で覆わず、下端からの一方向で自然に見せる） */
     linear-gradient(0deg,
       rgba(255, 255, 255, .97) 0%,
-      rgba(255, 255, 255, .93) 26%,
-      rgba(255, 255, 255, .72) 44%,
-      rgba(255, 255, 255, 0) 68%),
+      rgba(255, 255, 255, .94) 32%,
+      rgba(255, 255, 255, .76) 52%,
+      rgba(255, 255, 255, 0) 78%),
     /* 左：本文側へのなじませ */
     linear-gradient(90deg, rgba(255, 255, 255, .55) 0%, rgba(255, 255, 255, 0) 24%);
 }
 
 
-.hero__body { padding-block: 40px 56px; }
+.hero__body { padding-block: 0 26px; }
 .hero__title { margin: 0; }
 
 /* ---- 冒頭の導入「PLAY」→「BEYOND.」----
@@ -859,26 +859,32 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 .hero__square, .hero__scroll { display: none; }
 
 @media (min-width: 1024px) {
-  .hero { min-height: 780px; }
+  /* 文字とボタンは左の列、写真は右の列。重ねずに横に並べる。 */
+  .hero {
+    min-height: 780px;
+    grid-template-columns: 50% 50%;
+  }
+  /* 左の列に収まる大きさにする。列幅は「画面の半分 − コンテナの左余白」なので、
+     画面が広くなっても content の幅はほぼ一定になる。 */
+  .hero .pb { font-size: clamp(38px, 4.6vw, 58px); }
   .hero__media {
-    position: absolute;
-    top: 0; right: 0;
-    width: 55%;
-    height: 100%;
+    grid-area: 1 / 2;
+    height: auto;
+    min-height: 0;
     max-height: none;
     border-radius: 0 0 0 280px;
   }
-  /* 左下の丸み（280px）を避けた位置に置く */
-  .hero__copy { left: 11%; right: 7%; bottom: 14%; }
-  /* キャッチコピーが写真側へ移ったぶん左が軽くなるので、上下中央に置き直す */
   .hero__body {
-    position: relative;
-    display: flex;
-    align-items: flex-end;
-    min-height: 780px;
-    padding-block: 120px calc(14% + 8px);
+    grid-area: 1 / 1;
+    align-self: center;
+    z-index: 1;
+    /* .container の中央寄せをやめ、左の列いっぱいに使う */
+    max-width: none;
+    margin-inline: 0;
+    padding-inline: max(var(--gutter), calc((100vw - var(--container-max)) / 2 + var(--gutter))) 24px;
+    padding-block: 120px;
   }
-  .hero__inner { max-width: 520px; }
+  .hero__inner { max-width: none; }
   .hero__en { margin-top: 22px; font-size: 14px; }
   .hero__lead { margin-top: 42px; }
   .hero__cta { margin-top: 40px; }
@@ -919,21 +925,21 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   overflow-x: auto;
   scroll-snap-type: x mandatory;
   scrollbar-width: none;
-  /* 端まで気持ちよくスワイプできるよう、コンテナ外へ広げる */
-  margin-inline: calc(var(--gutter) * -1);
-  padding-inline: var(--gutter);
-  /* 止まる位置を少し右へずらし、左に前のカードの端を覗かせる
-     （「まだ左に続きがある」ことが分かるように） */
-  scroll-padding-inline-start: 36px;
+  /* 画面いっぱいに流す。1枚目だけ本文と同じ位置から始まるよう内側に余白を取る
+     （100% は自分の幅＝画面幅。vw と違いスクロールバーぶんずれない）。 */
+  --carousel-pad: max(var(--gutter), calc((100% - var(--container-max)) / 2 + var(--gutter)));
+  /* 止まったときに左へ覗かせる幅（前のカードの端を見せて、続きがあると伝える）。
+     main.js もこの値を読んで TODAY の線を置くので、px で書いておくこと。 */
+  --carousel-peek: 16px;
+  padding-inline: var(--carousel-pad);
+  scroll-padding-inline-start: calc(var(--carousel-pad) + var(--carousel-peek));
 }
 .carousel::-webkit-scrollbar { display: none; }
 @media (min-width: 1024px) {
   .carousel {
     gap: 24px;
     margin-top: 48px;
-    margin-inline: 0;
-    padding-inline: 4px;
-    scroll-padding-inline-start: 48px;
+    --carousel-peek: 28px;
   }
 }
 
@@ -1603,8 +1609,6 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   overflow-y: hidden;
   scrollbar-width: none;
   overscroll-behavior-x: contain;
-  /* 画面端まで流す（端は切り落としたままにする。ぼかすとバナーが白く抜ける） */
-  margin-inline: calc(var(--gutter) * -1);
 }
 .marquee::-webkit-scrollbar { display: none; }
 @media (min-width: 1024px) { .marquee { margin-top: 48px; } }

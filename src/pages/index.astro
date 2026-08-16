@@ -52,33 +52,33 @@ const upcomingTournaments = TOURNAMENTS.filter((t) => t.status !== 'past');
         <span class="pbi pbi--play">PLAY</span>
         <span class="pbi pbi--beyond">BEYOND.</span>
       </div>
-      <div class="hero__copy">
-        <h1 class="hero__title">
-          {/* 文字は1枚だけ。背景のグラデーションを文字型に切り抜いて流し、
-              薄いグレー → 赤いスラッシュ → 黒と、面の色だけを変えていく。
-              2枚重ねると字がわずかにずれて立体的に見えるので、重ねないこと。 */}
-          <span class="pb">
-            <span class="visually-hidden">{CATCH}</span>
-            <span class="pb__ink" aria-hidden="true">{CATCH}</span>
-          </span>
-          <span class="hero__sub fu" style="animation-delay:3.15s">テニスで、もっとつながろう。</span>
-        </h1>
-        {/* 左から1文字ずつ、静かに浮かび上がらせる */}
-        <p class="hero__en">
-          <span class="visually-hidden">{EN}</span>
-          {EN_CHARS.map((c, i) => (
-            <span class="hero__en-ch" style={`--i:${i}`} aria-hidden="true">{c === ' ' ? ' ' : c}</span>
-          ))}
-        </p>
-        <div class="hero__lead fu" style="animation-delay:3.75s">
-          {/* 本文の全域を囲む赤い枠が、左から右へ一度だけ駆け抜ける */}
-          <span class="hero__lead-frame" aria-hidden="true"></span>
-          <p>大会やテニス教室を通して、世代や経験をこえて誰もがテニスを楽しみ、新しいつながりや交流が生まれる場所をつくっています。</p>
-        </div>
-      </div>
     </div>
     <div class="container hero__body">
       <div class="hero__inner">
+        <div class="hero__copy">
+          <h1 class="hero__title">
+            {/* 文字は1枚だけ。背景のグラデーションを文字型に切り抜いて流し、
+                薄いグレー → 赤いスラッシュ → 黒と、面の色だけを変えていく。
+                2枚重ねると字がわずかにずれて立体的に見えるので、重ねないこと。 */}
+            <span class="pb">
+              <span class="visually-hidden">{CATCH}</span>
+              <span class="pb__ink" aria-hidden="true">{CATCH}</span>
+            </span>
+            <span class="hero__sub fu" style="animation-delay:3.15s">テニスで、もっとつながろう。</span>
+          </h1>
+          {/* 左から1文字ずつ、静かに浮かび上がらせる */}
+          <p class="hero__en">
+            <span class="visually-hidden">{EN}</span>
+            {EN_CHARS.map((c, i) => (
+              <span class="hero__en-ch" style={`--i:${i}`} aria-hidden="true">{c === ' ' ? ' ' : c}</span>
+            ))}
+          </p>
+          <div class="hero__lead fu" style="animation-delay:3.75s">
+            {/* 本文の全域を囲む赤い枠が、左から右へ一度だけ駆け抜ける */}
+            <span class="hero__lead-frame" aria-hidden="true"></span>
+            <p>大会やテニス教室を通して、世代や経験をこえて誰もがテニスを楽しみ、新しいつながりや交流が生まれる場所をつくっています。</p>
+          </div>
+        </div>
         <a class="btn btn--primary hero__cta fu" style="animation-delay:3.95s" href="about.html">協会について見る <span class="aw">→</span></a>
       </div>
     </div>
@@ -115,7 +115,11 @@ const upcomingTournaments = TOURNAMENTS.filter((t) => t.status !== 'past');
         </div>
       </div>
 
-      <div class="carousel rv" data-carousel tabindex="0" role="group" aria-label="大会カルーセル（横スクロール）">
+    </div>
+
+    {/* カルーセルは画面いっぱいに流す。コンテナの外に置き、1枚目だけ
+        本文と同じ位置から始まるよう内側に余白を取る。 */}
+    <div class="carousel rv" data-carousel tabindex="0" role="group" aria-label="大会カルーセル（横スクロール）">
 
         <!-- 終了した大会 -->
         {pastTournaments.map((t) => <TournamentCard tournament={t} />)}
@@ -130,8 +134,9 @@ const upcomingTournaments = TOURNAMENTS.filter((t) => t.status !== 'past');
         <!-- 今後の大会 -->
         {upcomingTournaments.map((t) => <TournamentCard tournament={t} />)}
 
-      </div>
+    </div>
 
+    <div class="container">
       {/* いま何枚目を見ているか。点を押すとその大会まで送る。 */}
       <div class="cdots rv" role="tablist" aria-label="大会カードの位置">
         {TOURNAMENTS.map((t, i) => (
@@ -243,9 +248,12 @@ const upcomingTournaments = TOURNAMENTS.filter((t) => t.status !== 'past');
           </a>
         </div>
       </div>
-      {/* 2段組み。上段（テニス協会・連盟のHP）は右から左へ、下段（施設・クラブ・
-          協賛など）は左から右へ流れる。振り分けは src/data/links.js の row。 */}
-      <div class="marquee-rows rv">
+    </div>
+
+    {/* 2段組み。上段（テニス協会・連盟のHP）は右から左へ、下段（施設・クラブ・
+        協賛など）は左から右へ流れる。振り分けは src/data/links.js の row。
+        画面いっぱいに流したいので、コンテナの外に置いている。 */}
+    <div class="marquee-rows rv">
         <div class="marquee" data-marquee data-marquee-dir="1">
           <div class="marquee__track">
             {marqueeHalf(LINKS_ASSOC).map((l) => <LinkCard link={l} compact />)}
@@ -264,7 +272,6 @@ const upcomingTournaments = TOURNAMENTS.filter((t) => t.status !== 'past');
             </div>
           </div>
         </div>
-      </div>
     </div>
   </section>
 
