@@ -1,10 +1,13 @@
 ---
 // 大会一覧の表。src/data/schedule.js の配列をそのまま受け取る。
 // 列は 日付／大会名・種目／会場／予備日／予備会場／締切／登録区分 の順。
-// 予備会場は原稿に無いので、入るまでは「—」を出す。
-import { REG_LABEL } from '../data/schedule.js';
+// 期日はトップページの大会カードと同じ日程チップ（上に 08.16、下に SUN）で見せる。
+// 読み上げには『3月22日（日）』と伝えたいので、チップは隠して label を添えている。
+// 予備会場が決まっていないものは「—」を出す。
+import { REG_LABEL, dateChip } from '../data/schedule.js';
 
 const { items, id, caption } = Astro.props;
+const rows = items.map((t) => ({ ...t, chip: dateChip(t.date) }));
 ---
 
 <div class="table-scroll rv">
@@ -22,9 +25,18 @@ const { items, id, caption } = Astro.props;
       </tr>
     </thead>
     <tbody>
-      {items.map((t) => (
+      {rows.map((t) => (
         <tr class:list={[t.status === 'done' && 'is-ended', t.status === 'open' && 'is-open']} data-tags={`${t.status} ${t.reg}`}>
-          <td class="col-date">{t.label}</td>
+          <td class="col-date">
+            <span class="date-cell">
+              <span class="date-chip date-chip--table" aria-hidden="true">
+                <span class="date-chip__md">{t.chip.md}</span>
+                <span class="date-chip__dow">{t.chip.dow}</span>
+              </span>
+              <span class="visually-hidden">{t.label}</span>
+              {t.dateNote && <span class="date-cell__note" aria-hidden="true">{t.dateNote}</span>}
+            </span>
+          </td>
           <td>
             <span class="name">{t.name}</span><br>
             <span class="data-table__sub">{t.event}</span>

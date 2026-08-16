@@ -1745,28 +1745,43 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 .cta .btn { margin-top: 28px; }
 
 /* ---- 見出しの塗り替え（ヒーロー以外）----
-   出たときはグレーで、左から右へなめらかに黒へ変わる。
+   まずグレーの文字で 1.2 秒とどまり、そのあと赤いスラッシュが左から右へ走って、
+   通ったところがなめらかに黒へ変わる。作りはキャッチコピー（.pb__ink）と同じで、
+   「黒｜赤｜薄いグレー」の帯を文字の形に切り抜いて流している。
    最初に出るときだけ動かす（.rv は一度 .on が付いたら外れないので自然に1回きり）。 */
 .sec-head__title, .page-title, .sub-head {
-  background-image: linear-gradient(90deg, var(--ink) 0 50%, var(--gray-500) 50% 100%);
-  background-size: 200% 100%;
-  background-position: 0 0;
+  /* グレーでとどまる 1.2 秒＋スラッシュが走る 0.9 秒＝2.1 秒。
+     とどまる割合（下の 57.14%）は 1.2 ÷ 2.1。どちらかを変えるときは両方を直すこと。 */
+  --title-sweep-dur: 2.1s;
+  /* 帯は要素の幅を基準に流れるので、箱を文字の幅に合わせておく。
+     見出しの箱が段いっぱいのままだと、スラッシュが文字の上を一瞬で通り過ぎてしまう。 */
+  width: fit-content;
+  max-width: 100%;
+  background-image: linear-gradient(100deg,
+    var(--ink) 0 40%,
+    var(--red) 40% 45.5%,
+    var(--gray-500) 45.5% 100%);
+  background-size: 300% 100%;
+  background-position: 6% 0;
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
   -webkit-text-fill-color: transparent;
 }
-/* JS が動くときだけ、出る前をグレーにしておく */
+/* JS が動くときだけ、出る前をグレーにしておく（赤が入る手前の位置） */
 body.jsrv .rv .sec-head__title,
-body.jsrv .rv .sub-head { background-position: 100% 0; }
+body.jsrv .rv .sub-head { background-position: 68% 0; }
 body.jsrv .rv.on .sec-head__title,
-body.jsrv .rv.on .sub-head { animation: title-sweep .9s var(--ease) .1s both; }
+body.jsrv .rv.on .sub-head { animation: title-sweep var(--title-sweep-dur) cubic-bezier(.45, .05, .4, 1) .1s both; }
 /* ページ見出しは読み込み時に出るので、そのまま走らせる */
-.page-title { animation: title-sweep .9s var(--ease) .2s both; }
+.page-title { animation: title-sweep var(--title-sweep-dur) cubic-bezier(.45, .05, .4, 1) .2s both; }
 
+/* 68%→6% は「赤が左端に差しかかる手前」から「右端を抜け切った所」まで。
+   0→100% で振ると、前後に赤の見えない間ができて走る時間が半分になる。 */
 @keyframes title-sweep {
-  from { background-position: 100% 0; }
-  to   { background-position: 0 0; }
+  0%     { background-position: 68% 0; }
+  57.14% { background-position: 68% 0; }
+  100%   { background-position: 6% 0; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -2145,6 +2160,16 @@ body.jsrv .rv.on .ink-sweep {
 }
 .data-table tbody tr:hover { background: var(--gray-050); }
 .data-table .col-date { width: 104px; white-space: nowrap; font-family: var(--flt); font-weight: 500; letter-spacing: .04em; }
+/* 期日は、トップページの大会カードと同じ日程チップ（上に 08.16、下に SUN）で見せる。
+   何日か続く大会や祝日など、チップだけでは足りないものは下に一行そえる。 */
+.date-cell { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
+.date-chip--table { min-width: 60px; height: 56px; }
+.date-chip--table .date-chip__md { font-size: 18px; }
+.date-cell__note { font: 400 12px/1.5 var(--fjp); letter-spacing: .02em; color: var(--gray-500); }
+/* 終わった大会はチップも落ち着かせる（行そのものがグレーになるのに合わせる） */
+.data-table tr.is-ended .date-chip { background: var(--gray-050); }
+.data-table tr.is-ended .date-chip__md,
+.data-table tr.is-ended .date-chip__dow { color: var(--gray-500); }
 .data-table .col-place { width: 180px; }
 .data-table .col-spare { width: 96px; white-space: nowrap; font-family: var(--flt); font-weight: 500; letter-spacing: .04em; }
 .data-table .col-note { width: 96px; font-family: var(--flt); font-weight: 500; letter-spacing: .04em; }
