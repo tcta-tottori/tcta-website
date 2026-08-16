@@ -876,13 +876,14 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   }
   .hero__body {
     grid-area: 1 / 1;
-    align-self: center;
+    /* 文字は左上に置く（写真の高さに合わせて中央へ下げない） */
+    align-self: start;
     z-index: 1;
     /* .container の中央寄せをやめ、左の列いっぱいに使う */
     max-width: none;
     margin-inline: 0;
     padding-inline: max(var(--gutter), calc((100vw - var(--container-max)) / 2 + var(--gutter))) 24px;
-    padding-block: 120px;
+    padding-block: 96px 48px;
   }
   .hero__inner { max-width: none; }
   .hero__en { margin-top: 22px; font-size: 14px; }

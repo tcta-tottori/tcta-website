@@ -4,6 +4,21 @@ import MobileNav from '../components/MobileNav.astro';
 import Cta from '../components/Cta.astro';
 import SiteFooter from '../components/SiteFooter.astro';
 import SiteSplash from '../components/SiteSplash.astro';
+import { createHash } from 'node:crypto';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+
+/* CSS と JS の URL に中身のハッシュを付ける。
+   ファイル名を変えずに更新しているので、これが無いと古い CSS が
+   ブラウザのキャッシュから使われ、新しい HTML と噛み合わずに崩れる。
+   （ビルドは常にプロジェクト直下で走るので cwd を基準にする） */
+const assetV = (path) =>
+  createHash('sha1')
+    .update(readFileSync(join(process.cwd(), 'public', path)))
+    .digest('hex')
+    .slice(0, 8);
+const CSS = `assets/css/style.css?v=${assetV('assets/css/style.css')}`;
+const JS = `assets/js/main.js?v=${assetV('assets/js/main.js')}`;
 
 interface Props {
   title: string;
@@ -43,7 +58,7 @@ const {
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&family=Jost:wght@500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/css/style.css">
+<link rel="stylesheet" href={CSS}>
 {splash && (
   <script is:inline>
     /* オープニングを出すかどうかを、本文が描かれる前に決める。
@@ -75,6 +90,6 @@ const {
 
 <SiteFooter />
 
-<script src="assets/js/main.js" defer is:inline></script>
+<script src={JS} defer is:inline></script>
 </body>
 </html>
