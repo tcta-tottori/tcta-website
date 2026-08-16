@@ -520,8 +520,8 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   height: var(--header-h);
 }
 .site-header__logo { display: inline-flex; }
-.site-header__logo img { height: 24px; width: auto; }
-@media (min-width: 1024px) { .site-header__logo img { height: 31px; } }
+.site-header__logo img { height: 28px; width: auto; }
+@media (min-width: 1024px) { .site-header__logo img { height: 36px; } }
 
 .nav { display: none; }
 @media (min-width: 1024px) {

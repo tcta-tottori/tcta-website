@@ -172,32 +172,77 @@
   // マーキーの複製（aria-hidden の span）には出さない。
   var RIPPLE_SEL = 'a[href], button:not([disabled]), [role="button"]';
 
+  /* 指を置いてから、これだけ動かなければ「押した」とみなす。
+     スワイプの出だしでも pointerdown は必ず来るので、待たずに出すと
+     一覧をなぞっただけで波紋が出てしまう。 */
+  var TAP_SLOP = 10;    // px。これを超えて動いたらスワイプ扱い
+  var TAP_WAIT = 90;    // ms。押しっぱなしならこの時間で出す
+
+  function showRipple(host, cx, cy) {
+    // 波紋は押した所を中心に、要素の隅まで届く大きさにする
+    var box = host.getBoundingClientRect();
+    var x = cx - box.left;
+    var y = cy - box.top;
+    var far = Math.max(x, box.width - x);
+    var tall = Math.max(y, box.height - y);
+    var size = Math.hypot(far, tall) * 2;
+
+    host.classList.add('ripple-host');
+    if (getComputedStyle(host).position === 'static') host.classList.add('ripple-host--rel');
+    var drop = document.createElement('span');
+    drop.className = 'ripple';
+    drop.style.setProperty('--r', size + 'px');
+    drop.style.setProperty('--x', x + 'px');
+    drop.style.setProperty('--y', y + 'px');
+    drop.addEventListener('animationend', function () {
+      if (drop.parentNode) drop.parentNode.removeChild(drop);
+    });
+    host.appendChild(drop);
+  }
+
   function initRipple() {
     if (reduceMotion) return;
+
+    var wait = null;   // 出すかどうかを決めかねている状態
+    var clear = function () {
+      if (wait) clearTimeout(wait.timer);
+      wait = null;
+    };
+
     document.addEventListener('pointerdown', function (e) {
       var host = e.target.closest(RIPPLE_SEL);
       if (!host || host.closest('[aria-hidden="true"]')) return;
+      clear();
 
-      // 波紋は押した所を中心に、要素の隅まで届く大きさにする
-      var box = host.getBoundingClientRect();
-      var x = e.clientX - box.left;
-      var y = e.clientY - box.top;
-      var far = Math.max(x, box.width - x);
-      var tall = Math.max(y, box.height - y);
-      var size = Math.hypot(far, tall) * 2;
+      // マウスはなぞって画面を送らないので、そのまま出す
+      if (e.pointerType === 'mouse') { showRipple(host, e.clientX, e.clientY); return; }
 
-      host.classList.add('ripple-host');
-      if (getComputedStyle(host).position === 'static') host.classList.add('ripple-host--rel');
-      var drop = document.createElement('span');
-      drop.className = 'ripple';
-      drop.style.setProperty('--r', size + 'px');
-      drop.style.setProperty('--x', x + 'px');
-      drop.style.setProperty('--y', y + 'px');
-      drop.addEventListener('animationend', function () {
-        if (drop.parentNode) drop.parentNode.removeChild(drop);
-      });
-      host.appendChild(drop);
+      wait = { host: host, x: e.clientX, y: e.clientY };
+      wait.timer = setTimeout(function () {
+        if (!wait) return;
+        showRipple(wait.host, wait.x, wait.y);
+        wait = null;
+      }, TAP_WAIT);
     }, { passive: true });
+
+    // 少しでも動いたらスワイプ。出さずに取りやめる。
+    document.addEventListener('pointermove', function (e) {
+      if (!wait) return;
+      if (Math.hypot(e.clientX - wait.x, e.clientY - wait.y) > TAP_SLOP) clear();
+    }, { passive: true });
+
+    // 待っているあいだに指が離れたら、短いタップなのでその場で出す
+    document.addEventListener('pointerup', function (e) {
+      if (!wait) return;
+      if (Math.hypot(e.clientX - wait.x, e.clientY - wait.y) <= TAP_SLOP) {
+        showRipple(wait.host, wait.x, wait.y);
+      }
+      clear();
+    }, { passive: true });
+
+    // ブラウザが画面送りに切り替えたら取りやめる
+    document.addEventListener('pointercancel', clear, { passive: true });
+    window.addEventListener('scroll', clear, { passive: true });
   }
 
   /* ---------- リンクのバナー（押している間だけ赤枠） ----------
@@ -208,12 +253,19 @@
       if (pressed) pressed.classList.remove('is-pressed');
       pressed = null;
     };
+    var from = null;
     document.addEventListener('pointerdown', function (e) {
       var card = e.target.closest('.link-card--compact');
       if (!card) return;
       off();
+      from = { x: e.clientX, y: e.clientY };
       pressed = card;
       card.classList.add('is-pressed');
+    }, { passive: true });
+    // なぞって流しているだけのときは枠を消す（バナーは横に動かせるため）
+    document.addEventListener('pointermove', function (e) {
+      if (!pressed || !from) return;
+      if (Math.hypot(e.clientX - from.x, e.clientY - from.y) > TAP_SLOP) off();
     }, { passive: true });
     ['pointerup', 'pointercancel'].forEach(function (ev) {
       document.addEventListener(ev, off, { passive: true });
