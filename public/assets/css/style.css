@@ -1834,7 +1834,8 @@ body.jsrv .rv.on .ink-sweep {
 
 .site-footer { position: relative; background: var(--ink); overflow: hidden; }
 /* 地の黒とわずかに色の違う四角を散らした背景。
-   位置・大きさ・色・速さは要素ごとの変数で持たせ、ゆっくり漂わせる。 */
+   位置・大きさ・色・速さは要素ごとの変数で持たせる。
+   止まっているときも常に少しだけ漂い、スクロール中は奥行きの分だけ大きく動く。 */
 .footer-deco {
   position: absolute;
   inset: 0;
@@ -1850,10 +1851,11 @@ body.jsrv .rv.on .ink-sweep {
   margin: calc(var(--s) / -2) 0 0 calc(var(--s) / -2);
   background: var(--c);
   border-radius: 3px;
-  /* ゆっくり漂う動き。transform を使う。 */
+  /* 常時の漂い。止まって見ていても動きが分かる速さにしてある。transform を使う。 */
   animation: footer-drift var(--d) ease-in-out var(--delay) infinite alternate;
   /* スクロールに合わせた上下。transform とは別枠の translate なので、
-     上の漂いと打ち消し合わない。--sy は main.js がフッターに書き込む。 */
+     上の漂いと打ち消し合わない。--sy は main.js がフッターに書き込む。
+     --depth は四角が大きいほど大きく（0.2〜1.7）、手前ほど速く動いて奥行きが出る。 */
   translate: 0 calc(var(--sy, 0px) * var(--depth, .5));
   will-change: translate;
 }

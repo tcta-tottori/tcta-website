@@ -396,7 +396,9 @@
     var deco = document.querySelector('.footer-deco');
     if (!deco || reduceMotion) return;
 
-    var RANGE = 140;   // 端から端までで動かす量（px）
+    // 端から端までで動かす量（px）。四角ごとの --depth（0.2〜1.7）を掛けるので、
+    // 手前の大きな四角はこの数値より大きく、奥の小さな四角は控えめに動く。
+    var RANGE = 260;
     var ticking = false;
 
     var place = function () {
