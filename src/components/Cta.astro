@@ -1,5 +1,8 @@
 ---
 // 全ページ共通の入会誘導。<main> の末尾に置かれる。
+// 見出しは「PLAY BEYOND.」と同じ塗り替えで出す（薄いグレー → 赤いスラッシュ → 黒）。
+// 画面に入ってから動き出すよう、.rv が .on になったときに走らせている。
+const HEAD = 'テニスを、もっと楽しむ場所へ。';
 ---
 
   <section class="cta" aria-labelledby="cta-title">
@@ -10,9 +13,14 @@
       <div class="cta__inner rv">
         <div class="cta__head">
           <span class="sec-head__mark" aria-hidden="true"></span>
-          <h2 class="cta__title" id="cta-title">一緒にテニスを楽しみませんか？</h2>
+          <h2 class="cta__title" id="cta-title">
+            <span class="visually-hidden">{HEAD}</span>
+            <span class="ink-sweep" aria-hidden="true">{HEAD}</span>
+          </h2>
         </div>
-        <p class="cta__text">鳥取市テニス協会では、会員を随時募集しています。協会に登録すると、市登録が必要な年8大会にエントリーできます。登録がなくても参加できる大会もありますので、まずはお気軽にどうぞ。</p>
+        <p class="cta__text">大会に出たい。新しい仲間とつながりたい。もっとテニスを楽しみたい。</p>
+        <p class="cta__text">鳥取市テニス協会は、そんな皆さんの参加をお待ちしています。登録者向け大会はもちろん、どなたでも参加できる大会も開催しています。</p>
+        <p class="cta__close">さあ、次のゲームへ。</p>
         <a class="btn btn--primary" href="membership.html">入会案内を見る <span class="aw">→</span></a>
       </div>
     </div>
