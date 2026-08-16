@@ -7,7 +7,7 @@ import Icon from '../components/Icon.astro';
 import { TOURNAMENTS, TODAY } from '../data/tournaments.js';
 import { LINKS_ASSOC, LINKS_OTHER } from '../data/links.js';
 import { NEWS, NEWS_VISIBLE } from '../data/news.js';
-import { COURTS, mapEmbed, mapLink, mapAllLink } from '../data/courts.js';
+import { COURTS, mapEmbed, mapLink } from '../data/courts.js';
 
 const CATCH = 'PLAY BEYOND.';
 // 英字は左から1文字ずつ出すので、文字に分解しておく。
@@ -303,7 +303,6 @@ const upcomingTournaments = TOURNAMENTS.filter((t) => t.status !== 'past');
               </a></li>
             ))}
           </ul>
-          <a class="ghost-link mt-24" href={mapAllLink()} target="_blank" rel="noopener noreferrer">3施設をまとめて地図で見る <span class="aw">↗</span></a>
           <p class="embed-caption">コートの予約は鳥取市の公共施設予約システムから行えます。協会が管理・貸出を行っているものではありませんのでご注意ください。</p>
         </div>
 

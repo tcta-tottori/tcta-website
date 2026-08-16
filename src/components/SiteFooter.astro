@@ -3,7 +3,37 @@
 ---
 
 <footer class="site-footer">
-  <img class="site-footer__mark" src="assets/img/logo-outline.png" alt="" aria-hidden="true" loading="lazy">
+  {/* 地の黒とわずかに色の違う四角を、大きさも位置もばらばらに散らした背景。
+      ゆっくり漂わせているだけで、内容には触れない飾り。
+      値は決め打ち（毎回同じ見た目になるよう、生成時に固定してある）。 */}
+  <div class="footer-deco" aria-hidden="true">
+    <span class="footer-dot" style="--x:63.0%;--y:23.6%;--s:185px;--c:#202020;--d:21.5s;--delay:-6.0s;--dx:-4px;--dy:3px;--r:4.3deg"></span>
+    <span class="footer-dot" style="--x:66.9%;--y:77.9%;--s:53px;--c:#171717;--d:18.0s;--delay:-6.5s;--dx:10px;--dy:-2px;--r:-2.2deg"></span>
+    <span class="footer-dot" style="--x:11.2%;--y:82.4%;--s:166px;--c:#202020;--d:22.5s;--delay:-0.3s;--dx:8px;--dy:-2px;--r:-1.2deg"></span>
+    <span class="footer-dot" style="--x:73.1%;--y:49.5%;--s:150px;--c:#171717;--d:20.8s;--delay:-4.7s;--dx:-6px;--dy:3px;--r:3.7deg"></span>
+    <span class="footer-dot" style="--x:78.7%;--y:16.5%;--s:126px;--c:#232323;--d:17.7s;--delay:-13.2s;--dx:7px;--dy:-8px;--r:5.6deg"></span>
+    <span class="footer-dot" style="--x:28.7%;--y:0.6%;--s:122px;--c:#121212;--d:22.3s;--delay:-18.1s;--dx:12px;--dy:-9px;--r:-5.1deg"></span>
+    <span class="footer-dot" style="--x:74.9%;--y:91.8%;--s:42px;--c:#232323;--d:20.7s;--delay:-6.7s;--dx:12px;--dy:2px;--r:-4.7deg"></span>
+    <span class="footer-dot" style="--x:56.1%;--y:25.7%;--s:40px;--c:#202020;--d:18.4s;--delay:-3.6s;--dx:-8px;--dy:6px;--r:-4.7deg"></span>
+    <span class="footer-dot" style="--x:34.2%;--y:29.2%;--s:187px;--c:#171717;--d:18.6s;--delay:-9.0s;--dx:1px;--dy:-3px;--r:3.6deg"></span>
+    <span class="footer-dot" style="--x:12.6%;--y:61.5%;--s:136px;--c:#232323;--d:25.2s;--delay:-4.3s;--dx:8px;--dy:-12px;--r:-3.1deg"></span>
+    <span class="footer-dot" style="--x:45.6%;--y:97.7%;--s:49px;--c:#0E0E0E;--d:26.8s;--delay:-9.4s;--dx:8px;--dy:5px;--r:4.6deg"></span>
+    <span class="footer-dot" style="--x:66.4%;--y:3.2%;--s:79px;--c:#1E1414;--d:17.4s;--delay:-1.1s;--dx:-1px;--dy:5px;--r:-5.4deg"></span>
+    <span class="footer-dot" style="--x:74.8%;--y:47.0%;--s:137px;--c:#232323;--d:14.6s;--delay:-1.8s;--dx:-5px;--dy:1px;--r:-2.0deg"></span>
+    <span class="footer-dot" style="--x:69.5%;--y:39.3%;--s:177px;--c:#1E1414;--d:15.0s;--delay:-19.3s;--dx:7px;--dy:5px;--r:1.6deg"></span>
+    <span class="footer-dot" style="--x:85.4%;--y:30.4%;--s:181px;--c:#232323;--d:22.6s;--delay:-2.7s;--dx:-10px;--dy:-8px;--r:-2.2deg"></span>
+    <span class="footer-dot" style="--x:92.1%;--y:34.4%;--s:146px;--c:#101010;--d:27.5s;--delay:-14.8s;--dx:-10px;--dy:-6px;--r:3.9deg"></span>
+    <span class="footer-dot" style="--x:40.3%;--y:26.0%;--s:160px;--c:#171717;--d:25.7s;--delay:-4.1s;--dx:11px;--dy:-4px;--r:-4.5deg"></span>
+    <span class="footer-dot" style="--x:4.6%;--y:35.1%;--s:43px;--c:#121212;--d:19.9s;--delay:-19.0s;--dx:14px;--dy:5px;--r:2.6deg"></span>
+    <span class="footer-dot" style="--x:5.4%;--y:35.8%;--s:149px;--c:#101010;--d:27.0s;--delay:-13.3s;--dx:-11px;--dy:-10px;--r:-2.4deg"></span>
+    <span class="footer-dot" style="--x:87.6%;--y:31.2%;--s:92px;--c:#232323;--d:18.7s;--delay:-8.1s;--dx:14px;--dy:2px;--r:-5.7deg"></span>
+    <span class="footer-dot" style="--x:77.3%;--y:85.7%;--s:119px;--c:#121212;--d:14.9s;--delay:-11.1s;--dx:5px;--dy:2px;--r:-5.8deg"></span>
+    <span class="footer-dot" style="--x:59.8%;--y:45.7%;--s:86px;--c:#202020;--d:24.1s;--delay:-11.4s;--dx:-5px;--dy:1px;--r:2.5deg"></span>
+    <span class="footer-dot" style="--x:91.7%;--y:82.7%;--s:77px;--c:#0E0E0E;--d:18.7s;--delay:-14.3s;--dx:12px;--dy:-10px;--r:2.2deg"></span>
+    <span class="footer-dot" style="--x:67.6%;--y:54.5%;--s:80px;--c:#101010;--d:22.3s;--delay:-1.9s;--dx:-6px;--dy:-4px;--r:3.5deg"></span>
+    <span class="footer-dot" style="--x:41.2%;--y:58.6%;--s:155px;--c:#171717;--d:22.8s;--delay:-3.8s;--dx:10px;--dy:9px;--r:-3.9deg"></span>
+    <span class="footer-dot" style="--x:20.5%;--y:26.3%;--s:85px;--c:#232323;--d:22.0s;--delay:-18.9s;--dx:3px;--dy:2px;--r:1.2deg"></span>
+  </div>
   <div class="container site-footer__grid">
     <div class="site-footer__brand">
       <img src="assets/img/logo-white.png" alt="鳥取市テニス協会 TOTTORI-CITY TENNIS ASSOCIATION" width="648" height="240">
@@ -27,7 +57,6 @@
   </div>
   <div class="container site-footer__bottom">
     <div class="site-footer__utils">
-      <a class="fw" href="links.html"><span aria-hidden="true" style="font:400 11px/1 var(--flt)">↗</span>鳥取市公共施設予約システム</a>
       <a class="fw" href="#">プライバシーポリシー</a>
     </div>
     <span class="site-footer__copy">© Tottori-City Tennis Association All Rights Reserved.</span>

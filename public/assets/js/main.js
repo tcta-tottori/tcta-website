@@ -137,9 +137,20 @@
     ['pointerdown', 'touchstart', 'wheel'].forEach(function (ev) {
       view.addEventListener(ev, hold, { passive: true });
     });
-    // マウスを乗せているあいだは止め、離れたらすぐ戻す
+    /* マウスを乗せているあいだは止め、離れたらすぐ戻す。
+       ただしバナーを別タブで開くと、そのまま離れて mouseleave が来ないことがある。
+       止まったままになるので、画面を離れた・戻ってきた時点でも必ず解除する。 */
+    var release = function () { hovering = false; };
     view.addEventListener('mouseenter', function () { hovering = true; });
-    view.addEventListener('mouseleave', function () { hovering = false; });
+    ['mouseleave', 'pointerleave', 'pointercancel'].forEach(function (ev) {
+      view.addEventListener(ev, release, { passive: true });
+    });
+    window.addEventListener('blur', release);
+    window.addEventListener('focus', release);
+    window.addEventListener('pageshow', function () { release(); holdUntil = 0; });
+    document.addEventListener('visibilitychange', function () {
+      if (document.hidden) { release(); holdUntil = 0; }
+    });
 
     // 画面の外にあるあいだは動かさない
     if ('IntersectionObserver' in window) {

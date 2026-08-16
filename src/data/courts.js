@@ -13,7 +13,6 @@
 //   埋め込みは施設ごとの正確な1枚に統一している。
 //   3施設だけをピンで1枚に出したい場合は、各施設の緯度経度をもらって
 //   地図を自前で描く作りに差し替えること（COURTS に lat/lng を足す想定）。
-//   それまでは、下の mapAllLink で別タブのGoogleマップに3施設をまとめて渡す。
 //
 // ■ href
 //   一覧の行を押したときの遷移先。サイト内に説明ページがあるものはそこへ。
@@ -51,14 +50,3 @@ export const mapEmbed = (query, zoom = 15) =>
 /** 別タブで開くときのURL（1施設） */
 export const mapLink = (query) =>
   `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
-
-/**
- * 3施設をまとめてGoogleマップで開くURL。
- * 経路の形にすると、Google が3か所すべてを地図に収めて表示してくれる。
- */
-export const mapAllLink = (courts = COURTS) => {
-  const q = courts.map((c) => encodeURIComponent(c.query));
-  return `https://www.google.com/maps/dir/?api=1&origin=${q[0]}` +
-    `&destination=${q[q.length - 1]}` +
-    (q.length > 2 ? `&waypoints=${q.slice(1, -1).join('|')}` : '');
-};

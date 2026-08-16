@@ -1760,17 +1760,31 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 .cta .btn { margin-top: 28px; }
 
 .site-footer { position: relative; background: var(--ink); overflow: hidden; }
-/* 背景に薄く敷く協会マーク。ぼかさず、下へ向かうほど地の黒に溶かして消す。 */
-.site-footer__mark {
+/* 地の黒とわずかに色の違う四角を散らした背景。
+   位置・大きさ・色・速さは要素ごとの変数で持たせ、ゆっくり漂わせる。 */
+.footer-deco {
   position: absolute;
-  right: -30px;
-  bottom: 56px;
-  width: min(660px, 120%);
-  height: auto;
-  opacity: .18;
-  -webkit-mask-image: linear-gradient(180deg, #000 0%, rgba(0, 0, 0, .5) 50%, rgba(0, 0, 0, .14) 82%, transparent 100%);
-  mask-image: linear-gradient(180deg, #000 0%, rgba(0, 0, 0, .5) 50%, rgba(0, 0, 0, .14) 82%, transparent 100%);
+  inset: 0;
+  overflow: hidden;
   pointer-events: none;
+}
+.footer-dot {
+  position: absolute;
+  left: var(--x);
+  top: var(--y);
+  width: var(--s);
+  height: var(--s);
+  margin: calc(var(--s) / -2) 0 0 calc(var(--s) / -2);
+  background: var(--c);
+  border-radius: 3px;
+  animation: footer-drift var(--d) ease-in-out var(--delay) infinite alternate;
+}
+@keyframes footer-drift {
+  from { transform: none; }
+  to   { transform: translate3d(var(--dx), var(--dy), 0) rotate(var(--r)); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .footer-dot { animation: none; }
 }
 .site-footer__grid {
   position: relative;
