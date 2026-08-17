@@ -55,14 +55,31 @@
   --ease: cubic-bezier(.22, 1, .36, 1);
 
   /* 見出しの塗り替え（グレー → 黒）の時間。
-     出たあと 0.5秒 はグレーのまま置き、そこから 0.9秒 かけて斜めの境目が
-     左から右へ走り、通ったところが黒くなる。境目に色は付けない。
-     合計 1.4秒。@keyframes 側の 36% がちょうど 0.5秒 にあたるので、
-     時間を変えるときは --sweep-dur と keyframes の 36% をそろえて直すこと。
+     グレーの文字が出てから 0.2秒 はそのまま置き、そこから 0.9秒 かけて
+     細い白のスラッシュ（/）が左から右へ走り、通ったところが黒くなる。
+     合計 1.1秒。@keyframes 側の「待つ」位置がちょうど 0.2秒 にあたるので、
+     時間を変えるときは --sweep-dur と keyframes の百分率をそろえて直すこと。
      （--sweep-ease は var(--ease) より減速がゆるく、境目が一定の速さで
        行き渡って見える曲線。--ease だと一瞬で走り抜けてしまう） */
-  --sweep-dur: 1.4s;
+  --sweep-dur: 1.1s;
   --sweep-ease: cubic-bezier(.45, .05, .4, 1);
+
+  /* 走らせる白いスラッシュそのもの。「黒｜グレー」の帯の上に重ねる一枚で、
+     境目（42%）に細い白の芯を置き、その両側をだんだん薄くして光らせている。
+     背景は 300% に伸ばして使うので、ここでの 1% は文字の幅の 3% にあたる。
+     芯は 0.3%（＝文字の幅の約 0.9%）で、髪の毛ほどの細さになる。
+     帯と同じ大きさ・同じ位置に敷くので、流すと境目と一緒に動く。
+     角度（--slash-deg）は帯と共通。真横（90deg）から 16度 倒してあるので、
+     文字の上では下から上へ右に流れる「/」の形で通り過ぎて見える。 */
+  --slash-deg: 106deg;
+  --slash: linear-gradient(var(--slash-deg),
+    rgba(255, 255, 255, 0) 41.0%,
+    rgba(255, 255, 255, .30) 41.45%,
+    rgba(255, 255, 255, .92) 41.85%,
+    #FFFFFF 42%,
+    rgba(255, 255, 255, .92) 42.15%,
+    rgba(255, 255, 255, .30) 42.55%,
+    rgba(255, 255, 255, 0) 43.0%);
 }
 
 @media (min-width: 640px) {
@@ -447,21 +464,24 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   to   { opacity: 1; transform: none; }
 }
 
-/* 見出しの塗り替え。薄いグレーで出したあと 0.5秒（＝36%）そのまま置き、
-   残りの 0.9秒 で境目が左から右へ走り、通ったところが黒くなる。
+/* 見出しの塗り替え。薄いグレーで出しきってから 0.2秒 そのまま置き、
+   残りの 0.9秒 で白いスラッシュが左から右へ走り、通ったところが黒くなる。
+   ここは自分で出るところ（0→14%）も持っているので、グレーが出そろうのは 14%。
+   そこから 0.2秒（＝32%）まで待って走り出す。
    72% は文字全体がグレー（キャッチコピーは赤）に収まる位置、
    6% は全体が黒に収まる位置。0→100% で振ると前後に境目の見えない間ができ、
    走っている時間が半分になってしまう。 */
 @keyframes sweep-hold {
   0%   { opacity: 0; background-position: 72% 0; }
-  15%  { opacity: 1; background-position: 72% 0; }
-  36%  { opacity: 1; background-position: 72% 0; }
+  14%  { opacity: 1; background-position: 72% 0; }
+  32%  { opacity: 1; background-position: 72% 0; }
   100% { opacity: 1; background-position: 6% 0; }
 }
-/* 上と同じ動きの、透明度を触らない版（見出しの出方は .rv / .fu 側に任せる） */
+/* 上と同じ動きの、透明度を触らない版（見出しの出方は .rv / .fu 側に任せる）。
+   出るところを持たないぶん、待つのは頭から 0.2秒（＝18%）だけ。 */
 @keyframes title-slash {
   0%   { background-position: 72% 0; }
-  36%  { background-position: 72% 0; }
+  18%  { background-position: 72% 0; }
   100% { background-position: 6% 0; }
 }
 /* キャッチコピー用。待つ間を持たず、出たらすぐ境目が走りきる。 */
@@ -1809,14 +1829,17 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 .cta .btn { margin-top: 28px; }
 
 /* ---- 見出しの塗り替え（ヒーロー以外）----
-   「PLAY BEYOND.」と同じ作り。「黒｜グレー」の帯を文字の形に切り抜いて流す。
-   出たあと 0.5秒 はグレーのまま置き、そこから斜めの境目が左から右へ走って、
-   通ったところがなめらかに黒へ変わる。
+   「黒｜グレー」の帯を文字の形に切り抜いて流し、その上に細い白のスラッシュ（/）を
+   重ねて一緒に走らせる。グレーで出たあと 0.2秒 はそのまま置き、そこから
+   スラッシュが左から右へ抜けていって、通ったところが黒へ変わる。
+   2枚は大きさも位置もそろえてあるので、流すとスラッシュが境目の上に乗り続ける。
    最初に出るときだけ動かす（.rv は一度 .on が付いたら外れないので自然に1回きり）。 */
 .sec-head__title, .page-title, .sub-head {
-  background-image: linear-gradient(100deg,
-    var(--ink) 0 42%,
-    var(--gray-500) 42% 100%);
+  background-image:
+    var(--slash),
+    linear-gradient(var(--slash-deg),
+      var(--ink) 0 42%,
+      var(--gray-500) 42% 100%);
   background-size: 300% 100%;
   background-position: 6% 0;
   -webkit-background-clip: text;
@@ -1853,15 +1876,18 @@ body.jsrv .rv.on .sub-head { animation: title-slash var(--sweep-dur) var(--sweep
   }
 }
 
-/* ---- 見出しの塗り替え（「PLAY BEYOND.」と同じ作り）----
-   「黒｜薄いグレー」の帯を文字の形に切り抜いて右から左へ流す。
-   見た目は斜めの境目が左から右へ走り、通ったところが黒く変わる。
+/* ---- 見出しの塗り替え（ほかの見出しと同じ作り）----
+   「黒｜薄いグレー」の帯を文字の形に切り抜いて右から左へ流し、細い白のスラッシュ（/）を
+   重ねる。見た目はスラッシュが左から右へ走り、通ったところが黒く変わる。
+   グレーは --gray-300。--gray-200 だと白に近すぎて、白いスラッシュが埋もれてしまう。
    .rv が .on になってから走らせるので、画面に入ったときに動く。 */
 .ink-sweep {
   display: inline;
-  background-image: linear-gradient(100deg,
-    var(--ink) 0 42%,
-    var(--gray-200) 42% 100%);
+  background-image:
+    var(--slash),
+    linear-gradient(var(--slash-deg),
+      var(--ink) 0 42%,
+      var(--gray-300) 42% 100%);
   background-size: 300% 100%;
   background-position: 6% 0;
   -webkit-background-clip: text;
