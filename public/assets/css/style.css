@@ -54,13 +54,14 @@
   --header-h: 64px;
   --ease: cubic-bezier(.22, 1, .36, 1);
 
-  /* 見出しの塗り替え（グレー → 赤いスラッシュ → 黒）の時間。
-     出たあと 1.2秒 はグレーのまま置き、そこから 0.9秒 かけてスラッシュが走る。
-     合計 2.1秒。@keyframes 側の 57% がちょうど 1.2秒 にあたるので、
-     時間を変えるときは --sweep-dur と keyframes の 57% をそろえて直すこと。
-     （--sweep-ease は var(--ease) より減速がゆるく、スラッシュが一定の速さで
+  /* 見出しの塗り替え（グレー → 黒）の時間。
+     出たあと 0.5秒 はグレーのまま置き、そこから 0.9秒 かけて斜めの境目が
+     左から右へ走り、通ったところが黒くなる。境目に色は付けない。
+     合計 1.4秒。@keyframes 側の 36% がちょうど 0.5秒 にあたるので、
+     時間を変えるときは --sweep-dur と keyframes の 36% をそろえて直すこと。
+     （--sweep-ease は var(--ease) より減速がゆるく、境目が一定の速さで
        行き渡って見える曲線。--ease だと一瞬で走り抜けてしまう） */
-  --sweep-dur: 2.1s;
+  --sweep-dur: 1.4s;
   --sweep-ease: cubic-bezier(.45, .05, .4, 1);
 }
 
@@ -446,23 +447,22 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   to   { opacity: 1; transform: none; }
 }
 
-/* キャッチコピー：薄く浮かび上がったあと、赤いスラッシュが走って黒へ変える。
-   62%→6% は「赤が左端に差しかかった所」から「右端を抜け切った所」まで。
-   0→100% で振ると前後に赤が見えない間ができ、走っている時間が半分になる。 */
-/* 文字の塗り替え。薄いグレーで出したあと 1.2秒（＝57%）そのまま置き、
-   残りの 0.9秒 で赤いスラッシュが左から右へ走り、通ったところが黒くなる。
+/* 文字の塗り替え。薄いグレーで出したあと 0.5秒（＝36%）そのまま置き、
+   残りの 0.9秒 で境目が左から右へ走り、通ったところが黒くなる。
+   境目に赤を付けるかどうかは、使う側の背景グラデーションで決まる
+   （キャッチコピーだけ赤あり、ほかの見出しは色なし）。
    72% は文字全体がグレーに収まる位置、6% は全体が黒に収まる位置。
-   72% より手前（62% など）で止めると、1文字目に赤が掛かったまま待つことになる。 */
+   0→100% で振ると前後に境目の見えない間ができ、走っている時間が半分になる。 */
 @keyframes pb-color {
   0%   { opacity: 0; background-position: 72% 0; }
-  10%  { opacity: 1; background-position: 72% 0; }
-  57%  { opacity: 1; background-position: 72% 0; }
+  15%  { opacity: 1; background-position: 72% 0; }
+  36%  { opacity: 1; background-position: 72% 0; }
   100% { opacity: 1; background-position: 6% 0; }
 }
 /* 上と同じ動きの、透明度を触らない版（見出しの出方は .rv / .fu 側に任せる） */
 @keyframes title-slash {
   0%   { background-position: 72% 0; }
-  57%  { background-position: 72% 0; }
+  36%  { background-position: 72% 0; }
   100% { background-position: 6% 0; }
 }
 /* 英字（TOTTORI-CITY…）：小さく出て → 少し大きく → 通常の大きさへ */
@@ -738,6 +738,7 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 /* ---- キャッチコピー「PLAY BEYOND.」----
    文字は1枚だけ。「黒｜赤｜薄いグレー」の帯を文字の形に切り抜いて右から左へ流し、
    見た目は赤いスラッシュが左から右へ走って、通った所が黒く変わるようにしている。
+   ここだけ赤を残してある（ほかの見出しは色を付けずグレー → 黒だけで変える）。
    2枚重ねると字がわずかにずれて立体的に見えてしまうので、重ねないこと。 */
 .pb {
   display: block;
@@ -767,7 +768,7 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   background-clip: text;
   color: transparent;
   -webkit-text-fill-color: transparent;
-  /* 導入が終わってから薄いグレーで出て、1.2秒 そのまま置き、スラッシュで黒へ */
+  /* 導入が終わってから薄いグレーで出て、0.5秒 そのまま置き、赤いスラッシュで黒へ */
   animation: pb-color var(--sweep-dur) var(--sweep-ease) var(--intro-end) both;
 }
 
@@ -782,7 +783,7 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
     -webkit-text-fill-color: var(--ink);
   }
 }
-/* 切り抜きが使えない環境では、スラッシュは出さず黒い文字だけを出す */
+/* 切り抜きが使えない環境では、塗り替えはせず黒い文字だけを出す */
 @supports not ((-webkit-background-clip: text) or (background-clip: text)) {
   .pb__ink {
     animation: none;
@@ -1769,15 +1770,14 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 .cta .btn { margin-top: 28px; }
 
 /* ---- 見出しの塗り替え（ヒーロー以外）----
-   「PLAY BEYOND.」と同じ作り。「黒｜赤｜グレー」の帯を文字の形に切り抜いて流す。
-   出たあと 1.2秒 はグレーのまま置き、そこから赤いスラッシュが左から右へ走って、
+   「PLAY BEYOND.」と同じ作り。「黒｜グレー」の帯を文字の形に切り抜いて流す。
+   出たあと 0.5秒 はグレーのまま置き、そこから斜めの境目が左から右へ走って、
    通ったところがなめらかに黒へ変わる。
    最初に出るときだけ動かす（.rv は一度 .on が付いたら外れないので自然に1回きり）。 */
 .sec-head__title, .page-title, .sub-head {
   background-image: linear-gradient(100deg,
-    var(--ink) 0 40%,
-    var(--red) 40% 45.5%,
-    var(--gray-500) 45.5% 100%);
+    var(--ink) 0 42%,
+    var(--gray-500) 42% 100%);
   background-size: 300% 100%;
   background-position: 6% 0;
   -webkit-background-clip: text;
@@ -1815,15 +1815,14 @@ body.jsrv .rv.on .sub-head { animation: title-slash var(--sweep-dur) var(--sweep
 }
 
 /* ---- 見出しの塗り替え（「PLAY BEYOND.」と同じ作り）----
-   「黒｜赤｜薄いグレー」の帯を文字の形に切り抜いて右から左へ流す。
-   見た目は赤いスラッシュが左から右へ走り、通ったところが黒く変わる。
+   「黒｜薄いグレー」の帯を文字の形に切り抜いて右から左へ流す。
+   見た目は斜めの境目が左から右へ走り、通ったところが黒く変わる。
    .rv が .on になってから走らせるので、画面に入ったときに動く。 */
 .ink-sweep {
   display: inline;
   background-image: linear-gradient(100deg,
-    var(--ink) 0 40%,
-    var(--red) 40% 45.5%,
-    var(--gray-200) 45.5% 100%);
+    var(--ink) 0 42%,
+    var(--gray-200) 42% 100%);
   background-size: 300% 100%;
   background-position: 6% 0;
   -webkit-background-clip: text;
