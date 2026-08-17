@@ -54,25 +54,19 @@ const upcomingTournaments = TOURNAMENTS.filter((t) => t.status !== 'past');
         <img class="hero__photo" src="assets/img/hero.png" alt="青空の下、コートでバックハンドを打つ選手">
         <div class="hero__scrim" aria-hidden="true"></div>
       </div>
-      {/* 冒頭だけの導入。写真の右上に PLAY、続けて左下に BEYOND. を大きく出して消す
-          （飾りは付けない）。消えたところで下のキャッチコピーが動き出す。 */}
-      <div class="hero__intro" aria-hidden="true">
-        <span class="pbi pbi--play">PLAY</span>
-        <span class="pbi pbi--beyond">BEYOND.</span>
-      </div>
     </div>
     <div class="container hero__body">
       <div class="hero__inner">
         <div class="hero__copy">
           <h1 class="hero__title">
-            {/* 文字は1枚だけ。背景のグラデーションを文字型に切り抜いて流し、
-                赤 → 黒と、赤いスラッシュを走らせて面の色だけを変えていく。
+            {/* 文字は1枚だけ。写真の上に大きく出して赤 → 黒に塗り替えたあと、
+                消さずにそのまま最終位置へ縮みながら移動する（導入もこの1枚が兼ねる）。
                 2枚重ねると字がわずかにずれて立体的に見えるので、重ねないこと。 */}
             <span class="pb">
               <span class="visually-hidden">{CATCH}</span>
               <span class="pb__ink" aria-hidden="true">{CATCH}</span>
             </span>
-            <span class="hero__sub fu" style="animation-delay:var(--rest-in)">テニスで、もっとつながろう。</span>
+            <span class="hero__sub fu" style="animation-delay:var(--sub-in)">テニスで、もっとつながろう。</span>
           </h1>
           {/* 左から1文字ずつ、静かに浮かび上がらせる */}
           <p class="hero__en">
