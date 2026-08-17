@@ -469,9 +469,11 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   from { background-position: 72% 0; }
   to   { background-position: 6% 0; }
 }
+/* 出るところ。字間を開いた状態から詰めつつ、左から右へ拭うように現れる。 */
 @keyframes pb-in {
-  from { opacity: 0; }
-  to   { opacity: 1; }
+  0%   { opacity: 0; letter-spacing: .2em; clip-path: inset(0 100% 0 0); }
+  18%  { opacity: 1; }
+  100% { opacity: 1; letter-spacing: .06em; clip-path: inset(0 -.12em 0 0); }
 }
 /* 英字（TOTTORI-CITY…）：小さく出て → 少し大きく → 通常の大きさへ */
 @keyframes en-in {
@@ -486,7 +488,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 .fu { animation: fadeup .8s var(--ease) both; }
 .hl { display: block; overflow: hidden; padding-bottom: .08em; margin-bottom: -.08em; }
 .hl > span { display: inline-block; transform: translateY(112%); animation: lineup 1s var(--ease) forwards; }
-/* 写真の払い。導入の PLAY が写真の上に乗るよう、1語目のうちに払い終える */
+/* 写真の払い。キャッチコピーが写真の上に乗るときには終わっているようにする */
 .phv { animation: phrev .6s var(--ease) both; }
 .blink { animation: blink 2.4s ease-in-out infinite; }
 
@@ -703,49 +705,11 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 .hero__body { padding-block: 0 26px; }
 .hero__title { margin: 0; }
 
-/* ---- 冒頭の導入「PLAY」→「BEYOND.」----
-   写真の右上に PLAY、続けて左下に BEYOND. を大きく出して消す。飾りは付けない。
-   字間が詰まりながら左から現れ、そのまま静かに引いていく。出て消えるまでで1語1秒。
-   消えたところで下のキャッチコピー（.pb）が動き出す。基準は .hero の --intro-end。 */
-.hero__intro {
-  position: absolute;
-  inset: 0;
-  z-index: 2;
-  pointer-events: none;
-}
-.pbi {
-  position: absolute;
-  display: block;
-  font: 700 clamp(46px, 12vw, 112px)/1 var(--fdisp);
-  color: var(--ink);
-  white-space: nowrap;
-  animation: pbi-word 1s var(--ease) var(--pbi-d) both;
-}
-/* 拡大は角の側から広がるよう、置いた側に基点を寄せる。
-   出はじめは字間を開くので、その分だけ横に伸びる。写真からはみ出すと
-   切れてしまうので、字間と拡大は控えめにしてある。 */
-.pbi--play { --pbi-d: 0s; top: 8%; right: 6%; transform-origin: right center; }
-.pbi--beyond { --pbi-d: 1s; bottom: 17%; left: 7%; transform-origin: left center; }
-
-/* デスクトップの写真は画面幅の55%しかないので、その幅を基準に置き直す */
-@media (min-width: 1024px) { .pbi { font-size: clamp(46px, 6.6vw, 112px); } }
-
-@keyframes pbi-word {
-  0%   { opacity: 0; letter-spacing: .18em; transform: scale(1.1); clip-path: inset(0 100% 0 0); }
-  14%  { opacity: 1; }
-  44%  { opacity: 1; letter-spacing: 0; transform: none; clip-path: inset(0 0 0 0); }
-  72%  { opacity: 1; letter-spacing: 0; transform: none; clip-path: inset(0 0 0 0); }
-  100% { opacity: 0; letter-spacing: -.03em; transform: scale(.9); clip-path: inset(0 0 0 52%); }
-}
-
-/* 動きを減らす設定では導入そのものを出さない */
-@media (prefers-reduced-motion: reduce) {
-  .hero__intro { display: none; }
-}
-
 /* ---- キャッチコピー「PLAY BEYOND.」----
-   文字は1枚だけ。「黒｜赤」の帯を文字の形に切り抜いて右から左へ流し、
-   見た目は赤い文字の上を境目が左から右へ走って、通った所が黒く変わるようにしている。
+   冒頭の導入もこの1枚が受け持つ。写真の上に大きく出して赤 → 黒に塗り替え、
+   消さずにそのまま最終位置へ縮みながら移動する（別に導入用の文字は置かない）。
+   塗り替えは「黒｜赤」の帯を文字の形に切り抜いて右から左へ流し、赤い文字の上を
+   境目が左から右へ走って、通った所が黒く変わるようにしている。
    ここだけ赤を使う（ほかの見出しは色を付けずグレー → 黒だけで変える）。
    2枚重ねると字がわずかにずれて立体的に見えてしまうので、重ねないこと。 */
 .pb {
@@ -753,21 +717,42 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   font: 700 clamp(31px, 7.4vw, 62px)/1.12 var(--fdisp);
   letter-spacing: .06em;
   white-space: nowrap;
+  /* 縮むときに左端が動かないよう、基点は文字の左に置く。
+     移動の終わりは transform なしなので、着地は必ず本来の位置になる。 */
+  transform-origin: left center;
+  animation: pb-place var(--pb-move-dur) var(--ease) var(--pb-move-at) both;
+}
+/* 導入で置く位置と大きさ。縦は自身の高さ、横は倍率だけで決めているので、
+   画面幅が変わっても文字の左端と行の高さに対する比が保たれる。
+   倍率は「文字の左端から画面右端まで」に収まる範囲で決めること（.hero は
+   overflow:hidden なので、はみ出すと切れる）。 */
+.pb { --pb-from: translateY(-450%) scale(1.05); }
+@media (min-width: 360px) { .pb { --pb-from: translateY(-450%) scale(1.2); } }
+@media (min-width: 640px) { .pb { --pb-from: translateY(-400%) scale(1.35); } }
+/* 1024px 以上は写真が右半分だけになり、キャッチコピーは左上に来る。
+   導入はヒーローのほぼ中央（写真にもかかる位置）に置いて、そこから左上へ運ぶ。 */
+@media (min-width: 1024px) { .pb { --pb-from: translateY(430%) scale(1.85); } }
+
+@keyframes pb-place {
+  from { transform: var(--pb-from); }
+  to   { transform: none; }
 }
 
-/* 導入（PLAY → BEYOND.）が終わる時刻。ここから下の動きが始まる。
-   導入を止めるときは、この値を 0s にすれば全体がそのまま前へ詰まる。
-
-   --rest-in はキャッチコピー以外（サブコピー・英字・リード・ボタン・赤い四角）が
-   動き出す時刻。ひとつずつ順に出すのではなく、この1点から全部が同時に動き出す。
-   赤が文字の半分あたりを走っているところなので、塗り替えの時間を変えても
-   「途中で残りが一斉に動く」関係は崩れない。 */
+/* ヒーローの時間割。上から順に、キャッチコピーが出る → 赤が走る →
+   最終位置へ移動 → 0.5秒おいてサブコピー → 少し遅れて英字 →
+   英字の後半でリード・ボタン・赤い四角が動き出す。
+   数字を1つ動かすと以降がまとめてずれるよう、前の値からの足し算で書いている。 */
 .hero {
-  --intro-end: 2s;
-  /* キャッチコピーが走る時間。ほかの見出し（--sweep-dur）と違って
-     グレーで待つ間を持たないので、走る 0.9秒 だけを取る。 */
+  --pb-in-at: .35s;      /* 文字が出はじめる */
+  --pb-in-dur: .65s;
+  --pb-slash-at: .55s;   /* 赤 → 黒。出る動きの終わりに重ねる */
   --pb-dur: .9s;
-  --rest-in: calc(var(--intro-end) + var(--pb-dur) * .5);
+  --pb-move-at: calc(var(--pb-slash-at) + var(--pb-dur));      /* 塗り終わってから動く */
+  --pb-move-dur: .8s;
+  --pb-settle: calc(var(--pb-move-at) + var(--pb-move-dur));   /* 移動し終わる時刻 */
+  --sub-in: calc(var(--pb-settle) + .5s);   /* サブコピー */
+  --en-in: calc(var(--sub-in) + .3s);       /* 英字（少しラグを置く） */
+  --rest-in: calc(var(--en-in) + .45s);     /* 英字の後半から、残り全部 */
 }
 
 .pb__ink {
@@ -781,19 +766,21 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   background-clip: text;
   color: transparent;
   -webkit-text-fill-color: transparent;
-  /* 導入が終わったら赤い文字で出て、そのまま境目が左から右へ走って黒へ変わる。
+  /* 赤い文字が左から現れ、続けて境目が左から右へ走って黒へ変わる。
      出る動きは別に持たせてある（塗り替えの曲線に引きずられないようにするため）。 */
   animation:
-    pb-slash var(--pb-dur) var(--sweep-ease) var(--intro-end) both,
-    pb-in .25s var(--ease) var(--intro-end) both;
+    pb-slash var(--pb-dur) var(--sweep-ease) var(--pb-slash-at) both,
+    pb-in var(--pb-in-dur) var(--ease) var(--pb-in-at) both;
 }
 
 /* 動きを減らす設定では、色を変えずに黒い文字だけを最初から出す。
    （このブロックは .pb の定義より後に置くこと。同じ詳細度なので順序で決まる） */
 @media (prefers-reduced-motion: reduce) {
+  .pb { animation: none; transform: none; }
   .pb__ink {
     animation: none;
     opacity: 1;
+    clip-path: none;
     background-image: none;
     color: var(--ink);
     -webkit-text-fill-color: var(--ink);
@@ -804,6 +791,7 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   .pb__ink {
     animation: none;
     opacity: 1;
+    clip-path: none;
     background-image: none;
     color: var(--ink);
     -webkit-text-fill-color: var(--ink);
@@ -830,7 +818,7 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   opacity: 0;
   transform-origin: 50% 100%;
   animation: en-in .42s var(--ease) both;
-  animation-delay: calc(var(--rest-in) + var(--i) * .02s);
+  animation-delay: calc(var(--en-in) + var(--i) * .02s);
 }
 /* 英字（TOTTORI-CITY…）の下。1行ぶん空けてから置く。
    キャッチコピーと同じく写真の上に載る。 */
@@ -2699,8 +2687,8 @@ body.jsrv .rv.on .ink-sweep {
 .splash-on .phv,
 .splash-on .fu,
 .splash-on .hl > span,
+.splash-on .pb,
 .splash-on .pb__ink,
-.splash-on .pbi,
 .splash-on .hero__en-ch { animation-play-state: paused; }
 
 /* ============ 汎用ユーティリティ ============ */
