@@ -448,7 +448,9 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 }
 
 /* 文字の塗り替え。薄いグレーで出したあと 0.5秒（＝36%）そのまま置き、
-   残りの 0.9秒 で黒とグレーの境目が左から右へ走り、通ったところが黒くなる。
+   残りの 0.9秒 で境目が左から右へ走り、通ったところが黒くなる。
+   境目に赤を付けるかどうかは、使う側の背景グラデーションで決まる
+   （キャッチコピーだけ赤あり、ほかの見出しは色なし）。
    72% は文字全体がグレーに収まる位置、6% は全体が黒に収まる位置。
    0→100% で振ると前後に境目の見えない間ができ、走っている時間が半分になる。 */
 @keyframes pb-color {
@@ -734,8 +736,9 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 }
 
 /* ---- キャッチコピー「PLAY BEYOND.」----
-   文字は1枚だけ。「黒｜薄いグレー」の帯を文字の形に切り抜いて右から左へ流し、
-   見た目は斜めの境目が左から右へ走って、通った所が黒く変わるようにしている。
+   文字は1枚だけ。「黒｜赤｜薄いグレー」の帯を文字の形に切り抜いて右から左へ流し、
+   見た目は赤いスラッシュが左から右へ走って、通った所が黒く変わるようにしている。
+   ここだけ赤を残してある（ほかの見出しは色を付けずグレー → 黒だけで変える）。
    2枚重ねると字がわずかにずれて立体的に見えてしまうので、重ねないこと。 */
 .pb {
   display: block;
@@ -756,15 +759,16 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 .pb__ink {
   display: block;
   background-image: linear-gradient(100deg,
-    var(--ink) 0 42%,
-    var(--gray-200) 42% 100%);
+    var(--ink) 0 40%,
+    var(--red) 40% 45.5%,
+    var(--gray-200) 45.5% 100%);
   background-size: 300% 100%;
   background-position: 100% 0;
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
   -webkit-text-fill-color: transparent;
-  /* 導入が終わってから薄いグレーで出て、0.5秒 そのまま置き、境目が走って黒へ */
+  /* 導入が終わってから薄いグレーで出て、0.5秒 そのまま置き、赤いスラッシュで黒へ */
   animation: pb-color var(--sweep-dur) var(--sweep-ease) var(--intro-end) both;
 }
 
