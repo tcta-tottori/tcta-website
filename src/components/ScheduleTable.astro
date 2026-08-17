@@ -2,10 +2,14 @@
 // 大会一覧の表。src/data/schedule.js の配列をそのまま受け取る。
 // 列は 日付／大会名・種目／会場／予備日／予備会場／締切／登録区分 の順。
 // 期日はトップページの大会カードと同じ「08.16 ＋ 改行 ＋ SUN」の形で出す。
+//
+// 要項や結果を載せている大会は、大会名から個別ページ（event-<slug>.html）へ行ける。
+// 素材がまだ無い大会は、リンクにせず文字のまま出す。
 import { REG_LABEL, dateCell } from '../data/schedule.js';
+import { eventForSchedule } from '../data/events.js';
 
 const { items, id, caption } = Astro.props;
-const rows = items.map((t) => ({ t, date: dateCell(t) }));
+const rows = items.map((t) => ({ t, date: dateCell(t), event: eventForSchedule(t) }));
 ---
 
 <div class="table-scroll rv">
@@ -23,7 +27,7 @@ const rows = items.map((t) => ({ t, date: dateCell(t) }));
       </tr>
     </thead>
     <tbody>
-      {rows.map(({ t, date }) => (
+      {rows.map(({ t, date, event }) => (
         <tr class:list={[t.status === 'done' && 'is-ended', t.status === 'open' && 'is-open']} data-tags={`${t.status} ${t.reg}`}>
           <td class="col-date">
             <span class="date-cell">
@@ -33,8 +37,11 @@ const rows = items.map((t) => ({ t, date: dateCell(t) }));
             {date.note && <span class="date-cell__note">{date.note}</span>}
           </td>
           <td>
-            <span class="name">{t.name}</span><br>
+            {event
+              ? <a class="name" href={event.url}>{t.name} <span class="aw" aria-hidden="true">→</span></a>
+              : <span class="name">{t.name}</span>}<br>
             <span class="data-table__sub">{t.event}</span>
+            {event && <span class="data-table__sub">　{event.sections.map((s) => s.label).join('・')}</span>}
           </td>
           <td class="col-place">{t.place}</td>
           <td class="col-spare">

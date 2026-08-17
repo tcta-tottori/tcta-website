@@ -16,8 +16,14 @@
 //   'open'   受付中（赤バッジ）
 //
 // ■ リンク先（カードをタップしたときの遷移先）
-//   大会の進み具合に応じて、カード下部のボタンの文言と遷移先が切り替わる。
-//   下ほど優先度が高く、URL が入っているものが採用される。
+//
+//   slug を入れた大会は、その大会の個別ページ（event-<slug>.html）へ飛ぶ。
+//   要項・ドロー・結果・写真はそこに全部まとまっているので、カードの文言だけを
+//   大会の進み具合に合わせて切り替える（要項を見る／ドローを見る／結果を見る）。
+//   slug は src/data/events.json のものと同じ。素材を取り込むと自動で増える。
+//
+//   slug の無い大会は、下の URL を上から順に見て、入っているものへ飛ぶ。
+//   下ほど優先度が高い。
 //
 //     outlineUrl … 要項。募集中〜開催前はこれ（「要項を見る」）
 //     drawUrl    … ドロー（組み合わせ）。決まったら入れる（「ドローを見る」）
@@ -26,8 +32,8 @@
 //
 //   URL を入れていない段階では、その状態を飛ばして1つ前の案内に留まる。
 //   例）ドロー未発表なら「要項を見る」、結果未掲載なら「結果は準備中」と出る。
-//   ※ drawUrl / liveUrl は掲載先が決まりしだい記入すること。外部システムの
-//     URL でも、サイト内のページ（例 'tournaments.html#draw'）でもよい。
+
+import { eventBySlug } from './events.js';
 
 // カルーセル中央の「TODAY」マーカー。終了した大会と今後の大会の境目に入る。
 // ビルドした日の日本時間。公開のたびに更新されるので、手で書き換えない。
@@ -56,9 +62,19 @@ export function dateChip(date) {
 
 /**
  * 大会の進み具合から、カードの遷移先とボタンの文言を決める。
- * 該当する URL が未記入なら、1つ手前の案内へ自動的に下がる。
+ * 個別ページのある大会（slug つき）はそこへ飛ばし、文言だけを段階に合わせる。
+ * 個別ページの無い大会は、該当する URL が未記入なら1つ手前の案内へ自動的に下がる。
  */
 export function cardAction(t) {
+  if (t.slug) {
+    const e = eventBySlug(t.slug);
+    const href = e ? e.url : null;
+    if (!href) return { label: '詳細は準備中', href: null };
+    if (t.status === 'live') return { label: '速報・ドローを見る', href: t.liveUrl || href };
+    if (e.hasResult) return { label: '結果を見る', href };
+    if (e.sections.some((s) => s.key === 'draw')) return { label: 'ドローを見る', href };
+    return { label: '要項を見る', href };
+  }
   if (t.status === 'past') {
     return t.resultUrl
       ? { label: '結果を見る', href: t.resultUrl }
@@ -85,12 +101,11 @@ export const VENUE_LOGOS = {
 export const TOURNAMENTS = [
   {
     date: '2026.05.10',
+    slug: 'r8-club-taiko-1',
     title: '令和8年度クラブ対抗戦 前期日程',
     event: '団体戦（男子1部〜8部）',
     venue: 'ヤマタスポーツパーク',
     status: 'past',
-    resultUrl: 'results.html',
-    drawUrl: null,
     image: 'assets/img/results/2023/2023club-taiko-5-7-gallery-001.webp',
     imageAlt: 'クラブ対抗戦のコート。ネットをはさんで打ち合う選手たち',
   },
@@ -100,56 +115,46 @@ export const TOURNAMENTS = [
     event: '校区別対抗戦',
     venue: 'ヤマタスポーツパーク',
     status: 'past',
-    resultUrl: 'results.html',
-    drawUrl: null,
     image: 'assets/img/results/2023/2023club-taiko-5-7-gallery-033.webp',
     imageAlt: '芝生ごしに見える試合中のテニスコート',
   },
   {
     date: '2026.07.12',
+    slug: 'r8-club-taiko-2',
     title: '令和8年度クラブ対抗戦 後期日程',
     event: '女子1部〜4部／男女予選会',
     venue: 'ヤマタスポーツパーク',
     status: 'past',
-    resultUrl: 'results.html',
-    drawUrl: null,
     image: 'assets/img/results/2023/2023club-taiko-7-16-gallery-036.webp',
     imageAlt: '大会当日のコート。奥のコートまで試合が続いている',
   },
   {
     date: '2026.08.02',
+    slug: 'r8-ketaka',
     title: '第11回気高カップシングルス大会',
     event: '男女シングルス',
     venue: 'ヤマタスポーツパーク',
     status: 'past',
-    resultUrl: 'results.html',
-    drawUrl: null,
     image: 'assets/img/results/2023/2023club-taiko-7-16-gallery-071.webp',
     imageAlt: 'コートでストロークを打つ選手',
   },
   {
     date: '2026.08.16',
+    slug: 'r8-summer-mix',
     title: 'サマーミックスダブルス',
     event: 'ミックスダブルス',
     venue: 'ヤマタスポーツパーク',
-    status: 'closed',
-    outlineUrl: 'tournaments.html',
-    drawUrl: null,      // 組み合わせが決まったらURLを入れる
-    liveUrl: null,      // 当日の大会運用システムのURLを入れる
-    resultUrl: null,    // 終了後、結果の掲載先を入れる
+    status: 'past',
     image: 'assets/img/results/2024/2024summer-mix-040.webp',
     imageAlt: '主審台の置かれたコートと、試合の準備をする選手たち',
   },
   {
     date: '2026.08.30',
+    slug: 'r8-dunlop',
     title: '第49回ダンロップテニストーナメント',
     event: '男女ダブルス',
     venue: 'ヤマタスポーツパーク',
     status: 'closed',
-    outlineUrl: 'tournaments.html',
-    drawUrl: null,      // 組み合わせが決まったらURLを入れる
-    liveUrl: null,      // 当日の大会運用システムのURLを入れる
-    resultUrl: null,    // 終了後、結果の掲載先を入れる
     image: 'assets/img/results/2024/2024summer-mix-050.webp',
     imageAlt: 'コート番号の看板が立つコートでの試合',
   },

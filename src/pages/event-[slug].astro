@@ -1,0 +1,170 @@
+---
+// 令和8年度の大会1件のページ。src/data/events.js の1件から作る。
+// build.format:'file' なので出力は event-<slug>.html。
+// 相対パス（assets/... など）を他のページと同じに保つため、あえて平置きにしている。
+//
+// 中身は「概要」＋「節」で、節は大会の進み具合で並びが変わる（events.js を参照）。
+// 終わった大会なら結果が先、これからの大会なら要項が先に来る。
+import Base from '../layouts/Base.astro';
+import { EVENTS, EVENTS_BY_DATE } from '../data/events.js';
+
+export function getStaticPaths() {
+  return EVENTS.map((e) => ({ params: { slug: e.slug }, props: { e } }));
+}
+
+const { e } = Astro.props;
+
+// 日付順に並べた中での前後（ページ下部の行き来に使う）
+const idx = EVENTS_BY_DATE.findIndex((x) => x.slug === e.slug);
+const newer = EVENTS_BY_DATE[idx - 1];
+const older = EVENTS_BY_DATE[idx + 1];
+
+// 概要の表。値の無い行は出さない。
+const facts = [
+  ['期日', e.label],
+  ['種目', e.event],
+  ['会場', e.place],
+  ['予備日', e.spareDate ? `${e.spareDate}${e.spareVenue ? `／${e.spareVenue}` : ''}` : e.spareNote],
+  ['申込締切', e.due && e.due !== '—' ? e.due : ''],
+  ['主催', e.host],
+].filter(([, v]) => v);
+
+// 横長の紙（リーグ表・スコア表）は1枚で横いっぱいに広げる
+const isWide = (img) => img.w / img.h > 1.5;
+
+const title = `${e.displayName}｜大会情報｜鳥取市テニス協会`;
+const description = `${e.label}に${e.place}で行われる${e.name}（${e.event}）のページです。`
+  + `${e.hasResult ? '結果・当日の写真・ドロー・要項' : '要項・申込用紙'}を掲載しています。`;
+---
+
+<Base
+  title={title}
+  description={description}
+  navActive="tournaments"
+  mobileNavActive="tournaments"
+>
+  <!-- ============ ページヘッダー ============ -->
+  <section class="page-head">
+    <span class="ghost" aria-hidden="true">{e.hasResult ? 'RESULT' : 'ENTRY'}</span>
+    <div class="container">
+      <nav class="breadcrumb" aria-label="パンくず">
+        <a href="index.html">ホーム</a><span class="breadcrumb__sep" aria-hidden="true">›</span>
+        <a href="tournaments.html">大会情報</a><span class="breadcrumb__sep" aria-hidden="true">›</span>
+        <span aria-current="page">{e.displayName}</span>
+      </nav>
+      <div class="page-title-row fu">
+        <span class="sec-head__mark" aria-hidden="true" style="margin-top:8px"></span>
+        <div>
+          <p class="page-title__en" style="margin:0">{e.chip.md}<span style="margin-left:10px">{e.chip.dow}</span></p>
+          <h1 class="page-title" style="margin-top:8px">{e.name}</h1>
+        </div>
+      </div>
+      <p class="page-lead fu" style="animation-delay:.15s">
+        <span class={`badge ${e.badge.badge}`}>{e.badge.label}</span>
+        <span class={`reg reg--${e.reg}`} style="margin-left:8px">{e.regLabel}</span>
+        <span style="margin-left:12px">{e.event}　／　{e.place}</span>
+      </p>
+
+      {e.sections.length > 1 && (
+        <nav class="jump fu" style="animation-delay:.3s" aria-label="このページの内容">
+          {e.sections.map((s) => (
+            <a class="jump__link" href={`#${s.key}`}>
+              {s.label}
+              {s.images.length > 0 && <span class="jump__n">{s.images.length}</span>}
+            </a>
+          ))}
+        </nav>
+      )}
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+
+      <!-- ============ 開催の概要 ============ -->
+      <div class="rv">
+        <h2 class="sub-head">開催概要</h2>
+        <div class="deflist">
+          {facts.map(([k, v]) => (
+            <div class="deflist__row">
+              <div class="deflist__key">{k}</div>
+              <div class="deflist__val">{v}</div>
+            </div>
+          ))}
+        </div>
+        {e.note && <p class="note mt-24">{e.note}</p>}
+      </div>
+
+      <!-- ============ 要項・ドロー・結果・写真 ============ -->
+      {e.sections.map((s) => (
+        <section class="esec rv" id={s.key} style="margin-top:64px">
+          <div class="esec__head">
+            <h2 class="sub-head" style="margin-bottom:0">{s.label}</h2>
+            <span class="esec__en">{s.en}</span>
+            {s.images.length > 0 && <span class="gallery__count">{s.images.length}枚</span>}
+          </div>
+          {s.lead && <p class="note mt-24" style="margin-bottom:0">{s.lead}</p>}
+
+          {/* 当日の写真は升目に、要項・ドロー・結果はその場で読める大きさで並べる */}
+          {s.images.length > 0 && (s.key === 'photo'
+            ? <div class="gallery">
+                {s.images.map((img, i) => (
+                  <a class="gallery__item" href={img.src} target="_blank" rel="noopener noreferrer">
+                    <img src={img.src} alt={`${e.name}の写真 ${i + 1}`} width={img.w} height={img.h} loading="lazy" decoding="async">
+                  </a>
+                ))}
+              </div>
+            : <div class="sheets">
+                {s.images.map((img) => (
+                  <a class:list={['sheet', isWide(img) && 'sheet--wide']} href={img.src} target="_blank" rel="noopener noreferrer">
+                    <img src={img.src} alt={`${e.name} ${s.label}｜${img.label ?? ''}`} width={img.w} height={img.h} loading="lazy" decoding="async">
+                    <span class="sheet__cap">
+                      {img.label ?? s.label}
+                      <span class="sqbtn" aria-hidden="true">↗</span>
+                    </span>
+                  </a>
+                ))}
+              </div>
+          )}
+
+          {s.pdfs.length > 0 && (
+            <ul class="mt-32">
+              {s.pdfs.map((p) => (
+                <li><a class="dl-item" href={p.src} target="_blank" rel="noopener noreferrer">
+                  <span class="dl-item__type">PDF</span>
+                  <span class="dl-item__text">
+                    <span class="dl-item__title">{p.label}</span>
+                    <span class="dl-item__note">{p.kb.toLocaleString()}KB／別タブで開きます</span>
+                  </span>
+                  <span class="sqbtn" aria-hidden="true">↓</span>
+                </a></li>
+              ))}
+            </ul>
+          )}
+        </section>
+      ))}
+
+      {/* 終わった大会なのに結果がまだ無いときは、その旨を書いておく */}
+      {e.status === 'done' && !e.hasResult && (
+        <p class="esec__wait rv" style="margin-top:64px">この大会の結果は、まとまりしだい掲載します。</p>
+      )}
+
+      <nav class="page-nav rv" aria-label="ほかの大会">
+        {newer
+          ? <a class="page-nav__link" href={newer.url}><span class="page-nav__dir">← あとの大会</span><span class="page-nav__title">{newer.displayName}</span></a>
+          : <span></span>}
+        <a class="ghost-link" href="tournaments.html">大会一覧へ</a>
+        {older
+          ? <a class="page-nav__link page-nav__link--next" href={older.url}><span class="page-nav__dir">前の大会 →</span><span class="page-nav__title">{older.displayName}</span></a>
+          : <span></span>}
+      </nav>
+
+      <div class="rv panel panel--gray" style="margin-top:64px">
+        <p class="panel__title">令和6年度までの大会</p>
+        <p class="prose" style="margin:0">平成16年度から令和6年度までの大会結果は、大会結果のページに年度ごとにまとめています。</p>
+        <a class="ghost-link mt-24" href="results.html">大会結果を見る <span class="aw">→</span></a>
+      </div>
+
+    </div>
+  </section>
+</Base>
