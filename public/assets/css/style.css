@@ -55,13 +55,13 @@
   --ease: cubic-bezier(.22, 1, .36, 1);
 
   /* 見出しの塗り替え（グレー → 黒）の時間。
-     グレーの文字が出てから 0.2秒 はそのまま置き、そこから 0.9秒 かけて
+     グレーの文字が出てから 0.1秒 はそのまま置き、そこから 0.9秒 かけて
      細い白のスラッシュ（/）が左から右へ走り、通ったところが黒くなる。
-     合計 1.1秒。@keyframes 側の「待つ」位置がちょうど 0.2秒 にあたるので、
+     合計 1.0秒。@keyframes 側の「待つ」位置がちょうど 0.1秒 にあたるので、
      時間を変えるときは --sweep-dur と keyframes の百分率をそろえて直すこと。
      （--sweep-ease は var(--ease) より減速がゆるく、境目が一定の速さで
        行き渡って見える曲線。--ease だと一瞬で走り抜けてしまう） */
-  --sweep-dur: 1.1s;
+  --sweep-dur: 1.0s;
   --sweep-ease: cubic-bezier(.45, .05, .4, 1);
 
   /* 走らせる白いスラッシュそのもの。「黒｜グレー」の帯の上に重ねる一枚で、
@@ -464,24 +464,24 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   to   { opacity: 1; transform: none; }
 }
 
-/* 見出しの塗り替え。薄いグレーで出しきってから 0.2秒 そのまま置き、
+/* 見出しの塗り替え。薄いグレーで出しきってから 0.1秒 そのまま置き、
    残りの 0.9秒 で白いスラッシュが左から右へ走り、通ったところが黒くなる。
-   ここは自分で出るところ（0→14%）も持っているので、グレーが出そろうのは 14%。
-   そこから 0.2秒（＝32%）まで待って走り出す。
+   ここは自分で出るところ（0→12%）も持っているので、グレーが出そろうのは 12%。
+   そこから 0.1秒（＝22%）まで待って走り出す。
    72% は文字全体がグレー（キャッチコピーは赤）に収まる位置、
    6% は全体が黒に収まる位置。0→100% で振ると前後に境目の見えない間ができ、
    走っている時間が半分になってしまう。 */
 @keyframes sweep-hold {
   0%   { opacity: 0; background-position: 72% 0; }
-  14%  { opacity: 1; background-position: 72% 0; }
-  32%  { opacity: 1; background-position: 72% 0; }
+  12%  { opacity: 1; background-position: 72% 0; }
+  22%  { opacity: 1; background-position: 72% 0; }
   100% { opacity: 1; background-position: 6% 0; }
 }
 /* 上と同じ動きの、透明度を触らない版（見出しの出方は .rv / .fu 側に任せる）。
-   出るところを持たないぶん、待つのは頭から 0.2秒（＝18%）だけ。 */
+   出るところを持たないぶん、待つのは頭から 0.1秒（＝10%）だけ。 */
 @keyframes title-slash {
   0%   { background-position: 72% 0; }
-  18%  { background-position: 72% 0; }
+  10%  { background-position: 72% 0; }
   100% { background-position: 6% 0; }
 }
 /* キャッチコピー用。待つ間を持たず、出たらすぐ境目が走りきる。 */
@@ -1839,7 +1839,7 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
     var(--slash),
     linear-gradient(var(--slash-deg),
       var(--ink) 0 42%,
-      var(--gray-500) 42% 100%);
+      var(--gray-300) 42% 100%);
   background-size: 300% 100%;
   background-position: 6% 0;
   -webkit-background-clip: text;
@@ -1851,9 +1851,9 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 body.jsrv .rv .sec-head__title,
 body.jsrv .rv .sub-head { background-position: 72% 0; }
 body.jsrv .rv.on .sec-head__title,
-body.jsrv .rv.on .sub-head { animation: title-slash var(--sweep-dur) var(--sweep-ease) .1s both; }
+body.jsrv .rv.on .sub-head { animation: title-slash var(--sweep-dur) var(--sweep-ease) 0s both; }
 /* ページ見出しは読み込み時に出るので、そのまま走らせる */
-.page-title { animation: title-slash var(--sweep-dur) var(--sweep-ease) .2s both; }
+.page-title { animation: title-slash var(--sweep-dur) var(--sweep-ease) .1s both; }
 
 @media (prefers-reduced-motion: reduce) {
   .sec-head__title, .page-title, .sub-head,
@@ -1898,7 +1898,7 @@ body.jsrv .rv.on .sub-head { animation: title-slash var(--sweep-dur) var(--sweep
 /* JS が動くときだけ、出る前を薄いグレーにしておく */
 body.jsrv .ink-sweep { background-position: 72% 0; opacity: 0; }
 body.jsrv .rv.on .ink-sweep {
-  animation: sweep-hold var(--sweep-dur) var(--sweep-ease) .15s both;
+  animation: sweep-hold var(--sweep-dur) var(--sweep-ease) .05s both;
 }
 /* 動きを減らす設定と、切り抜きが使えない環境では、黒い文字をそのまま出す */
 @media (prefers-reduced-motion: reduce) {
