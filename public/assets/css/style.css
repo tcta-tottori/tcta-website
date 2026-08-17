@@ -757,14 +757,17 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 
 /* 導入（PLAY → BEYOND.）が終わる時刻。ここから下の動きが始まる。
    導入を止めるときは、この値を 0s にすれば全体がそのまま前へ詰まる。
-   --copy-end はキャッチコピーが黒く塗り終わる時刻。サブコピー以下は
-   これを起点に並べているので、塗り替えの時間を変えても順番が崩れない。 */
+
+   --rest-in はキャッチコピー以外（サブコピー・英字・リード・ボタン・赤い四角）が
+   動き出す時刻。ひとつずつ順に出すのではなく、この1点から全部が同時に動き出す。
+   赤が文字の半分あたりを走っているところなので、塗り替えの時間を変えても
+   「途中で残りが一斉に動く」関係は崩れない。 */
 .hero {
   --intro-end: 2s;
   /* キャッチコピーが走る時間。ほかの見出し（--sweep-dur）と違って
      グレーで待つ間を持たないので、走る 0.9秒 だけを取る。 */
   --pb-dur: .9s;
-  --copy-end: calc(var(--intro-end) + var(--pb-dur));
+  --rest-in: calc(var(--intro-end) + var(--pb-dur) * .5);
 }
 
 .pb__ink {
@@ -827,7 +830,7 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   opacity: 0;
   transform-origin: 50% 100%;
   animation: en-in .42s var(--ease) both;
-  animation-delay: calc(var(--copy-end) + .2s + var(--i) * .02s);
+  animation-delay: calc(var(--rest-in) + var(--i) * .02s);
 }
 /* 英字（TOTTORI-CITY…）の下。1行ぶん空けてから置く。
    キャッチコピーと同じく写真の上に載る。 */
@@ -842,7 +845,7 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 .hero__lead p { margin: 0; }
 .hero__lead p + p { margin-top: .9em; }
 /* 英字が出終わって 0.3 秒後から動き出す */
-.hero__lead { --lead-in: calc(var(--copy-end) + 1.5s); }
+.hero__lead { --lead-in: var(--rest-in); }
 .hero__lead-p { margin: 0; }
 
 /* 行ごとに、下のライン（枠は出さない）から起き上がる。
