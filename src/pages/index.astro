@@ -59,12 +59,12 @@ const upcomingTournaments = TOURNAMENTS.filter((t) => t.status !== 'past');
       <div class="hero__inner">
         <div class="hero__copy">
           <h1 class="hero__title">
-            {/* 文字は1枚だけ。写真の上に大きく出して赤 → 黒に塗り替えたあと、
-                消さずにそのまま最終位置へ縮みながら移動する（導入もこの1枚が兼ねる）。
-                2枚重ねると字がわずかにずれて立体的に見えるので、重ねないこと。 */}
+            {/* 導入もこの2語が兼ねる。写真の右上に PLAY、左下に BEYOND. を大きく出して
+                それぞれ赤 → 黒に塗り替え、消さずにそのまま1行へ合流させる。
+                読み上げ用の文字は別に1つだけ置き、見える方は2語に分けてある。 */}
             <span class="pb">
               <span class="visually-hidden">{CATCH}</span>
-              <span class="pb__ink" aria-hidden="true">{CATCH}</span>
+              <span class="pb__ink" aria-hidden="true"><span class="pbw pbw--play">PLAY</span> <span class="pbw pbw--beyond">BEYOND.</span></span>
             </span>
             <span class="hero__sub fu" style="animation-delay:var(--sub-in)">テニスで、もっとつながろう。</span>
           </h1>

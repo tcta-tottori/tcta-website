@@ -706,8 +706,10 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 .hero__title { margin: 0; }
 
 /* ---- キャッチコピー「PLAY BEYOND.」----
-   冒頭の導入もこの1枚が受け持つ。写真の上に大きく出して赤 → 黒に塗り替え、
-   消さずにそのまま最終位置へ縮みながら移動する（別に導入用の文字は置かない）。
+   冒頭の導入もこの2語が受け持つ。写真の右上に PLAY、左下に BEYOND. を大きく出し、
+   それぞれ赤 → 黒に塗り替えたあと、消さずにそのまま1行へ合流させる。
+   合流の終わりは transform なしなので、着地は必ず本来の行の位置になる。
+
    塗り替えは「黒｜赤」の帯を文字の形に切り抜いて右から左へ流し、赤い文字の上を
    境目が左から右へ走って、通った所が黒く変わるようにしている。
    ここだけ赤を使う（ほかの見出しは色を付けずグレー → 黒だけで変える）。
@@ -717,46 +719,14 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   font: 700 clamp(31px, 7.4vw, 62px)/1.12 var(--fdisp);
   letter-spacing: .06em;
   white-space: nowrap;
-  /* 縮むときに左端が動かないよう、基点は文字の左に置く。
-     移動の終わりは transform なしなので、着地は必ず本来の位置になる。 */
+}
+.pb__ink { display: block; }
+
+/* 1語ぶん。導入では写真の上へ飛ばすので、動かせるよう inline-block にする。
+   基点を左に置き、拡大しても左端が動かないようにしている。 */
+.pbw {
+  display: inline-block;
   transform-origin: left center;
-  animation: pb-place var(--pb-move-dur) var(--ease) var(--pb-move-at) both;
-}
-/* 導入で置く位置と大きさ。縦は自身の高さ、横は倍率だけで決めているので、
-   画面幅が変わっても文字の左端と行の高さに対する比が保たれる。
-   倍率は「文字の左端から画面右端まで」に収まる範囲で決めること（.hero は
-   overflow:hidden なので、はみ出すと切れる）。 */
-.pb { --pb-from: translateY(-450%) scale(1.05); }
-@media (min-width: 360px) { .pb { --pb-from: translateY(-450%) scale(1.2); } }
-@media (min-width: 640px) { .pb { --pb-from: translateY(-400%) scale(1.35); } }
-/* 1024px 以上は写真が右半分だけになり、キャッチコピーは左上に来る。
-   導入はヒーローのほぼ中央（写真にもかかる位置）に置いて、そこから左上へ運ぶ。 */
-@media (min-width: 1024px) { .pb { --pb-from: translateY(430%) scale(1.85); } }
-
-@keyframes pb-place {
-  from { transform: var(--pb-from); }
-  to   { transform: none; }
-}
-
-/* ヒーローの時間割。上から順に、キャッチコピーが出る → 赤が走る →
-   最終位置へ移動 → 0.5秒おいてサブコピー → 少し遅れて英字 →
-   英字の後半でリード・ボタン・赤い四角が動き出す。
-   数字を1つ動かすと以降がまとめてずれるよう、前の値からの足し算で書いている。 */
-.hero {
-  --pb-in-at: .35s;      /* 文字が出はじめる */
-  --pb-in-dur: .65s;
-  --pb-slash-at: .55s;   /* 赤 → 黒。出る動きの終わりに重ねる */
-  --pb-dur: .9s;
-  --pb-move-at: calc(var(--pb-slash-at) + var(--pb-dur));      /* 塗り終わってから動く */
-  --pb-move-dur: .8s;
-  --pb-settle: calc(var(--pb-move-at) + var(--pb-move-dur));   /* 移動し終わる時刻 */
-  --sub-in: calc(var(--pb-settle) + .5s);   /* サブコピー */
-  --en-in: calc(var(--sub-in) + .3s);       /* 英字（少しラグを置く） */
-  --rest-in: calc(var(--en-in) + .45s);     /* 英字の後半から、残り全部 */
-}
-
-.pb__ink {
-  display: block;
   background-image: linear-gradient(100deg,
     var(--ink) 0 42%,
     var(--red) 42% 100%);
@@ -766,19 +736,83 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   background-clip: text;
   color: transparent;
   -webkit-text-fill-color: transparent;
-  /* 赤い文字が左から現れ、続けて境目が左から右へ走って黒へ変わる。
-     出る動きは別に持たせてある（塗り替えの曲線に引きずられないようにするため）。 */
+  /* 赤い文字が左から現れ、続けて境目が左から右へ走って黒へ変わり、
+     塗り終わってから本来の位置へ動く。3つを別の動きに分けてあるので、
+     出方・塗り替え・移動の曲線がそれぞれ濁らない。 */
   animation:
-    pb-slash var(--pb-dur) var(--sweep-ease) var(--pb-slash-at) both,
-    pb-in var(--pb-in-dur) var(--ease) var(--pb-in-at) both;
+    pb-in var(--pb-in-dur) var(--ease) var(--pbw-at) both,
+    pb-slash var(--pb-dur) var(--sweep-ease) calc(var(--pbw-at) + .2s) both,
+    pb-place var(--pb-move-dur) var(--ease) calc(var(--pb-move-at) + var(--pbw-move-d, 0s)) both;
+}
+/* PLAY が先、BEYOND. が少し遅れて出る（出る順は元の導入と同じ）。
+   合流も PLAY を先に行かせる。右から来る PLAY が行の右半分を横切るので、
+   BEYOND. を少しだけ遅らせると、2語が重なって見える瞬間が出ない。 */
+.pbw--play   { --pbw-at: var(--pb-in-at); }
+.pbw--beyond { --pbw-at: calc(var(--pb-in-at) + var(--pb-gap)); --pbw-move-d: .14s; }
+
+@keyframes pb-place {
+  from { transform: var(--pbw-from); }
+  to   { transform: none; }
+}
+
+/* 導入で2語を置く位置と大きさ。PLAY は写真の右上、BEYOND. は左下。
+   行の中の位置からの差で書いてあるので、着地は必ず本来の行になる。
+
+   横は行頭（--pb-x0＝コンテナの左余白）と、行頭から各語までの幅で決まる。
+   PLAY の幅は 3.02em、行頭から BEYOND. の左端までは 3.42em（Jost 700・字間 .06em）。
+   縦は画面の高さから引いて出す。ヒーローの高さが 100svh − ヘッダーなので、
+   svh で書けば画面が低いときも比率が保たれる。
+   倍率と位置は、画面からはみ出さない範囲で決めること（.hero は overflow:hidden）。 */
+.pbw--play   { --pbw-from: translate(var(--play-x), var(--play-y)) scale(var(--pbw-sc)); }
+.pbw--beyond { --pbw-from: translate(var(--beyond-x), var(--beyond-y)) scale(var(--pbw-sc)); }
+.pb {
+  --pbw-sc: 1.5;
+  --pbw-w: 3.02em;    /* PLAY の幅（拡大前） */
+  --pbw-gap: 3.42em;  /* 行頭から BEYOND. の左端まで */
+  --pb-x0: var(--gutter);
+  --play-x: calc(94vw - var(--pbw-w) * var(--pbw-sc) - var(--pb-x0));
+  --beyond-x: calc(7vw - var(--pb-x0) - var(--pbw-gap));
+  /* いちばん狭い画面はリード文が折り返して行が上がるので、上へ運ぶ量を控えめにする */
+  --play-y: calc(400px - 70svh);
+  --beyond-y: calc(360px - 18svh);
+}
+@media (min-width: 360px) { .pb { --play-y: calc(400px - 82svh); } }
+/* 1024px 以上は写真が右半分だけ、キャッチコピーは左上に来る。
+   PLAY は写真の右上、BEYOND. はキャッチコピーより下の左から寄ってくる。
+   行頭はコンテナの左余白（画面が広いと中央寄せの分だけ内側に入る）。 */
+@media (min-width: 1024px) {
+  .pb {
+    --pbw-sc: 1.7;
+    --pb-x0: max(var(--gutter), calc((100vw - var(--container-max)) / 2 + var(--gutter)));
+    --play-y: calc(15svh - 112px);
+    --beyond-y: calc(78svh - 172px);
+  }
+}
+
+/* ヒーローの時間割。上から順に、PLAY が出る → BEYOND. が出る →
+   それぞれ赤が走る → 1行へ合流 → 0.5秒おいてサブコピー → 少し遅れて英字 →
+   英字の後半でリード・ボタン・赤い四角が動き出す。
+   数字を1つ動かすと以降がまとめてずれるよう、前の値からの足し算で書いている。 */
+.hero {
+  --pb-in-at: .3s;       /* PLAY が出はじめる */
+  --pb-gap: .45s;        /* BEYOND. が遅れて出る分 */
+  --pb-in-dur: .6s;
+  --pb-dur: .9s;         /* 赤 → 黒（出はじめの 0.2秒 後に走る） */
+  /* 2語とも塗り終わってから合流する */
+  --pb-move-at: calc(var(--pb-in-at) + var(--pb-gap) + .2s + var(--pb-dur) + .1s);
+  --pb-move-dur: .8s;
+  --pb-settle: calc(var(--pb-move-at) + .14s + var(--pb-move-dur));  /* 合流し終わる時刻 */
+  --sub-in: calc(var(--pb-settle) + .5s);   /* サブコピー */
+  --en-in: calc(var(--sub-in) + .3s);       /* 英字（少しラグを置く） */
+  --rest-in: calc(var(--en-in) + .45s);     /* 英字の後半から、残り全部 */
 }
 
 /* 動きを減らす設定では、色を変えずに黒い文字だけを最初から出す。
    （このブロックは .pb の定義より後に置くこと。同じ詳細度なので順序で決まる） */
 @media (prefers-reduced-motion: reduce) {
-  .pb { animation: none; transform: none; }
-  .pb__ink {
+  .pbw {
     animation: none;
+    transform: none;
     opacity: 1;
     clip-path: none;
     background-image: none;
@@ -788,8 +822,9 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 }
 /* 切り抜きが使えない環境では、塗り替えはせず黒い文字だけを出す */
 @supports not ((-webkit-background-clip: text) or (background-clip: text)) {
-  .pb__ink {
+  .pbw {
     animation: none;
+    transform: none;
     opacity: 1;
     clip-path: none;
     background-image: none;
@@ -2687,8 +2722,7 @@ body.jsrv .rv.on .ink-sweep {
 .splash-on .phv,
 .splash-on .fu,
 .splash-on .hl > span,
-.splash-on .pb,
-.splash-on .pb__ink,
+.splash-on .pbw,
 .splash-on .hero__en-ch { animation-play-state: paused; }
 
 /* ============ 汎用ユーティリティ ============ */
