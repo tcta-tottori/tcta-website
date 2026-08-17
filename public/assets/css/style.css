@@ -2725,6 +2725,98 @@ body.jsrv .rv.on .ink-sweep {
 .splash-on .pbw,
 .splash-on .hero__en-ch { animation-play-state: paused; }
 
+/* ============ 15. 大会の個別ページ ============ */
+
+/* ページ上部の、節への飛び札。要項・ドロー・結果を見に来た人が
+   スクロールせずに目的の節へ行けるようにする。 */
+.jump {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 28px;
+}
+.jump__link {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 9px 16px;
+  border: 1px solid var(--gray-300);
+  border-radius: 999px;
+  font: 700 13px/1.5 var(--fjp);
+  letter-spacing: .04em;
+  color: var(--gray-800);
+  transition: background .3s ease, border-color .3s ease, color .3s ease;
+}
+.jump__link:hover { background: var(--ink); border-color: var(--ink); color: var(--white); }
+.jump__n { font: 400 11px/1 var(--flt); color: var(--gray-500); }
+.jump__link:hover .jump__n { color: var(--gray-300); }
+
+/* 大会1件の中の節。左に赤い縦線を引いて、節の切れ目を分かりやすくする */
+.esec + .esec { margin-top: 64px; }
+.esec__head {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.esec__en {
+  font: 400 12px/1 var(--flt);
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--gray-500);
+}
+
+/* 要項・ドロー・結果の紙面。当日の写真と違い「その場で読めること」が要るので、
+   写真のような小さな升目ではなく、1〜2列に大きく並べる。 */
+.sheets {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  margin-top: 24px;
+}
+@media (min-width: 768px) { .sheets { grid-template-columns: repeat(2, 1fr); gap: 20px; } }
+/* 横に長いリーグ表・スコア表は、半分の幅に割ると字が潰れる。
+   同じ節に縦長の紙と混ざることがあるので、1枚ずつ横いっぱいに広げる。 */
+.sheet--wide { grid-column: 1 / -1; }
+
+.sheet {
+  display: block;
+  overflow: hidden;
+  background: var(--white);
+  border: 1px solid var(--gray-200);
+  border-radius: 6px;
+  transition: border-color .3s ease, box-shadow .3s ease;
+}
+.sheet:hover { border-color: var(--gray-300); box-shadow: var(--shadow-hover); color: inherit; }
+.sheet img {
+  display: block;
+  width: 100%;
+  height: auto;
+  background: var(--white);
+}
+.sheet__cap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-top: 1px solid var(--gray-200);
+  font: 700 13px/1.6 var(--fjp);
+  letter-spacing: .03em;
+  color: var(--ink);
+}
+.sheet__cap .sqbtn { flex: none; margin-left: auto; }
+.sheet:hover .sqbtn { background: var(--red); border-color: var(--red); color: #fff; }
+
+/* まだ中身が無い節（結果待ちなど）の言い方 */
+.esec__wait {
+  margin: 24px 0 0;
+  padding: 20px;
+  background: var(--gray-050);
+  border-left: 3px solid var(--gray-300);
+  font: 400 14px/1.9 var(--fjp);
+  color: var(--gray-600);
+}
+
 /* ============ 汎用ユーティリティ ============ */
 .stack-24 > * + * { margin-top: 24px; }
 .stack-40 > * + * { margin-top: 40px; }

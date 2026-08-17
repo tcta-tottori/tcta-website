@@ -3,9 +3,20 @@ import Base from '../layouts/Base.astro';
 import ScheduleCalendar from '../components/ScheduleCalendar.astro';
 import ScheduleTable from '../components/ScheduleTable.astro';
 import { SCHEDULE, SCHEDULE_NEXT } from '../data/schedule.js';
+import { SCHEDULE_PDF, EVENTS } from '../data/events.js';
 
 const title = "大会情報｜鳥取市テニス協会";
 const description = "令和8年度（2026年度）に鳥取市テニス協会が主催・主管する全19大会の一覧。エントリー締切・会場・登録区分を掲載しています。";
+
+// 絞り込みチップの件数。手で数えると日程の更新のたびにずれるので、データから出す。
+const count = {
+  all: SCHEDULE.length,
+  open: SCHEDULE.filter((t) => t.status === 'open').length,
+  done: SCHEDULE.filter((t) => t.status === 'done').length,
+};
+
+// 一覧に入らない大会（協会が結果を預かっているもの）は、表の下に別立てで案内する
+const extras = EVENTS.filter((e) => !e.no);
 ---
 
 <Base
@@ -46,16 +57,36 @@ const description = "令和8年度（2026年度）に鳥取市テニス協会が
       </div>
 
       <div class="chips mt-32 rv" data-filter-group data-filter-target="#r8-list" role="group" aria-label="大会一覧の絞り込み">
-        <button class="chip is-active" type="button" data-filter="all" aria-pressed="true">すべて（19）</button>
-        <button class="chip" type="button" data-filter="open" aria-pressed="false">受付中（1）</button>
-        <button class="chip" type="button" data-filter="done" aria-pressed="false">終了（9）</button>
+        <button class="chip is-active" type="button" data-filter="all" aria-pressed="true">すべて（{count.all}）</button>
+        <button class="chip" type="button" data-filter="open" aria-pressed="false">受付中（{count.open}）</button>
+        <button class="chip" type="button" data-filter="done" aria-pressed="false">終了（{count.done}）</button>
       </div>
+
+      <p class="note mt-24">大会名に矢印が付いているものは、要項・ドロー・結果・写真をまとめたページがあります。大会名をタップしてください。</p>
 
       <ScheduleTable items={SCHEDULE} id="r8-list" caption="令和8年度 大会一覧" />
       <p class="note" id="r8-list-empty" hidden>該当する大会はありません。</p>
 
+      {extras.length > 0 && (
+        <div class="rv" style="margin-top:56px">
+          <h2 class="sub-head">協会が結果を預かっている大会</h2>
+          <p class="note" style="margin-bottom:20px">協会の主催ではありませんが、要項・ドロー・結果をお預かりして掲載している大会です。</p>
+          <ul class="sch-list">
+            {extras.map((e) => (
+              <li><a class="sch-item" href={e.url}>
+                <span class="sch-item__text">
+                  <span class="sch-item__title">{e.name}</span>
+                  <span class="sch-item__place">{e.label}　／　{e.place}　／　{e.event}</span>
+                </span>
+                <span class="sqbtn" aria-hidden="true">→</span>
+              </a></li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       <div class="rv mt-40" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:20px">
-        <a class="btn btn--outline" href="#">令和8年度 大会日程をダウンロード（PDF / 85.8KB）<span aria-hidden="true" class="text-red">↓</span></a>
+        <a class="btn btn--outline" href={SCHEDULE_PDF.src} target="_blank" rel="noopener noreferrer">令和8年度 大会日程をダウンロード（PDF / {SCHEDULE_PDF.kb.toLocaleString()}KB）<span aria-hidden="true" class="text-red">↓</span></a>
         <p style="margin:0;font:400 14px/1.8 var(--fjp);color:var(--gray-600)">大会日程はGoogleカレンダーでも公開しています。<a class="ghost-link" href="#calendar" style="border-bottom:1px solid var(--gray-300)">カレンダーに追加する</a></p>
       </div>
 
