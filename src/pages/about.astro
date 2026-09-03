@@ -3,6 +3,32 @@ import Base from '../layouts/Base.astro';
 
 const title = "協会について｜鳥取市テニス協会";
 const description = "鳥取市テニス協会の概要・ごあいさつ・役員名簿・協会規約。";
+
+// 役員・理事（令和7年度〜令和8年度）。役員名簿PDFと同じ並び。
+const OFFICERS = [
+  ['会長', '浅倉 俊一'],
+  ['副会長', '橋本 修'],
+  ['理事長', '漆原 和弘'],
+  ['副理事長', '麻木 政史／岡墻 篤典'],
+  ['理事', '安道 まり子／日出嶋 隆男／阪根 昌恵／原 康浩／玉川 裕康／山根 暁／松村 祐人／赤松 健太／谷口 淳也／山本 和弥／平木 優成'],
+  ['高体連理事', '冨林 紀之'],
+  ['会計', '石原 康司'],
+  ['会計監査', '岡田 浩四郎／勝井 節朗'],
+  ['顧問', '前田 一男'],
+  ['事務局', '麻木 政史'],
+];
+
+const COMMITTEES = [
+  { name: '大会運営委員会', chair: '山根 暁', vice: '玉川 裕康', members: '安道 まり子／麻木 政史／田中 謙次／松村 祐人／赤松 健太／山本 和弥' },
+  { name: '普及委員会', chair: '安道 まり子', vice: '日出嶋 隆男', members: '梅田 悦子／山口 英晃／梁 正夫／前田 邦明／玉川 裕康／竹内 光恵／加納 ちよみ／中尾 しず葉／中島 雄二／宮島 衣吹／石田 敦裕／下谷 慎一' },
+  { name: '強化・ジュニア委員会', chair: '平木 優成', vice: '谷口 淳也', members: '常村 和仁／阪根 昌恵／原 康浩／玉川 裕康／高木 克憲／竹間 梨絵／小谷 彩香' },
+  { name: 'ベテランズ委員会', chair: '漆原 和弘', vice: '梅田 悦子', members: '日出嶋 隆男' },
+  { name: '庶務委員会', chair: '阪根 昌恵', vice: '玉川 裕康', members: '' },
+  { name: '広報委員会', chair: '山本 和弥', vice: '麻木 政史', members: '' },
+  { name: '渉外・規約改正委員会', chair: '漆原 和弘', vice: '麻木 政史', members: '' },
+];
+
+const RULES = [1, 2, 3, 4, 5];
 ---
 
 <Base
@@ -39,7 +65,7 @@ const description = "鳥取市テニス協会の概要・ごあいさつ・役�
           <p>本協会は、テニスを通じた市民の健康増進と青少年の健全育成、そして競技力の向上と生涯スポーツの普及を目的に活動しています。</p>
           <p>年間19の大会運営、クラブ対抗戦のリーグ編成、水曜テニス教室での指導、市民体育祭やテニス祭りといった地域イベント。どれも、鳥取市でテニスを続けられる環境を守るための活動です。</p>
           <p>コートに立つ理由は人それぞれです。勝ちたい方も、体を動かしたい方も、仲間に会いたい方も。そのすべてを受けとめられる協会でありたいと考えています。</p>
-          <p style="text-align:right;font-weight:700;color:var(--ink)">鳥取市テニス協会 会長（氏名は<span class="todo-note">要確認</span>）</p>
+          <p style="text-align:right;font-weight:700;color:var(--ink)">鳥取市テニス協会 会長　浅倉 俊一</p>
         </div>
       </div>
 
@@ -48,8 +74,8 @@ const description = "鳥取市テニス協会の概要・ごあいさつ・役�
         <dl class="deflist">
           <div class="deflist__row"><dt class="deflist__key">名称</dt><dd class="deflist__val" style="margin:0">鳥取市テニス協会</dd></div>
           <div class="deflist__row"><dt class="deflist__key">英字名称</dt><dd class="deflist__val" style="margin:0">TOTTORI-CITY TENNIS ASSOCIATION</dd></div>
-          <div class="deflist__row"><dt class="deflist__key">目的</dt><dd class="deflist__val" style="margin:0">協会規約より転記（<span class="todo-note">要確認</span>）</dd></div>
-          <div class="deflist__row"><dt class="deflist__key">所在地</dt><dd class="deflist__val" style="margin:0"><span class="todo-note">要確認</span></dd></div>
+          <div class="deflist__row"><dt class="deflist__key">目的</dt><dd class="deflist__val" style="margin:0">テニスの健全な発展に資するとともに、加盟団体間の親睦および外部諸機関との連絡を図ること（協会規約 第3条）</dd></div>
+          <div class="deflist__row"><dt class="deflist__key">事務局</dt><dd class="deflist__val" style="margin:0">鳥取市内に置いています（協会規約 第2条）。連絡はお問い合わせページからお願いします。</dd></div>
           <div class="deflist__row"><dt class="deflist__key">上部団体</dt><dd class="deflist__val" style="margin:0">鳥取県テニス協会</dd></div>
           <div class="deflist__row"><dt class="deflist__key">主な活動</dt><dd class="deflist__val" style="margin:0">大会の主催・主管／クラブ対抗戦の運営／テニス教室の開催／普及イベントの実施</dd></div>
         </dl>
@@ -57,30 +83,63 @@ const description = "鳥取市テニス協会の概要・ごあいさつ・役�
 
       <div class="rv" style="margin-top:56px">
         <h2 class="sub-head">役員名簿</h2>
-        <div class="panel panel--gray">
-          <p class="panel__title">令和7・8年度 役員名簿</p>
-          <p class="prose" style="margin:0">役職・氏名・所属をCMS（microCMS）の表形式で管理し、この位置に掲載します。掲載内容は協会の最終確認後に反映します。</p>
+        <p class="prose" style="max-width:46em">令和7年度〜令和8年度の役員・理事と各委員会です。</p>
+        <dl class="deflist mt-24">
+          {OFFICERS.map(([k, v]) => (
+            <div class="deflist__row"><dt class="deflist__key">{k}</dt><dd class="deflist__val" style="margin:0">{v}</dd></div>
+          ))}
+        </dl>
+        <h3 class="panel__title" style="margin-top:40px">各委員会</h3>
+        <div class="table-scroll">
+          <table class="fee-table" style="min-width:640px">
+            <caption class="visually-hidden">各委員会の委員長・副委員長・委員</caption>
+            <thead><tr><th scope="col">委員会</th><th scope="col">委員長</th><th scope="col">副委員長</th><th scope="col">委員</th></tr></thead>
+            <tbody>
+              {COMMITTEES.map((c) => (
+                <tr><th scope="row">{c.name}</th><td>{c.chair}</td><td>{c.vice}</td><td>{c.members}</td></tr>
+              ))}
+            </tbody>
+          </table>
         </div>
+        <ul class="mt-32">
+          <li><a class="dl-item" href="assets/pdf/about/r7-r8-yakuin.pdf" target="_blank" rel="noopener noreferrer">
+            <span class="dl-item__type">PDF</span>
+            <span class="dl-item__text">
+              <span class="dl-item__title">令和7・8年度 鳥取市テニス協会 役員・理事</span>
+              <span class="dl-item__note">49KB／別タブで開きます</span>
+            </span>
+            <span class="sqbtn" aria-hidden="true">↓</span>
+          </a></li>
+        </ul>
       </div>
 
       <div class="rv" style="margin-top:56px">
         <h2 class="sub-head">協会規約</h2>
-        <p class="prose" style="max-width:46em">規約本文はテキスト（HTML）で掲載し、原本PDFを併置します。現行サイトの画像掲載（JPEG5枚）からテキスト化して移行します。</p>
-        <ul class="mt-24">
-          <li><a class="dl-item" href="#">
+        <p class="prose" style="max-width:46em">鳥取市テニス協会規約（令和5年4月1日施行）です。画像をタップすると大きく表示します。</p>
+        <div class="sheets">
+          {RULES.map((n) => (
+            <a class="sheet" href={`assets/img/about/rules-0${n}.webp`} target="_blank" rel="noopener noreferrer">
+              <img src={`assets/img/about/rules-0${n}.webp`} alt={`鳥取市テニス協会規約 ${n}ページ目`} width="850" height="1320" loading="lazy" decoding="async">
+              <span class="sheet__cap">{n}ページ目 <span class="sqbtn" aria-hidden="true">↗</span></span>
+            </a>
+          ))}
+        </div>
+        <ul class="mt-32">
+          <li><a class="dl-item" href="assets/pdf/about/r7-daigiinkai-giansho.pdf" target="_blank" rel="noopener noreferrer">
             <span class="dl-item__type">PDF</span>
-            <span class="dl-item__text"><span class="dl-item__title">鳥取市テニス協会規約（原本）</span></span>
-            <span class="sqbtn" aria-hidden="true">→</span>
+            <span class="dl-item__text">
+              <span class="dl-item__title">令和7年度 代議員会議案書</span>
+              <span class="dl-item__note">494KB／別タブで開きます</span>
+            </span>
+            <span class="sqbtn" aria-hidden="true">↓</span>
           </a></li>
-          <li><a class="dl-item" href="#">
-            <span class="dl-item__type">PDF</span>
-            <span class="dl-item__text"><span class="dl-item__title">令和7年度 代議員会議案書</span></span>
-            <span class="sqbtn" aria-hidden="true">→</span>
-          </a></li>
-          <li><a class="dl-item" href="#">
-            <span class="dl-item__type">PDF</span>
-            <span class="dl-item__text"><span class="dl-item__title">フェアプレー推進について（鳥取県テニス協会）</span></span>
-            <span class="sqbtn" aria-hidden="true">→</span>
+          <li><a class="dl-item" href="https://tottoritennis.sakura.ne.jp/wp/" target="_blank" rel="noopener noreferrer">
+            <span class="dl-item__type">LINK</span>
+            <span class="dl-item__text">
+              <span class="dl-item__title">フェアプレー推進について（鳥取県テニス協会）</span>
+              <span class="dl-item__note">鳥取県テニス協会のサイトで公開されています。別タブで開きます。</span>
+            </span>
+            <span class="sqbtn" aria-hidden="true">↗</span>
           </a></li>
         </ul>
       </div>

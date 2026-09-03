@@ -35,7 +35,7 @@ export const LINKS = [
     name: '鳥取市テニス協会 LINE公式アカウント',
     row: 'other',
     desc: '大会・教室のお知らせを配信中',
-    url: 'https://lin.ee/sius2Li',
+    url: 'https://lin.ee/1oJQ9mu',
     banner: 'assets/img/banners/line-official.png',
   },
   {

@@ -154,22 +154,19 @@ export const TOURNAMENTS = [
     title: '第49回ダンロップテニストーナメント',
     event: '男女ダブルス',
     venue: 'ヤマタスポーツパーク',
-    status: 'closed',
+    status: 'past',
     image: 'assets/img/results/2024/2024summer-mix-050.webp',
     imageAlt: 'コート番号の看板が立つコートでの試合',
   },
   {
     date: '2026.10.18',
-    title: '第30回エネトピア杯ミックスダブルス',
+    slug: 'r8-enetopia',
+    title: '第31回エネトピア杯テニス大会',
     event: 'ミックスダブルス',
     venue: 'ヤマタスポーツパーク',
     status: 'open',
-    outlineUrl: 'tournaments.html',
-    drawUrl: null,      // 組み合わせが決まったらURLを入れる
-    liveUrl: null,      // 当日の大会運用システムのURLを入れる
-    resultUrl: null,    // 終了後、結果の掲載先を入れる
-    image: 'assets/img/results/2023/2023enetpia-hai-020.webp',
-    imageAlt: '日暮れどきのコートで続くダブルスの試合',
+    image: 'assets/img/tournaments/enetopia-2026.webp',
+    imageAlt: '第31回エネトピア杯テニス大会の告知バナー。エネトピアの旗を持つ男女の選手',
   },
   {
     date: '2026.11.07',

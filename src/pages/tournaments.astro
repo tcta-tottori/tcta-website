@@ -17,6 +17,13 @@ const count = {
 
 // 一覧に入らない大会（協会が結果を預かっているもの）は、表の下に別立てで案内する
 const extras = EVENTS.filter((e) => !e.no);
+
+// 協会の Google カレンダー（旧サイトで埋め込んでいたもの）。
+// embed は表示用、subscribe は「＋」と同じく自分のカレンダーに追加する入口。
+const GCAL = {
+  embed: 'https://calendar.google.com/calendar/embed?src=t.c.t.a.r7%40gmail.com&ctz=Asia%2FTokyo',
+  subscribe: 'https://calendar.google.com/calendar/u/0/r?cid=t.c.t.a.r7%40gmail.com',
+};
 ---
 
 <Base
@@ -87,7 +94,7 @@ const extras = EVENTS.filter((e) => !e.no);
 
       <div class="rv mt-40" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:20px">
         <a class="btn btn--outline" href={SCHEDULE_PDF.src} target="_blank" rel="noopener noreferrer">令和8年度 大会日程をダウンロード（PDF / {SCHEDULE_PDF.kb.toLocaleString()}KB）<span aria-hidden="true" class="text-red">↓</span></a>
-        <p style="margin:0;font:400 14px/1.8 var(--fjp);color:var(--gray-600)">大会日程はGoogleカレンダーでも公開しています。<a class="ghost-link" href="#calendar" style="border-bottom:1px solid var(--gray-300)">カレンダーに追加する</a></p>
+        <p style="margin:0;font:400 14px/1.8 var(--fjp);color:var(--gray-600)">大会日程はGoogleカレンダーでも公開しています。<a class="ghost-link" href="#gcal" style="border-bottom:1px solid var(--gray-300)">カレンダーに追加する</a></p>
       </div>
 
       <div class="rv" style="margin-top:64px">
@@ -120,8 +127,13 @@ const extras = EVENTS.filter((e) => !e.no);
 
       <ScheduleCalendar />
 
+      <div class="rv gcal mt-40" id="gcal">
+        <p class="panel__title">Googleカレンダー</p>
+        <p class="note" style="margin:8px 0 16px">協会のGoogleカレンダーです。右下の「＋」を押すと、自分のGoogleカレンダーに大会日程を追加できます。</p>
+        <iframe class="gcal__frame" src={GCAL.embed} title="鳥取市テニス協会 大会日程（Googleカレンダー）" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+      </div>
       <div class="btn-stack rv mt-40">
-        <a class="btn btn--primary" href="#calendar">Googleカレンダーに追加する <span class="aw">→</span></a>
+        <a class="btn btn--primary" href={GCAL.subscribe} target="_blank" rel="noopener noreferrer">Googleカレンダーに追加する <span class="aw">↗</span></a>
       </div>
     </div>
   </section>
