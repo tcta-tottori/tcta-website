@@ -31,8 +31,8 @@
 //
 // ■ 書くときの約束
 //   このサイトに載っていないものは、お知らせにも書かない。
-//   （例：令和8年度の大会結果は results.json にまだ無いので「結果を掲載しました」
-//     とは書けない。結果を入れてから、そのお知らせを足すこと）
+//   （例：大会結果は events.json（tools/build_events.py）に入れてから
+//     「結果を掲載しました」と書く。先に書かないこと）
 //   href は必ずサイト内の実在するページにする。
 
 /** トップページに出す件数。これを超えた分は VIEW ALL の中だけに出る。 */
@@ -42,10 +42,14 @@ export const NEWS_VISIBLE = 4;
 const NEW_DAYS = 14;
 
 export const NEWS = [
-  { date: '2026.08.12', category: 'tournament', title: 'エネトピア杯ミックスダブルスの受付をはじめました', href: 'tournaments.html' },
+  { date: '2026.09.02', category: 'tournament', title: '第31回エネトピア杯テニス大会の要項を公開し、受付をはじめました', href: 'event-r8-enetopia.html' },
+  { date: '2026.09.02', category: 'info', title: '10月12日のテニス祭りの募集要項を公開しました', href: 'tennis-day.html' },
+  { date: '2026.09.01', category: 'tournament', title: '京丹後市オープンダブルス大会（10月4日）の要項を掲載しました', href: 'event-r8-kyotango-doubles.html' },
+  { date: '2026.08.30', category: 'result', title: '第49回ダンロップテニストーナメントの結果を掲載しました', href: 'event-r8-dunlop.html' },
+  { date: '2026.08.16', category: 'result', title: 'サマーミックスダブルスの結果を掲載しました', href: 'event-r8-summer-mix.html' },
+  { date: '2026.08.02', category: 'result', title: '第11回気高カップシングルス大会の結果を掲載しました', href: 'event-r8-ketaka.html' },
   { date: '2026.07.31', category: 'tournament', title: 'サマーミックスダブルスの受付を締め切りました', href: 'tournaments.html' },
   { date: '2026.07.21', category: 'info', title: '令和9年度クラブ対抗戦の編成表を公開しました', href: 'club.html' },
-  { date: '2026.07.01', category: 'info', title: '10月12日のテニス祭りの参加受付をはじめました', href: 'tennis-day.html' },
   { date: '2026.06.18', category: 'info', title: '毎週水曜日のテニス教室の会場を井原公園に変更しました', href: 'lesson.html' },
   { date: '2026.06.02', category: 'tournament', title: '令和8年度の大会日程（全19大会）を公開しました', href: 'tournaments.html' },
   { date: '2026.05.20', category: 'result', title: '平成16年度〜令和6年度の大会結果を掲載しました', href: 'results.html' },

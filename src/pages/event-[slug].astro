@@ -93,6 +93,7 @@ const description = `${e.label}に${e.place}で行われる${e.name}（${e.event
           ))}
         </div>
         {e.note && <p class="note mt-24">{e.note}</p>}
+        {e.link && <a class="btn btn--outline mt-24" href={e.link.url} target="_blank" rel="noopener noreferrer">{e.link.label} <span class="aw">↗</span></a>}
       </div>
 
       <!-- ============ 要項・ドロー・結果・写真 ============ -->

@@ -41,6 +41,7 @@ PHOTO = {'max': 1400, 'q': 74}  # 当日の写真
 
 # 見出しを作るときに落とす語（長いものから順に当てる）
 LABEL_STRIP = [
+    '_2026ダンロップテニストーナメント鳥取大会_結果',
     '令和８年度 鳥取市テニス協会クラブ対抗戦（後期・男子予選会）_',
     '令和８年度 鳥取市テニス協会クラブ対抗戦（後期・女子）_',
     '第11回気高カップ・サマーシングルス大会_',
@@ -72,6 +73,7 @@ def label_of(path):
 #   result   … 結果    photo … 当日の写真    entry … 申込用紙・名簿
 #
 #   各節は {'img': [...], 'pdf': [...]}。img は並べる順に書く。
+#   pdf は '元ファイル名' か ('元ファイル名', '公開名') の組。glob を使う節は skip で除外できる。
 # ─────────────────────────────────────────────────────────────
 MANIFEST = [
     {
@@ -262,6 +264,30 @@ MANIFEST = [
         'slug': 'r8-dunlop', 'no': '11', 'src': '11　ダンロップ',
         'outline': {'img': ['2026ダンロップ要項_page-0001.jpg'], 'pdf': ['2026ダンロップ要項.pdf']},
         'entry': {'pdf': ['2026ダンロップ申込用紙.pdf']},
+        # 1ページ目（男子A級・45歳・55歳）だけ 8/21 に再訂正が出たので、その版に差し替えて並べる
+        'draw': {
+            'img': ['2026ダンロップドロー（訂正）２_page-0001.jpg'] +
+                   [f'2026ダンロップドロー（訂正）_page-000{n}.jpg' for n in range(2, 6)],
+            'labels': ['1ページ目（8/21 再訂正）', '2ページ目', '3ページ目', '4ページ目', '5ページ目'],
+            'pdf': ['2026ダンロップドロー（訂正）２.pdf', '2026ダンロップドロー（訂正）.pdf'],
+        },
+        'result': {
+            'img': ['結果/' + c + '_2026ダンロップテニストーナメント鳥取大会_結果.jpg' for c in
+                    ['男子ダブルスＡ級', '男子ダブルスＢ級', '男子ダブルスＣ級',
+                     '男子ダブルス45歳以上', '男子ダブルス55歳以上', '男子ダブルス65歳以上',
+                     '女子ダブルスＡ級', '女子ダブルスＢ級',
+                     '女子ダブルス45歳以上', '女子ダブルス55歳以上', '女子ダブルス65歳以上']],
+        },
+        # 「(1)」付きは同じ写真の軽い版。13MB の原本のほうは載せない
+        'photo': {'glob': '写真/*.jpg', 'skip': ['MVIMG_20260830_153100.jpg']},
+    },
+    {
+        'slug': 'r8-enetopia', 'no': '12', 'src': '13　エネトピア',
+        # PDF は 9/2 に差し替えた版（ファイル名末尾に空白あり）が公式サイト掲載分
+        'outline': {
+            'img': ['R8エネトピア杯要項_page-0001.jpg', 'R8エネトピア杯要項_page-0002.jpg'],
+            'pdf': [('R8エネトピア杯要項 .pdf', 'R8エネトピア杯要項.pdf')],
+        },
     },
     {
         # 協会主催19大会には入らないが、協会が結果を預かっている大会
@@ -280,6 +306,14 @@ MANIFEST = [
             'labels': ['結果一覧'],
         },
         'photo': {'img': ['優勝ペアの写真.jpg', '準優勝ペアの写真.jpg']},
+    },
+    {
+        # 京丹後市テニス協会の主催。要項だけを預かって案内している（申込は先方のHP）
+        'slug': 'r8-kyotango-doubles', 'no': None, 'src': '京丹後ダブルス',
+        'outline': {
+            'img': ['京丹後市オープンダブルス大会_page-0001.jpg'],
+            'pdf': ['京丹後市オープンダブルス大会.pdf'],
+        },
     },
 ]
 
@@ -315,10 +349,7 @@ def collect(section, base):
         files = [f for f in files
                  if os.path.splitext(f)[1].lower() in ('.jpg', '.jpeg', '.png')
                  and os.path.basename(f) not in section.get('skip', [])]
-    missing = [f for f in files if not os.path.exists(f)]
-    for f in missing:
-        print('  素材なし:', os.path.relpath(f, SRC_ROOT), file=sys.stderr)
-    return [f for f in files if os.path.exists(f)]
+    return files
 
 
 def build_section(ev, kind, section):
@@ -330,23 +361,30 @@ def build_section(ev, kind, section):
     labels = section.get('labels')
     for i, src in enumerate(srcs, 1):
         rel = f'{ev["slug"]}/{kind}-{i:02d}.webp'
-        w, h = convert(src, os.path.join(IMG_OUT, rel), preset)
+        dst = os.path.join(IMG_OUT, rel)
+        # 元の JPG が作業フォルダから消えていても、変換ずみの WebP が残っていればそれを使う
+        if not os.path.exists(src) and not os.path.exists(dst):
+            print('  素材なし:', os.path.relpath(src, SRC_ROOT), file=sys.stderr)
+            continue
+        w, h = convert(src, dst, preset)
         label = labels[i - 1] if labels and i <= len(labels) else label_of(src)
         images.append({'src': f'assets/img/events/{rel}', 'label': label, 'w': w, 'h': h})
 
     for p in section.get('pdf', []):
+        # 元のファイル名をそのまま公開したくないときは (元ファイル名, 公開名) の組で書く
+        p, out_name = p if isinstance(p, tuple) else (p, None)
         src = os.path.join(base, p)
         if not os.path.exists(src):
             print('  素材なし:', p, file=sys.stderr)
             continue
-        name = os.path.basename(p).replace(' ', '_').replace('　', '_')
+        name = (out_name or os.path.basename(p)).replace(' ', '_').replace('　', '_')
         dst = os.path.join(PDF_OUT, ev['slug'], name)
         os.makedirs(os.path.dirname(dst), exist_ok=True)
         if not os.path.exists(dst):
             shutil.copy2(src, dst)
         pdfs.append({
             'src': f'assets/pdf/events/{ev["slug"]}/{name}',
-            'label': label_of(p),
+            'label': label_of(name),
             'kb': round(os.path.getsize(src) / 1024),
         })
     return {'images': images, 'pdfs': pdfs}

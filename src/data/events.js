@@ -33,8 +33,9 @@ const DONE_ORDER = ['result', 'photo', 'draw', 'outline', 'entry'];
 const UPCOMING_ORDER = ['outline', 'entry', 'draw', 'result', 'photo'];
 
 /**
- * 協会主催19大会（schedule.js）には入らないが、協会が要項と結果を預かっている大会。
+ * 協会主催19大会（schedule.js）には入らないが、協会が要項や結果を預かっている大会。
  * schedule.js から取れない項目をここで補う。
+ * link を入れると、個別ページの概要の下に外部サイトへのボタンが出る（申込先が先方のとき）。
  */
 const EXTRA = {
   'r8-tottori-univ-open': {
@@ -48,6 +49,20 @@ const EXTRA = {
     reg: 'free',
     host: '鳥取大学硬式庭球部',
     note: '鳥取大学硬式庭球部が主催する大会です。協会は要項・ドロー・結果の掲載に協力しています。',
+  },
+  'r8-kyotango-doubles': {
+    date: '2026-10-04',
+    label: '10月4日（日）',
+    name: '第22回京丹後市オープンダブルステニス大会',
+    event: '一般男子ダブルス／女子ダブルス／壮年男子ダブルス',
+    place: '峰山総合公園テニスコート（京都府京丹後市）',
+    spareNote: '予備日なし',
+    due: '9/25（金）20:00',
+    status: 'open',
+    reg: 'free',
+    host: '京丹後市テニス協会',
+    note: '京丹後市テニス協会が主催するオープン大会です。申込は京丹後市テニス協会のホームページにあるエントリーフォームから行ってください（本人以外の申込はできません）。ドローも同ホームページに掲載されます。',
+    link: { label: '京丹後市テニス協会のホームページで申し込む', url: 'https://kyotangotennis.sakura.ne.jp/' },
   },
 };
 

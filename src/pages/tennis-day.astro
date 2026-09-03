@@ -2,7 +2,20 @@
 import Base from '../layouts/Base.astro';
 
 const title = "テニス祭り｜鳥取市テニス協会";
-const description = "鳥取市テニス協会のテニス祭り（テニスの日）。10月12日（祝）鳥取産業体育館で開催。協会登録は不要、どなたでも参加できます。";
+const description = "鳥取市テニス協会のテニス祭り（テニスの日）。2026年10月12日（祝）、鳥取県立鳥取産業体育館メインアリーナで開催。キッズテニス、元プロ 加藤季温コーチのテニスクリニック、ピックルボール体験会など。協会登録は不要、どなたでも参加できます。";
+
+// 当日のプログラム（募集要項より・時間順）。参加費の書かれていないものは fee を空にしておく。
+const PROGRAM = [
+  { time: '9:30〜11:30', name: 'キッズテニス', who: '中学生以下', fee: '500円', note: '受付 9:00〜9:20。ラケットの貸し出しあり。申込時に学年とラケットの有無をお知らせください。' },
+  { time: '11:30〜13:00', name: 'コート無料開放', who: 'どなたでも', fee: '無料', note: '2面を開放します。' },
+  { time: '11:30〜13:00', name: 'ピックルボール体験会', who: 'どなたでも', fee: '', note: 'ラケットの貸し出しあり。' },
+  { time: '13:00〜15:00', name: 'テニスクリニック', who: '参加制限なし・定員30名', fee: '1,000円', note: '元プロテニスプレーヤー 加藤季温コーチが指導します。' },
+  { time: '15:10〜', name: 'じゃんけん大会', who: 'クリニック受講生全員', fee: '', note: '豪華景品をご用意しています。' },
+  { time: '15:30〜16:30', name: '加藤プロとタイブレークマッチ', who: '参加ペア募集', fee: '', note: '加藤コーチに挑戦するタイブレークマッチです。' },
+];
+
+const YOUKOU_PDF = { src: 'assets/pdf/tennis-day/2026-tennis-matsuri-youkou.pdf', kb: 783 };
+const YOUKOU_IMG = { src: 'assets/img/tennis-day/2026-youkou.webp', w: 1273, h: 1800 };
 ---
 
 <Base
@@ -23,7 +36,7 @@ const description = "鳥取市テニス協会のテニス祭り（テニスの�
           <h1 class="page-title" style="margin-top:8px">テニス祭り</h1>
         </div>
       </div>
-      <p class="page-lead fu" style="animation-delay:.15s">10月12日（祝）、鳥取産業体育館で開催します。テニス教室をはじめ、どなたでも参加いただけるプログラムをご用意します。協会登録は不要です。</p>
+      <p class="page-lead fu" style="animation-delay:.15s">2026年10月12日（祝）、鳥取県立鳥取産業体育館メインアリーナで「テニス祭り 鳥取イベント」を開きます。子ども向けのキッズテニスから、元プロ 加藤季温コーチのクリニック、ピックルボール体験会まで。協会登録は不要で、どなたでも参加できます。</p>
     </div>
   </section>
 
@@ -33,10 +46,61 @@ const description = "鳥取市テニス協会のテニス祭り（テニスの�
       <div class="rv">
         <h2 class="sub-head">開催概要</h2>
         <dl class="deflist">
-          <div class="deflist__row"><dt class="deflist__key">日時</dt><dd class="deflist__val" style="margin:0">2026年10月12日（祝）</dd></div>
-          <div class="deflist__row"><dt class="deflist__key">会場</dt><dd class="deflist__val" style="margin:0">鳥取産業体育館</dd></div>
+          <div class="deflist__row"><dt class="deflist__key">日時</dt><dd class="deflist__val" style="margin:0">2026年10月12日（月・祝）9:30〜16:30（キッズテニスの受付は 9:00〜）</dd></div>
+          <div class="deflist__row"><dt class="deflist__key">会場</dt><dd class="deflist__val" style="margin:0">鳥取県立鳥取産業体育館 メインアリーナ</dd></div>
           <div class="deflist__row"><dt class="deflist__key">参加資格</dt><dd class="deflist__val" style="margin:0">どなたでも参加できます（協会登録は不要です）</dd></div>
-          <div class="deflist__row"><dt class="deflist__key">内容</dt><dd class="deflist__val" style="margin:0">テニス教室ほか（プログラム・参加費・申込方法は<span class="todo-note">要確認</span>のうえ掲載）</dd></div>
+          <div class="deflist__row"><dt class="deflist__key">申込</dt><dd class="deflist__val" style="margin:0">キッズテニス・テニスクリニックは事前申込（定員になり次第締切）。募集要項の申込用紙に記入のうえ、下記の問合せ先へお申し込みください。</dd></div>
+          <div class="deflist__row"><dt class="deflist__key">主催</dt><dd class="deflist__val" style="margin:0">鳥取市テニス協会（主管：鳥取市テニス協会普及委員会）</dd></div>
+          <div class="deflist__row"><dt class="deflist__key">共催・協賛</dt><dd class="deflist__val" style="margin:0">共催：遊ポートテニスクラブ／協賛：テニスショップ・フラシーノ</dd></div>
+        </dl>
+      </div>
+
+      <div class="rv" style="margin-top:56px">
+        <h2 class="sub-head">当日のプログラム</h2>
+        <div class="card-grid card-grid--3 mt-32">
+          {PROGRAM.map((p) => (
+            <div class="panel">
+              <p style="margin:0;font:700 20px/1 var(--flt);letter-spacing:.04em;color:var(--red)">{p.time}</p>
+              <p style="margin:12px 0 0;font:700 17px/1.5 var(--fjp);letter-spacing:.02em;color:var(--ink)">{p.name}</p>
+              <p style="margin:8px 0 0;font:400 14px/1.8 var(--fjp);color:var(--gray-800)">対象：{p.who}{p.fee && `／参加費：${p.fee}`}</p>
+              <p style="margin:6px 0 0;font:400 13px/1.8 var(--fjp);color:var(--gray-600)">{p.note}</p>
+            </div>
+          ))}
+        </div>
+        <p class="note">※ 内容・時間は変更になる場合があります。最新の情報は募集要項をご確認ください。</p>
+      </div>
+
+      <div class="rv panel panel--tint" style="margin-top:56px">
+        <p class="panel__title">コーチ紹介　加藤 季温（かとう としおん）</p>
+        <p class="prose" style="margin:0">元プロテニスプレーヤー。2002年 国体優勝、2007年 全日本テニス選手権優勝、全日本大学テニス選手権3連覇、インターハイ優勝、ユニバーシアード日本代表。午後のテニスクリニックとタイブレークマッチで指導・対戦していただきます。</p>
+      </div>
+
+      <div class="rv" style="margin-top:56px">
+        <h2 class="sub-head">募集要項・申込用紙</h2>
+        <p class="note" style="margin-bottom:0">申込用紙は募集要項の下段にあります。画像をタップすると大きく表示します。</p>
+        <div class="sheets">
+          <a class="sheet" href={YOUKOU_IMG.src} target="_blank" rel="noopener noreferrer">
+            <img src={YOUKOU_IMG.src} alt="2026テニス祭り鳥取イベント 募集要項" width={YOUKOU_IMG.w} height={YOUKOU_IMG.h} loading="lazy" decoding="async">
+            <span class="sheet__cap">募集要項・申込用紙 <span class="sqbtn" aria-hidden="true">↗</span></span>
+          </a>
+        </div>
+        <ul class="mt-32">
+          <li><a class="dl-item" href={YOUKOU_PDF.src} target="_blank" rel="noopener noreferrer">
+            <span class="dl-item__type">PDF</span>
+            <span class="dl-item__text">
+              <span class="dl-item__title">2026テニス祭り鳥取 募集要項</span>
+              <span class="dl-item__note">{YOUKOU_PDF.kb.toLocaleString()}KB／別タブで開きます</span>
+            </span>
+            <span class="sqbtn" aria-hidden="true">↓</span>
+          </a></li>
+        </ul>
+      </div>
+
+      <div class="rv" style="margin-top:56px">
+        <h2 class="sub-head">お問い合わせ・申込先</h2>
+        <dl class="deflist">
+          <div class="deflist__row"><dt class="deflist__key">フラシーノラケットワークス</dt><dd class="deflist__val" style="margin:0">TEL 0857-32-5578／FAX 0857-32-5579</dd></div>
+          <div class="deflist__row"><dt class="deflist__key">鳥取市テニス協会（普及委員会）</dt><dd class="deflist__val" style="margin:0">安道まり子　090-8362-6190</dd></div>
         </dl>
       </div>
 
