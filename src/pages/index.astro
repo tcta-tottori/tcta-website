@@ -350,20 +350,20 @@ const upcomingTournaments = TOURNAMENTS.filter((t) => t.status !== 'past');
         <div class="rv">
           <ul class="sch-list">
             {COURTS.map((c) => (
-              <li><a class="court-item" href={c.href}>
+              <li><a class="court-item" href={c.href} {...(c.external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}>
                 <Icon name="pin" class="court-pin" />
                 <span class="sch-item__text">
                   <span class="sch-item__title">{c.name}</span>
                   <span class="sch-item__place">{c.note}</span>
                 </span>
-                <span class="ar" aria-hidden="true">→</span>
+                <span class="ar" aria-hidden="true">{c.external ? '↗' : '→'}</span>
               </a></li>
             ))}
           </ul>
           <p class="embed-caption">コートの予約は鳥取市の公共施設予約システムから行えます。協会が管理・貸出を行っているものではありませんのでご注意ください。</p>
         </div>
 
-        {/* 施設ごとの地図。上のボタンで切り替える（地図は施設名で引くので緯度経度は持たない）。 */}
+        {/* 施設ごとの地図。上のボタンで切り替える（緯度経度とコートの輪郭は courts.js / court-shapes.json）。 */}
         <div class="rv embed-wrap" style="transition-delay:.1s">
           <div class="cmap" data-cmap>
             <div class="cmap__tabs" role="group" aria-label="地図に出す施設">
@@ -382,8 +382,8 @@ const upcomingTournaments = TOURNAMENTS.filter((t) => t.status !== 'past');
             <div class="cmap__frame">
               {/* 地図は Leaflet で自前に描く（サイトの白・グレー・赤に合わせるため）。
                   タイルは OpenStreetMap。テニスコートの面を赤く塗り、その重心にピンを立てる。
-                  上のボタンでその施設のコート全体が入るように寄り、「すべて」で3施設を一望する。 */}
-              <div class="cmap__map" data-cmap-map data-courts={JSON.stringify(COURTS.map(mapData))} role="img" aria-label="利用コート3施設の地図"></div>
+                  上のボタンでその施設のコート全体が入るように寄り、「すべて」で全施設を一望する。 */}
+              <div class="cmap__map" data-cmap-map data-courts={JSON.stringify(COURTS.map(mapData))} role="img" aria-label="利用コートの地図"></div>
               {/* 地図が出せないときの下敷き。タイルが読めない環境ではこれが見える。 */}
               <div class="cmap__fallback" aria-hidden="true">
                 <Icon name="pin" class="cmap__fallback-pin" />

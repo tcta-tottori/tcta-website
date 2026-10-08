@@ -361,7 +361,7 @@
   /* ---------- コート案内の地図 ----------
      Leaflet で自前に描く。タイルは OpenStreetMap の標準版を CSS でグレーに落とし、
      テニスコートの面（court-shapes.json）を赤く塗って、その重心にピンとラベルを置く。
-     施設のボタンを押すとそのコート全体が入る範囲に寄り、「すべて」で3施設を一望する。
+     施設のボタンを押すとそのコート全体が入る範囲に寄り、「すべて」で全施設を一望する。
      Leaflet（CDN）は defer で読むので、window の load を待ってから始める。 */
   function initCourtMap() {
     var root = document.querySelector('[data-cmap]');
@@ -444,10 +444,10 @@
         else map.flyToBounds(venues[i].bounds, Object.assign({ duration: 0.9 }, opts));
       }
 
-      // すべて：3施設が全部入る範囲を出す
+      // すべて：全施設が入る範囲を出す
       function showAll(animate) {
         setActive(-1);
-        if (name) name.textContent = '利用コート 3施設';
+        if (name) name.textContent = '利用コート ' + courts.length + '施設';
         if (link) link.href = 'https://www.google.com/maps/search/?api=1&query=' + courts[0].lat + ',' + courts[0].lng;
         var opts = { padding: [48, 48] };
         if (animate === false) map.fitBounds(allBounds, opts);
