@@ -4,6 +4,8 @@
 export const NAV = [
   { key: 'home', label: 'HOME', href: 'index.html', en: true },
   { key: 'tournaments', label: '大会情報', href: 'tournaments.html' },
+  { key: 'tennis-day', label: 'イベント情報', href: 'tennis-day.html' },
+  { key: 'lesson', label: '水曜テニス教室', href: 'lesson.html' },
   { key: 'about', label: '協会について', href: 'about.html' },
   { key: 'membership', label: '入会案内', href: 'membership.html' },
   { key: 'courts', label: 'コート案内', href: 'index.html#courts' },
@@ -16,7 +18,7 @@ export const MOBILE_NAV = [
   { key: 'results', label: '大会結果', href: 'results.html' },
   { key: 'club', label: 'クラブ対抗戦', href: 'club.html' },
   { key: 'lesson', label: '水曜テニス教室', href: 'lesson.html' },
-  { key: 'tennis-day', label: 'テニスの日', href: 'tennis-day.html' },
+  { key: 'tennis-day', label: 'イベント情報（テニス祭り）', href: 'tennis-day.html' },
   { key: 'about', label: '協会について', href: 'about.html' },
   { key: 'membership', label: '入会案内（協会登録）', href: 'membership.html' },
   { key: 'links', label: 'リンク集', href: 'links.html' },

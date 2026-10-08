@@ -1,14 +1,44 @@
 ---
 import Base from '../layouts/Base.astro';
 import { RESULTS, resultUrl, summarize, counts } from '../data/results.js';
+import { EVENTS_BY_NENDO, winnersSummary } from '../data/events.js';
 
 const title = "大会結果｜鳥取市テニス協会";
-const description = "鳥取市テニス協会が主催・主管した大会の結果。平成16年度から令和6年度まで、年度ごとの優勝・準優勝と大会写真を掲載しています。";
+const description = "鳥取市テニス協会が主催・主管した大会の結果。平成16年度から令和8年度まで、年度ごとの優勝・準優勝と大会写真を掲載しています。";
 
-// 年度タブは新しい順。旧サイトから引き継いだ分をそのまま並べる。
-const years = RESULTS;
-const totalTournaments = years.reduce((n, y) => n + y.tournaments.length, 0);
-const totalPhotos = years.reduce(
+// 年度タブは新しい順。
+// 令和7年度以降は大会1件ごとのページ（event-*.html）に結果があるのでそこへ、
+// 令和6年度までは旧サイトから引き継いだ結果ページ（result-*.html）へ飛ばす。
+// どちらも同じ1行（タイトル／要約／件数のバッジ）に整えてから並べる。
+const rowOf = {
+  event: (e) => {
+    const wins = winnersSummary(e);
+    const places = e.winners.reduce((n, c) => n + c.places.length, 0);
+    const photos = e.sections.find((s) => s.key === 'photo')?.images.length ?? 0;
+    const sheets = e.sections.find((s) => s.key === 'result')?.images.length ?? 0;
+    return {
+      href: e.url, title: e.displayName,
+      sub: wins.length ? `優勝 ${wins.join('／')}${places > wins.length ? ' ほか' : ''}` : '結果を掲載しています',
+      places, photos, pdfs: e.sections.reduce((n, s) => n + s.pdfs.length, 0), sheets,
+    };
+  },
+  archive: (t) => {
+    const c = counts(t);
+    const wins = summarize(t);
+    return {
+      href: resultUrl(t), title: t.title,
+      sub: wins.length ? `優勝 ${wins.join('／')}${c.places > wins.length ? ' ほか' : ''}`
+        : c.photos > 0 ? '写真で結果を掲載しています' : '結果を掲載しています',
+      places: c.places, photos: c.photos, pdfs: c.pdfs, sheets: 0,
+    };
+  },
+};
+const years = [
+  ...EVENTS_BY_NENDO.map((y) => ({ nendo: y.nendo, label: y.label, rows: y.events.map(rowOf.event) })),
+  ...RESULTS.map((y) => ({ nendo: y.nendo, label: y.label, rows: y.tournaments.map(rowOf.archive) })),
+];
+const totalTournaments = RESULTS.reduce((n, y) => n + y.tournaments.length, 0);
+const totalPhotos = RESULTS.reduce(
   (n, y) => n + y.tournaments.reduce((m, t) => m + t.photos.length, 0), 0);
 ---
 
@@ -57,33 +87,26 @@ const totalPhotos = years.reduce(
       {years.map((y, i) => (
         <div class="tabpanel" id={`panel-${y.nendo}`} role="tabpanel" aria-labelledby={`tab-${y.nendo}`} hidden={i !== 0}>
           <ul class="sch-list">
-            {y.tournaments.map((t) => {
-              const c = counts(t);
-              const wins = summarize(t);
-              return (
-                <li><a class="sch-item" href={resultUrl(t)}>
-                  <span class="sch-item__text">
-                    <span class="sch-item__title">{t.title}</span>
-                    <span class="sch-item__place">
-                      {wins.length > 0
-                        ? `優勝 ${wins.join('／')}${c.places > wins.length ? ' ほか' : ''}`
-                        : c.photos > 0 ? '写真で結果を掲載しています' : '結果を掲載しています'}
-                    </span>
-                  </span>
-                  <span class="result-tags" aria-hidden="true">
-                    {c.places > 0 && <span class="badge badge--outline">{c.places}件</span>}
-                    {c.photos > 0 && <span class="badge badge--tint">写真{c.photos}</span>}
-                    {c.pdfs > 0 && <span class="dl-item__type">PDF</span>}
-                  </span>
-                  <span class="sqbtn" aria-hidden="true">→</span>
-                </a></li>
-              );
-            })}
+            {y.rows.map((r) => (
+              <li><a class="sch-item" href={r.href}>
+                <span class="sch-item__text">
+                  <span class="sch-item__title">{r.title}</span>
+                  <span class="sch-item__place">{r.sub}</span>
+                </span>
+                <span class="result-tags" aria-hidden="true">
+                  {r.places > 0 && <span class="badge badge--outline">{r.places}件</span>}
+                  {r.sheets > 0 && <span class="badge badge--outline">結果表{r.sheets}</span>}
+                  {r.photos > 0 && <span class="badge badge--tint">写真{r.photos}</span>}
+                  {r.pdfs > 0 && <span class="dl-item__type">PDF</span>}
+                </span>
+                <span class="sqbtn" aria-hidden="true">→</span>
+              </a></li>
+            ))}
           </ul>
         </div>
       ))}
 
-      <p class="note">※ 旧サイト（{totalTournaments}大会・写真{totalPhotos}枚）から引き継いだ内容です。種目名や氏名は当時の掲載をそのまま載せています。誤りや掲載の取り下げのご依頼は<a href="contact.html">お問い合わせ</a>からお知らせください。</p>
+      <p class="note">※ 令和6年度までは旧サイト（{totalTournaments}大会・写真{totalPhotos}枚）から引き継いだ内容です。種目名や氏名は当時の掲載をそのまま載せています。誤りや掲載の取り下げのご依頼は<a href="contact.html">お問い合わせ</a>からお知らせください。</p>
     </div>
   </section>
 </Base>

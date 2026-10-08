@@ -26,7 +26,8 @@
 │   ├── config/nav.js            ナビゲーション定義の唯一の正
 │   ├── data/tournaments.js      トップの大会カルーセルの唯一の正（写真の差し込み口）
 │   ├── data/news.js             トップのお知らせの唯一の正
-│   ├── data/schedule.js         令和8年度 全19大会（カレンダーの元データ）
+│   ├── data/schedule.js         令和8年度 全19大会（カレンダーの元データ）と令和7年度の全19大会
+│   ├── data/winners.json        種目ごとの優勝・準優勝（tools/fetch_winners.py が公式サイトから取り込む）
 │   └── data/courts.js           コート案内の一覧と地図の唯一の正
 ├── public/               そのまま公開される静的ファイル
 │   ├── assets/css/style.css     デザイントークン＋全コンポーネント（1ファイル）
@@ -167,6 +168,11 @@ npm run build && npm run preview
   実行します（`tools/README.md`）。PDF は `('元ファイル名', '公開名')` の組でも書け、
   元の JPG が作業フォルダから消えても変換ずみの WebP が残っていればそのまま使います。
   協会主催でない大会（鳥大オープン・京丹後）は `src/data/events.js` の `EXTRA` に日程を足します。
+  令和7年度の大会は MANIFEST に `'nendo': '2025'` を付けて、`01_大会/2025` の素材を読みます
+  （日程は `src/data/schedule.js` の `SCHEDULE_R7`）。
+- 種目ごとの優勝・準優勝は、公式サイトの結果ページから `python3 tools/fetch_winners.py` で
+  `src/data/winners.json` に取り込みます。大会1件ごとのページの「成績」と、大会結果ページの
+  令和7年度・令和8年度のタブに使われます。
 - **お知らせ** — `src/data/news.js` が唯一の正。トップは上から4件を出し、5件目があるときは
   続きがあることが分かるよう薄く重ねます。VIEW ALL（または5件目）で全件が別画面で開き、
   右上の × か Esc で閉じます。日付がビルド時点から2週間以内のものには赤い `NEW` が自動で付くので、

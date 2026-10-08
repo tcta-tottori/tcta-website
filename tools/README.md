@@ -55,7 +55,17 @@ python3 tools/build_dataset.py    # parsed.json を results.json に整え、写
 
 ---
 
-# build_events.py —— 令和8年度の大会素材を取り込む
+# fetch_winners.py —— 公式サイトの結果ページから優勝者を取り込む
+
+公式サイト（Jimdo）の「大会結果」の各ページにある「男子シングルスA級　優勝　○○選手」の
+行を拾って `src/data/winners.json` に書く。`PAGES` に公式サイトのURLと slug の対応を
+足してから流す。
+
+```bash
+python3 tools/fetch_winners.py
+```
+
+# build_events.py —— 令和7年度・令和8年度の大会素材を取り込む
 
 こちらは**ふだんの更新で使う**道具。上の3本（旧サイトの取り込み）とは別物で、
 協会の作業フォルダにある要項・ドロー・結果・写真を、大会1件ごとのページ
@@ -63,8 +73,10 @@ python3 tools/build_dataset.py    # parsed.json を results.json に整え、写
 
 ## 元データ
 
+年度ごとに `01_大会/<西暦>/` に分かれている。MANIFEST の `nendo`（省略時 '2026'）で切り替える。
+
 ```
-~/Desktop/鳥取市テニス協会WEB/2026/
+~/Desktop/鳥取市テニス協会WEB/01_大会/2026/
 ├── 1　東部S/{要綱,ドロー,結果,入賞者写真}/
 ├── 3　佐々木/{ドロー,結果,2026-4-5 佐々木杯}/
 ├── …（大会ごとにフォルダ）

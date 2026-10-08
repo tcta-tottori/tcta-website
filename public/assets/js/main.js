@@ -359,34 +359,87 @@
   }
 
   /* ---------- コート案内の地図 ----------
-     ボタンを押したら、その施設の埋め込みに差し替える。 */
+     Leaflet で自前に描く。タイルは OpenStreetMap の標準版を CSS でグレーに落とし、
+     赤いピンとラベルだけが立つようにする。3施設すべてにピンを立て、
+     上のボタンでその施設へ寄る（ピンも「いま見ている施設」の見た目に変わる）。
+     Leaflet（CDN）は defer で読むので、window の load を待ってから始める。 */
   function initCourtMap() {
     var root = document.querySelector('[data-cmap]');
     if (!root) return;
-
-    var frame = root.querySelector('[data-cmap-frame]');
+    var el = root.querySelector('[data-cmap-map]');
     var name = root.querySelector('[data-cmap-name]');
     var link = root.querySelector('[data-cmap-link]');
     var tabs = root.querySelectorAll('[data-cmap-tab]');
-    if (!frame || !tabs.length) return;
+    if (!el || !tabs.length) return;
 
-    // 読み終わってから出す（読み込み中は下敷きが見える）
-    var ready = function () { frame.classList.add('is-ready'); };
-    frame.addEventListener('load', ready);
-    if (frame.complete) ready();
+    var courts;
+    try { courts = JSON.parse(el.getAttribute('data-courts') || '[]'); } catch (e) { courts = []; }
+    if (!courts.length) return;
 
-    Array.prototype.forEach.call(tabs, function (tab) {
-      tab.addEventListener('click', function () {
-        Array.prototype.forEach.call(tabs, function (t) {
-          var on = t === tab;
+    function start() {
+      if (!window.L) return;
+      var L = window.L;
+      var map = L.map(el, {
+        zoomControl: false,
+        scrollWheelZoom: false,      // ページのスクロールを奪わない
+        attributionControl: true,
+      });
+      L.control.zoom({ position: 'bottomright' }).addTo(map);
+      // タイルは OpenStreetMap の標準版（鍵なしで使える）。色は CSS でグレーに落とす
+      L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        maxZoom: 19,
+      }).addTo(map);
+
+      var markers = courts.map(function (c, i) {
+        var icon = L.divIcon({
+          className: 'cpin-wrap',
+          html: '<span class="cpin"><span class="cpin__ring"></span><span class="cpin__dot"></span></span>',
+          iconSize: [20, 20],
+          iconAnchor: [10, 10],
+        });
+        var m = L.marker([c.lat, c.lng], { icon: icon, title: c.name }).addTo(map);
+        m.bindTooltip(c.short, {
+          permanent: true, direction: 'top', offset: [0, -12], className: 'cpin-label',
+        });
+        m.on('click', function () { select(i); });
+        return m;
+      });
+
+      function select(i, animate) {
+        var c = courts[i];
+        Array.prototype.forEach.call(tabs, function (t, k) {
+          var on = k === i;
           t.classList.toggle('is-active', on);
           t.setAttribute('aria-pressed', String(on));
         });
-        frame.src = tab.getAttribute('data-embed');
-        if (name) name.textContent = tab.getAttribute('data-name');
-        if (link) link.href = tab.getAttribute('data-link');
+        markers.forEach(function (m, k) {
+          var w = m.getElement();
+          if (w) w.classList.toggle('is-active', k === i);
+          var tt = m.getTooltip() && m.getTooltip().getElement();
+          if (tt) tt.classList.toggle('is-active', k === i);
+          m.setZIndexOffset(k === i ? 1000 : 0);
+        });
+        if (name) name.textContent = c.name;
+        if (link) link.href = tabs[i].getAttribute('data-link');
+        if (animate === false) map.setView([c.lat, c.lng], c.zoom);
+        else map.flyTo([c.lat, c.lng], c.zoom, { duration: 0.9 });
+      }
+
+      Array.prototype.forEach.call(tabs, function (tab, i) {
+        tab.addEventListener('click', function () { select(i); });
       });
-    });
+
+      // 最初は3施設が全部入る範囲を出してから、1つ目に寄る
+      map.fitBounds(L.latLngBounds(courts.map(function (c) { return [c.lat, c.lng]; })), { padding: [40, 40] });
+      select(0, false);
+      el.classList.add('is-ready');
+      // 隠れた状態で測られた幅がずれていたときのために、一度だけ測り直す
+      setTimeout(function () { map.invalidateSize(); }, 300);
+    }
+
+    if (window.L) start();
+    else window.addEventListener('load', start);
   }
 
   /* ---------- フッターの四角（スクロールで動かす） ----------

@@ -1,4 +1,9 @@
-// 令和8年度の大会1件ごとのページ（event-<slug>.html）の唯一の正。
+// 令和7年度・令和8年度の大会1件ごとのページ（event-<slug>.html）の唯一の正。
+//
+// 年度は events.json の nendo（西暦）で持つ。令和8年度は schedule.js の SCHEDULE、
+// 令和7年度は SCHEDULE_R7 と通し番号で結びつく。
+// 種目ごとの優勝・準優勝（winners.json）は tools/fetch_winners.py が
+// 公式サイトの結果ページから拾ったもの。
 //
 // 素材（要項・ドロー・結果・写真）は tools/build_events.py が
 // 協会の作業フォルダから取り込み、events.json に書き出している。
@@ -16,7 +21,8 @@
 //   見に来る人が最初に知りたいものを先頭に置くため。
 
 import raw from './events.json';
-import { SCHEDULE, STATUS_LABEL, REG_LABEL, dateCell } from './schedule.js';
+import WINNERS from './winners.json';
+import { SCHEDULE, SCHEDULE_R7, NENDO_LABEL, STATUS_LABEL, REG_LABEL, dateCell } from './schedule.js';
 
 export const SCHEDULE_PDF = raw.schedulePdf;
 
@@ -50,6 +56,18 @@ const EXTRA = {
     host: '鳥取大学硬式庭球部',
     note: '鳥取大学硬式庭球部が主催する大会です。協会は要項・ドロー・結果の掲載に協力しています。',
   },
+  'r7-tottori-univ-singles': {
+    date: '2025-12-14',
+    label: '12月14日（日）',
+    name: '鳥大オープンテニス大会',
+    event: '男女シングルス',
+    place: '鳥取大学テニスコート',
+    due: '12/5',
+    status: 'done',
+    reg: 'free',
+    host: '鳥取大学硬式庭球部',
+    note: '鳥取大学硬式庭球部が主催する大会です。協会は要項・結果の掲載に協力しています。',
+  },
   'r8-kyotango-doubles': {
     date: '2026-10-04',
     label: '10月4日（日）',
@@ -58,7 +76,7 @@ const EXTRA = {
     place: '峰山総合公園テニスコート（京都府京丹後市）',
     spareNote: '予備日なし',
     due: '9/25（金）20:00',
-    status: 'open',
+    status: 'done',
     reg: 'free',
     host: '京丹後市テニス協会',
     note: '京丹後市テニス協会が主催するオープン大会です。申込は京丹後市テニス協会のホームページにあるエントリーフォームから行ってください（本人以外の申込はできません）。ドローも同ホームページに掲載されます。',
@@ -66,22 +84,40 @@ const EXTRA = {
   },
 };
 
-const byNo = new Map(SCHEDULE.map((t) => [t.no, t]));
+/**
+ * 協会主催19大会（schedule.js）に含まれる大会のうち、主催が別のところにあるもの。
+ * 概要の下に出す主催者・補足・外部リンクをここで足す。
+ */
+const NOTES = {
+  'r8-prince-open': {
+    host: 'フラシーノラケットワークス（協賛：グローブライド株式会社／協力：鳥取市テニス協会）',
+    note: 'プリンス商品の使用・着用と、クラブプリンスメルマガの会員登録（大会当日の新規登録も可）が参加条件です。ドローと開催要項はドロー会議後にこのサイトで発表します。',
+    link: { label: 'クラブプリンスメルマガに登録する', url: 'https://www.princeshop.jp/shop/mail/mag.aspx' },
+  },
+};
+
+// 年度と通し番号で引く（通し番号は年度ごとに 01 から振り直される）
+const byNo = new Map([
+  ...SCHEDULE.map((t) => [`2026-${t.no}`, t]),
+  ...SCHEDULE_R7.map((t) => [`2025-${t.no}`, t]),
+]);
 
 // 東部地区選手権のように、シングルスとダブルスで同じ大会名を使うものがある。
 // 一覧や前後の行き来で取り違えないよう、名前が重なるものだけ種目を添える。
 const nameCount = new Map();
 for (const e of raw.events) {
-  const n = (e.no ? byNo.get(e.no) : EXTRA[e.slug])?.name;
+  const n = (e.no ? byNo.get(`${e.nendo}-${e.no}`) : EXTRA[e.slug])?.name;
   if (n) nameCount.set(n, (nameCount.get(n) ?? 0) + 1);
 }
 
 export const EVENTS = raw.events.map((e) => {
-  const base = e.no ? byNo.get(e.no) : EXTRA[e.slug];
-  if (!base) throw new Error(`events.json の ${e.slug} に対応する大会が見つからない`);
+  const found = e.no ? byNo.get(`${e.nendo}-${e.no}`) : EXTRA[e.slug];
+  if (!found) throw new Error(`events.json の ${e.slug} に対応する大会が見つからない`);
+  const base = { ...found, ...(NOTES[e.slug] ?? {}) };
 
   const sections = e.sections;
-  const hasResult = (sections.result?.images.length ?? 0) > 0;
+  const winners = WINNERS[e.slug]?.categories ?? [];
+  const hasResult = (sections.result?.images.length ?? 0) > 0 || winners.length > 0;
   const order = (hasResult ? DONE_ORDER : UPCOMING_ORDER)
     .filter((k) => sections[k] && (sections[k].images.length || sections[k].pdfs.length))
     .map((k) => ({ key: k, ...SECTIONS[k], ...sections[k] }));
@@ -89,8 +125,12 @@ export const EVENTS = raw.events.map((e) => {
   return {
     ...base,
     slug: e.slug,
+    nendo: e.nendo,
+    nendoLabel: NENDO_LABEL[e.nendo],
     no: e.no,
     url: `event-${e.slug}.html`,
+    /** 種目ごとの優勝・準優勝（公式サイトの結果ページから）。無ければ空 */
+    winners,
     /** 大会名だけでは区別できないときに種目を添えた名前（タイトル・前後の行き来用） */
     displayName: nameCount.get(base.name) > 1 ? `${base.name}（${base.event}）` : base.name,
     chip: dateCell(base),
@@ -113,6 +153,31 @@ export const eventBySlug = (slug) => bySlug.get(slug) ?? null;
 
 /** 大会一覧（schedule.js）の行から、対応するページを引く。無ければ null。 */
 export const eventForSchedule = (t) => byDate.get(t.date) ?? null;
+
+/**
+ * 年度ごとにまとめたもの（大会結果ページの年度タブ用）。新しい年度が先、
+ * 年度の中は開催日順。結果の出ている大会だけを入れる。
+ */
+export const EVENTS_BY_NENDO = [...new Set(EVENTS.map((e) => e.nendo))]
+  .sort((a, b) => b.localeCompare(a))
+  .map((nendo) => ({
+    nendo,
+    label: NENDO_LABEL[nendo],
+    events: EVENTS.filter((e) => e.nendo === nendo && e.hasResult).sort((a, b) => a.date.localeCompare(b.date)),
+  }))
+  .filter((y) => y.events.length);
+
+/** 一覧に出す1行の要約。優勝者を先頭からいくつか並べる（results.js の summarize と同じ形）。 */
+export function winnersSummary(e, max = 3) {
+  const wins = [];
+  for (const c of e.winners) {
+    for (const p of c.places) {
+      if (p.award === '優勝' && p.name) wins.push(`${c.category ? c.category + ' ' : ''}${p.name}`);
+      if (wins.length >= max) return wins;
+    }
+  }
+  return wins;
+}
 
 /** 日付の新しい順（一覧に並べるとき用） */
 export const EVENTS_BY_DATE = [...EVENTS].sort((a, b) => b.date.localeCompare(a.date));

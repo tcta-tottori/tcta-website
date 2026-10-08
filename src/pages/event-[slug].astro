@@ -1,5 +1,5 @@
 ---
-// 令和8年度の大会1件のページ。src/data/events.js の1件から作る。
+// 令和7年度・令和8年度の大会1件のページ。src/data/events.js の1件から作る。
 // build.format:'file' なので出力は event-<slug>.html。
 // 相対パス（assets/... など）を他のページと同じに保つため、あえて平置きにしている。
 //
@@ -65,8 +65,9 @@ const description = `${e.label}に${e.place}で行われる${e.name}（${e.event
         <span style="margin-left:12px">{e.event}　／　{e.place}</span>
       </p>
 
-      {e.sections.length > 1 && (
+      {(e.sections.length + (e.winners.length ? 1 : 0)) > 1 && (
         <nav class="jump fu" style="animation-delay:.3s" aria-label="このページの内容">
+          {e.winners.length > 0 && <a class="jump__link" href="#winners">成績</a>}
           {e.sections.map((s) => (
             <a class="jump__link" href={`#${s.key}`}>
               {s.label}
@@ -95,6 +96,33 @@ const description = `${e.label}に${e.place}で行われる${e.name}（${e.event
         {e.note && <p class="note mt-24">{e.note}</p>}
         {e.link && <a class="btn btn--outline mt-24" href={e.link.url} target="_blank" rel="noopener noreferrer">{e.link.label} <span class="aw">↗</span></a>}
       </div>
+
+      {/* 種目ごとの優勝・準優勝（公式サイトの結果ページの文言そのまま） */}
+      {e.winners.length > 0 && (
+        <section class="esec rv" id="winners" style="margin-top:64px">
+          <div class="esec__head">
+            <h2 class="sub-head" style="margin-bottom:0">成績</h2>
+            <span class="esec__en">Winners</span>
+          </div>
+          <div class="deflist mt-24">
+            {e.winners.map((c) => (
+              <div class="deflist__row">
+                <div class="deflist__key">{c.category || '種目'}</div>
+                <div class="deflist__val">
+                  <ul class="place-list">
+                    {c.places.map((p) => (
+                      <li>
+                        <span class="place-list__award">{p.award}</span>
+                        <span class="place-list__name">{p.name}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       <!-- ============ 要項・ドロー・結果・写真 ============ -->
       {e.sections.map((s) => (
@@ -161,8 +189,8 @@ const description = `${e.label}に${e.place}で行われる${e.name}（${e.event
       </nav>
 
       <div class="rv panel panel--gray" style="margin-top:64px">
-        <p class="panel__title">令和6年度までの大会</p>
-        <p class="prose" style="margin:0">平成16年度から令和6年度までの大会結果は、大会結果のページに年度ごとにまとめています。</p>
+        <p class="panel__title">ほかの年度の大会</p>
+        <p class="prose" style="margin:0">平成16年度からの大会結果は、大会結果のページに年度ごとにまとめています。</p>
         <a class="ghost-link mt-24" href="results.html">大会結果を見る <span class="aw">→</span></a>
       </div>
 

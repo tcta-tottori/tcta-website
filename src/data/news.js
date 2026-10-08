@@ -42,6 +42,11 @@ export const NEWS_VISIBLE = 4;
 const NEW_DAYS = 14;
 
 export const NEWS = [
+  { date: '2026.10.08', category: 'tournament', title: '第31回エネトピア杯テニス大会のドローを公開しました', href: 'event-r8-enetopia.html' },
+  { date: '2026.10.04', category: 'tournament', title: '第71回鳥取健康テニス大会（秋季）の要項を公開し、受付をはじめました', href: 'event-r8-kenko-autumn.html' },
+  { date: '2026.10.04', category: 'tournament', title: '鳥取県テニス選手権シングルスの要項を公開し、受付をはじめました', href: 'event-r8-kensen-singles.html' },
+  { date: '2026.10.04', category: 'tournament', title: '第62回会長杯（秋季）ダブルスの要項を公開し、受付をはじめました', href: 'event-r8-kaicho-autumn.html' },
+  { date: '2026.09.22', category: 'tournament', title: '2026プリンスオープン チーム対抗戦の要項を公開しました', href: 'event-r8-prince-open.html' },
   { date: '2026.09.02', category: 'tournament', title: '第31回エネトピア杯テニス大会の要項を公開し、受付をはじめました', href: 'event-r8-enetopia.html' },
   { date: '2026.09.02', category: 'info', title: '10月12日のテニス祭りの募集要項を公開しました', href: 'tennis-day.html' },
   { date: '2026.09.01', category: 'tournament', title: '京丹後市オープンダブルス大会（10月4日）の要項を掲載しました', href: 'event-r8-kyotango-doubles.html' },

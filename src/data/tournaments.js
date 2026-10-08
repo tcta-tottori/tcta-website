@@ -164,34 +164,48 @@ export const TOURNAMENTS = [
     title: '第31回エネトピア杯テニス大会',
     event: 'ミックスダブルス',
     venue: 'ヤマタスポーツパーク',
-    status: 'open',
+    status: 'closed',
     image: 'assets/img/tournaments/enetopia-2026.webp',
     imageAlt: '第31回エネトピア杯テニス大会の告知バナー。エネトピアの旗を持つ男女の選手',
   },
   {
     date: '2026.11.07',
+    slug: 'r8-kenko-autumn',
     title: '第71回鳥取健康テニス（秋期）',
     event: '一般：男女ダブルス／ジュニア：男女シングルス',
     venue: 'ヤマタスポーツパーク',
-    status: 'soon',
-    outlineUrl: 'tournaments.html',
-    drawUrl: null,      // 組み合わせが決まったらURLを入れる
-    liveUrl: null,      // 当日の大会運用システムのURLを入れる
-    resultUrl: null,    // 終了後、結果の掲載先を入れる
+    status: 'open',
     image: 'assets/img/results/2023/2023enetpia-hai-040.webp',
     imageAlt: 'フェンスごしに見えるコートと、サーブを打つ選手',
   },
   {
     date: '2026.11.08',
+    slug: 'r8-kensen-singles',
     title: '鳥取県テニス選手権 シングルス',
     event: '男女シングルス',
     venue: 'ヤマタスポーツパーク',
-    status: 'soon',
-    outlineUrl: 'tournaments.html',
-    drawUrl: null,      // 組み合わせが決まったらURLを入れる
-    liveUrl: null,      // 当日の大会運用システムのURLを入れる
-    resultUrl: null,    // 終了後、結果の掲載先を入れる
+    status: 'open',
     image: 'assets/img/results/2023/2023enetpia-hai-010.webp',
     imageAlt: 'ナイター照明のついたコートでの試合',
+  },
+  {
+    date: '2026.11.15',
+    slug: 'r8-kaicho-autumn',
+    title: '第62回鳥取市テニス協会会長杯（秋季）',
+    event: '男女ダブルス',
+    venue: 'ヤマタスポーツパーク',
+    status: 'open',
+    image: 'assets/img/results/2023/2023enetpia-hai-020.webp',
+    imageAlt: 'ネット際でハイタッチするダブルスのペア',
+  },
+  {
+    date: '2026.11.22',
+    slug: 'r8-prince-open',
+    title: '2026 プリンスオープン チーム対抗戦',
+    event: 'チーム対抗戦（男子複・女子複・混合複）',
+    venue: 'ヤマタスポーツパーク',
+    status: 'open',
+    image: 'assets/img/results/2023/2023enetpia-hai-025.webp',
+    imageAlt: 'ダブルスの試合で、前衛がボレーに出る場面',
   },
 ];

@@ -8,6 +8,7 @@ import { TOURNAMENTS, TODAY } from '../data/tournaments.js';
 import { LINKS_ASSOC, LINKS_OTHER } from '../data/links.js';
 import { NEWS, NEWS_VISIBLE } from '../data/news.js';
 import { COURTS, mapEmbed, mapLink } from '../data/courts.js';
+import { EVENT_INFO, eventChip } from '../data/eventinfo.js';
 
 const CATCH = 'PLAY BEYOND.';
 // 英字は左から1文字ずつ出すので、文字に分解しておく。
@@ -175,6 +176,56 @@ const upcomingTournaments = TOURNAMENTS.filter((t) => t.status !== 'past');
     </div>
   </section>
 
+  <!-- ============ イベント情報 ============ -->
+  <section class="section section--flush-top" id="events" aria-labelledby="events-title">
+    <span class="ghost" aria-hidden="true">EVENT</span>
+    <div class="container">
+      <div class="sec-bar rv">
+        <div class="sec-head">
+          <div class="sec-head__row">
+            <span class="sec-head__mark" aria-hidden="true"></span>
+            <div>
+              <p class="sec-head__eyebrow">Event</p>
+              <h2 class="sec-head__title" id="events-title">イベント情報</h2>
+            </div>
+          </div>
+        </div>
+        <div class="sec-bar__aside">
+          <a class="ghost-link view-all" href="tennis-day.html">
+            <span class="view-all__label">VIEW ALL</span><span class="sqbtn">→</span>
+          </a>
+        </div>
+      </div>
+
+      <div class="evlist rv">
+        {EVENT_INFO.map((e) => {
+          const chip = eventChip(e);
+          return (
+            <a class="evcard" href={e.href}>
+              <div class="evcard__media">
+                {e.image
+                  ? <img src={e.image} alt={e.imageAlt} loading="lazy" decoding="async">
+                  : <span class="evcard__media-empty" aria-hidden="true"><span class="evcard__media-text">{e.when}</span></span>}
+              </div>
+              <div class="evcard__body">
+                <div class="evcard__top">
+                  {chip
+                    ? <span class="date-chip"><span class="date-chip__md">{chip.md}</span><span class="date-chip__dow">{chip.dow}</span></span>
+                    : <span class="date-chip"><span class="date-chip__md">WED</span><span class="date-chip__dow">毎週</span></span>}
+                  {e.badge && <span class="badge badge--open">{e.badge}</span>}
+                </div>
+                <h3 class="evcard__title">{e.title}</h3>
+                <p class="evcard__meta">{e.when}<br>{e.place}</p>
+                <p class="evcard__lead">{e.lead}</p>
+                <span class="ghost-link evcard__more">詳しく見る <span class="aw">→</span></span>
+              </div>
+            </a>
+          );
+        })}
+      </div>
+    </div>
+  </section>
+
   <!-- ============ お知らせ ============ -->
   <section class="section section--flush-top" id="news" aria-labelledby="news-title">
     <span class="ghost" aria-hidden="true">NEWS</span>
@@ -315,30 +366,23 @@ const upcomingTournaments = TOURNAMENTS.filter((t) => t.status !== 'past');
         {/* 施設ごとの地図。上のボタンで切り替える（地図は施設名で引くので緯度経度は持たない）。 */}
         <div class="rv embed-wrap" style="transition-delay:.1s">
           <div class="cmap" data-cmap>
-            <div class="cmap__tabs" role="group" aria-label="地図に出す施設">
+            <div class="cmap__tabs" role="group" aria-label="地図の中心にする施設">
               {COURTS.map((c, i) => (
                 <button
                   class:list={['cmap__tab', i === 0 && 'is-active']}
                   type="button"
                   aria-pressed={i === 0 ? 'true' : 'false'}
-                  data-cmap-tab
-                  data-embed={mapEmbed(c.query, c.zoom)}
-                  data-link={mapLink(c.query)}
+                  data-cmap-tab={i}
+                  data-link={mapLink(c)}
                   data-name={c.name}
                 >{c.short}</button>
               ))}
             </div>
             <div class="cmap__frame">
-              <iframe
-                class="cmap__iframe"
-                data-cmap-frame
-                src={mapEmbed(COURTS[0].query, COURTS[0].zoom)}
-                title="鳥取市テニス協会 利用コートの地図"
-                loading="lazy"
-                referrerpolicy="no-referrer-when-downgrade"
-                allowfullscreen
-              ></iframe>
-              {/* 地図が出せないときの下敷き。iframe が読めない環境ではこれが見える。 */}
+              {/* 地図は Leaflet で自前に描く（サイトの白・グレー・赤に合わせるため）。
+                  タイルは OpenStreetMap。3施設すべてにピンを立て、上のボタンで中心を移す。 */}
+              <div class="cmap__map" data-cmap-map data-courts={JSON.stringify(COURTS.map((c) => ({ name: c.name, short: c.short, lat: c.lat, lng: c.lng, zoom: c.zoom ?? 16 })))} role="img" aria-label="利用コート3施設の地図"></div>
+              {/* 地図が出せないときの下敷き。タイルが読めない環境ではこれが見える。 */}
               <div class="cmap__fallback" aria-hidden="true">
                 <Icon name="pin" class="cmap__fallback-pin" />
                 <span class="cmap__fallback-text">地図を読み込んでいます</span>
@@ -346,7 +390,7 @@ const upcomingTournaments = TOURNAMENTS.filter((t) => t.status !== 'past');
             </div>
             <div class="cmap__bar">
               <span class="cmap__name" data-cmap-name>{COURTS[0].name}</span>
-              <a class="ghost-link cmap__open" data-cmap-link href={mapLink(COURTS[0].query)} target="_blank" rel="noopener noreferrer">
+              <a class="ghost-link cmap__open" data-cmap-link href={mapLink(COURTS[0])} target="_blank" rel="noopener noreferrer">
                 Googleマップで開く <span class="aw">↗</span>
               </a>
             </div>
@@ -356,4 +400,6 @@ const upcomingTournaments = TOURNAMENTS.filter((t) => t.status !== 'past');
       </div>
     </div>
   </section>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
+  <script is:inline src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js" crossorigin="anonymous" referrerpolicy="no-referrer" defer></script>
 </Base>

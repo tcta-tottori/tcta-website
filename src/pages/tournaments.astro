@@ -16,7 +16,7 @@ const count = {
 };
 
 // 一覧に入らない大会（協会が結果を預かっているもの）は、表の下に別立てで案内する
-const extras = EVENTS.filter((e) => !e.no);
+const extras = EVENTS.filter((e) => !e.no && e.nendo === '2026');
 
 // 協会の Google カレンダー（旧サイトで埋め込んでいたもの）。
 // embed は表示用、subscribe は「＋」と同じく自分のカレンダーに追加する入口。
