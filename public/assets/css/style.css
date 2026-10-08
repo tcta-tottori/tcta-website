@@ -1580,6 +1580,10 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 }
 .cmap__map .leaflet-control-attribution a { color: var(--gray-600); }
 
+/* テニスコートの面。敷地は薄く、コート1面ずつは赤で塗る（タイルがグレーなので赤だけが立つ） */
+.cmap__map .carea { fill: var(--red); fill-opacity: .08; stroke: var(--red); stroke-width: 1; stroke-opacity: .35; }
+.cmap__map .ccourt { fill: var(--red); fill-opacity: .55; stroke: var(--white); stroke-width: 1; stroke-opacity: .9; }
+
 /* ピン：赤い点に白い縁。見ている施設は輪が広がる */
 .cpin-wrap { background: none; border: 0; }
 .cpin { position: relative; display: block; width: 20px; height: 20px; }

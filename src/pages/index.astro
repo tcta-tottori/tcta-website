@@ -7,7 +7,7 @@ import Icon from '../components/Icon.astro';
 import { TOURNAMENTS, TODAY } from '../data/tournaments.js';
 import { LINKS_ASSOC, LINKS_OTHER } from '../data/links.js';
 import { NEWS, NEWS_VISIBLE } from '../data/news.js';
-import { COURTS, mapEmbed, mapLink } from '../data/courts.js';
+import { COURTS, mapData, mapLink } from '../data/courts.js';
 import { EVENT_INFO, eventChip } from '../data/eventinfo.js';
 
 const CATCH = 'PLAY BEYOND.';
@@ -366,7 +366,8 @@ const upcomingTournaments = TOURNAMENTS.filter((t) => t.status !== 'past');
         {/* 施設ごとの地図。上のボタンで切り替える（地図は施設名で引くので緯度経度は持たない）。 */}
         <div class="rv embed-wrap" style="transition-delay:.1s">
           <div class="cmap" data-cmap>
-            <div class="cmap__tabs" role="group" aria-label="地図の中心にする施設">
+            <div class="cmap__tabs" role="group" aria-label="地図に出す施設">
+              <button class="cmap__tab" type="button" aria-pressed="false" data-cmap-all>すべて</button>
               {COURTS.map((c, i) => (
                 <button
                   class:list={['cmap__tab', i === 0 && 'is-active']}
@@ -380,8 +381,9 @@ const upcomingTournaments = TOURNAMENTS.filter((t) => t.status !== 'past');
             </div>
             <div class="cmap__frame">
               {/* 地図は Leaflet で自前に描く（サイトの白・グレー・赤に合わせるため）。
-                  タイルは OpenStreetMap。3施設すべてにピンを立て、上のボタンで中心を移す。 */}
-              <div class="cmap__map" data-cmap-map data-courts={JSON.stringify(COURTS.map((c) => ({ name: c.name, short: c.short, lat: c.lat, lng: c.lng, zoom: c.zoom ?? 16 })))} role="img" aria-label="利用コート3施設の地図"></div>
+                  タイルは OpenStreetMap。テニスコートの面を赤く塗り、その重心にピンを立てる。
+                  上のボタンでその施設のコート全体が入るように寄り、「すべて」で3施設を一望する。 */}
+              <div class="cmap__map" data-cmap-map data-courts={JSON.stringify(COURTS.map(mapData))} role="img" aria-label="利用コート3施設の地図"></div>
               {/* 地図が出せないときの下敷き。タイルが読めない環境ではこれが見える。 */}
               <div class="cmap__fallback" aria-hidden="true">
                 <Icon name="pin" class="cmap__fallback-pin" />

@@ -360,8 +360,8 @@
 
   /* ---------- コート案内の地図 ----------
      Leaflet で自前に描く。タイルは OpenStreetMap の標準版を CSS でグレーに落とし、
-     赤いピンとラベルだけが立つようにする。3施設すべてにピンを立て、
-     上のボタンでその施設へ寄る（ピンも「いま見ている施設」の見た目に変わる）。
+     テニスコートの面（court-shapes.json）を赤く塗って、その重心にピンとラベルを置く。
+     施設のボタンを押すとそのコート全体が入る範囲に寄り、「すべて」で3施設を一望する。
      Leaflet（CDN）は defer で読むので、window の load を待ってから始める。 */
   function initCourtMap() {
     var root = document.querySelector('[data-cmap]');
@@ -370,6 +370,7 @@
     var name = root.querySelector('[data-cmap-name]');
     var link = root.querySelector('[data-cmap-link]');
     var tabs = root.querySelectorAll('[data-cmap-tab]');
+    var allTab = root.querySelector('[data-cmap-all]');
     if (!el || !tabs.length) return;
 
     var courts;
@@ -391,51 +392,77 @@
         maxZoom: 19,
       }).addTo(map);
 
-      var markers = courts.map(function (c, i) {
+      var allBounds = L.latLngBounds([]);
+      var venues = courts.map(function (c, i) {
+        var bounds = L.latLngBounds(c.bounds);
+        allBounds.extend(bounds);
+        // 敷地（薄い赤）→ コート1面ずつ（赤）の順に重ねる
+        var area = c.area ? L.polygon(c.area, { className: 'carea', interactive: false }).addTo(map) : null;
+        var pitches = L.layerGroup(c.courts.map(function (ring) {
+          return L.polygon(ring, { className: 'ccourt', interactive: false });
+        })).addTo(map);
         var icon = L.divIcon({
           className: 'cpin-wrap',
           html: '<span class="cpin"><span class="cpin__ring"></span><span class="cpin__dot"></span></span>',
           iconSize: [20, 20],
           iconAnchor: [10, 10],
         });
-        var m = L.marker([c.lat, c.lng], { icon: icon, title: c.name }).addTo(map);
-        m.bindTooltip(c.short, {
-          permanent: true, direction: 'top', offset: [0, -12], className: 'cpin-label',
-        });
-        m.on('click', function () { select(i); });
-        return m;
+        var marker = L.marker([c.lat, c.lng], { icon: icon, title: c.name }).addTo(map);
+        marker.bindTooltip(c.name, { permanent: true, direction: 'top', offset: [0, -12], className: 'cpin-label' });
+        marker.on('click', function () { select(i); });
+        return { bounds: bounds, area: area, pitches: pitches, marker: marker };
       });
 
-      function select(i, animate) {
-        var c = courts[i];
+      function setActive(i) {
         Array.prototype.forEach.call(tabs, function (t, k) {
           var on = k === i;
           t.classList.toggle('is-active', on);
           t.setAttribute('aria-pressed', String(on));
         });
-        markers.forEach(function (m, k) {
-          var w = m.getElement();
-          if (w) w.classList.toggle('is-active', k === i);
-          var tt = m.getTooltip() && m.getTooltip().getElement();
-          if (tt) tt.classList.toggle('is-active', k === i);
-          m.setZIndexOffset(k === i ? 1000 : 0);
+        if (allTab) {
+          allTab.classList.toggle('is-active', i < 0);
+          allTab.setAttribute('aria-pressed', String(i < 0));
+        }
+        venues.forEach(function (v, k) {
+          var on = k === i;
+          var w = v.marker.getElement();
+          if (w) w.classList.toggle('is-active', on);
+          var tt = v.marker.getTooltip() && v.marker.getTooltip().getElement();
+          if (tt) tt.classList.toggle('is-active', on);
+          v.marker.setZIndexOffset(on ? 1000 : 0);
         });
+      }
+
+      // 施設を1つ選ぶ：そのコート全体が入る範囲に寄る
+      function select(i, animate) {
+        setActive(i);
+        var c = courts[i];
         if (name) name.textContent = c.name;
         if (link) link.href = tabs[i].getAttribute('data-link');
-        if (animate === false) map.setView([c.lat, c.lng], c.zoom);
-        else map.flyTo([c.lat, c.lng], c.zoom, { duration: 0.9 });
+        var opts = { padding: [56, 56], maxZoom: 18 };
+        if (animate === false) map.fitBounds(venues[i].bounds, opts);
+        else map.flyToBounds(venues[i].bounds, Object.assign({ duration: 0.9 }, opts));
+      }
+
+      // すべて：3施設が全部入る範囲を出す
+      function showAll(animate) {
+        setActive(-1);
+        if (name) name.textContent = '利用コート 3施設';
+        if (link) link.href = 'https://www.google.com/maps/search/?api=1&query=' + courts[0].lat + ',' + courts[0].lng;
+        var opts = { padding: [48, 48] };
+        if (animate === false) map.fitBounds(allBounds, opts);
+        else map.flyToBounds(allBounds, Object.assign({ duration: 0.9 }, opts));
       }
 
       Array.prototype.forEach.call(tabs, function (tab, i) {
         tab.addEventListener('click', function () { select(i); });
       });
+      if (allTab) allTab.addEventListener('click', function () { showAll(); });
 
-      // 最初は3施設が全部入る範囲を出してから、1つ目に寄る
-      map.fitBounds(L.latLngBounds(courts.map(function (c) { return [c.lat, c.lng]; })), { padding: [40, 40] });
       select(0, false);
       el.classList.add('is-ready');
-      // 隠れた状態で測られた幅がずれていたときのために、一度だけ測り直す
-      setTimeout(function () { map.invalidateSize(); }, 300);
+      // 隠れた状態で測られた幅がずれていたときのために、一度だけ測り直して寄せ直す
+      setTimeout(function () { map.invalidateSize(); select(0, false); }, 300);
     }
 
     if (window.L) start();
