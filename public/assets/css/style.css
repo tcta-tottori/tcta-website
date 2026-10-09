@@ -600,6 +600,23 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 .nav__link:hover::after, .nav__link.is-active::after { left: 0; right: 0; }
 .nav__link:hover { color: var(--ink); }
 
+/* 重要なお知らせの帯（中止・延期）。ヘッダーの直下に赤で出す。 */
+.notice-bar { background: var(--red); color: #fff; }
+.notice-bar__inner { display: flex; align-items: flex-start; gap: 14px; padding-top: 10px; padding-bottom: 10px; }
+.notice-bar__label {
+  flex: none;
+  margin-top: 2px;
+  padding: 3px 8px;
+  border: 1px solid rgba(255, 255, 255, .8);
+  font: 700 11px/1 var(--fjp);
+  letter-spacing: .12em;
+}
+.notice-bar__list { list-style: none; margin: 0; padding: 0; min-width: 0; display: grid; gap: 4px; }
+.notice-bar__link { display: flex; gap: 10px; align-items: baseline; color: #fff; font: 700 14px/1.6 var(--fjp); }
+.notice-bar__link:hover { color: #fff; text-decoration: underline; }
+.notice-bar__date { flex: none; font: 600 12px/1.6 var(--flt); letter-spacing: .06em; opacity: .85; }
+.notice-bar__title { min-width: 0; }
+
 /* 画面右上の赤ブロック（お問い合わせ） */
 .header-contact {
   position: absolute;
@@ -2651,8 +2668,17 @@ body.jsrv .rv.on .ink-sweep {
   .rlist__item .sqbtn { display: none; }
 }
 
-/* 結果ページの1かたまり。結果画像を大きく → その下に優勝者の写真 */
+/* 結果ページの1かたまり。スマホは 結果画像 → その下に優勝者の写真 の1列、
+   PC（1024px〜）は 左に結果画像・右に優勝者の写真 の2列。 */
+.container--result { max-width: 1040px; }
 .rblock { margin-top: 32px; }
+@media (min-width: 1024px) {
+  .rblock--split { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 24px; align-items: start; }
+  .rblock--split .gallery.gallery--winners { margin-top: 0; }
+}
+/* 優勝者の名前。写真の下に「男子シングルスA級　優勝 ○○　準優勝 ○○」 */
+.rblock__caption { margin: 10px 0 0; font: 400 14px/1.8 var(--fjp); color: var(--gray-800); }
+.rblock__cat { display: inline-block; margin-right: 10px; padding: 1px 8px; border: 1px solid var(--red); font: 700 12px/1.6 var(--fjp); color: var(--red); }
 .rblock:first-child { margin-top: 0; }
 .rblock + .rblock { margin-top: 48px; }
 .sheet--result { border-radius: 4px; }
