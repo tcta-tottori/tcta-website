@@ -325,6 +325,133 @@
     });
   }
 
+  /* ---------- 画像の全画面表示（写真・要項・ドロー・結果・規約） ----------
+     .gallery__item / .sheet の画像リンクを、別タブではなくその場で全画面に開く。
+     同じ升目（.gallery / .sheets）の中は ← → やスワイプで前後に送れる。
+     紙もの（ドロー表など）は画像をタップすると原寸に切り替わり、指で動かして読める。 */
+  function initLightbox() {
+    var links = Array.prototype.slice.call(
+      document.querySelectorAll('a.gallery__item[href], a.sheet[href]')
+    ).filter(function (a) { return /\.(webp|jpe?g|png|gif|avif)$/i.test(a.getAttribute('href')); });
+    if (!links.length) return;
+
+    var box = document.createElement('div');
+    box.className = 'lightbox';
+    box.hidden = true;
+    box.setAttribute('role', 'dialog');
+    box.setAttribute('aria-modal', 'true');
+    box.setAttribute('aria-label', '画像の拡大表示');
+    box.innerHTML =
+      '<div class="lightbox__bar">' +
+        '<span class="lightbox__count" data-lb-count></span>' +
+        '<span class="lightbox__cap" data-lb-cap></span>' +
+        '<button type="button" class="lightbox__btn lightbox__close" data-lb-close aria-label="閉じる">×</button>' +
+      '</div>' +
+      '<button type="button" class="lightbox__btn lightbox__nav lightbox__nav--prev" data-lb-prev aria-label="前の画像">‹</button>' +
+      '<div class="lightbox__stage" data-lb-stage><img class="lightbox__img" alt="" data-lb-img></div>' +
+      '<button type="button" class="lightbox__btn lightbox__nav lightbox__nav--next" data-lb-next aria-label="次の画像">›</button>' +
+      '<p class="lightbox__hint" data-lb-hint>画像をタップすると原寸で表示します</p>';
+    document.body.appendChild(box);
+
+    var img = box.querySelector('[data-lb-img]');
+    var stage = box.querySelector('[data-lb-stage]');
+    var count = box.querySelector('[data-lb-count]');
+    var cap = box.querySelector('[data-lb-cap]');
+    var prevBtn = box.querySelector('[data-lb-prev]');
+    var nextBtn = box.querySelector('[data-lb-next]');
+    var group = [];
+    var index = 0;
+    var opener = null;
+
+    var captionOf = function (a) {
+      var c = a.querySelector('.sheet__cap');
+      if (c) return c.textContent.replace(/[↗⤢]/g, '').trim();
+      var im = a.querySelector('img');
+      return im ? im.getAttribute('alt') || '' : '';
+    };
+
+    var show = function (i) {
+      index = (i + group.length) % group.length;
+      var a = group[index];
+      box.classList.remove('is-zoomed');
+      img.src = a.getAttribute('href');
+      img.alt = captionOf(a);
+      cap.textContent = captionOf(a);
+      count.textContent = group.length > 1 ? (index + 1) + ' / ' + group.length : '';
+      prevBtn.hidden = nextBtn.hidden = group.length < 2;
+      stage.scrollTop = 0;
+      stage.scrollLeft = 0;
+    };
+
+    var open = function (a) {
+      var root = a.closest('.gallery, .sheets');
+      group = root ? links.filter(function (l) { return root.contains(l); }) : [a];
+      opener = a;
+      box.hidden = false;
+      document.body.classList.add('is-locked');
+      show(group.indexOf(a));
+      box.querySelector('[data-lb-close]').focus();
+    };
+
+    var close = function () {
+      box.hidden = true;
+      box.classList.remove('is-zoomed');
+      document.body.classList.remove('is-locked');
+      img.removeAttribute('src');
+      if (opener) opener.focus();
+    };
+
+    links.forEach(function (a) {
+      a.removeAttribute('target');
+      a.addEventListener('click', function (e) {
+        if (e.metaKey || e.ctrlKey || e.shiftKey) return; // 新しいタブで開きたい人はそのまま
+        e.preventDefault();
+        open(a);
+      });
+    });
+
+    box.querySelector('[data-lb-close]').addEventListener('click', close);
+    prevBtn.addEventListener('click', function () { show(index - 1); });
+    nextBtn.addEventListener('click', function () { show(index + 1); });
+
+    // 画像をタップすると原寸に。余白をタップすると閉じる。
+    img.addEventListener('click', function (e) {
+      e.stopPropagation();
+      var zoomIn = !box.classList.contains('is-zoomed');
+      if (zoomIn && img.naturalWidth <= stage.clientWidth && img.naturalHeight <= stage.clientHeight) return;
+      // タップした場所が拡大後も中央に来るようにする
+      var rect = img.getBoundingClientRect();
+      var rx = (e.clientX - rect.left) / rect.width;
+      var ry = (e.clientY - rect.top) / rect.height;
+      box.classList.toggle('is-zoomed', zoomIn);
+      if (zoomIn) {
+        stage.scrollLeft = img.offsetWidth * rx - stage.clientWidth / 2;
+        stage.scrollTop = img.offsetHeight * ry - stage.clientHeight / 2;
+      }
+    });
+    stage.addEventListener('click', function (e) { if (e.target === stage) close(); });
+
+    document.addEventListener('keydown', function (e) {
+      if (box.hidden) return;
+      if (e.key === 'Escape') close();
+      else if (e.key === 'ArrowLeft') show(index - 1);
+      else if (e.key === 'ArrowRight') show(index + 1);
+    });
+
+    // スワイプで前後へ（原寸表示中はスクロールに譲る）
+    var sx = null, sy = null;
+    stage.addEventListener('touchstart', function (e) {
+      sx = e.touches[0].clientX; sy = e.touches[0].clientY;
+    }, { passive: true });
+    stage.addEventListener('touchend', function (e) {
+      if (sx === null || box.classList.contains('is-zoomed')) return;
+      var dx = e.changedTouches[0].clientX - sx;
+      var dy = e.changedTouches[0].clientY - sy;
+      sx = sy = null;
+      if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5) show(dx < 0 ? index + 1 : index - 1);
+    }, { passive: true });
+  }
+
   /* ---------- 大会カレンダーの月送り ----------
      月ぶんのマス目は全部書き出してあるので、出す1枚を切り替えるだけ。 */
   function initCalendar() {
@@ -806,6 +933,7 @@
     initFilters();
     initTabs();
     initForm();
+    initLightbox();
   }
 
   if (document.readyState === 'loading') {

@@ -101,12 +101,12 @@ const description = `${t.yearLabel}に行われた${t.title}の結果です。�
           <h2 class="sub-head">当日の写真<span class="gallery__count">{t.photos.length}枚</span></h2>
           <div class="gallery">
             {t.photos.map((src, i) => (
-              <a class="gallery__item" href={src} target="_blank" rel="noopener noreferrer">
+              <a class="gallery__item" href={src}>
                 <img src={src} alt={`${t.title}の写真 ${i + 1}`} loading="lazy" decoding="async">
               </a>
             ))}
           </div>
-          <p class="note">※ 写真をタップすると大きく表示します。</p>
+          <p class="note">※ 写真をタップすると全画面で表示します。</p>
         </div>
       )}
 

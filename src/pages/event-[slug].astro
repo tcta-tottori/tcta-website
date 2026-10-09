@@ -138,18 +138,18 @@ const description = `${e.label}に${e.place}で行われる${e.name}（${e.event
           {s.images.length > 0 && (s.key === 'photo'
             ? <div class="gallery">
                 {s.images.map((img, i) => (
-                  <a class="gallery__item" href={img.src} target="_blank" rel="noopener noreferrer">
+                  <a class="gallery__item" href={img.src}>
                     <img src={img.src} alt={`${e.name}の写真 ${i + 1}`} width={img.w} height={img.h} loading="lazy" decoding="async">
                   </a>
                 ))}
               </div>
             : <div class="sheets">
                 {s.images.map((img) => (
-                  <a class:list={['sheet', isWide(img) && 'sheet--wide']} href={img.src} target="_blank" rel="noopener noreferrer">
+                  <a class:list={['sheet', isWide(img) && 'sheet--wide']} href={img.src}>
                     <img src={img.src} alt={`${e.name} ${s.label}｜${img.label ?? ''}`} width={img.w} height={img.h} loading="lazy" decoding="async">
                     <span class="sheet__cap">
                       {img.label ?? s.label}
-                      <span class="sqbtn" aria-hidden="true">↗</span>
+                      <span class="sqbtn" aria-hidden="true">⤢</span>
                     </span>
                   </a>
                 ))}
