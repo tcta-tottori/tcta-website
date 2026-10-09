@@ -1,4 +1,4 @@
-// トップページ「お知らせ」の唯一の正。
+// トップページ「お知らせ」の唯一の正（データ本体は news.json）。
 //
 // ■ 並び
 //   新しいものから順に書く。トップページは上から4件だけを出し、
@@ -41,25 +41,15 @@ export const NEWS_VISIBLE = 4;
 /** NEW を付ける期間（日） */
 const NEW_DAYS = 14;
 
-export const NEWS = [
-  { date: '2026.10.08', category: 'tournament', title: '第31回エネトピア杯テニス大会のドローを公開しました', href: 'event-r8-enetopia.html' },
-  { date: '2026.10.04', category: 'tournament', title: '第71回鳥取健康テニス大会（秋季）の要項を公開し、受付をはじめました', href: 'event-r8-kenko-autumn.html' },
-  { date: '2026.10.04', category: 'tournament', title: '鳥取県テニス選手権シングルスの要項を公開し、受付をはじめました', href: 'event-r8-kensen-singles.html' },
-  { date: '2026.10.04', category: 'tournament', title: '第62回会長杯（秋季）ダブルスの要項を公開し、受付をはじめました', href: 'event-r8-kaicho-autumn.html' },
-  { date: '2026.09.22', category: 'tournament', title: '2026プリンスオープン チーム対抗戦の要項を公開しました', href: 'event-r8-prince-open.html' },
-  { date: '2026.09.02', category: 'tournament', title: '第31回エネトピア杯テニス大会の要項を公開し、受付をはじめました', href: 'event-r8-enetopia.html' },
-  { date: '2026.09.02', category: 'info', title: '10月12日のテニス祭りの募集要項を公開しました', href: 'tennis-day.html' },
-  { date: '2026.09.01', category: 'tournament', title: '京丹後市オープンダブルス大会（10月4日）の要項を掲載しました', href: 'event-r8-kyotango-doubles.html' },
-  { date: '2026.08.30', category: 'result', title: '第49回ダンロップテニストーナメントの結果を掲載しました', href: 'event-r8-dunlop.html' },
-  { date: '2026.08.16', category: 'result', title: 'サマーミックスダブルスの結果を掲載しました', href: 'event-r8-summer-mix.html' },
-  { date: '2026.08.02', category: 'result', title: '第11回気高カップシングルス大会の結果を掲載しました', href: 'event-r8-ketaka.html' },
-  { date: '2026.07.31', category: 'tournament', title: 'サマーミックスダブルスの受付を締め切りました', href: 'tournaments.html' },
-  { date: '2026.07.21', category: 'info', title: '令和9年度クラブ対抗戦の編成表を公開しました', href: 'club.html' },
-  { date: '2026.06.18', category: 'info', title: '毎週水曜日のテニス教室の会場を井原公園に変更しました', href: 'lesson.html' },
-  { date: '2026.06.02', category: 'tournament', title: '令和8年度の大会日程（全19大会）を公開しました', href: 'tournaments.html' },
-  { date: '2026.05.20', category: 'result', title: '平成16年度〜令和6年度の大会結果を掲載しました', href: 'results.html' },
-  { date: '2026.04.13', category: 'info', title: '令和8年度の協会登録の受付をはじめました', href: 'membership.html' },
-];
+// 中身は news.json。管理画面（admin/）からの投稿もここに書き込まれる。
+//   { date, category, title, href, important? }
+//   important: true … 中止・延期などの重要なお知らせ。全ページ上部の赤い帯にも出る。
+import NEWS from './news.json';
+export { NEWS };
+
+/** 全ページ上部の帯に出す重要なお知らせ（中止・延期など）。新しいものから。 */
+export const IMPORTANT_NEWS = NEWS.filter((n) => n.important);
+
 
 /** '2026.08.03' → { day: '08.03', year: '2026' }（左端の日付表示用） */
 export function newsDate(date) {

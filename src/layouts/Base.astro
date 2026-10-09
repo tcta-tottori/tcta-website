@@ -4,6 +4,7 @@ import MobileNav from '../components/MobileNav.astro';
 import Cta from '../components/Cta.astro';
 import SiteFooter from '../components/SiteFooter.astro';
 import SiteSplash from '../components/SiteSplash.astro';
+import ImportantNotice from '../components/ImportantNotice.astro';
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -80,6 +81,8 @@ const {
 <a class="skip-link" href="#main">本文へスキップ</a>
 
 <SiteHeader active={navActive} onHome={home} />
+
+<ImportantNotice />
 
 <MobileNav active={mobileNavActive} />
 

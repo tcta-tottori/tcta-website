@@ -1,0 +1,23 @@
+---
+// 全ページ上部の赤い帯。中止・延期など、来た人が最初に知るべきお知らせだけを出す。
+// 出すかどうかは news.json の important フラグ（管理画面の「目立たせる」）で決まる。
+import { IMPORTANT_NEWS, newsDate } from '../data/news.js';
+
+const items = IMPORTANT_NEWS.slice(0, 3);
+---
+
+{items.length > 0 && (
+  <div class="notice-bar" role="region" aria-label="重要なお知らせ">
+    <div class="container notice-bar__inner">
+      <span class="notice-bar__label">重要</span>
+      <ul class="notice-bar__list">
+        {items.map((n) => (
+          <li><a class="notice-bar__link" href={n.href}>
+            <span class="notice-bar__date">{newsDate(n.date).day}</span>
+            <span class="notice-bar__title">{n.title}</span>
+          </a></li>
+        ))}
+      </ul>
+    </div>
+  </div>
+)}
