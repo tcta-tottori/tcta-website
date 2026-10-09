@@ -4,12 +4,11 @@
 export const NAV = [
   { key: 'home', label: 'HOME', href: 'index.html', en: true },
   { key: 'tournaments', label: '大会情報', href: 'tournaments.html' },
+  { key: 'results', label: '大会結果', href: 'results.html' },
   { key: 'tennis-day', label: 'イベント情報', href: 'tennis-day.html' },
   { key: 'lesson', label: '水曜テニス教室', href: 'lesson.html' },
   { key: 'about', label: '協会について', href: 'about.html' },
   { key: 'membership', label: '入会案内', href: 'membership.html' },
-  { key: 'courts', label: 'コート案内', href: 'index.html#courts' },
-  { key: 'news', label: 'お知らせ', href: 'index.html#news' },
 ];
 
 export const MOBILE_NAV = [
