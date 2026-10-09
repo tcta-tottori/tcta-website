@@ -2627,52 +2627,41 @@ body.jsrv .rv.on .ink-sweep {
 .year-head__en { margin-left: 10px; font: 500 14px/1 var(--flt); letter-spacing: .08em; color: var(--gray-500); }
 .year-head__sum { margin: 0; font: 400 14px/1.6 var(--fjp); color: var(--gray-500); }
 
-/* 大会1件のカード。題名 → 種目別の表 → 写真・PDFへの案内 */
-.rcards { display: grid; gap: 20px; }
-.rcard { background: var(--white); border: 1px solid var(--gray-200); padding: 20px 20px 16px; }
-@media (min-width: 1024px) { .rcard { padding: 28px 32px 20px; } }
-.rcard__head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; margin-bottom: 16px; }
-.rcard__title { margin: 0; font: 700 18px/1.4 var(--fjp); color: var(--ink); }
-@media (min-width: 1024px) { .rcard__title { font-size: 20px; } }
-.rcard__title a { color: inherit; }
-.rcard__title a:hover { color: var(--red); }
-.rcard__when { margin: 0; font: 400 13px/1.6 var(--fjp); color: var(--gray-500); }
-.rcard__meta { display: flex; align-items: center; gap: 6px; margin-left: auto; }
-.rcard__note { margin: 0 0 8px; font: 400 14px/1.7 var(--fjp); color: var(--gray-500); }
-.rcard__foot { display: flex; flex-wrap: wrap; gap: 8px 24px; margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--gray-200); }
-.rcard__link { font: 500 13px/1.6 var(--fjp); color: var(--gray-800); }
-.rcard__link .ar { display: inline-block; margin-left: 6px; color: var(--red); transition: transform .25s var(--ease); }
-.rcard__link:hover { color: var(--red); }
-.rcard__link:hover .ar { transform: translateX(4px); }
-.rcard__link--more { margin-left: auto; font-weight: 700; }
-
-/* 種目別の表。種目｜優勝｜準優勝｜3位・ベスト4 */
-.wtable { width: 100%; border-collapse: collapse; font: 400 14px/1.6 var(--fjp); }
-.wtable th, .wtable td { padding: 10px 12px 10px 0; border-bottom: 1px solid var(--gray-200); text-align: left; vertical-align: top; }
-.wtable thead th { padding-top: 0; font: 700 12px/1.5 var(--fjp); letter-spacing: .06em; color: var(--gray-500); white-space: nowrap; }
-.wtable tbody th.wtable__cat { font: 700 14px/1.6 var(--fjp); color: var(--ink); }
-.wtable__cat { width: 30%; }
-.wtable__sub th { padding-top: 18px; padding-bottom: 6px; border-bottom: 0; font: 700 12px/1.5 var(--fjp); letter-spacing: .08em; color: var(--red); }
-.wtable__sub th a { color: inherit; }
-.wtable__sub th a:hover { text-decoration: underline; }
-.wtable__win { font-weight: 700; color: var(--ink); }
-.wtable__name { display: block; }
-.wtable__award { display: inline-block; min-width: 4em; margin-right: 6px; font: 700 11px/1.6 var(--fjp); letter-spacing: .04em; color: var(--gray-500); }
-.wtable__none { color: var(--gray-300); }
-@media (max-width: 639px) {
-  /* 狭い画面では1種目を1ブロックにし、「優勝」「準優勝」の見出しを各行の左に出す */
-  .wtable thead { display: none; }
-  .wtable, .wtable tbody, .wtable tr { display: block; }
-  .wtable tr { padding: 10px 0; border-bottom: 1px solid var(--gray-200); }
-  .wtable th, .wtable td { display: block; padding: 2px 0; border-bottom: 0; }
-  .wtable__cat { width: auto; margin-bottom: 4px; }
-  .wtable td { display: grid; grid-template-columns: 6.5em 1fr; gap: 0 8px; }
-  .wtable td::before { content: attr(data-label); font: 700 12px/1.8 var(--fjp); letter-spacing: .04em; color: var(--red); white-space: nowrap; }
-  .wtable td .wtable__name { grid-column: 2; }
-  .wtable__sub th { padding: 14px 0 0; }
-  .wtable tr.wtable__sub { border-bottom: 0; padding-bottom: 0; }
-  .rcard__meta { margin-left: 0; width: 100%; }
+/* 年度の中の大会一覧。番号・大会名・開催日だけの1行 */
+.rlist { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--gray-200); }
+.rlist__item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 4px;
+  border-bottom: 1px solid var(--gray-200);
+  color: inherit;
+  transition: background .2s ease;
 }
+.rlist__item:hover { background: var(--gray-050); color: inherit; }
+.rlist__item:hover .rlist__title { color: var(--red); }
+.rlist__no { flex: none; width: 2em; font: 600 13px/1 var(--flt); letter-spacing: .06em; color: var(--gray-500); }
+.rlist__title { flex: 1; min-width: 0; font: 700 16px/1.5 var(--fjp); color: var(--ink); transition: color .2s ease; }
+.rlist__date { flex: none; font: 400 13px/1.5 var(--fjp); color: var(--gray-500); }
+.rlist__item .sqbtn { flex: none; }
+.rlist__item:hover .sqbtn { background: var(--red); border-color: var(--red); color: #fff; }
+@media (max-width: 639px) {
+  .rlist__item { flex-wrap: wrap; gap: 6px 12px; }
+  .rlist__date { order: 3; width: 100%; padding-left: calc(2em + 12px); }
+  .rlist__item .sqbtn { display: none; }
+}
+
+/* 結果ページの1かたまり。結果画像を大きく → その下に優勝者の写真 */
+.rblock { margin-top: 32px; }
+.rblock:first-child { margin-top: 0; }
+.rblock + .rblock { margin-top: 48px; }
+.sheet--result { border-radius: 4px; }
+/* 優勝者の写真。1枚なら横いっぱい、2枚なら半分ずつ、それ以上は折り返す */
+/* （.gallery の定義より前にあるので、打ち消すためにクラスを重ねている） */
+.gallery.gallery--winners { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
+.gallery.gallery--winners .gallery__item { flex: 1 1 300px; max-width: 100%; }
+.gallery.gallery--winners .gallery__item img { aspect-ratio: auto; height: auto; }
+.deflist__group { padding: 20px 4px 6px; font: 700 13px/1.5 var(--fjp); letter-spacing: .08em; color: var(--red); }
 
 /* 種目ごとの順位。「優勝　◯◯ペア」を1行ずつ */
 .place-list { list-style: none; margin: 0; padding: 0; }

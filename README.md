@@ -13,7 +13,7 @@
 │   │   ├── index.astro          トップ（ヒーロー／大会カルーセル／お知らせ／
 │   │   │                         リンク集／コート案内）
 │   │   ├── tournaments.astro    大会情報（月ごとのカレンダー・全19大会・状態フィルタ）
-│   │   ├── results.astro        大会結果（年度の選択＋大会ごとの種目別優勝・準優勝の表）
+│   │   ├── results.astro        大会結果（年度の選択 → 大会名の一覧）
 │   │   ├── club.astro           クラブ対抗戦
 │   │   ├── lesson.astro         水曜テニス教室
 │   │   ├── tennis-day.astro     テニス祭り（テニスの日）

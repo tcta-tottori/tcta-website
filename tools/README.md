@@ -24,7 +24,11 @@
 python3 tools/convert_images.py   # 写真を WebP（最大1000px・q72）に変換 1.1GB → 約220MB
 python3 tools/parse_results.py    # 本文から 種目・優勝・準優勝 を取り出す → parsed.json
 python3 tools/build_dataset.py    # parsed.json を results.json に整え、写真とPDFを public/ へ
+python3 tools/classify_photos.py  # 写真を 結果画像（sheet）／写真（photo）に仕分けし、幅・高さを添える
 ```
+
+`classify_photos.py` は画像の白い面積の割合で仕分ける（スポンサーのロゴなど幅300px以下は落とす）。
+結果ページはこの仕分けを使って、旧サイトと同じ「種目の結果画像 → 優勝者の写真」の順に組む。
 
 `convert_images.py` と `parse_results.py` の出力先はスクリプト内の作業用ディレクトリ。
 `build_dataset.py` だけが `src/data/results.json` と `public/assets/` を書き換える。

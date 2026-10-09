@@ -1,80 +1,32 @@
 ---
 import Base from '../layouts/Base.astro';
-import { RESULTS, resultUrl, groupYear, placeRow } from '../data/results.js';
+import { GROUPS_BY_YEAR } from '../data/results.js';
 import { EVENTS_BY_NENDO } from '../data/events.js';
 
 const title = "大会結果｜鳥取市テニス協会";
-const description = "鳥取市テニス協会が主催・主管した大会の結果。平成16年度から令和8年度まで、年度ごとに種目別の優勝・準優勝と大会写真を掲載しています。";
+const description = "鳥取市テニス協会が主催・主管した大会の結果。平成16年度から令和8年度まで、年度ごとの大会結果と当日の写真を掲載しています。";
 
-// 年度ごとに「大会のカード」を並べる。1枚のカードは
-//   題名（詳細ページへのリンク）／種目ごとの優勝・準優勝の表／写真・PDFへの案内
-// でできている。
-//
-// 令和7年度以降は大会1件ごとのページ（event-*.html）に結果があるのでそこへ、
-// 令和6年度までは旧サイトから引き継いだ結果ページ（result-*.html）へ飛ばす。
-// 旧サイトは1大会を「シングルス」「ダブルス」「写真」と複数ページに分けていたので、
-// results.js の groupYear で同じ大会を1枚に束ねている。
-
-/** 種目の表。rows に「3位・ベスト4」が1つでもあれば列を足す */
-const table = (sections) => {
-  const secs = sections.map((s) => ({ ...s, rows: s.categories.map(placeRow) }));
-  const hasOther = secs.some((s) => s.rows.some((r) => r.other.length));
-  const hasSecond = secs.some((s) => s.rows.some((r) => r.second.length));
-  return { secs, hasOther, hasSecond, cols: 2 + (hasSecond ? 1 : 0) + (hasOther ? 1 : 0) };
-};
-
-/** 写真ページへの案内の頭。「ダブルスの」「令和5年5月7日の」のように、どの写真か分かるときだけ付ける */
-const galleryName = (g, e) => {
-  const own = e.title.includes('ギャラリー') ? null : e.title;
-  const name = (g.results.length || g.galleries.length > 1) ? (own ?? e.t.date) : null;
-  return name && name !== g.title ? `${name}の` : '';
-};
-
-const cardOf = {
-  event: (e) => ({
-    title: e.displayName,
-    href: e.url,
-    date: e.label,
-    place: e.place,
-    photos: e.sections.find((s) => s.key === 'photo')?.images.length ?? 0,
-    sheets: e.sections.find((s) => s.key === 'result')?.images.length ?? 0,
-    pdfs: e.sections.reduce((n, s) => n + s.pdfs.length, 0),
-    table: e.winners.length ? table([{ title: null, href: e.url, categories: e.winners }]) : null,
-    links: [],
-  }),
-  archive: (g) => ({
-    title: g.title,
-    href: g.href,
-    date: g.entries[0].t.date,
-    place: g.entries[0].t.venue,
-    photos: g.photos,
-    sheets: 0,
-    pdfs: g.pdfs.length,
-    table: g.results.length
-      ? table(g.results.map((e) => ({ title: g.results.length > 1 ? e.title : null, href: resultUrl(e.t), categories: e.t.categories })))
-      : null,
-    // 成績の表が無い（写真やPDFだけの）ページへの案内
-    links: [
-      ...g.galleries.map((e) => ({ href: resultUrl(e.t), label: `${galleryName(g, e)}写真（${e.t.photos.length}枚）` })),
-      ...g.entries.filter((e) => e.kind === 'pdf').map((e) => ({ href: e.t.pdfs[0], label: `${e.title}の結果PDF`, pdf: true })),
-    ],
-  }),
-};
-
+// 年度を選ぶ → その年度の大会名が開催順に並ぶ → 大会名を選ぶと結果のページへ。
+// 令和7年度以降は大会1件ごとのページ（event-*.html）、
+// 令和6年度までは旧サイトから引き継いだ結果ページ（result-*.html）に飛ぶ。
+// 旧サイトで「シングルス」「ダブルス」「写真」と分かれていたページは、
+// results.js の groupYear で1つの大会に束ねてある。
 const eraOf = (nendo) => (Number(nendo) >= 2019
   ? { era: '令和', n: Number(nendo) - 2018 }
   : { era: '平成', n: Number(nendo) - 1988 });
 
 const years = [
-  ...EVENTS_BY_NENDO.map((y) => ({ nendo: y.nendo, label: y.label, cards: y.events.map(cardOf.event) })),
-  ...RESULTS.map((y) => ({ nendo: y.nendo, label: y.label, cards: groupYear(y).map(cardOf.archive) })),
-].map((y) => ({ ...y, ...eraOf(y.nendo), photos: y.cards.reduce((n, c) => n + c.photos, 0) }));
+  ...EVENTS_BY_NENDO.map((y) => ({
+    nendo: y.nendo, label: y.label,
+    rows: y.events.map((e) => ({ href: e.url, title: e.displayName, date: e.label })),
+  })),
+  ...GROUPS_BY_YEAR.map((y) => ({
+    nendo: y.nendo, label: y.label,
+    rows: y.groups.map((g) => ({ href: g.href, title: g.title, date: g.entries[0].t.date })),
+  })),
+].map((y) => ({ ...y, ...eraOf(y.nendo) }));
 
 const eras = ['令和', '平成'].map((era) => ({ era, years: years.filter((y) => y.era === era) }));
-
-const totalTournaments = RESULTS.reduce((n, y) => n + y.tournaments.length, 0);
-const totalPhotos = RESULTS.reduce(
-  (n, y) => n + y.tournaments.reduce((m, t) => m + t.photos.length, 0), 0);
 ---
 
 <Base
@@ -97,12 +49,12 @@ const totalPhotos = RESULTS.reduce(
           <h1 class="page-title" style="margin-top:8px">大会結果</h1>
         </div>
       </div>
-      <p class="page-lead fu" style="animation-delay:.15s">これまでの大会結果です。年度を選ぶと、その年に行われた大会ごとに種目別の優勝・準優勝が並びます。大会名をひらくと、当日の写真や結果表もご覧いただけます。</p>
+      <p class="page-lead fu" style="animation-delay:.15s">年度を選ぶと、その年に行われた大会が開催順に並びます。大会名をひらくと、結果表と当日の写真をご覧いただけます。</p>
     </div>
   </section>
 
   <section class="section" aria-labelledby="results-title">
-    <div class="container">
+    <div class="container container--narrow">
       <h2 class="visually-hidden" id="results-title">年度別の大会結果</h2>
 
       <!-- 年度の選択。令和・平成の2段に分け、年の数字だけを並べる -->
@@ -132,81 +84,22 @@ const totalPhotos = RESULTS.reduce(
         <div class="tabpanel" id={`panel-${y.nendo}`} role="tabpanel" aria-labelledby={`tab-${y.nendo}`} hidden={i !== 0}>
           <div class="year-head">
             <h3 class="year-head__title">{y.label}<span class="year-head__en">{y.nendo}</span></h3>
-            <p class="year-head__sum">{y.cards.length}大会{y.photos > 0 && `・写真${y.photos}枚`}</p>
+            <p class="year-head__sum">{y.rows.length}大会</p>
           </div>
-
-          <div class="rcards">
-            {y.cards.map((c) => (
-              <article class="rcard">
-                <header class="rcard__head">
-                  <h4 class="rcard__title"><a href={c.href}>{c.title}</a></h4>
-                  {(c.date || c.place) && (
-                    <p class="rcard__when">{[c.date, c.place].filter(Boolean).join('　')}</p>
-                  )}
-                  <div class="rcard__meta" aria-hidden="true">
-                    {c.sheets > 0 && <span class="badge badge--outline">結果表{c.sheets}</span>}
-                    {c.photos > 0 && <span class="badge badge--tint">写真{c.photos}枚</span>}
-                    {c.pdfs > 0 && <span class="dl-item__type">PDF</span>}
-                  </div>
-                </header>
-
-                {c.table && (
-                  <table class="wtable">
-                    <thead>
-                      <tr>
-                        <th scope="col" class="wtable__cat">種目</th>
-                        <th scope="col">優勝</th>
-                        {c.table.hasSecond && <th scope="col">準優勝</th>}
-                        {c.table.hasOther && <th scope="col">3位・ベスト4</th>}
-                      </tr>
-                    </thead>
-                    {c.table.secs.map((s) => (
-                      <tbody>
-                        {s.title && (
-                          <tr class="wtable__sub"><th scope="rowgroup" colspan={c.table.cols}><a href={s.href}>{s.title}</a></th></tr>
-                        )}
-                        {s.rows.map((r) => (
-                          <tr>
-                            <th scope="row" class="wtable__cat">{r.category}</th>
-                            <td data-label="優勝" class="wtable__win">
-                              {r.win.length ? r.win.map((p) => <span class="wtable__name">{p.name}</span>) : <span class="wtable__none">—</span>}
-                            </td>
-                            {c.table.hasSecond && (
-                              <td data-label="準優勝">
-                                {r.second.length ? r.second.map((p) => <span class="wtable__name">{p.name}</span>) : <span class="wtable__none">—</span>}
-                              </td>
-                            )}
-                            {c.table.hasOther && (
-                              <td data-label="3位・ベスト4">
-                                {r.other.length
-                                  ? r.other.map((p) => <span class="wtable__name"><span class="wtable__award">{p.award}</span>{p.name}</span>)
-                                  : <span class="wtable__none">—</span>}
-                              </td>
-                            )}
-                          </tr>
-                        ))}
-                      </tbody>
-                    ))}
-                  </table>
-                )}
-
-                {!c.table && c.links.length === 0 && (
-                  <p class="rcard__note">写真・結果表で掲載しています。</p>
-                )}
-
-                <footer class="rcard__foot">
-                  {c.links.map((l) => (
-                    <a class="rcard__link" href={l.href} target={l.pdf ? '_blank' : undefined} rel={l.pdf ? 'noopener noreferrer' : undefined}>{l.label}<span class="ar" aria-hidden="true">→</span></a>
-                  ))}
-                  <a class="rcard__link rcard__link--more" href={c.href}>{c.table ? 'くわしく見る' : '結果を見る'}<span class="ar" aria-hidden="true">→</span></a>
-                </footer>
-              </article>
+          <ol class="rlist">
+            {y.rows.map((r, n) => (
+              <li><a class="rlist__item" href={r.href}>
+                <span class="rlist__no" aria-hidden="true">{String(n + 1).padStart(2, '0')}</span>
+                <span class="rlist__title">{r.title}</span>
+                {r.date && <span class="rlist__date">{r.date}</span>}
+                <span class="sqbtn" aria-hidden="true">→</span>
+              </a></li>
             ))}
-          </div>
+          </ol>
         </div>
       ))}
 
-      <p class="note">※ 令和6年度までは旧サイト（{totalTournaments}大会・写真{totalPhotos}枚）から引き継いだ内容です。種目名や氏名は当時の掲載をそのまま載せています。誤りや掲載の取り下げのご依頼は<a href="contact.html">お問い合わせ</a>からお知らせください。</p>
+      <p class="note">※ 令和6年度までは旧サイトから引き継いだ内容です。種目名や氏名は当時の掲載をそのまま載せています。誤りや掲載の取り下げのご依頼は<a href="contact.html">お問い合わせ</a>からお知らせください。</p>
     </div>
   </section>
 </Base>

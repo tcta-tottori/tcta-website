@@ -16,7 +16,10 @@
 // ■ 新しい年度を足すとき
 //   results.json の先頭に { nendo, label, tournaments: [...] } を足す。
 //   写真は public/assets/img/results/<年度>/ に置き、
-//   tournament.photos に 'assets/img/results/<年度>/○○.webp' の形で書く。
+//   tournament.photos に { src: 'assets/img/results/<年度>/○○.webp', w, h, kind } の形で書く。
+//   kind は 'sheet'（ドロー表・リーグ表などの結果画像）か 'photo'（表彰・試合の写真）。
+//   旧サイトと同じく「種目の結果画像 → その種目の優勝者の写真」の順に並べる。
+//   旧サイト分の kind は tools/classify_photos.py が画像の中身から付けた。
 //
 // ■ 載せていないもの
 //   旧サイトに本文も写真もPDFも無かった大会は落としている。
@@ -30,8 +33,12 @@ export { RESULTS };
 /** 年度ラベルからタブ用の短い id を作る（令和6年度 → 2024） */
 export const yearId = (y) => y.nendo;
 
-/** 大会1件の詳細ページのURL。build.format:'file' なので拡張子付きの平置き。 */
-export const resultUrl = (t) => `result-${t.id}.html`;
+/**
+ * 大会1件の詳細ページのURL。build.format:'file' なので拡張子付きの平置き。
+ * 旧サイトで「ダブルス」「写真」と別ページに分かれていたものは、束ねた先頭ページの id を使う
+ * （下の groupYear を参照）。
+ */
+export const resultUrl = (t) => `result-${GROUP_ID.get(t.id) ?? t.id}.html`;
 
 /** 一覧に出す1行の要約。優勝者を先頭からいくつか並べる。 */
 export function summarize(t, max = 3) {
@@ -170,9 +177,37 @@ export function groupYear(year) {
     for (const e of g.entries) e.title = subTitle(g.title, e.title.replace(/（写真）$|（PDF）$/, ''));
     g.photos = g.entries.reduce((n, e) => n + e.t.photos.length, 0);
     g.pdfs = g.entries.flatMap((e) => e.t.pdfs);
-    g.href = resultUrl(g.entries[0].t);
+    g.href = `result-${g.entries[0].t.id}.html`;
     g.results = g.entries.filter((e) => e.kind === 'result');
     g.galleries = g.entries.filter((e) => e.kind === 'gallery');
   }
   return groups;
 }
+
+/**
+ * 画像を「結果画像 1枚 ＋ それに続く写真」のかたまりに切る。
+ * 旧サイトの並び（種目の結果画像 → 優勝者の写真 → 次の種目…）をそのまま再現するため。
+ * 先頭が写真から始まるときは sheet が null のかたまりになる。
+ */
+export function photoBlocks(t) {
+  const blocks = [];
+  for (const p of t.photos) {
+    if (p.kind === 'sheet' || !blocks.length) blocks.push({ sheet: p.kind === 'sheet' ? p : null, photos: [] });
+    if (p.kind !== 'sheet') blocks[blocks.length - 1].photos.push(p);
+  }
+  return blocks;
+}
+
+/** 全年度の束ね（詳細ページの生成と、一覧の並びに使う）。新しい年度が先、年度の中は旧サイトの順。 */
+export const GROUPS_BY_YEAR = RESULTS.map((y) => ({
+  nendo: y.nendo,
+  label: y.label,
+  groups: groupYear(y).map((g) => ({ ...g, id: g.entries[0].t.id, nendo: y.nendo, yearLabel: y.label })),
+}));
+
+/** 旧サイトの1ページ（tournament.id）→ 束ねたページの id */
+const GROUP_ID = new Map(
+  GROUPS_BY_YEAR.flatMap((y) => y.groups.flatMap((g) => g.entries.map((e) => [e.t.id, g.id]))),
+);
+
+export const ALL_GROUPS = GROUPS_BY_YEAR.flatMap((y) => y.groups);
