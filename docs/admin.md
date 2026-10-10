@@ -27,7 +27,7 @@
  └──────────────────────────────┘
 ```
 
-- 公式サイトは **GitHub Pages のまま**。管理アプリは別の URL（`https://tcta-admin.<アカウント>.workers.dev`）。
+- 公式サイトは **GitHub Pages のまま**。管理アプリは別の URL：**https://tcta-admin.tcta-admin-worker.workers.dev/**（2026-10-10 配備。Cloudflare アカウントは t.c.t.a.r7@gmail.com）。
 - 画面側の権限表示は目安で、**保存・公開の API 側でも毎回ログインを確かめる**（`worker/src/api.js`）。
 - GitHub への書き込みトークンは Worker の秘密情報（`wrangler secret`）にだけ置く。リポジトリにも画面にも無い。
 
@@ -79,6 +79,8 @@ GitHub の代わりに、このリポジトリを一時フォルダに clone し
 「公開」は 6 秒後に「公開完了」になる。
 
 ## 設置手順（はじめて）
+
+2026-10-10 時点で 1〜4・6 の SESSION_SECRET・7 まで済み。残りは **GITHUB_TOKEN と EDITORS の登録**（2・5・6）。
 
 1. **Cloudflare アカウント**を協会名義（または担当者名義）で作る。Free プランでよい。
 2. **GitHub のトークン**を作る。GitHub → Settings → Developer settings → Fine-grained personal access tokens。
