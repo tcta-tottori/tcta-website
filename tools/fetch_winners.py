@@ -131,7 +131,8 @@ def main():
             continue
         out[slug] = {'source': SITE + urllib.parse.quote(path), 'title': title, 'categories': categories}
     with open(OUT, 'w', encoding='utf-8') as f:
-        json.dump(out, f, ensure_ascii=False, indent=1)
+        json.dump(out, f, ensure_ascii=False, indent=2)
+        f.write('\n')
     print(f'完了  {len(out)}大会 → {os.path.relpath(OUT)}', file=sys.stderr)
 
 

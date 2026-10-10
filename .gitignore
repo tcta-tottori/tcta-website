@@ -7,3 +7,8 @@ dist/
 .claude/settings.local.json
 # Playwright MCP のスクリーンショット出力
 .playwright-mcp/
+
+# 管理アプリの Worker（worker/）
+worker/node_modules/
+worker/.wrangler/
+worker/.dev.vars

@@ -25,8 +25,8 @@
 │   ├── components/              共通パーツ（下記「共通パーツ」を参照）
 │   ├── config/nav.js            ナビゲーション定義の唯一の正
 │   ├── data/tournaments.js      トップの大会カルーセルの唯一の正（写真の差し込み口）
-│   ├── data/news.js             トップのお知らせの唯一の正
-│   ├── data/schedule.js         令和8年度 全19大会（カレンダーの元データ）と令和7年度の全19大会
+│   ├── data/news.js             トップのお知らせ（データは news.json。管理アプリが書き込む）
+│   ├── data/schedule.js         年度別の大会一覧（データは schedule.json。管理アプリが状態を書き換える）
 │   ├── data/winners.json        種目ごとの優勝・準優勝（tools/fetch_winners.py が公式サイトから取り込む）
 │   └── data/courts.js           コート案内の一覧と地図の唯一の正
 ├── public/               そのまま公開される静的ファイル
@@ -35,6 +35,8 @@
 │   ├── assets/img/              画像・ファビコン
 │   │   └── tournaments/         大会写真の置き場（入稿分をここに追加）
 │   └── .nojekyll                GitHub Pages で Jekyll 処理を無効化
+├── admin/                サイト更新アプリ（PWA）の画面。Cloudflare Worker が配信する
+├── worker/               サイト更新アプリの API（ログイン・下書き・GitHub への公開）
 ├── docs/                 設計資料（構成方針・デザイン仕様・原稿仕様・検討ログ）
 ├── .github/workflows/deploy.yml  ビルドして GitHub Pages へ公開
 └── dist/                 ビルド出力（Git管理外）
@@ -49,6 +51,7 @@
 - [`docs/content.md`](./docs/content.md) — 原稿仕様書 v2.0（各ページの実テキストと `要確認` 項目）
 - [`docs/design-chat-log.md`](./docs/design-chat-log.md) — ファーストビュー3案から採用案決定までの検討ログ
 - [`docs/cloudflare.md`](./docs/cloudflare.md) — Cloudflare（Pages／Workers／Wrangler）導入の検討メモ
+- [`docs/admin.md`](./docs/admin.md) — サイト更新アプリ（管理画面）の構成と設置手順
 
 ## ローカルでの確認
 

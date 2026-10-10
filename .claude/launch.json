@@ -4,8 +4,19 @@
     {
       "name": "astro-dev",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev"],
+      "runtimeArgs": [
+        "run",
+        "dev"
+      ],
       "port": 4321
+    },
+    {
+      "name": "admin-local",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "worker/scripts/local-dev.mjs"
+      ],
+      "port": 8788
     }
   ]
 }

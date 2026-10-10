@@ -1,0 +1,4 @@
+# `npx wrangler dev` で使う秘密情報の見本。.dev.vars にコピーして値を入れる（.dev.vars は Git 管理外）。
+GITHUB_TOKEN=github_pat_xxxxxxxx
+SESSION_SECRET=長いランダムな文字列（openssl rand -base64 48 など）
+EDITORS={"山田":"pbkdf2$200000$...$..."}

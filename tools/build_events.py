@@ -779,7 +779,8 @@ def main():
             'kb': round(os.path.getsize(src) / 1024)}
 
     with open(JSON_OUT, 'w', encoding='utf-8') as f:
-        json.dump({'schedulePdf': meta, 'events': out}, f, ensure_ascii=False, separators=(',', ':'))
+        json.dump({'schedulePdf': meta, 'events': out}, f, ensure_ascii=False, indent=2)
+        f.write('\n')
 
     n_img = sum(len(s['images']) for e in out for s in e['sections'].values())
     n_pdf = sum(len(s['pdfs']) for e in out for s in e['sections'].values())
