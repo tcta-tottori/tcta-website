@@ -63,7 +63,8 @@ worker/
 ├── src/auth.js        ログインとセッション Cookie
 ├── src/github.js      GitHub への読み書き（1 公開 = 1 コミット）
 ├── src/data.js        扱うファイルの一覧と入力の確かめ
-├── scripts/hash-password.mjs   編集者のパスワードのハッシュを作る
+├── scripts/register-editors.mjs 編集者の名前とパスワードを対話で聞いて EDITORS に登録する
+├── scripts/hash-password.mjs   ハッシュだけ作る
 └── scripts/local-dev.mjs       手元で動かす（Cloudflare も GitHub も使わない）
 .github/workflows/admin-deploy.yml   admin/ と worker/ が変わったら Worker を配備
 ```
@@ -95,16 +96,17 @@ GitHub の代わりに、このリポジトリを一時フォルダに clone し
    ```bash
    npx wrangler kv namespace create DRAFTS
    ```
-5. **編集者**を登録する。1 人ずつハッシュを作り、1 つの JSON にまとめる。
+5. **編集者**を登録する。名前とパスワードを対話で聞いて、そのまま EDITORS に登録する。
    ```bash
-   node scripts/hash-password.mjs 山田 '10文字以上のパスワード'
-   # → {"山田":"pbkdf2$200000$…"}   複数人なら {"山田":"…","鈴木":"…"} にまとめる
+   node scripts/register-editors.mjs
    ```
+   パスワードは画面に出ない。複数人は続けて入れる（全員ぶんをまとめて登録する。あとから
+   1 人足すときも全員ぶんを入れ直す）。ハッシュだけ作りたいときは `node scripts/hash-password.mjs 名前 'パスワード'`。
 6. **秘密情報**を入れる（聞かれたら値を貼り付ける）。
    ```bash
    npx wrangler secret put GITHUB_TOKEN     # 2 で作ったトークン
    npx wrangler secret put SESSION_SECRET   # openssl rand -base64 48 などで作った長い文字列
-   npx wrangler secret put EDITORS          # 5 でまとめた JSON
+   # EDITORS は 5 のスクリプトが登録する
    ```
 7. **配備**する。
    ```bash
@@ -124,8 +126,8 @@ GitHub の代わりに、このリポジトリを一時フォルダに clone し
   履歴に残っている。GitHub の Actions の画面でやり直すか、もう一度何かを公開すれば直る。
 - **元に戻す**：その公開で変えたファイルを直前の状態に戻す新しいコミットを積む（履歴は消さない）。
   2 つ前の公開を戻すと、その後の公開で同じファイルを変えていた分も一緒に戻るので、直近から順に戻すこと。
-- **編集者を外す**：EDITORS からその人を消して `wrangler secret put EDITORS` し直す。ログイン中でも次の操作から無効になる。
-- **パスワードを忘れた**：5 でハッシュを作り直して EDITORS を入れ直す。
+- **編集者を外す／足す**：`node scripts/register-editors.mjs` で残す人全員を入れ直す（EDITORS は丸ごと置き換わる）。ログイン中でも次の操作から無効になる。
+- **パスワードを忘れた**：同じスクリプトで全員ぶんを入れ直す。
 - **tools/build_events.py との関係**：このスクリプトは MANIFEST から `events.json` を丸ごと書き直すので、
   管理アプリで足した大会・画像が消える。管理アプリを使い始めたら、まとめ取り込みは行わないか、
   行う前に `events.json` の差分を確かめること。
