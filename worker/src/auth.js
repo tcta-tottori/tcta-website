@@ -1,7 +1,9 @@
 // ログインとセッション。
 //
 // ・編集者は EDITORS（秘密情報）に「名前 → パスワードのハッシュ」で登録する。
-//   ハッシュは scripts/hash-password.mjs で作る（PBKDF2-SHA256・20万回・個別ソルト）。
+//   ハッシュは scripts/register-editors.mjs で作る（PBKDF2-SHA256・1万回・個別ソルト）。
+//   反復回数は Workers の CPU 時間の上限（Free プランは 1 リクエスト 10ms）に収まる値にしている。
+//   ハッシュ自体が秘密情報（Worker の外に出ない）なので、この回数でも十分。
 // ・ログインに成功したら、名前と期限を SESSION_SECRET で署名した Cookie を返す。
 //   HttpOnly / Secure / SameSite=Strict なので、他サイトからの読み出しも持ち出しもできない。
 // ・権限の確認は保存・公開の API 側（requireEditor）で毎回行う。画面側の判定は信用しない。
@@ -13,7 +15,7 @@ const COOKIE = 'tcta_session';
 const b64url = (buf) => btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 const unb64url = (s) => Uint8Array.from(atob(s.replace(/-/g, '+').replace(/_/g, '/')), (c) => c.charCodeAt(0));
 
-export async function pbkdf2(password, salt, iterations = 200000) {
+export async function pbkdf2(password, salt, iterations = 10000) {
   const key = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveBits']);
   return crypto.subtle.deriveBits({ name: 'PBKDF2', hash: 'SHA-256', salt, iterations }, key, 256);
 }
@@ -21,7 +23,7 @@ export async function pbkdf2(password, salt, iterations = 200000) {
 /** 'pbkdf2$<iterations>$<salt>$<hash>' の形にする */
 export async function hashPassword(password) {
   const salt = crypto.getRandomValues(new Uint8Array(16));
-  const iterations = 200000;
+  const iterations = 10000;
   const hash = await pbkdf2(password, salt, iterations);
   return `pbkdf2$${iterations}$${b64url(salt)}$${b64url(hash)}`;
 }

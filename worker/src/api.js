@@ -41,10 +41,15 @@ export async function handleApi(request, env, repo) {
   }
 
   if (path === '/login' && method === 'POST') {
-    const { name, password } = await request.json().catch(() => ({}));
-    const cookie = await login(env, String(name || '').trim(), String(password || ''), url.protocol === 'https:');
-    if (!cookie) return fail('名前かパスワードが違います', 401);
-    return json({ name, site: env.SITE_URL }, 200, { 'Set-Cookie': cookie });
+    try {
+      const { name, password } = await request.json().catch(() => ({}));
+      const cookie = await login(env, String(name || '').trim(), String(password || ''), url.protocol === 'https:');
+      if (!cookie) return fail('名前かパスワードが違います', 401);
+      return json({ name, site: env.SITE_URL }, 200, { 'Set-Cookie': cookie });
+    } catch (err) {
+      console.error(err);
+      return fail(`ログインの処理に失敗しました：${err.message}`, 500);
+    }
   }
   if (path === '/logout' && method === 'POST') {
     return json({ ok: true }, 200, { 'Set-Cookie': logoutCookie(url.protocol === 'https:') });
