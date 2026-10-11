@@ -42,7 +42,12 @@ export async function handleApi(request, env, repo) {
 
   if (path === '/login' && method === 'POST') {
     const { name, password } = await request.json().catch(() => ({}));
-    const cookie = await login(env, String(name || '').trim(), String(password || ''), url.protocol === 'https:');
+    let cookie;
+    try {
+      cookie = await login(env, String(name || '').trim(), String(password || ''), url.protocol === 'https:');
+    } catch (e) {
+      return fail(e.message, 500);
+    }
     if (!cookie) return fail('名前かパスワードが違います', 401);
     return json({ name, site: env.SITE_URL }, 200, { 'Set-Cookie': cookie });
   }

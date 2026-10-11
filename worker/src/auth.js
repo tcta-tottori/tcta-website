@@ -1,7 +1,8 @@
 // ログインとセッション。
 //
 // ・編集者は EDITORS（秘密情報）に「名前 → パスワードのハッシュ」で登録する。
-//   ハッシュは scripts/hash-password.mjs で作る（PBKDF2-SHA256・20万回・個別ソルト）。
+//   ハッシュは scripts/hash-password.mjs で作る（PBKDF2-SHA256・10万回・個別ソルト）。
+//   Cloudflare Workers の WebCrypto は PBKDF2 の回数が 10万回までしか使えない（超えると例外）。
 // ・ログインに成功したら、名前と期限を SESSION_SECRET で署名した Cookie を返す。
 //   HttpOnly / Secure / SameSite=Strict なので、他サイトからの読み出しも持ち出しもできない。
 // ・権限の確認は保存・公開の API 側（requireEditor）で毎回行う。画面側の判定は信用しない。
@@ -9,11 +10,12 @@
 const enc = new TextEncoder();
 const SESSION_DAYS = 30;
 const COOKIE = 'tcta_session';
+const MAX_ITERATIONS = 100000;
 
 const b64url = (buf) => btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 const unb64url = (s) => Uint8Array.from(atob(s.replace(/-/g, '+').replace(/_/g, '/')), (c) => c.charCodeAt(0));
 
-export async function pbkdf2(password, salt, iterations = 200000) {
+export async function pbkdf2(password, salt, iterations = MAX_ITERATIONS) {
   const key = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveBits']);
   return crypto.subtle.deriveBits({ name: 'PBKDF2', hash: 'SHA-256', salt, iterations }, key, 256);
 }
@@ -21,7 +23,7 @@ export async function pbkdf2(password, salt, iterations = 200000) {
 /** 'pbkdf2$<iterations>$<salt>$<hash>' の形にする */
 export async function hashPassword(password) {
   const salt = crypto.getRandomValues(new Uint8Array(16));
-  const iterations = 200000;
+  const iterations = MAX_ITERATIONS;
   const hash = await pbkdf2(password, salt, iterations);
   return `pbkdf2$${iterations}$${b64url(salt)}$${b64url(hash)}`;
 }
@@ -29,6 +31,8 @@ export async function hashPassword(password) {
 async function verifyPassword(password, stored) {
   const [scheme, iter, salt, hash] = String(stored).split('$');
   if (scheme !== 'pbkdf2') return false;
+  // 10万回を超えるハッシュは Workers では確かめられない。登録し直してもらう
+  if (!(Number(iter) <= MAX_ITERATIONS)) throw new Error('EDITORS のハッシュが古い形式です。scripts/register-editors.mjs で登録し直してください');
   const got = new Uint8Array(await pbkdf2(password, unb64url(salt), Number(iter)));
   const want = unb64url(hash);
   if (got.length !== want.length) return false;
