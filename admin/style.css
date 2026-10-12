@@ -37,6 +37,7 @@ h1, h2, h3 { margin: 0; line-height: 1.4; }
 .sec__title { display: flex; align-items: baseline; gap: 10px; font: 700 15px/1.4 var(--fjp); margin-bottom: 10px; }
 .sec__title .en { font: 600 11px/1 var(--flt); letter-spacing: .1em; color: var(--red); }
 .sec__title .count { font: 500 12px/1 var(--flt); color: var(--gray-500); }
+.field__label .count { margin-left: 8px; font: 500 12px/1 var(--flt); color: var(--gray-500); }
 
 .card { background: #fff; border: 1px solid var(--gray-200); border-radius: 8px; padding: 16px; }
 .card + .card { margin-top: 12px; }

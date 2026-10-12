@@ -67,8 +67,16 @@ export function validateNewsItem(n) {
   if (!CATEGORIES.has(n.category)) e.push('分類が正しくありません');
   if (!n.title || n.title.length > 80) e.push('タイトルは1〜80文字で入れてください');
   if (!n.href || /^https?:/.test(n.href) || n.href.includes('..')) e.push('リンク先はサイト内のページ（例：event-r8-enetopia.html）を入れてください');
+  if (n.link && (/^https?:/.test(n.link) || n.link.includes('..'))) e.push('関連ページはサイト内のページを選んでください');
+  if (n.id !== undefined && !NEWS_ID.test(n.id)) e.push('お知らせの id が正しくありません');
+  if ((n.body || '').length > 5000) e.push('本文は5000文字までにしてください');
+  if ((n.images || []).length > 60) e.push('写真は60枚までにしてください');
+  for (const im of n.images || []) if (!String(im.src || '').startsWith(`assets/img/news/${n.id}/`)) e.push('写真の指定が正しくありません');
   return e;
 }
+
+/** お知らせ専用ページ（news-<id>.html）の id */
+export const NEWS_ID = /^[a-z0-9-]{3,40}$/;
 
 export function validateStatus(status) {
   return STATUS.has(status) ? [] : ['状態が正しくありません'];

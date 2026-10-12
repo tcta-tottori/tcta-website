@@ -5,6 +5,7 @@
 //   GET    /api/me
 //   GET    /api/data             公開ずみのデータに下書きを重ねたもの
 //   PUT    /api/draft/news       お知らせの全件（並びごと）
+//   POST   /api/draft/news-image multipart: file, id, w, h  お知らせの写真（保存はお知らせと一緒に）
 //   PUT    /api/draft/schedule   {nendo, no, status, due, spareNote}
 //   POST   /api/draft/event      {nendo, no, slug}  大会ページを新しく作る
 //   POST   /api/draft/upload     multipart: file, slug, section, label, w, h
@@ -23,7 +24,7 @@
 import { login, logoutCookie, currentEditor } from './auth.js';
 import {
   FILES, DRAFT_KEY, HISTORY_KEY, emptyDraft, loadDraft, saveDraft, loadPublished, withDraft,
-  validateNewsItem, validateStatus, CARD_STATUS, safeName,
+  validateNewsItem, validateStatus, CARD_STATUS, safeName, NEWS_ID,
 } from './data.js';
 
 const json = (data, status = 200, headers = {}) =>
@@ -82,16 +83,54 @@ export async function handleApi(request, env, repo) {
     if (path === '/draft/news' && method === 'PUT') {
       const body = await request.json();
       if (!Array.isArray(body.items)) return fail('形式が違います');
-      const items = body.items.map((n) => ({
-        date: n.date, category: n.category, title: String(n.title || '').trim(), href: String(n.href || '').trim(),
-        ...(n.important ? { important: true } : {}),
-      }));
+      const items = body.items.map(cleanNewsItem);
       for (const n of items) { const e = validateNewsItem(n); if (e.length) return fail(e.join('／')); }
+      const pages = new Set(items.filter((n) => n.body || n.images).map((n) => n.href));
+      const dead = items.find((n) => /^news-/.test(n.href) && !pages.has(n.href));
+      if (dead) return fail(`「${dead.title}」のリンク先のお知らせページがありません。リンク先を選ぶか、本文を書いてください`);
+      const ids = items.filter((n) => n.id).map((n) => n.id);
+      if (new Set(ids).size !== ids.length) return fail('同じ id のお知らせが2つあります');
       items.sort((a, b) => b.date.localeCompare(a.date));
       const draft = (await loadDraft(env)) || emptyDraft(editor);
       draft.files[FILES.news] = items;
+      // 外した写真：下書き中のものはアップロードごと捨て、公開ずみのものはファイルを消す
+      const used = new Set(items.flatMap((n) => (n.images || []).map((im) => 'public/' + im.src)));
+      const published = await loadPublished(repo);
+      draft.deletes = (draft.deletes || []).filter((p) => !p.startsWith('public/assets/img/news/') || !used.has(p));
+      for (const p of published.news.flatMap((n) => (n.images || []).map((im) => 'public/' + im.src))) {
+        if (!used.has(p) && !draft.deletes.includes(p)) draft.deletes.push(p);
+      }
+      await dropUnusedNewsUploads(env, draft, used);
       await saveDraft(env, draft, editor, body.log || 'お知らせを更新');
       return json({ ok: true });
+    }
+
+    if (path === '/draft/news-image' && method === 'POST') {
+      // 写真だけ先に下書きへ置く。お知らせ本体に載るのは「下書きに保存」のとき。
+      const form = await request.formData();
+      const file = form.get('file');
+      const id = String(form.get('id') || '');
+      if (!(file instanceof File)) return fail('ファイルがありません');
+      if (!NEWS_ID.test(id)) return fail('お知らせの指定が違います');
+      if (!/^image\/(webp|jpeg|png)$/.test(file.type)) return fail('画像（WebP/JPEG/PNG）を選んでください');
+      if (file.size > 20 * 1024 * 1024) return fail('20MB までにしてください');
+      const draft = (await loadDraft(env)) || emptyDraft(editor);
+      const data = withDraft(await loadPublished(repo), draft);
+      const ext = file.type === 'image/webp' ? 'webp' : file.type === 'image/png' ? 'png' : 'jpg';
+      const dir = `assets/img/news/${id}/`;
+      const taken = new Set([
+        ...data.news.flatMap((n) => (n.images || []).map((im) => im.src)),
+        ...draft.uploads.map((u) => u.path.replace(/^public\//, '')),
+      ].filter((s) => s.startsWith(dir)).map((s) => s.slice(dir.length).replace(/\.\w+$/, '')));
+      let n = 1;
+      while (taken.has(`photo-${String(n).padStart(2, '0')}`)) n++;
+      const src = `${dir}photo-${String(n).padStart(2, '0')}.${ext}`;
+      const upId = crypto.randomUUID();
+      await env.DRAFTS.put(`upload:${upId}`, await file.arrayBuffer(), { metadata: { type: file.type } });
+      draft.uploads.push({ id: upId, path: 'public/' + src, kind: 'image', kb: Math.round(file.size / 1024), newsId: id });
+      draft.deletes = (draft.deletes || []).filter((p) => p !== 'public/' + src);
+      await saveDraft(env, draft, editor, null);
+      return json({ ok: true, item: { src, w: Number(form.get('w')) || 0, h: Number(form.get('h')) || 0 } });
     }
 
     if (path === '/draft/schedule' && method === 'PUT') {
@@ -247,6 +286,9 @@ export async function handleApi(request, env, repo) {
       const { message } = await request.json().catch(() => ({}));
       const draft = await loadDraft(env);
       if (!draft || (!Object.keys(draft.files).length && !draft.uploads.length)) return fail('公開する変更がありません');
+      // お知らせに載らなかった写真（追加したが保存しなかったもの）は公開しない
+      const news = withDraft(await loadPublished(repo), draft).news;
+      await dropUnusedNewsUploads(env, draft, new Set(news.flatMap((n) => (n.images || []).map((im) => 'public/' + im.src))));
       const files = [];
       for (const [p, content] of Object.entries(draft.files)) files.push({ path: p, text: JSON.stringify(content, null, 2) + '\n' });
       for (const u of draft.uploads) {
@@ -292,6 +334,33 @@ export async function handleApi(request, env, repo) {
     console.error(err);
     return fail(`処理に失敗しました：${err.message}`, 500);
   }
+}
+
+/** お知らせ1件を、保存してよい項目だけにする */
+function cleanNewsItem(n) {
+  const body = String(n.body || '').replace(/\r\n?/g, '\n').trim();
+  const images = Array.isArray(n.images)
+    ? n.images.map((im) => ({ src: String(im.src || ''), w: Number(im.w) || 0, h: Number(im.h) || 0 }))
+    : [];
+  const link = String(n.link || '').trim();
+  // 本文か写真があれば専用ページ（news-<id>.html）を作り、一覧からはそこへ飛ばす
+  const hasPage = n.id && (body || images.length);
+  return {
+    date: n.date, category: n.category, title: String(n.title || '').trim(),
+    href: hasPage ? `news-${n.id}.html` : String(n.href || '').trim(),
+    ...(n.important ? { important: true } : {}),
+    ...(n.id ? { id: String(n.id) } : {}),
+    ...(body ? { body } : {}),
+    ...(images.length ? { images } : {}),
+    ...(hasPage && link ? { link } : {}),
+  };
+}
+
+/** お知らせ用にアップロードしたが、どのお知らせにも載っていない写真を下書きから捨てる */
+async function dropUnusedNewsUploads(env, draft, used) {
+  const drop = draft.uploads.filter((u) => u.newsId && !used.has(u.path));
+  for (const u of drop) await env.DRAFTS.delete(`upload:${u.id}`);
+  draft.uploads = draft.uploads.filter((u) => !drop.includes(u));
 }
 
 const SECTION_LABEL = { outline: '要項', entry: '申込用紙', draw: 'ドロー', result: '結果', photo: '写真' };

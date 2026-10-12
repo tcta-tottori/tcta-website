@@ -42,13 +42,31 @@ export const NEWS_VISIBLE = 4;
 const NEW_DAYS = 14;
 
 // 中身は news.json。管理画面（admin/）からの投稿もここに書き込まれる。
-//   { date, category, title, href, important? }
+//   { date, category, title, href, important?, id?, body?, images?, link? }
 //   important: true … 中止・延期などの重要なお知らせ。全ページ上部の赤い帯にも出る。
+//   body / images … 本文（プレーンテキスト）と写真 [{ src, w, h }]。どちらかがあると
+//     そのお知らせ専用のページ news-<id>.html ができ、href はそこを指す
+//     （src/pages/news-[id].astro）。link は、そのページの下に出す関連ページ。
 import NEWS from './news.json';
 export { NEWS };
 
 /** 全ページ上部の帯に出す重要なお知らせ（中止・延期など）。新しいものから。 */
 export const IMPORTANT_NEWS = NEWS.filter((n) => n.important);
+
+/** 専用ページを持つお知らせ（本文か写真のあるもの）。新しいものから。 */
+export const NEWS_PAGES = NEWS.filter((n) => n.id && (n.body || n.images?.length));
+
+const URL_RE = /(https?:\/\/[^\s<>「」（）]+|[a-z0-9-]+\.html(?:#[\w-]+)?)/g;
+
+/**
+ * 本文を段落 → 行 → 文字とリンクの切れ端 に分ける。
+ * 空行で段落、改行で <br>。https://… とサイト内の xxx.html はリンクにする。
+ */
+export function bodyParagraphs(body = '') {
+  return String(body).replace(/\r\n?/g, '\n').trim().split(/\n\s*\n/).filter((p) => p.trim())
+    .map((para) => para.split('\n').map((line) =>
+      line.split(URL_RE).filter(Boolean).map((t) => (t.match(/^https?:\/\//) || /^[a-z0-9-]+\.html(?:#[\w-]+)?$/.test(t) ? { text: t, url: t } : { text: t }))));
+}
 
 
 /** '2026.08.03' → { day: '08.03', year: '2026' }（左端の日付表示用） */

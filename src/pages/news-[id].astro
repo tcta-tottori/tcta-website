@@ -1,0 +1,104 @@
+---
+// お知らせ1件のページ。news.json のうち、本文（body）か写真（images）のあるものだけから作る。
+// 管理アプリで本文・写真を書いて投稿すると、href が自動で news-<id>.html になる。
+// build.format:'file' なので出力は news-<id>.html（他のページと同じく平置き）。
+import Base from '../layouts/Base.astro';
+import { NEWS_PAGES, newsDate, bodyParagraphs } from '../data/news.js';
+
+export function getStaticPaths() {
+  return NEWS_PAGES.map((n) => ({ params: { id: n.id }, props: { n } }));
+}
+
+const { n } = Astro.props;
+const { day, year } = newsDate(n.date);
+const paragraphs = bodyParagraphs(n.body);
+const images = n.images || [];
+
+// 新しいものから並べた中での前後（ページ下部の行き来に使う）
+const idx = NEWS_PAGES.findIndex((x) => x.id === n.id);
+const newer = NEWS_PAGES[idx - 1];
+const older = NEWS_PAGES[idx + 1];
+
+const plain = (n.body || '').replace(/\s+/g, ' ').trim();
+const title = `${n.title}｜お知らせ｜鳥取市テニス協会`;
+const description = plain ? plain.slice(0, 110) + (plain.length > 110 ? '…' : '') : `${n.title}（${n.date}）`;
+---
+
+<Base
+  title={title}
+  description={description}
+  navActive="home"
+>
+  <!-- ============ ページヘッダー ============ -->
+  <section class="page-head">
+    <span class="ghost" aria-hidden="true">NEWS</span>
+    <div class="container">
+      <nav class="breadcrumb" aria-label="パンくず">
+        <a href="index.html">ホーム</a><span class="breadcrumb__sep" aria-hidden="true">›</span>
+        <a href="index.html#news">お知らせ</a><span class="breadcrumb__sep" aria-hidden="true">›</span>
+        <span aria-current="page">{n.title}</span>
+      </nav>
+      <div class="page-title-row fu">
+        <span class="sec-head__mark" aria-hidden="true" style="margin-top:8px"></span>
+        <div>
+          <p class="page-title__en" style="margin:0"><time datetime={n.date.replace(/\./g, '-')}>{year}.{day}</time></p>
+          <h1 class="page-title" style="margin-top:8px">{n.title}</h1>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container container--narrow">
+
+      {paragraphs.length > 0 && (
+        <div class="prose rv">
+          {paragraphs.map((lines) => (
+            <p>
+              {lines.map((parts, li) => (
+                <Fragment>
+                  {li > 0 && <br />}
+                  {parts.map((p) => p.url
+                    ? <a href={p.url} target={/^https?:/.test(p.url) ? '_blank' : undefined} rel={/^https?:/.test(p.url) ? 'noopener noreferrer' : undefined}>{p.text}</a>
+                    : p.text)}
+                </Fragment>
+              ))}
+            </p>
+          ))}
+        </div>
+      )}
+
+      {images.length > 0 && (
+        <section class="esec rv" id="photo" style={paragraphs.length ? 'margin-top:48px' : undefined}>
+          <div class="esec__head">
+            <h2 class="sub-head" style="margin-bottom:0">写真</h2>
+            <span class="esec__en">Photos</span>
+            <span class="gallery__count">{images.length}枚</span>
+          </div>
+          <div class="gallery">
+            {images.map((img, i) => (
+              <a class="gallery__item" href={img.src}>
+                <img src={img.src} alt={img.label || `${n.title}の写真 ${i + 1}`} width={img.w || undefined} height={img.h || undefined} loading="lazy" decoding="async">
+              </a>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {n.link && (
+        <a class="btn btn--outline rv" style="margin-top:48px" href={n.link}>関連ページを見る <span class="aw">→</span></a>
+      )}
+
+      <nav class="page-nav rv" aria-label="ほかのお知らせ">
+        {newer
+          ? <a class="page-nav__link" href={newer.href}><span class="page-nav__dir">← 新しいお知らせ</span><span class="page-nav__title">{newer.title}</span></a>
+          : <span></span>}
+        <a class="ghost-link" href="index.html#news">お知らせ一覧へ</a>
+        {older
+          ? <a class="page-nav__link page-nav__link--next" href={older.href}><span class="page-nav__dir">前のお知らせ →</span><span class="page-nav__title">{older.title}</span></a>
+          : <span></span>}
+      </nav>
+
+    </div>
+  </section>
+</Base>

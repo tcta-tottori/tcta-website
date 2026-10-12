@@ -366,11 +366,18 @@
         ${n.important ? raw('<span class="badge badge--open">重要</span>') : ''}<span class="row__arrow">›</span></button></li>`).join(''))}</ul>`;
   };
 
+  // お知らせ専用ページの id（写真の置き場所とページ名 news-<id>.html に使う）。作った日＋乱数。
+  const newNewsId = () => today().replace(/\./g, '') + '-' + Math.random().toString(36).slice(2, 6);
+  const hasNewsPage = (n) => !!(n.id && (n.body || n.images?.length));
+
   views.newsEdit = (idx) => {
     const isNew = idx === 'new';
     const n = isNew ? { date: today(), category: 'tournament', title: '', href: '', important: false } : state.data.news[Number(idx)];
     if (!n) return go('#/news');
+    const id = n.id || newNewsId();
+    let imgs = (n.images || []).map((im) => ({ ...im }));
     const hrefs = [...PAGES, ...state.data.events.events.map((e) => [`event-${e.slug}.html`, `大会：${eventInfo(e).name}（${eventInfo(e).event || e.slug}）`])];
+    const linkNow = hasNewsPage(n) ? (n.link || '') : n.href;
     $app.innerHTML = h`
       <a class="back" href="#/news">‹ お知らせの一覧</a>
       <h1 class="page-title">${isNew ? '新しく投稿' : 'お知らせの編集'}</h1>
@@ -378,15 +385,94 @@
         <label class="field" style="margin-top:0"><span class="field__label">日付</span><input class="input" name="date" value="${n.date}" placeholder="2026.10.08" pattern="\\d{4}\\.\\d{2}\\.\\d{2}" required><span class="field__hint">2026.10.08 の形。2週間以内のものに NEW が付きます。</span></label>
         <label class="field"><span class="field__label">分類</span><select class="select" name="category">${raw(Object.entries(CATEGORY).map(([k, v]) => h`<option value="${k}" ${k === n.category ? 'selected' : ''}>${v}</option>`).join(''))}</select></label>
         <label class="field"><span class="field__label">タイトル</span><input class="input" name="title" value="${n.title}" maxlength="80" required placeholder="例：第31回エネトピア杯テニス大会のドローを公開しました"><span class="field__hint">「〜しました」「〜します」の形で。例：中止します／延期します／受付をはじめました</span></label>
-        <label class="field"><span class="field__label">リンク先</span><select class="select" name="href">${raw(hrefs.map(([v, l]) => h`<option value="${v}" ${v === n.href ? 'selected' : ''}>${l}</option>`).join(''))}</select></label>
+        <label class="field"><span class="field__label">本文（任意）</span><textarea class="textarea" name="body" rows="8" maxlength="5000" placeholder="例：10月11日（日）に行った「2026テニス祭り鳥取」の様子をお届けします。&#10;&#10;ご参加いただいた皆さま、ありがとうございました。">${n.body || ''}</textarea><span class="field__hint">本文か写真を入れると、このお知らせ専用のページができます。空行で段落を分けます。https://… や tennis-day.html はリンクになります。</span></label>
+        <div class="field"><span class="field__label">写真（任意）<span class="count" id="nimg-count"></span></span>
+          <div class="thumbs" id="nthumbs"></div>
+          <label class="addbox" id="naddbox">＋ 写真を追加<input type="file" id="nfile" multiple accept="image/*"></label>
+          <div class="progress" id="nprogress" hidden><div></div></div>
+        </div>
+        <label class="field"><span class="field__label" id="link-label"></span><select class="select" name="href"><option value="">（なし）</option>${raw(hrefs.map(([v, l]) => h`<option value="${v}" ${v === linkNow ? 'selected' : ''}>${l}</option>`).join(''))}</select><span class="field__hint" id="link-hint"></span></label>
         <label class="check"><input type="checkbox" name="important" ${n.important ? 'checked' : ''}><span><b>目立たせる（中止・延期など）</b><small>全ページの上部に赤い帯で出ます。落ち着いたら外してください。</small></span></label>
+        <div class="btnrow"><button type="button" class="btn btn--outline btn--sm" id="news-pv">ページの見え方を確かめる</button></div>
+        <iframe class="preview-frame" id="news-pv-frame" title="お知らせページのプレビュー" hidden></iframe>
         <div class="btnrow btnrow--end">${isNew ? '' : raw('<button type="button" class="btn btn--danger" id="news-del">消す</button>')}<button class="btn btn--primary" type="submit">下書きに保存</button></div>
       </form>`;
+    const f = document.getElementById('news-form');
+    const pageWanted = () => !!(f.body.value.trim() || imgs.length);
+    const syncLink = () => {
+      const page = pageWanted();
+      document.getElementById('link-label').textContent = page ? '関連ページ（任意）' : 'リンク先';
+      document.getElementById('link-hint').textContent = page
+        ? `一覧から押すと、このお知らせのページ（news-${id}.html）が開きます。ここで選んだページへのボタンが本文の下に付きます。`
+        : '一覧から押したときに開くページ。本文か写真を入れたときは、このお知らせ専用のページになります。';
+      document.getElementById('news-pv').hidden = !page;
+      if (!page) document.getElementById('news-pv-frame').hidden = true;
+    };
+    const renderThumbs = () => {
+      document.getElementById('nimg-count').textContent = imgs.length ? `${imgs.length}枚` : '';
+      document.getElementById('nthumbs').innerHTML = imgs.map((im, i) => h`
+        <div class="thumb ${uploadFor(im.src) ? 'thumb--draft' : ''}" data-i="${i}">
+          <img src="${imgUrl(im.src)}" alt="" loading="lazy">
+          <div class="thumb__tools">
+            <button type="button" data-move="-1" ${i === 0 ? 'disabled' : ''} aria-label="前へ">‹</button>
+            <button type="button" data-move="1" ${i === imgs.length - 1 ? 'disabled' : ''} aria-label="後ろへ">›</button>
+            <button type="button" class="del" data-del aria-label="外す">×</button>
+          </div>
+        </div>`).join('');
+      syncLink();
+    };
+    renderThumbs();
+    f.body.addEventListener('input', syncLink);
+    document.getElementById('nthumbs').addEventListener('click', (e) => {
+      const btn = e.target.closest('button'); if (!btn) return;
+      const i = Number(btn.closest('.thumb').dataset.i);
+      if (btn.dataset.del !== undefined) imgs.splice(i, 1);
+      else { const j = i + Number(btn.dataset.move); [imgs[i], imgs[j]] = [imgs[j], imgs[i]]; }
+      renderThumbs();
+    });
+    document.getElementById('nfile').addEventListener('change', async (e) => {
+      const files = [...e.target.files]; if (!files.length) return;
+      const box = document.getElementById('naddbox'); const prog = document.getElementById('nprogress');
+      box.classList.add('is-busy'); prog.hidden = false;
+      let done = 0;
+      try {
+        for (const file of files) {
+          const r = await resizeImage(file, true);
+          const form = new FormData();
+          form.append('file', r.blob, `${file.name.replace(/\.[^.]+$/, '')}.${r.ext}`);
+          form.append('w', r.w); form.append('h', r.h); form.append('id', id);
+          const res = await api.upload('/draft/news-image', form);
+          imgs.push(res.item);
+          done++; prog.firstElementChild.style.width = `${Math.round((done / files.length) * 100)}%`;
+        }
+        toast(`${done}枚を追加しました。「下書きに保存」で確定します`);
+      } catch (err) { toast(err.message, true); }
+      // 下書きの uploads が増えたので読み直す（サムネイルの表示に使う）。フォームの入力はそのまま。
+      try { await loadData(); } catch (err) { /* 表示だけなので無視 */ }
+      box.classList.remove('is-busy'); prog.hidden = true; prog.firstElementChild.style.width = '0';
+      e.target.value = '';
+      renderThumbs();
+    });
+    const readItem = () => {
+      const page = pageWanted();
+      const body = f.body.value.trim();
+      return {
+        date: f.date.value.trim(), category: f.category.value, title: f.title.value.trim(), important: f.important.checked,
+        id, ...(body ? { body } : {}), ...(imgs.length ? { images: imgs } : {}),
+        href: page ? `news-${id}.html` : f.href.value,
+        ...(page && f.href.value ? { link: f.href.value } : {}),
+      };
+    };
+    document.getElementById('news-pv').addEventListener('click', () => {
+      const fr = document.getElementById('news-pv-frame');
+      fr.hidden = false; fr.srcdoc = newsPageDoc(readItem());
+    });
     const save = async (btn, items, log) => busy(btn, async () => { await api.put('/draft/news', { items, log }); await loadData(); go('#/news'); toast('下書きに保存しました'); });
-    document.getElementById('news-form').addEventListener('submit', (e) => {
+    f.addEventListener('submit', (e) => {
       e.preventDefault();
-      const f = e.target;
-      const item = { date: f.date.value.trim(), category: f.category.value, title: f.title.value.trim(), href: f.href.value, important: f.important.checked };
+      const item = readItem();
+      if (!item.href) return toast('リンク先を選ぶか、本文・写真を入れてください', true);
+      if (!hasNewsPage(item)) delete item.id;
       const items = [...state.data.news];
       if (isNew) items.unshift(item); else items[Number(idx)] = item;
       save(f.querySelector('[type=submit]'), items, `${isNew ? 'お知らせを投稿' : 'お知らせを修正'}：${item.title}${item.important ? '（重要）' : ''}`);
@@ -398,10 +484,21 @@
     });
   };
 
+  /** お知らせ専用ページの見え方（src/pages/news-[id].astro と同じ組み方） */
+  function newsPageDoc(n) {
+    const css = `<link rel="stylesheet" href="${state.site}assets/css/style.css"><base href="${state.site}"><style>body{padding:16px}.rv,.fu{opacity:1!important;transform:none!important;animation:none!important}</style>`;
+    const linkify = (line) => line.split(/(https?:\/\/[^\s<>「」（）]+|[a-z0-9-]+\.html(?:#[\w-]+)?)/g).map((t, i) => (i % 2 ? `<a href="${esc(t)}">${esc(t)}</a>` : esc(t))).join('');
+    const paras = (n.body || '').split(/\n\s*\n/).filter((p) => p.trim()).map((p) => `<p>${p.trim().split('\n').map(linkify).join('<br>')}</p>`).join('');
+    const imgs = n.images || [];
+    const gallery = imgs.length ? `<section class="esec" style="margin-top:48px"><div class="esec__head"><h2 class="sub-head" style="margin-bottom:0">写真</h2><span class="gallery__count">${imgs.length}枚</span></div><div class="gallery">${imgs.map((im) => `<a class="gallery__item"><img src="${imgUrl(im.src)}" width="${im.w}" height="${im.h}"></a>`).join('')}</div></section>` : '';
+    const link = n.link ? `<a class="btn btn--outline" style="margin-top:48px">関連ページを見る <span class="aw">→</span></a>` : '';
+    return `<!DOCTYPE html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width">${css}</head><body><div class="container container--narrow"><p class="page-title__en" style="margin:16px 0 0">${esc(n.date)}</p><h1 class="page-title" style="margin-top:8px">${esc(n.title)}</h1><div class="prose" style="margin-top:32px">${paras}</div>${gallery}${link}</div></body></html>`;
+  }
+
   /* プレビュー：公開サイトの CSS を読み込んだ iframe に、サイトと同じ組み方で中身を流し込む */
   let previewPick = 'top';
   views.preview = () => {
-    const changedSlugs = [...new Set((state.data.draft?.uploads || []).map((u) => u.slug))];
+    const changedSlugs = [...new Set((state.data.draft?.uploads || []).map((u) => u.slug).filter(Boolean))];
     const picks = [['top', 'トップ（お知らせ）'], ...changedSlugs.map((s) => [s, eventInfo(eventBySlug(s)).name])];
     if (!picks.some(([k]) => k === previewPick)) previewPick = 'top';
     $app.innerHTML = h`
