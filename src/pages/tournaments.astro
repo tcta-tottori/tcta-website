@@ -1,7 +1,7 @@
 ---
 import Base from '../layouts/Base.astro';
 import ScheduleCalendar from '../components/ScheduleCalendar.astro';
-import ScheduleTable from '../components/ScheduleTable.astro';
+import TournamentList from '../components/TournamentList.astro';
 import { SCHEDULE, SCHEDULE_NEXT } from '../data/schedule.js';
 import { SCHEDULE_PDF, EVENTS } from '../data/events.js';
 
@@ -69,9 +69,9 @@ const GCAL = {
         <button class="chip" type="button" data-filter="done" aria-pressed="false">終了（{count.done}）</button>
       </div>
 
-      <p class="note mt-24">大会名に矢印が付いているものは、要項・ドロー・結果・写真をまとめたページがあります。大会名をタップしてください。</p>
+      <p class="note mt-24">要項・申込書・ドロー・結果は、掲載ずみのものだけボタンが押せます。大会名をタップすると、その大会のページで全部まとめて見られます。</p>
 
-      <ScheduleTable items={SCHEDULE} id="r8-list" caption="令和8年度 大会一覧" />
+      <TournamentList items={SCHEDULE} id="r8-list" caption="令和8年度 大会一覧" />
       <p class="note" id="r8-list-empty" hidden>該当する大会はありません。</p>
 
       {extras.length > 0 && (
@@ -99,7 +99,7 @@ const GCAL = {
 
       <div class="rv" style="margin-top:64px">
         <h2 class="sub-head">令和9年度（先行案内）</h2>
-        <ScheduleTable items={SCHEDULE_NEXT} caption="令和9年度 大会（先行案内）" />
+        <TournamentList items={SCHEDULE_NEXT} caption="令和9年度 大会（先行案内）" />
       </div>
 
       <div class="rv panel panel--gray" style="margin-top:64px">

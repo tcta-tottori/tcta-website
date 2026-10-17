@@ -2294,45 +2294,102 @@ body.jsrv .rv.on .ink-sweep {
 
 /* 表 */
 .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-.data-table {
-  width: 100%;
-  min-width: 1080px;
-  border-collapse: collapse;
-  font: 400 14px/1.6 var(--fjp);
-}
-.data-table th, .data-table td {
-  padding: 14px 12px;
-  border-bottom: 1px solid var(--gray-200);
-  text-align: left;
-  vertical-align: middle;
-}
-.data-table thead th {
-  background: var(--gray-050);
-  font: 700 13px/1.5 var(--fjp);
-  letter-spacing: .04em;
-  color: var(--ink);
-  border-bottom: 1px solid var(--gray-300);
-  white-space: nowrap;
-}
-.data-table tbody tr:hover { background: var(--gray-050); }
-.data-table .col-date { width: 96px; white-space: nowrap; font-family: var(--flt); font-weight: 500; letter-spacing: .04em; }
-/* 期日欄。トップページの大会カードと同じ「08.16 ＋ 改行 ＋ SUN」で出す。
-   カードの日程チップと違い、表では枠を持たせず文字だけを2段に置く。 */
-.date-cell { display: flex; flex-direction: column; gap: 3px; }
-.date-cell__md { font: 700 19px/1 var(--flt); letter-spacing: .02em; color: var(--ink); }
-.date-cell__dow { font: 700 11px/1 var(--flt); letter-spacing: .1em; color: var(--red); }
-/* 1日で終わらない大会・祝日開催の一言。チップの下に小さく添える。 */
-.date-cell__note { display: block; margin-top: 6px; font: 400 12px/1.5 var(--fjp); letter-spacing: 0; color: var(--gray-500); white-space: normal; }
-/* 終了した大会は行ごと薄くしているので、日付の黒と赤もそれに合わせる */
-.data-table tr.is-ended .date-cell__md,
-.data-table tr.is-ended .date-cell__dow { color: var(--gray-500); }
-.data-table .col-place { width: 180px; }
-.data-table .col-spare { width: 96px; white-space: nowrap; font-family: var(--flt); font-weight: 500; letter-spacing: .04em; }
-.data-table .col-note { width: 96px; font-family: var(--flt); font-weight: 500; letter-spacing: .04em; }
-.data-table .col-reg { width: 108px; }
-.data-table__sub { font: 400 13px/1.6 var(--fjp); color: var(--gray-500); }
 
-/* 登録区分。県＝白地に赤、市＝赤地に白、不要＝グレー地に白。 */
+/* ---- 大会一覧（大会情報ページ）----
+   1大会を1ブロックで出す。見出しはサイト共通の赤い角マーク、下に細い罫。
+   その下に 日程・会場・種目、要項／申込書／ドロー／結果 の4ボタン、備考 の順。
+   表だと7列を横に読まされるが、ブロックなら上から順に読めば済むので
+   スマホで横にずらさなくてよい。ボタンは共通の .btn--outline をそのまま使う。 */
+.tl { display: flex; flex-direction: column; gap: 56px; }
+@media (min-width: 1024px) { .tl { gap: 72px; } }
+.tl-item[hidden] { display: none; }
+
+.tl-item__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 10px 14px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--gray-200);
+}
+.tl-item__head .sec-head__mark { width: 12px; height: 12px; margin-top: 9px; }
+.tl-item__title {
+  /* 角マークと同じ行に残るよう、折り返しの下限を小さめにしておく（バッジは次の行へ） */
+  flex: 1 1 200px;
+  min-width: 0;
+  margin: 0;
+  font: 700 19px/1.5 var(--fjp);
+  letter-spacing: .03em;
+  color: var(--ink);
+}
+@media (min-width: 1024px) { .tl-item__title { font-size: 22px; } }
+.tl-item__title a { transition: color .3s ease; }
+.tl-item__title a:hover { color: var(--red); }
+.tl-item__tags { display: flex; align-items: center; gap: 8px; margin: 2px 0 0; padding-left: 26px; }
+@media (min-width: 640px) { .tl-item__tags { margin-left: auto; padding-left: 0; } }
+.tl-item--done .tl-item__head .sec-head__mark { background: var(--gray-300); }
+.tl-item--done .tl-item__title { color: var(--gray-600); }
+
+.tl-item__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 20px 0 0;
+}
+.tl-item__row { display: flex; align-items: flex-start; gap: 10px; }
+.tl-item__row dt { flex: none; display: flex; align-items: center; height: 24px; color: var(--gray-600); }
+.tl-item__row dd {
+  margin: 0;
+  font: 400 15px/1.6 var(--fjp);
+  letter-spacing: .03em;
+  color: var(--gray-800);
+}
+.tl-item__ico { width: 18px; height: 18px; }
+/* 日程は大会カード・個別ページと同じく Barlow の「2026.10.18 SUN」 */
+.tl-item__date { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 10px; }
+.tl-item__ymd { font: 700 18px/24px var(--flt); letter-spacing: .03em; color: var(--ink); }
+.tl-item__dow { font: 700 12px/24px var(--flt); letter-spacing: .1em; color: var(--red); }
+.tl-item__date-note { font: 400 13px/24px var(--fjp); letter-spacing: 0; color: var(--gray-500); }
+.tl-item--done .tl-item__ymd, .tl-item--done .tl-item__dow { color: var(--gray-500); }
+.tl-item--done .tl-item__row dd { color: var(--gray-600); }
+
+/* 4つのボタン。スマホは2列、640px から4つ横に並べる。 */
+.tl-item__btns {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-top: 24px;
+}
+@media (min-width: 640px) {
+  .tl-item__btns { grid-template-columns: repeat(4, minmax(0, 1fr)); max-width: 760px; gap: 12px; }
+}
+.tl-btn { width: 100%; gap: 12px; padding-inline: 20px; }
+.tl-btn:hover .aw { transform: translateX(4px); }
+/* まだ素材の無いもの。押せないことが色で分かるよう、枠を消して薄い地にする */
+.tl-btn--off {
+  border: 1px solid var(--gray-100);
+  background: var(--gray-100);
+  color: var(--gray-300);
+  cursor: default;
+  pointer-events: none;
+  justify-content: center;
+}
+
+.tl-item__note { margin-top: 24px; }
+.tl-item__note-label {
+  margin: 0 0 6px;
+  font: 700 12px/1.5 var(--fjp);
+  letter-spacing: .06em;
+  color: var(--gray-500);
+}
+.tl-item__note-list { display: flex; flex-direction: column; gap: 6px; }
+.tl-item__note-list li {
+  font: 400 14px/1.7 var(--fjp);
+  letter-spacing: .03em;
+  color: var(--gray-800);
+}
+.tl-item--done .tl-item__note-list li { color: var(--gray-600); }
+
 .reg {
   display: inline-flex;
   align-items: center;
@@ -2348,12 +2405,6 @@ body.jsrv .rv.on .ink-sweep {
 .reg--ken { background: var(--white); border: 1px solid var(--red); color: var(--red); }
 .reg--shi { background: var(--red); color: #fff; }
 .reg--free { background: var(--gray-600); color: #fff; }
-.data-table .name { font-weight: 700; color: var(--ink); }
-.data-table tr.is-open { background: var(--red-tint); }
-.data-table tr.is-open:hover { background: #f9e2e4; }
-.data-table tr.is-ended { color: var(--gray-500); }
-.data-table tr.is-ended .name { color: var(--gray-500); font-weight: 500; }
-.data-table tr[hidden] { display: none; }
 
 /* フィルタチップ / タブ */
 .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 24px; }

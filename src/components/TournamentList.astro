@@ -1,0 +1,115 @@
+---
+// 大会一覧の1件ずつのブロック。src/data/schedule.js の配列をそのまま受け取る。
+//
+//   大会名（左に赤い縦線）＋ 受付状態・登録区分のバッジ
+//   日付（カレンダー印）／会場（地図のピン）
+//   要項・申込書・ドロー・結果 の4つのボタン（素材の無いものは灰色で押せない）
+//   備考（締切・予備日・荒天時の扱い・外部の申込先）
+//
+// ボタンの行き先は大会の個別ページ（event-<slug>.html）の該当する節。
+// 個別ページがまだ無い大会は4つとも押せない状態で出し、大会名もリンクにしない。
+import Icon from './Icon.astro';
+import { REG_LABEL, STATUS_LABEL, dateCell } from '../data/schedule.js';
+import { eventForSchedule } from '../data/events.js';
+
+const { items, id, caption } = Astro.props;
+
+/** 日程。トップの大会カード・個別ページと同じ「2026.10.18 ＋ SUN」。期間・祝日は一言添える。 */
+function dateText(t) {
+  const c = dateCell(t);
+  return { ymd: `${t.date.slice(0, 4)}.${c.md}`, dow: c.dow, note: c.note };
+}
+
+/** 4つのボタン。該当する節が個別ページにあればそこへ飛ばす。 */
+function buttons(t, e) {
+  const has = (key) => !!e && e.sections.some((s) => s.key === key);
+  const link = (key) => (has(key) ? `${e.url}#${key}` : null);
+  return [
+    { key: 'outline', label: '要項', href: link('outline') },
+    { key: 'entry', label: '申込書', href: link('entry') },
+    { key: 'draw', label: 'ドロー', href: link('draw') },
+    {
+      key: 'result',
+      label: '結果',
+      href: e?.hasResult ? `${e.url}#${has('result') ? 'result' : 'winners'}` : null,
+    },
+  ];
+}
+
+/** 備考の文言。締切・予備日・荒天時の扱い・外部の申込先を並べる。 */
+function notes(t, e) {
+  const list = [];
+  if (t.due && t.due !== '—') list.push({ text: `エントリー締切 ${t.due}` });
+  if (t.spareDate) list.push({ text: `予備日 ${t.spareDate}${t.spareVenue ? `（${t.spareVenue}）` : ''}` });
+  else if (t.spareNote) list.push({ text: t.spareNote });
+  if (e?.link) list.push({ text: e.link.label, href: e.link.url, external: true });
+  return list;
+}
+
+const rows = items.map((t) => {
+  const e = eventForSchedule(t);
+  return { t, e, date: dateText(t), buttons: buttons(t, e), notes: notes(t, e), badge: STATUS_LABEL[t.status] };
+});
+---
+
+<div class="tl" id={id} role="list" aria-label={caption}>
+  {rows.map(({ t, e, date, buttons, notes, badge }) => (
+    <article
+      class:list={['tl-item rv', t.status === 'done' && 'tl-item--done', t.status === 'open' && 'tl-item--open']}
+      data-tags={`${t.status} ${t.reg}`}
+      role="listitem"
+    >
+      <header class="tl-item__head">
+        <span class="sec-head__mark" aria-hidden="true"></span>
+        <h3 class="tl-item__title">
+          {e ? <a href={e.url}>{t.name}</a> : t.name}
+        </h3>
+        <p class="tl-item__tags">
+          <span class={`badge ${badge.badge}`}>{badge.label}</span>
+          <span class={`reg reg--${t.reg}`}>{REG_LABEL[t.reg]}</span>
+        </p>
+      </header>
+
+      <dl class="tl-item__meta">
+        <div class="tl-item__row">
+          <dt><Icon name="calendar" class="tl-item__ico" /><span class="visually-hidden">日程</span></dt>
+          <dd class="tl-item__date">
+            <span class="tl-item__ymd">{date.ymd}</span><span class="tl-item__dow">{date.dow}</span>
+            {date.note && <span class="tl-item__date-note">{date.note}</span>}
+          </dd>
+        </div>
+        <div class="tl-item__row">
+          <dt><Icon name="pin" class="tl-item__ico" /><span class="visually-hidden">会場</span></dt>
+          <dd>{t.place}</dd>
+        </div>
+        <div class="tl-item__row">
+          <dt><Icon name="list" class="tl-item__ico" /><span class="visually-hidden">種目</span></dt>
+          <dd>{t.event}</dd>
+        </div>
+      </dl>
+
+      <div class="tl-item__btns">
+        {buttons.map((b) =>
+          b.href
+            ? <a class="btn btn--outline tl-btn" href={b.href}>{b.label}<span class="aw" aria-hidden="true">→</span></a>
+            : <span class="btn tl-btn tl-btn--off" aria-disabled="true" title="準備中">{b.label}</span>
+        )}
+      </div>
+
+      {notes.length > 0 && (
+        <div class="tl-item__note">
+          <p class="tl-item__note-label">備考</p>
+          <ul class="tl-item__note-list">
+            {notes.map((n) => (
+              <li>
+                {n.href
+                  ? <a class="ghost-link" href={n.href} target="_blank" rel="noopener noreferrer">{n.text}<span class="aw" aria-hidden="true">↗</span></a>
+                  : n.text}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </article>
+  ))}
+</div>
