@@ -2125,6 +2125,14 @@ body.jsrv .rv.on .ink-sweep {
   }
 }
 
+/* トップページのセクション見出しと同じ見え方にする下層ページ（大会情報）。
+   灰色の帯をやめて白地にし、背景の英字も白地用の濃さに戻す。 */
+.page-head--plain { background: var(--white); border-bottom: 0; }
+.page-head--plain .ghost { color: var(--ghost); }
+/* 見出しの直下に置く絞り込み。トップの「終了した大会／今後の大会」の列にあたる。 */
+.page-head__chips { position: relative; margin: 28px 0 0; }
+
+
 .breadcrumb {
   position: relative;
   display: flex;
