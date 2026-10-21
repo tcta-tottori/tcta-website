@@ -16,6 +16,10 @@ const PROGRAM = [
 
 const YOUKOU_PDF = { src: 'assets/pdf/tennis-day/2026-tennis-matsuri-youkou.pdf', kb: 783 };
 const YOUKOU_IMG = { src: 'assets/img/tennis-day/2026-youkou.webp', w: 1273, h: 1800 };
+
+// 当日のギャラリー（公式サイトの「2026テニス祭り」から取り込んだもの。写真は tennisday-2026.json）
+import GALLERY from '../data/tennisday-2026.json';
+let photoNo = 0;
 ---
 
 <Base
@@ -38,11 +42,52 @@ const YOUKOU_IMG = { src: 'assets/img/tennis-day/2026-youkou.webp', w: 1273, h: 
           <h1 class="page-title" style="margin-top:8px">テニス祭り</h1>
         </div>
       </div>
-      <p class="page-lead fu" style="animation-delay:.15s">2026年10月12日（祝）、鳥取県立鳥取産業体育館メインアリーナで「テニス祭り 鳥取イベント」を開きます。子ども向けのキッズテニスから、元プロ 加藤季温コーチのクリニック、ピックルボール体験会まで。協会登録は不要で、どなたでも参加できます。</p>
+      <p class="page-lead fu" style="animation-delay:.15s">2026年10月12日（祝）、鳥取県立鳥取産業体育館メインアリーナで「テニス祭り 鳥取イベント」を開催しました。子ども向けのキッズテニスから、元プロ 加藤季温コーチのクリニック、ピックルボール体験会まで。たくさんの方にお集まりいただき、ありがとうございました。当日の写真と動画をご覧いただけます。</p>
     </div>
   </section>
 
-  <section class="section">
+  <section class="section" id="gallery">
+    <div class="container">
+
+      <div class="rv">
+        <div class="esec__head">
+          <h2 class="sub-head" style="margin-bottom:0">イベントギャラリー</h2>
+          <span class="esec__en">Gallery</span>
+        </div>
+        <p class="note mt-24">先日開催したテニスイベントは、参加者の皆様の熱気に包まれ無事終了しました。たくさんの方にお集まりいただき、誠にありがとうございます。</p>
+        <a class="sheet mt-24" href={GALLERY.hero.src} style="display:block">
+          <img src={GALLERY.hero.src} alt="2026テニス祭り鳥取イベント" width={GALLERY.hero.w} height={GALLERY.hero.h} loading="lazy" decoding="async">
+        </a>
+        <div class="video-embed mt-32">
+          <iframe src={`https://www.youtube-nocookie.com/embed/${GALLERY.video}`} title="2026テニス祭り鳥取イベント（YouTube）" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>
+        </div>
+        <p class="note">※ 動画は協会の YouTube チャンネルで公開しています。</p>
+      </div>
+
+      {GALLERY.blocks.map((b) => (
+        <div class="rv" style="margin-top:56px" id={`gallery-${b.id}`}>
+          <h3 class="sub-head">{b.title}</h3>
+          <p class="prose" style="max-width:46em">{b.lead}</p>
+          {b.lead?.src && (
+            <a class="sheet" href={b.lead.src} style="display:block;margin-bottom:16px">
+              <img class="gallery-lead" src={b.lead.src} alt={`${b.title}の写真`} width={b.lead.w} height={b.lead.h} loading="lazy" decoding="async">
+            </a>
+          )}
+          <div class="gallery">
+            {b.photos.map((ph) => (
+              <a class="gallery__item" href={ph.src}>
+                <img src={ph.src} alt={`${b.title}の写真 ${++photoNo}`} width={ph.w} height={ph.h} loading="lazy" decoding="async">
+              </a>
+            ))}
+          </div>
+        </div>
+      ))}
+
+      <p class="note rv">※ 画像をタップすると全画面で表示します。</p>
+    </div>
+  </section>
+
+  <section class="section section--gray">
     <div class="container">
 
       <div class="rv">
@@ -69,17 +114,18 @@ const YOUKOU_IMG = { src: 'assets/img/tennis-day/2026-youkou.webp', w: 1273, h: 
             </div>
           ))}
         </div>
-        <p class="note">※ 内容・時間は変更になる場合があります。最新の情報は募集要項をご確認ください。</p>
+        <p class="note">※ 開催時のプログラムです。</p>
       </div>
 
       <div class="rv panel panel--tint" style="margin-top:56px">
         <p class="panel__title">コーチ紹介　加藤 季温（かとう としおん）</p>
-        <p class="prose" style="margin:0">元プロテニスプレーヤー。2002年 国体優勝、2007年 全日本テニス選手権優勝、全日本大学テニス選手権3連覇、インターハイ優勝、ユニバーシアード日本代表。午後のテニスクリニックとタイブレークマッチで指導・対戦していただきます。</p>
+        <p class="prose" style="margin:0">元プロテニスプレーヤー。兵庫県神戸市出身、株式会社KION 代表取締役。2002年 国体優勝、2007年 全日本テニス選手権優勝、全日本大学テニス選手権3連覇、インターハイ優勝、ユニバーシアード日本代表。日本ランキング最高11位。テニスクリニックとタイブレークマッチで指導・対戦していただきました。</p>
+        <a class="ghost-link mt-24" href={GALLERY.coachChannel} target="_blank" rel="noopener noreferrer">加藤コーチの YouTube チャンネル <span class="aw">↗</span></a>
       </div>
 
       <div class="rv" style="margin-top:56px">
-        <h2 class="sub-head">募集要項・申込用紙</h2>
-        <p class="note" style="margin-bottom:0">申込用紙は募集要項の下段にあります。画像をタップすると全画面で表示します。</p>
+        <h2 class="sub-head">募集要項・申込用紙（開催時のもの）</h2>
+        <p class="note" style="margin-bottom:0">当日の募集要項です。画像をタップすると全画面で表示します。</p>
         <div class="sheets">
           <a class="sheet" href={YOUKOU_IMG.src}>
             <img src={YOUKOU_IMG.src} alt="2026テニス祭り鳥取イベント 募集要項" width={YOUKOU_IMG.w} height={YOUKOU_IMG.h} loading="lazy" decoding="async">

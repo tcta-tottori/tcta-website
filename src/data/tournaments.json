@@ -107,5 +107,15 @@
     "status": "closed",
     "image": "assets/img/results/2023/2023enetpia-hai-025.webp",
     "imageAlt": "ダブルスの試合で、前衛がボレーに出る場面"
+  },
+  {
+    "date": "2026.11.23",
+    "slug": "r8-shicho",
+    "title": "第41回鳥取市市長杯",
+    "event": "男女シングルス",
+    "venue": "ヤマタスポーツパーク",
+    "status": "open",
+    "image": "assets/img/events/r7-shicho/photo-01.webp",
+    "imageAlt": "市長杯のコート。表彰式に並ぶ選手たち"
   }
 ]
