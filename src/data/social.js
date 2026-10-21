@@ -3,7 +3,8 @@
 // ここでは、入れられた値（@tcta のようなハンドル、または URL そのもの）を公開 URL に直す。
 // 値が空のサービスは出ない。フッターとリンク集の「協会の公式アカウント」に並ぶ。
 
-const handle = (v) => String(v).trim().replace(/^@/, '').replace(/^https?:\/\/[^/]+\//, '').replace(/\/+$/, '');
+// ハンドルは日本語のこともある（YouTube の @鳥取市テニス協会 など）ので、URL に入れる形に直す
+const handle = (v) => encodeURIComponent(String(v).trim().replace(/^@/, '').replace(/^https?:\/\/[^/]+\//, '').replace(/\/+$/, ''));
 const isUrl = (v) => /^https?:\/\//i.test(String(v).trim());
 
 /** 出す順に並べる。label はそのまま文字として出る。 */

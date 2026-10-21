@@ -282,7 +282,13 @@ const seed = {
   $schema: 'https://emdashcms.com/seed.schema.json',
   version: '1',
   meta: { name: '鳥取市テニス協会', description: '鳥取市テニス協会 公式サイトの内容モデルと移行時の内容', author: '鳥取市テニス協会' },
-  settings: { title: '鳥取市テニス協会', tagline: 'つなぐ、広がる、テニスの輪。', timezone: 'Asia/Tokyo' },
+  settings: {
+    title: '鳥取市テニス協会',
+    tagline: 'つなぐ、広がる、テニスの輪。',
+    timezone: 'Asia/Tokyo',
+    // 協会の SNS（管理画面の Settings → Social でも変えられる）
+    social: { youtube: '@鳥取市テニス協会', instagram: 'tottori.city.tennis' },
+  },
   blockTypes,
   collections,
   content: { news, tournaments, event_info },

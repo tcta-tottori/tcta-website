@@ -9,7 +9,11 @@
 	"settings": {
 		"title": "鳥取市テニス協会",
 		"tagline": "つなぐ、広がる、テニスの輪。",
-		"timezone": "Asia/Tokyo"
+		"timezone": "Asia/Tokyo",
+		"social": {
+			"youtube": "@鳥取市テニス協会",
+			"instagram": "tottori.city.tennis"
+		}
 	},
 	"blockTypes": [
 		{
