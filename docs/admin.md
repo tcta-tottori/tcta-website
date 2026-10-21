@@ -139,3 +139,4 @@ GitHub の代わりに、このリポジトリを一時フォルダに clone し
 - 写真・PDF を R2 に置き、リポジトリを軽くする
 - お問い合わせフォームの送信先を同じ Worker に持たせる（docs/cloudflare.md）
 - 公式サイトごと Workers Static Assets に移す（Cloudflare は新規には Pages より Workers を勧めている）
+- ページ本文のブロック編集に着手するとき、この自作アプリを Cloudflare の CMS「EmDash」に置き換えるか検討する（docs/emdash.md）

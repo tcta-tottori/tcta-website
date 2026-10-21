@@ -9,6 +9,9 @@
 | [`design.md`](./design.md) | ビジュアルデザイン仕様書 v3.1。カラー、タイポグラフィ、余白、コンポーネント、レスポンシブ、アクセシビリティの規則。`assets/css/style.css` のCSS変数はこの仕様に対応しています |
 | [`content.md`](./content.md) | 原稿仕様書 v2.0。各ページの実テキスト、情報構成、`【要確認】` 項目の一覧 |
 | [`design-chat-log.md`](./design-chat-log.md) | ファーストビュー3案の提案から採用案（3a）決定までの検討ログ。なぜこの構成になったかの経緯 |
+| [`cloudflare.md`](./cloudflare.md) | Cloudflare（Pages／Workers／Wrangler）導入の検討メモ。お問い合わせフォームを繋ぐ段階で移す判断 |
+| [`admin.md`](./admin.md) | サイト更新アプリ（管理画面）の構成と設置手順。Cloudflare Worker から GitHub に 1 コミットして公開する仕組み |
+| [`emdash.md`](./emdash.md) | Cloudflare の CMS「EmDash」導入の検討メモ。動画の主張の検証、手元で試した結果、このサイトとの比較、2 つの移行案と結論 |
 
 ## 使い方
 

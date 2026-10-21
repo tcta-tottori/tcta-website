@@ -52,6 +52,7 @@
 - [`docs/design-chat-log.md`](./docs/design-chat-log.md) — ファーストビュー3案から採用案決定までの検討ログ
 - [`docs/cloudflare.md`](./docs/cloudflare.md) — Cloudflare（Pages／Workers／Wrangler）導入の検討メモ
 - [`docs/admin.md`](./docs/admin.md) — サイト更新アプリ（管理画面）の構成と設置手順
+- [`docs/emdash.md`](./docs/emdash.md) — Cloudflare の CMS「EmDash」導入の検討メモ（動画の主張の検証・このサイトへの適合・2 つの移行案）
 
 ## ローカルでの確認
 
