@@ -64,7 +64,7 @@
     "title": "第31回エネトピア杯テニス大会",
     "event": "ミックスダブルス",
     "venue": "ヤマタスポーツパーク",
-    "status": "closed",
+    "status": "past",
     "image": "assets/img/tournaments/enetopia-2026.webp",
     "imageAlt": "第31回エネトピア杯テニス大会の告知バナー。エネトピアの旗を持つ男女の選手"
   },
@@ -104,7 +104,7 @@
     "title": "2026 プリンスオープン チーム対抗戦",
     "event": "チーム対抗戦（男子複・女子複・混合複）",
     "venue": "ヤマタスポーツパーク",
-    "status": "open",
+    "status": "closed",
     "image": "assets/img/results/2023/2023enetpia-hai-025.webp",
     "imageAlt": "ダブルスの試合で、前衛がボレーに出る場面"
   }
