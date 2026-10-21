@@ -1,8 +1,10 @@
 ---
 // 全ページ上部の赤い帯。中止・延期など、来た人が最初に知るべきお知らせだけを出す。
-// 出すかどうかは news.json の important フラグ（管理画面の「目立たせる」）で決まる。
-import { IMPORTANT_NEWS, newsDate } from '../data/news.js';
+// 出すかどうかは、お知らせの「目立たせる」（管理画面のチェック）で決まる。
+import { siteData } from '../lib/cms.js';
+import { newsDate } from '../data/news.js';
 
+const { IMPORTANT_NEWS } = await siteData(Astro);
 const items = IMPORTANT_NEWS.slice(0, 3);
 ---
 

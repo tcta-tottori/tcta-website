@@ -3,7 +3,10 @@
 // 出すのは1か月ぶんだけ。前後のボタンで月を移す（main.js の initCalendar）。
 // 全月ぶんのマス目は最初から書き出しておき、表示の切り替えだけをJSが行うので、
 // JSが動かない環境でも先頭の月は読める。
-import { SCHEDULE, STATUS_LABEL, byMonth, monthGrid } from '../data/schedule.js';
+import { siteData } from '../lib/cms.js';
+import { STATUS_LABEL, byMonth, monthGrid } from '../data/schedule.js';
+
+const { SCHEDULE } = await siteData(Astro);
 
 const DOW = ['日', '月', '火', '水', '木', '金', '土'];
 const months = byMonth(SCHEDULE).map((m) => ({ ...m, ...monthGrid(m) }));

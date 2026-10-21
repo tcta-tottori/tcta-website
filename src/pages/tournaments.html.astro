@@ -2,8 +2,11 @@
 import Base from '../layouts/Base.astro';
 import ScheduleCalendar from '../components/ScheduleCalendar.astro';
 import TournamentList from '../components/TournamentList.astro';
-import { SCHEDULE, SCHEDULE_NEXT } from '../data/schedule.js';
-import { SCHEDULE_PDF, EVENTS } from '../data/events.js';
+import { siteData } from '../lib/cms.js';
+import { CURRENT_NENDO } from '../data/schedule.js';
+import { SCHEDULE_PDF } from '../data/events.js';
+
+const { SCHEDULE, SCHEDULE_NEXT, EVENTS } = await siteData(Astro);
 
 const title = "大会情報｜鳥取市テニス協会";
 const description = "令和8年度（2026年度）に鳥取市テニス協会が主催・主管する全19大会の一覧。エントリー締切・会場・登録区分を掲載しています。";
@@ -16,7 +19,7 @@ const count = {
 };
 
 // 一覧に入らない大会（協会が結果を預かっているもの）は、表の下に別立てで案内する
-const extras = EVENTS.filter((e) => !e.no && e.nendo === '2026');
+const extras = EVENTS.filter((e) => e.kind === 'extra' && e.nendo === CURRENT_NENDO);
 
 // 協会の Google カレンダー（旧サイトで埋め込んでいたもの）。
 // embed は表示用、subscribe は「＋」と同じく自分のカレンダーに追加する入口。

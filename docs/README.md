@@ -10,8 +10,8 @@
 | [`content.md`](./content.md) | 原稿仕様書 v2.0。各ページの実テキスト、情報構成、`【要確認】` 項目の一覧 |
 | [`design-chat-log.md`](./design-chat-log.md) | ファーストビュー3案の提案から採用案（3a）決定までの検討ログ。なぜこの構成になったかの経緯 |
 | [`cloudflare.md`](./cloudflare.md) | Cloudflare（Pages／Workers／Wrangler）導入の検討メモ。お問い合わせフォームを繋ぐ段階で移す判断 |
-| [`admin.md`](./admin.md) | サイト更新アプリ（管理画面）の構成と設置手順。Cloudflare Worker から GitHub に 1 コミットして公開する仕組み |
-| [`emdash.md`](./emdash.md) | Cloudflare の CMS「EmDash」導入の検討メモ。動画の主張の検証、手元で試した結果、このサイトとの比較、2 つの移行案と結論 |
+| [`admin.md`](./admin.md) | （置き換え前の記録）自作のサイト更新アプリの構成と設置手順。2026-10-21 に EmDash へ置き換えた |
+| [`emdash.md`](./emdash.md) | CMS「EmDash」への移行。内容モデル、設置手順（Cloudflare Workers・D1・R2）、更新のしかた、AI からの更新、検討の経緯 |
 
 ## 使い方
 
@@ -24,5 +24,5 @@
 
 ## 注意
 
-GitHub Pages の公開元（Settings → Pages → Source）は **GitHub Actions** を選択してください。
-`Deploy from a branch` のままだと、ビルド前のソースが公開されて表示が崩れます。
+公式サイトは Cloudflare Workers で動いています（`main` への push で `.github/workflows/deploy.yml` が配備）。
+GitHub Pages はもう使いません。配備に必要な設定は `emdash.md` の「設置手順」を参照してください。

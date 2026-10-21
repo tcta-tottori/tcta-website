@@ -1,5 +1,10 @@
 # tools —— 旧サイトから大会結果を起こすための道具
 
+> **2026-10-21 に EmDash へ移行した。** お知らせ・大会・大会の素材は管理画面（`/_emdash/admin/`）で更新する。
+> `build_events.py`・`fetch_winners.py` が書いていた `src/data/events.json`・`winners.json` は、移行時に
+> `build_seed.mjs` が `seed/seed.json` へ取り込んだ記録として残してあり、**もう公式サイトには使われない**。
+> 以下は `src/data/results.json`（平成16〜令和6年度の結果。いまも results.html が読む）の作り方。
+
 `src/data/results.json`（平成16年度〜令和6年度・327大会）は手書きではなく、
 旧サイト <https://tottori-tennis.sakura.ne.jp> を保存したデータから起こしている。
 その手順をここに残す。ふだんの更新では使わない。**結果を直したいときは

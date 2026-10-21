@@ -1,0 +1,8049 @@
+{
+	"$schema": "https://emdashcms.com/seed.schema.json",
+	"version": "1",
+	"meta": {
+		"name": "鳥取市テニス協会",
+		"description": "鳥取市テニス協会 公式サイトの内容モデルと移行時の内容",
+		"author": "鳥取市テニス協会"
+	},
+	"settings": {
+		"title": "鳥取市テニス協会",
+		"tagline": "つなぐ、広がる、テニスの輪。",
+		"timezone": "Asia/Tokyo"
+	},
+	"blockTypes": [
+		{
+			"slug": "material_image",
+			"label": "画像（要項・ドロー・結果・写真）",
+			"currentVersion": 1,
+			"versions": [
+				{
+					"version": 1,
+					"fields": [
+						{
+							"slug": "section",
+							"label": "種類",
+							"type": "select",
+							"validation": {
+								"options": [
+									"要項",
+									"申込用紙",
+									"ドロー",
+									"結果",
+									"当日の写真"
+								]
+							},
+							"defaultValue": "結果",
+							"required": true
+						},
+						{
+							"slug": "image",
+							"label": "画像",
+							"type": "image",
+							"required": true
+						},
+						{
+							"slug": "label",
+							"label": "説明（例：男子シングルスA級）",
+							"type": "string"
+						}
+					]
+				}
+			]
+		},
+		{
+			"slug": "material_pdf",
+			"label": "PDF（要項・申込用紙・ドロー・結果）",
+			"currentVersion": 1,
+			"versions": [
+				{
+					"version": 1,
+					"fields": [
+						{
+							"slug": "section",
+							"label": "種類",
+							"type": "select",
+							"validation": {
+								"options": [
+									"要項",
+									"申込用紙",
+									"ドロー",
+									"結果"
+								]
+							},
+							"defaultValue": "要項",
+							"required": true
+						},
+						{
+							"slug": "file",
+							"label": "PDF",
+							"type": "file",
+							"required": true,
+							"validation": {
+								"allowedMimeTypes": [
+									"application/pdf"
+								]
+							}
+						},
+						{
+							"slug": "label",
+							"label": "ボタンの文言（例：R8東部選手権シングルス要項）",
+							"type": "string"
+						}
+					]
+				}
+			]
+		}
+	],
+	"collections": [
+		{
+			"slug": "news",
+			"label": "お知らせ",
+			"labelSingular": "お知らせ",
+			"supports": [
+				"drafts",
+				"revisions",
+				"search"
+			],
+			"fields": [
+				{
+					"slug": "title",
+					"label": "タイトル",
+					"type": "string",
+					"required": true,
+					"searchable": true
+				},
+				{
+					"slug": "date",
+					"label": "日付（2026-10-12 の形）",
+					"type": "string",
+					"required": true,
+					"indexed": true
+				},
+				{
+					"slug": "category",
+					"label": "分類",
+					"type": "select",
+					"validation": {
+						"options": [
+							"大会",
+							"結果",
+							"ジュニア",
+							"お知らせ"
+						]
+					},
+					"defaultValue": "お知らせ",
+					"required": true
+				},
+				{
+					"slug": "href",
+					"label": "リンク先（サイト内のページ。例：event-r8-enetopia.html）",
+					"type": "string",
+					"required": true
+				},
+				{
+					"slug": "important",
+					"label": "目立たせる（中止・延期など。全ページ上部の赤い帯に出す）",
+					"type": "boolean",
+					"defaultValue": false
+				}
+			]
+		},
+		{
+			"slug": "tournaments",
+			"label": "大会",
+			"labelSingular": "大会",
+			"supports": [
+				"drafts",
+				"revisions",
+				"search"
+			],
+			"fields": [
+				{
+					"slug": "name",
+					"label": "大会名",
+					"type": "string",
+					"required": true,
+					"searchable": true
+				},
+				{
+					"slug": "nendo",
+					"label": "年度（西暦。令和8年度＝2026）",
+					"type": "string",
+					"required": true,
+					"indexed": true
+				},
+				{
+					"slug": "no",
+					"label": "通し番号（協会主催の大会のみ。01〜19）",
+					"type": "string"
+				},
+				{
+					"slug": "kind",
+					"label": "区分",
+					"type": "select",
+					"validation": {
+						"options": [
+							"協会主催",
+							"預かり",
+							"その他"
+						]
+					},
+					"defaultValue": "協会主催",
+					"required": true
+				},
+				{
+					"slug": "event",
+					"label": "種目",
+					"type": "string"
+				},
+				{
+					"slug": "date",
+					"label": "開催日（2026-10-18 の形。期間の大会は初日）",
+					"type": "string",
+					"required": true,
+					"indexed": true
+				},
+				{
+					"slug": "label",
+					"label": "期日の表記（例：10月18日（日））",
+					"type": "string"
+				},
+				{
+					"slug": "place",
+					"label": "会場",
+					"type": "string"
+				},
+				{
+					"slug": "spare_date",
+					"label": "予備日（例：10/24）",
+					"type": "string"
+				},
+				{
+					"slug": "spare_venue",
+					"label": "予備会場",
+					"type": "string"
+				},
+				{
+					"slug": "spare_note",
+					"label": "予備日がないときの補足（例：荒天中止）",
+					"type": "string"
+				},
+				{
+					"slug": "due",
+					"label": "申込締切（例：10/9）",
+					"type": "string"
+				},
+				{
+					"slug": "state",
+					"label": "受付状態",
+					"type": "select",
+					"validation": {
+						"options": [
+							"終了",
+							"受付終了",
+							"受付中",
+							"まもなく受付",
+							"本日開催"
+						]
+					},
+					"defaultValue": "まもなく受付",
+					"required": true
+				},
+				{
+					"slug": "reg",
+					"label": "登録区分",
+					"type": "select",
+					"validation": {
+						"options": [
+							"県登録",
+							"市登録",
+							"登録不要"
+						]
+					},
+					"defaultValue": "市登録",
+					"required": true
+				},
+				{
+					"slug": "host",
+					"label": "主催（協会以外のとき）",
+					"type": "string"
+				},
+				{
+					"slug": "note",
+					"label": "補足（概要の下に出る）",
+					"type": "text"
+				},
+				{
+					"slug": "link_label",
+					"label": "外部リンクの文言",
+					"type": "string"
+				},
+				{
+					"slug": "link_url",
+					"label": "外部リンクの URL",
+					"type": "url"
+				},
+				{
+					"slug": "card",
+					"label": "トップページの大会カードに出す",
+					"type": "boolean",
+					"defaultValue": false
+				},
+				{
+					"slug": "card_event",
+					"label": "カードに出す種目の文言（空なら「種目」をそのまま使う）",
+					"type": "string"
+				},
+				{
+					"slug": "card_image",
+					"label": "カードの写真",
+					"type": "image"
+				},
+				{
+					"slug": "card_image_alt",
+					"label": "カードの写真の説明（読み上げ用）",
+					"type": "string"
+				},
+				{
+					"slug": "card_image_path",
+					"label": "取り込みずみの写真の場所（編集不要）",
+					"type": "string"
+				},
+				{
+					"slug": "live_url",
+					"label": "当日の速報・ドロー（大会運用システム）の URL",
+					"type": "url"
+				},
+				{
+					"slug": "outline_url",
+					"label": "要項の URL（ページを作らない大会のみ）",
+					"type": "url"
+				},
+				{
+					"slug": "draw_url",
+					"label": "ドローの URL（ページを作らない大会のみ）",
+					"type": "url"
+				},
+				{
+					"slug": "result_url",
+					"label": "結果の URL（ページを作らない大会のみ）",
+					"type": "url"
+				},
+				{
+					"slug": "materials",
+					"label": "要項・申込用紙・ドロー・結果・当日の写真",
+					"type": "blocks",
+					"validation": {
+						"allowedTypes": [
+							"material_image",
+							"material_pdf"
+						],
+						"maxItems": 100
+					}
+				},
+				{
+					"slug": "winners",
+					"label": "成績（種目ごとの優勝・準優勝）",
+					"type": "repeater",
+					"validation": {
+						"subFields": [
+							{
+								"slug": "category",
+								"label": "種目",
+								"type": "string",
+								"required": true
+							},
+							{
+								"slug": "award",
+								"label": "順位",
+								"type": "select",
+								"required": true,
+								"options": [
+									"優勝",
+									"準優勝",
+									"3位",
+									"ベスト4",
+									"ベスト8"
+								]
+							},
+							{
+								"slug": "name",
+								"label": "名前",
+								"type": "string",
+								"required": true
+							}
+						]
+					}
+				},
+				{
+					"slug": "legacy_materials",
+					"label": "取り込みずみの素材（移行前の画像・PDF。編集不要）",
+					"type": "json"
+				}
+			]
+		},
+		{
+			"slug": "event_info",
+			"label": "イベント情報",
+			"labelSingular": "イベント",
+			"supports": [
+				"drafts",
+				"revisions"
+			],
+			"fields": [
+				{
+					"slug": "title",
+					"label": "タイトル",
+					"type": "string",
+					"required": true
+				},
+				{
+					"slug": "date",
+					"label": "開催日（2026-10-12 の形。毎週あるものは空）",
+					"type": "string"
+				},
+				{
+					"slug": "when",
+					"label": "日時の文言",
+					"type": "string",
+					"required": true
+				},
+				{
+					"slug": "place",
+					"label": "会場",
+					"type": "string"
+				},
+				{
+					"slug": "lead",
+					"label": "紹介文",
+					"type": "text"
+				},
+				{
+					"slug": "image",
+					"label": "画像（縦長のチラシやポスター）",
+					"type": "image"
+				},
+				{
+					"slug": "image_alt",
+					"label": "画像の説明（読み上げ用）",
+					"type": "string"
+				},
+				{
+					"slug": "image_path",
+					"label": "取り込みずみの画像の場所（編集不要）",
+					"type": "string"
+				},
+				{
+					"slug": "href",
+					"label": "リンク先（サイト内のページ）",
+					"type": "string",
+					"required": true
+				},
+				{
+					"slug": "badge",
+					"label": "バッジの文言（例：参加者募集中）",
+					"type": "string"
+				},
+				{
+					"slug": "order",
+					"label": "並び順（小さいほど上）",
+					"type": "integer",
+					"defaultValue": 10,
+					"indexed": true
+				}
+			]
+		}
+	],
+	"content": {
+		"news": [
+			{
+				"id": "20261012-18",
+				"slug": "20261012-18",
+				"status": "published",
+				"data": {
+					"title": "2026テニス祭り鳥取イベントギャラリー",
+					"date": "2026-10-12",
+					"category": "お知らせ",
+					"href": "index.html",
+					"important": false
+				}
+			},
+			{
+				"id": "20261008-17",
+				"slug": "20261008-17",
+				"status": "published",
+				"data": {
+					"title": "第31回エネトピア杯テニス大会のドローを公開しました",
+					"date": "2026-10-08",
+					"category": "大会",
+					"href": "event-r8-enetopia.html",
+					"important": false
+				}
+			},
+			{
+				"id": "20261004-16",
+				"slug": "20261004-16",
+				"status": "published",
+				"data": {
+					"title": "第71回鳥取健康テニス大会（秋季）の要項を公開し、受付をはじめました",
+					"date": "2026-10-04",
+					"category": "大会",
+					"href": "event-r8-kenko-autumn.html",
+					"important": false
+				}
+			},
+			{
+				"id": "20261004-15",
+				"slug": "20261004-15",
+				"status": "published",
+				"data": {
+					"title": "鳥取県テニス選手権シングルスの要項を公開し、受付をはじめました",
+					"date": "2026-10-04",
+					"category": "大会",
+					"href": "event-r8-kensen-singles.html",
+					"important": false
+				}
+			},
+			{
+				"id": "20261004-14",
+				"slug": "20261004-14",
+				"status": "published",
+				"data": {
+					"title": "第62回会長杯（秋季）ダブルスの要項を公開し、受付をはじめました",
+					"date": "2026-10-04",
+					"category": "大会",
+					"href": "event-r8-kaicho-autumn.html",
+					"important": false
+				}
+			},
+			{
+				"id": "20260922-13",
+				"slug": "20260922-13",
+				"status": "published",
+				"data": {
+					"title": "2026プリンスオープン チーム対抗戦の要項を公開しました",
+					"date": "2026-09-22",
+					"category": "大会",
+					"href": "event-r8-prince-open.html",
+					"important": false
+				}
+			},
+			{
+				"id": "20260902-12",
+				"slug": "20260902-12",
+				"status": "published",
+				"data": {
+					"title": "第31回エネトピア杯テニス大会の要項を公開し、受付をはじめました",
+					"date": "2026-09-02",
+					"category": "大会",
+					"href": "event-r8-enetopia.html",
+					"important": false
+				}
+			},
+			{
+				"id": "20260902-11",
+				"slug": "20260902-11",
+				"status": "published",
+				"data": {
+					"title": "10月12日のテニス祭りの募集要項を公開しました",
+					"date": "2026-09-02",
+					"category": "お知らせ",
+					"href": "tennis-day.html",
+					"important": false
+				}
+			},
+			{
+				"id": "20260901-10",
+				"slug": "20260901-10",
+				"status": "published",
+				"data": {
+					"title": "京丹後市オープンダブルス大会（10月4日）の要項を掲載しました",
+					"date": "2026-09-01",
+					"category": "大会",
+					"href": "event-r8-kyotango-doubles.html",
+					"important": false
+				}
+			},
+			{
+				"id": "20260830-09",
+				"slug": "20260830-09",
+				"status": "published",
+				"data": {
+					"title": "第49回ダンロップテニストーナメントの結果を掲載しました",
+					"date": "2026-08-30",
+					"category": "結果",
+					"href": "event-r8-dunlop.html",
+					"important": false
+				}
+			},
+			{
+				"id": "20260816-08",
+				"slug": "20260816-08",
+				"status": "published",
+				"data": {
+					"title": "サマーミックスダブルスの結果を掲載しました",
+					"date": "2026-08-16",
+					"category": "結果",
+					"href": "event-r8-summer-mix.html",
+					"important": false
+				}
+			},
+			{
+				"id": "20260802-07",
+				"slug": "20260802-07",
+				"status": "published",
+				"data": {
+					"title": "第11回気高カップシングルス大会の結果を掲載しました",
+					"date": "2026-08-02",
+					"category": "結果",
+					"href": "event-r8-ketaka.html",
+					"important": false
+				}
+			},
+			{
+				"id": "20260731-06",
+				"slug": "20260731-06",
+				"status": "published",
+				"data": {
+					"title": "サマーミックスダブルスの受付を締め切りました",
+					"date": "2026-07-31",
+					"category": "大会",
+					"href": "tournaments.html",
+					"important": false
+				}
+			},
+			{
+				"id": "20260721-05",
+				"slug": "20260721-05",
+				"status": "published",
+				"data": {
+					"title": "令和9年度クラブ対抗戦の編成表を公開しました",
+					"date": "2026-07-21",
+					"category": "お知らせ",
+					"href": "club.html",
+					"important": false
+				}
+			},
+			{
+				"id": "20260618-04",
+				"slug": "20260618-04",
+				"status": "published",
+				"data": {
+					"title": "毎週水曜日のテニス教室の会場を井原公園に変更しました",
+					"date": "2026-06-18",
+					"category": "お知らせ",
+					"href": "lesson.html",
+					"important": false
+				}
+			},
+			{
+				"id": "20260602-03",
+				"slug": "20260602-03",
+				"status": "published",
+				"data": {
+					"title": "令和8年度の大会日程（全19大会）を公開しました",
+					"date": "2026-06-02",
+					"category": "大会",
+					"href": "tournaments.html",
+					"important": false
+				}
+			},
+			{
+				"id": "20260520-02",
+				"slug": "20260520-02",
+				"status": "published",
+				"data": {
+					"title": "平成16年度〜令和6年度の大会結果を掲載しました",
+					"date": "2026-05-20",
+					"category": "結果",
+					"href": "results.html",
+					"important": false
+				}
+			},
+			{
+				"id": "20260413-01",
+				"slug": "20260413-01",
+				"status": "published",
+				"data": {
+					"title": "令和8年度の協会登録の受付をはじめました",
+					"date": "2026-04-13",
+					"category": "お知らせ",
+					"href": "membership.html",
+					"important": false
+				}
+			}
+		],
+		"tournaments": [
+			{
+				"id": "r7-tobu-singles",
+				"slug": "r7-tobu-singles",
+				"status": "published",
+				"data": {
+					"name": "第55回東部地区テニス選手権",
+					"nendo": "2025",
+					"no": "01",
+					"kind": "協会主催",
+					"event": "男女シングルス",
+					"date": "2025-03-23",
+					"label": "3月23日（日）",
+					"place": "ヤマタスポーツパーク",
+					"spare_date": "3/29",
+					"spare_venue": "鳥取市千代テニス場",
+					"spare_note": "",
+					"due": "3/7",
+					"state": "終了",
+					"reg": "県登録",
+					"host": "",
+					"note": "",
+					"link_label": "",
+					"link_url": "",
+					"card": false,
+					"materials": [],
+					"winners": [
+						{
+							"category": "男子シングルスA級",
+							"award": "優勝",
+							"name": "米本 叶芽 選手"
+						},
+						{
+							"category": "男子シングルスB級",
+							"award": "優勝",
+							"name": "廣江 健生 選手"
+						},
+						{
+							"category": "男子シングルスC級",
+							"award": "優勝",
+							"name": "白石 慧 選手"
+						},
+						{
+							"category": "男子45歳以上シングルス",
+							"award": "優勝",
+							"name": "山崎 信博 選手"
+						},
+						{
+							"category": "男子65歳以上シングルス",
+							"award": "優勝",
+							"name": "勝井 節朗 選手"
+						},
+						{
+							"category": "女子シングルスB級",
+							"award": "優勝",
+							"name": "冨林 真悠花 選手"
+						}
+					],
+					"legacy_materials": {
+						"outline": {
+							"images": [
+								{
+									"src": "assets/img/events/r7-tobu-singles/outline-01.webp",
+									"label": "要項",
+									"w": 850,
+									"h": 1251
+								}
+							],
+							"pdfs": []
+						},
+						"draw": {
+							"images": [],
+							"pdfs": [
+								{
+									"src": "assets/pdf/events/r7-tobu-singles/第55回東部地区選手権シングルスドロー.pdf",
+									"label": "第55回東部地区選手権シングルスドロー",
+									"kb": 194
+								}
+							]
+						},
+						"result": {
+							"images": [
+								{
+									"src": "assets/img/events/r7-tobu-singles/result-01.webp",
+									"label": "男子シングルスA級",
+									"w": 1132,
+									"h": 644
+								},
+								{
+									"src": "assets/img/events/r7-tobu-singles/result-02.webp",
+									"label": "男子シングルスB級",
+									"w": 1139,
+									"h": 1083
+								},
+								{
+									"src": "assets/img/events/r7-tobu-singles/result-03.webp",
+									"label": "男子シングルスC級",
+									"w": 1142,
+									"h": 333
+								},
+								{
+									"src": "assets/img/events/r7-tobu-singles/result-04.webp",
+									"label": "男子45歳以上シングルス",
+									"w": 1144,
+									"h": 380
+								},
+								{
+									"src": "assets/img/events/r7-tobu-singles/result-05.webp",
+									"label": "男子55歳以上シングルス",
+									"w": 1160,
+									"h": 397
+								},
+								{
+									"src": "assets/img/events/r7-tobu-singles/result-06.webp",
+									"label": "男子65歳以上シングルス",
+									"w": 1160,
+									"h": 568
+								},
+								{
+									"src": "assets/img/events/r7-tobu-singles/result-07.webp",
+									"label": "女子シングルスB級",
+									"w": 1152,
+									"h": 447
+								}
+							],
+							"pdfs": []
+						},
+						"photo": {
+							"images": [
+								{
+									"src": "assets/img/events/r7-tobu-singles/photo-01.webp",
+									"label": "ZE102901",
+									"w": 1400,
+									"h": 935
+								},
+								{
+									"src": "assets/img/events/r7-tobu-singles/photo-02.webp",
+									"label": "ZE102904",
+									"w": 1400,
+									"h": 935
+								},
+								{
+									"src": "assets/img/events/r7-tobu-singles/photo-03.webp",
+									"label": "ZE102905",
+									"w": 1400,
+									"h": 935
+								},
+								{
+									"src": "assets/img/events/r7-tobu-singles/photo-04.webp",
+									"label": "ZE102908",
+									"w": 1400,
+									"h": 935
+								},
+								{
+									"src": "assets/img/events/r7-tobu-singles/photo-05.webp",
+									"label": "ZE102909",
+									"w": 1400,
+									"h": 935
+								},
+								{
+									"src": "assets/img/events/r7-tobu-singles/photo-06.webp",
+									"label": "ZE102912",
+									"w": 1400,
+									"h": 935
+								},
+								{
+									"src": "assets/img/events/r7-tobu-singles/photo-07.webp",
+									"label": "ZE102914",
+									"w": 1400,
+									"h": 935
+								},
+								{
+									"src": "assets/img/events/r7-tobu-singles/photo-08.webp",
+									"label": "ZE102915",
+									"w": 1400,
+									"h": 935
+								},
+								{
+									"src": "assets/img/events/r7-tobu-singles/photo-09.webp",
+									"label": "ZE102919",
+									"w": 1400,
+									"h": 935
+								}
+							],
+							"pdfs": []
+						}
+					}
+				}
+			},
+			{
+				"id": "r7-tobu-doubles",
+				"slug": "r7-tobu-doubles",
+				"status": "published",
+				"data": {
+					"name": "第55回東部地区テニス選手権",
+					"nendo": "2025",
+					"no": "02",
+					"kind": "協会主催",
+					"event": "男女ダブルス",
+					"date": "2025-03-30",
+					"label": "3月30日（日）",
+					"place": "ヤマタスポーツパーク",
+					"spare_date": "4/5",
+					"spare_venue": "鳥取市千代テニス場",
+					"spare_note": "",
+					"due": "3/14",
+					"state": "終了",
+					"reg": "県登録",
+					"host": "",
+					"note": "",
+					"link_label": "",
+					"link_url": "",
+					"card": false,
+					"materials": [],
+					"winners": [
+						{
+							"category": "男子ダブルスA級",
+							"award": "優勝",
+							"name": "鶴石・岸本 ペア"
+						},
+						{
+							"category": "男子ダブルスB級",
+							"award": "優勝",
+							"name": "三宅・山下 ペア"
+						},
+						{
+							"category": "男子65歳以上ダブルス",
+							"award": "優勝",
+							"name": "船本・竹内 ペア"
+						},
+						{
+							"category": "女子B級ダブルス",
+							"award": "優勝",
+							"name": "桶谷・山内 ペア"
+						},
+						{
+							"category": "女子45歳以上ダブルス",
+							"award": "優勝",
+							"name": "小林・山形 ペア"
+						}
+					],
+					"legacy_materials": {
+						"outline": {
+							"images": [
+								{
+									"src": "assets/img/events/r7-tobu-doubles/outline-01.webp",
+									"label": "要項",
+									"w": 850,
+									"h": 1183
+								}
+							],
+							"pdfs": []
+						},
+						"draw": {
+							"images": [
+								{
+									"src": "assets/img/events/r7-tobu-doubles/draw-01.webp",
+									"label": "リドロー 1ページ目（予備日開催）",
+									"w": 1241,
+									"h": 1754
+								},
+								{
+									"src": "assets/img/events/r7-tobu-doubles/draw-02.webp",
+									"label": "リドロー 2ページ目",
+									"w": 1241,
+									"h": 1754
+								},
+								{
+									"src": "assets/img/events/r7-tobu-doubles/draw-03.webp",
+									"label": "リドロー 3ページ目",
+									"w": 1241,
+									"h": 1754
+								}
+							],
+							"pdfs": [
+								{
+									"src": "assets/pdf/events/r7-tobu-doubles/R7東部選手権ダブルスドロー(予備日).pdf",
+									"label": "R7東部選手権ダブルスドロー(予備日)",
+									"kb": 128
+								}
+							]
+						},
+						"result": {
+							"images": [
+								{
+									"src": "assets/img/events/r7-tobu-doubles/result-01.webp",
+									"label": "男子ダブルスA級",
+									"w": 1800,
+									"h": 760
+								},
+								{
+									"src": "assets/img/events/r7-tobu-doubles/result-02.webp",
+									"label": "男子ダブルスB級",
+									"w": 1314,
+									"h": 1292
+								},
+								{
+									"src": "assets/img/events/r7-tobu-doubles/result-03.webp",
+									"label": "男子65歳以上ダブルス",
+									"w": 1354,
+									"h": 818
+								},
+								{
+									"src": "assets/img/events/r7-tobu-doubles/result-04.webp",
+									"label": "女子ダブルスB級",
+									"w": 1800,
+									"h": 609
+								},
+								{
+									"src": "assets/img/events/r7-tobu-doubles/result-05.webp",
+									"label": "女子45歳以上ダブルス",
+									"w": 1800,
+									"h": 611
+								}
+							],
+							"pdfs": []
+						},
+						"photo": {
+							"images": [
+								{
+									"src": "assets/img/events/r7-tobu-doubles/photo-01.webp",
+									"label": "20250405-ZE102951",
+									"w": 1400,
+									"h": 935
+								},
+								{
+									"src": "assets/img/events/r7-tobu-doubles/photo-02.webp",
+									"label": "20250405-ZE102959",
+									"w": 1400,
+									"h": 935
+								},
+								{
+									"src": "assets/img/events/r7-tobu-doubles/photo-03.webp",
+									"label": "20250405-ZE102962",
+									"w": 1400,
+									"h": 935
+								},
+								{
+									"src": "assets/img/events/r7-tobu-doubles/photo-04.webp",
+									"label": "20250405-ZE102964",
+									"w": 1400,
+									"h": 935
+								},
+								{
+									"src": "assets/img/events/r7-tobu-doubles/photo-05.webp",
+									"label": "20250405-ZE102968",
+									"w": 1400,
+									"h": 935
+								},
+								{
+									"src": "assets/img/events/r7-tobu-doubles/photo-06.webp",
+									"label": "20250405-ZE102970",
+									"w": 1400,
+									"h": 935
+								},
+								{
+									"src": "assets/img/events/r7-tobu-doubles/photo-07.webp",
+									"label": "20250405-ZE102975",
+									"w": 1400,
+									"h": 935
+								},
+								{
+									"src": "assets/img/events/r7-tobu-doubles/photo-08.webp",
+									"label": "20250405-ZE102976",
+									"w": 1400,
+									"h": 935
+								},
+								{
+									"src": "assets/img/events/r7-tobu-doubles/photo-09.webp",
+									"label": "20250405-ZE102977",
+									"w": 1400,
+									"h": 935
+								}
+							],
+							"pdfs": []
+						}
+					}
+				}
+			},
+			{
+				"id": "r7-sasaki",
+				"slug": "r7-sasaki",
+				"status": "published",
+				"data": {
+					"name": "佐々木杯テニス大会",
+					"nendo": "2025",
+					"no": "03",
+					"kind": "協会主催",
+					"event": "ミックスダブルス",
+					"date": "2025-04-06",
+					"label": "4月6日（日）",
+					"place": "ヤマタスポーツパーク",
+					"spare_date": "4/12",
+					"spare_venue": "鳥取市千代テニス場",
+					"spare_note": "",
+					"due": "3/21",
+					"state": "終了",
+					"reg": "市登録",
+					"host": "",
+					"note": "",
+					"link_label": "",
+					"link_url": "",
+					"card": false,
+					"materials": [],
+					"winners": [
+						{
+							"category": "1位トーナメント",
+							"award": "優勝",
+							"name": "平木・荒木 ペア"
+						},
+						{
+							"category": "1位トーナメント",
+							"award": "準優勝",
+							"name": "岸本・三浦 ペア"
+						},
+						{
+							"category": "2位トーナメント",
+							"award": "優勝",
+							"name": "福本・笠原 ペア"
+						},
+						{
+							"category": "2位トーナメント",
+							"award": "準優勝",
+							"name": "斉木・斉木 ペア"
+						},
+						{
+							"category": "3位トーナメント",
+							"award": "優勝",
+							"name": "永田・細田 ペア"
+						},
+						{
+							"category": "3位トーナメント",
+							"award": "準優勝",
+							"name": "石田・谷口 ペア"
+						},
+						{
+							"category": "4位トーナメント",
+							"award": "優勝",
+							"name": "平木・平木 ペア"
+						},
+						{
+							"category": "4位トーナメント",
+							"award": "準優勝",
+							"name": "田中・山﨑 ペア"
+						}
+					],
+					"legacy_materials": {
+						"entry": {
+							"images": [],
+							"pdfs": [
+								{
+									"src": "assets/pdf/events/r7-sasaki/2025sasaki-hai-entry.pdf",
+									"label": "2025sasaki-hai-entry",
+									"kb": 70
+								}
+							]
+						},
+						"draw": {
+							"images": [],
+							"pdfs": [
+								{
+									"src": "assets/pdf/events/r7-sasaki/R7佐々木杯プログラム.pdf",
+									"label": "R7佐々木杯プログラム",
+									"kb": 240
+								}
+							]
+						},
+						"result": {
+							"images": [
+								{
+									"src": "assets/img/events/r7-sasaki/result-01.webp",
+									"label": "予選 Aリーグ",
+									"w": 1648,
+									"h": 664
+								},
+								{
+									"src": "assets/img/events/r7-sasaki/result-02.webp",
+									"label": "予選 Bリーグ",
+									"w": 1648,
+									"h": 598
+								},
+								{
+									"src": "assets/img/events/r7-sasaki/result-03.webp",
+									"label": "予選 Cリーグ",
+									"w": 1642,
+									"h": 602
+								},
+								{
+									"src": "assets/img/events/r7-sasaki/result-04.webp",
+									"label": "予選 Dリーグ",
+									"w": 1650,
+									"h": 604
+								},
+								{
+									"src": "assets/img/events/r7-sasaki/result-05.webp",
+									"label": "予選 Eリーグ",
+									"w": 1646,
+									"h": 606
+								},
+								{
+									"src": "assets/img/events/r7-sasaki/result-06.webp",
+									"label": "予選 Fリーグ",
+									"w": 1648,
+									"h": 608
+								},
+								{
+									"src": "assets/img/events/r7-sasaki/result-07.webp",
+									"label": "予選 Gリーグ",
+									"w": 1642,
+									"h": 602
+								},
+								{
+									"src": "assets/img/events/r7-sasaki/result-08.webp",
+									"label": "予選 Hリーグ",
+									"w": 1646,
+									"h": 606
+								},
+								{
+									"src": "assets/img/events/r7-sasaki/result-09.webp",
+									"label": "予選 Iリーグ",
+									"w": 1652,
+									"h": 612
+								},
+								{
+									"src": "assets/img/events/r7-sasaki/result-10.webp",
+									"label": "予選 Jリーグ",
+									"w": 1648,
+									"h": 608
+								},
+								{
+									"src": "assets/img/events/r7-sasaki/result-11.webp",
+									"label": "予選 Kリーグ",
+									"w": 1648,
+									"h": 610
+								},
+								{
+									"src": "assets/img/events/r7-sasaki/result-12.webp",
+									"label": "予選 Lリーグ",
+									"w": 1658,
+									"h": 610
+								},
+								{
+									"src": "assets/img/events/r7-sasaki/result-13.webp",
+									"label": "予選 Mリーグ",
+									"w": 1656,
+									"h": 610
+								},
+								{
+									"src": "assets/img/events/r7-sasaki/result-14.webp",
+									"label": "1位トーナメント",
+									"w": 1624,
+									"h": 970
+								},
+								{
+									"src": "assets/img/events/r7-sasaki/result-15.webp",
+									"label": "2位トーナメント",
+									"w": 1612,
+									"h": 960
+								},
+								{
+									"src": "assets/img/events/r7-sasaki/result-16.webp",
+									"label": "3位トーナメント",
+									"w": 1622,
+									"h": 960
+								},
+								{
+									"src": "assets/img/events/r7-sasaki/result-17.webp",
+									"label": "4位トーナメント",
+									"w": 1614,
+									"h": 958
+								}
+							],
+							"pdfs": []
+						},
+						"photo": {
+							"images": [
+								{
+									"src": "assets/img/events/r7-sasaki/photo-01.webp",
+									"label": "20250406-ZE102978",
+									"w": 1400,
+									"h": 935
+								},
+								{
+									"src": "assets/img/events/r7-sasaki/photo-02.webp",
+									"label": "20250406-ZE102983",
+									"w": 1400,
+									"h": 935
+								},
+								{
+									"src": "assets/img/events/r7-sasaki/photo-03.webp",
+									"label": "20250406-ZE102984",
+									"w": 1400,
+									"h": 935
+								},
+								{
+									"src": "assets/img/events/r7-sasaki/photo-04.webp",
+									"label": "20250406-ZE102991",
+									"w": 1400,
+									"h": 935
+								},
+								{
+									"src": "assets/img/events/r7-sasaki/photo-05.webp",
+									"label": "20250406-ZE102992",
+									"w": 1400,
+									"h": 935
+								},
+								{
+									"src": "assets/img/events/r7-sasaki/photo-06.webp",
+									"label": "20250406-ZE102995",
+									"w": 1400,
+									"h": 935
+								},
+								{
+									"src": "assets/img/events/r7-sasaki/photo-07.webp",
+									"label": "20250406-ZE102996",
+									"w": 1400,
+									"h": 935
+								},
+								{
+									"src": "assets/img/events/r7-sasaki/photo-08.webp",
+									"label": "20250406-ZE102998",
+									"w": 1400,
+									"h": 935
+								},
+								{
+									"src": "assets/img/events/r7-sasaki/photo-09.webp",
+									"label": "20250406-ZE103000",
+									"w": 1400,
+									"h": 935
+								},
+								{
+									"src": "assets/img/events/r7-sasaki/photo-10.webp",
+									"label": "20250406-ZE103002",
+									"w": 1400,
+									"h": 935
+								},
+								{
+									"src": "assets/img/events/r7-sasaki/photo-11.webp",
+									"label": "20250406-ZE103004",
+									"w": 1400,
+									"h": 935
+								},
+								{
+									"src": "assets/img/events/r7-sasaki/photo-12.webp",
+									"label": "20250406-ZE103005",
+									"w": 1400,
+									"h": 935
+								},
+								{
+									"src": "assets/img/events/r7-sasaki/photo-13.webp",
+									"label": "20250406-ZE103006",
+									"w": 1400,
+									"h": 935
+								},
+								{
+									"src": "assets/img/events/r7-sasaki/photo-14.webp",
+									"label": "20250406-ZE103007",
+									"w": 1400,
+									"h": 935
+								},
+								{
+									"src": "assets/img/events/r7-sasaki/photo-15.webp",
+									"label": "20250406-ZE103009",
+									"w": 1400,
+									"h": 935
+								},
+								{
+									"src": "assets/img/events/r7-sasaki/photo-16.webp",
+									"label": "20250406-ZE103012",
+									"w": 1400,
+									"h": 935
+								},
+								{
+									"src": "assets/img/events/r7-sasaki/photo-17.webp",
+									"label": "20250406-ZE103013",
+									"w": 1400,
+									"h": 935
+								},
+								{
+									"src": "assets/img/events/r7-sasaki/photo-18.webp",
+									"label": "20250406-ZE103016",
+									"w": 1400,
+									"h": 935
+								},
+								{
+									"src": "assets/img/events/r7-sasaki/photo-19.webp",
+									"label": "20250406-ZE103024",
+									"w": 1400,
+									"h": 935
+								},
+								{
+									"src": "assets/img/events/r7-sasaki/photo-20.webp",
+									"label": "20250406-ZE103025",
+									"w": 1400,
+									"h": 935
+								},
+								{
+									"src": "assets/img/events/r7-sasaki/photo-21.webp",
+									"label": "20250406-ZE103027",
+									"w": 1400,
+									"h": 935
+								},
+								{
+									"src": "assets/img/events/r7-sasaki/photo-22.webp",
+									"label": "20250406-ZE103028",
+									"w": 1400,
+									"h": 935
+								},
+								{
+									"src": "assets/img/events/r7-sasaki/photo-23.webp",
+									"label": "20250406-ZE103030",
+									"w": 1400,
+									"h": 935
+								},
+								{
+									"src": "assets/img/events/r7-sasaki/photo-24.webp",
+									"label": "20250406-ZE103031",
+									"w": 1400,
+									"h": 935
+								},
+								{
+									"src": "assets/img/events/r7-sasaki/photo-25.webp",
+									"label": "20250406-ZE103032",
+									"w": 1400,
+									"h": 935
+								},
+								{
+									"src": "assets/img/events/r7-sasaki/photo-26.webp",
+									"label": "20250406-ZE103033",
+									"w": 1400,
+									"h": 935
+								},
+								{
+									"src": "assets/img/events/r7-sasaki/photo-27.webp",
+									"label": "20250406-ZE103035",
+									"w": 1400,
+									"h": 935
+								},
+								{
+									"src": "assets/img/events/r7-sasaki/photo-28.webp",
+									"label": "20250406-ZE103036",
+									"w": 1400,
+									"h": 935
+								},
+								{
+									"src": "assets/img/events/r7-sasaki/photo-29.webp",
+									"label": "20250406-ZE103037",
+									"w": 1400,
+									"h": 935
+								},
+								{
+									"src": "assets/img/events/r7-sasaki/photo-30.webp",
+									"label": "20250406-ZE103039",
+									"w": 1400,
+									"h": 935
+								},
+								{
+									"src": "assets/img/events/r7-sasaki/photo-31.webp",
+									"label": "20250406-ZE103040",
+									"w": 1400,
+									"h": 935
+								},
+								{
+									"src": "assets/img/events/r7-sasaki/photo-32.webp",
+									"label": "20250406-ZE103041",
+									"w": 1400,
+									"h": 935
+								},
+								{
+									"src": "assets/img/events/r7-sasaki/photo-33.webp",
+									"label": "20250406-ZE103042",
+									"w": 1400,
+									"h": 935
+								},
+								{
+									"src": "assets/img/events/r7-sasaki/photo-34.webp",
+									"label": "20250406-ZE103043",
+									"w": 1400,
+									"h": 935
+								},
+								{
+									"src": "assets/img/events/r7-sasaki/photo-35.webp",
+									"label": "20250406-ZE103044",
+									"w": 1400,
+									"h": 935
+								},
+								{
+									"src": "assets/img/events/r7-sasaki/photo-36.webp",
+									"label": "20250406-ZE103048",
+									"w": 1400,
+									"h": 935
+								},
+								{
+									"src": "assets/img/events/r7-sasaki/photo-37.webp",
+									"label": "20250406-ZE103050",
+									"w": 1400,
+									"h": 935
+								},
+								{
+									"src": "assets/img/events/r7-sasaki/photo-38.webp",
+									"label": "20250406-ZE103051",
+									"w": 1400,
+									"h": 935
+								},
+								{
+									"src": "assets/img/events/r7-sasaki/photo-39.webp",
+									"label": "20250406-ZE103052",
+									"w": 1400,
+									"h": 935
+								},
+								{
+									"src": "assets/img/events/r7-sasaki/photo-40.webp",
+									"label": "20250406-ZE103055",
+									"w": 1400,
+									"h": 935
+								},
+								{
+									"src": "assets/img/events/r7-sasaki/photo-41.webp",
+									"label": "20250406-ZE103056",
+									"w": 1400,
+									"h": 935
+								},
+								{
+									"src": "assets/img/events/r7-sasaki/photo-42.webp",
+									"label": "20250406-ZE103058",
+									"w": 1400,
+									"h": 935
+								},
+								{
+									"src": "assets/img/events/r7-sasaki/photo-43.webp",
+									"label": "20250406-ZE103060",
+									"w": 1400,
+									"h": 935
+								},
+								{
+									"src": "assets/img/events/r7-sasaki/photo-44.webp",
+									"label": "20250406-ZE103064",
+									"w": 1400,
+									"h": 935
+								},
+								{
+									"src": "assets/img/events/r7-sasaki/photo-45.webp",
+									"label": "20250406-ZE103066",
+									"w": 1400,
+									"h": 935
+								},
+								{
+									"src": "assets/img/events/r7-sasaki/photo-46.webp",
+									"label": "20250406-ZE103087",
+									"w": 1400,
+									"h": 935
+								},
+								{
+									"src": "assets/img/events/r7-sasaki/photo-47.webp",
+									"label": "20250406-ZE103088",
+									"w": 1400,
+									"h": 935
+								},
+								{
+									"src": "assets/img/events/r7-sasaki/photo-48.webp",
+									"label": "20250406-ZE103089",
+									"w": 1400,
+									"h": 935
+								},
+								{
+									"src": "assets/img/events/r7-sasaki/photo-49.webp",
+									"label": "20250406-ZE103090",
+									"w": 1400,
+									"h": 935
+								},
+								{
+									"src": "assets/img/events/r7-sasaki/photo-50.webp",
+									"label": "20250406-ZE103093",
+									"w": 1400,
+									"h": 935
+								},
+								{
+									"src": "assets/img/events/r7-sasaki/photo-51.webp",
+									"label": "20250406-ZE103094",
+									"w": 1400,
+									"h": 935
+								},
+								{
+									"src": "assets/img/events/r7-sasaki/photo-52.webp",
+									"label": "20250406-ZE103095",
+									"w": 1400,
+									"h": 935
+								},
+								{
+									"src": "assets/img/events/r7-sasaki/photo-53.webp",
+									"label": "20250406-ZE103096",
+									"w": 1400,
+									"h": 935
+								},
+								{
+									"src": "assets/img/events/r7-sasaki/photo-54.webp",
+									"label": "20250406-ZE103102",
+									"w": 1400,
+									"h": 935
+								},
+								{
+									"src": "assets/img/events/r7-sasaki/photo-55.webp",
+									"label": "20250406-ZE103105",
+									"w": 1400,
+									"h": 935
+								},
+								{
+									"src": "assets/img/events/r7-sasaki/photo-56.webp",
+									"label": "20250406-ZE103107",
+									"w": 1400,
+									"h": 935
+								},
+								{
+									"src": "assets/img/events/r7-sasaki/photo-57.webp",
+									"label": "20250406-ZE103110",
+									"w": 1400,
+									"h": 935
+								},
+								{
+									"src": "assets/img/events/r7-sasaki/photo-58.webp",
+									"label": "20250406-ZE103111",
+									"w": 1400,
+									"h": 935
+								},
+								{
+									"src": "assets/img/events/r7-sasaki/photo-59.webp",
+									"label": "20250406-ZE103114",
+									"w": 1400,
+									"h": 935
+								},
+								{
+									"src": "assets/img/events/r7-sasaki/photo-60.webp",
+									"label": "20250406-ZE103115",
+									"w": 1400,
+									"h": 935
+								},
+								{
+									"src": "assets/img/events/r7-sasaki/photo-61.webp",
+									"label": "20250406-ZE103117",
+									"w": 1400,
+									"h": 935
+								},
+								{
+									"src": "assets/img/events/r7-sasaki/photo-62.webp",
+									"label": "20250406-ZE103119",
+									"w": 1400,
+									"h": 935
+								},
+								{
+									"src": "assets/img/events/r7-sasaki/photo-63.webp",
+									"label": "20250406-ZE103123",
+									"w": 1400,
+									"h": 935
+								},
+								{
+									"src": "assets/img/events/r7-sasaki/photo-64.webp",
+									"label": "20250406-ZE103124",
+									"w": 1400,
+									"h": 935
+								},
+								{
+									"src": "assets/img/events/r7-sasaki/photo-65.webp",
+									"label": "20250406-ZE103126",
+									"w": 1400,
+									"h": 935
+								},
+								{
+									"src": "assets/img/events/r7-sasaki/photo-66.webp",
+									"label": "20250406-ZE103127",
+									"w": 1400,
+									"h": 935
+								},
+								{
+									"src": "assets/img/events/r7-sasaki/photo-67.webp",
+									"label": "20250406-ZE103129",
+									"w": 1400,
+									"h": 935
+								},
+								{
+									"src": "assets/img/events/r7-sasaki/photo-68.webp",
+									"label": "20250406-ZE103131",
+									"w": 1400,
+									"h": 935
+								},
+								{
+									"src": "assets/img/events/r7-sasaki/photo-69.webp",
+									"label": "20250406-ZE103133",
+									"w": 1400,
+									"h": 935
+								},
+								{
+									"src": "assets/img/events/r7-sasaki/photo-70.webp",
+									"label": "20250406-ZE103135",
+									"w": 1400,
+									"h": 935
+								},
+								{
+									"src": "assets/img/events/r7-sasaki/photo-71.webp",
+									"label": "20250406-ZE103136",
+									"w": 1400,
+									"h": 935
+								},
+								{
+									"src": "assets/img/events/r7-sasaki/photo-72.webp",
+									"label": "20250406-ZE103138",
+									"w": 1400,
+									"h": 935
+								},
+								{
+									"src": "assets/img/events/r7-sasaki/photo-73.webp",
+									"label": "20250406-ZE103139",
+									"w": 1400,
+									"h": 935
+								}
+							],
+							"pdfs": []
+						}
+					}
+				}
+			},
+			{
+				"id": "r7-kaicho-spring",
+				"slug": "r7-kaicho-spring",
+				"status": "published",
+				"data": {
+					"name": "第59回鳥取市テニス協会会長杯（春季）",
+					"nendo": "2025",
+					"no": "04",
+					"kind": "協会主催",
+					"event": "男女ダブルス",
+					"date": "2025-05-06",
+					"label": "5月6日（祝）",
+					"place": "ヤマタスポーツパーク",
+					"spare_date": "5/10",
+					"spare_venue": "鳥取市千代テニス場",
+					"spare_note": "",
+					"due": "4/18",
+					"state": "終了",
+					"reg": "市登録",
+					"host": "",
+					"note": "",
+					"link_label": "",
+					"link_url": "",
+					"card": false,
+					"materials": [],
+					"winners": [
+						{
+							"category": "男子A級ダブルス",
+							"award": "優勝",
+							"name": "小川・船川 ペア"
+						},
+						{
+							"category": "男子B級ダブルス",
+							"award": "優勝",
+							"name": "西村・藤田 ペア"
+						},
+						{
+							"category": "男子C級ダブルス",
+							"award": "優勝",
+							"name": "林・林 ペア"
+						},
+						{
+							"category": "女子B級ダブルス",
+							"award": "優勝",
+							"name": "平尾・馬嶋 ペア"
+						}
+					],
+					"legacy_materials": {
+						"outline": {
+							"images": [
+								{
+									"src": "assets/img/events/r7-kaicho-spring/outline-01.webp",
+									"label": "1ページ目",
+									"w": 1241,
+									"h": 1754
+								},
+								{
+									"src": "assets/img/events/r7-kaicho-spring/outline-02.webp",
+									"label": "2ページ目",
+									"w": 1241,
+									"h": 1754
+								}
+							],
+							"pdfs": [
+								{
+									"src": "assets/pdf/events/r7-kaicho-spring/2025会長杯（ダブルス）要項.pdf",
+									"label": "2025会長杯（ダブルス）要項",
+									"kb": 118
+								}
+							]
+						},
+						"entry": {
+							"images": [],
+							"pdfs": [
+								{
+									"src": "assets/pdf/events/r7-kaicho-spring/2025会長杯（ダブルス）申込用紙.pdf",
+									"label": "2025会長杯（ダブルス）申込用紙",
+									"kb": 128
+								}
+							]
+						},
+						"draw": {
+							"images": [
+								{
+									"src": "assets/img/events/r7-kaicho-spring/draw-01.webp",
+									"label": "1ページ目",
+									"w": 1241,
+									"h": 1754
+								},
+								{
+									"src": "assets/img/events/r7-kaicho-spring/draw-02.webp",
+									"label": "2ページ目",
+									"w": 1241,
+									"h": 1754
+								},
+								{
+									"src": "assets/img/events/r7-kaicho-spring/draw-03.webp",
+									"label": "3ページ目",
+									"w": 1241,
+									"h": 1754
+								},
+								{
+									"src": "assets/img/events/r7-kaicho-spring/draw-04.webp",
+									"label": "4ページ目",
+									"w": 1241,
+									"h": 1754
+								}
+							],
+							"pdfs": [
+								{
+									"src": "assets/pdf/events/r7-kaicho-spring/R7会長杯ダブルスドロー.pdf",
+									"label": "R7会長杯ダブルスドロー",
+									"kb": 254
+								}
+							]
+						},
+						"result": {
+							"images": [
+								{
+									"src": "assets/img/events/r7-kaicho-spring/result-01.webp",
+									"label": "男子A級 予選リーグ",
+									"w": 1420,
+									"h": 1194
+								},
+								{
+									"src": "assets/img/events/r7-kaicho-spring/result-02.webp",
+									"label": "男子A級 決勝",
+									"w": 1456,
+									"h": 416
+								},
+								{
+									"src": "assets/img/events/r7-kaicho-spring/result-03.webp",
+									"label": "男子B級 Aリーグ",
+									"w": 1414,
+									"h": 1186
+								},
+								{
+									"src": "assets/img/events/r7-kaicho-spring/result-04.webp",
+									"label": "男子B級 Cリーグ",
+									"w": 1332,
+									"h": 1026
+								},
+								{
+									"src": "assets/img/events/r7-kaicho-spring/result-05.webp",
+									"label": "男子B級 Eリーグ",
+									"w": 1420,
+									"h": 538
+								},
+								{
+									"src": "assets/img/events/r7-kaicho-spring/result-06.webp",
+									"label": "男子B級 Fリーグ",
+									"w": 1800,
+									"h": 727
+								},
+								{
+									"src": "assets/img/events/r7-kaicho-spring/result-07.webp",
+									"label": "男子B級 決勝トーナメント",
+									"w": 1480,
+									"h": 516
+								},
+								{
+									"src": "assets/img/events/r7-kaicho-spring/result-08.webp",
+									"label": "男子C級 予選リーグ",
+									"w": 1558,
+									"h": 1226
+								},
+								{
+									"src": "assets/img/events/r7-kaicho-spring/result-09.webp",
+									"label": "男子C級 決勝・順位決定戦",
+									"w": 1490,
+									"h": 1134
+								},
+								{
+									"src": "assets/img/events/r7-kaicho-spring/result-10.webp",
+									"label": "女子B級 予選リーグ",
+									"w": 1344,
+									"h": 1120
+								},
+								{
+									"src": "assets/img/events/r7-kaicho-spring/result-11.webp",
+									"label": "女子B級 決勝",
+									"w": 1456,
+									"h": 388
+								}
+							],
+							"pdfs": []
+						},
+						"photo": {
+							"images": [
+								{
+									"src": "assets/img/events/r7-kaicho-spring/photo-01.webp",
+									"label": "20250506-ZE103580",
+									"w": 1400,
+									"h": 935
+								},
+								{
+									"src": "assets/img/events/r7-kaicho-spring/photo-02.webp",
+									"label": "20250506-ZE103582",
+									"w": 1400,
+									"h": 935
+								},
+								{
+									"src": "assets/img/events/r7-kaicho-spring/photo-03.webp",
+									"label": "20250506-ZE103585",
+									"w": 1400,
+									"h": 935
+								},
+								{
+									"src": "assets/img/events/r7-kaicho-spring/photo-04.webp",
+									"label": "20250506-ZE103587",
+									"w": 1400,
+									"h": 935
+								}
+							],
+							"pdfs": []
+						}
+					}
+				}
+			},
+			{
+				"id": "r7-club-taiko-1",
+				"slug": "r7-club-taiko-1",
+				"status": "published",
+				"data": {
+					"name": "令和7年度クラブ対抗戦 前期日程",
+					"nendo": "2025",
+					"no": "05",
+					"kind": "協会主催",
+					"event": "男子1部〜8部",
+					"date": "2025-05-11",
+					"label": "5月11日（日）",
+					"place": "ヤマタスポーツパーク",
+					"spare_date": "5/31",
+					"spare_venue": "鳥取市千代テニス場",
+					"spare_note": "",
+					"due": "4/25",
+					"state": "終了",
+					"reg": "市登録",
+					"host": "",
+					"note": "",
+					"link_label": "",
+					"link_url": "",
+					"card": false,
+					"materials": [],
+					"winners": [],
+					"legacy_materials": {
+						"outline": {
+							"images": [
+								{
+									"src": "assets/img/events/r7-club-taiko-1/outline-01.webp",
+									"label": "実施要項 1ページ目",
+									"w": 1241,
+									"h": 1754
+								},
+								{
+									"src": "assets/img/events/r7-club-taiko-1/outline-02.webp",
+									"label": "実施要項 2ページ目",
+									"w": 1241,
+									"h": 1754
+								},
+								{
+									"src": "assets/img/events/r7-club-taiko-1/outline-03.webp",
+									"label": "実施要項 3ページ目",
+									"w": 1241,
+									"h": 1754
+								},
+								{
+									"src": "assets/img/events/r7-club-taiko-1/outline-04.webp",
+									"label": "実施要項 4ページ目",
+									"w": 1241,
+									"h": 1754
+								},
+								{
+									"src": "assets/img/events/r7-club-taiko-1/outline-05.webp",
+									"label": "実施要項 5ページ目",
+									"w": 1241,
+									"h": 1754
+								}
+							],
+							"pdfs": [
+								{
+									"src": "assets/pdf/events/r7-club-taiko-1/R7クラブ対抗（前期）実施要項.pdf",
+									"label": "R7クラブ対抗（前期）実施要項",
+									"kb": 282
+								},
+								{
+									"src": "assets/pdf/events/r7-club-taiko-1/令和7年クラブ対抗要項.pdf",
+									"label": "令和7年クラブ対抗要項",
+									"kb": 292
+								},
+								{
+									"src": "assets/pdf/events/r7-club-taiko-1/令和7年クラブ対抗申込用紙.pdf",
+									"label": "令和7年クラブ対抗申込用紙",
+									"kb": 44
+								}
+							]
+						},
+						"result": {
+							"images": [
+								{
+									"src": "assets/img/events/r7-club-taiko-1/result-01.webp",
+									"label": "男子1部",
+									"w": 1628,
+									"h": 1082
+								},
+								{
+									"src": "assets/img/events/r7-club-taiko-1/result-02.webp",
+									"label": "男子2部",
+									"w": 1732,
+									"h": 1058
+								},
+								{
+									"src": "assets/img/events/r7-club-taiko-1/result-03.webp",
+									"label": "男子3部",
+									"w": 1628,
+									"h": 1080
+								},
+								{
+									"src": "assets/img/events/r7-club-taiko-1/result-04.webp",
+									"label": "男子4部",
+									"w": 1626,
+									"h": 1086
+								},
+								{
+									"src": "assets/img/events/r7-club-taiko-1/result-05.webp",
+									"label": "男子5部",
+									"w": 1626,
+									"h": 1074
+								},
+								{
+									"src": "assets/img/events/r7-club-taiko-1/result-06.webp",
+									"label": "男子6部",
+									"w": 1626,
+									"h": 1082
+								},
+								{
+									"src": "assets/img/events/r7-club-taiko-1/result-07.webp",
+									"label": "男子7部",
+									"w": 1626,
+									"h": 1080
+								},
+								{
+									"src": "assets/img/events/r7-club-taiko-1/result-08.webp",
+									"label": "男子8部",
+									"w": 1738,
+									"h": 1062
+								}
+							],
+							"pdfs": []
+						},
+						"photo": {
+							"images": [
+								{
+									"src": "assets/img/events/r7-club-taiko-1/photo-01.webp",
+									"label": "20250511-DSC08266",
+									"w": 1400,
+									"h": 935
+								},
+								{
+									"src": "assets/img/events/r7-club-taiko-1/photo-02.webp",
+									"label": "20250511-DSC08274",
+									"w": 1400,
+									"h": 936
+								}
+							],
+							"pdfs": []
+						}
+					}
+				}
+			},
+			{
+				"id": "r7-no06",
+				"slug": "r7-no06",
+				"status": "published",
+				"data": {
+					"name": "第68回鳥取マスターズ健康テニス（春期）",
+					"nendo": "2025",
+					"no": "06",
+					"kind": "協会主催",
+					"event": "男女ダブルス",
+					"date": "2025-05-31",
+					"label": "5月31日（土）",
+					"place": "ヤマタスポーツパーク",
+					"spare_date": "",
+					"spare_venue": "",
+					"spare_note": "荒天中止",
+					"due": "5/23",
+					"state": "終了",
+					"reg": "登録不要",
+					"host": "",
+					"note": "",
+					"link_label": "",
+					"link_url": "",
+					"card": false,
+					"materials": [],
+					"winners": [],
+					"legacy_materials": {}
+				}
+			},
+			{
+				"id": "r7-club-taiko-2",
+				"slug": "r7-club-taiko-2",
+				"status": "published",
+				"data": {
+					"name": "令和7年度クラブ対抗戦 後期日程",
+					"nendo": "2025",
+					"no": "07",
+					"kind": "協会主催",
+					"event": "女子1部〜4部／男女予選会",
+					"date": "2025-06-01",
+					"label": "6月1日（日）",
+					"place": "ヤマタスポーツパーク",
+					"spare_date": "6/21",
+					"spare_venue": "鳥取市千代テニス場",
+					"spare_note": "",
+					"due": "5/16",
+					"state": "終了",
+					"reg": "市登録",
+					"host": "",
+					"note": "",
+					"link_label": "",
+					"link_url": "",
+					"card": false,
+					"materials": [],
+					"winners": [],
+					"legacy_materials": {
+						"outline": {
+							"images": [
+								{
+									"src": "assets/img/events/r7-club-taiko-2/outline-01.webp",
+									"label": "実施要項 1ページ目",
+									"w": 1241,
+									"h": 1754
+								},
+								{
+									"src": "assets/img/events/r7-club-taiko-2/outline-02.webp",
+									"label": "実施要項 2ページ目",
+									"w": 1241,
+									"h": 1754
+								},
+								{
+									"src": "assets/img/events/r7-club-taiko-2/outline-03.webp",
+									"label": "実施要項 3ページ目",
+									"w": 1241,
+									"h": 1754
+								},
+								{
+									"src": "assets/img/events/r7-club-taiko-2/outline-04.webp",
+									"label": "実施要項 4ページ目",
+									"w": 1241,
+									"h": 1754
+								},
+								{
+									"src": "assets/img/events/r7-club-taiko-2/outline-05.webp",
+									"label": "実施要項 5ページ目",
+									"w": 1241,
+									"h": 1754
+								},
+								{
+									"src": "assets/img/events/r7-club-taiko-2/outline-06.webp",
+									"label": "実施要項 6ページ目",
+									"w": 1241,
+									"h": 1754
+								}
+							],
+							"pdfs": [
+								{
+									"src": "assets/pdf/events/r7-club-taiko-2/R7クラブ対抗(後期)実施要項.pdf",
+									"label": "R7クラブ対抗(後期)実施要項",
+									"kb": 520
+								}
+							]
+						},
+						"result": {
+							"images": [
+								{
+									"src": "assets/img/events/r7-club-taiko-2/result-01.webp",
+									"label": "女子1部",
+									"w": 1768,
+									"h": 1044
+								},
+								{
+									"src": "assets/img/events/r7-club-taiko-2/result-02.webp",
+									"label": "女子2部",
+									"w": 1768,
+									"h": 1042
+								},
+								{
+									"src": "assets/img/events/r7-club-taiko-2/result-03.webp",
+									"label": "女子3部",
+									"w": 1768,
+									"h": 1044
+								},
+								{
+									"src": "assets/img/events/r7-club-taiko-2/result-04.webp",
+									"label": "女子4部",
+									"w": 1766,
+									"h": 1040
+								},
+								{
+									"src": "assets/img/events/r7-club-taiko-2/result-05.webp",
+									"label": "女子予選会A",
+									"w": 1800,
+									"h": 1055
+								},
+								{
+									"src": "assets/img/events/r7-club-taiko-2/result-06.webp",
+									"label": "女子予選会B",
+									"w": 1800,
+									"h": 957
+								},
+								{
+									"src": "assets/img/events/r7-club-taiko-2/result-07.webp",
+									"label": "女子予選会 順位決定戦",
+									"w": 954,
+									"h": 1186
+								},
+								{
+									"src": "assets/img/events/r7-club-taiko-2/result-08.webp",
+									"label": "男子予選会A",
+									"w": 1570,
+									"h": 1102
+								},
+								{
+									"src": "assets/img/events/r7-club-taiko-2/result-09.webp",
+									"label": "男子予選会B",
+									"w": 1770,
+									"h": 1262
+								},
+								{
+									"src": "assets/img/events/r7-club-taiko-2/result-10.webp",
+									"label": "男子予選会 ブロック決定戦",
+									"w": 1104,
+									"h": 1118
+								}
+							],
+							"pdfs": []
+						},
+						"photo": {
+							"images": [
+								{
+									"src": "assets/img/events/r7-club-taiko-2/photo-01.webp",
+									"label": "1748874711962",
+									"w": 1105,
+									"h": 737
+								},
+								{
+									"src": "assets/img/events/r7-club-taiko-2/photo-02.webp",
+									"label": "1748874714190",
+									"w": 1108,
+									"h": 739
+								},
+								{
+									"src": "assets/img/events/r7-club-taiko-2/photo-03.webp",
+									"label": "20250601-ZE103592",
+									"w": 1400,
+									"h": 935
+								},
+								{
+									"src": "assets/img/events/r7-club-taiko-2/photo-04.webp",
+									"label": "20250601-ZE103602",
+									"w": 1400,
+									"h": 935
+								},
+								{
+									"src": "assets/img/events/r7-club-taiko-2/photo-05.webp",
+									"label": "20250601-ZE103608",
+									"w": 1400,
+									"h": 935
+								},
+								{
+									"src": "assets/img/events/r7-club-taiko-2/photo-06.webp",
+									"label": "20250601-ZE103613",
+									"w": 1400,
+									"h": 935
+								},
+								{
+									"src": "assets/img/events/r7-club-taiko-2/photo-07.webp",
+									"label": "20250601-ZE103615",
+									"w": 1400,
+									"h": 935
+								}
+							],
+							"pdfs": []
+						}
+					}
+				}
+			},
+			{
+				"id": "r7-ketaka",
+				"slug": "r7-ketaka",
+				"status": "published",
+				"data": {
+					"name": "第10回気高カップシングルス大会",
+					"nendo": "2025",
+					"no": "08",
+					"kind": "協会主催",
+					"event": "男女シングルス",
+					"date": "2025-06-15",
+					"label": "6月15日（日）",
+					"place": "ヤマタスポーツパーク",
+					"spare_date": "6/28",
+					"spare_venue": "鳥取市千代テニス場",
+					"spare_note": "",
+					"due": "5/30",
+					"state": "終了",
+					"reg": "県登録",
+					"host": "",
+					"note": "",
+					"link_label": "",
+					"link_url": "",
+					"card": false,
+					"materials": [],
+					"winners": [
+						{
+							"category": "男子シングルスA級",
+							"award": "優勝",
+							"name": "船川 凌我 選手"
+						},
+						{
+							"category": "男子シングルスB級",
+							"award": "優勝",
+							"name": "山下 陽大 選手"
+						},
+						{
+							"category": "男子シングルスC級",
+							"award": "優勝",
+							"name": "片寄 翔太 選手"
+						},
+						{
+							"category": "男子55歳以上シングルス",
+							"award": "優勝",
+							"name": "山崎 信博 選手"
+						},
+						{
+							"category": "男子65歳以上シングルス",
+							"award": "優勝",
+							"name": "勝井 節朗 選手"
+						},
+						{
+							"category": "女子シングルスA級",
+							"award": "優勝",
+							"name": "高木 美穂 選手"
+						},
+						{
+							"category": "女子シングルスB級",
+							"award": "優勝",
+							"name": "間島 千紗都 選手"
+						}
+					],
+					"legacy_materials": {
+						"outline": {
+							"images": [
+								{
+									"src": "assets/img/events/r7-ketaka/outline-01.webp",
+									"label": "1ページ目",
+									"w": 1240,
+									"h": 1755
+								}
+							],
+							"pdfs": [
+								{
+									"src": "assets/pdf/events/r7-ketaka/R7気高カップ要項.pdf",
+									"label": "R7気高カップ要項",
+									"kb": 99
+								}
+							]
+						},
+						"entry": {
+							"images": [],
+							"pdfs": [
+								{
+									"src": "assets/pdf/events/r7-ketaka/R7気高カップ申込用紙.pdf",
+									"label": "R7気高カップ申込用紙",
+									"kb": 88
+								}
+							]
+						},
+						"draw": {
+							"images": [
+								{
+									"src": "assets/img/events/r7-ketaka/draw-01.webp",
+									"label": "1ページ目",
+									"w": 1241,
+									"h": 1754
+								},
+								{
+									"src": "assets/img/events/r7-ketaka/draw-02.webp",
+									"label": "2ページ目",
+									"w": 1241,
+									"h": 1754
+								},
+								{
+									"src": "assets/img/events/r7-ketaka/draw-03.webp",
+									"label": "3ページ目",
+									"w": 1240,
+									"h": 1755
+								},
+								{
+									"src": "assets/img/events/r7-ketaka/draw-04.webp",
+									"label": "4ページ目",
+									"w": 1241,
+									"h": 1754
+								},
+								{
+									"src": "assets/img/events/r7-ketaka/draw-05.webp",
+									"label": "5ページ目",
+									"w": 1241,
+									"h": 1754
+								}
+							],
+							"pdfs": [
+								{
+									"src": "assets/pdf/events/r7-ketaka/R7気高カップ仮ドロー.pdf",
+									"label": "R7気高カップ仮ドロー",
+									"kb": 151
+								}
+							]
+						},
+						"result": {
+							"images": [
+								{
+									"src": "assets/img/events/r7-ketaka/result-01.webp",
+									"label": "男子A級シングルス",
+									"w": 878,
+									"h": 1262
+								},
+								{
+									"src": "assets/img/events/r7-ketaka/result-02.webp",
+									"label": "男子B級シングルス",
+									"w": 878,
+									"h": 1286
+								},
+								{
+									"src": "assets/img/events/r7-ketaka/result-03.webp",
+									"label": "男子C級シングルス",
+									"w": 1348,
+									"h": 386
+								},
+								{
+									"src": "assets/img/events/r7-ketaka/result-04.webp",
+									"label": "男子55歳以上シングルス",
+									"w": 1346,
+									"h": 568
+								},
+								{
+									"src": "assets/img/events/r7-ketaka/result-05.webp",
+									"label": "男子65歳以上シングルス",
+									"w": 1346,
+									"h": 886
+								},
+								{
+									"src": "assets/img/events/r7-ketaka/result-06.webp",
+									"label": "女子A級シングルス",
+									"w": 1348,
+									"h": 340
+								},
+								{
+									"src": "assets/img/events/r7-ketaka/result-07.webp",
+									"label": "女子B級シングルス",
+									"w": 1344,
+									"h": 496
+								}
+							],
+							"pdfs": []
+						},
+						"photo": {
+							"images": [
+								{
+									"src": "assets/img/events/r7-ketaka/photo-01.webp",
+									"label": "1749985042311",
+									"w": 1050,
+									"h": 1400
+								},
+								{
+									"src": "assets/img/events/r7-ketaka/photo-02.webp",
+									"label": "1749985048953",
+									"w": 1050,
+									"h": 1400
+								},
+								{
+									"src": "assets/img/events/r7-ketaka/photo-03.webp",
+									"label": "1749985052645",
+									"w": 1050,
+									"h": 1400
+								},
+								{
+									"src": "assets/img/events/r7-ketaka/photo-04.webp",
+									"label": "1749985057962",
+									"w": 1050,
+									"h": 1400
+								},
+								{
+									"src": "assets/img/events/r7-ketaka/photo-05.webp",
+									"label": "1749985063185",
+									"w": 1050,
+									"h": 1400
+								},
+								{
+									"src": "assets/img/events/r7-ketaka/photo-06.webp",
+									"label": "1749985066719",
+									"w": 1050,
+									"h": 1400
+								},
+								{
+									"src": "assets/img/events/r7-ketaka/photo-07.webp",
+									"label": "1749985071082",
+									"w": 1050,
+									"h": 1400
+								}
+							],
+							"pdfs": []
+						}
+					}
+				}
+			},
+			{
+				"id": "r7-no09",
+				"slug": "r7-no09",
+				"status": "published",
+				"data": {
+					"name": "鳥取市市民体育祭（Aグループ）",
+					"nendo": "2025",
+					"no": "09",
+					"kind": "協会主催",
+					"event": "校区別対抗戦",
+					"date": "2025-07-06",
+					"label": "7月6日（日）",
+					"place": "鳥取市千代テニス場",
+					"spare_date": "7/20",
+					"spare_venue": "鳥取市千代テニス場",
+					"spare_note": "",
+					"due": "別記",
+					"state": "終了",
+					"reg": "登録不要",
+					"host": "",
+					"note": "",
+					"link_label": "",
+					"link_url": "",
+					"card": false,
+					"materials": [],
+					"winners": [],
+					"legacy_materials": {}
+				}
+			},
+			{
+				"id": "r7-summer-mix",
+				"slug": "r7-summer-mix",
+				"status": "published",
+				"data": {
+					"name": "サマーミックスダブルス",
+					"nendo": "2025",
+					"no": "10",
+					"kind": "協会主催",
+					"event": "ミックスダブルス",
+					"date": "2025-08-24",
+					"label": "8月24日（日）",
+					"place": "ヤマタスポーツパーク",
+					"spare_date": "9/7",
+					"spare_venue": "鳥取市千代テニス場",
+					"spare_note": "",
+					"due": "8/8",
+					"state": "終了",
+					"reg": "市登録",
+					"host": "",
+					"note": "",
+					"link_label": "",
+					"link_url": "",
+					"card": false,
+					"materials": [],
+					"winners": [
+						{
+							"category": "1位トーナメント",
+							"award": "優勝",
+							"name": "西山・赤井 ペア"
+						},
+						{
+							"category": "1位トーナメント",
+							"award": "準優勝",
+							"name": "遠藤・遠藤 ペア"
+						},
+						{
+							"category": "2位トーナメント",
+							"award": "優勝",
+							"name": "竹安・楠瀬 ペア"
+						},
+						{
+							"category": "2位トーナメント",
+							"award": "準優勝",
+							"name": "田中・田渕 ペア"
+						},
+						{
+							"category": "3位トーナメント",
+							"award": "優勝",
+							"name": "杦山・玉川 ペア"
+						},
+						{
+							"category": "3位トーナメント",
+							"award": "準優勝",
+							"name": "岩本・岩本 ペア"
+						},
+						{
+							"category": "4位・5位トーナメント",
+							"award": "優勝",
+							"name": "藤田・山根 ペア"
+						},
+						{
+							"category": "4位・5位トーナメント",
+							"award": "準優勝",
+							"name": "山下・田苗 ペア"
+						}
+					],
+					"legacy_materials": {
+						"outline": {
+							"images": [
+								{
+									"src": "assets/img/events/r7-summer-mix/outline-01.webp",
+									"label": "1ページ目",
+									"w": 1240,
+									"h": 1755
+								},
+								{
+									"src": "assets/img/events/r7-summer-mix/outline-02.webp",
+									"label": "2ページ目",
+									"w": 1240,
+									"h": 1755
+								}
+							],
+							"pdfs": []
+						},
+						"draw": {
+							"images": [
+								{
+									"src": "assets/img/events/r7-summer-mix/draw-01.webp",
+									"label": "1ページ目",
+									"w": 1273,
+									"h": 1800
+								}
+							],
+							"pdfs": [
+								{
+									"src": "assets/pdf/events/r7-summer-mix/R7サマーミックスドロー.pdf",
+									"label": "R7サマーミックスドロー",
+									"kb": 352
+								}
+							]
+						},
+						"result": {
+							"images": [
+								{
+									"src": "assets/img/events/r7-summer-mix/result-01.webp",
+									"label": "予選 Aリーグ",
+									"w": 1492,
+									"h": 1180
+								},
+								{
+									"src": "assets/img/events/r7-summer-mix/result-02.webp",
+									"label": "予選リーグ",
+									"w": 1494,
+									"h": 1124
+								},
+								{
+									"src": "assets/img/events/r7-summer-mix/result-03.webp",
+									"label": "予選 Eリーグ",
+									"w": 1504,
+									"h": 1130
+								},
+								{
+									"src": "assets/img/events/r7-summer-mix/result-04.webp",
+									"label": "予選 Gリーグ",
+									"w": 1502,
+									"h": 1136
+								},
+								{
+									"src": "assets/img/events/r7-summer-mix/result-05.webp",
+									"label": "予選リーグ",
+									"w": 1498,
+									"h": 1128
+								},
+								{
+									"src": "assets/img/events/r7-summer-mix/result-06.webp",
+									"label": "予選 Kリーグ",
+									"w": 1494,
+									"h": 556
+								},
+								{
+									"src": "assets/img/events/r7-summer-mix/result-07.webp",
+									"label": "予選リーグ",
+									"w": 1554,
+									"h": 726
+								},
+								{
+									"src": "assets/img/events/r7-summer-mix/result-08.webp",
+									"label": "1位トーナメント",
+									"w": 1800,
+									"h": 933
+								},
+								{
+									"src": "assets/img/events/r7-summer-mix/result-09.webp",
+									"label": "2位トーナメント",
+									"w": 1800,
+									"h": 922
+								},
+								{
+									"src": "assets/img/events/r7-summer-mix/result-10.webp",
+									"label": "3位トーナメント",
+									"w": 1800,
+									"h": 941
+								},
+								{
+									"src": "assets/img/events/r7-summer-mix/result-11.webp",
+									"label": "4位・5位トーナメント",
+									"w": 1800,
+									"h": 1062
+								}
+							],
+							"pdfs": []
+						},
+						"photo": {
+							"images": [
+								{
+									"src": "assets/img/events/r7-summer-mix/photo-01.webp",
+									"label": "DSC08308",
+									"w": 1400,
+									"h": 933
+								},
+								{
+									"src": "assets/img/events/r7-summer-mix/photo-02.webp",
+									"label": "DSC08309",
+									"w": 1400,
+									"h": 933
+								},
+								{
+									"src": "assets/img/events/r7-summer-mix/photo-03.webp",
+									"label": "DSC08310",
+									"w": 1400,
+									"h": 933
+								},
+								{
+									"src": "assets/img/events/r7-summer-mix/photo-04.webp",
+									"label": "DSC08311",
+									"w": 1400,
+									"h": 933
+								},
+								{
+									"src": "assets/img/events/r7-summer-mix/photo-05.webp",
+									"label": "DSC08312",
+									"w": 1400,
+									"h": 933
+								},
+								{
+									"src": "assets/img/events/r7-summer-mix/photo-06.webp",
+									"label": "DSC08313",
+									"w": 1400,
+									"h": 933
+								},
+								{
+									"src": "assets/img/events/r7-summer-mix/photo-07.webp",
+									"label": "DSC08314",
+									"w": 1400,
+									"h": 933
+								},
+								{
+									"src": "assets/img/events/r7-summer-mix/photo-08.webp",
+									"label": "DSC08317",
+									"w": 1400,
+									"h": 933
+								},
+								{
+									"src": "assets/img/events/r7-summer-mix/photo-09.webp",
+									"label": "DSC08318",
+									"w": 1400,
+									"h": 933
+								}
+							],
+							"pdfs": []
+						}
+					}
+				}
+			},
+			{
+				"id": "r7-dunlop",
+				"slug": "r7-dunlop",
+				"status": "published",
+				"data": {
+					"name": "第48回ダンロップテニストーナメント",
+					"nendo": "2025",
+					"no": "11",
+					"kind": "協会主催",
+					"event": "男女ダブルス",
+					"date": "2025-08-31",
+					"label": "8月31日（日）",
+					"place": "ヤマタスポーツパーク",
+					"spare_date": "9/6",
+					"spare_venue": "鳥取市千代テニス場",
+					"spare_note": "",
+					"due": "別記",
+					"state": "終了",
+					"reg": "県登録",
+					"host": "",
+					"note": "",
+					"link_label": "",
+					"link_url": "",
+					"card": false,
+					"materials": [],
+					"winners": [
+						{
+							"category": "男子ダブルスA級",
+							"award": "優勝",
+							"name": "斉木・檜垣ペア"
+						},
+						{
+							"category": "男子ダブルスA級",
+							"award": "準優勝",
+							"name": "岸本・平木ペア"
+						},
+						{
+							"category": "男子ダブルスB級",
+							"award": "優勝",
+							"name": "三宅・山下ペア"
+						},
+						{
+							"category": "男子ダブルスB級",
+							"award": "準優勝",
+							"name": "平井・河上ペア"
+						},
+						{
+							"category": "男子ダブルス45歳以上",
+							"award": "優勝",
+							"name": "山口・下川ペア"
+						},
+						{
+							"category": "男子ダブルス45歳以上",
+							"award": "準優勝",
+							"name": "寺沢・田村ペア"
+						},
+						{
+							"category": "男子ダブルス55歳以上",
+							"award": "優勝",
+							"name": "森本・小谷ペア"
+						},
+						{
+							"category": "男子ダブルス55歳以上",
+							"award": "準優勝",
+							"name": "湯浅・湯浅ペア"
+						},
+						{
+							"category": "男子ダブルス65歳以上",
+							"award": "優勝",
+							"name": "竹内・船本ペア"
+						},
+						{
+							"category": "男子ダブルス65歳以上",
+							"award": "準優勝",
+							"name": "勝井・岡田ペア"
+						},
+						{
+							"category": "女子ダブルスA級",
+							"award": "優勝",
+							"name": "楠瀬・川上ペア"
+						},
+						{
+							"category": "女子ダブルスA級",
+							"award": "準優勝",
+							"name": "荒木・松崎ペア"
+						},
+						{
+							"category": "女子ダブルス45歳以上",
+							"award": "優勝",
+							"name": "小林・山形ペア"
+						},
+						{
+							"category": "女子ダブルス55歳以上",
+							"award": "優勝",
+							"name": "谷口・大石ペア"
+						}
+					],
+					"legacy_materials": {
+						"outline": {
+							"images": [
+								{
+									"src": "assets/img/events/r7-dunlop/outline-01.webp",
+									"label": "1ページ目",
+									"w": 1240,
+									"h": 1755
+								}
+							],
+							"pdfs": [
+								{
+									"src": "assets/pdf/events/r7-dunlop/2025ダンロップ要項.pdf",
+									"label": "2025ダンロップ要項",
+									"kb": 178
+								}
+							]
+						},
+						"draw": {
+							"images": [
+								{
+									"src": "assets/img/events/r7-dunlop/draw-01.webp",
+									"label": "1ページ目",
+									"w": 1240,
+									"h": 1755
+								},
+								{
+									"src": "assets/img/events/r7-dunlop/draw-02.webp",
+									"label": "2ページ目",
+									"w": 1240,
+									"h": 1755
+								},
+								{
+									"src": "assets/img/events/r7-dunlop/draw-03.webp",
+									"label": "3ページ目",
+									"w": 1240,
+									"h": 1755
+								},
+								{
+									"src": "assets/img/events/r7-dunlop/draw-04.webp",
+									"label": "4ページ目",
+									"w": 1240,
+									"h": 1755
+								},
+								{
+									"src": "assets/img/events/r7-dunlop/draw-05.webp",
+									"label": "5ページ目",
+									"w": 1240,
+									"h": 1755
+								}
+							],
+							"pdfs": [
+								{
+									"src": "assets/pdf/events/r7-dunlop/第48回ダンロップ仮ドロー.pdf",
+									"label": "第48回ダンロップ仮ドロー",
+									"kb": 426
+								}
+							]
+						},
+						"result": {
+							"images": [
+								{
+									"src": "assets/img/events/r7-dunlop/result-01.webp",
+									"label": "男子ダブルスA級",
+									"w": 1478,
+									"h": 1152
+								},
+								{
+									"src": "assets/img/events/r7-dunlop/result-02.webp",
+									"label": "男子ダブルスB級",
+									"w": 966,
+									"h": 1314
+								},
+								{
+									"src": "assets/img/events/r7-dunlop/result-03.webp",
+									"label": "男子ダブルス45歳以上",
+									"w": 1468,
+									"h": 716
+								},
+								{
+									"src": "assets/img/events/r7-dunlop/result-04.webp",
+									"label": "男子ダブルス55歳以上",
+									"w": 1470,
+									"h": 594
+								},
+								{
+									"src": "assets/img/events/r7-dunlop/result-05.webp",
+									"label": "男子ダブルス65歳以上",
+									"w": 1468,
+									"h": 850
+								},
+								{
+									"src": "assets/img/events/r7-dunlop/result-06.webp",
+									"label": "女子ダブルスA級",
+									"w": 1474,
+									"h": 718
+								},
+								{
+									"src": "assets/img/events/r7-dunlop/result-07.webp",
+									"label": "女子ダブルス45歳以上（決勝スコア修正）",
+									"w": 1476,
+									"h": 714
+								},
+								{
+									"src": "assets/img/events/r7-dunlop/result-08.webp",
+									"label": "女子ダブルス55歳以上",
+									"w": 1468,
+									"h": 394
+								}
+							],
+							"pdfs": []
+						},
+						"photo": {
+							"images": [
+								{
+									"src": "assets/img/events/r7-dunlop/photo-01.webp",
+									"label": "RXR00010-1",
+									"w": 1400,
+									"h": 933
+								},
+								{
+									"src": "assets/img/events/r7-dunlop/photo-02.webp",
+									"label": "RXR00014-1",
+									"w": 1400,
+									"h": 933
+								},
+								{
+									"src": "assets/img/events/r7-dunlop/photo-03.webp",
+									"label": "RXR00015-1",
+									"w": 1400,
+									"h": 933
+								},
+								{
+									"src": "assets/img/events/r7-dunlop/photo-04.webp",
+									"label": "RXR00016-1",
+									"w": 1400,
+									"h": 933
+								},
+								{
+									"src": "assets/img/events/r7-dunlop/photo-05.webp",
+									"label": "RXR00020-1",
+									"w": 1400,
+									"h": 933
+								},
+								{
+									"src": "assets/img/events/r7-dunlop/photo-06.webp",
+									"label": "RXR00021-2",
+									"w": 1400,
+									"h": 933
+								},
+								{
+									"src": "assets/img/events/r7-dunlop/photo-07.webp",
+									"label": "RXR00023-1",
+									"w": 1400,
+									"h": 933
+								},
+								{
+									"src": "assets/img/events/r7-dunlop/photo-08.webp",
+									"label": "RXR00024-2",
+									"w": 1400,
+									"h": 933
+								},
+								{
+									"src": "assets/img/events/r7-dunlop/photo-09.webp",
+									"label": "RXR00025-1",
+									"w": 1400,
+									"h": 933
+								},
+								{
+									"src": "assets/img/events/r7-dunlop/photo-10.webp",
+									"label": "RXR00026-1",
+									"w": 1400,
+									"h": 933
+								},
+								{
+									"src": "assets/img/events/r7-dunlop/photo-11.webp",
+									"label": "RXR00028-1",
+									"w": 1400,
+									"h": 933
+								},
+								{
+									"src": "assets/img/events/r7-dunlop/photo-12.webp",
+									"label": "RXR00029-2",
+									"w": 1400,
+									"h": 933
+								},
+								{
+									"src": "assets/img/events/r7-dunlop/photo-13.webp",
+									"label": "RXR00030-3",
+									"w": 1400,
+									"h": 933
+								},
+								{
+									"src": "assets/img/events/r7-dunlop/photo-14.webp",
+									"label": "RXR00032-1",
+									"w": 1400,
+									"h": 933
+								},
+								{
+									"src": "assets/img/events/r7-dunlop/photo-15.webp",
+									"label": "RXR00034-2",
+									"w": 1400,
+									"h": 933
+								}
+							],
+							"pdfs": []
+						}
+					}
+				}
+			},
+			{
+				"id": "r7-enetopia",
+				"slug": "r7-enetopia",
+				"status": "published",
+				"data": {
+					"name": "第29回エネトピア杯ミックスダブルス",
+					"nendo": "2025",
+					"no": "12",
+					"kind": "協会主催",
+					"event": "ミックスダブルス",
+					"date": "2025-09-23",
+					"label": "9月23日（祝）",
+					"place": "ヤマタスポーツパーク",
+					"spare_date": "9/27",
+					"spare_venue": "鳥取市千代テニス場",
+					"spare_note": "",
+					"due": "9/5",
+					"state": "終了",
+					"reg": "市登録",
+					"host": "",
+					"note": "",
+					"link_label": "",
+					"link_url": "",
+					"card": false,
+					"materials": [],
+					"winners": [
+						{
+							"category": "1位トーナメント",
+							"award": "優勝",
+							"name": "檜垣・橋本ペア"
+						},
+						{
+							"category": "1位トーナメント",
+							"award": "準優勝",
+							"name": "岸本・三浦 ペア"
+						},
+						{
+							"category": "1位トーナメント",
+							"award": "ベスト4",
+							"name": "田中・田渕 ペア"
+						},
+						{
+							"category": "1位トーナメント",
+							"award": "ベスト4",
+							"name": "竹安・楠瀬 ペア"
+						},
+						{
+							"category": "2位トーナメント",
+							"award": "優勝",
+							"name": "遠藤・遠藤 ペア"
+						},
+						{
+							"category": "2位トーナメント",
+							"award": "準優勝",
+							"name": "羽馬・杉原 ペア"
+						},
+						{
+							"category": "2位トーナメント",
+							"award": "ベスト4",
+							"name": "坪上・高垣 ペア"
+						},
+						{
+							"category": "2位トーナメント",
+							"award": "ベスト4",
+							"name": "和気・中川 ペア"
+						},
+						{
+							"category": "3位トーナメント",
+							"award": "優勝",
+							"name": "井嶋・高木 ペア"
+						},
+						{
+							"category": "3位トーナメント",
+							"award": "準優勝",
+							"name": "西山・小林 ペア"
+						},
+						{
+							"category": "3位トーナメント",
+							"award": "ベスト4",
+							"name": "松原・宮島 ペア"
+						},
+						{
+							"category": "3位トーナメント",
+							"award": "ベスト4",
+							"name": "近藤・前田 ペア"
+						},
+						{
+							"category": "4位・5位トーナメント",
+							"award": "優勝",
+							"name": "山下・田苗 ペア"
+						},
+						{
+							"category": "4位・5位トーナメント",
+							"award": "準優勝",
+							"name": "吉田・吉田 ペア"
+						},
+						{
+							"category": "4位・5位トーナメント",
+							"award": "ベスト4",
+							"name": "米村・佐藤 ペア"
+						},
+						{
+							"category": "4位・5位トーナメント",
+							"award": "ベスト4",
+							"name": "外園・船越 ペア"
+						}
+					],
+					"legacy_materials": {
+						"outline": {
+							"images": [
+								{
+									"src": "assets/img/events/r7-enetopia/outline-01.webp",
+									"label": "1ページ目",
+									"w": 1240,
+									"h": 1755
+								}
+							],
+							"pdfs": [
+								{
+									"src": "assets/pdf/events/r7-enetopia/R7エネトピア杯要項.pdf",
+									"label": "R7エネトピア杯要項",
+									"kb": 79
+								}
+							]
+						},
+						"entry": {
+							"images": [],
+							"pdfs": [
+								{
+									"src": "assets/pdf/events/r7-enetopia/R7エネトピア杯申込用紙.pdf",
+									"label": "R7エネトピア杯申込用紙",
+									"kb": 89
+								}
+							]
+						},
+						"draw": {
+							"images": [
+								{
+									"src": "assets/img/events/r7-enetopia/draw-01.webp",
+									"label": "1ページ目",
+									"w": 1241,
+									"h": 1754
+								},
+								{
+									"src": "assets/img/events/r7-enetopia/draw-02.webp",
+									"label": "2ページ目",
+									"w": 1241,
+									"h": 1754
+								}
+							],
+							"pdfs": [
+								{
+									"src": "assets/pdf/events/r7-enetopia/R7エネトピア杯仮ドロー.pdf",
+									"label": "R7エネトピア杯仮ドロー",
+									"kb": 139
+								}
+							]
+						},
+						"result": {
+							"images": [
+								{
+									"src": "assets/img/events/r7-enetopia/result-01.webp",
+									"label": "予選 Aリーグ",
+									"w": 994,
+									"h": 1160
+								},
+								{
+									"src": "assets/img/events/r7-enetopia/result-02.webp",
+									"label": "予選 Dリーグ",
+									"w": 996,
+									"h": 1126
+								},
+								{
+									"src": "assets/img/events/r7-enetopia/result-03.webp",
+									"label": "予選 Gリーグ",
+									"w": 1000,
+									"h": 1130
+								},
+								{
+									"src": "assets/img/events/r7-enetopia/result-04.webp",
+									"label": "予選リーグ",
+									"w": 998,
+									"h": 1130
+								},
+								{
+									"src": "assets/img/events/r7-enetopia/result-05.webp",
+									"label": "予選 Mリーグ",
+									"w": 1038,
+									"h": 488
+								},
+								{
+									"src": "assets/img/events/r7-enetopia/result-06.webp",
+									"label": "1位トーナメント",
+									"w": 1606,
+									"h": 1004
+								},
+								{
+									"src": "assets/img/events/r7-enetopia/result-07.webp",
+									"label": "2位トーナメント",
+									"w": 1610,
+									"h": 990
+								},
+								{
+									"src": "assets/img/events/r7-enetopia/result-08.webp",
+									"label": "3位トーナメント",
+									"w": 1604,
+									"h": 988
+								},
+								{
+									"src": "assets/img/events/r7-enetopia/result-09.webp",
+									"label": "4位・5位トーナメント",
+									"w": 1608,
+									"h": 1118
+								}
+							],
+							"pdfs": []
+						},
+						"photo": {
+							"images": [
+								{
+									"src": "assets/img/events/r7-enetopia/photo-01.webp",
+									"label": "RXR00187",
+									"w": 1400,
+									"h": 934
+								},
+								{
+									"src": "assets/img/events/r7-enetopia/photo-02.webp",
+									"label": "RXR00188",
+									"w": 1400,
+									"h": 933
+								},
+								{
+									"src": "assets/img/events/r7-enetopia/photo-03.webp",
+									"label": "RXR00189",
+									"w": 1400,
+									"h": 933
+								},
+								{
+									"src": "assets/img/events/r7-enetopia/photo-04.webp",
+									"label": "RXR00190",
+									"w": 1400,
+									"h": 934
+								},
+								{
+									"src": "assets/img/events/r7-enetopia/photo-05.webp",
+									"label": "RXR00192",
+									"w": 1400,
+									"h": 933
+								},
+								{
+									"src": "assets/img/events/r7-enetopia/photo-06.webp",
+									"label": "RXR00193",
+									"w": 1400,
+									"h": 933
+								},
+								{
+									"src": "assets/img/events/r7-enetopia/photo-07.webp",
+									"label": "RXR00194",
+									"w": 1400,
+									"h": 933
+								},
+								{
+									"src": "assets/img/events/r7-enetopia/photo-08.webp",
+									"label": "RXR00195",
+									"w": 1400,
+									"h": 933
+								},
+								{
+									"src": "assets/img/events/r7-enetopia/photo-09.webp",
+									"label": "RXR00197",
+									"w": 1400,
+									"h": 933
+								},
+								{
+									"src": "assets/img/events/r7-enetopia/photo-10.webp",
+									"label": "RXR00200",
+									"w": 1400,
+									"h": 933
+								},
+								{
+									"src": "assets/img/events/r7-enetopia/photo-11.webp",
+									"label": "RXR00201",
+									"w": 1400,
+									"h": 933
+								},
+								{
+									"src": "assets/img/events/r7-enetopia/photo-12.webp",
+									"label": "RXR00202",
+									"w": 1400,
+									"h": 933
+								},
+								{
+									"src": "assets/img/events/r7-enetopia/photo-13.webp",
+									"label": "RXR00203",
+									"w": 1400,
+									"h": 933
+								},
+								{
+									"src": "assets/img/events/r7-enetopia/photo-14.webp",
+									"label": "RXR00204",
+									"w": 1400,
+									"h": 934
+								},
+								{
+									"src": "assets/img/events/r7-enetopia/photo-15.webp",
+									"label": "RXR00205",
+									"w": 1400,
+									"h": 934
+								},
+								{
+									"src": "assets/img/events/r7-enetopia/photo-16.webp",
+									"label": "RXR00206",
+									"w": 1400,
+									"h": 934
+								},
+								{
+									"src": "assets/img/events/r7-enetopia/photo-17.webp",
+									"label": "RXR00208",
+									"w": 1400,
+									"h": 933
+								},
+								{
+									"src": "assets/img/events/r7-enetopia/photo-18.webp",
+									"label": "RXR00209",
+									"w": 1400,
+									"h": 933
+								},
+								{
+									"src": "assets/img/events/r7-enetopia/photo-19.webp",
+									"label": "RXR00211",
+									"w": 1400,
+									"h": 933
+								},
+								{
+									"src": "assets/img/events/r7-enetopia/photo-20.webp",
+									"label": "RXR00213",
+									"w": 1400,
+									"h": 933
+								}
+							],
+							"pdfs": []
+						}
+					}
+				}
+			},
+			{
+				"id": "r7-prince-open",
+				"slug": "r7-prince-open",
+				"status": "published",
+				"data": {
+					"name": "2025 プリンスオープン チーム対抗戦",
+					"nendo": "2025",
+					"no": "13",
+					"kind": "協会主催",
+					"event": "チーム対抗戦",
+					"date": "2025-10-13",
+					"label": "10月13日（祝）",
+					"place": "ヤマタスポーツパーク",
+					"spare_date": "10/18",
+					"spare_venue": "鳥取市千代テニス場",
+					"spare_note": "",
+					"due": "別記",
+					"state": "終了",
+					"reg": "登録不要",
+					"host": "",
+					"note": "",
+					"link_label": "",
+					"link_url": "",
+					"card": false,
+					"materials": [],
+					"winners": [],
+					"legacy_materials": {
+						"outline": {
+							"images": [
+								{
+									"src": "assets/img/events/r7-prince-open/outline-01.webp",
+									"label": "1ページ目",
+									"w": 1240,
+									"h": 1755
+								}
+							],
+							"pdfs": [
+								{
+									"src": "assets/pdf/events/r7-prince-open/2025プリンスオープン要項.pdf",
+									"label": "2025プリンスオープン要項",
+									"kb": 274
+								}
+							]
+						},
+						"entry": {
+							"images": [],
+							"pdfs": [
+								{
+									"src": "assets/pdf/events/r7-prince-open/princeOPEN2025申込用紙.pdf",
+									"label": "princeOPEN2025申込用紙",
+									"kb": 71
+								}
+							]
+						},
+						"draw": {
+							"images": [
+								{
+									"src": "assets/img/events/r7-prince-open/draw-01.webp",
+									"label": "プログラム 1ページ目",
+									"w": 1241,
+									"h": 1754
+								},
+								{
+									"src": "assets/img/events/r7-prince-open/draw-02.webp",
+									"label": "プログラム 2ページ目",
+									"w": 1241,
+									"h": 1754
+								},
+								{
+									"src": "assets/img/events/r7-prince-open/draw-03.webp",
+									"label": "プログラム 3ページ目",
+									"w": 1241,
+									"h": 1754
+								},
+								{
+									"src": "assets/img/events/r7-prince-open/draw-04.webp",
+									"label": "プログラム 4ページ目",
+									"w": 1241,
+									"h": 1754
+								},
+								{
+									"src": "assets/img/events/r7-prince-open/draw-05.webp",
+									"label": "オーダー",
+									"w": 1241,
+									"h": 1754
+								},
+								{
+									"src": "assets/img/events/r7-prince-open/draw-06.webp",
+									"label": "メンバー表",
+									"w": 1241,
+									"h": 1754
+								}
+							],
+							"pdfs": [
+								{
+									"src": "assets/pdf/events/r7-prince-open/R7プリンスオープンプログラム.pdf",
+									"label": "R7プリンスオープンプログラム",
+									"kb": 2741
+								},
+								{
+									"src": "assets/pdf/events/r7-prince-open/R7プリンスオープンOP.pdf",
+									"label": "R7プリンスオープンOP",
+									"kb": 379
+								},
+								{
+									"src": "assets/pdf/events/r7-prince-open/R7プリンスオープンメンバー表.pdf",
+									"label": "R7プリンスオープンメンバー表",
+									"kb": 360
+								}
+							]
+						},
+						"result": {
+							"images": [
+								{
+									"src": "assets/img/events/r7-prince-open/result-01.webp",
+									"label": "表紙",
+									"w": 1273,
+									"h": 1800
+								},
+								{
+									"src": "assets/img/events/r7-prince-open/result-02.webp",
+									"label": "Aリーグ 成績表",
+									"w": 1273,
+									"h": 1800
+								},
+								{
+									"src": "assets/img/events/r7-prince-open/result-03.webp",
+									"label": "Dリーグ 成績表",
+									"w": 1273,
+									"h": 1800
+								},
+								{
+									"src": "assets/img/events/r7-prince-open/result-04.webp",
+									"label": "1位トーナメント",
+									"w": 1273,
+									"h": 1800
+								},
+								{
+									"src": "assets/img/events/r7-prince-open/result-05.webp",
+									"label": "1位トーナメント",
+									"w": 1273,
+									"h": 1800
+								},
+								{
+									"src": "assets/img/events/r7-prince-open/result-06.webp",
+									"label": "1位・2位トーナメント",
+									"w": 1273,
+									"h": 1800
+								},
+								{
+									"src": "assets/img/events/r7-prince-open/result-07.webp",
+									"label": "2位トーナメント",
+									"w": 1273,
+									"h": 1800
+								},
+								{
+									"src": "assets/img/events/r7-prince-open/result-08.webp",
+									"label": "2位・3位トーナメント",
+									"w": 1273,
+									"h": 1800
+								},
+								{
+									"src": "assets/img/events/r7-prince-open/result-09.webp",
+									"label": "3位トーナメント",
+									"w": 1273,
+									"h": 1800
+								},
+								{
+									"src": "assets/img/events/r7-prince-open/result-10.webp",
+									"label": "3位トーナメント",
+									"w": 1273,
+									"h": 1800
+								},
+								{
+									"src": "assets/img/events/r7-prince-open/result-11.webp",
+									"label": "4位トーナメント",
+									"w": 1273,
+									"h": 1800
+								},
+								{
+									"src": "assets/img/events/r7-prince-open/result-12.webp",
+									"label": "4位トーナメント",
+									"w": 1273,
+									"h": 1800
+								},
+								{
+									"src": "assets/img/events/r7-prince-open/result-13.webp",
+									"label": "13ページ目",
+									"w": 1273,
+									"h": 1800
+								}
+							],
+							"pdfs": []
+						},
+						"photo": {
+							"images": [
+								{
+									"src": "assets/img/events/r7-prince-open/photo-01.webp",
+									"label": "3Q8A3019",
+									"w": 1400,
+									"h": 933
+								},
+								{
+									"src": "assets/img/events/r7-prince-open/photo-02.webp",
+									"label": "3Q8A3020",
+									"w": 1400,
+									"h": 933
+								},
+								{
+									"src": "assets/img/events/r7-prince-open/photo-03.webp",
+									"label": "3Q8A3031",
+									"w": 1400,
+									"h": 933
+								},
+								{
+									"src": "assets/img/events/r7-prince-open/photo-04.webp",
+									"label": "3Q8A3034",
+									"w": 1400,
+									"h": 933
+								},
+								{
+									"src": "assets/img/events/r7-prince-open/photo-05.webp",
+									"label": "3Q8A3035",
+									"w": 1400,
+									"h": 933
+								},
+								{
+									"src": "assets/img/events/r7-prince-open/photo-06.webp",
+									"label": "3Q8A3042",
+									"w": 1400,
+									"h": 933
+								},
+								{
+									"src": "assets/img/events/r7-prince-open/photo-07.webp",
+									"label": "3Q8A3050",
+									"w": 1400,
+									"h": 933
+								},
+								{
+									"src": "assets/img/events/r7-prince-open/photo-08.webp",
+									"label": "BeReal.",
+									"w": 1400,
+									"h": 933
+								},
+								{
+									"src": "assets/img/events/r7-prince-open/photo-09.webp",
+									"label": "JGO",
+									"w": 1400,
+									"h": 933
+								},
+								{
+									"src": "assets/img/events/r7-prince-open/photo-10.webp",
+									"label": "SUPER細ピー",
+									"w": 1400,
+									"h": 933
+								},
+								{
+									"src": "assets/img/events/r7-prince-open/photo-11.webp",
+									"label": "しましまのラスカル",
+									"w": 1400,
+									"h": 933
+								},
+								{
+									"src": "assets/img/events/r7-prince-open/photo-12.webp",
+									"label": "すぷらとぅーん",
+									"w": 1400,
+									"h": 933
+								},
+								{
+									"src": "assets/img/events/r7-prince-open/photo-13.webp",
+									"label": "せとか",
+									"w": 1400,
+									"h": 933
+								},
+								{
+									"src": "assets/img/events/r7-prince-open/photo-14.webp",
+									"label": "てにすぶのつどい",
+									"w": 1400,
+									"h": 934
+								},
+								{
+									"src": "assets/img/events/r7-prince-open/photo-15.webp",
+									"label": "ウルトラマリン",
+									"w": 1400,
+									"h": 933
+								},
+								{
+									"src": "assets/img/events/r7-prince-open/photo-16.webp",
+									"label": "エール",
+									"w": 1400,
+									"h": 933
+								},
+								{
+									"src": "assets/img/events/r7-prince-open/photo-17.webp",
+									"label": "オールマイティ",
+									"w": 1400,
+									"h": 934
+								},
+								{
+									"src": "assets/img/events/r7-prince-open/photo-18.webp",
+									"label": "チームどんどんまいあがれ",
+									"w": 1400,
+									"h": 933
+								},
+								{
+									"src": "assets/img/events/r7-prince-open/photo-19.webp",
+									"label": "ノーレット７",
+									"w": 1400,
+									"h": 934
+								},
+								{
+									"src": "assets/img/events/r7-prince-open/photo-20.webp",
+									"label": "ハッピーばうわ",
+									"w": 1400,
+									"h": 934
+								},
+								{
+									"src": "assets/img/events/r7-prince-open/photo-21.webp",
+									"label": "プチドーム",
+									"w": 1400,
+									"h": 933
+								},
+								{
+									"src": "assets/img/events/r7-prince-open/photo-22.webp",
+									"label": "プラセールReto",
+									"w": 1400,
+									"h": 934
+								},
+								{
+									"src": "assets/img/events/r7-prince-open/photo-23.webp",
+									"label": "プラセールVAMOS",
+									"w": 1400,
+									"h": 933
+								},
+								{
+									"src": "assets/img/events/r7-prince-open/photo-24.webp",
+									"label": "プラセールヌエボ",
+									"w": 1400,
+									"h": 933
+								},
+								{
+									"src": "assets/img/events/r7-prince-open/photo-25.webp",
+									"label": "ファイヤーボルト",
+									"w": 1400,
+									"h": 933
+								},
+								{
+									"src": "assets/img/events/r7-prince-open/photo-26.webp",
+									"label": "リミ家の留守番",
+									"w": 1400,
+									"h": 933
+								},
+								{
+									"src": "assets/img/events/r7-prince-open/photo-27.webp",
+									"label": "可愛いだけじゃだめですか",
+									"w": 1400,
+									"h": 933
+								},
+								{
+									"src": "assets/img/events/r7-prince-open/photo-28.webp",
+									"label": "味方でも打倒K",
+									"w": 1400,
+									"h": 934
+								},
+								{
+									"src": "assets/img/events/r7-prince-open/photo-29.webp",
+									"label": "女王専属護衛団",
+									"w": 1400,
+									"h": 934
+								},
+								{
+									"src": "assets/img/events/r7-prince-open/photo-30.webp",
+									"label": "目指せネットラッシャー",
+									"w": 1400,
+									"h": 933
+								},
+								{
+									"src": "assets/img/events/r7-prince-open/photo-31.webp",
+									"label": "西山ダディ",
+									"w": 1400,
+									"h": 934
+								}
+							],
+							"pdfs": []
+						}
+					}
+				}
+			},
+			{
+				"id": "r7-kenko-autumn",
+				"slug": "r7-kenko-autumn",
+				"status": "published",
+				"data": {
+					"name": "第69回鳥取マスターズ健康テニス（秋期）",
+					"nendo": "2025",
+					"no": "14",
+					"kind": "協会主催",
+					"event": "男女ダブルス",
+					"date": "2025-11-08",
+					"label": "11月8日（土）",
+					"place": "ヤマタスポーツパーク",
+					"spare_date": "",
+					"spare_venue": "",
+					"spare_note": "荒天中止",
+					"due": "10/31",
+					"state": "終了",
+					"reg": "登録不要",
+					"host": "",
+					"note": "",
+					"link_label": "",
+					"link_url": "",
+					"card": false,
+					"materials": [],
+					"winners": [],
+					"legacy_materials": {
+						"outline": {
+							"images": [
+								{
+									"src": "assets/img/events/r7-kenko-autumn/outline-01.webp",
+									"label": "1ページ目",
+									"w": 1241,
+									"h": 1755
+								},
+								{
+									"src": "assets/img/events/r7-kenko-autumn/outline-02.webp",
+									"label": "2ページ目",
+									"w": 1241,
+									"h": 1755
+								}
+							],
+							"pdfs": [
+								{
+									"src": "assets/pdf/events/r7-kenko-autumn/鳥取健康テニス大会要綱.pdf",
+									"label": "鳥取健康テニス大会要綱",
+									"kb": 479
+								},
+								{
+									"src": "assets/pdf/events/r7-kenko-autumn/鳥取健康テニス大会【一般の部】申込用紙.pdf",
+									"label": "鳥取健康テニス大会【一般の部】申込用紙",
+									"kb": 238
+								},
+								{
+									"src": "assets/pdf/events/r7-kenko-autumn/鳥取健康テニス大会【ジュニアの部】申込用紙.pdf",
+									"label": "鳥取健康テニス大会【ジュニアの部】申込用紙",
+									"kb": 494
+								}
+							]
+						}
+					}
+				}
+			},
+			{
+				"id": "r7-kensen-singles",
+				"slug": "r7-kensen-singles",
+				"status": "published",
+				"data": {
+					"name": "鳥取県テニス選手権 シングルス",
+					"nendo": "2025",
+					"no": "15",
+					"kind": "協会主催",
+					"event": "男女シングルス",
+					"date": "2025-11-09",
+					"label": "11月9日（日）",
+					"place": "ヤマタスポーツパーク",
+					"spare_date": "11/15",
+					"spare_venue": "鳥取市千代テニス場",
+					"spare_note": "",
+					"due": "10/24",
+					"state": "終了",
+					"reg": "県登録",
+					"host": "",
+					"note": "",
+					"link_label": "",
+					"link_url": "",
+					"card": false,
+					"materials": [],
+					"winners": [
+						{
+							"category": "一般男子シングルスA級",
+							"award": "優勝",
+							"name": "安田 彰汰 選手"
+						},
+						{
+							"category": "男子45歳以上シングルス",
+							"award": "優勝",
+							"name": "山崎 信博 選手"
+						},
+						{
+							"category": "男子55歳以上シングルス",
+							"award": "優勝",
+							"name": "小谷 佳介 選手"
+						},
+						{
+							"category": "男子65歳以上シングルス",
+							"award": "優勝",
+							"name": "勝井 節朗 選手"
+						},
+						{
+							"category": "一般女子シングルス",
+							"award": "優勝",
+							"name": "川上 梨華 選手"
+						}
+					],
+					"legacy_materials": {
+						"outline": {
+							"images": [
+								{
+									"src": "assets/img/events/r7-kensen-singles/outline-01.webp",
+									"label": "1ページ目",
+									"w": 1241,
+									"h": 1754
+								},
+								{
+									"src": "assets/img/events/r7-kensen-singles/outline-02.webp",
+									"label": "2ページ目",
+									"w": 1241,
+									"h": 1754
+								}
+							],
+							"pdfs": [
+								{
+									"src": "assets/pdf/events/r7-kensen-singles/令和7県選シングルス要項.pdf",
+									"label": "令和7県選シングルス要項",
+									"kb": 94
+								}
+							]
+						},
+						"draw": {
+							"images": [
+								{
+									"src": "assets/img/events/r7-kensen-singles/draw-01.webp",
+									"label": "訂正ドロー 1ページ目",
+									"w": 1241,
+									"h": 1754
+								},
+								{
+									"src": "assets/img/events/r7-kensen-singles/draw-02.webp",
+									"label": "訂正ドロー 2ページ目",
+									"w": 1241,
+									"h": 1754
+								},
+								{
+									"src": "assets/img/events/r7-kensen-singles/draw-03.webp",
+									"label": "訂正ドロー 3ページ目",
+									"w": 1241,
+									"h": 1754
+								}
+							],
+							"pdfs": [
+								{
+									"src": "assets/pdf/events/r7-kensen-singles/R7県選シングルスドロー（訂正）.pdf",
+									"label": "R7県選シングルスドロー（訂正）",
+									"kb": 127
+								}
+							]
+						},
+						"result": {
+							"images": [
+								{
+									"src": "assets/img/events/r7-kensen-singles/result-01.webp",
+									"label": "一般男子シングルス",
+									"w": 950,
+									"h": 1252
+								},
+								{
+									"src": "assets/img/events/r7-kensen-singles/result-02.webp",
+									"label": "男子45歳以上シングルス",
+									"w": 1592,
+									"h": 466
+								},
+								{
+									"src": "assets/img/events/r7-kensen-singles/result-03.webp",
+									"label": "男子55歳以上シングルス",
+									"w": 1470,
+									"h": 430
+								},
+								{
+									"src": "assets/img/events/r7-kensen-singles/result-04.webp",
+									"label": "男子65歳以上シングルス",
+									"w": 1570,
+									"h": 916
+								},
+								{
+									"src": "assets/img/events/r7-kensen-singles/result-05.webp",
+									"label": "一般女子シングルス",
+									"w": 1524,
+									"h": 310
+								}
+							],
+							"pdfs": []
+						},
+						"photo": {
+							"images": [
+								{
+									"src": "assets/img/events/r7-kensen-singles/photo-01.webp",
+									"label": "RXR00703",
+									"w": 1400,
+									"h": 933
+								},
+								{
+									"src": "assets/img/events/r7-kensen-singles/photo-02.webp",
+									"label": "RXR00705",
+									"w": 1400,
+									"h": 933
+								},
+								{
+									"src": "assets/img/events/r7-kensen-singles/photo-03.webp",
+									"label": "RXR00706",
+									"w": 1400,
+									"h": 933
+								},
+								{
+									"src": "assets/img/events/r7-kensen-singles/photo-04.webp",
+									"label": "RXR00707",
+									"w": 1400,
+									"h": 933
+								},
+								{
+									"src": "assets/img/events/r7-kensen-singles/photo-05.webp",
+									"label": "RXR00707",
+									"w": 1400,
+									"h": 933
+								},
+								{
+									"src": "assets/img/events/r7-kensen-singles/photo-06.webp",
+									"label": "RXR00724-1",
+									"w": 1400,
+									"h": 933
+								}
+							],
+							"pdfs": []
+						}
+					}
+				}
+			},
+			{
+				"id": "r7-kensen-doubles",
+				"slug": "r7-kensen-doubles",
+				"status": "published",
+				"data": {
+					"name": "鳥取県テニス選手権 ダブルス",
+					"nendo": "2025",
+					"no": "16",
+					"kind": "協会主催",
+					"event": "男女ダブルス",
+					"date": "2025-11-16",
+					"label": "11月16日（日）",
+					"place": "ヤマタスポーツパーク",
+					"spare_date": "11/22",
+					"spare_venue": "鳥取市千代テニス場",
+					"spare_note": "",
+					"due": "10/31",
+					"state": "終了",
+					"reg": "県登録",
+					"host": "",
+					"note": "",
+					"link_label": "",
+					"link_url": "",
+					"card": false,
+					"materials": [],
+					"winners": [
+						{
+							"category": "一般男子ダブルスA級",
+							"award": "優勝",
+							"name": "岸本・平木 ペア"
+						},
+						{
+							"category": "男子45歳以上ダブルス",
+							"award": "優勝",
+							"name": "井崎・戸苅 ペア"
+						},
+						{
+							"category": "男子55歳以上ダブルス",
+							"award": "優勝",
+							"name": "岩井・砂沢 ペア"
+						},
+						{
+							"category": "男子65歳以上ダブルス",
+							"award": "優勝",
+							"name": "石崎・岸田 ペア"
+						},
+						{
+							"category": "女子45歳以上ダブルス",
+							"award": "優勝",
+							"name": "高木・谷口 ペア"
+						}
+					],
+					"legacy_materials": {
+						"outline": {
+							"images": [
+								{
+									"src": "assets/img/events/r7-kensen-doubles/outline-01.webp",
+									"label": "1ページ目",
+									"w": 1241,
+									"h": 1754
+								},
+								{
+									"src": "assets/img/events/r7-kensen-doubles/outline-02.webp",
+									"label": "2ページ目",
+									"w": 1241,
+									"h": 1754
+								}
+							],
+							"pdfs": [
+								{
+									"src": "assets/pdf/events/r7-kensen-doubles/令和7年県選ダブルス要項.pdf",
+									"label": "令和7年県選ダブルス要項",
+									"kb": 4780
+								}
+							]
+						},
+						"draw": {
+							"images": [
+								{
+									"src": "assets/img/events/r7-kensen-doubles/draw-01.webp",
+									"label": "ドロー（再）1ページ目",
+									"w": 1241,
+									"h": 1754
+								},
+								{
+									"src": "assets/img/events/r7-kensen-doubles/draw-02.webp",
+									"label": "ドロー（再）2ページ目",
+									"w": 1241,
+									"h": 1754
+								},
+								{
+									"src": "assets/img/events/r7-kensen-doubles/draw-03.webp",
+									"label": "ドロー（再）3ページ目",
+									"w": 1241,
+									"h": 1754
+								}
+							],
+							"pdfs": [
+								{
+									"src": "assets/pdf/events/r7-kensen-doubles/R7県選ダブルスドロー.pdf",
+									"label": "R7県選ダブルスドロー",
+									"kb": 119
+								}
+							]
+						},
+						"result": {
+							"images": [
+								{
+									"src": "assets/img/events/r7-kensen-doubles/result-01.webp",
+									"label": "一般男子ダブルス",
+									"w": 1530,
+									"h": 1284
+								},
+								{
+									"src": "assets/img/events/r7-kensen-doubles/result-02.webp",
+									"label": "男子45歳以上ダブルス",
+									"w": 1450,
+									"h": 618
+								},
+								{
+									"src": "assets/img/events/r7-kensen-doubles/result-03.webp",
+									"label": "男子55歳以上ダブルス",
+									"w": 1440,
+									"h": 610
+								},
+								{
+									"src": "assets/img/events/r7-kensen-doubles/result-04.webp",
+									"label": "男子65歳以上ダブルス",
+									"w": 1516,
+									"h": 892
+								},
+								{
+									"src": "assets/img/events/r7-kensen-doubles/result-05.webp",
+									"label": "女子45歳以上ダブルス",
+									"w": 1516,
+									"h": 528
+								}
+							],
+							"pdfs": []
+						}
+					}
+				}
+			},
+			{
+				"id": "r7-kaicho-autumn",
+				"slug": "r7-kaicho-autumn",
+				"status": "published",
+				"data": {
+					"name": "第60回鳥取市テニス協会会長杯（秋季）",
+					"nendo": "2025",
+					"no": "17",
+					"kind": "協会主催",
+					"event": "団体戦",
+					"date": "2025-11-23",
+					"label": "11月23日（日）",
+					"place": "ヤマタスポーツパーク",
+					"spare_date": "11/24",
+					"spare_venue": "ヤマタスポーツパーク",
+					"spare_note": "",
+					"due": "11/7",
+					"state": "終了",
+					"reg": "市登録",
+					"host": "",
+					"note": "",
+					"link_label": "",
+					"link_url": "",
+					"card": false,
+					"materials": [],
+					"winners": [
+						{
+							"category": "1位トーナメント",
+							"award": "優勝",
+							"name": "託児所"
+						},
+						{
+							"category": "2位トーナメント",
+							"award": "優勝",
+							"name": "ぐんまちゃん"
+						},
+						{
+							"category": "3位トーナメント",
+							"award": "優勝",
+							"name": "ウルトラマリン"
+						},
+						{
+							"category": "4位トーナメント",
+							"award": "優勝",
+							"name": "チームどんどんまいあがれ"
+						}
+					],
+					"legacy_materials": {
+						"outline": {
+							"images": [
+								{
+									"src": "assets/img/events/r7-kaicho-autumn/outline-01.webp",
+									"label": "1ページ目",
+									"w": 1241,
+									"h": 1754
+								},
+								{
+									"src": "assets/img/events/r7-kaicho-autumn/outline-02.webp",
+									"label": "2ページ目",
+									"w": 1241,
+									"h": 1754
+								}
+							],
+							"pdfs": [
+								{
+									"src": "assets/pdf/events/r7-kaicho-autumn/2025会長杯団体要項.pdf",
+									"label": "2025会長杯団体要項",
+									"kb": 197
+								}
+							]
+						},
+						"draw": {
+							"images": [
+								{
+									"src": "assets/img/events/r7-kaicho-autumn/draw-01.webp",
+									"label": "1ページ目",
+									"w": 1241,
+									"h": 1754
+								},
+								{
+									"src": "assets/img/events/r7-kaicho-autumn/draw-02.webp",
+									"label": "2ページ目",
+									"w": 1241,
+									"h": 1754
+								},
+								{
+									"src": "assets/img/events/r7-kaicho-autumn/draw-03.webp",
+									"label": "3ページ目",
+									"w": 1241,
+									"h": 1754
+								},
+								{
+									"src": "assets/img/events/r7-kaicho-autumn/draw-04.webp",
+									"label": "4ページ目",
+									"w": 1241,
+									"h": 1754
+								}
+							],
+							"pdfs": [
+								{
+									"src": "assets/pdf/events/r7-kaicho-autumn/R7会長杯団体戦ドロー.pdf",
+									"label": "R7会長杯団体戦ドロー",
+									"kb": 809
+								}
+							]
+						},
+						"result": {
+							"images": [
+								{
+									"src": "assets/img/events/r7-kaicho-autumn/result-01.webp",
+									"label": "Aリーグ 成績表",
+									"w": 1800,
+									"h": 1187
+								},
+								{
+									"src": "assets/img/events/r7-kaicho-autumn/result-02.webp",
+									"label": "Bリーグ 成績表",
+									"w": 1800,
+									"h": 1205
+								},
+								{
+									"src": "assets/img/events/r7-kaicho-autumn/result-03.webp",
+									"label": "Cリーグ 成績表",
+									"w": 1800,
+									"h": 1213
+								},
+								{
+									"src": "assets/img/events/r7-kaicho-autumn/result-04.webp",
+									"label": "Dリーグ 成績表",
+									"w": 1800,
+									"h": 1192
+								},
+								{
+									"src": "assets/img/events/r7-kaicho-autumn/result-05.webp",
+									"label": "Eリーグ 成績表",
+									"w": 1800,
+									"h": 1182
+								},
+								{
+									"src": "assets/img/events/r7-kaicho-autumn/result-06.webp",
+									"label": "1位トーナメント",
+									"w": 1416,
+									"h": 776
+								},
+								{
+									"src": "assets/img/events/r7-kaicho-autumn/result-07.webp",
+									"label": "2位トーナメント",
+									"w": 1412,
+									"h": 778
+								},
+								{
+									"src": "assets/img/events/r7-kaicho-autumn/result-08.webp",
+									"label": "3位トーナメント",
+									"w": 1414,
+									"h": 770
+								},
+								{
+									"src": "assets/img/events/r7-kaicho-autumn/result-09.webp",
+									"label": "4位・5位トーナメント",
+									"w": 1412,
+									"h": 824
+								}
+							],
+							"pdfs": []
+						}
+					}
+				}
+			},
+			{
+				"id": "r7-shicho",
+				"slug": "r7-shicho",
+				"status": "published",
+				"data": {
+					"name": "第40回鳥取市市長杯",
+					"nendo": "2025",
+					"no": "18",
+					"kind": "協会主催",
+					"event": "男女シングルス",
+					"date": "2025-11-30",
+					"label": "11月30日（日）",
+					"place": "ヤマタスポーツパーク",
+					"spare_date": "12/6",
+					"spare_venue": "ヤマタスポーツパーク",
+					"spare_note": "",
+					"due": "11/14",
+					"state": "終了",
+					"reg": "市登録",
+					"host": "",
+					"note": "",
+					"link_label": "",
+					"link_url": "",
+					"card": false,
+					"materials": [],
+					"winners": [
+						{
+							"category": "男子シングルスA級",
+							"award": "優勝",
+							"name": "米本叶芽 選手"
+						},
+						{
+							"category": "男子B級シングルス",
+							"award": "優勝",
+							"name": "三宅 諒弥 選手"
+						},
+						{
+							"category": "男子C級シングルス",
+							"award": "優勝",
+							"name": "角田 勝 選手"
+						},
+						{
+							"category": "一般女子シングルス",
+							"award": "優勝",
+							"name": "川上 梨華 選手"
+						},
+						{
+							"category": "女子B級シングルス",
+							"award": "優勝",
+							"name": "岩本 理紗子 選手"
+						}
+					],
+					"legacy_materials": {
+						"outline": {
+							"images": [
+								{
+									"src": "assets/img/events/r7-shicho/outline-01.webp",
+									"label": "1ページ目",
+									"w": 1241,
+									"h": 1754
+								},
+								{
+									"src": "assets/img/events/r7-shicho/outline-02.webp",
+									"label": "2ページ目",
+									"w": 1241,
+									"h": 1754
+								}
+							],
+							"pdfs": [
+								{
+									"src": "assets/pdf/events/r7-shicho/2025市長杯要項.pdf",
+									"label": "2025市長杯要項",
+									"kb": 205
+								}
+							]
+						},
+						"draw": {
+							"images": [
+								{
+									"src": "assets/img/events/r7-shicho/draw-01.webp",
+									"label": "1ページ目",
+									"w": 1241,
+									"h": 1754
+								},
+								{
+									"src": "assets/img/events/r7-shicho/draw-02.webp",
+									"label": "2ページ目",
+									"w": 1241,
+									"h": 1754
+								},
+								{
+									"src": "assets/img/events/r7-shicho/draw-03.webp",
+									"label": "3ページ目",
+									"w": 1241,
+									"h": 1754
+								}
+							],
+							"pdfs": [
+								{
+									"src": "assets/pdf/events/r7-shicho/R7市長杯ドロー.pdf",
+									"label": "R7市長杯ドロー",
+									"kb": 5099
+								}
+							]
+						},
+						"result": {
+							"images": [
+								{
+									"src": "assets/img/events/r7-shicho/result-01.webp",
+									"label": "男子A級 Aリーグ",
+									"w": 1800,
+									"h": 1104
+								},
+								{
+									"src": "assets/img/events/r7-shicho/result-02.webp",
+									"label": "男子A級 Bリーグ",
+									"w": 1800,
+									"h": 1106
+								},
+								{
+									"src": "assets/img/events/r7-shicho/result-03.webp",
+									"label": "男子A級 Cリーグ",
+									"w": 1800,
+									"h": 1145
+								},
+								{
+									"src": "assets/img/events/r7-shicho/result-04.webp",
+									"label": "男子A級 決勝リーグ",
+									"w": 1800,
+									"h": 1059
+								},
+								{
+									"src": "assets/img/events/r7-shicho/result-05.webp",
+									"label": "男子B級 Aリーグ",
+									"w": 1800,
+									"h": 1101
+								},
+								{
+									"src": "assets/img/events/r7-shicho/result-06.webp",
+									"label": "男子B級 Bリーグ",
+									"w": 1800,
+									"h": 1104
+								},
+								{
+									"src": "assets/img/events/r7-shicho/result-07.webp",
+									"label": "男子B級 Cリーグ",
+									"w": 1800,
+									"h": 1102
+								},
+								{
+									"src": "assets/img/events/r7-shicho/result-08.webp",
+									"label": "男子B級 Dリーグ",
+									"w": 1800,
+									"h": 1099
+								},
+								{
+									"src": "assets/img/events/r7-shicho/result-09.webp",
+									"label": "男子B級 Eリーグ",
+									"w": 1800,
+									"h": 1104
+								},
+								{
+									"src": "assets/img/events/r7-shicho/result-10.webp",
+									"label": "男子B級 Fリーグ",
+									"w": 1800,
+									"h": 1102
+								},
+								{
+									"src": "assets/img/events/r7-shicho/result-11.webp",
+									"label": "男子B級 Gリーグ",
+									"w": 1800,
+									"h": 1103
+								},
+								{
+									"src": "assets/img/events/r7-shicho/result-12.webp",
+									"label": "男子B級 Hリーグ",
+									"w": 1800,
+									"h": 1097
+								},
+								{
+									"src": "assets/img/events/r7-shicho/result-13.webp",
+									"label": "男子B級 Iリーグ",
+									"w": 1800,
+									"h": 1097
+								},
+								{
+									"src": "assets/img/events/r7-shicho/result-14.webp",
+									"label": "男子B級 Jリーグ",
+									"w": 1800,
+									"h": 1098
+								},
+								{
+									"src": "assets/img/events/r7-shicho/result-15.webp",
+									"label": "男子B級 Kリーグ",
+									"w": 1800,
+									"h": 1145
+								},
+								{
+									"src": "assets/img/events/r7-shicho/result-16.webp",
+									"label": "男子B級 Lリーグ",
+									"w": 1658,
+									"h": 1000
+								},
+								{
+									"src": "assets/img/events/r7-shicho/result-17.webp",
+									"label": "男子B級 決勝トーナメント",
+									"w": 1344,
+									"h": 1052
+								},
+								{
+									"src": "assets/img/events/r7-shicho/result-18.webp",
+									"label": "男子C級 Aリーグ",
+									"w": 1800,
+									"h": 1145
+								},
+								{
+									"src": "assets/img/events/r7-shicho/result-19.webp",
+									"label": "男子C級 Bリーグ",
+									"w": 1642,
+									"h": 994
+								},
+								{
+									"src": "assets/img/events/r7-shicho/result-20.webp",
+									"label": "男子C級 決勝",
+									"w": 1354,
+									"h": 366
+								},
+								{
+									"src": "assets/img/events/r7-shicho/result-21.webp",
+									"label": "女子A級 予選リーグ",
+									"w": 1800,
+									"h": 1100
+								},
+								{
+									"src": "assets/img/events/r7-shicho/result-22.webp",
+									"label": "女子A級 決勝リーグ",
+									"w": 1800,
+									"h": 1106
+								},
+								{
+									"src": "assets/img/events/r7-shicho/result-23.webp",
+									"label": "女子B級 Aリーグ",
+									"w": 1800,
+									"h": 1101
+								},
+								{
+									"src": "assets/img/events/r7-shicho/result-24.webp",
+									"label": "女子B級 Bリーグ",
+									"w": 1800,
+									"h": 1139
+								},
+								{
+									"src": "assets/img/events/r7-shicho/result-25.webp",
+									"label": "女子B級 決勝",
+									"w": 1340,
+									"h": 348
+								}
+							],
+							"pdfs": []
+						},
+						"photo": {
+							"images": [
+								{
+									"src": "assets/img/events/r7-shicho/photo-01.webp",
+									"label": "1764501144640",
+									"w": 1050,
+									"h": 1400
+								},
+								{
+									"src": "assets/img/events/r7-shicho/photo-02.webp",
+									"label": "1764501140740",
+									"w": 1050,
+									"h": 1400
+								},
+								{
+									"src": "assets/img/events/r7-shicho/photo-03.webp",
+									"label": "1764501135596",
+									"w": 1050,
+									"h": 1400
+								},
+								{
+									"src": "assets/img/events/r7-shicho/photo-04.webp",
+									"label": "1764501135344",
+									"w": 1050,
+									"h": 1400
+								},
+								{
+									"src": "assets/img/events/r7-shicho/photo-05.webp",
+									"label": "1764501135522",
+									"w": 1050,
+									"h": 1400
+								}
+							],
+							"pdfs": []
+						}
+					}
+				}
+			},
+			{
+				"id": "r7-osaka",
+				"slug": "r7-osaka",
+				"status": "published",
+				"data": {
+					"name": "第53回尾坂杯鳥取室内テニス選手権",
+					"nendo": "2025",
+					"no": "19",
+					"kind": "協会主催",
+					"event": "男女シングルス／男女ダブルス",
+					"date": "2026-01-12",
+					"label": "1/12〜2/23",
+					"place": "鳥取市民体育館／鳥取県民体育館／鳥取産業体育館",
+					"spare_date": "",
+					"spare_venue": "",
+					"spare_note": "1/12・1/17・2/14・2/21・2/22・2/23 の全6日",
+					"due": "12月",
+					"state": "終了",
+					"reg": "県登録",
+					"host": "",
+					"note": "",
+					"link_label": "",
+					"link_url": "",
+					"card": false,
+					"materials": [],
+					"winners": [
+						{
+							"category": "男子A級シングルス",
+							"award": "優勝",
+							"name": "白石 直紀 選手"
+						},
+						{
+							"category": "男子B級シングルス",
+							"award": "優勝",
+							"name": "細川 善貴 選手"
+						},
+						{
+							"category": "男子55歳以上シングルス",
+							"award": "優勝",
+							"name": "盛本 貴之 選手"
+						},
+						{
+							"category": "男子65歳以上シングルス",
+							"award": "優勝",
+							"name": "勝井 節朗 選手"
+						},
+						{
+							"category": "女子45歳以上シングルス",
+							"award": "優勝",
+							"name": "網川 佐知子 選手"
+						},
+						{
+							"category": "男子A級ダブルス",
+							"award": "優勝",
+							"name": "岸本・平木 ペア"
+						},
+						{
+							"category": "男子B級ダブルス",
+							"award": "優勝",
+							"name": "戸杉・細川 ペア"
+						},
+						{
+							"category": "男子45歳以上ダブルス",
+							"award": "優勝",
+							"name": "星川・渡辺 ペア"
+						},
+						{
+							"category": "男子65歳以上ダブルス",
+							"award": "優勝",
+							"name": "勝井・岡田 ペア"
+						},
+						{
+							"category": "女子A級ダブルス",
+							"award": "優勝",
+							"name": "手嶋・細田 ペア"
+						},
+						{
+							"category": "女子B級ダブルス",
+							"award": "優勝",
+							"name": "三澤・青柳 ペア"
+						}
+					],
+					"legacy_materials": {
+						"outline": {
+							"images": [
+								{
+									"src": "assets/img/events/r7-osaka/outline-01.webp",
+									"label": "要項（修正）",
+									"w": 1240,
+									"h": 1755
+								}
+							],
+							"pdfs": [
+								{
+									"src": "assets/pdf/events/r7-osaka/令和7年度尾坂杯要項(修正).pdf",
+									"label": "令和7年度尾坂杯要項(修正)",
+									"kb": 73
+								},
+								{
+									"src": "assets/pdf/events/r7-osaka/令和7年度尾坂杯シングルス(修正).pdf",
+									"label": "令和7年度尾坂杯シングルス(修正)",
+									"kb": 67
+								},
+								{
+									"src": "assets/pdf/events/r7-osaka/令和7年度尾坂杯ダブルス(修正).pdf",
+									"label": "令和7年度尾坂杯ダブルス(修正)",
+									"kb": 69
+								}
+							]
+						},
+						"entry": {
+							"images": [],
+							"pdfs": [
+								{
+									"src": "assets/pdf/events/r7-osaka/令和7年度尾坂杯S申込用紙.pdf",
+									"label": "令和7年度尾坂杯S申込用紙",
+									"kb": 79
+								}
+							]
+						},
+						"draw": {
+							"images": [
+								{
+									"src": "assets/img/events/r7-osaka/draw-01.webp",
+									"label": "シングルス前期日程 1ページ目",
+									"w": 1241,
+									"h": 1754
+								},
+								{
+									"src": "assets/img/events/r7-osaka/draw-02.webp",
+									"label": "シングルス前期日程 2ページ目",
+									"w": 1241,
+									"h": 1754
+								},
+								{
+									"src": "assets/img/events/r7-osaka/draw-03.webp",
+									"label": "シングルス前期日程 3ページ目",
+									"w": 1241,
+									"h": 1754
+								},
+								{
+									"src": "assets/img/events/r7-osaka/draw-04.webp",
+									"label": "女子45歳以上シングルス 訂正ドロー",
+									"w": 1241,
+									"h": 1754
+								},
+								{
+									"src": "assets/img/events/r7-osaka/draw-05.webp",
+									"label": "男子65歳以上シングルス 訂正ドロー 1",
+									"w": 1241,
+									"h": 1754
+								},
+								{
+									"src": "assets/img/events/r7-osaka/draw-06.webp",
+									"label": "男子65歳以上シングルス 訂正ドロー 2",
+									"w": 1241,
+									"h": 1754
+								}
+							],
+							"pdfs": [
+								{
+									"src": "assets/pdf/events/r7-osaka/令和7年度尾坂杯シングルス前期日程ドロー.pdf",
+									"label": "令和7年度尾坂杯シングルス前期日程ドロー",
+									"kb": 221
+								},
+								{
+									"src": "assets/pdf/events/r7-osaka/尾坂杯女子45歳以上シングルス訂正ドロー.pdf",
+									"label": "尾坂杯女子45歳以上シングルス訂正ドロー",
+									"kb": 51
+								},
+								{
+									"src": "assets/pdf/events/r7-osaka/尾坂杯男子65歳以上シングルス訂正ドロー.pdf",
+									"label": "尾坂杯男子65歳以上シングルス訂正ドロー",
+									"kb": 84
+								}
+							]
+						},
+						"result": {
+							"images": [
+								{
+									"src": "assets/img/events/r7-osaka/result-01.webp",
+									"label": "男子A級シングルス",
+									"w": 1398,
+									"h": 772
+								},
+								{
+									"src": "assets/img/events/r7-osaka/result-02.webp",
+									"label": "男子B級シングルス",
+									"w": 1110,
+									"h": 1350
+								},
+								{
+									"src": "assets/img/events/r7-osaka/result-03.webp",
+									"label": "男子55歳以上シングルス",
+									"w": 1218,
+									"h": 388
+								},
+								{
+									"src": "assets/img/events/r7-osaka/result-04.webp",
+									"label": "男子65歳以上シングルス",
+									"w": 1402,
+									"h": 650
+								},
+								{
+									"src": "assets/img/events/r7-osaka/result-05.webp",
+									"label": "女子45歳以上シングルス",
+									"w": 1412,
+									"h": 338
+								},
+								{
+									"src": "assets/img/events/r7-osaka/result-06.webp",
+									"label": "男子A級ダブルス",
+									"w": 1276,
+									"h": 844
+								},
+								{
+									"src": "assets/img/events/r7-osaka/result-07.webp",
+									"label": "男子B級ダブルス",
+									"w": 1260,
+									"h": 1094
+								},
+								{
+									"src": "assets/img/events/r7-osaka/result-08.webp",
+									"label": "男子45歳以上ダブルス",
+									"w": 1506,
+									"h": 830
+								},
+								{
+									"src": "assets/img/events/r7-osaka/result-09.webp",
+									"label": "男子65歳以上ダブルス",
+									"w": 1496,
+									"h": 566
+								},
+								{
+									"src": "assets/img/events/r7-osaka/result-10.webp",
+									"label": "女子A級ダブルス",
+									"w": 1254,
+									"h": 420
+								},
+								{
+									"src": "assets/img/events/r7-osaka/result-11.webp",
+									"label": "女子B級ダブルス",
+									"w": 1270,
+									"h": 428
+								}
+							],
+							"pdfs": []
+						},
+						"photo": {
+							"images": [
+								{
+									"src": "assets/img/events/r7-osaka/photo-01.webp",
+									"label": "1771843236738-2",
+									"w": 1040,
+									"h": 1387
+								},
+								{
+									"src": "assets/img/events/r7-osaka/photo-02.webp",
+									"label": "1771843236838-2",
+									"w": 1050,
+									"h": 1400
+								},
+								{
+									"src": "assets/img/events/r7-osaka/photo-03.webp",
+									"label": "1771843241772-2",
+									"w": 1050,
+									"h": 1400
+								},
+								{
+									"src": "assets/img/events/r7-osaka/photo-04.webp",
+									"label": "1771843241825-2",
+									"w": 1050,
+									"h": 1400
+								},
+								{
+									"src": "assets/img/events/r7-osaka/photo-05.webp",
+									"label": "1771843241849-2",
+									"w": 1050,
+									"h": 1400
+								},
+								{
+									"src": "assets/img/events/r7-osaka/photo-06.webp",
+									"label": "1771843241902-2",
+									"w": 1050,
+									"h": 1400
+								},
+								{
+									"src": "assets/img/events/r7-osaka/photo-07.webp",
+									"label": "1771843241935-2",
+									"w": 1050,
+									"h": 1400
+								},
+								{
+									"src": "assets/img/events/r7-osaka/photo-08.webp",
+									"label": "1771843241967-2",
+									"w": 1050,
+									"h": 1400
+								},
+								{
+									"src": "assets/img/events/r7-osaka/photo-09.webp",
+									"label": "1771843241990-2",
+									"w": 1050,
+									"h": 1400
+								},
+								{
+									"src": "assets/img/events/r7-osaka/photo-10.webp",
+									"label": "1771843242017-2",
+									"w": 1050,
+									"h": 1400
+								},
+								{
+									"src": "assets/img/events/r7-osaka/photo-11.webp",
+									"label": "IMG20260222143446-2",
+									"w": 1400,
+									"h": 933
+								},
+								{
+									"src": "assets/img/events/r7-osaka/photo-12.webp",
+									"label": "IMG20260222143541-2",
+									"w": 1400,
+									"h": 933
+								}
+							],
+							"pdfs": []
+						}
+					}
+				}
+			},
+			{
+				"id": "r8-tobu-singles",
+				"slug": "r8-tobu-singles",
+				"status": "published",
+				"data": {
+					"name": "第56回東部地区テニス選手権",
+					"nendo": "2026",
+					"no": "01",
+					"kind": "協会主催",
+					"event": "男女シングルス",
+					"date": "2026-03-22",
+					"label": "3月22日（日）",
+					"place": "ヤマタスポーツパーク",
+					"spare_date": "3/28",
+					"spare_venue": "鳥取市千代テニス場",
+					"spare_note": "",
+					"due": "3/6",
+					"state": "終了",
+					"reg": "県登録",
+					"host": "",
+					"note": "",
+					"link_label": "",
+					"link_url": "",
+					"card": false,
+					"materials": [],
+					"winners": [
+						{
+							"category": "男子シングルスA級",
+							"award": "優勝",
+							"name": "米本 叶芽 選手"
+						},
+						{
+							"category": "男子シングルスB級",
+							"award": "優勝",
+							"name": "宮根 拓海 選手"
+						},
+						{
+							"category": "男子シングルスC級",
+							"award": "優勝",
+							"name": "黒部 将健 選手"
+						},
+						{
+							"category": "男子45歳以上シングルス",
+							"award": "優勝",
+							"name": "椿 誠 選手"
+						},
+						{
+							"category": "男子55歳以上シングルス",
+							"award": "優勝",
+							"name": "小谷 佳介 選手"
+						},
+						{
+							"category": "男子65歳以上シングルス",
+							"award": "優勝",
+							"name": "勝井 節朗 選手"
+						},
+						{
+							"category": "女子シングルスA級",
+							"award": "優勝",
+							"name": "荒木 柚那 選手"
+						},
+						{
+							"category": "女子シングルスB級",
+							"award": "優勝",
+							"name": "岡田 友子 選手"
+						},
+						{
+							"category": "女子45歳以上シングルス",
+							"award": "優勝",
+							"name": "山方 祥子 選手"
+						}
+					],
+					"legacy_materials": {
+						"outline": {
+							"images": [
+								{
+									"src": "assets/img/events/r8-tobu-singles/outline-01.webp",
+									"label": "1ページ目",
+									"w": 1241,
+									"h": 1754
+								},
+								{
+									"src": "assets/img/events/r8-tobu-singles/outline-02.webp",
+									"label": "2ページ目",
+									"w": 1241,
+									"h": 1754
+								}
+							],
+							"pdfs": [
+								{
+									"src": "assets/pdf/events/r8-tobu-singles/R8東部選手権シングルス要項.pdf",
+									"label": "R8東部選手権シングルス要項",
+									"kb": 169
+								}
+							]
+						},
+						"draw": {
+							"images": [
+								{
+									"src": "assets/img/events/r8-tobu-singles/draw-01.webp",
+									"label": "ドロー 1ページ目",
+									"w": 1241,
+									"h": 1754
+								},
+								{
+									"src": "assets/img/events/r8-tobu-singles/draw-02.webp",
+									"label": "ドロー 2ページ目",
+									"w": 1241,
+									"h": 1754
+								},
+								{
+									"src": "assets/img/events/r8-tobu-singles/draw-03.webp",
+									"label": "ドロー 3ページ目",
+									"w": 1241,
+									"h": 1754
+								},
+								{
+									"src": "assets/img/events/r8-tobu-singles/draw-04.webp",
+									"label": "ドロー 4ページ目",
+									"w": 1241,
+									"h": 1754
+								},
+								{
+									"src": "assets/img/events/r8-tobu-singles/draw-05.webp",
+									"label": "B級 修正ドロー",
+									"w": 1241,
+									"h": 1754
+								}
+							],
+							"pdfs": [
+								{
+									"src": "assets/pdf/events/r8-tobu-singles/第56回東部地区選手権シングルスドロー.pdf",
+									"label": "第56回東部地区選手権シングルスドロー",
+									"kb": 149
+								},
+								{
+									"src": "assets/pdf/events/r8-tobu-singles/第56回東部地区選手権シングルスドロー(リドロー）.pdf",
+									"label": "第56回東部地区選手権シングルスドロー(リドロー）",
+									"kb": 158
+								},
+								{
+									"src": "assets/pdf/events/r8-tobu-singles/第56回東部地区選手権B級修正.pdf",
+									"label": "第56回東部地区選手権B級修正",
+									"kb": 121
+								}
+							]
+						},
+						"result": {
+							"images": [
+								{
+									"src": "assets/img/events/r8-tobu-singles/result-01.webp",
+									"label": "男子シングルスA級",
+									"w": 1616,
+									"h": 1160
+								},
+								{
+									"src": "assets/img/events/r8-tobu-singles/result-02.webp",
+									"label": "男子シングルスB級",
+									"w": 1614,
+									"h": 1516
+								},
+								{
+									"src": "assets/img/events/r8-tobu-singles/result-03.webp",
+									"label": "男子シングルスC級",
+									"w": 1610,
+									"h": 896
+								},
+								{
+									"src": "assets/img/events/r8-tobu-singles/result-04.webp",
+									"label": "男子45歳以上シングルス",
+									"w": 1616,
+									"h": 522
+								},
+								{
+									"src": "assets/img/events/r8-tobu-singles/result-05.webp",
+									"label": "男子55歳以上シングルス",
+									"w": 1566,
+									"h": 420
+								},
+								{
+									"src": "assets/img/events/r8-tobu-singles/result-06.webp",
+									"label": "男子65歳以上シングルス",
+									"w": 1612,
+									"h": 576
+								},
+								{
+									"src": "assets/img/events/r8-tobu-singles/result-07.webp",
+									"label": "女子シングルスA級",
+									"w": 1576,
+									"h": 430
+								},
+								{
+									"src": "assets/img/events/r8-tobu-singles/result-08.webp",
+									"label": "女子シングルスB級",
+									"w": 1576,
+									"h": 440
+								},
+								{
+									"src": "assets/img/events/r8-tobu-singles/result-09.webp",
+									"label": "女子45歳以上シングルス",
+									"w": 1566,
+									"h": 326
+								}
+							],
+							"pdfs": []
+						},
+						"photo": {
+							"images": [
+								{
+									"src": "assets/img/events/r8-tobu-singles/photo-01.webp",
+									"label": "IMG_20260322_135041-2",
+									"w": 1400,
+									"h": 1054
+								},
+								{
+									"src": "assets/img/events/r8-tobu-singles/photo-02.webp",
+									"label": "IMG_20260322_152851",
+									"w": 1400,
+									"h": 1054
+								},
+								{
+									"src": "assets/img/events/r8-tobu-singles/photo-03.webp",
+									"label": "IMG_20260322_154155",
+									"w": 1400,
+									"h": 1054
+								},
+								{
+									"src": "assets/img/events/r8-tobu-singles/photo-04.webp",
+									"label": "IMG_20260322_160526",
+									"w": 1400,
+									"h": 1054
+								},
+								{
+									"src": "assets/img/events/r8-tobu-singles/photo-05.webp",
+									"label": "IMG_20260322_160928",
+									"w": 1400,
+									"h": 1054
+								},
+								{
+									"src": "assets/img/events/r8-tobu-singles/photo-06.webp",
+									"label": "IMG_20260322_164225",
+									"w": 1400,
+									"h": 1054
+								},
+								{
+									"src": "assets/img/events/r8-tobu-singles/photo-07.webp",
+									"label": "IMG_20260322_165901",
+									"w": 1400,
+									"h": 1054
+								},
+								{
+									"src": "assets/img/events/r8-tobu-singles/photo-08.webp",
+									"label": "IMG_20260322_171840",
+									"w": 1400,
+									"h": 1054
+								},
+								{
+									"src": "assets/img/events/r8-tobu-singles/photo-09.webp",
+									"label": "IMG_20260322_175135",
+									"w": 1400,
+									"h": 1053
+								}
+							],
+							"pdfs": []
+						}
+					}
+				}
+			},
+			{
+				"id": "r8-tobu-doubles",
+				"slug": "r8-tobu-doubles",
+				"status": "published",
+				"data": {
+					"name": "第56回東部地区テニス選手権",
+					"nendo": "2026",
+					"no": "02",
+					"kind": "協会主催",
+					"event": "男女ダブルス",
+					"date": "2026-03-29",
+					"label": "3月29日（日）",
+					"place": "ヤマタスポーツパーク",
+					"spare_date": "4/4",
+					"spare_venue": "鳥取市千代テニス場",
+					"spare_note": "",
+					"due": "3/13",
+					"state": "終了",
+					"reg": "県登録",
+					"host": "",
+					"note": "",
+					"link_label": "",
+					"link_url": "",
+					"card": false,
+					"materials": [],
+					"winners": [
+						{
+							"category": "男子ダブルスA級",
+							"award": "優勝",
+							"name": "鶴石・岸本 ペア"
+						},
+						{
+							"category": "男子ダブルスB級",
+							"award": "優勝",
+							"name": "吉織・中里 ペア"
+						},
+						{
+							"category": "男子ダブルスC級",
+							"award": "優勝",
+							"name": "松島・西田 ペア"
+						},
+						{
+							"category": "男子45歳以上ダブルス",
+							"award": "優勝",
+							"name": "山口・野波 ペア"
+						},
+						{
+							"category": "男子55歳以上ダブルス",
+							"award": "優勝",
+							"name": "霜田・吉田 ペア"
+						},
+						{
+							"category": "男子65歳以上ダブルス",
+							"award": "優勝",
+							"name": "船本・梶 ペア"
+						},
+						{
+							"category": "女子45歳以上ダブルス",
+							"award": "優勝",
+							"name": "小林・山形 ペア"
+						}
+					],
+					"legacy_materials": {
+						"outline": {
+							"images": [
+								{
+									"src": "assets/img/events/r8-tobu-doubles/outline-01.webp",
+									"label": "3ページ目",
+									"w": 1241,
+									"h": 1754
+								},
+								{
+									"src": "assets/img/events/r8-tobu-doubles/outline-02.webp",
+									"label": "4ページ目",
+									"w": 1241,
+									"h": 1754
+								}
+							],
+							"pdfs": [
+								{
+									"src": "assets/pdf/events/r8-tobu-doubles/R8東部選手権要綱_page-0004.pdf",
+									"label": "4ページ目",
+									"kb": 176
+								}
+							]
+						},
+						"draw": {
+							"images": [
+								{
+									"src": "assets/img/events/r8-tobu-doubles/draw-01.webp",
+									"label": "1ページ目",
+									"w": 1241,
+									"h": 1754
+								},
+								{
+									"src": "assets/img/events/r8-tobu-doubles/draw-02.webp",
+									"label": "2ページ目",
+									"w": 1241,
+									"h": 1754
+								},
+								{
+									"src": "assets/img/events/r8-tobu-doubles/draw-03.webp",
+									"label": "3ページ目",
+									"w": 1241,
+									"h": 1754
+								}
+							],
+							"pdfs": [
+								{
+									"src": "assets/pdf/events/r8-tobu-doubles/第56回東部ダブルスドロー.pdf",
+									"label": "第56回東部ダブルスドロー",
+									"kb": 134
+								}
+							]
+						},
+						"result": {
+							"images": [
+								{
+									"src": "assets/img/events/r8-tobu-doubles/result-01.webp",
+									"label": "男子ダブルスA級",
+									"w": 1532,
+									"h": 694
+								},
+								{
+									"src": "assets/img/events/r8-tobu-doubles/result-02.webp",
+									"label": "男子ダブルスB級",
+									"w": 1548,
+									"h": 1326
+								},
+								{
+									"src": "assets/img/events/r8-tobu-doubles/result-03.webp",
+									"label": "男子ダブルスC級",
+									"w": 1492,
+									"h": 302
+								},
+								{
+									"src": "assets/img/events/r8-tobu-doubles/result-04.webp",
+									"label": "男子45歳以上ダブルス",
+									"w": 1492,
+									"h": 350
+								},
+								{
+									"src": "assets/img/events/r8-tobu-doubles/result-05.webp",
+									"label": "男子55歳以上ダブルス",
+									"w": 1476,
+									"h": 482
+								},
+								{
+									"src": "assets/img/events/r8-tobu-doubles/result-06.webp",
+									"label": "男子65歳以上ダブルス",
+									"w": 1540,
+									"h": 660
+								},
+								{
+									"src": "assets/img/events/r8-tobu-doubles/result-07.webp",
+									"label": "女子45歳以上ダブルス",
+									"w": 1474,
+									"h": 488
+								}
+							],
+							"pdfs": []
+						},
+						"photo": {
+							"images": [
+								{
+									"src": "assets/img/events/r8-tobu-doubles/photo-01.webp",
+									"label": "IMG_20260329_110302",
+									"w": 1400,
+									"h": 1050
+								},
+								{
+									"src": "assets/img/events/r8-tobu-doubles/photo-02.webp",
+									"label": "IMG_20260329_111205",
+									"w": 1400,
+									"h": 1050
+								},
+								{
+									"src": "assets/img/events/r8-tobu-doubles/photo-03.webp",
+									"label": "IMG_20260329_115048",
+									"w": 1400,
+									"h": 1050
+								},
+								{
+									"src": "assets/img/events/r8-tobu-doubles/photo-04.webp",
+									"label": "IMG_20260329_134345",
+									"w": 1400,
+									"h": 1050
+								},
+								{
+									"src": "assets/img/events/r8-tobu-doubles/photo-05.webp",
+									"label": "IMG_20260329_153640",
+									"w": 1400,
+									"h": 1050
+								},
+								{
+									"src": "assets/img/events/r8-tobu-doubles/photo-06.webp",
+									"label": "IMG_20260329_154036",
+									"w": 1400,
+									"h": 1050
+								},
+								{
+									"src": "assets/img/events/r8-tobu-doubles/photo-07.webp",
+									"label": "IMG_20260329_155846",
+									"w": 1400,
+									"h": 1050
+								}
+							],
+							"pdfs": []
+						}
+					}
+				}
+			},
+			{
+				"id": "r8-sasaki",
+				"slug": "r8-sasaki",
+				"status": "published",
+				"data": {
+					"name": "佐々木杯テニス大会",
+					"nendo": "2026",
+					"no": "03",
+					"kind": "協会主催",
+					"event": "ミックスダブルス",
+					"date": "2026-04-05",
+					"label": "4月5日（日）",
+					"place": "ヤマタスポーツパーク",
+					"spare_date": "4/11",
+					"spare_venue": "鳥取市千代テニス場",
+					"spare_note": "",
+					"due": "3/20",
+					"state": "終了",
+					"reg": "市登録",
+					"host": "",
+					"note": "",
+					"link_label": "",
+					"link_url": "",
+					"card": false,
+					"materials": [],
+					"winners": [
+						{
+							"category": "1位トーナメント",
+							"award": "優勝",
+							"name": "竹安・楠瀬 ペア"
+						},
+						{
+							"category": "1位トーナメント",
+							"award": "準優勝",
+							"name": "小川・山内 ペア"
+						},
+						{
+							"category": "2位トーナメント",
+							"award": "優勝",
+							"name": "石原・高木 ペア"
+						},
+						{
+							"category": "2位トーナメント",
+							"award": "準優勝",
+							"name": "中里・市川 ペア"
+						},
+						{
+							"category": "3位トーナメント",
+							"award": "優勝",
+							"name": "吉田・吉田 ペア"
+						},
+						{
+							"category": "3位トーナメント",
+							"award": "準優勝",
+							"name": "福本・浜角 ペア"
+						},
+						{
+							"category": "4•5位トーナメント",
+							"award": "優勝",
+							"name": "山下・田苗 ペア"
+						},
+						{
+							"category": "4•5位トーナメント",
+							"award": "準優勝",
+							"name": "岩本・岩本 ペア"
+						}
+					],
+					"legacy_materials": {
+						"outline": {
+							"images": [
+								{
+									"src": "assets/img/events/r8-sasaki/outline-01.webp",
+									"label": "1ページ目",
+									"w": 1241,
+									"h": 1754
+								},
+								{
+									"src": "assets/img/events/r8-sasaki/outline-02.webp",
+									"label": "2ページ目",
+									"w": 1241,
+									"h": 1754
+								},
+								{
+									"src": "assets/img/events/r8-sasaki/outline-03.webp",
+									"label": "3ページ目",
+									"w": 1241,
+									"h": 1754
+								}
+							],
+							"pdfs": [
+								{
+									"src": "assets/pdf/events/r8-sasaki/R8佐々木杯要項.pdf",
+									"label": "R8佐々木杯要項",
+									"kb": 244
+								}
+							]
+						},
+						"entry": {
+							"images": [],
+							"pdfs": [
+								{
+									"src": "assets/pdf/events/r8-sasaki/R8佐々木杯申込用紙.pdf",
+									"label": "R8佐々木杯申込用紙",
+									"kb": 151
+								}
+							]
+						},
+						"draw": {
+							"images": [
+								{
+									"src": "assets/img/events/r8-sasaki/draw-01.webp",
+									"label": "1ページ目",
+									"w": 1241,
+									"h": 1754
+								},
+								{
+									"src": "assets/img/events/r8-sasaki/draw-02.webp",
+									"label": "2ページ目",
+									"w": 1241,
+									"h": 1754
+								},
+								{
+									"src": "assets/img/events/r8-sasaki/draw-03.webp",
+									"label": "3ページ目",
+									"w": 1241,
+									"h": 1754
+								}
+							],
+							"pdfs": [
+								{
+									"src": "assets/pdf/events/r8-sasaki/R8佐々木杯ドロー.pdf",
+									"label": "R8佐々木杯ドロー",
+									"kb": 161
+								}
+							]
+						},
+						"result": {
+							"images": [
+								{
+									"src": "assets/img/events/r8-sasaki/result-01.webp",
+									"label": "1位トーナメント",
+									"w": 1506,
+									"h": 1800
+								},
+								{
+									"src": "assets/img/events/r8-sasaki/result-02.webp",
+									"label": "2位トーナメント",
+									"w": 1506,
+									"h": 1800
+								},
+								{
+									"src": "assets/img/events/r8-sasaki/result-03.webp",
+									"label": "3位トーナメント",
+									"w": 1506,
+									"h": 1800
+								},
+								{
+									"src": "assets/img/events/r8-sasaki/result-04.webp",
+									"label": "4・5位トーナメント",
+									"w": 1506,
+									"h": 1800
+								},
+								{
+									"src": "assets/img/events/r8-sasaki/result-05.webp",
+									"label": "Aリーグ結果",
+									"w": 1740,
+									"h": 966
+								},
+								{
+									"src": "assets/img/events/r8-sasaki/result-06.webp",
+									"label": "Bリーグ結果",
+									"w": 1740,
+									"h": 966
+								},
+								{
+									"src": "assets/img/events/r8-sasaki/result-07.webp",
+									"label": "Cリーグ結果",
+									"w": 1740,
+									"h": 966
+								},
+								{
+									"src": "assets/img/events/r8-sasaki/result-08.webp",
+									"label": "Dリーグ結果",
+									"w": 1740,
+									"h": 966
+								},
+								{
+									"src": "assets/img/events/r8-sasaki/result-09.webp",
+									"label": "Eリーグ結果",
+									"w": 1740,
+									"h": 966
+								},
+								{
+									"src": "assets/img/events/r8-sasaki/result-10.webp",
+									"label": "Fリーグ結果",
+									"w": 1740,
+									"h": 966
+								},
+								{
+									"src": "assets/img/events/r8-sasaki/result-11.webp",
+									"label": "Gリーグ結果",
+									"w": 1740,
+									"h": 966
+								},
+								{
+									"src": "assets/img/events/r8-sasaki/result-12.webp",
+									"label": "Hリーグ結果",
+									"w": 1740,
+									"h": 966
+								},
+								{
+									"src": "assets/img/events/r8-sasaki/result-13.webp",
+									"label": "Iリーグ結果",
+									"w": 1740,
+									"h": 966
+								},
+								{
+									"src": "assets/img/events/r8-sasaki/result-14.webp",
+									"label": "Jリーグ結果",
+									"w": 1740,
+									"h": 966
+								},
+								{
+									"src": "assets/img/events/r8-sasaki/result-15.webp",
+									"label": "Kリーグ結果",
+									"w": 1740,
+									"h": 966
+								},
+								{
+									"src": "assets/img/events/r8-sasaki/result-16.webp",
+									"label": "Lリーグ結果",
+									"w": 1740,
+									"h": 966
+								},
+								{
+									"src": "assets/img/events/r8-sasaki/result-17.webp",
+									"label": "Mリーグ結果",
+									"w": 1800,
+									"h": 1043
+								}
+							],
+							"pdfs": []
+						},
+						"photo": {
+							"images": [
+								{
+									"src": "assets/img/events/r8-sasaki/photo-01.webp",
+									"label": "DSC00589",
+									"w": 1400,
+									"h": 933
+								},
+								{
+									"src": "assets/img/events/r8-sasaki/photo-02.webp",
+									"label": "DSC00594",
+									"w": 1400,
+									"h": 933
+								},
+								{
+									"src": "assets/img/events/r8-sasaki/photo-03.webp",
+									"label": "DSC00597",
+									"w": 1400,
+									"h": 933
+								},
+								{
+									"src": "assets/img/events/r8-sasaki/photo-04.webp",
+									"label": "DSC00600",
+									"w": 1400,
+									"h": 933
+								},
+								{
+									"src": "assets/img/events/r8-sasaki/photo-05.webp",
+									"label": "DSC00603",
+									"w": 1400,
+									"h": 933
+								},
+								{
+									"src": "assets/img/events/r8-sasaki/photo-06.webp",
+									"label": "DSC00606",
+									"w": 1400,
+									"h": 933
+								},
+								{
+									"src": "assets/img/events/r8-sasaki/photo-07.webp",
+									"label": "DSC00613",
+									"w": 1400,
+									"h": 933
+								},
+								{
+									"src": "assets/img/events/r8-sasaki/photo-08.webp",
+									"label": "DSC00619",
+									"w": 1400,
+									"h": 933
+								}
+							],
+							"pdfs": []
+						}
+					}
+				}
+			},
+			{
+				"id": "r8-kaicho-spring",
+				"slug": "r8-kaicho-spring",
+				"status": "published",
+				"data": {
+					"name": "第61回鳥取市テニス協会会長杯（春季）",
+					"nendo": "2026",
+					"no": "04",
+					"kind": "協会主催",
+					"event": "団体戦",
+					"date": "2026-04-29",
+					"label": "4月29日（祝）",
+					"place": "ヤマタスポーツパーク",
+					"spare_date": "5/6",
+					"spare_venue": "鳥取市千代テニス場",
+					"spare_note": "",
+					"due": "4/10",
+					"state": "終了",
+					"reg": "市登録",
+					"host": "",
+					"note": "",
+					"link_label": "",
+					"link_url": "",
+					"card": false,
+					"materials": [],
+					"winners": [
+						{
+							"category": "1位トーナメント",
+							"award": "優勝",
+							"name": "味方でも打倒K"
+						},
+						{
+							"category": "1位トーナメント",
+							"award": "準優勝",
+							"name": "ひみつのケンゴちゃん"
+						},
+						{
+							"category": "2位トーナメント",
+							"award": "優勝",
+							"name": "ケンちゃんテニス"
+						},
+						{
+							"category": "2位トーナメント",
+							"award": "準優勝",
+							"name": "プチ・ドーム"
+						},
+						{
+							"category": "3・4位トーナメント",
+							"award": "優勝",
+							"name": "ウルトラマリン"
+						},
+						{
+							"category": "3・4位トーナメント",
+							"award": "準優勝",
+							"name": "バターのいとこ"
+						}
+					],
+					"legacy_materials": {
+						"outline": {
+							"images": [
+								{
+									"src": "assets/img/events/r8-kaicho-spring/outline-01.webp",
+									"label": "1ページ目",
+									"w": 1241,
+									"h": 1754
+								}
+							],
+							"pdfs": [
+								{
+									"src": "assets/pdf/events/r8-kaicho-spring/令和8年度会長杯団体戦要項-1-2_(1).pdf",
+									"label": "令和8年度会長杯団体戦要項-1-2_(1)",
+									"kb": 174
+								}
+							]
+						},
+						"entry": {
+							"images": [],
+							"pdfs": [
+								{
+									"src": "assets/pdf/events/r8-kaicho-spring/令和8年度会長杯団体戦申込用紙.pdf",
+									"label": "令和8年度会長杯団体戦申込用紙",
+									"kb": 174
+								}
+							]
+						},
+						"draw": {
+							"images": [
+								{
+									"src": "assets/img/events/r8-kaicho-spring/draw-01.webp",
+									"label": "1ページ目",
+									"w": 1241,
+									"h": 1754
+								},
+								{
+									"src": "assets/img/events/r8-kaicho-spring/draw-02.webp",
+									"label": "2ページ目",
+									"w": 1241,
+									"h": 1754
+								},
+								{
+									"src": "assets/img/events/r8-kaicho-spring/draw-03.webp",
+									"label": "3ページ目",
+									"w": 1241,
+									"h": 1754
+								},
+								{
+									"src": "assets/img/events/r8-kaicho-spring/draw-04.webp",
+									"label": "4ページ目",
+									"w": 1241,
+									"h": 1754
+								}
+							],
+							"pdfs": [
+								{
+									"src": "assets/pdf/events/r8-kaicho-spring/R８会長杯団体戦プログラム.pdf",
+									"label": "R８会長杯団体戦プログラム",
+									"kb": 743
+								}
+							]
+						},
+						"result": {
+							"images": [
+								{
+									"src": "assets/img/events/r8-kaicho-spring/result-01.webp",
+									"label": "1位トーナメント",
+									"w": 1800,
+									"h": 1716
+								},
+								{
+									"src": "assets/img/events/r8-kaicho-spring/result-02.webp",
+									"label": "2位トーナメント",
+									"w": 1800,
+									"h": 1716
+								},
+								{
+									"src": "assets/img/events/r8-kaicho-spring/result-03.webp",
+									"label": "3位トーナメント",
+									"w": 1800,
+									"h": 1716
+								},
+								{
+									"src": "assets/img/events/r8-kaicho-spring/result-04.webp",
+									"label": "3・4位トーナメント",
+									"w": 1800,
+									"h": 1716
+								},
+								{
+									"src": "assets/img/events/r8-kaicho-spring/result-05.webp",
+									"label": "A",
+									"w": 1800,
+									"h": 1209
+								},
+								{
+									"src": "assets/img/events/r8-kaicho-spring/result-06.webp",
+									"label": "B",
+									"w": 1800,
+									"h": 1209
+								},
+								{
+									"src": "assets/img/events/r8-kaicho-spring/result-07.webp",
+									"label": "C",
+									"w": 1800,
+									"h": 1209
+								},
+								{
+									"src": "assets/img/events/r8-kaicho-spring/result-08.webp",
+									"label": "D",
+									"w": 1800,
+									"h": 1209
+								},
+								{
+									"src": "assets/img/events/r8-kaicho-spring/result-09.webp",
+									"label": "E",
+									"w": 1800,
+									"h": 1209
+								},
+								{
+									"src": "assets/img/events/r8-kaicho-spring/result-10.webp",
+									"label": "F",
+									"w": 1800,
+									"h": 1209
+								},
+								{
+									"src": "assets/img/events/r8-kaicho-spring/result-11.webp",
+									"label": "G",
+									"w": 1800,
+									"h": 1235
+								}
+							],
+							"pdfs": []
+						},
+						"photo": {
+							"images": [
+								{
+									"src": "assets/img/events/r8-kaicho-spring/photo-01.webp",
+									"label": "IMG_20260429_161258",
+									"w": 1400,
+									"h": 1054
+								},
+								{
+									"src": "assets/img/events/r8-kaicho-spring/photo-02.webp",
+									"label": "IMG_20260429_161430",
+									"w": 1400,
+									"h": 1054
+								},
+								{
+									"src": "assets/img/events/r8-kaicho-spring/photo-03.webp",
+									"label": "IMG_20260429_161848",
+									"w": 1400,
+									"h": 1054
+								},
+								{
+									"src": "assets/img/events/r8-kaicho-spring/photo-04.webp",
+									"label": "IMG_20260429_162633",
+									"w": 1400,
+									"h": 1054
+								},
+								{
+									"src": "assets/img/events/r8-kaicho-spring/photo-05.webp",
+									"label": "IMG_20260429_162750",
+									"w": 1400,
+									"h": 1054
+								},
+								{
+									"src": "assets/img/events/r8-kaicho-spring/photo-06.webp",
+									"label": "IMG_20260429_162925",
+									"w": 1400,
+									"h": 1054
+								}
+							],
+							"pdfs": []
+						}
+					}
+				}
+			},
+			{
+				"id": "r8-kenko-spring",
+				"slug": "r8-kenko-spring",
+				"status": "published",
+				"data": {
+					"name": "第70回鳥取健康テニス（春期）",
+					"nendo": "2026",
+					"no": "05",
+					"kind": "協会主催",
+					"event": "一般：男女複／ジュニア：男女単",
+					"date": "2026-05-02",
+					"label": "5月2日（土）",
+					"place": "ヤマタスポーツパーク",
+					"spare_date": "",
+					"spare_venue": "",
+					"spare_note": "荒天中止",
+					"due": "4/25",
+					"state": "終了",
+					"reg": "登録不要",
+					"host": "",
+					"note": "",
+					"link_label": "",
+					"link_url": "",
+					"card": false,
+					"materials": [],
+					"winners": [],
+					"legacy_materials": {
+						"outline": {
+							"images": [
+								{
+									"src": "assets/img/events/r8-kenko-spring/outline-01.webp",
+									"label": "一般の部 要綱",
+									"w": 1241,
+									"h": 1755
+								},
+								{
+									"src": "assets/img/events/r8-kenko-spring/outline-02.webp",
+									"label": "ジュニアの部 要綱",
+									"w": 1241,
+									"h": 1755
+								}
+							],
+							"pdfs": [
+								{
+									"src": "assets/pdf/events/r8-kenko-spring/要綱_一般.pdf",
+									"label": "要綱_一般",
+									"kb": 210
+								},
+								{
+									"src": "assets/pdf/events/r8-kenko-spring/要綱_ジュニア_(変更).pdf",
+									"label": "要綱_ジュニア_(変更)",
+									"kb": 318
+								}
+							]
+						}
+					}
+				}
+			},
+			{
+				"id": "r8-club-taiko-1",
+				"slug": "r8-club-taiko-1",
+				"status": "published",
+				"data": {
+					"name": "令和8年度クラブ対抗戦 前期日程",
+					"nendo": "2026",
+					"no": "06",
+					"kind": "協会主催",
+					"event": "男子1部〜8部",
+					"date": "2026-05-10",
+					"label": "5月10日（日）",
+					"place": "ヤマタスポーツパーク",
+					"spare_date": "5/31",
+					"spare_venue": "鳥取市千代テニス場",
+					"spare_note": "",
+					"due": "4/24",
+					"state": "終了",
+					"reg": "市登録",
+					"host": "",
+					"note": "",
+					"link_label": "",
+					"link_url": "",
+					"card": true,
+					"card_event": "団体戦（男子1部〜8部）",
+					"card_image_path": "assets/img/results/2023/2023club-taiko-5-7-gallery-001.webp",
+					"card_image_alt": "クラブ対抗戦のコート。ネットをはさんで打ち合う選手たち",
+					"live_url": "",
+					"outline_url": "",
+					"draw_url": "",
+					"result_url": "",
+					"materials": [],
+					"winners": [],
+					"legacy_materials": {
+						"outline": {
+							"images": [
+								{
+									"src": "assets/img/events/r8-club-taiko-1/outline-01.webp",
+									"label": "1ページ目",
+									"w": 1241,
+									"h": 1754
+								},
+								{
+									"src": "assets/img/events/r8-club-taiko-1/outline-02.webp",
+									"label": "2ページ目",
+									"w": 1241,
+									"h": 1754
+								},
+								{
+									"src": "assets/img/events/r8-club-taiko-1/outline-03.webp",
+									"label": "3ページ目",
+									"w": 1273,
+									"h": 1800
+								},
+								{
+									"src": "assets/img/events/r8-club-taiko-1/outline-04.webp",
+									"label": "4ページ目",
+									"w": 1241,
+									"h": 1754
+								},
+								{
+									"src": "assets/img/events/r8-club-taiko-1/outline-05.webp",
+									"label": "5ページ目",
+									"w": 1241,
+									"h": 1754
+								},
+								{
+									"src": "assets/img/events/r8-club-taiko-1/outline-06.webp",
+									"label": "6ページ目",
+									"w": 1241,
+									"h": 1754
+								},
+								{
+									"src": "assets/img/events/r8-club-taiko-1/outline-07.webp",
+									"label": "7ページ目",
+									"w": 1241,
+									"h": 1754
+								},
+								{
+									"src": "assets/img/events/r8-club-taiko-1/outline-08.webp",
+									"label": "8ページ目",
+									"w": 1241,
+									"h": 1754
+								},
+								{
+									"src": "assets/img/events/r8-club-taiko-1/outline-09.webp",
+									"label": "9ページ目",
+									"w": 1241,
+									"h": 1754
+								},
+								{
+									"src": "assets/img/events/r8-club-taiko-1/outline-10.webp",
+									"label": "編成表変更のお知らせ",
+									"w": 1169,
+									"h": 929
+								}
+							],
+							"pdfs": [
+								{
+									"src": "assets/pdf/events/r8-club-taiko-1/令和８年クラブ対抗要項全ファイル.pdf",
+									"label": "令和８年クラブ対抗要項全ファイル",
+									"kb": 1108
+								},
+								{
+									"src": "assets/pdf/events/r8-club-taiko-1/クラブ対抗編成表変更のお知らせ.pdf",
+									"label": "クラブ対抗編成表変更のお知らせ",
+									"kb": 96
+								}
+							]
+						},
+						"entry": {
+							"images": [],
+							"pdfs": [
+								{
+									"src": "assets/pdf/events/r8-club-taiko-1/令和８年クラブ対抗申込用紙_前期日程（男子1〜8部）.pdf",
+									"label": "令和８年クラブ対抗申込用紙_前期日程（男子1〜8部）",
+									"kb": 65
+								},
+								{
+									"src": "assets/pdf/events/r8-club-taiko-1/令和８年クラブ対抗_選手名簿（8名）.pdf",
+									"label": "令和８年クラブ対抗_選手名簿（8名）",
+									"kb": 102
+								},
+								{
+									"src": "assets/pdf/events/r8-club-taiko-1/令和８年クラブ対抗_選手名簿（12名）..pdf",
+									"label": "令和８年クラブ対抗_選手名簿（12名）.",
+									"kb": 104
+								}
+							]
+						},
+						"result": {
+							"images": [
+								{
+									"src": "assets/img/events/r8-club-taiko-1/result-01.webp",
+									"label": "男子1部",
+									"w": 1800,
+									"h": 1502
+								},
+								{
+									"src": "assets/img/events/r8-club-taiko-1/result-02.webp",
+									"label": "男子2部",
+									"w": 1800,
+									"h": 1407
+								},
+								{
+									"src": "assets/img/events/r8-club-taiko-1/result-03.webp",
+									"label": "男子3部",
+									"w": 1800,
+									"h": 1502
+								},
+								{
+									"src": "assets/img/events/r8-club-taiko-1/result-04.webp",
+									"label": "男子4部",
+									"w": 1800,
+									"h": 1612
+								},
+								{
+									"src": "assets/img/events/r8-club-taiko-1/result-05.webp",
+									"label": "男子5部",
+									"w": 1800,
+									"h": 1502
+								},
+								{
+									"src": "assets/img/events/r8-club-taiko-1/result-06.webp",
+									"label": "男子6部",
+									"w": 1800,
+									"h": 1612
+								},
+								{
+									"src": "assets/img/events/r8-club-taiko-1/result-07.webp",
+									"label": "男子7部",
+									"w": 1800,
+									"h": 1612
+								},
+								{
+									"src": "assets/img/events/r8-club-taiko-1/result-08.webp",
+									"label": "男子8部",
+									"w": 1800,
+									"h": 1453
+								}
+							],
+							"pdfs": []
+						},
+						"photo": {
+							"images": [
+								{
+									"src": "assets/img/events/r8-club-taiko-1/photo-01.webp",
+									"label": "DSC00760",
+									"w": 1400,
+									"h": 933
+								},
+								{
+									"src": "assets/img/events/r8-club-taiko-1/photo-02.webp",
+									"label": "DSC00788",
+									"w": 1400,
+									"h": 933
+								},
+								{
+									"src": "assets/img/events/r8-club-taiko-1/photo-03.webp",
+									"label": "DSC00793",
+									"w": 1400,
+									"h": 933
+								},
+								{
+									"src": "assets/img/events/r8-club-taiko-1/photo-04.webp",
+									"label": "DSC00796",
+									"w": 1400,
+									"h": 933
+								},
+								{
+									"src": "assets/img/events/r8-club-taiko-1/photo-05.webp",
+									"label": "DSC00804",
+									"w": 1400,
+									"h": 933
+								},
+								{
+									"src": "assets/img/events/r8-club-taiko-1/photo-06.webp",
+									"label": "DSC00809",
+									"w": 1400,
+									"h": 933
+								},
+								{
+									"src": "assets/img/events/r8-club-taiko-1/photo-07.webp",
+									"label": "DSC00812",
+									"w": 1400,
+									"h": 933
+								},
+								{
+									"src": "assets/img/events/r8-club-taiko-1/photo-08.webp",
+									"label": "DSC00818",
+									"w": 1400,
+									"h": 933
+								}
+							],
+							"pdfs": []
+						}
+					}
+				}
+			},
+			{
+				"id": "r8-no07",
+				"slug": "r8-no07",
+				"status": "published",
+				"data": {
+					"name": "鳥取市市民体育祭（BCグループ）",
+					"nendo": "2026",
+					"no": "07",
+					"kind": "協会主催",
+					"event": "校区別対抗戦",
+					"date": "2026-07-05",
+					"label": "7月5日（日）",
+					"place": "ヤマタスポーツパーク",
+					"spare_date": "7/19",
+					"spare_venue": "鳥取市千代テニス場",
+					"spare_note": "",
+					"due": "別記",
+					"state": "終了",
+					"reg": "登録不要",
+					"host": "",
+					"note": "",
+					"link_label": "",
+					"link_url": "",
+					"card": true,
+					"card_event": "",
+					"card_image_path": "assets/img/results/2023/2023club-taiko-5-7-gallery-033.webp",
+					"card_image_alt": "芝生ごしに見える試合中のテニスコート",
+					"live_url": "",
+					"outline_url": "",
+					"draw_url": "",
+					"result_url": "",
+					"materials": [],
+					"winners": [],
+					"legacy_materials": {}
+				}
+			},
+			{
+				"id": "r8-club-taiko-2",
+				"slug": "r8-club-taiko-2",
+				"status": "published",
+				"data": {
+					"name": "令和8年度クラブ対抗戦 後期日程",
+					"nendo": "2026",
+					"no": "08",
+					"kind": "協会主催",
+					"event": "女子1部〜4部／男女予選会",
+					"date": "2026-07-12",
+					"label": "7月12日（日）",
+					"place": "ヤマタスポーツパーク",
+					"spare_date": "7/18",
+					"spare_venue": "鳥取市千代テニス場",
+					"spare_note": "",
+					"due": "6/19",
+					"state": "終了",
+					"reg": "市登録",
+					"host": "",
+					"note": "",
+					"link_label": "",
+					"link_url": "",
+					"card": true,
+					"card_event": "",
+					"card_image_path": "assets/img/results/2023/2023club-taiko-7-16-gallery-036.webp",
+					"card_image_alt": "大会当日のコート。奥のコートまで試合が続いている",
+					"live_url": "",
+					"outline_url": "",
+					"draw_url": "",
+					"result_url": "",
+					"materials": [],
+					"winners": [],
+					"legacy_materials": {
+						"outline": {
+							"images": [
+								{
+									"src": "assets/img/events/r8-club-taiko-2/outline-01.webp",
+									"label": "女子 1ページ目",
+									"w": 1241,
+									"h": 1754
+								},
+								{
+									"src": "assets/img/events/r8-club-taiko-2/outline-02.webp",
+									"label": "女子 2ページ目",
+									"w": 1241,
+									"h": 1754
+								},
+								{
+									"src": "assets/img/events/r8-club-taiko-2/outline-03.webp",
+									"label": "女子 3ページ目",
+									"w": 1241,
+									"h": 1754
+								},
+								{
+									"src": "assets/img/events/r8-club-taiko-2/outline-04.webp",
+									"label": "女子 4ページ目",
+									"w": 1241,
+									"h": 1754
+								},
+								{
+									"src": "assets/img/events/r8-club-taiko-2/outline-05.webp",
+									"label": "男子予選会 1ページ目",
+									"w": 1241,
+									"h": 1754
+								},
+								{
+									"src": "assets/img/events/r8-club-taiko-2/outline-06.webp",
+									"label": "男子予選会 2ページ目",
+									"w": 1241,
+									"h": 1754
+								},
+								{
+									"src": "assets/img/events/r8-club-taiko-2/outline-07.webp",
+									"label": "男子予選会 3ページ目",
+									"w": 1241,
+									"h": 1754
+								},
+								{
+									"src": "assets/img/events/r8-club-taiko-2/outline-08.webp",
+									"label": "男子予選会 4ページ目",
+									"w": 1241,
+									"h": 1754
+								},
+								{
+									"src": "assets/img/events/r8-club-taiko-2/outline-09.webp",
+									"label": "男子予選会 5ページ目",
+									"w": 1241,
+									"h": 1754
+								}
+							],
+							"pdfs": [
+								{
+									"src": "assets/pdf/events/r8-club-taiko-2/R8クラブ対抗（女子）実施要項.pdf",
+									"label": "R8クラブ対抗（女子）実施要項",
+									"kb": 531
+								},
+								{
+									"src": "assets/pdf/events/r8-club-taiko-2/R8クラブ対抗(男子予選会)実施要項.pdf",
+									"label": "R8クラブ対抗(男子予選会)実施要項",
+									"kb": 1304
+								},
+								{
+									"src": "assets/pdf/events/r8-club-taiko-2/R8(男子予選会)OP他.pdf",
+									"label": "R8(男子予選会)OP他",
+									"kb": 774
+								}
+							]
+						},
+						"result": {
+							"images": [
+								{
+									"src": "assets/img/events/r8-club-taiko-2/result-01.webp",
+									"label": "女子1部リーグ",
+									"w": 1800,
+									"h": 1136
+								},
+								{
+									"src": "assets/img/events/r8-club-taiko-2/result-02.webp",
+									"label": "女子2部リーグ",
+									"w": 1800,
+									"h": 1136
+								},
+								{
+									"src": "assets/img/events/r8-club-taiko-2/result-03.webp",
+									"label": "女子3部リーグ",
+									"w": 1800,
+									"h": 1218
+								},
+								{
+									"src": "assets/img/events/r8-club-taiko-2/result-04.webp",
+									"label": "女子4部リーグ",
+									"w": 1800,
+									"h": 1218
+								},
+								{
+									"src": "assets/img/events/r8-club-taiko-2/result-05.webp",
+									"label": "女子予選会 Bリーグ",
+									"w": 1800,
+									"h": 1199
+								},
+								{
+									"src": "assets/img/events/r8-club-taiko-2/result-06.webp",
+									"label": "女子予選会 1位・2位決定戦",
+									"w": 1640,
+									"h": 796
+								},
+								{
+									"src": "assets/img/events/r8-club-taiko-2/result-07.webp",
+									"label": "女子予選会 3位・4位決定戦",
+									"w": 1640,
+									"h": 796
+								},
+								{
+									"src": "assets/img/events/r8-club-taiko-2/result-08.webp",
+									"label": "女子予選会 5位・6位決定戦",
+									"w": 1640,
+									"h": 796
+								},
+								{
+									"src": "assets/img/events/r8-club-taiko-2/result-09.webp",
+									"label": "男子予選会リーグ",
+									"w": 1800,
+									"h": 1631
+								},
+								{
+									"src": "assets/img/events/r8-club-taiko-2/result-10.webp",
+									"label": "男子予選会リーグ順位表",
+									"w": 1639,
+									"h": 1800
+								},
+								{
+									"src": "assets/img/events/r8-club-taiko-2/result-11.webp",
+									"label": "男子予選会 順位表",
+									"w": 1639,
+									"h": 1800
+								}
+							],
+							"pdfs": []
+						},
+						"photo": {
+							"images": [
+								{
+									"src": "assets/img/events/r8-club-taiko-2/photo-01.webp",
+									"label": "1784086750318",
+									"w": 1400,
+									"h": 1050
+								},
+								{
+									"src": "assets/img/events/r8-club-taiko-2/photo-02.webp",
+									"label": "1784086764892",
+									"w": 1400,
+									"h": 1050
+								},
+								{
+									"src": "assets/img/events/r8-club-taiko-2/photo-03.webp",
+									"label": "MVIMG_20260712_155713",
+									"w": 1400,
+									"h": 933
+								},
+								{
+									"src": "assets/img/events/r8-club-taiko-2/photo-04.webp",
+									"label": "MVIMG_20260712_160041",
+									"w": 1400,
+									"h": 933
+								},
+								{
+									"src": "assets/img/events/r8-club-taiko-2/photo-05.webp",
+									"label": "MVIMG_20260712_160202",
+									"w": 1400,
+									"h": 933
+								},
+								{
+									"src": "assets/img/events/r8-club-taiko-2/photo-06.webp",
+									"label": "MVIMG_20260712_160434",
+									"w": 1400,
+									"h": 933
+								},
+								{
+									"src": "assets/img/events/r8-club-taiko-2/photo-07.webp",
+									"label": "MVIMG_20260712_163136",
+									"w": 1400,
+									"h": 933
+								}
+							],
+							"pdfs": []
+						}
+					}
+				}
+			},
+			{
+				"id": "r8-ketaka",
+				"slug": "r8-ketaka",
+				"status": "published",
+				"data": {
+					"name": "第11回気高カップシングルス大会",
+					"nendo": "2026",
+					"no": "09",
+					"kind": "協会主催",
+					"event": "男女シングルス",
+					"date": "2026-08-02",
+					"label": "8月2日（日）",
+					"place": "ヤマタスポーツパーク",
+					"spare_date": "8/8",
+					"spare_venue": "鳥取市千代テニス場",
+					"spare_note": "",
+					"due": "7/17",
+					"state": "終了",
+					"reg": "県登録",
+					"host": "",
+					"note": "",
+					"link_label": "",
+					"link_url": "",
+					"card": true,
+					"card_event": "",
+					"card_image_path": "assets/img/results/2023/2023club-taiko-7-16-gallery-071.webp",
+					"card_image_alt": "コートでストロークを打つ選手",
+					"live_url": "",
+					"outline_url": "",
+					"draw_url": "",
+					"result_url": "",
+					"materials": [],
+					"winners": [
+						{
+							"category": "男子シングルスA級",
+							"award": "優勝",
+							"name": "米本 叶芽 選手"
+						},
+						{
+							"category": "男子シングルスB級",
+							"award": "優勝",
+							"name": "井嶋 勇翔 選手"
+						},
+						{
+							"category": "男子シングルスC級",
+							"award": "優勝",
+							"name": "森永 愛斗 選手"
+						},
+						{
+							"category": "男子45歳以上シングルス",
+							"award": "優勝",
+							"name": "山崎 信博 選手"
+						},
+						{
+							"category": "男子65歳以上シングルス",
+							"award": "優勝",
+							"name": "勝井 節朗 選手"
+						},
+						{
+							"category": "女子シングルスB級",
+							"award": "優勝",
+							"name": "姫岩 桂子 選手"
+						}
+					],
+					"legacy_materials": {
+						"outline": {
+							"images": [
+								{
+									"src": "assets/img/events/r8-ketaka/outline-01.webp",
+									"label": "1ページ目",
+									"w": 1241,
+									"h": 1754
+								}
+							],
+							"pdfs": [
+								{
+									"src": "assets/pdf/events/r8-ketaka/R8気高カップ要項.pdf",
+									"label": "R8気高カップ要項",
+									"kb": 65
+								}
+							]
+						},
+						"draw": {
+							"images": [
+								{
+									"src": "assets/img/events/r8-ketaka/draw-01.webp",
+									"label": "1ページ目",
+									"w": 1241,
+									"h": 1754
+								},
+								{
+									"src": "assets/img/events/r8-ketaka/draw-02.webp",
+									"label": "2ページ目",
+									"w": 1241,
+									"h": 1754
+								},
+								{
+									"src": "assets/img/events/r8-ketaka/draw-03.webp",
+									"label": "3ページ目",
+									"w": 1241,
+									"h": 1754
+								},
+								{
+									"src": "assets/img/events/r8-ketaka/draw-04.webp",
+									"label": "4ページ目",
+									"w": 1241,
+									"h": 1754
+								},
+								{
+									"src": "assets/img/events/r8-ketaka/draw-05.webp",
+									"label": "5ページ目",
+									"w": 1241,
+									"h": 1754
+								}
+							],
+							"pdfs": [
+								{
+									"src": "assets/pdf/events/r8-ketaka/R8気高カップドロー.pdf",
+									"label": "R8気高カップドロー",
+									"kb": 161
+								}
+							]
+						},
+						"result": {
+							"images": [
+								{
+									"src": "assets/img/events/r8-ketaka/result-01.webp",
+									"label": "男子Ａ級シングルス",
+									"w": 1800,
+									"h": 1258
+								},
+								{
+									"src": "assets/img/events/r8-ketaka/result-02.webp",
+									"label": "男子Ｂ級シングルス",
+									"w": 1800,
+									"h": 1060
+								},
+								{
+									"src": "assets/img/events/r8-ketaka/result-03.webp",
+									"label": "男子Ｃ級シングルス",
+									"w": 1800,
+									"h": 891
+								},
+								{
+									"src": "assets/img/events/r8-ketaka/result-04.webp",
+									"label": "男子45歳以上シングルス",
+									"w": 1760,
+									"h": 916
+								},
+								{
+									"src": "assets/img/events/r8-ketaka/result-05.webp",
+									"label": "男子65歳以上シングルス",
+									"w": 1800,
+									"h": 748
+								},
+								{
+									"src": "assets/img/events/r8-ketaka/result-06.webp",
+									"label": "女子Ｂ級シングルス",
+									"w": 1800,
+									"h": 738
+								}
+							],
+							"pdfs": []
+						},
+						"photo": {
+							"images": [
+								{
+									"src": "assets/img/events/r8-ketaka/photo-01.webp",
+									"label": "IMG_20260802_163829",
+									"w": 1400,
+									"h": 933
+								},
+								{
+									"src": "assets/img/events/r8-ketaka/photo-02.webp",
+									"label": "IMG_20260802_164501",
+									"w": 1400,
+									"h": 933
+								},
+								{
+									"src": "assets/img/events/r8-ketaka/photo-03.webp",
+									"label": "IMG_20260802_172751",
+									"w": 1400,
+									"h": 933
+								},
+								{
+									"src": "assets/img/events/r8-ketaka/photo-04.webp",
+									"label": "IMG_20260802_174445",
+									"w": 1400,
+									"h": 933
+								},
+								{
+									"src": "assets/img/events/r8-ketaka/photo-05.webp",
+									"label": "MVIMG_20260802_135523",
+									"w": 1400,
+									"h": 933
+								},
+								{
+									"src": "assets/img/events/r8-ketaka/photo-06.webp",
+									"label": "MVIMG_20260802_155053",
+									"w": 1400,
+									"h": 933
+								}
+							],
+							"pdfs": []
+						}
+					}
+				}
+			},
+			{
+				"id": "r8-summer-mix",
+				"slug": "r8-summer-mix",
+				"status": "published",
+				"data": {
+					"name": "サマーミックスダブルス",
+					"nendo": "2026",
+					"no": "10",
+					"kind": "協会主催",
+					"event": "ミックスダブルス",
+					"date": "2026-08-16",
+					"label": "8月16日（日）",
+					"place": "ヤマタスポーツパーク",
+					"spare_date": "9/6",
+					"spare_venue": "鳥取市千代テニス場",
+					"spare_note": "",
+					"due": "7/31",
+					"state": "終了",
+					"reg": "市登録",
+					"host": "",
+					"note": "",
+					"link_label": "",
+					"link_url": "",
+					"card": true,
+					"card_event": "",
+					"card_image_path": "assets/img/results/2024/2024summer-mix-040.webp",
+					"card_image_alt": "主審台の置かれたコートと、試合の準備をする選手たち",
+					"live_url": "",
+					"outline_url": "",
+					"draw_url": "",
+					"result_url": "",
+					"materials": [],
+					"winners": [
+						{
+							"category": "1位トーナメント",
+							"award": "優勝",
+							"name": "竹安・楠瀬 ペア"
+						},
+						{
+							"category": "1位トーナメント",
+							"award": "準優勝",
+							"name": "檜垣・岩井 ペア"
+						},
+						{
+							"category": "2位トーナメント",
+							"award": "優勝",
+							"name": "山根・浅野 ペア"
+						},
+						{
+							"category": "2位トーナメント",
+							"award": "準優勝",
+							"name": "岩田・岩田 ペア"
+						},
+						{
+							"category": "3位トーナメント",
+							"award": "優勝",
+							"name": "近藤・前田 ペア"
+						},
+						{
+							"category": "3位トーナメント",
+							"award": "準優勝",
+							"name": "山下・山下 ペア"
+						}
+					],
+					"legacy_materials": {
+						"outline": {
+							"images": [
+								{
+									"src": "assets/img/events/r8-summer-mix/outline-01.webp",
+									"label": "1ページ目",
+									"w": 1241,
+									"h": 1754
+								},
+								{
+									"src": "assets/img/events/r8-summer-mix/outline-02.webp",
+									"label": "2ページ目",
+									"w": 1241,
+									"h": 1754
+								}
+							],
+							"pdfs": [
+								{
+									"src": "assets/pdf/events/r8-summer-mix/R8サマーミックス要項.pdf",
+									"label": "R8サマーミックス要項",
+									"kb": 111
+								}
+							]
+						},
+						"draw": {
+							"images": [
+								{
+									"src": "assets/img/events/r8-summer-mix/draw-01.webp",
+									"label": "1ページ目",
+									"w": 1273,
+									"h": 1800
+								},
+								{
+									"src": "assets/img/events/r8-summer-mix/draw-02.webp",
+									"label": "2ページ目",
+									"w": 1273,
+									"h": 1800
+								}
+							],
+							"pdfs": [
+								{
+									"src": "assets/pdf/events/r8-summer-mix/R8サマーミックスドロー.pdf",
+									"label": "R8サマーミックスドロー",
+									"kb": 102
+								}
+							]
+						},
+						"result": {
+							"images": [
+								{
+									"src": "assets/img/events/r8-summer-mix/result-01.webp",
+									"label": "1位トーナメント",
+									"w": 1741,
+									"h": 1800
+								},
+								{
+									"src": "assets/img/events/r8-summer-mix/result-02.webp",
+									"label": "2位トーナメント",
+									"w": 1741,
+									"h": 1800
+								},
+								{
+									"src": "assets/img/events/r8-summer-mix/result-03.webp",
+									"label": "3位トーナメント",
+									"w": 1741,
+									"h": 1800
+								},
+								{
+									"src": "assets/img/events/r8-summer-mix/result-04.webp",
+									"label": "Aリーグ結果",
+									"w": 1550,
+									"h": 900
+								},
+								{
+									"src": "assets/img/events/r8-summer-mix/result-05.webp",
+									"label": "Bリーグ結果",
+									"w": 1550,
+									"h": 900
+								},
+								{
+									"src": "assets/img/events/r8-summer-mix/result-06.webp",
+									"label": "Cリーグ結果",
+									"w": 1550,
+									"h": 900
+								},
+								{
+									"src": "assets/img/events/r8-summer-mix/result-07.webp",
+									"label": "Dリーグ結果",
+									"w": 1550,
+									"h": 900
+								},
+								{
+									"src": "assets/img/events/r8-summer-mix/result-08.webp",
+									"label": "Eリーグ結果",
+									"w": 1550,
+									"h": 900
+								},
+								{
+									"src": "assets/img/events/r8-summer-mix/result-09.webp",
+									"label": "Fリーグ結果",
+									"w": 1550,
+									"h": 900
+								},
+								{
+									"src": "assets/img/events/r8-summer-mix/result-10.webp",
+									"label": "Gリーグ結果",
+									"w": 1550,
+									"h": 900
+								},
+								{
+									"src": "assets/img/events/r8-summer-mix/result-11.webp",
+									"label": "Hリーグ結果",
+									"w": 1550,
+									"h": 900
+								},
+								{
+									"src": "assets/img/events/r8-summer-mix/result-12.webp",
+									"label": "Iリーグ結果",
+									"w": 1550,
+									"h": 900
+								},
+								{
+									"src": "assets/img/events/r8-summer-mix/result-13.webp",
+									"label": "Jリーグ結果",
+									"w": 1550,
+									"h": 900
+								}
+							],
+							"pdfs": []
+						},
+						"photo": {
+							"images": [
+								{
+									"src": "assets/img/events/r8-summer-mix/photo-01.webp",
+									"label": "DSC_0173",
+									"w": 1400,
+									"h": 934
+								},
+								{
+									"src": "assets/img/events/r8-summer-mix/photo-02.webp",
+									"label": "DSC_0175",
+									"w": 1400,
+									"h": 933
+								},
+								{
+									"src": "assets/img/events/r8-summer-mix/photo-03.webp",
+									"label": "DSC_0176",
+									"w": 1400,
+									"h": 934
+								},
+								{
+									"src": "assets/img/events/r8-summer-mix/photo-04.webp",
+									"label": "DSC_0177",
+									"w": 1400,
+									"h": 933
+								},
+								{
+									"src": "assets/img/events/r8-summer-mix/photo-05.webp",
+									"label": "DSC_0179",
+									"w": 1400,
+									"h": 933
+								},
+								{
+									"src": "assets/img/events/r8-summer-mix/photo-06.webp",
+									"label": "MVIMG_20260816_152245-2",
+									"w": 1400,
+									"h": 933
+								}
+							],
+							"pdfs": []
+						}
+					}
+				}
+			},
+			{
+				"id": "r8-dunlop",
+				"slug": "r8-dunlop",
+				"status": "published",
+				"data": {
+					"name": "第49回ダンロップテニストーナメント",
+					"nendo": "2026",
+					"no": "11",
+					"kind": "協会主催",
+					"event": "男女ダブルス",
+					"date": "2026-08-30",
+					"label": "8月30日（日）",
+					"place": "ヤマタスポーツパーク",
+					"spare_date": "9/5",
+					"spare_venue": "鳥取市千代テニス場",
+					"spare_note": "",
+					"due": "8/12",
+					"state": "終了",
+					"reg": "県登録",
+					"host": "",
+					"note": "",
+					"link_label": "",
+					"link_url": "",
+					"card": true,
+					"card_event": "",
+					"card_image_path": "assets/img/results/2024/2024summer-mix-050.webp",
+					"card_image_alt": "コート番号の看板が立つコートでの試合",
+					"live_url": "",
+					"outline_url": "",
+					"draw_url": "",
+					"result_url": "",
+					"materials": [],
+					"winners": [
+						{
+							"category": "男子ダブルスA級",
+							"award": "優勝",
+							"name": "岸本・安田ペア"
+						},
+						{
+							"category": "男子ダブルスB級",
+							"award": "優勝",
+							"name": "杉山・成川ペア"
+						},
+						{
+							"category": "男子ダブルスC級",
+							"award": "優勝",
+							"name": "千酌・鶴石ペア"
+						},
+						{
+							"category": "男子ダブルス45歳以上",
+							"award": "優勝",
+							"name": "森本・白石ペア"
+						},
+						{
+							"category": "男子ダブルス55歳以上",
+							"award": "優勝",
+							"name": "吉田・霜田ペア"
+						},
+						{
+							"category": "男子ダブルス65歳以上",
+							"award": "優勝",
+							"name": "湯浅・逸見ペア"
+						},
+						{
+							"category": "女子ダブルスA級",
+							"award": "優勝",
+							"name": "楠瀬・赤井ペア"
+						},
+						{
+							"category": "女子ダブルスB級",
+							"award": "優勝",
+							"name": "大谷・大谷ペア"
+						},
+						{
+							"category": "女子ダブルス45歳以上",
+							"award": "優勝",
+							"name": "小林・山形ペア"
+						},
+						{
+							"category": "女子ダブルス55歳以上",
+							"award": "優勝",
+							"name": "宮原・杉原ペア"
+						},
+						{
+							"category": "女子ダブルス65歳以上",
+							"award": "優勝",
+							"name": "三澤・青柳ペア"
+						}
+					],
+					"legacy_materials": {
+						"outline": {
+							"images": [
+								{
+									"src": "assets/img/events/r8-dunlop/outline-01.webp",
+									"label": "1ページ目",
+									"w": 1241,
+									"h": 1754
+								}
+							],
+							"pdfs": [
+								{
+									"src": "assets/pdf/events/r8-dunlop/2026ダンロップ要項.pdf",
+									"label": "2026ダンロップ要項",
+									"kb": 86
+								}
+							]
+						},
+						"entry": {
+							"images": [],
+							"pdfs": [
+								{
+									"src": "assets/pdf/events/r8-dunlop/2026ダンロップ申込用紙.pdf",
+									"label": "2026ダンロップ申込用紙",
+									"kb": 92
+								}
+							]
+						},
+						"draw": {
+							"images": [
+								{
+									"src": "assets/img/events/r8-dunlop/draw-01.webp",
+									"label": "1ページ目（8/21 再訂正）",
+									"w": 1241,
+									"h": 1754
+								},
+								{
+									"src": "assets/img/events/r8-dunlop/draw-02.webp",
+									"label": "2ページ目",
+									"w": 1273,
+									"h": 1800
+								},
+								{
+									"src": "assets/img/events/r8-dunlop/draw-03.webp",
+									"label": "3ページ目",
+									"w": 1273,
+									"h": 1800
+								},
+								{
+									"src": "assets/img/events/r8-dunlop/draw-04.webp",
+									"label": "4ページ目",
+									"w": 1273,
+									"h": 1800
+								},
+								{
+									"src": "assets/img/events/r8-dunlop/draw-05.webp",
+									"label": "5ページ目",
+									"w": 1273,
+									"h": 1800
+								}
+							],
+							"pdfs": [
+								{
+									"src": "assets/pdf/events/r8-dunlop/2026ダンロップドロー（訂正）２.pdf",
+									"label": "2026ダンロップドロー（訂正）２",
+									"kb": 107
+								},
+								{
+									"src": "assets/pdf/events/r8-dunlop/2026ダンロップドロー（訂正）.pdf",
+									"label": "2026ダンロップドロー（訂正）",
+									"kb": 178
+								}
+							]
+						},
+						"result": {
+							"images": [
+								{
+									"src": "assets/img/events/r8-dunlop/result-01.webp",
+									"label": "男子ダブルスＡ級",
+									"w": 1800,
+									"h": 1013
+								},
+								{
+									"src": "assets/img/events/r8-dunlop/result-02.webp",
+									"label": "男子ダブルスＢ級",
+									"w": 1800,
+									"h": 990
+								},
+								{
+									"src": "assets/img/events/r8-dunlop/result-03.webp",
+									"label": "男子ダブルスＣ級",
+									"w": 1800,
+									"h": 709
+								},
+								{
+									"src": "assets/img/events/r8-dunlop/result-04.webp",
+									"label": "男子ダブルス45歳以上",
+									"w": 1800,
+									"h": 1009
+								},
+								{
+									"src": "assets/img/events/r8-dunlop/result-05.webp",
+									"label": "男子ダブルス55歳以上",
+									"w": 1760,
+									"h": 760
+								},
+								{
+									"src": "assets/img/events/r8-dunlop/result-06.webp",
+									"label": "男子ダブルス65歳以上",
+									"w": 1800,
+									"h": 1081
+								},
+								{
+									"src": "assets/img/events/r8-dunlop/result-07.webp",
+									"label": "女子ダブルスＡ級",
+									"w": 1800,
+									"h": 1007
+								},
+								{
+									"src": "assets/img/events/r8-dunlop/result-08.webp",
+									"label": "女子ダブルスＢ級",
+									"w": 1760,
+									"h": 760
+								},
+								{
+									"src": "assets/img/events/r8-dunlop/result-09.webp",
+									"label": "女子ダブルス45歳以上",
+									"w": 1760,
+									"h": 760
+								},
+								{
+									"src": "assets/img/events/r8-dunlop/result-10.webp",
+									"label": "女子ダブルス55歳以上",
+									"w": 1760,
+									"h": 738
+								},
+								{
+									"src": "assets/img/events/r8-dunlop/result-11.webp",
+									"label": "女子ダブルス65歳以上",
+									"w": 1760,
+									"h": 738
+								}
+							],
+							"pdfs": []
+						},
+						"photo": {
+							"images": [
+								{
+									"src": "assets/img/events/r8-dunlop/photo-01.webp",
+									"label": "MVIMG_20260830_122802",
+									"w": 1400,
+									"h": 788
+								},
+								{
+									"src": "assets/img/events/r8-dunlop/photo-02.webp",
+									"label": "MVIMG_20260830_124730",
+									"w": 1400,
+									"h": 788
+								},
+								{
+									"src": "assets/img/events/r8-dunlop/photo-03.webp",
+									"label": "MVIMG_20260830_125622",
+									"w": 1400,
+									"h": 788
+								},
+								{
+									"src": "assets/img/events/r8-dunlop/photo-04.webp",
+									"label": "MVIMG_20260830_130505",
+									"w": 1400,
+									"h": 788
+								},
+								{
+									"src": "assets/img/events/r8-dunlop/photo-05.webp",
+									"label": "MVIMG_20260830_131532",
+									"w": 1400,
+									"h": 788
+								},
+								{
+									"src": "assets/img/events/r8-dunlop/photo-06.webp",
+									"label": "MVIMG_20260830_132329",
+									"w": 1400,
+									"h": 788
+								},
+								{
+									"src": "assets/img/events/r8-dunlop/photo-07.webp",
+									"label": "MVIMG_20260830_134154",
+									"w": 1400,
+									"h": 788
+								},
+								{
+									"src": "assets/img/events/r8-dunlop/photo-08.webp",
+									"label": "MVIMG_20260830_134920",
+									"w": 1400,
+									"h": 788
+								},
+								{
+									"src": "assets/img/events/r8-dunlop/photo-09.webp",
+									"label": "MVIMG_20260830_135209",
+									"w": 1400,
+									"h": 788
+								},
+								{
+									"src": "assets/img/events/r8-dunlop/photo-10.webp",
+									"label": "MVIMG_20260830_153100",
+									"w": 1400,
+									"h": 788
+								},
+								{
+									"src": "assets/img/events/r8-dunlop/photo-11.webp",
+									"label": "MVIMG_20260830_160818",
+									"w": 1400,
+									"h": 788
+								}
+							],
+							"pdfs": []
+						}
+					}
+				}
+			},
+			{
+				"id": "r8-enetopia",
+				"slug": "r8-enetopia",
+				"status": "published",
+				"data": {
+					"name": "第31回エネトピア杯テニス大会",
+					"nendo": "2026",
+					"no": "12",
+					"kind": "協会主催",
+					"event": "ミックスダブルス",
+					"date": "2026-10-18",
+					"label": "10月18日（日）",
+					"place": "ヤマタスポーツパーク",
+					"spare_date": "10/24",
+					"spare_venue": "鳥取市千代テニス場",
+					"spare_note": "",
+					"due": "10/2",
+					"state": "受付終了",
+					"reg": "市登録",
+					"host": "",
+					"note": "",
+					"link_label": "",
+					"link_url": "",
+					"card": true,
+					"card_event": "",
+					"card_image_path": "assets/img/tournaments/enetopia-2026.webp",
+					"card_image_alt": "第31回エネトピア杯テニス大会の告知バナー。エネトピアの旗を持つ男女の選手",
+					"live_url": "",
+					"outline_url": "",
+					"draw_url": "",
+					"result_url": "",
+					"materials": [],
+					"winners": [],
+					"legacy_materials": {
+						"outline": {
+							"images": [
+								{
+									"src": "assets/img/events/r8-enetopia/outline-01.webp",
+									"label": "1ページ目",
+									"w": 1273,
+									"h": 1800
+								},
+								{
+									"src": "assets/img/events/r8-enetopia/outline-02.webp",
+									"label": "2ページ目",
+									"w": 1273,
+									"h": 1800
+								}
+							],
+							"pdfs": [
+								{
+									"src": "assets/pdf/events/r8-enetopia/R8エネトピア杯要項.pdf",
+									"label": "R8エネトピア杯要項",
+									"kb": 71
+								}
+							]
+						},
+						"draw": {
+							"images": [
+								{
+									"src": "assets/img/events/r8-enetopia/draw-01.webp",
+									"label": "1ページ目",
+									"w": 1241,
+									"h": 1754
+								},
+								{
+									"src": "assets/img/events/r8-enetopia/draw-02.webp",
+									"label": "2ページ目",
+									"w": 1241,
+									"h": 1754
+								}
+							],
+							"pdfs": [
+								{
+									"src": "assets/pdf/events/r8-enetopia/R8エネトピア杯ドロー.pdf",
+									"label": "R8エネトピア杯ドロー",
+									"kb": 133
+								}
+							]
+						}
+					}
+				}
+			},
+			{
+				"id": "r8-kenko-autumn",
+				"slug": "r8-kenko-autumn",
+				"status": "published",
+				"data": {
+					"name": "第71回鳥取健康テニス（秋期）",
+					"nendo": "2026",
+					"no": "13",
+					"kind": "協会主催",
+					"event": "一般：男女複／ジュニア：男女単",
+					"date": "2026-11-07",
+					"label": "11月7日（土）",
+					"place": "ヤマタスポーツパーク",
+					"spare_date": "",
+					"spare_venue": "",
+					"spare_note": "荒天中止",
+					"due": "10/23",
+					"state": "受付中",
+					"reg": "登録不要",
+					"host": "",
+					"note": "",
+					"link_label": "",
+					"link_url": "",
+					"card": true,
+					"card_event": "一般：男女ダブルス／ジュニア：男女シングルス",
+					"card_image_path": "assets/img/results/2023/2023enetpia-hai-040.webp",
+					"card_image_alt": "フェンスごしに見えるコートと、サーブを打つ選手",
+					"live_url": "",
+					"outline_url": "",
+					"draw_url": "",
+					"result_url": "",
+					"materials": [],
+					"winners": [],
+					"legacy_materials": {
+						"outline": {
+							"images": [
+								{
+									"src": "assets/img/events/r8-kenko-autumn/outline-01.webp",
+									"label": "一般の部 要綱・申込用紙",
+									"w": 1241,
+									"h": 1755
+								},
+								{
+									"src": "assets/img/events/r8-kenko-autumn/outline-02.webp",
+									"label": "ジュニアの部 要綱・申込用紙",
+									"w": 1241,
+									"h": 1755
+								}
+							],
+							"pdfs": [
+								{
+									"src": "assets/pdf/events/r8-kenko-autumn/鳥取健康テニス大会（秋季）要綱.pdf",
+									"label": "鳥取健康テニス大会（秋季）要綱",
+									"kb": 341
+								}
+							]
+						}
+					}
+				}
+			},
+			{
+				"id": "r8-kensen-singles",
+				"slug": "r8-kensen-singles",
+				"status": "published",
+				"data": {
+					"name": "鳥取県テニス選手権 シングルス",
+					"nendo": "2026",
+					"no": "14",
+					"kind": "協会主催",
+					"event": "男女シングルス",
+					"date": "2026-11-08",
+					"label": "11月8日（日）",
+					"place": "ヤマタスポーツパーク",
+					"spare_date": "11/14",
+					"spare_venue": "鳥取市千代テニス場",
+					"spare_note": "",
+					"due": "10/23",
+					"state": "受付中",
+					"reg": "県登録",
+					"host": "",
+					"note": "",
+					"link_label": "",
+					"link_url": "",
+					"card": true,
+					"card_event": "",
+					"card_image_path": "assets/img/results/2023/2023enetpia-hai-010.webp",
+					"card_image_alt": "ナイター照明のついたコートでの試合",
+					"live_url": "",
+					"outline_url": "",
+					"draw_url": "",
+					"result_url": "",
+					"materials": [],
+					"winners": [],
+					"legacy_materials": {
+						"outline": {
+							"images": [
+								{
+									"src": "assets/img/events/r8-kensen-singles/outline-01.webp",
+									"label": "1ページ目",
+									"w": 1241,
+									"h": 1754
+								},
+								{
+									"src": "assets/img/events/r8-kensen-singles/outline-02.webp",
+									"label": "2ページ目",
+									"w": 1241,
+									"h": 1754
+								}
+							],
+							"pdfs": [
+								{
+									"src": "assets/pdf/events/r8-kensen-singles/2026県選シングルス要項.pdf",
+									"label": "2026県選シングルス要項",
+									"kb": 49
+								}
+							]
+						}
+					}
+				}
+			},
+			{
+				"id": "r8-kaicho-autumn",
+				"slug": "r8-kaicho-autumn",
+				"status": "published",
+				"data": {
+					"name": "第62回鳥取市テニス協会会長杯（秋季）",
+					"nendo": "2026",
+					"no": "15",
+					"kind": "協会主催",
+					"event": "男女ダブルス",
+					"date": "2026-11-15",
+					"label": "11月15日（日）",
+					"place": "ヤマタスポーツパーク",
+					"spare_date": "11/21",
+					"spare_venue": "鳥取市千代テニス場",
+					"spare_note": "",
+					"due": "10/30",
+					"state": "受付中",
+					"reg": "市登録",
+					"host": "",
+					"note": "",
+					"link_label": "",
+					"link_url": "",
+					"card": true,
+					"card_event": "",
+					"card_image_path": "assets/img/results/2023/2023enetpia-hai-020.webp",
+					"card_image_alt": "ネット際でハイタッチするダブルスのペア",
+					"live_url": "",
+					"outline_url": "",
+					"draw_url": "",
+					"result_url": "",
+					"materials": [],
+					"winners": [],
+					"legacy_materials": {
+						"outline": {
+							"images": [
+								{
+									"src": "assets/img/events/r8-kaicho-autumn/outline-01.webp",
+									"label": "要項・申込用紙",
+									"w": 1241,
+									"h": 1754
+								}
+							],
+							"pdfs": [
+								{
+									"src": "assets/pdf/events/r8-kaicho-autumn/2026会長杯（ダブルス）要項.pdf",
+									"label": "2026会長杯（ダブルス）要項",
+									"kb": 116
+								}
+							]
+						},
+						"entry": {
+							"images": [],
+							"pdfs": [
+								{
+									"src": "assets/pdf/events/r8-kaicho-autumn/2026会長杯（ダブルス）申込用紙.pdf",
+									"label": "2026会長杯（ダブルス）申込用紙",
+									"kb": 59
+								}
+							]
+						}
+					}
+				}
+			},
+			{
+				"id": "r8-prince-open",
+				"slug": "r8-prince-open",
+				"status": "published",
+				"data": {
+					"name": "2026 プリンスオープン チーム対抗戦",
+					"nendo": "2026",
+					"no": "16",
+					"kind": "協会主催",
+					"event": "チーム対抗戦（男子複・女子複・混合複）",
+					"date": "2026-11-22",
+					"label": "11月22日（日）",
+					"place": "ヤマタスポーツパーク",
+					"spare_date": "11/28",
+					"spare_venue": "鳥取市千代テニス場",
+					"spare_note": "",
+					"due": "11/6",
+					"state": "受付中",
+					"reg": "登録不要",
+					"host": "フラシーノラケットワークス（協賛：グローブライド株式会社／協力：鳥取市テニス協会）",
+					"note": "プリンス商品の使用・着用と、クラブプリンスメルマガの会員登録（大会当日の新規登録も可）が参加条件です。ドローと開催要項はドロー会議後にこのサイトで発表します。",
+					"link_label": "クラブプリンスメルマガに登録する",
+					"link_url": "https://www.princeshop.jp/shop/mail/mag.aspx",
+					"card": true,
+					"card_event": "",
+					"card_image_path": "assets/img/results/2023/2023enetpia-hai-025.webp",
+					"card_image_alt": "ダブルスの試合で、前衛がボレーに出る場面",
+					"live_url": "",
+					"outline_url": "",
+					"draw_url": "",
+					"result_url": "",
+					"materials": [],
+					"winners": [],
+					"legacy_materials": {
+						"outline": {
+							"images": [
+								{
+									"src": "assets/img/events/r8-prince-open/outline-01.webp",
+									"label": "要項・申込用紙",
+									"w": 1273,
+									"h": 1800
+								}
+							],
+							"pdfs": [
+								{
+									"src": "assets/pdf/events/r8-prince-open/PRINCEOPEN2026要項・申込用紙.pdf",
+									"label": "PRINCEOPEN2026要項・申込用紙",
+									"kb": 70
+								}
+							]
+						}
+					}
+				}
+			},
+			{
+				"id": "r8-no17",
+				"slug": "r8-no17",
+				"status": "published",
+				"data": {
+					"name": "第41回鳥取市市長杯",
+					"nendo": "2026",
+					"no": "17",
+					"kind": "協会主催",
+					"event": "男女シングルス",
+					"date": "2026-11-23",
+					"label": "11月23日（祝）",
+					"place": "ヤマタスポーツパーク",
+					"spare_date": "12/5",
+					"spare_venue": "鳥取市千代テニス場",
+					"spare_note": "",
+					"due": "11/6",
+					"state": "まもなく受付",
+					"reg": "市登録",
+					"host": "",
+					"note": "",
+					"link_label": "",
+					"link_url": "",
+					"card": false,
+					"materials": [],
+					"winners": [],
+					"legacy_materials": {}
+				}
+			},
+			{
+				"id": "r8-no18",
+				"slug": "r8-no18",
+				"status": "published",
+				"data": {
+					"name": "鳥取県テニス選手権 ダブルス",
+					"nendo": "2026",
+					"no": "18",
+					"kind": "協会主催",
+					"event": "男女ダブルス",
+					"date": "2026-11-29",
+					"label": "11月29日（日）",
+					"place": "ヤマタスポーツパーク",
+					"spare_date": "12/6",
+					"spare_venue": "鳥取市千代テニス場",
+					"spare_note": "",
+					"due": "11/13",
+					"state": "まもなく受付",
+					"reg": "県登録",
+					"host": "",
+					"note": "",
+					"link_label": "",
+					"link_url": "",
+					"card": false,
+					"materials": [],
+					"winners": [],
+					"legacy_materials": {}
+				}
+			},
+			{
+				"id": "r8-no19",
+				"slug": "r8-no19",
+				"status": "published",
+				"data": {
+					"name": "尾坂杯鳥取室内テニス選手権",
+					"nendo": "2026",
+					"no": "19",
+					"kind": "協会主催",
+					"event": "男女シングルス／男女ダブルス",
+					"date": "2026-12-27",
+					"label": "12/27〜2/23",
+					"place": "鳥取市民体育館／鳥取産業体育館",
+					"spare_date": "",
+					"spare_venue": "",
+					"spare_note": "1/3・1/9・2/20 ほか全5日",
+					"due": "—",
+					"state": "まもなく受付",
+					"reg": "県登録",
+					"host": "",
+					"note": "",
+					"link_label": "",
+					"link_url": "",
+					"card": false,
+					"materials": [],
+					"winners": [],
+					"legacy_materials": {}
+				}
+			},
+			{
+				"id": "r9-no01",
+				"slug": "r9-no01",
+				"status": "published",
+				"data": {
+					"name": "第57回東部地区テニス選手権",
+					"nendo": "2027",
+					"no": "01",
+					"kind": "協会主催",
+					"event": "男女シングルス・ダブルス",
+					"date": "2027-03-21",
+					"label": "3月21日・28日",
+					"place": "ヤマタスポーツパーク",
+					"spare_date": "",
+					"spare_venue": "",
+					"spare_note": "",
+					"due": "3/5",
+					"state": "まもなく受付",
+					"reg": "県登録",
+					"host": "",
+					"note": "",
+					"link_label": "",
+					"link_url": "",
+					"card": false,
+					"materials": [],
+					"winners": [],
+					"legacy_materials": {}
+				}
+			},
+			{
+				"id": "r8-tottori-univ-open",
+				"slug": "r8-tottori-univ-open",
+				"status": "published",
+				"data": {
+					"name": "鳥大オープンテニス大会",
+					"nendo": "2026",
+					"no": "",
+					"kind": "預かり",
+					"event": "男女ダブルス",
+					"date": "2026-06-21",
+					"label": "6月21日（日）",
+					"place": "鳥取大学テニスコート",
+					"spare_date": "",
+					"spare_venue": "",
+					"spare_note": "",
+					"due": "6/13",
+					"state": "終了",
+					"reg": "登録不要",
+					"host": "鳥取大学硬式庭球部",
+					"note": "鳥取大学硬式庭球部が主催する大会です。協会は要項・ドロー・結果の掲載に協力しています。",
+					"link_label": "",
+					"link_url": "",
+					"card": false,
+					"materials": [],
+					"winners": [
+						{
+							"category": "男子ダブルス",
+							"award": "優勝",
+							"name": "河上・万道 ペア"
+						},
+						{
+							"category": "男子ダブルス",
+							"award": "準優勝",
+							"name": "北村・山本 ペア"
+						}
+					],
+					"legacy_materials": {
+						"outline": {
+							"images": [
+								{
+									"src": "assets/img/events/r8-tottori-univ-open/outline-01.webp",
+									"label": "1ページ目",
+									"w": 1241,
+									"h": 1755
+								}
+							],
+							"pdfs": [
+								{
+									"src": "assets/pdf/events/r8-tottori-univ-open/R8鳥大オープンダブルス_要項.pdf",
+									"label": "R8鳥大オープンダブルス_要項",
+									"kb": 217
+								}
+							]
+						},
+						"draw": {
+							"images": [
+								{
+									"src": "assets/img/events/r8-tottori-univ-open/draw-01.webp",
+									"label": "1ページ目",
+									"w": 1240,
+									"h": 1754
+								}
+							],
+							"pdfs": [
+								{
+									"src": "assets/pdf/events/r8-tottori-univ-open/R8鳥大オープンダブルスドロー.pdf",
+									"label": "R8鳥大オープンダブルスドロー",
+									"kb": 262
+								}
+							]
+						},
+						"result": {
+							"images": [
+								{
+									"src": "assets/img/events/r8-tottori-univ-open/result-01.webp",
+									"label": "結果一覧",
+									"w": 1240,
+									"h": 1754
+								}
+							],
+							"pdfs": [
+								{
+									"src": "assets/pdf/events/r8-tottori-univ-open/R8鳥大オープンダブルス_結果.pdf",
+									"label": "R8鳥大オープンダブルス",
+									"kb": 276
+								}
+							]
+						},
+						"photo": {
+							"images": [
+								{
+									"src": "assets/img/events/r8-tottori-univ-open/photo-01.webp",
+									"label": "優勝ペアの写真",
+									"w": 1400,
+									"h": 1054
+								},
+								{
+									"src": "assets/img/events/r8-tottori-univ-open/photo-02.webp",
+									"label": "準優勝ペアの写真",
+									"w": 1400,
+									"h": 1054
+								}
+							],
+							"pdfs": []
+						}
+					}
+				}
+			},
+			{
+				"id": "r8-kyotango-doubles",
+				"slug": "r8-kyotango-doubles",
+				"status": "published",
+				"data": {
+					"name": "第22回京丹後市オープンダブルステニス大会",
+					"nendo": "2026",
+					"no": "",
+					"kind": "預かり",
+					"event": "一般男子ダブルス／女子ダブルス／壮年男子ダブルス",
+					"date": "2026-10-04",
+					"label": "10月4日（日）",
+					"place": "峰山総合公園テニスコート（京都府京丹後市）",
+					"spare_date": "",
+					"spare_venue": "",
+					"spare_note": "予備日なし",
+					"due": "9/25（金）20:00",
+					"state": "終了",
+					"reg": "登録不要",
+					"host": "京丹後市テニス協会",
+					"note": "京丹後市テニス協会が主催するオープン大会です。申込は京丹後市テニス協会のホームページにあるエントリーフォームから行ってください（本人以外の申込はできません）。ドローも同ホームページに掲載されます。",
+					"link_label": "京丹後市テニス協会のホームページで申し込む",
+					"link_url": "https://kyotangotennis.sakura.ne.jp/",
+					"card": false,
+					"materials": [],
+					"winners": [],
+					"legacy_materials": {
+						"outline": {
+							"images": [
+								{
+									"src": "assets/img/events/r8-kyotango-doubles/outline-01.webp",
+									"label": "1ページ目",
+									"w": 1273,
+									"h": 1800
+								}
+							],
+							"pdfs": [
+								{
+									"src": "assets/pdf/events/r8-kyotango-doubles/京丹後市オープンダブルス大会.pdf",
+									"label": "京丹後市オープンダブルス大会",
+									"kb": 64
+								}
+							]
+						}
+					}
+				}
+			},
+			{
+				"id": "r7-tottori-univ-singles",
+				"slug": "r7-tottori-univ-singles",
+				"status": "published",
+				"data": {
+					"name": "鳥大オープンテニス大会",
+					"nendo": "2025",
+					"no": "",
+					"kind": "預かり",
+					"event": "男女シングルス",
+					"date": "2025-12-14",
+					"label": "12月14日（日）",
+					"place": "鳥取大学テニスコート",
+					"spare_date": "",
+					"spare_venue": "",
+					"spare_note": "",
+					"due": "12/5",
+					"state": "終了",
+					"reg": "登録不要",
+					"host": "鳥取大学硬式庭球部",
+					"note": "鳥取大学硬式庭球部が主催する大会です。協会は要項・結果の掲載に協力しています。",
+					"link_label": "",
+					"link_url": "",
+					"card": false,
+					"materials": [],
+					"winners": [
+						{
+							"category": "女子シングルス",
+							"award": "優勝",
+							"name": "間島 千紗都 選手"
+						},
+						{
+							"category": "女子シングルス",
+							"award": "準優勝",
+							"name": "船越 海希 選手"
+						}
+					],
+					"legacy_materials": {
+						"outline": {
+							"images": [
+								{
+									"src": "assets/img/events/r7-tottori-univ-singles/outline-01.webp",
+									"label": "1ページ目",
+									"w": 1241,
+									"h": 1754
+								}
+							],
+							"pdfs": [
+								{
+									"src": "assets/pdf/events/r7-tottori-univ-singles/R7鳥大オープンシングルス_要項.pdf",
+									"label": "R7鳥大オープンシングルス_要項",
+									"kb": 213
+								}
+							]
+						},
+						"result": {
+							"images": [
+								{
+									"src": "assets/img/events/r7-tottori-univ-singles/result-01.webp",
+									"label": "男子シングルス",
+									"w": 1240,
+									"h": 1755
+								},
+								{
+									"src": "assets/img/events/r7-tottori-univ-singles/result-02.webp",
+									"label": "女子シングルス",
+									"w": 1240,
+									"h": 1755
+								}
+							],
+							"pdfs": [
+								{
+									"src": "assets/pdf/events/r7-tottori-univ-singles/鳥大オープンシングルス2025男子結果.pdf",
+									"label": "鳥大オープンシングルス2025男子結果",
+									"kb": 76
+								},
+								{
+									"src": "assets/pdf/events/r7-tottori-univ-singles/鳥大オープンシングルス2025女子結果.pdf",
+									"label": "鳥大オープンシングルス2025女子結果",
+									"kb": 45
+								}
+							]
+						}
+					}
+				}
+			}
+		],
+		"event_info": [
+			{
+				"id": "tennis-day-2026",
+				"slug": "tennis-day-2026",
+				"status": "published",
+				"data": {
+					"title": "テニス祭り 鳥取イベント",
+					"date": "2026-10-12",
+					"when": "2026年10月12日（月・祝）9:30〜16:30",
+					"place": "鳥取県立鳥取産業体育館 メインアリーナ",
+					"lead": "キッズテニス、元プロ 加藤季温コーチのテニスクリニック、ピックルボール体験会。協会登録は不要で、どなたでも参加できます。",
+					"image_alt": "テニス祭り 鳥取イベント 募集要項",
+					"image_path": "assets/img/tennis-day/2026-youkou.webp",
+					"href": "tennis-day.html",
+					"badge": "参加者募集中",
+					"order": 10
+				}
+			},
+			{
+				"id": "wednesday-lesson",
+				"slug": "wednesday-lesson",
+				"status": "published",
+				"data": {
+					"title": "水曜テニス教室",
+					"date": "",
+					"when": "毎週水曜日 夜",
+					"place": "井原公園テニスコート",
+					"lead": "レベル別に4つのコートに分かれ、専任コーチがつきます。ラケットの持ち方から教えるコートもあり、はじめての方も歓迎です。",
+					"image_alt": "",
+					"image_path": "",
+					"href": "lesson.html",
+					"badge": "通年",
+					"order": 20
+				}
+			}
+		]
+	}
+}

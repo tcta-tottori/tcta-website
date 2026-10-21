@@ -1,6 +1,7 @@
 ---
 // 大会1件の結果ページ。src/data/results.json の大会を results.js で束ねた1件から作る。
-// build.format:'file' なので出力は result-<id>.html（id は束ねた先頭ページの id）。
+// URL は result-<id>.html（id は束ねた先頭ページの id）。旧サイトの結果は EmDash ではなく
+// results.json に置いたまま（手で直す資料。管理画面からは触らない）。
 // 相対パス（assets/... など）を他のページと同じに保つため、あえて平置きにしている。
 //
 // 画面の構成は旧サイトと同じ。
@@ -9,11 +10,8 @@
 import Base from '../layouts/Base.astro';
 import { ALL_GROUPS, GROUPS_BY_YEAR, photoBlocks } from '../data/results.js';
 
-export function getStaticPaths() {
-  return ALL_GROUPS.map((g) => ({ params: { id: g.id }, props: { g } }));
-}
-
-const { g } = Astro.props;
+const g = ALL_GROUPS.find((x) => x.id === Astro.params.id);
+if (!g) return Astro.rewrite('/404');
 
 // 同じ年度の前後の大会（ページ下部の行き来に使う）
 const year = GROUPS_BY_YEAR.find((y) => y.nendo === g.nendo);

@@ -1,7 +1,10 @@
 ---
 import Base from '../layouts/Base.astro';
+import { siteData } from '../lib/cms.js';
 import { GROUPS_BY_YEAR } from '../data/results.js';
-import { EVENTS_BY_NENDO } from '../data/events.js';
+
+// 令和7年度以降は EmDash の大会から、令和6年度までは旧サイトから引き継いだ results.json から
+const { EVENTS_BY_NENDO } = await siteData(Astro);
 
 const title = "大会結果｜鳥取市テニス協会";
 const description = "鳥取市テニス協会が主催・主管した大会の結果。平成16年度から令和8年度まで、年度ごとの大会結果と当日の写真を掲載しています。";

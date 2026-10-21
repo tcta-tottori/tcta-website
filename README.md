@@ -1,8 +1,10 @@
 # 鳥取市テニス協会 公式サイト
 
 鳥取市テニス協会（TOTTORI-CITY TENNIS ASSOCIATION）の公式サイトです。
-[Astro](https://astro.build/) で静的HTMLを生成し、GitHub Pages で公開しています。
-出力は素の静的HTMLなので、アニメーションの自由度と表示速度は制約を受けません。
+[Astro](https://astro.build/) に CMS の [EmDash](https://github.com/emdash-cms/emdash) を組み込み、
+Cloudflare Workers で公開しています（2026-10-21 に GitHub Pages から移行。[`docs/emdash.md`](./docs/emdash.md)）。
+お知らせ・大会・イベント情報は管理画面（`/_emdash/admin/`）と AI（MCP）から更新でき、
+ページはリクエストごとに描いて Workers Cache が静的 HTML と同じ速さで返します。
 
 ## 構成
 
@@ -24,21 +26,25 @@
 │   ├── layouts/Base.astro       <head>・通知バー・ヘッダー・CTA・フッターの土台
 │   ├── components/              共通パーツ（下記「共通パーツ」を参照）
 │   ├── config/nav.js            ナビゲーション定義の唯一の正
-│   ├── data/tournaments.js      トップの大会カルーセルの唯一の正（写真の差し込み口）
-│   ├── data/news.js             トップのお知らせ（データは news.json。管理アプリが書き込む）
-│   ├── data/schedule.js         年度別の大会一覧（データは schedule.json。管理アプリが状態を書き換える）
-│   ├── data/winners.json        種目ごとの優勝・準優勝（tools/fetch_winners.py が公式サイトから取り込む）
+│   ├── lib/cms.js               EmDash から内容を読み、ページが使う形に組む入口（1リクエストに1回）
+│   ├── data/tournaments.js      トップの大会カルーセルの組み立て（内容は EmDash の「大会」）
+│   ├── data/news.js             お知らせの組み立て（内容は EmDash の「お知らせ」）
+│   ├── data/schedule.js         年度別の大会一覧の組み立て（内容は EmDash の「大会」）
+│   ├── data/events.js           大会1件ごとのページの組み立て（素材・成績は EmDash の「大会」）
+│   ├── data/results.json        平成16〜令和6年度の大会結果（旧サイトから引き継いだ正本。EmDash には入れていない）
+│   ├── data/*.json              移行前のデータ（seed の入力。results.json 以外はもう使われない）
 │   └── data/courts.js           コート案内の一覧と地図の唯一の正
+│   ├── worker.ts                Cloudflare Worker の入口（EmDash の定期処理）
+│   └── live.config.ts           EmDash を Astro の Live Collections に登録（決まり文句）
 ├── public/               そのまま公開される静的ファイル
 │   ├── assets/css/style.css     デザイントークン＋全コンポーネント（1ファイル）
 │   ├── assets/js/main.js        リビール／ヘッダー／カルーセル／フィルタ／タブ／フォーム
 │   ├── assets/img/              画像・ファビコン
 │   │   └── tournaments/         大会写真の置き場（入稿分をここに追加）
-│   └── .nojekyll                GitHub Pages で Jekyll 処理を無効化
-├── admin/                サイト更新アプリ（PWA）の画面。Cloudflare Worker が配信する
-├── worker/               サイト更新アプリの API（ログイン・下書き・GitHub への公開）
-├── docs/                 設計資料（構成方針・デザイン仕様・原稿仕様・検討ログ）
-├── .github/workflows/deploy.yml  ビルドして GitHub Pages へ公開
+├── seed/seed.json        EmDash の内容モデル（コレクションと項目）と移行時の内容。tools/build_seed.mjs が生成
+├── wrangler.jsonc        Cloudflare Worker の設定（D1・R2・Cron・キャッシュ）
+├── docs/                 設計資料（構成方針・デザイン仕様・原稿仕様・検討ログ・EmDash の設置と運用）
+├── .github/workflows/deploy.yml  ビルドして Cloudflare Workers へ配備
 └── dist/                 ビルド出力（Git管理外）
 ```
 
@@ -51,34 +57,33 @@
 - [`docs/content.md`](./docs/content.md) — 原稿仕様書 v2.0（各ページの実テキストと `要確認` 項目）
 - [`docs/design-chat-log.md`](./docs/design-chat-log.md) — ファーストビュー3案から採用案決定までの検討ログ
 - [`docs/cloudflare.md`](./docs/cloudflare.md) — Cloudflare（Pages／Workers／Wrangler）導入の検討メモ
-- [`docs/admin.md`](./docs/admin.md) — サイト更新アプリ（管理画面）の構成と設置手順
-- [`docs/emdash.md`](./docs/emdash.md) — Cloudflare の CMS「EmDash」導入の検討メモ（動画の主張の検証・このサイトへの適合・2 つの移行案）
+- [`docs/emdash.md`](./docs/emdash.md) — CMS「EmDash」への移行。内容モデル、設置手順、更新のしかた、AI からの更新、検討の経緯
+- [`docs/admin.md`](./docs/admin.md) — （置き換え前の記録）自作のサイト更新アプリの構成と設置手順
 
 ## ローカルでの確認
 
 ```bash
-npm install     # 初回のみ
-npm run dev     # http://localhost:4321 を開く
+npm install                                  # 初回のみ
+npx emdash secrets generate --write .env     # 初回のみ（手元用の暗号鍵）
+npm run dev                                  # http://localhost:4321 を開く
 ```
 
-保存すると自動で再読み込みされます。公開されるものと同じ出力を確認する場合は:
+管理画面は http://localhost:4321/_emdash/admin/ 。手元では D1 と R2 の代わりに `.wrangler/` に保存されます。
+内容（お知らせ・大会）を入れる手順は [`docs/emdash.md`](./docs/emdash.md) の「運用のメモ」を参照してください。
+保存すると自動で再読み込みされます。公開されるものと同じビルドを確認する場合は `npm run build`。
 
-```bash
-npm run build && npm run preview
-```
-
-## 公開（GitHub Pages）
+## 公開（Cloudflare Workers）
 
 `main` への push で [`.github/workflows/deploy.yml`](./.github/workflows/deploy.yml) が動き、
-ビルド結果が自動で公開されます。
+ビルドして Cloudflare Workers に配備します（リポジトリの Secrets に `CLOUDFLARE_API_TOKEN` と
+`CLOUDFLARE_ACCOUNT_ID` が必要）。手元からは `npm run deploy`。
 
-> **初回のみ設定変更が必要です。**
-> リポジトリの Settings → Pages で **Source: GitHub Actions** を選択してください。
-> 以前の **Deploy from a branch** のままだと、ビルド前のソースが公開されて表示が崩れます。
+はじめての配備（D1・R2 の作成、暗号鍵、初回セットアップ、編集者の招待）は
+[`docs/emdash.md`](./docs/emdash.md) の「設置手順」のとおりに行ってください。
+内容は D1 にあるので、配備しても消えません。
 
-独自ドメインを使う場合は `public/CNAME` を追加してください（`public/` の中身はそのまま公開されます）。
-ページ内のリンクはすべて相対パスなので、プロジェクトページ（`/tcta-website/` 配下）でも
-独自ドメイン（ルート直下）でも設定を変えずに動きます。
+ページ内のリンクはすべて相対パスなので、`*.workers.dev` でも独自ドメインでも設定を変えずに動きます。
+独自ドメインは `wrangler.jsonc` の `routes` で付けます。
 
 ## 実装メモ
 
@@ -98,9 +103,12 @@ npm run build && npm run preview
   ヘッダーが追従しないので、この高さで次のセクションが覗かなくなります。
 - **ヒーローの見出し位置** — デスクトップは左の列の上寄せに「PLAY BEYOND.」〜ボタンまでをまとめ、
   右に写真を置きます。モバイルは写真の上に重ねます（同じ格子のマスに置いて切り替えています）。
-- **CSS・JS のキャッシュ対策** — `Base.astro` が中身のハッシュを URL に付けます
-  （`style.css?v=xxxxxxxx`）。ファイル名を変えずに更新しているため、これが無いと
+- **CSS・JS のキャッシュ対策** — `astro.config.mjs` がビルド時に中身のハッシュを計算し、`Base.astro` が
+  URL に付けます（`style.css?v=xxxxxxxx`）。ファイル名を変えずに更新しているため、これが無いと
   ブラウザが古い CSS を使い続け、新しい HTML と噛み合わずに表示が崩れます。
+- **URL と描画** — `src/pages/about.html.astro` のようにファイル名に `.html` を含め、移行前と同じ URL を保っています。
+  ページはリクエストごとに描き（`output: 'server'`）、EmDash の内容は `src/lib/cms.js` が1リクエストに1回だけ読みます。
+  公開ページは Workers Cache に1日置かれ、管理画面で公開するとそのタグのキャッシュが消えます（`astro.config.mjs` の `routeRules`）。
 - **画面いっぱいの帯** — 大会カルーセルとリンク集のマーキーはコンテナの外に出し、
   画面の端から端まで使います。カルーセルは1枚目だけ本文と同じ位置から始まるよう
   内側に余白（`--carousel-pad`）を取っています。
@@ -141,11 +149,12 @@ npm run build && npm run preview
   短いタップは離した時点、押しっぱなしは 90ms で出します。マウスは即時です。
 - **大会カルーセル** — カード下の点で現在位置が分かります（押すとその大会まで送ります）。
   `TODAY` の日付は見ている人の端末で毎回書き直すので、常に今日（日本時間）になります
-  （`main.js` の `initToday`）。JSが無いときはビルドした日の日本時間を出します
-  （`src/data/tournaments.js`）。線を引く位置は今も build 時点の基準です。
+  （`main.js` の `initToday`）。JSが無いときはページを描いた時点の日本時間を出します
+  （`src/data/tournaments.js`）。
   VIEW ALL を押すと全件が別画面で開き、横並びのカードが縦に並び直します。
-- **大会一覧・カレンダー** — 大会情報ページは、先に一覧（`ScheduleTable`）、そのあとに
-  カレンダー（`ScheduleCalendar`）の順です。どちらも `src/data/schedule.js` から作ります。
+- **大会一覧・カレンダー** — 大会情報ページは、先に一覧（`TournamentList`）、そのあとに
+  カレンダー（`ScheduleCalendar`）の順です。どちらも管理画面の「大会」（区分「協会主催」・いまの年度）から
+  `src/data/schedule.js` が組み立てます。
   一覧の列は 期日／大会名・種目／会場／予備日／予備会場／締切／登録区分。
   登録区分は 県＝白地に赤・市＝赤地に白・不要＝グレー地に白（`.reg--ken/shi/free`）。
   カレンダーは1か月ずつ出し、前後のボタンで月を移します（マス目は全月ぶん書き出してあり、
@@ -168,19 +177,15 @@ npm run build && npm run preview
   毎回同じ見た目になります。動きを減らす設定のときは両方止まります。
 - **閉じるボタン** — 全画面表示（お知らせ・大会情報）の閉じるボタンは `.close-x`。
   ハンバーガーが開いているときと同じ×にそろえてあります。
-- **大会の素材の取り込み** — 要項・ドロー・結果・写真は `tools/build_events.py` の MANIFEST に書いて
-  実行します（`tools/README.md`）。PDF は `('元ファイル名', '公開名')` の組でも書け、
-  元の JPG が作業フォルダから消えても変換ずみの WebP が残っていればそのまま使います。
-  協会主催でない大会（鳥大オープン・京丹後）は `src/data/events.js` の `EXTRA` に日程を足します。
-  令和7年度の大会は MANIFEST に `'nendo': '2025'` を付けて、`01_大会/2025` の素材を読みます
-  （日程は `src/data/schedule.js` の `SCHEDULE_R7`）。
-- 種目ごとの優勝・準優勝は、公式サイトの結果ページから `python3 tools/fetch_winners.py` で
-  `src/data/winners.json` に取り込みます。大会1件ごとのページの「成績」と、大会結果ページの
-  令和7年度・令和8年度のタブに使われます。
-- **お知らせ** — `src/data/news.js` が唯一の正。トップは上から4件を出し、5件目があるときは
-  続きがあることが分かるよう薄く重ねます。VIEW ALL（または5件目）で全件が別画面で開き、
-  右上の × か Esc で閉じます。日付がビルド時点から2週間以内のものには赤い `NEW` が自動で付くので、
-  手で付け外しはしません（記事を足して push すれば付き直ります）。
+- **大会の素材と成績** — 要項・申込用紙・ドロー・結果・写真は、管理画面の「大会」の
+  「要項・申込用紙・ドロー・結果・当日の写真」に画像・PDF のブロックとして足します。種目ごとの優勝・準優勝は
+  同じ画面の「成績」の行です。移行前に `public/assets/` へ置いた素材は「取り込みずみの素材」として残り、
+  あとから足したものがその後ろに並びます（`src/data/events.js`）。
+  協会主催でない大会（鳥大オープン・京丹後）は区分「預かり」の大会として同じ画面で管理します。
+- **お知らせ** — 管理画面の「お知らせ」が唯一の正（`src/data/news.js` は組み立ての道具）。トップは上から4件を出し、
+  5件目があるときは続きがあることが分かるよう薄く重ねます。VIEW ALL（または5件目）で全件が別画面で開き、
+  右上の × か Esc で閉じます。日付が見た時点から2週間以内のものには赤い `NEW` が自動で付くので、
+  手で付け外しはしません。「目立たせる」にチェックしたものは全ページ上部の赤い帯にも出ます。
 - **コート案内の地図** — `src/data/courts.js` が唯一の正。地図は緯度経度を持たず、施設名で
   Googleマップに引いてもらう埋め込み（APIキー不要）です。上のボタンで施設を切り替えます。
   施設名を直せば地図の出方も変わります。
@@ -191,10 +196,10 @@ npm run build && npm run preview
 - **アイコン** — `src/components/Icon.astro` に置いた面のアイコンを `currentColor` で出します
   （`list` は種目、`pin` は会場・コート）。
 - **通知バーの表示** — トップページと大会情報ページのみ。`Base` に `notice` を渡した場合に出ます。
-- **大会カルーセル** — トップの大会カードは `src/data/tournaments.js` の配列から生成されます。
-  大会の追加・並び替え・状態（受付中／受付終了など）の変更はこのファイルだけで完結します。
-  写真は `public/assets/img/tournaments/` に置き、各大会の `image` にパスを書けば差し込まれます。
-  `image` が `null` の大会は、写真が届くまで大会名だけのプレースホルダーを表示します。
+- **大会カルーセル** — トップの大会カードは、管理画面の「大会」で「トップページの大会カードに出す」にチェックした
+  ものが開催日順に並びます。状態（受付中／受付終了など）は「受付状態」から決まります。
+  写真は「カードの写真」にアップロードします（移行前の写真は「取り込みずみの写真の場所」に残っています）。
+  写真の無い大会は、写真が届くまで大会名だけのプレースホルダーを表示します。
 
 ## 公開前に差し替えが必要なもの
 

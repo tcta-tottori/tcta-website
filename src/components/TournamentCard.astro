@@ -1,16 +1,15 @@
 ---
-// 大会カード1枚。src/data/tournaments.js の1件をそのまま受け取る。
+// 大会カード1枚。src/data/tournaments.js の buildCards が組んだ1件をそのまま受け取る。
 // 写真の上に文字を重ねる構成：
 //   左上に日程チップ（上に日付・下に曜日）、その横に大会名、
 //   下に種目・会場、いちばん下に大会の進み具合に応じた案内。
 import Icon from './Icon.astro';
-import { STATUS, VENUE_LOGOS, dateChip, cardAction } from '../data/tournaments.js';
+import { STATUS, VENUE_LOGOS, dateChip } from '../data/tournaments.js';
 
 const { tournament } = Astro.props;
-const { date, title, event, venue, status, image, imageAlt } = tournament;
+const { date, title, event, venue, status, image, imageAlt, action } = tournament;
 const badge = STATUS[status];
 const chip = dateChip(date);
-const action = cardAction(tournament);
 const venueLogo = VENUE_LOGOS[venue];
 
 // 遷移先が未定（結果待ちなど）のときはリンクにせず、案内だけ出す。

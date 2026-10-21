@@ -1,18 +1,16 @@
 ---
-// 令和7年度・令和8年度の大会1件のページ。src/data/events.js の1件から作る。
-// build.format:'file' なので出力は event-<slug>.html。
+// 大会1件のページ。EmDash の「大会」の1件（src/data/events.js の buildEvents が組んだもの）から作る。
+// URL は移行前と同じ event-<slug>.html（ファイル名の .html がそのまま URL になる）。
 // 相対パス（assets/... など）を他のページと同じに保つため、あえて平置きにしている。
 //
 // 中身は「概要」＋「節」で、節は大会の進み具合で並びが変わる（events.js を参照）。
 // 終わった大会なら結果が先、これからの大会なら要項が先に来る。
 import Base from '../layouts/Base.astro';
-import { EVENTS, EVENTS_BY_DATE } from '../data/events.js';
+import { siteData } from '../lib/cms.js';
 
-export function getStaticPaths() {
-  return EVENTS.map((e) => ({ params: { slug: e.slug }, props: { e } }));
-}
-
-const { e } = Astro.props;
+const { EVENTS_BY_DATE, eventBySlug } = await siteData(Astro);
+const e = eventBySlug(Astro.params.slug);
+if (!e) return Astro.rewrite('/404');
 
 // 日付順に並べた中での前後（ページ下部の行き来に使う）
 const idx = EVENTS_BY_DATE.findIndex((x) => x.slug === e.slug);
