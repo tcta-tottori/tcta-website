@@ -1,7 +1,12 @@
 ---
 import Base from '../layouts/Base.astro';
 import LinkCard from '../components/LinkCard.astro';
+import Icon from '../components/Icon.astro';
+import { siteData } from '../lib/cms.js';
 import { LINK_GROUPS } from '../data/links.js';
+
+// 協会の SNS（管理画面 → Settings → Social）。「協会の公式アカウント」の先頭に並べる
+const { SOCIAL } = await siteData(Astro);
 
 const title = "リンク集｜鳥取市テニス協会";
 const description = "鳥取市テニス協会に関係する団体・施設のリンク集。鳥取県テニス協会、公共施設予約システム、近隣協会など。";
@@ -34,6 +39,20 @@ const description = "鳥取市テニス協会に関係する団体・施設の�
       {LINK_GROUPS.map((g, i) => (
         <div class="rv" style={i === 0 ? undefined : 'margin-top:56px'}>
           <h2 class="sub-head">{g.title}</h2>
+          {g.id === 'official' && SOCIAL.length > 0 && (
+            <div class="sns-grid">
+              {SOCIAL.map((s) => (
+                <a class="sns-card" href={s.url} target="_blank" rel="me noopener noreferrer">
+                  <Icon name={s.key} class="sns-card__ico" />
+                  <span class="sns-card__text">
+                    <span class="sns-card__name">{s.name}</span>
+                    <span class="sns-card__desc">{s.desc}</span>
+                  </span>
+                  <span class="link-card__ext" aria-hidden="true">↗</span>
+                </a>
+              ))}
+            </div>
+          )}
           <div class="link-grid">
             {g.items.map((l) => <LinkCard link={l} />)}
           </div>

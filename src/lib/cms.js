@@ -5,12 +5,13 @@
 // 返すものの形は移行前の src/data/*.js と同じにしてあり、各ページは
 //   const { NEWS, SCHEDULE, EVENTS, CARDS, ... } = await siteData(Astro);
 // と受け取る。
-import { getEmDashCollection } from 'emdash';
+import { getEmDashCollection, getSiteSettingsWithCacheHint } from 'emdash';
 import { buildNews } from '../data/news.js';
 import { buildSchedule } from '../data/schedule.js';
 import { buildEvents } from '../data/events.js';
 import { buildCards } from '../data/tournaments.js';
 import { buildEventInfo } from '../data/eventinfo.js';
+import { buildSocial } from '../data/social.js';
 
 /** コレクションを全件読む（1 ページ 100 件までなので、続きがあれば読み足す）。 */
 async function readAll(collection, options = {}) {
@@ -28,10 +29,11 @@ async function readAll(collection, options = {}) {
 }
 
 async function load(locals) {
-  const [news, tournaments, eventInfo] = await Promise.all([
+  const [news, tournaments, eventInfo, settings] = await Promise.all([
     readAll('news', { orderBy: { date: 'desc' } }),
     readAll('tournaments', { orderBy: { date: 'asc' } }),
     readAll('event_info', { orderBy: { order: 'asc' } }),
+    getSiteSettingsWithCacheHint(), // サイト設定（SNS のアカウント名など）
   ]);
   // アップロードした PDF の URL は、保存先の鍵から EmDash に引いてもらう
   const mediaUrl = (key) => locals.emdash?.getPublicMediaUrl?.(key) ?? null;
@@ -45,7 +47,8 @@ async function load(locals) {
     ...events,
     ...cards,
     ...buildEventInfo(eventInfo.rows),
-    hints: [...news.hints, ...tournaments.hints, ...eventInfo.hints],
+    ...buildSocial(settings.data?.social),
+    hints: [...news.hints, ...tournaments.hints, ...eventInfo.hints, ...(settings.cacheHint ? [settings.cacheHint] : [])],
   };
 }
 

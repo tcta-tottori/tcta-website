@@ -31,6 +31,7 @@ Cloudflare Workers で公開しています（2026-10-21 に GitHub Pages から
 │   ├── data/news.js             お知らせの組み立て（内容は EmDash の「お知らせ」）
 │   ├── data/schedule.js         年度別の大会一覧の組み立て（内容は EmDash の「大会」）
 │   ├── data/events.js           大会1件ごとのページの組み立て（素材・成績は EmDash の「大会」）
+│   ├── data/social.js           協会の SNS（EmDash の Settings → Social）をフッターとリンク集に出す
 │   ├── data/results.json        平成16〜令和6年度の大会結果（旧サイトから引き継いだ正本。EmDash には入れていない）
 │   ├── data/*.json              移行前のデータ（seed の入力。results.json 以外はもう使われない）
 │   └── data/courts.js           コート案内の一覧と地図の唯一の正
@@ -160,6 +161,9 @@ npm run dev                                  # http://localhost:4321 を開く
   カレンダーは1か月ずつ出し、前後のボタンで月を移します（マス目は全月ぶん書き出してあり、
   JSは表示の切り替えだけなので、JSが無くても先頭の月は読めます）。
   予備会場は原稿に無いため空で、表では「—」と出ます。分かりしだい `spareVenue` に入れてください。
+- **協会の SNS** — YouTube・Instagram・X・Facebook のアカウント名は管理画面の Settings → Social に入れます。
+  入れたものだけが全ページのフッター（ロゴの下）とリンク集の「協会の公式アカウント」に出ます
+  （`src/data/social.js` がハンドルを URL に直し、`Icon.astro` の面のアイコンで示します）。
 - **リンクのバナー** — トップのマーキーは白いカードの枠を出さず、バナーそのものを見せます。
   押している間だけ太い赤枠が出ます。手を離してから3秒でまた流れ出します。
   バナーを別タブで開くと `mouseleave` が来ないまま離れることがあるので、

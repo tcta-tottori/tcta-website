@@ -2056,6 +2056,19 @@ body.jsrv .rv.on .ink-sweep {
 @media (min-width: 1024px) { .site-footer__brand { grid-column: auto; margin-bottom: 0; } }
 .site-footer__brand img { width: 160px; height: auto; }
 @media (min-width: 1024px) { .site-footer__brand img { width: 190px; } }
+/* ロゴの下の SNS（管理画面の Social に入れたものだけ出る） */
+.site-footer__sns { display: flex; flex-wrap: wrap; gap: 8px 20px; margin-top: 20px; }
+.sns-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #fff;
+  font: 700 13px/1 var(--flt);
+  letter-spacing: .04em;
+  transition: color .3s ease;
+}
+.sns-link:hover { color: var(--gray-300); }
+.sns-link__ico { width: 22px; height: 22px; }
 
 .fw { display: block; color: #fff; cursor: pointer; transition: color .3s ease; }
 .fw:hover { color: var(--gray-300); }
@@ -2102,6 +2115,25 @@ body.jsrv .rv.on .ink-sweep {
   letter-spacing: .04em;
   color: rgba(255, 255, 255, .6);
 }
+
+/* リンク集の「協会の公式アカウント」に出す SNS のカード */
+.sns-grid { display: grid; grid-template-columns: 1fr; gap: 12px; margin-bottom: 16px; }
+@media (min-width: 640px) { .sns-grid { grid-template-columns: repeat(2, 1fr); gap: 16px; } }
+.sns-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 18px 20px;
+  border: 1px solid var(--gray-200);
+  background: #fff;
+  color: var(--ink);
+  transition: border-color .3s ease, transform .3s ease;
+}
+.sns-card:hover { border-color: var(--ink); transform: translateY(-2px); }
+.sns-card__ico { width: 32px; height: 32px; flex: none; color: var(--red); }
+.sns-card__text { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 0; }
+.sns-card__name { font: 700 15px/1.4 var(--fjp); }
+.sns-card__desc { font: 400 13px/1.6 var(--fjp); color: var(--gray-600); }
 
 /* ============ 14. 下層ページ ============ */
 .page-head {
