@@ -2138,7 +2138,6 @@ body.jsrv .rv.on .ink-sweep {
 /* 動画の埋め込み（テニス祭りの YouTube） */
 .video-embed { position: relative; aspect-ratio: 16 / 9; background: var(--ink); overflow: hidden; }
 .video-embed iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
-.gallery-lead { display: block; width: 100%; height: auto; margin-bottom: 16px; }
 
 /* ============ 14. 下層ページ ============ */
 .page-head {
@@ -2823,6 +2822,8 @@ body.jsrv .rv.on .ink-sweep {
 .gallery__item img {
   display: block;
   width: 100%;
+  /* img の width/height 属性が高さに効いたままだと、幅だけ縮んで縦長の升目になる */
+  height: auto;
   aspect-ratio: 4 / 3;
   /* 表彰の写真だけでなく、細長いドロー表やスコア表も混ざっている。
      cover で切ると何の紙か分からなくなるので、全体を収める。 */
