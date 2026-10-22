@@ -17,7 +17,9 @@ Cloudflare Workers で公開しています（2026-10-21 に GitHub Pages から
 │   │   │                         リンク集／コート案内）
 │   │   ├── tournaments.astro    大会情報（月ごとのカレンダー・全19大会・状態フィルタ）
 │   │   ├── results.astro        大会結果（年度の選択 → 大会名の一覧）
-│   │   ├── club.astro           クラブ対抗戦
+│   │   ├── result-[id].astro    令和6年度までの大会1件の結果（results.json）。クラブ対抗戦は年度で1ページ、部の順
+│   │   ├── gallery-[id].astro   その大会の当日の写真（写真だけのページが12枚以上あるとき、結果とは別に）
+│   │   ├── club.astro           クラブ対抗戦（今年度の各部の結果・編成表・これまでの優勝クラブ）
 │   │   ├── lesson.astro         水曜テニス教室
 │   │   ├── tennis-day.astro     テニス祭り（テニスの日）
 │   │   ├── membership.astro     協会登録（入会案内）
@@ -34,6 +36,8 @@ Cloudflare Workers で公開しています（2026-10-21 に GitHub Pages から
 │   ├── data/events.js           大会1件ごとのページの組み立て（素材・成績は EmDash の「大会」）
 │   ├── data/social.js           協会の SNS（EmDash の Settings → Social）をフッターとリンク集に出す
 │   ├── data/results.json        平成16〜令和6年度の大会結果（旧サイトから引き継いだ正本。EmDash には入れていない）
+│   ├── data/results.js          旧結果の束ね方（分かれていたページを1つに、クラブ対抗戦は部の順に、写真はギャラリーへ）
+│   ├── data/club-league.js      令和7年度〜のクラブ対抗戦の部ごとの優勝クラブ（公式サイトの写し。管理画面の成績があればそちらが優先）
 │   ├── data/*.json              移行前のデータ（seed の入力。results.json 以外はもう使われない）
 │   └── data/courts.js           コート案内の一覧と地図の唯一の正
 │   ├── worker.ts                Cloudflare Worker の入口（EmDash の定期処理）

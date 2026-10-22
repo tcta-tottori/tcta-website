@@ -2790,6 +2790,36 @@ body.jsrv .rv.on .ink-sweep {
 .gallery.gallery--winners .gallery__item img { aspect-ratio: auto; height: auto; }
 .deflist__group { padding: 20px 4px 6px; font: 700 13px/1.5 var(--fjp); letter-spacing: .08em; color: var(--red); }
 
+/* クラブ対抗戦の結果ページ。部ごとの見出し（部の名前＋優勝クラブ）の下に、結果表と優勝クラブの写真 */
+.division + .division { margin-top: 56px; }
+.jump + .division { margin-top: 40px; }
+.division__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 16px;
+  margin: 0 0 16px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--gray-200);
+}
+.division__name { font: 700 20px/1.3 var(--fjp); letter-spacing: .02em; color: var(--ink); }
+.division__name::before { content: ""; display: inline-block; width: 10px; height: 10px; margin-right: 10px; background: var(--red); vertical-align: 2px; }
+.division__champ { font: 400 15px/1.6 var(--fjp); color: var(--gray-800); }
+.division__award { margin-right: 8px; font: 700 12px/1.6 var(--fjp); letter-spacing: .06em; color: var(--red); }
+.division .rblock { margin-top: 0; }
+/* リーグ表が何枚もある部（8部など）は、.sheets の升目で並べる。結果表の間隔は小さめに */
+.rblock__sheet.sheets { margin-top: 0; gap: 12px; }
+
+/* ギャラリーの入口（結果ページの下部）。写真を少し見せて、別ページへ */
+.gallery-peek { display: block; margin-top: 16px; color: inherit; }
+.gallery-peek__grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+@media (min-width: 640px) { .gallery-peek__grid { grid-template-columns: repeat(8, 1fr); } }
+.gallery-peek__grid img { display: block; width: 100%; height: auto; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 4px; background: var(--gray-050); transition: opacity .3s ease; }
+.gallery-peek:hover .gallery-peek__grid img { opacity: .85; }
+.gallery-peek__label { display: inline-flex; align-items: center; gap: 8px; margin-top: 14px; font: 700 14px/1.5 var(--fjp); letter-spacing: .04em; color: var(--ink); }
+.gallery-peek:hover .gallery-peek__label { color: var(--red); }
+.gallery-peek:hover .aw { transform: translateX(4px); }
+
 /* 種目ごとの順位。「優勝　◯◯ペア」を1行ずつ */
 .place-list { list-style: none; margin: 0; padding: 0; }
 .place-list li {
@@ -3020,6 +3050,7 @@ body.jsrv .rv.on .ink-sweep {
   color: var(--red);
 }
 .champ__club { font: 400 15px/1.7 var(--fjp); color: var(--ink); }
+.champ__award { margin-right: 6px; font: 700 12px/1.6 var(--fjp); color: var(--red); }
 .champ__none { margin: 8px 0 0; font: 400 13px/1.7 var(--fjp); color: var(--gray-500); }
 
 /* ============ 16. オープニング（全画面の映像） ============ */

@@ -1,0 +1,75 @@
+---
+// 大会1件のギャラリー（当日の写真だけのページ）。結果のページ（result-<id>.html）から分けて出す。
+// 旧サイトで「ギャラリー」「○○（写真）」として別ページだった写真を、結果とは別にまとめて見せる。
+// URL は gallery-<id>.html（id は結果のページと同じ、束ねた先頭ページの id）。
+import Base from '../layouts/Base.astro';
+import { groupById } from '../data/results.js';
+
+const g = groupById(Astro.params.id);
+if (!g || !g.galleryHref) return Astro.rewrite('/404');
+
+const title = `${g.title} ギャラリー（${g.yearLabel}）｜大会結果｜鳥取市テニス協会`;
+const description = `${g.yearLabel}の${g.title}の当日の写真 ${g.galleryPhotos}枚です。`;
+
+// ギャラリーが複数あるとき（クラブ対抗戦の前期・後期など）は、旧ページごとに日付を見出しにして分ける
+const parts = g.galleries.map((e) => ({
+  heading: [e.t.date, e.t.venue].filter(Boolean).join('　／　') || (g.galleries.length > 1 ? e.title : ''),
+  photos: e.t.photos,
+}));
+let photoNo = 0;
+---
+
+<Base
+  title={title}
+  description={description}
+  navActive="results"
+  mobileNavActive="results"
+>
+  <section class="page-head">
+    <span class="ghost" aria-hidden="true">GALLERY</span>
+    <div class="container">
+      <nav class="breadcrumb" aria-label="パンくず">
+        <a href="index.html">ホーム</a><span class="breadcrumb__sep" aria-hidden="true">›</span>
+        <a href="results.html">大会結果</a><span class="breadcrumb__sep" aria-hidden="true">›</span>
+        <a href={g.href}>{g.title}</a><span class="breadcrumb__sep" aria-hidden="true">›</span>
+        <span aria-current="page">ギャラリー</span>
+      </nav>
+      <div class="page-title-row fu">
+        <span class="sec-head__mark" aria-hidden="true" style="margin-top:8px"></span>
+        <div>
+          <p class="page-title__en" style="margin:0">{g.yearLabel}</p>
+          <h1 class="page-title" style="margin-top:8px">{g.title} ギャラリー</h1>
+        </div>
+      </div>
+      <p class="page-lead fu" style="animation-delay:.15s">当日の写真 {g.galleryPhotos}枚です。画像をタップすると全画面で表示します。</p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      {parts.map((p, i) => (
+        <div class="rv" style={i > 0 ? 'margin-top:56px' : undefined}>
+          {p.heading && (
+            <div class="esec__head">
+              <h2 class="sub-head" style="margin-bottom:0">{p.heading}</h2>
+              <span class="gallery__count">{p.photos.length}枚</span>
+            </div>
+          )}
+          <div class="gallery">
+            {p.photos.map((ph) => (
+              <a class="gallery__item" href={ph.src}>
+                <img src={ph.src} alt={`${g.title}の写真 ${++photoNo}`} width={ph.w} height={ph.h} loading="lazy" decoding="async">
+              </a>
+            ))}
+          </div>
+        </div>
+      ))}
+
+      <nav class="page-nav rv" aria-label="結果のページへ">
+        <a class="page-nav__link" href={g.href}><span class="page-nav__dir">← 結果のページ</span><span class="page-nav__title">{g.title}（{g.yearLabel}）</span></a>
+        <a class="ghost-link" href="results.html">大会結果の一覧へ</a>
+        <span></span>
+      </nav>
+    </div>
+  </section>
+</Base>

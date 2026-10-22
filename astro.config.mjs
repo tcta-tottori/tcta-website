@@ -46,6 +46,7 @@ export default defineConfig({
     '/results.html': PAGE,
     '/event-[slug].html': PAGE,
     '/result-[id].html': PAGE,
+    '/gallery-[id].html': PAGE,
     '/about.html': PAGE,
     '/club.html': PAGE,
     '/lesson.html': PAGE,
