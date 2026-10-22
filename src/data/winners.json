@@ -487,6 +487,75 @@
       }
     ]
   },
+  "r8-enetopia": {
+    "source": "https://www.tottori-tenis.net/%E5%A4%A7%E4%BC%9A%E7%B5%90%E6%9E%9C/r8/%E3%82%A8%E3%83%8D%E3%83%88%E3%83%94%E3%82%A2%E7%B5%90%E6%9E%9C/",
+    "title": "2026エネトピア杯テニス大会結果",
+    "categories": [
+      {
+        "category": "1位トーナメント",
+        "places": [
+          {
+            "award": "優勝",
+            "name": "檜垣・橋本ペア"
+          },
+          {
+            "award": "準優勝",
+            "name": "津田・大田ペア"
+          },
+          {
+            "award": "ベスト4",
+            "name": "椿・椿ペア"
+          },
+          {
+            "award": "ベスト4",
+            "name": "高木・小野ペア"
+          }
+        ]
+      },
+      {
+        "category": "2位トーナメント",
+        "places": [
+          {
+            "award": "優勝",
+            "name": "山根・竹内ペア"
+          },
+          {
+            "award": "準優勝",
+            "name": "小川・山内ペア"
+          },
+          {
+            "award": "ベスト4",
+            "name": "吉識・高木ペア"
+          },
+          {
+            "award": "ベスト4",
+            "name": "平木・平木ペア"
+          }
+        ]
+      },
+      {
+        "category": "3位トーナメント",
+        "places": [
+          {
+            "award": "優勝",
+            "name": "田中・山﨑ペア"
+          },
+          {
+            "award": "準優勝",
+            "name": "山本・山本ペア"
+          },
+          {
+            "award": "ベスト4",
+            "name": "小谷・小谷ペア"
+          },
+          {
+            "award": "ベスト4",
+            "name": "坪上・高垣ペア"
+          }
+        ]
+      }
+    ]
+  },
   "r7-tobu-singles": {
     "source": "https://www.tottori-tenis.net/%E5%A4%A7%E4%BC%9A%E7%B5%90%E6%9E%9C/r7/%E6%9D%B1%E9%83%A8s%E7%B5%90%E6%9E%9C/",
     "title": "第５5回東部地区選手権シングルス結果",

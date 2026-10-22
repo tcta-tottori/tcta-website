@@ -12,3 +12,18 @@ dist/
 worker/node_modules/
 worker/.wrangler/
 worker/.dev.vars
+
+# EmDash（docs/emdash.md）
+.env
+.env.*
+!.env.example
+.emdash/
+.wrangler/
+emdash-env.d.ts
+worker-configuration.d.ts
+data.db
+data.db-*
+uploads/
+
+# Python のキャッシュ
+__pycache__/

@@ -41,6 +41,7 @@ PAGES = {
     '/大会結果/r8/気高カップ/': 'r8-ketaka',
     '/大会結果/r8/サマーミックス結果/': 'r8-summer-mix',
     '/大会結果/r8/ダンロップ/': 'r8-dunlop',
+    '/大会結果/r8/エネトピア結果/': 'r8-enetopia',
     # 令和7年度
     '/大会結果/r7/東部s結果/': 'r7-tobu-singles',
     '/大会結果/r7/東部w結果/': 'r7-tobu-doubles',

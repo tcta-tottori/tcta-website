@@ -1,5 +1,10 @@
 ---
 // 全ページ共通のフッター。移行前は10ファイルに同じマークアップが重複していた。
+// ロゴの下の SNS は、管理画面 → Settings → Social に入れたアカウントだけが出る（src/data/social.js）。
+import Icon from './Icon.astro';
+import { siteData } from '../lib/cms.js';
+
+const { SOCIAL } = await siteData(Astro);
 ---
 
 <footer class="site-footer">
@@ -38,6 +43,16 @@
   <div class="container site-footer__grid">
     <div class="site-footer__brand">
       <img src="assets/img/logo-white.png" alt="鳥取市テニス協会 TOTTORI-CITY TENNIS ASSOCIATION" width="648" height="240">
+      {SOCIAL.length > 0 && (
+        <ul class="site-footer__sns" aria-label="協会の SNS">
+          {SOCIAL.map((s) => (
+            <li><a class="sns-link" href={s.url} target="_blank" rel="me noopener noreferrer">
+              <Icon name={s.key} class="sns-link__ico" />
+              <span class="sns-link__label">{s.label}</span>
+            </a></li>
+          ))}
+        </ul>
+      )}
     </div>
     <div><a class="fw fw--head" href="index.html">ホーム</a></div>
     <div>

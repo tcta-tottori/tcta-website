@@ -1,0 +1,143 @@
+---
+import Base from '../layouts/Base.astro';
+import ScheduleCalendar from '../components/ScheduleCalendar.astro';
+import TournamentList from '../components/TournamentList.astro';
+import { siteData } from '../lib/cms.js';
+import { CURRENT_NENDO } from '../data/schedule.js';
+import { SCHEDULE_PDF } from '../data/events.js';
+
+const { SCHEDULE, SCHEDULE_NEXT, EVENTS } = await siteData(Astro);
+
+const title = "大会情報｜鳥取市テニス協会";
+const description = "令和8年度（2026年度）に鳥取市テニス協会が主催・主管する全19大会の一覧。エントリー締切・会場・登録区分を掲載しています。";
+
+// 絞り込みチップの件数。手で数えると日程の更新のたびにずれるので、データから出す。
+const count = {
+  all: SCHEDULE.length,
+  open: SCHEDULE.filter((t) => t.status === 'open').length,
+  done: SCHEDULE.filter((t) => t.status === 'done').length,
+};
+
+// 一覧に入らない大会（協会が結果を預かっているもの）は、表の下に別立てで案内する
+const extras = EVENTS.filter((e) => e.kind === 'extra' && e.nendo === CURRENT_NENDO);
+
+// 協会の Google カレンダー（旧サイトで埋め込んでいたもの）。
+// embed は表示用、subscribe は「＋」と同じく自分のカレンダーに追加する入口。
+const GCAL = {
+  embed: 'https://calendar.google.com/calendar/embed?src=t.c.t.a.r7%40gmail.com&ctz=Asia%2FTokyo',
+  subscribe: 'https://calendar.google.com/calendar/u/0/r?cid=t.c.t.a.r7%40gmail.com',
+};
+---
+
+<Base
+  title={title}
+  description={description}
+  navActive="tournaments"
+  mobileNavActive="tournaments"
+>
+  <!-- ============ ページヘッダー ============ -->
+  <section class="page-head page-head--plain">
+    <span class="ghost" aria-hidden="true">TOURNAMENT</span>
+    <div class="container">
+      <nav class="breadcrumb" aria-label="パンくず">
+        <a href="index.html">ホーム</a><span class="breadcrumb__sep" aria-hidden="true">›</span><span aria-current="page">大会情報</span>
+      </nav>
+      <div class="page-title-row fu">
+        <span class="sec-head__mark" aria-hidden="true" style="margin-top:8px"></span>
+        <div>
+          <p class="page-title__en" style="margin:0">Tournament</p>
+          <h1 class="page-title" style="margin-top:8px">大会情報</h1>
+        </div>
+      </div>
+      <p class="page-lead fu" style="animation-delay:.15s">令和8年度（2026年度）に鳥取市テニス協会が主催・主管する大会の一覧です。エントリー締切、会場、必要な登録区分をあわせて掲載しています。日程は天候等により変更になる場合があります。</p>
+      <div class="chips page-head__chips fu" style="animation-delay:.3s" data-filter-group data-filter-target="#r8-list" role="group" aria-label="大会一覧の絞り込み">
+        <button class="chip is-active" type="button" data-filter="all" aria-pressed="true">すべて（{count.all}）</button>
+        <button class="chip" type="button" data-filter="open" aria-pressed="false">受付中（{count.open}）</button>
+        <button class="chip" type="button" data-filter="done" aria-pressed="false">終了（{count.done}）</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 大会一覧 ============ -->
+  <section class="section" aria-labelledby="r8-title">
+    <div class="container">
+      <div class="sec-head rv">
+        <div class="sec-head__row">
+          <span class="sec-head__mark" aria-hidden="true"></span>
+          <div>
+            <p class="sec-head__eyebrow">Schedule R8</p>
+            <h2 class="sec-head__title" id="r8-title">令和8年度 大会一覧</h2>
+          </div>
+        </div>
+      </div>
+
+      <p class="note mt-24">要項・申込書・ドロー・結果は、掲載ずみのものだけボタンが押せます。大会名をタップすると、その大会のページで全部まとめて見られます。</p>
+
+      <TournamentList items={SCHEDULE} id="r8-list" caption="令和8年度 大会一覧" />
+      <p class="note" id="r8-list-empty" hidden>該当する大会はありません。</p>
+
+      {extras.length > 0 && (
+        <div class="rv" style="margin-top:56px">
+          <h2 class="sub-head">協会が結果を預かっている大会</h2>
+          <p class="note" style="margin-bottom:20px">協会の主催ではありませんが、要項・ドロー・結果をお預かりして掲載している大会です。</p>
+          <ul class="sch-list">
+            {extras.map((e) => (
+              <li><a class="sch-item" href={e.url}>
+                <span class="sch-item__text">
+                  <span class="sch-item__title">{e.name}</span>
+                  <span class="sch-item__place">{e.label}　／　{e.place}　／　{e.event}</span>
+                </span>
+                <span class="sqbtn" aria-hidden="true">→</span>
+              </a></li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      <div class="rv mt-40" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:20px">
+        <a class="btn btn--outline" href={SCHEDULE_PDF.src} target="_blank" rel="noopener noreferrer">令和8年度 大会日程をダウンロード（PDF / {SCHEDULE_PDF.kb.toLocaleString()}KB）<span aria-hidden="true" class="text-red">↓</span></a>
+        <p style="margin:0;font:400 14px/1.8 var(--fjp);color:var(--gray-600)">大会日程はGoogleカレンダーでも公開しています。<a class="ghost-link" href="#gcal" style="border-bottom:1px solid var(--gray-300)">カレンダーに追加する</a></p>
+      </div>
+
+      <div class="rv" style="margin-top:64px">
+        <h2 class="sub-head">令和9年度（先行案内）</h2>
+        <TournamentList items={SCHEDULE_NEXT} caption="令和9年度 大会（先行案内）" />
+      </div>
+
+      <div class="rv panel panel--gray" style="margin-top:64px">
+        <p class="panel__title">過去の大会</p>
+        <p class="prose" style="margin:0">平成16年度から令和6年度までの大会は、大会結果のページに年度ごとにまとめています。種目ごとの成績と当日の写真をご覧いただけます。</p>
+        <a class="ghost-link mt-24" href="results.html">大会結果を見る <span class="aw">→</span></a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 月ごとのカレンダー ============ -->
+  <section class="section section--gray" id="calendar" aria-labelledby="cal-title">
+    <span class="ghost" aria-hidden="true">CALENDAR</span>
+    <div class="container">
+      <div class="sec-head rv">
+        <div class="sec-head__row">
+          <span class="sec-head__mark" aria-hidden="true"></span>
+          <div>
+            <p class="sec-head__eyebrow">Calendar</p>
+            <h2 class="sec-head__title" id="cal-title">大会カレンダー</h2>
+          </div>
+        </div>
+      </div>
+      <p class="sec-head__lead rv">令和8年度の大会を月ごとに並べています。赤いマスが開催日です。年間の日程はGoogleカレンダーでも公開しています。</p>
+
+      <ScheduleCalendar />
+
+      <div class="rv gcal mt-40" id="gcal">
+        <p class="panel__title">Googleカレンダー</p>
+        <p class="note" style="margin:8px 0 16px">協会のGoogleカレンダーです。右下の「＋」を押すと、自分のGoogleカレンダーに大会日程を追加できます。</p>
+        <iframe class="gcal__frame" src={GCAL.embed} title="鳥取市テニス協会 大会日程（Googleカレンダー）" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+      </div>
+      <div class="btn-stack rv mt-40">
+        <a class="btn btn--primary" href={GCAL.subscribe} target="_blank" rel="noopener noreferrer">Googleカレンダーに追加する <span class="aw">↗</span></a>
+      </div>
+    </div>
+  </section>
+
+</Base>

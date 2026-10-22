@@ -1,0 +1,37 @@
+{
+	// 公式サイト本体（Astro ＋ EmDash）を動かす Cloudflare Worker。配備手順は docs/emdash.md を参照。
+	// D1（内容）と R2（アップロードした画像・PDF）は、最初の `wrangler deploy` で名前どおりに作られる。
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "tcta-site",
+	"main": "./src/worker.ts",
+	"compatibility_date": "2026-02-24",
+	"compatibility_flags": ["nodejs_compat"],
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "tcta-site"
+		}
+	],
+	"r2_buckets": [
+		{
+			"binding": "MEDIA",
+			"bucket_name": "tcta-site-media"
+		}
+	],
+	// Astro のセッション用 KV（@astrojs/cloudflare が要求する）。最初の配備で作られたものの ID。
+	// ID を書いておかないと、配備のたびに同じ名前で作り直そうとして失敗する。
+	"kv_namespaces": [
+		{
+			"binding": "SESSION",
+			"id": "66b01edd9e6e4ac296bb079fc290ca04"
+		}
+	],
+	// 予約公開・バックアップ・保守を動かす定期実行
+	"triggers": {
+		"crons": ["* * * * *"]
+	},
+	// 公開ページのキャッシュ（Workers Cache）。配備のたびに空になる（配備直後のエラーが残らないようにするため）
+	"cache": { "enabled": true }
+	// 隔離実行のプラグイン（Workers Paid プラン）を使うときだけ:
+	// "worker_loaders": [{ "binding": "LOADER" }]
+}

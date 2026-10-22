@@ -1812,6 +1812,172 @@
               "kb": 133
             }
           ]
+        },
+        "result": {
+          "images": [
+            {
+              "src": "assets/img/events/r8-enetopia/result-01.webp",
+              "label": null,
+              "w": 1550,
+              "h": 900
+            },
+            {
+              "src": "assets/img/events/r8-enetopia/result-02.webp",
+              "label": null,
+              "w": 1550,
+              "h": 900
+            },
+            {
+              "src": "assets/img/events/r8-enetopia/result-03.webp",
+              "label": null,
+              "w": 1550,
+              "h": 900
+            },
+            {
+              "src": "assets/img/events/r8-enetopia/result-04.webp",
+              "label": null,
+              "w": 1550,
+              "h": 900
+            },
+            {
+              "src": "assets/img/events/r8-enetopia/result-05.webp",
+              "label": null,
+              "w": 1550,
+              "h": 900
+            },
+            {
+              "src": "assets/img/events/r8-enetopia/result-06.webp",
+              "label": null,
+              "w": 1550,
+              "h": 900
+            },
+            {
+              "src": "assets/img/events/r8-enetopia/result-07.webp",
+              "label": null,
+              "w": 1550,
+              "h": 900
+            },
+            {
+              "src": "assets/img/events/r8-enetopia/result-08.webp",
+              "label": null,
+              "w": 1550,
+              "h": 900
+            },
+            {
+              "src": "assets/img/events/r8-enetopia/result-09.webp",
+              "label": null,
+              "w": 1550,
+              "h": 900
+            },
+            {
+              "src": "assets/img/events/r8-enetopia/result-10.webp",
+              "label": null,
+              "w": 1550,
+              "h": 900
+            },
+            {
+              "src": "assets/img/events/r8-enetopia/result-11.webp",
+              "label": null,
+              "w": 1550,
+              "h": 900
+            },
+            {
+              "src": "assets/img/events/r8-enetopia/result-12.webp",
+              "label": "1位トーナメント",
+              "w": 1760,
+              "h": 1528
+            },
+            {
+              "src": "assets/img/events/r8-enetopia/result-13.webp",
+              "label": "2位トーナメント",
+              "w": 1760,
+              "h": 1528
+            },
+            {
+              "src": "assets/img/events/r8-enetopia/result-14.webp",
+              "label": "3位トーナメント",
+              "w": 1760,
+              "h": 1528
+            }
+          ],
+          "pdfs": []
+        },
+        "photo": {
+          "images": [
+            {
+              "src": "assets/img/events/r8-enetopia/photo-01.webp",
+              "label": "1位トーナメント 優勝 檜垣・橋本ペア",
+              "w": 1400,
+              "h": 1051
+            },
+            {
+              "src": "assets/img/events/r8-enetopia/photo-02.webp",
+              "label": "1位トーナメント 準優勝 津田・大田ペア",
+              "w": 1400,
+              "h": 1051
+            },
+            {
+              "src": "assets/img/events/r8-enetopia/photo-03.webp",
+              "label": "1位トーナメント ベスト4 椿・椿ペア",
+              "w": 1400,
+              "h": 1051
+            },
+            {
+              "src": "assets/img/events/r8-enetopia/photo-04.webp",
+              "label": "1位トーナメント ベスト4 高木・小野ペア",
+              "w": 1400,
+              "h": 1052
+            },
+            {
+              "src": "assets/img/events/r8-enetopia/photo-05.webp",
+              "label": "2位トーナメント 優勝 山根・竹内ペア",
+              "w": 1400,
+              "h": 1051
+            },
+            {
+              "src": "assets/img/events/r8-enetopia/photo-06.webp",
+              "label": "2位トーナメント 準優勝 小川・山内ペア",
+              "w": 1400,
+              "h": 1051
+            },
+            {
+              "src": "assets/img/events/r8-enetopia/photo-07.webp",
+              "label": "2位トーナメント ベスト4 吉識・高木ペア",
+              "w": 1400,
+              "h": 1051
+            },
+            {
+              "src": "assets/img/events/r8-enetopia/photo-08.webp",
+              "label": "2位トーナメント ベスト4 平木・平木ペア",
+              "w": 1400,
+              "h": 1051
+            },
+            {
+              "src": "assets/img/events/r8-enetopia/photo-09.webp",
+              "label": "3位トーナメント 優勝 田中・山﨑ペア",
+              "w": 1400,
+              "h": 1051
+            },
+            {
+              "src": "assets/img/events/r8-enetopia/photo-10.webp",
+              "label": "3位トーナメント 準優勝 山本・山本ペア",
+              "w": 1400,
+              "h": 1051
+            },
+            {
+              "src": "assets/img/events/r8-enetopia/photo-11.webp",
+              "label": "3位トーナメント ベスト4 小谷・小谷ペア",
+              "w": 1400,
+              "h": 1051
+            },
+            {
+              "src": "assets/img/events/r8-enetopia/photo-12.webp",
+              "label": "3位トーナメント ベスト4 坪上・高垣ペア",
+              "w": 1400,
+              "h": 1051
+            }
+          ],
+          "pdfs": []
         }
       }
     },
@@ -1902,8 +2068,8 @@
           "pdfs": [
             {
               "src": "assets/pdf/events/r8-kaicho-autumn/2026会長杯（ダブルス）申込用紙.pdf",
-              "label": "2026会長杯（ダブルス）申込用紙",
-              "kb": 59
+              "label": "2026会長杯（ダブルス）申込用紙（訂正版）",
+              "kb": 126
             }
           ]
         }
@@ -1928,6 +2094,34 @@
               "src": "assets/pdf/events/r8-prince-open/PRINCEOPEN2026要項・申込用紙.pdf",
               "label": "PRINCEOPEN2026要項・申込用紙",
               "kb": 70
+            }
+          ]
+        }
+      }
+    },
+    {
+      "slug": "r8-shicho",
+      "nendo": "2026",
+      "no": "17",
+      "sections": {
+        "outline": {
+          "images": [
+            {
+              "src": "assets/img/events/r8-shicho/outline-01.webp",
+              "label": "要項・申込用紙",
+              "w": 1241,
+              "h": 1754
+            }
+          ],
+          "pdfs": []
+        },
+        "entry": {
+          "images": [],
+          "pdfs": [
+            {
+              "src": "assets/pdf/events/r8-shicho/R8市長杯申込用紙.pdf",
+              "label": "R8市長杯申込用紙",
+              "kb": 110
             }
           ]
         }

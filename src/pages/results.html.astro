@@ -1,0 +1,108 @@
+---
+import Base from '../layouts/Base.astro';
+import { siteData } from '../lib/cms.js';
+import { GROUPS_BY_YEAR } from '../data/results.js';
+
+// 令和7年度以降は EmDash の大会から、令和6年度までは旧サイトから引き継いだ results.json から
+const { EVENTS_BY_NENDO } = await siteData(Astro);
+
+const title = "大会結果｜鳥取市テニス協会";
+const description = "鳥取市テニス協会が主催・主管した大会の結果。平成16年度から令和8年度まで、年度ごとの大会結果と当日の写真を掲載しています。";
+
+// 年度を選ぶ → その年度の大会名が開催順に並ぶ → 大会名を選ぶと結果のページへ。
+// 令和7年度以降は大会1件ごとのページ（event-*.html）、
+// 令和6年度までは旧サイトから引き継いだ結果ページ（result-*.html）に飛ぶ。
+// 旧サイトで「シングルス」「ダブルス」「写真」と分かれていたページは、
+// results.js の groupYear で1つの大会に束ねてある。
+const eraOf = (nendo) => (Number(nendo) >= 2019
+  ? { era: '令和', n: Number(nendo) - 2018 }
+  : { era: '平成', n: Number(nendo) - 1988 });
+
+const years = [
+  ...EVENTS_BY_NENDO.map((y) => ({
+    nendo: y.nendo, label: y.label,
+    rows: y.events.map((e) => ({ href: e.url, title: e.displayName, date: e.label })),
+  })),
+  ...GROUPS_BY_YEAR.map((y) => ({
+    nendo: y.nendo, label: y.label,
+    rows: y.groups.map((g) => ({ href: g.href, title: g.title, date: g.entries[0].t.date })),
+  })),
+].map((y) => ({ ...y, ...eraOf(y.nendo) }));
+
+const eras = ['令和', '平成'].map((era) => ({ era, years: years.filter((y) => y.era === era) }));
+---
+
+<Base
+  title={title}
+  description={description}
+  navActive="results"
+  mobileNavActive="results"
+>
+  <!-- ============ ページヘッダー ============ -->
+  <section class="page-head">
+    <span class="ghost" aria-hidden="true">RESULTS</span>
+    <div class="container">
+      <nav class="breadcrumb" aria-label="パンくず">
+        <a href="index.html">ホーム</a><span class="breadcrumb__sep" aria-hidden="true">›</span><span aria-current="page">大会結果</span>
+      </nav>
+      <div class="page-title-row fu">
+        <span class="sec-head__mark" aria-hidden="true" style="margin-top:8px"></span>
+        <div>
+          <p class="page-title__en" style="margin:0">Results</p>
+          <h1 class="page-title" style="margin-top:8px">大会結果</h1>
+        </div>
+      </div>
+      <p class="page-lead fu" style="animation-delay:.15s">年度を選ぶと、その年に行われた大会が開催順に並びます。大会名をひらくと、結果表と当日の写真をご覧いただけます。</p>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="results-title">
+    <div class="container container--narrow">
+      <h2 class="visually-hidden" id="results-title">年度別の大会結果</h2>
+
+      <!-- 年度の選択。令和・平成の2段に分け、年の数字だけを並べる -->
+      <div class="year-picker rv" role="tablist" aria-label="年度の切り替え">
+        {eras.map((g) => (
+          <div class="year-picker__era">
+            <span class="year-picker__label">{g.era}</span>
+            <div class="year-picker__years">
+              {g.years.map((y) => (
+                <button
+                  class:list={['year-tab', y === years[0] && 'is-active']}
+                  type="button"
+                  role="tab"
+                  id={`tab-${y.nendo}`}
+                  aria-controls={`panel-${y.nendo}`}
+                  aria-selected={y === years[0] ? 'true' : 'false'}
+                  aria-label={`${y.label}の大会結果`}
+                  tabindex={y === years[0] ? 0 : -1}
+                >{y.n === 1 ? '元' : y.n}<span class="year-tab__unit">年度</span></button>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {years.map((y, i) => (
+        <div class="tabpanel" id={`panel-${y.nendo}`} role="tabpanel" aria-labelledby={`tab-${y.nendo}`} hidden={i !== 0}>
+          <div class="year-head">
+            <h3 class="year-head__title">{y.label}<span class="year-head__en">{y.nendo}</span></h3>
+            <p class="year-head__sum">{y.rows.length}大会</p>
+          </div>
+          <ol class="rlist">
+            {y.rows.map((r, n) => (
+              <li><a class="rlist__item" href={r.href}>
+                <span class="rlist__no" aria-hidden="true">{String(n + 1).padStart(2, '0')}</span>
+                <span class="rlist__title">{r.title}</span>
+                {r.date && <span class="rlist__date">{r.date}</span>}
+                <span class="sqbtn" aria-hidden="true">→</span>
+              </a></li>
+            ))}
+          </ol>
+        </div>
+      ))}
+
+      <p class="note">※ 令和6年度までは旧サイトから引き継いだ内容です。種目名や氏名は当時の掲載をそのまま載せています。誤りや掲載の取り下げのご依頼は<a href="contact.html">お問い合わせ</a>からお知らせください。</p>
+    </div>
+  </section>
+</Base>

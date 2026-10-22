@@ -433,7 +433,7 @@
       "event": "ミックスダブルス",
       "place": "ヤマタスポーツパーク",
       "due": "10/2",
-      "status": "closed",
+      "status": "done",
       "reg": "shi"
     },
     {
@@ -489,7 +489,7 @@
       "event": "チーム対抗戦（男子複・女子複・混合複）",
       "place": "ヤマタスポーツパーク",
       "due": "11/6",
-      "status": "open",
+      "status": "closed",
       "reg": "free"
     },
     {
@@ -503,7 +503,7 @@
       "event": "男女シングルス",
       "place": "ヤマタスポーツパーク",
       "due": "11/6",
-      "status": "soon",
+      "status": "open",
       "reg": "shi"
     },
     {

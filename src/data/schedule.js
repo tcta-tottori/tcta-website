@@ -1,19 +1,19 @@
-// 大会情報ページ「令和8年度 大会一覧」と、月ごとのカレンダーの唯一の正。
-// データ本体は schedule.json（年度の西暦をキーにした配列。"next" は翌年度の先行案内）。
-// 管理画面（admin/）は status・due・spareNote を書き換える。
+// 大会情報ページ「大会一覧」と、月ごとのカレンダー。
+// 内容は EmDash の「大会」コレクション（src/lib/cms.js が読む）。
 //
 // ■ date
-//   カレンダーに置くための実日付（ISO）。表に出る文言は label のほう。
+//   カレンダーに置くための実日付（2026-10-18 の形）。表に出る文言は label のほう。
 //   令和8年度は 2026年3月〜2027年2月。1〜2月のものは翌年になる。
-//   期間の大会（尾坂杯）は初日を date に入れ、日程の詳細は spareNote に書く。
+//   期間の大会（尾坂杯）は初日を date に入れ、日程の詳細は spare_note に書く。
 //
-// ■ spareDate / spareVenue / spareNote
-//   spareDate  … 予備日（'3/28' のように日付だけ）
-//   spareVenue … 予備会場（空欄は表で「—」と出る）
-//   spareNote  … 予備日ではない補足（'荒天中止' など）
+// ■ spare_date / spare_venue / spare_note
+//   spare_date  … 予備日（'3/28' のように日付だけ）
+//   spare_venue … 予備会場
+//   spare_note  … 予備日ではない補足（'荒天中止' など）
 //
-// ■ status  'done' 終了／'closed' 受付終了／'open' 受付中／'soon' まもなく受付
-// ■ reg     'ken' 県登録／'shi' 市登録／'free' 登録不要
+// ■ 受付状態（管理画面の選択肢）  終了／受付終了／受付中／まもなく受付／本日開催
+// ■ 登録区分（管理画面の選択肢）  県登録／市登録／登録不要
+// ■ 区分                          協会主催（一覧に出る）／預かり（一覧の下に別立て）／その他（トップのカードだけ）
 //
 // ■ 会場
 //   主会場は原則ヤマタスポーツパーク（鳥取県立布勢総合運動公園）、
@@ -21,11 +21,17 @@
 //   （荒天中止の大会は日を振り替えないので、予備会場も置かない）。
 //   室内の尾坂杯だけは体育館開催なので、この形に当てはめない。
 
+/** 管理画面の文言 → コードで使うキー */
+export const STATE_KEY = { '終了': 'done', '受付終了': 'closed', '受付中': 'open', 'まもなく受付': 'soon', '本日開催': 'live' };
+export const REG_KEY = { '県登録': 'ken', '市登録': 'shi', '登録不要': 'free' };
+export const KIND_KEY = { '協会主催': 'main', '預かり': 'extra', 'その他': 'other' };
+
 export const STATUS_LABEL = {
   done: { label: '終了', badge: 'badge--muted' },
   closed: { label: '受付終了', badge: 'badge--muted' },
   open: { label: '受付中', badge: 'badge--open' },
   soon: { label: 'まもなく受付', badge: 'badge--muted' },
+  live: { label: '本日開催', badge: 'badge--open' },
 };
 
 export const REG_LABEL = {
@@ -34,29 +40,53 @@ export const REG_LABEL = {
   free: '登録不要',
 };
 
-import SCHEDULE_JSON from './schedule.json';
+/** 年度（西暦）の表記。無いものは「令和N年度」を計算する。 */
+export const NENDO_LABEL = { '2025': '令和7年度', '2026': '令和8年度', '2027': '令和9年度' };
+export const nendoLabel = (nendo) => NENDO_LABEL[nendo] ?? `令和${Number(nendo) - 2018}年度`;
 
-/** 令和8年度（2026年度）の全19大会（schedule.json の "2026"） */
-export const SCHEDULE = SCHEDULE_JSON['2026'];
+/** いまの年度（西暦）。3月はじまり。 */
+export const CURRENT_NENDO = '2026';
 
-
-/** 年度の表記。events.json の nendo（年度の西暦）から引く。 */
-export const NENDO_LABEL = { '2025': '令和7年度', '2026': '令和8年度' };
+/** EmDash の 1 行を、移行前の schedule.json の 1 行と同じ形にする。 */
+export function scheduleRow(t) {
+  return {
+    slug: t.slug,
+    nendo: String(t.nendo ?? ''),
+    no: t.no || '',
+    kind: KIND_KEY[t.kind] ?? 'main',
+    date: String(t.date ?? '').slice(0, 10),
+    label: t.label || '',
+    spareDate: t.spare_date || '',
+    spareNote: t.spare_note || '',
+    spareVenue: t.spare_venue || '',
+    name: t.name,
+    event: t.event || '',
+    place: t.place || '',
+    due: t.due || '',
+    status: STATE_KEY[t.state] ?? 'soon',
+    reg: REG_KEY[t.reg] ?? 'free',
+  };
+}
 
 /**
- * 令和7年度（2025年度）の全19大会。大会日程（令和7年度鳥取市テニス協会大会日程.pdf）から起こした。
- * すべて終了ずみなので status は 'done' で固定。大会1件ごとのページ（event-r7-*.html）の
- * 日程・会場・登録区分はここから引く。
+ * EmDash の行から、ページが使う形に組み立てる。
+ *   SCHEDULE      … いまの年度（令和8年度）の協会主催の大会。通し番号順
+ *   SCHEDULE_R7   … 前の年度（令和7年度）の協会主催の大会
+ *   SCHEDULE_NEXT … 次の年度の先行案内
+ *   ROWS          … 全部（区分を問わない）
  */
-export const SCHEDULE_R7 = SCHEDULE_JSON['2025'];
-
-
-/** 令和9年度の先行案内 */
-export const SCHEDULE_NEXT = SCHEDULE_JSON.next;
-
+export function buildSchedule(rows) {
+  const ROWS = rows.filter((t) => t.name && t.date).map(scheduleRow);
+  const main = (nendo) => ROWS
+    .filter((t) => t.kind === 'main' && t.nendo === nendo)
+    .sort((a, b) => (a.no || '99').localeCompare(b.no || '99') || a.date.localeCompare(b.date));
+  const next = String(Number(CURRENT_NENDO) + 1);
+  const prev = String(Number(CURRENT_NENDO) - 1);
+  return { ROWS, SCHEDULE: main(CURRENT_NENDO), SCHEDULE_R7: main(prev), SCHEDULE_NEXT: main(next) };
+}
 
 /** 月ごとにまとめ直したもの（カレンダー用）。大会のある月だけを、日付順に返す。 */
-export function byMonth(items = SCHEDULE) {
+export function byMonth(items) {
   const map = new Map();
   for (const t of [...items].sort((a, b) => a.date.localeCompare(b.date))) {
     const key = t.date.slice(0, 7);
@@ -82,11 +112,11 @@ const DOW_EN = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
  */
 export function dateCell(t) {
   const [y, m, d] = t.date.split('-').map(Number);
-  const single = /^\d+月\d+日（.）$/.test(t.label);
+  const single = !t.label || /^\d+月\d+日（.）$/.test(t.label);
   return {
     md: `${String(m).padStart(2, '0')}.${String(d).padStart(2, '0')}`,
     dow: DOW_EN[new Date(y, m - 1, d).getDay()],
-    note: single ? (t.label.includes('（祝）') ? '祝日' : '') : t.label,
+    note: single ? (t.label?.includes('（祝）') ? '祝日' : '') : t.label,
   };
 }
 

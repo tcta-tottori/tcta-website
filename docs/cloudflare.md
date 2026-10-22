@@ -1,5 +1,8 @@
 # Cloudflare 導入の検討メモ
 
+> **2026-10-21 に公式サイトごと Cloudflare Workers へ移した**（CMS に EmDash を採用。[`docs/emdash.md`](./emdash.md)）。
+> このメモの「結論」はその前の判断。お問い合わせフォームの送信先はまだ無く、同じ Worker に持たせるのが次の候補。
+
 2026-09-03 時点の整理。対象は「Cloudflare（Pages／Workers／Wrangler）を、Claude Code などの
 AI コーディングツールと組み合わせて使う」という提案について、このサイトにとって何が変わるかを見たもの。
 

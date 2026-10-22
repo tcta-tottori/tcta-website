@@ -1,5 +1,9 @@
 # 管理アプリ（サイト更新）— 構成と設置手順
 
+> **2026-10-21 に EmDash へ置き換えた。** この自作の管理アプリ（`admin/`・`worker/`）はリポジトリから外してある
+> （必要なら `git log -- admin worker` から取り出せる）。いまの管理画面は公式サイトの `/_emdash/admin/`。
+> 構成・設置・運用は [`docs/emdash.md`](./emdash.md) を参照。以下は置き換え前の記録。
+
 2026-10-10 時点。スマホ・PC 共通の専用 Web アプリ（PWA）から、大会の結果・写真・PDF と
 お知らせを更新し、GitHub Pages の公式サイトに反映するための仕組み。
 
@@ -139,3 +143,4 @@ GitHub の代わりに、このリポジトリを一時フォルダに clone し
 - 写真・PDF を R2 に置き、リポジトリを軽くする
 - お問い合わせフォームの送信先を同じ Worker に持たせる（docs/cloudflare.md）
 - 公式サイトごと Workers Static Assets に移す（Cloudflare は新規には Pages より Workers を勧めている）
+- ページ本文のブロック編集に着手するとき、この自作アプリを Cloudflare の CMS「EmDash」に置き換えるか検討する（docs/emdash.md）

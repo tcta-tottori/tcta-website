@@ -1,0 +1,398 @@
+{
+  "hero": {
+    "src": "assets/img/tennis-day/2026/hero.webp",
+    "w": 1600,
+    "h": 619
+  },
+  "video": "CMrNEK2e7pI",
+  "coachChannel": "https://www.youtube.com/@to5268/videos",
+  "blocks": [
+    {
+      "id": "b1",
+      "title": "キッズテニス",
+      "lead": {
+        "src": "assets/img/tennis-day/2026/b1-lead.webp",
+        "w": 1400,
+        "h": 933
+      },
+      "photos": [
+        {
+          "src": "assets/img/tennis-day/2026/b1-photo-01.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2026/b1-photo-02.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2026/b1-photo-03.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2026/b1-photo-04.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2026/b1-photo-05.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2026/b1-photo-06.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2026/b1-photo-07.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2026/b1-photo-08.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2026/b1-photo-09.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2026/b1-photo-10.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2026/b1-photo-11.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2026/b1-photo-12.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2026/b1-photo-13.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2026/b1-photo-14.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2026/b1-photo-15.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2026/b1-photo-16.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2026/b1-photo-17.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2026/b1-photo-18.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2026/b1-photo-19.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2026/b1-photo-20.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2026/b1-photo-21.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2026/b1-photo-22.webp",
+          "w": 1400,
+          "h": 933
+        }
+      ]
+    },
+    {
+      "id": "b2",
+      "title": "ピックルボール体験会",
+      "lead": {
+        "src": "assets/img/tennis-day/2026/b2-lead.webp",
+        "w": 1400,
+        "h": 933
+      },
+      "photos": [
+        {
+          "src": "assets/img/tennis-day/2026/b2-photo-01.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2026/b2-photo-02.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2026/b2-photo-03.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2026/b2-photo-04.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2026/b2-photo-05.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2026/b2-photo-06.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2026/b2-photo-07.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2026/b2-photo-08.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2026/b2-photo-09.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2026/b2-photo-10.webp",
+          "w": 1400,
+          "h": 933
+        }
+      ]
+    },
+    {
+      "id": "b3",
+      "title": "テニスクリニック",
+      "lead": {
+        "src": "assets/img/tennis-day/2026/b3-lead.webp",
+        "w": 1400,
+        "h": 933
+      },
+      "photos": [
+        {
+          "src": "assets/img/tennis-day/2026/b3-photo-01.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2026/b3-photo-02.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2026/b3-photo-03.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2026/b3-photo-04.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2026/b3-photo-05.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2026/b3-photo-06.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2026/b3-photo-07.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2026/b3-photo-08.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2026/b3-photo-09.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2026/b3-photo-10.webp",
+          "w": 1400,
+          "h": 933
+        }
+      ]
+    },
+    {
+      "id": "b4",
+      "title": "じゃんけん大会",
+      "lead": null,
+      "photos": [
+        {
+          "src": "assets/img/tennis-day/2026/b4-photo-01.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2026/b4-photo-02.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2026/b4-photo-03.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2026/b4-photo-04.webp",
+          "w": 1400,
+          "h": 933
+        }
+      ]
+    },
+    {
+      "id": "b5",
+      "title": "加藤プロ＆安田ペアとのタイブレークマッチ",
+      "lead": null,
+      "photos": [
+        {
+          "src": "assets/img/tennis-day/2026/b5-photo-01.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2026/b5-photo-02.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2026/b5-photo-03.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2026/b5-photo-04.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2026/b5-photo-05.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2026/b5-photo-06.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2026/b5-photo-07.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2026/b5-photo-08.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2026/b5-photo-09.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2026/b5-photo-10.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2026/b5-photo-11.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2026/b5-photo-12.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2026/b5-photo-13.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2026/b5-photo-14.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2026/b5-photo-15.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2026/b5-photo-16.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2026/b5-photo-17.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2026/b5-photo-18.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2026/b5-photo-19.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2026/b5-photo-20.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2026/b5-photo-21.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2026/b5-photo-22.webp",
+          "w": 1400,
+          "h": 933
+        }
+      ]
+    }
+  ]
+}
