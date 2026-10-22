@@ -67,10 +67,10 @@ let photoNo = 0;
       {GALLERY.blocks.map((b) => (
         <div class="rv" style="margin-top:56px" id={`gallery-${b.id}`}>
           <h3 class="sub-head">{b.title}</h3>
-          <p class="prose" style="max-width:46em">{b.lead}</p>
+          {/* 見出し画像。lead は src・w・h を持つオブジェクトなので、文字として出すと [object Object] になる */}
           {b.lead?.src && (
-            <a class="sheet" href={b.lead.src} style="display:block;margin-bottom:16px">
-              <img class="gallery-lead" src={b.lead.src} alt={`${b.title}の写真`} width={b.lead.w} height={b.lead.h} loading="lazy" decoding="async">
+            <a class="sheet" href={b.lead.src} style="display:block">
+              <img src={b.lead.src} alt={`${b.title}の写真`} width={b.lead.w} height={b.lead.h} loading="lazy" decoding="async">
             </a>
           )}
           <div class="gallery">

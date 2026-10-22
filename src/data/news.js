@@ -5,6 +5,11 @@
 //   5件目があるときは「まだ続きがある」ことが分かるよう薄く重ねて見せる。
 //   VIEW ALL を押すと全件が別画面で開く。
 //
+// ■ 出す期間
+//   日付が見た時点から3ヶ月以内のものだけを出す（VIEW ALL の中も、上部の赤い帯も同じ）。
+//   古いものは管理画面に残っていても表には出ないので、消して回らなくてよい。
+//   先の日付（予告として先に書いたもの）はそのまま出る。
+//
 // ■ 分類（管理画面の選択肢）
 //   '大会'     … 要項公開、エントリー受付、ドロー発表
 //   '結果'     … 大会結果の掲載
@@ -27,6 +32,18 @@ export const NEWS_VISIBLE = 4;
 /** NEW を付ける期間（日） */
 const NEW_DAYS = 14;
 
+/** お知らせを出す期間（ヶ月）。日付がこれより前のものは表に出ない */
+const NEWS_MONTHS = 3;
+
+/** 見た時点から NEWS_MONTHS ヶ月前の日付（'2026-07-22' の形）。これより前のお知らせは出さない */
+export function newsCutoff(now = new Date()) {
+  const d = new Date(now.getFullYear(), now.getMonth() - NEWS_MONTHS, now.getDate());
+  // 月末の日付からの引き算で月をまたいだとき（5/31 → 2/31 = 3/3）は、その月の末日に丸める
+  if (d.getDate() !== now.getDate()) d.setDate(0);
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
 /** 移行時に付けた slug（20261004-16）の末尾の番号。それ以外は 0 */
 const seedNo = (n) => (/^\d{8}-\d{2}$/.test(n.slug) ? Number(n.slug.slice(9)) : 0);
 
@@ -35,12 +52,14 @@ export const CATEGORY_KEY = { '大会': 'tournament', '結果': 'result', 'ジ�
 
 /**
  * EmDash の行から、ページが使う形に組み立てる。
- *   NEWS           … 新しい順。{ date: '2026.10.12', category, title, href, important }
+ *   NEWS           … 新しい順、見た時点から3ヶ月以内のもの。{ date: '2026.10.12', category, title, href, important }
  *   IMPORTANT_NEWS … 全ページ上部の帯に出す重要なお知らせ（中止・延期など）
  */
-export function buildNews(rows) {
+export function buildNews(rows, now = new Date()) {
+  const cutoff = newsCutoff(now);
   const NEWS = rows
     .filter((n) => n.title && n.date)
+    .filter((n) => String(n.date).slice(0, 10) >= cutoff)
     .map((n) => ({
       slug: n.slug,
       date: String(n.date).slice(0, 10).replace(/-/g, '.'),
