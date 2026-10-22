@@ -351,25 +351,10 @@ const upcomingTournaments = TOURNAMENTS.filter((t) => t.status !== 'past');
         </div>
       </div>
 
-      <div class="split">
-        <div class="rv">
-          <ul class="sch-list">
-            {COURTS.map((c) => (
-              <li><a class="court-item" href={c.href} {...(c.external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}>
-                <Icon name="pin" class="court-pin" />
-                <span class="sch-item__text">
-                  <span class="sch-item__title">{c.name}</span>
-                  <span class="sch-item__place">{c.note}</span>
-                </span>
-                <span class="ar" aria-hidden="true">{c.external ? '↗' : '→'}</span>
-              </a></li>
-            ))}
-          </ul>
-          <p class="embed-caption">コートの予約は鳥取市の公共施設予約システムから行えます。協会が管理・貸出を行っているものではありませんのでご注意ください。</p>
-        </div>
-
+      {/* まず地図、次に施設の一覧。横に並ぶ幅では地図を左の広い側に置く（split--reverse）。 */}
+      <div class="split split--reverse">
         {/* 施設ごとの地図。上のボタンで切り替える（緯度経度とコートの輪郭は courts.js / court-shapes.json）。 */}
-        <div class="rv embed-wrap" style="transition-delay:.1s">
+        <div class="rv embed-wrap">
           <div class="cmap" data-cmap>
             <div class="cmap__tabs" role="group" aria-label="地図に出す施設">
               <button class="cmap__tab" type="button" aria-pressed="false" data-cmap-all>すべて</button>
@@ -404,6 +389,22 @@ const upcomingTournaments = TOURNAMENTS.filter((t) => t.status !== 'past');
           </div>
           <span class="embed-wrap__square" aria-hidden="true"></span>
         </div>
+        <div class="rv" style="transition-delay:.1s">
+          <ul class="sch-list">
+            {COURTS.map((c) => (
+              <li><a class="court-item" href={c.href} {...(c.external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}>
+                <Icon name="pin" class="court-pin" />
+                <span class="sch-item__text">
+                  <span class="sch-item__title">{c.name}</span>
+                  <span class="sch-item__place">{c.note}</span>
+                </span>
+                <span class="ar" aria-hidden="true">{c.external ? '↗' : '→'}</span>
+              </a></li>
+            ))}
+          </ul>
+          <p class="embed-caption">コートの予約は鳥取市の公共施設予約システムから行えます。協会が管理・貸出を行っているものではありませんのでご注意ください。</p>
+        </div>
+
       </div>
     </div>
   </section>
