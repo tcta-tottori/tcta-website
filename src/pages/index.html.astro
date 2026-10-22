@@ -9,10 +9,9 @@ import { today } from '../data/tournaments.js';
 import { LINKS_ASSOC, LINKS_OTHER } from '../data/links.js';
 import { NEWS_VISIBLE } from '../data/news.js';
 import { COURTS, mapData, mapLink } from '../data/courts.js';
-import { eventChip } from '../data/eventinfo.js';
 
-// 大会カード・お知らせ・イベント情報は EmDash から（1 リクエストに 1 回だけ読む）
-const { TOURNAMENTS, NEWS, EVENT_INFO } = await siteData(Astro);
+// 大会カード・お知らせは EmDash から（1 リクエストに 1 回だけ読む）
+const { TOURNAMENTS, NEWS } = await siteData(Astro);
 const TODAY = today();
 
 const CATCH = 'PLAY BEYOND.';
@@ -177,56 +176,6 @@ const upcomingTournaments = TOURNAMENTS.filter((t) => t.status !== 'past');
           </div>
           <a class="btn btn--outline tall__more" href="tournaments.html">年間の大会日程・カレンダーを見る <span class="aw">→</span></a>
         </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ============ イベント情報 ============ -->
-  <section class="section section--flush-top" id="events" aria-labelledby="events-title">
-    <span class="ghost" aria-hidden="true">EVENT</span>
-    <div class="container">
-      <div class="sec-bar rv">
-        <div class="sec-head">
-          <div class="sec-head__row">
-            <span class="sec-head__mark" aria-hidden="true"></span>
-            <div>
-              <p class="sec-head__eyebrow">Event</p>
-              <h2 class="sec-head__title" id="events-title">イベント情報</h2>
-            </div>
-          </div>
-        </div>
-        <div class="sec-bar__aside">
-          <a class="ghost-link view-all" href="tennis-day.html">
-            <span class="view-all__label">VIEW ALL</span><span class="sqbtn">→</span>
-          </a>
-        </div>
-      </div>
-
-      <div class="evlist rv">
-        {EVENT_INFO.map((e) => {
-          const chip = eventChip(e);
-          return (
-            <a class="evcard" href={e.href}>
-              <div class="evcard__media">
-                {e.image
-                  ? <img src={e.image} alt={e.imageAlt} loading="lazy" decoding="async">
-                  : <span class="evcard__media-empty" aria-hidden="true"><span class="evcard__media-text">{e.when}</span></span>}
-              </div>
-              <div class="evcard__body">
-                <div class="evcard__top">
-                  {chip
-                    ? <span class="date-chip"><span class="date-chip__md">{chip.md}</span><span class="date-chip__dow">{chip.dow}</span></span>
-                    : <span class="date-chip"><span class="date-chip__md">WED</span><span class="date-chip__dow">毎週</span></span>}
-                  {e.badge && <span class="badge badge--open">{e.badge}</span>}
-                </div>
-                <h3 class="evcard__title">{e.title}</h3>
-                <p class="evcard__meta">{e.when}<br>{e.place}</p>
-                <p class="evcard__lead">{e.lead}</p>
-                <span class="ghost-link evcard__more">詳しく見る <span class="aw">→</span></span>
-              </div>
-            </a>
-          );
-        })}
       </div>
     </div>
   </section>

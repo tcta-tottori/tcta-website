@@ -2289,6 +2289,12 @@ body.jsrv .rv.on .ink-sweep {
   color: var(--ink);
 }
 .fee-table__free { background: var(--gray-050); }
+/* 各委員会の表（協会について）。委員の列が長いぶん、委員会名と人名の列が狭められて
+   「玉川 裕｜康」のように名前の途中で折れていた。名前は折り返さず、委員の列だけで折り返す。 */
+.fee-table--committee { min-width: 0; }
+.fee-table--committee tbody th { width: auto; white-space: nowrap; }
+.fee-table--committee .nowrap { white-space: nowrap; }
+.fee-table--committee td:last-child { min-width: 18em; }
 .fee {
   font: 700 22px/1 var(--flt);
   letter-spacing: .02em;
@@ -3199,36 +3205,3 @@ body.jsrv .rv.on .ink-sweep {
 .mt-48 { margin-top: 48px; }
 .text-red { color: var(--red); }
 .nowrap { white-space: nowrap; }
-
-/* ============ トップ：イベント情報 ============
-   大会カードと違って写真の上に文字を載せない。左にチラシ（縦長）、右に文章。 */
-.evlist { display: grid; gap: 20px; margin-top: 32px; }
-@media (min-width: 900px) { .evlist { grid-template-columns: 1fr 1fr; gap: 24px; } }
-
-.evcard {
-  display: grid;
-  grid-template-columns: 112px 1fr;
-  gap: 20px;
-  padding: 20px;
-  background: var(--white);
-  border: 1px solid var(--gray-200);
-  color: var(--ink);
-  text-decoration: none;
-  transition: border-color .3s var(--ease), box-shadow .3s var(--ease), transform .3s var(--ease);
-}
-@media (min-width: 640px) { .evcard { grid-template-columns: 150px 1fr; gap: 28px; padding: 24px; } }
-.evcard:hover { border-color: var(--red); box-shadow: var(--shadow-hover); transform: translateY(-2px); }
-.evcard:hover .aw { transform: translateX(4px); }
-
-.evcard__media { position: relative; aspect-ratio: 3 / 4; overflow: hidden; background: var(--gray-100); border: 1px solid var(--gray-200); }
-.evcard__media img { width: 100%; height: 100%; object-fit: cover; object-position: top; display: block; }
-.evcard__media-empty { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 12px; background: var(--red); }
-.evcard__media-text { font: 700 14px/1.6 var(--fjp); color: #fff; text-align: center; letter-spacing: .04em; }
-
-.evcard__body { display: flex; flex-direction: column; align-items: flex-start; min-width: 0; }
-.evcard__top { display: flex; align-items: center; gap: 12px; }
-.evcard__title { margin: 14px 0 6px; font: 700 19px/1.4 var(--fjp); }
-@media (min-width: 640px) { .evcard__title { font-size: 21px; } }
-.evcard__meta { margin: 0; font: 500 13px/1.7 var(--fjp); color: var(--gray-600); }
-.evcard__lead { margin: 10px 0 0; font: 400 14px/1.8 var(--fjp); color: var(--gray-800); }
-.evcard__more { margin-top: auto; padding-top: 14px; }
