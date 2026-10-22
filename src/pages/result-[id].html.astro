@@ -7,10 +7,12 @@
 // 画面の構成は旧サイトと同じ。
 //   種目の結果画像（ドロー表・リーグ表）を大きく → その下にその種目の優勝者の写真 → 次の種目 …
 // 文字で起こした成績（優勝・準優勝）は、画像の後ろに控えとして置く。
+// クラブ対抗戦だけは、旧サイトで分かれていたページを1つにし、男子1部→8部、女子1部→5部の部の順に並べ直す。
+// 写真だけのページ（ギャラリー）は別ページ（gallery-<id>.html）に分け、ここには入口だけ置く。
 import Base from '../layouts/Base.astro';
-import { ALL_GROUPS, GROUPS_BY_YEAR, photoBlocks } from '../data/results.js';
+import { groupById, GROUPS_BY_YEAR, photoBlocks, clubDivisions, divisionChampion } from '../data/results.js';
 
-const g = ALL_GROUPS.find((x) => x.id === Astro.params.id);
+const g = groupById(Astro.params.id);
 if (!g) return Astro.rewrite('/404');
 
 // 同じ年度の前後の大会（ページ下部の行き来に使う）
@@ -30,7 +32,9 @@ const caption = (c) => c.places
   .filter((pl) => pl.name && ['優勝', '準優勝', '1位', '２位', '１位', '2位'].includes(pl.award))
   .map((pl) => `${pl.award} ${pl.name}`)
   .join('　');
-const parts = g.entries.map((e) => {
+// ギャラリーを別ページに出すときは、その分をここから外す
+const inline = g.galleryHref ? g.entries.filter((e) => e.kind !== 'gallery') : g.entries;
+const parts = inline.map((e) => {
   const blocks = photoBlocks(e.t);
   const sheets = blocks.filter((b) => b.sheet);
   const aligned = sheets.length > 0 && sheets.length === e.t.categories.length;
@@ -40,10 +44,18 @@ const parts = g.entries.map((e) => {
     b.category = c?.category ?? null;
     b.caption = c ? caption(c) : '';
   }
-  return { title: g.entries.length > 1 ? e.title : null, blocks, categories: e.t.categories, pdfs: e.t.pdfs };
+  return { title: inline.length > 1 ? e.title : null, blocks, categories: e.t.categories, pdfs: e.t.pdfs };
 });
-const hasAny = parts.some((p) => p.blocks.length || p.categories.length || p.pdfs.length);
+const hasAny = parts.some((p) => p.blocks.length || p.categories.length || p.pdfs.length) || !!g.galleryHref;
 const hasText = parts.some((p) => p.categories.length);
+
+// クラブ対抗戦：部ごとにまとめ直したもの（男子1部→8部、女子1部→5部）
+const club = g.merged ? clubDivisions(g) : null;
+const anchor = (name) => `div-${name.replace(/[^0-9A-Za-z\u3040-\u30ff\u4e00-\u9fff]/g, '')}`;
+
+// ギャラリーの入口に見せる写真（先頭の数枚）
+const GALLERY_PEEK = 8;
+const galleryPeek = g.galleryHref ? g.galleries.flatMap((e) => e.t.photos).slice(0, GALLERY_PEEK) : [];
 let photoNo = 0;
 ---
 
@@ -80,7 +92,123 @@ let photoNo = 0;
   <section class="section">
     <div class="container container--result">
 
-      {parts.map((p) => (
+      {club && (
+        <>
+          {/* 部へのジャンプ。長いページなので、見たい部へすぐ飛べるように */}
+          <nav class="jump rv" style="margin-top:0" aria-label="部へ移動">
+            {club.divisions.map((d) => <a class="jump__link" href={`#${anchor(d.name)}`}>{d.name}</a>)}
+            {g.galleryHref && <a class="jump__link" href="#gallery">ギャラリー<span class="jump__n">{g.galleryPhotos}</span></a>}
+          </nav>
+
+          {club.divisions.map((d) => {
+            const champ = divisionChampion(d);
+            return (
+              <section class="division rv" id={anchor(d.name)}>
+                <h2 class="division__head">
+                  <span class="division__name">{d.name}</span>
+                  {champ && <span class="division__champ"><span class="division__award">優勝</span>{champ}</span>}
+                </h2>
+                <div class:list={['rblock', d.sheets.length === 1 && d.photos.length && 'rblock--split']}>
+                  {d.sheets.length > 0 && (
+                    <div class:list={['rblock__sheet', d.sheets.length > 1 && 'sheets sheets--result']}>
+                      {d.sheets.map((sh, i) => (
+                        <a class="sheet sheet--result" href={sh.src}>
+                          <img src={sh.src} alt={`${g.title} ${d.name}の結果表${d.sheets.length > 1 ? ` ${i + 1}` : ''}`} width={sh.w} height={sh.h} loading="lazy" decoding="async">
+                        </a>
+                      ))}
+                    </div>
+                  )}
+                  {d.photos.length > 0 && (
+                    <div class="rblock__photos">
+                      <div class="gallery gallery--winners">
+                        {d.photos.map((ph) => (
+                          <a class="gallery__item" href={ph.src}>
+                            <img src={ph.src} alt={`${g.title} ${d.name}の写真 ${++photoNo}`} width={ph.w} height={ph.h} loading="lazy" decoding="async">
+                          </a>
+                        ))}
+                      </div>
+                      {d.places.length > 0 && (
+                        <p class="rblock__caption">
+                          <span class="rblock__cat">{d.name}</span>
+                          {d.places.filter((pl) => pl.name).map((pl) => `${pl.award} ${pl.name}`).join('　')}
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </section>
+            );
+          })}
+
+          {/* 部に対応づけられなかった画像（いまは無い。データを足したときの保険） */}
+          {club.loose.map((l) => (
+            <>
+              <h2 class="sub-head rv" style="margin-top:48px">{l.title}</h2>
+              {l.runs.map((r) => (
+                <div class="rblock rv">
+                  <div class:list={['rblock__sheet', r.sheets.length > 1 && 'sheets sheets--result']}>
+                    {r.sheets.map((sh) => (
+                      <a class="sheet sheet--result" href={sh.src}>
+                        <img src={sh.src} alt={`${g.title}の結果表`} width={sh.w} height={sh.h} loading="lazy" decoding="async">
+                      </a>
+                    ))}
+                  </div>
+                  {r.photos.length > 0 && (
+                    <div class="gallery gallery--winners">
+                      {r.photos.map((ph) => (
+                        <a class="gallery__item" href={ph.src}>
+                          <img src={ph.src} alt={`${g.title}の写真 ${++photoNo}`} width={ph.w} height={ph.h} loading="lazy" decoding="async">
+                        </a>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </>
+          ))}
+
+          {g.pdfs.length > 0 && (
+            <ul class="rv" style="margin-top:24px">
+              {g.pdfs.map((pdf) => (
+                <li><a class="dl-item" href={pdf} target="_blank" rel="noopener noreferrer">
+                  <span class="dl-item__type">PDF</span>
+                  <span class="dl-item__text">
+                    <span class="dl-item__title">{g.title} 結果（PDF をダウンロード）</span>
+                    <span class="dl-item__note">上の結果画像と同じ内容です。別タブで開きます</span>
+                  </span>
+                  <span class="sqbtn" aria-hidden="true">→</span>
+                </a></li>
+              ))}
+            </ul>
+          )}
+
+          {club.divisions.length > 0 && (
+            <div class="rv" style="margin-top:64px">
+              <h2 class="sub-head">成績</h2>
+              <div class="deflist">
+                {club.divisions.map((d) => (
+                  <div class="deflist__row">
+                    <div class="deflist__key">{d.name}</div>
+                    <div class="deflist__val">
+                      <ul class="place-list">
+                        {d.places.map((pl) => (
+                          <li>
+                            <span class="place-list__award">{pl.award}</span>
+                            <span class="place-list__name">{pl.name || '（掲載なし）'}</span>
+                            {pl.note && <span class="place-list__note">{pl.note}</span>}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </>
+      )}
+
+      {!club && parts.map((p) => (
         <>
           {p.title && <h2 class="sub-head rv" style="margin-top:48px">{p.title}</h2>}
 
@@ -130,7 +258,7 @@ let photoNo = 0;
         </>
       ))}
 
-      {hasText && (
+      {!club && hasText && (
         <div class="rv" style="margin-top:64px">
           <h2 class="sub-head">成績</h2>
           <div class="deflist">
@@ -156,6 +284,24 @@ let photoNo = 0;
               </>
             ))}
           </div>
+        </div>
+      )}
+
+      {g.galleryHref && (
+        <div class="rv" id="gallery" style="margin-top:64px">
+          <div class="esec__head">
+            <h2 class="sub-head" style="margin-bottom:0">ギャラリー</h2>
+            <span class="gallery__count">{g.galleryPhotos}枚</span>
+          </div>
+          <p class="note mt-24" style="margin-bottom:0">当日の写真は別のページにまとめています。</p>
+          <a class="gallery-peek" href={g.galleryHref}>
+            <span class="gallery-peek__grid" aria-hidden="true">
+              {galleryPeek.map((ph) => (
+                <img src={ph.src} alt="" width={ph.w} height={ph.h} loading="lazy" decoding="async">
+              ))}
+            </span>
+            <span class="gallery-peek__label">写真をすべて見る（{g.galleryPhotos}枚）<span class="aw">→</span></span>
+          </a>
         </div>
       )}
 

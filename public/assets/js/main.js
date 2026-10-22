@@ -498,11 +498,21 @@
     var link = root.querySelector('[data-cmap-link]');
     var tabs = root.querySelectorAll('[data-cmap-tab]');
     var allTab = root.querySelector('[data-cmap-all]');
+    var locateBtn = root.querySelector('[data-cmap-locate]');
+    var msg = root.querySelector('[data-cmap-msg]');
     if (!el || !tabs.length) return;
 
     var courts;
     try { courts = JSON.parse(el.getAttribute('data-courts') || '[]'); } catch (e) { courts = []; }
     if (!courts.length) return;
+
+    // 主会場（courts.js の main: true）。「すべて」ではこの施設を赤く、最前面に出す
+    var mainIndex = 0;
+    for (var m = 0; m < courts.length; m++) if (courts[m].main) { mainIndex = m; break; }
+
+    // 位置情報が使えない環境（対応していない、HTTP）では「現在地」を出さない
+    var canLocate = !!(navigator.geolocation && (window.isSecureContext !== false));
+    if (locateBtn && !canLocate) locateBtn.hidden = true;
 
     function start() {
       if (!window.L) return;
@@ -535,10 +545,22 @@
           iconAnchor: [10, 10],
         });
         var marker = L.marker([c.lat, c.lng], { icon: icon, title: c.name }).addTo(map);
-        marker.bindTooltip(c.name, { permanent: true, direction: 'top', offset: [0, -12], className: 'cpin-label' });
+        marker.bindTooltip(c.name, {
+          permanent: true, direction: 'top', offset: [0, -12],
+          className: 'cpin-label' + (i === mainIndex ? ' is-main' : ''),
+        });
         marker.on('click', function () { select(i); });
         return { bounds: bounds, area: area, pitches: pitches, marker: marker };
       });
+      // 主会場のラベルは、他の施設のラベルより後ろに描く（＝前に出る）。CSS の z-index と二重の保険
+      (function () {
+        var tt = venues[mainIndex].marker.getTooltip();
+        var ttEl = tt && tt.getElement();
+        if (ttEl && ttEl.parentNode) ttEl.parentNode.appendChild(ttEl);
+      })();
+
+      var current = 0;        // 見ている施設の番号。「すべて」は -1
+      var located = null;     // 現在地 { latlng, dot, acc }。出していないときは null
 
       function setActive(i) {
         Array.prototype.forEach.call(tabs, function (t, k) {
@@ -550,41 +572,113 @@
           allTab.classList.toggle('is-active', i < 0);
           allTab.setAttribute('aria-pressed', String(i < 0));
         }
+        // 地図の上の見た目。「すべて」のときは主会場を赤くして最前面に（他のラベルに隠れないように）
+        var lit = i < 0 ? mainIndex : i;
         venues.forEach(function (v, k) {
-          var on = k === i;
+          var on = k === lit;
           var w = v.marker.getElement();
           if (w) w.classList.toggle('is-active', on);
           var tt = v.marker.getTooltip() && v.marker.getTooltip().getElement();
           if (tt) tt.classList.toggle('is-active', on);
-          v.marker.setZIndexOffset(on ? 1000 : 0);
+          v.marker.setZIndexOffset(on ? 1000 : k === mainIndex ? 500 : 0);
         });
+      }
+
+      // 寄せる範囲。現在地を出していて、その範囲から 30km 以内なら現在地も入れる（遠いときは施設だけ）
+      var NEAR_M = 30000;
+      function withLocation(bounds) {
+        if (!located) return bounds;
+        var b = L.latLngBounds(bounds);
+        if (b.getCenter().distanceTo(located.latlng) > NEAR_M) return b;
+        return b.extend(located.latlng);
+      }
+      function go(bounds, opts, animate) {
+        if (animate === false) map.fitBounds(bounds, opts);
+        else map.flyToBounds(bounds, Object.assign({ duration: 0.9 }, opts));
       }
 
       // 施設を1つ選ぶ：そのコート全体が入る範囲に寄る
       function select(i, animate) {
+        current = i;
         setActive(i);
         var c = courts[i];
         if (name) name.textContent = c.name;
         if (link) link.href = tabs[i].getAttribute('data-link');
-        var opts = { padding: [56, 56], maxZoom: 18 };
-        if (animate === false) map.fitBounds(venues[i].bounds, opts);
-        else map.flyToBounds(venues[i].bounds, Object.assign({ duration: 0.9 }, opts));
+        go(withLocation(venues[i].bounds), { padding: [56, 56], maxZoom: 18 }, animate);
       }
 
       // すべて：全施設が入る範囲を出す
       function showAll(animate) {
+        current = -1;
         setActive(-1);
         if (name) name.textContent = '利用コート ' + courts.length + '施設';
-        if (link) link.href = 'https://www.google.com/maps/search/?api=1&query=' + courts[0].lat + ',' + courts[0].lng;
-        var opts = { padding: [48, 48] };
-        if (animate === false) map.fitBounds(allBounds, opts);
-        else map.flyToBounds(allBounds, Object.assign({ duration: 0.9 }, opts));
+        if (link) link.href = 'https://www.google.com/maps/search/?api=1&query=' + courts[mainIndex].lat + ',' + courts[mainIndex].lng;
+        go(withLocation(allBounds), { padding: [48, 48] }, animate);
+      }
+      function refit() { if (current < 0) showAll(); else select(current); }
+
+      /* 現在地。押すと位置情報の許可を求め、許可されれば青い点（精度の円つき）を出して、
+         見ている施設と現在地が両方入る範囲に寄る。もう一度押すと消す。 */
+      function say(text) { if (msg) msg.textContent = text || ''; }
+      function clearLocation() {
+        if (!located) return;
+        map.removeLayer(located.dot);
+        map.removeLayer(located.acc);
+        located = null;
+        locateBtn.classList.remove('is-active');
+        locateBtn.setAttribute('aria-pressed', 'false');
+        say('');
+      }
+      function showLocation(pos) {
+        var latlng = L.latLng(pos.coords.latitude, pos.coords.longitude);
+        var radius = Math.min(pos.coords.accuracy || 0, 2000);
+        if (located) {
+          located.latlng = latlng;
+          located.dot.setLatLng(latlng);
+          located.acc.setLatLng(latlng).setRadius(radius);
+        } else {
+          located = {
+            latlng: latlng,
+            acc: L.circle(latlng, { radius: radius, className: 'cloc-acc', interactive: false }).addTo(map),
+            dot: L.circleMarker(latlng, { radius: 7, className: 'cloc', interactive: false }).addTo(map),
+          };
+          located.dot.bindTooltip('現在地', { direction: 'bottom', offset: [0, 8], className: 'cpin-label' });
+        }
+        locateBtn.classList.add('is-active');
+        locateBtn.setAttribute('aria-pressed', 'true');
+        // 見ている施設から遠い（30km より先）ときは、施設だけに寄せたままにして一言添える
+        var base = L.latLngBounds(current < 0 ? allBounds : venues[current].bounds);
+        if (base.getCenter().distanceTo(latlng) > NEAR_M) {
+          say('現在地は地図の範囲の外です（' + Math.round(base.getCenter().distanceTo(latlng) / 1000) + 'km）。');
+        } else {
+          say('');
+          refit();
+        }
+      }
+      var GEO_MSG = {
+        1: '位置情報の利用が許可されていません。ブラウザの設定で許可してください。',
+        2: '現在地を取得できませんでした。',
+        3: '現在地の取得に時間がかかりすぎました。もう一度お試しください。',
+      };
+      function locate() {
+        if (located) { clearLocation(); refit(); return; }
+        locateBtn.classList.add('is-busy');
+        say('現在地を取得しています…');
+        navigator.geolocation.getCurrentPosition(
+          function (pos) { locateBtn.classList.remove('is-busy'); showLocation(pos); },
+          function (err) {
+            locateBtn.classList.remove('is-busy');
+            say(GEO_MSG[err && err.code] || GEO_MSG[2]);
+          },
+          { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+        );
       }
 
       Array.prototype.forEach.call(tabs, function (tab, i) {
         tab.addEventListener('click', function () { select(i); });
       });
       if (allTab) allTab.addEventListener('click', function () { showAll(); });
+      if (locateBtn && canLocate) locateBtn.addEventListener('click', locate);
 
       select(0, false);
       el.classList.add('is-ready');
