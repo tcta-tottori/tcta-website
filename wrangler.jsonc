@@ -18,6 +18,14 @@
 			"bucket_name": "tcta-site-media"
 		}
 	],
+	// Astro のセッション用 KV（@astrojs/cloudflare が要求する）。最初の配備で作られたものの ID。
+	// ID を書いておかないと、配備のたびに同じ名前で作り直そうとして失敗する。
+	"kv_namespaces": [
+		{
+			"binding": "SESSION",
+			"id": "66b01edd9e6e4ac296bb079fc290ca04"
+		}
+	],
 	// 予約公開・バックアップ・保守を動かす定期実行
 	"triggers": {
 		"crons": ["* * * * *"]
