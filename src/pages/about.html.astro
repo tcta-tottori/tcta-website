@@ -91,12 +91,18 @@ const RULES = [1, 2, 3, 4, 5];
         </dl>
         <h3 class="panel__title" style="margin-top:40px">各委員会</h3>
         <div class="table-scroll">
-          <table class="fee-table" style="min-width:640px">
+          <table class="fee-table fee-table--committee">
             <caption class="visually-hidden">各委員会の委員長・副委員長・委員</caption>
             <thead><tr><th scope="col">委員会</th><th scope="col">委員長</th><th scope="col">副委員長</th><th scope="col">委員</th></tr></thead>
             <tbody>
               {COMMITTEES.map((c) => (
-                <tr><th scope="row">{c.name}</th><td>{c.chair}</td><td>{c.vice}</td><td>{c.members}</td></tr>
+                <tr>
+                  <th scope="row">{c.name}</th>
+                  <td class="nowrap">{c.chair}</td>
+                  <td class="nowrap">{c.vice}</td>
+                  {/* 委員は「／」の後ろでだけ折り返す（姓と名の間で折れないように、名前ごとに nowrap で包む） */}
+                  <td>{c.members.split('／').filter(Boolean).map((m, i) => (<>{i > 0 && '／'}<span class="nowrap">{m}</span></>))}</td>
+                </tr>
               ))}
             </tbody>
           </table>

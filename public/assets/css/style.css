@@ -2289,6 +2289,12 @@ body.jsrv .rv.on .ink-sweep {
   color: var(--ink);
 }
 .fee-table__free { background: var(--gray-050); }
+/* 各委員会の表（協会について）。委員の列が長いぶん、委員会名と人名の列が狭められて
+   「玉川 裕｜康」のように名前の途中で折れていた。名前は折り返さず、委員の列だけで折り返す。 */
+.fee-table--committee { min-width: 0; }
+.fee-table--committee tbody th { width: auto; white-space: nowrap; }
+.fee-table--committee .nowrap { white-space: nowrap; }
+.fee-table--committee td:last-child { min-width: 18em; }
 .fee {
   font: 700 22px/1 var(--flt);
   letter-spacing: .02em;
