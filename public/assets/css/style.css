@@ -1533,8 +1533,8 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 .cal__item-badge { margin-left: auto; flex: none; min-width: 0; height: 22px; font-size: 11px; padding: 0 8px; }
 
 /* ---- コート案内の地図 ----
-   施設名でGoogleマップに引いてもらう埋め込み。上のボタンで施設を切り替える。
-   緯度経度は持たない（施設名が正しければ地図側が正しい場所を出す）。 */
+   Leaflet で自前に描く（main.js の initCourtMap）。上のボタンで施設を切り替え、「すべて」で全施設、
+   「現在地」で位置情報の許可を求めて青い点を出す。 */
 .cmap {
   background: var(--white);
   border: 1px solid var(--gray-200);
@@ -1641,6 +1641,22 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 }
 .cpin-label.leaflet-tooltip::before { display: none; }
 .cpin-label.leaflet-tooltip.is-active { background: var(--red); border-color: var(--red); color: #fff; }
+/* 主会場（ヤマタ）のラベルは他の施設のラベルより前に、見ている施設のラベルはさらに前に */
+.cpin-label.leaflet-tooltip.is-main { z-index: 900; }
+.cpin-label.leaflet-tooltip.is-active { z-index: 1000; }
+
+/* 現在地：青い点（白い縁）と、精度の円 */
+.cmap__map .cloc { fill: #1a73e8; fill-opacity: 1; stroke: var(--white); stroke-width: 3; }
+.cmap__map .cloc-acc { fill: #1a73e8; fill-opacity: .12; stroke: #1a73e8; stroke-width: 1; stroke-opacity: .4; }
+.cmap__tab--locate { display: inline-flex; align-items: center; gap: 6px; margin-left: auto; }
+.cmap__tab--locate[hidden] { display: none; }
+.cmap__locate-dot { width: 8px; height: 8px; border-radius: 50%; background: #1a73e8; box-shadow: 0 0 0 2px var(--white); }
+.cmap__tab--locate.is-active { background: #1a73e8; border-color: #1a73e8; color: #fff; }
+.cmap__tab--locate.is-active:hover { color: #fff; }
+.cmap__tab--locate.is-busy { opacity: .6; cursor: progress; }
+/* 位置情報の結果（許可されていない、取れなかった）を知らせる文言。無いときは出さない */
+.cmap__msg { flex: 1; min-width: 0; font: 400 12px/1.5 var(--fjp); color: var(--gray-600); }
+.cmap__msg:empty { display: none; }
 
 /* 地図が出せないときの下敷き。地図が読めた場合はその後ろに隠れる。 */
 .cmap__fallback {

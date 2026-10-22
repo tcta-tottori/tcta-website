@@ -317,6 +317,11 @@ const upcomingTournaments = TOURNAMENTS.filter((t) => t.status !== 'past');
                   data-name={c.name}
                 >{c.short}</button>
               ))}
+              {/* 現在地。押すと位置情報の許可を求め、許可されれば青い点で出す（main.js の initCourtMap）。
+                  位置情報が使えない環境では JS が隠す。 */}
+              <button class="cmap__tab cmap__tab--locate" type="button" aria-pressed="false" data-cmap-locate>
+                <span class="cmap__locate-dot" aria-hidden="true"></span>現在地
+              </button>
             </div>
             <div class="cmap__frame">
               {/* 地図は Leaflet で自前に描く（サイトの白・グレー・赤に合わせるため）。
@@ -331,6 +336,7 @@ const upcomingTournaments = TOURNAMENTS.filter((t) => t.status !== 'past');
             </div>
             <div class="cmap__bar">
               <span class="cmap__name" data-cmap-name>{COURTS[0].name}</span>
+              <span class="cmap__msg" data-cmap-msg role="status" aria-live="polite"></span>
               <a class="ghost-link cmap__open" data-cmap-link href={mapLink(COURTS[0])} target="_blank" rel="noopener noreferrer">
                 Googleマップで開く <span class="aw">↗</span>
               </a>

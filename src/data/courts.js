@@ -7,6 +7,10 @@
 //   court-shapes.json の center と同じ値。施設を足すときは fetch_court_shapes.py の
 //   VENUES に足して流し、出てきた center をここに写す。
 //
+// ■ main
+//   主会場（ヤマタスポーツパーク）に付ける。地図の「すべて」では、この施設のピンとラベルを
+//   赤くして最前面に出す（他の施設のラベルに隠れないように）。
+//
 // ■ href / external
 //   一覧の行を押したときの遷移先。サイト内に説明ページがあるものはそこへ。
 //   施設の公式ページ（鳥取市・八頭町）に飛ばすものは external: true を付ける（別タブで開く）。
@@ -21,6 +25,7 @@ export const COURTS = [
     note: '主会場・鳥取県立布勢総合運動公園 鳥取県鳥取市布勢146-1',
     lat: 35.498444, lng: 134.177261,
     href: '#courts',
+    main: true,
   },
   {
     id: 'chiyo',
@@ -80,7 +85,7 @@ import SHAPES from './court-shapes.json';
 
 /** 地図に渡す1施設ぶん（名前・ピンの位置・コートの輪郭・全体表示の範囲） */
 export const mapData = (c) => ({
-  id: c.id, name: c.name, short: c.short, lat: c.lat, lng: c.lng,
+  id: c.id, name: c.name, short: c.short, lat: c.lat, lng: c.lng, main: !!c.main,
   courts: SHAPES[c.id]?.courts ?? [],
   area: SHAPES[c.id]?.area ?? null,
   bounds: SHAPES[c.id]?.bounds ?? [[c.lat, c.lng], [c.lat, c.lng]],
