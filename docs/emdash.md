@@ -49,7 +49,7 @@
 
 ```
 astro.config.mjs        server 出力・Cloudflare アダプタ・EmDash（D1／R2）・Workers Cache の規則
-wrangler.jsonc          Worker の設定（D1 と R2 の名前、Cron、cross_version_cache）
+wrangler.jsonc          Worker の設定（D1 と R2 の名前、セッション用 KV の ID、Cron、キャッシュ）
 src/worker.ts           Worker の入口（EmDash の定期処理）
 src/live.config.ts      EmDash を Astro の Live Collections に登録（決まり文句）
 src/lib/cms.js          EmDash から読んで、ページが使う形に組む入口（1 リクエストに 1 回）
@@ -60,6 +60,12 @@ seed/seed.json          内容モデルと移行時の内容（tools/build_seed.
 ```
 
 ## 設置手順（はじめて配備するとき）
+
+> **2026-10-22 に配備ずみ。** 公開 URL は https://tcta-site.tcta-admin-worker.workers.dev/ 、
+> 管理画面は https://tcta-site.tcta-admin-worker.workers.dev/_emdash/admin/ 。初回セットアップと管理者のパスキー登録も済み。
+> 以下は記録。つまずいた点：R2 はダッシュボードで有効化（支払い方法の登録）してから
+> `npx wrangler r2 bucket create tcta-site-media` で作る必要があった。セッション用 KV は最初の配備で作られ、
+> その ID を `wrangler.jsonc` に書いておかないと 2 回目以降の配備が「同じ名前がある」で止まる。
 
 Cloudflare アカウントは配備ずみの管理アプリと同じもの（t.c.t.a.r7@gmail.com）を使う。Free プランでよい。
 
@@ -129,8 +135,8 @@ Cloudflare アカウントは配備ずみの管理アプリと同じもの（t.c
   `npx wrangler r2 object` か S3 互換の道具で別に取る。
 - **EmDash の更新**：`npm update emdash @emdash-cms/cloudflare` → `npm run build` → 配備。
   メジャー更新のときは公式の「Upgrade」ページを読む。更新が速い（v1.0 から 1 か月で v1.3）。
-- **配備とキャッシュ**：配備しても公開ページのキャッシュは残る（`cross_version_cache`）。デザインを変えたときは、
-  どれかの内容を公開し直すか、1 日待つ。急ぐときは `wrangler.jsonc` の `cross_version_cache` を一時的に外す。
+- **配備とキャッシュ**：配備するたびに公開ページのキャッシュは空になる（最初の表示だけ少し遅い）。
+  エラー応答（404・500・503）はキャッシュしない（`src/middleware.ts`）。
 - **手元で動かす**：`npm run dev` で http://localhost:4321/ 。管理画面は `/_emdash/admin/`。初回は
   `npx emdash secrets generate --write .env` で鍵を作る。D1 と R2 の代わりに手元の `.wrangler/` に保存される。
   内容を入れるには `curl -X POST http://localhost:4321/_emdash/api/setup -H 'content-type: application/json'

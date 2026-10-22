@@ -3,6 +3,7 @@
 鳥取市テニス協会（TOTTORI-CITY TENNIS ASSOCIATION）の公式サイトです。
 [Astro](https://astro.build/) に CMS の [EmDash](https://github.com/emdash-cms/emdash) を組み込み、
 Cloudflare Workers で公開しています（2026-10-21 に GitHub Pages から移行。[`docs/emdash.md`](./docs/emdash.md)）。
+公開 URL は https://tcta-site.tcta-admin-worker.workers.dev/ 。
 お知らせ・大会・イベント情報は管理画面（`/_emdash/admin/`）と AI（MCP）から更新でき、
 ページはリクエストごとに描いて Workers Cache が静的 HTML と同じ速さで返します。
 
