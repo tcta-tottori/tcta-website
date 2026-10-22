@@ -10,20 +10,25 @@ const { SCHEDULE } = await siteData(Astro);
 
 const DOW = ['日', '月', '火', '水', '木', '金', '土'];
 const months = byMonth(SCHEDULE).map((m) => ({ ...m, ...monthGrid(m) }));
+// 大会がまだ 1 件も無いとき（配備直後など）は、カレンダーを出さずに一言だけ出す
+const first = months[0];
 ---
+
+{!first && <p class="note">大会が登録されるとカレンダーが表示されます。</p>}
+{first && (
 
 <div class="cal" data-calendar>
   <div class="cal__bar">
     <button class="circle-btn" type="button" data-cal-prev aria-label="前の月へ" disabled>←</button>
     <p class="cal__label" data-cal-label aria-live="polite">
-      <span class="cal__num">{String(months[0].month).padStart(2, '0')}</span>
+      <span class="cal__num">{String(first.month).padStart(2, '0')}</span>
       <span class="cal__meta">
-        <span class="cal__en">{months[0].en}</span>
-        <span class="cal__year">{months[0].year}</span>
+        <span class="cal__en">{first.en}</span>
+        <span class="cal__year">{first.year}</span>
       </span>
     </p>
     <button class="circle-btn circle-btn--solid" type="button" data-cal-next aria-label="次の月へ">→</button>
-    <span class="cal__count" data-cal-count>{months[0].items.length}大会</span>
+    <span class="cal__count" data-cal-count>{first.items.length}大会</span>
   </div>
 
   {months.map((m, i) => (
@@ -71,3 +76,4 @@ const months = byMonth(SCHEDULE).map((m) => ({ ...m, ...monthGrid(m) }));
     </section>
   ))}
 </div>
+)}

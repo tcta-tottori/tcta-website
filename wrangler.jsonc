@@ -30,8 +30,8 @@
 	"triggers": {
 		"crons": ["* * * * *"]
 	},
-	// 配備しても公開ページのキャッシュを捨てない（内容の公開時には EmDash がタグで無効化する）
-	"cache": { "enabled": true, "cross_version_cache": true }
+	// 公開ページのキャッシュ（Workers Cache）。配備のたびに空になる（配備直後のエラーが残らないようにするため）
+	"cache": { "enabled": true }
 	// 隔離実行のプラグイン（Workers Paid プラン）を使うときだけ:
 	// "worker_loaders": [{ "binding": "LOADER" }]
 }
