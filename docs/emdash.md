@@ -92,12 +92,12 @@ Cloudflare アカウントは配備ずみの管理アプリと同じもの（t.c
      「Change domain」で移す）。
 5. **自動配備**。リポジトリの Secrets に `CLOUDFLARE_API_TOKEN`（Workers Scripts: Edit／D1: Edit／Workers R2 Storage: Edit）と
    `CLOUDFLARE_ACCOUNT_ID` があれば、以後は `main` に push するだけで配備される（`deploy.yml`）。
-6. 全ページを見て回る。移行前の GitHub Pages（https://tcta-tottori.github.io/tcta-website/）と見比べる。
+6. 全ページを見て回る（GitHub Pages の旧サイトは 2026-10-23 に公開を止めた）。
 7. **編集者を招く**。管理画面の Users から招待する（役割：Editor＝内容すべて／Author＝自分の記事）。
    招待メールを送るにはメールの設定（Resend など）が要る。設定前は、管理者がその場でパスキーを登録してもらう。
 8. 独自ドメイン（`www.tottori-tenis.net`）に移すときは、DNS を Cloudflare に置き、`wrangler.jsonc` に
    `"routes": [{ "pattern": "www.tottori-tenis.net", "custom_domain": true }]` を足して配備する。
-9. GitHub Pages の公開（Settings → Pages）を止める。
+9. GitHub Pages の公開（Settings → Pages）を止める（2026-10-23 済み）。
 
 ## 更新のしかた（編集者）
 

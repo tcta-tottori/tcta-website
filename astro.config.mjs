@@ -18,7 +18,7 @@ const assetV = (path) =>
 const PAGE = { maxAge: 86_400, swr: 604_800, tags: ['news', 'tournaments', 'event_info', 'all'] };
 
 export default defineConfig({
-  site: 'https://tcta-tottori.github.io/tcta-website',
+  site: 'https://tcta-site.tcta-admin-worker.workers.dev',
 
   // EmDash（管理画面・API・最新の内容）はリクエストごとに描くので server 出力。
   // 公開サイトは Cloudflare Workers で動く（docs/emdash.md）。
