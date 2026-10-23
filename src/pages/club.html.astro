@@ -5,7 +5,7 @@ import { CLUB_GROUPS, clubDivisions, divisionChampion } from '../data/results.js
 import { CLUB_SEASONS } from '../data/club-league.js';
 
 const title = "クラブ対抗戦｜鳥取市テニス協会";
-const description = "鳥取市テニス協会のクラブ対抗戦。令和8年度の各部の結果と令和9年度の編成表、平成26年度からの各部の優勝クラブを掲載しています。";
+const description = "鳥取市テニス協会のクラブ対抗戦。令和9年度の編成表と、平成26年度から令和8年度までの各部の優勝クラブを年度ごとに掲載しています。";
 
 // ■ 令和7年度〜（EmDash に移ってから）
 //   結果表と写真は EmDash の大会ページ（event-r8-club-taiko-1.html など）。
@@ -27,13 +27,24 @@ const seasons = CLUB_SEASONS.map((season) => ({
 //   男子1部→8部、女子1部→5部の順に優勝クラブを出す（results.js の clubDivisions）。
 const archive = CLUB_GROUPS.map((g) => ({
   label: g.yearLabel,
-  href: g.href,
-  galleryHref: g.galleryHref,
-  galleryPhotos: g.galleryPhotos,
   divisions: clubDivisions(g).divisions
     .map((d) => ({ div: d.name, club: divisionChampion(d) }))
     .filter((x) => x.club),
+  links: [
+    { label: `${g.yearLabel}の結果表と写真`, href: g.href },
+    ...(g.galleryHref ? [{ label: `当日のギャラリー（${g.galleryPhotos}枚）`, href: g.galleryHref }] : []),
+  ],
 }));
+
+// ■ 全年度を同じ形にそろえる（新しい年度が先。前期・後期はまとめて1つの一覧に）
+const years = [
+  ...seasons.map((season) => ({
+    label: season.label,
+    divisions: season.terms.flatMap((term) => term.divisions),
+    links: season.terms.filter((t) => t.href).map((t) => ({ label: `${t.label}（${t.event}）の結果表と写真`, href: t.href })),
+  })),
+  ...archive,
+];
 ---
 
 
@@ -78,48 +89,29 @@ const archive = CLUB_GROUPS.map((g) => ({
         </ul>
       </div>
 
-      {seasons.map((season) => (
-        <div class="rv" style="margin-top:56px">
-          <h2 class="sub-head">{season.label}</h2>
-          <p class="sec-head__lead" style="margin-top:8px">部ごとの優勝クラブです。結果表と当日の写真は、前期・後期それぞれのページでご覧いただけます。</p>
-          <div class="champ__body" style="padding:0">
-            {season.terms.map((term) => (
-              <div class="champ__block" style="margin-top:24px">
-                {term.href
-                  ? <a class="champ__title" href={term.href}>{term.label}（{term.event}）<span class="aw">→</span></a>
-                  : <p class="champ__title" style="margin:0">{term.label}（{term.event}）</p>}
-                <ul class="champ__list">
-                  {term.divisions.map((c) => (
-                    <li><span class="champ__div">{c.div}</span><span class="champ__club">{c.award && <span class="champ__award">{c.award}</span>}{c.club}</span></li>
-                  ))}
-                </ul>
-                {term.href && <p class="champ__none">{term.date}　／　<a class="ghost-link" href={term.href}>結果表と当日の写真を見る <span class="aw">→</span></a></p>}
-              </div>
-            ))}
-          </div>
-        </div>
-      ))}
-
       <div class="rv" style="margin-top:56px">
-        <h2 class="sub-head">これまでの優勝クラブ</h2>
-        <p class="sec-head__lead" style="margin-top:8px">令和6年度までは旧サイトから引き継いだ記録です。年度をひらくと、男子1部から8部、女子1部から5部の順に各部の優勝クラブが出ます。年度名からは結果表と写真のページへ移れます。</p>
+        <h2 class="sub-head">各年度の優勝クラブ</h2>
+        <p class="sec-head__lead" style="margin-top:8px">年度をひらくと、男子1部から8部、女子1部から5部、予選会の順に各部の優勝クラブが出ます。結果表と当日の写真は、各年度の中のリンクからご覧いただけます。令和6年度までは旧サイトから引き継いだ記録です。</p>
 
-        {archive.map((y) => (
+        {years.map((y) => (
           <details class="champ">
-            <summary class="champ__year">{y.label}<span class="champ__count">{y.divisions.length}部</span></summary>
+            <summary class="champ__year">{y.label}<span class="champ__count">{new Set(y.divisions.map((c) => c.div.replace(/\s.*$/, ''))).size}部</span></summary>
             <div class="champ__body">
               <div class="champ__block">
-                <a class="champ__title" href={y.href}>{y.label}のクラブ対抗戦 結果表と写真<span class="aw">→</span></a>
                 {y.divisions.length > 0 ? (
                   <ul class="champ__list">
                     {y.divisions.map((c) => (
-                      <li><span class="champ__div">{c.div}</span><span class="champ__club">{c.club}</span></li>
+                      <li><span class="champ__div">{c.div}</span><span class="champ__club">{c.award && <span class="champ__award">{c.award}</span>}{c.club}</span></li>
                     ))}
                   </ul>
                 ) : (
                   <p class="champ__none">記録は写真のみです</p>
                 )}
-                {y.galleryHref && <p class="champ__none"><a class="ghost-link" href={y.galleryHref}>当日のギャラリー（{y.galleryPhotos}枚） <span class="aw">→</span></a></p>}
+                <ul class="champ__links">
+                  {y.links.map((l) => (
+                    <li><a class="ghost-link" href={l.href}>{l.label} <span class="aw">→</span></a></li>
+                  ))}
+                </ul>
               </div>
             </div>
           </details>

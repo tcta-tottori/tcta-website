@@ -1011,6 +1011,8 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   /* 次の大会が右端で少し覗く幅にしてある（初期表示の見え方に効く） */
   width: 68vw;
   max-width: 380px;
+  /* 高さは固定。文字の長さで上下の位置が変わらないようにする */
+  height: 236px;
   scroll-snap-align: start;
   display: flex;
   flex-direction: column;
@@ -1022,20 +1024,20 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   transition: box-shadow .3s ease, transform .3s ease, border-color .3s ease;
   cursor: pointer;
 }
-@media (min-width: 640px) { .tcard { width: 340px; } }
+@media (min-width: 640px) { .tcard { width: 340px; height: 248px; } }
 @media (min-width: 1024px) { .tcard { width: 380px; } }
 .tcard:hover { transform: translateY(-4px); box-shadow: var(--shadow-hover); border-color: var(--gray-300); color: inherit; }
 /* 遷移先が決まっていないカード（結果待ちなど） */
 .tcard--nolink { cursor: default; }
 .tcard--nolink:hover { transform: none; box-shadow: none; border-color: var(--gray-200); }
 
-/* 種目・会場の文字と同じ段。左に文字（1行ずつ、折り返さない）、右に種目のピクトグラム。
-   文字が長くてピクトグラムが横に入らないときは、ピクトグラムが文字の下の行に下がる（flex-wrap）。 */
-.tcard__info { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 10px; }
-.tcard__text { display: flex; flex-direction: column; gap: 2px; flex: 0 1 auto; max-width: 100%; min-width: 0; }
+/* 種目・会場の段。文字は上揃えで詰め（1行ずつ、折り返さない）、ピクトグラムは文字の下のレイヤーに右下寄せで置く。
+   カードの高さは固定なので、文字が短くても長くても位置は変わらない。文字と重なっても構わない。 */
+.tcard__info { position: relative; flex: 1 1 auto; min-height: 64px; }
+.tcard__text { position: relative; z-index: 1; display: flex; flex-direction: column; gap: 2px; max-width: 100%; min-width: 0; }
 .tcard__line { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .tcard__info[data-len="long"] .tcard__event { font-size: 13px; }
-.tcard__icons { display: flex; flex: 1 0 auto; justify-content: flex-end; align-items: center; gap: 6px; }
+.tcard__icons { position: absolute; right: 0; bottom: 0; z-index: 0; display: flex; justify-content: flex-end; align-items: flex-end; gap: 6px; }
 /* 絵は横長（高さ 200px に対し幅 300〜550px）なので、高さで大きさを決め、幅は絵に合わせる */
 .tcard__icon { height: 40px; transition: transform .4s var(--ease), filter .4s ease, opacity .4s ease; }
 @media (min-width: 640px) { .tcard__icon { height: 44px; } }
@@ -1053,7 +1055,7 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 /* 受付中・本日開催は上端に赤い線 */
 .tcard--open, .tcard--live { border-top: 3px solid var(--red); }
 
-.tcard__body { display: flex; flex-direction: column; justify-content: space-between; gap: 14px; flex: 1; padding: 16px 16px 16px; }
+.tcard__body { display: flex; flex-direction: column; gap: 12px; flex: 1; padding: 16px 16px 16px; }
 @media (min-width: 640px) { .tcard__body { padding: 20px 20px 18px; } }
 .tcard__head { display: flex; gap: 12px; align-items: flex-start; }
 .tcard__title {
@@ -1068,7 +1070,8 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 }
 @media (min-width: 1024px) { .tcard__title { font-size: 17px; } }
 
-.tcard__foot { display: flex; flex-direction: column; gap: 0; }
+.tcard__foot { display: flex; flex-direction: column; flex: 1 1 auto; gap: 0; }
+.tcard__action { margin-top: auto; }
 .tcard__event {
   margin: 0;
   display: flex;
@@ -3136,6 +3139,9 @@ body.jsrv .rv.on .ink-sweep {
 }
 .champ__club { font: 400 15px/1.7 var(--fjp); color: var(--ink); }
 .champ__award { margin-right: 6px; font: 700 12px/1.6 var(--fjp); color: var(--red); }
+/* 年度の中の、結果表と写真のページへのリンク（前期・後期で2つになることがある） */
+.champ__links { list-style: none; margin: 16px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px 24px; }
+.champ__links .ghost-link { font-size: 13px; }
 .champ__none { margin: 8px 0 0; font: 400 13px/1.7 var(--fjp); color: var(--gray-500); }
 
 /* ============ 16. オープニング（全画面の映像） ============ */
