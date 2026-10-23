@@ -39,6 +39,28 @@ export const STATUS = {
   open: { label: '受付中', badge: 'badge--open' },
 };
 
+/**
+ * カードに出す種目の短い表記（1行で書き切るため）。
+ *   団体戦・○○対抗戦・男子1部〜8部・予選会 → 「団体戦」だけ（中の種目は書かない）
+ *   一般：男女複／ジュニア：男女単        → 「一般ダブルス/ジュニアシングルス」
+ *   男女シングルス／男女ダブルス          → 「男女シングルス/男女ダブルス」
+ * 「複」「単」は「ダブルス」「シングルス」に、「：」は取り、区切りは半角の「/」にそろえる。
+ */
+export function shortEvent(text) {
+  const s = String(text || '').trim();
+  if (/団体|対抗|予選会|\d+部/.test(s)) return '団体戦';
+  return s
+    .split(/[／/]/)
+    .map((seg) => {
+      let t = seg.trim();
+      const m = t.match(/^(.+?)[：:]\s*(.+)$/);
+      if (m) t = m[1] + m[2].replace(/^男女/, ''); // 一般：男女複 → 一般複
+      return t.replace(/複$/, 'ダブルス').replace(/単$/, 'シングルス');
+    })
+    .filter(Boolean)
+    .join('/');
+}
+
 /** 受付状態（schedule.js のキー）→ カードの状態 */
 const CARD_STATUS = { done: 'past', closed: 'closed', open: 'open', soon: 'soon', live: 'live' };
 

@@ -588,7 +588,9 @@
       var NEAR_M = 30000;
       function withLocation(bounds) {
         if (!located) return bounds;
-        var b = L.latLngBounds(bounds);
+        // 複製してから広げる（L.latLngBounds(既存の範囲) は同じものを返すので、そのまま extend すると
+        // 施設の範囲が書き換わり、現在地を消したあともその範囲のままになってしまう）
+        var b = L.latLngBounds(bounds.getSouthWest(), bounds.getNorthEast());
         if (b.getCenter().distanceTo(located.latlng) > NEAR_M) return b;
         return b.extend(located.latlng);
       }
@@ -1010,9 +1012,49 @@
     });
   }
 
+  /* ---------- 種目のピクトグラムの動き ----------
+     カード1枚ずつ（.evicon ごと）に画面に入った瞬間を見て、そのとき一度だけ動かす（CSS の .evicon.is-on）。
+     カルーセルを横に送って初めて見えたカードも、全件表示を開いて見えたカードも、そのときに動く。
+     IntersectionObserver は横スクロールの中の見え方（枠で切れている分）も含めて判定する。 */
+  function initEventIcons() {
+    var icons = document.querySelectorAll('.evicon');
+    if (!icons.length || reduceMotion) return;
+    if (!('IntersectionObserver' in window)) {
+      Array.prototype.forEach.call(icons, function (el) { el.classList.add('is-on'); });
+      return;
+    }
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (!e.isIntersecting) return;
+        e.target.classList.add('is-on');
+        io.unobserve(e.target);
+      });
+    }, { threshold: 0.6 });
+    Array.prototype.forEach.call(icons, function (el) { io.observe(el); });
+  }
+
+  /* ---------- コート案内の施設一覧：最初は3件だけ ----------
+     4件目以降はお知らせと同じく白いフェードで隠し、ボタンで全部出す（CSS の .court-more）。
+     JS が無いときは全部そのまま出る（is-js を付けたときだけ隠す）。 */
+  function initCourtList() {
+    var box = document.querySelector('[data-court-more]');
+    if (!box) return;
+    var btn = box.querySelector('[data-court-more-btn]');
+    if (!btn) return;
+    box.classList.add('is-js');
+    btn.addEventListener('click', function () {
+      box.classList.add('is-open');
+      btn.setAttribute('aria-expanded', 'true');
+      var first = box.querySelector('.court-more__rest a');
+      if (first) first.focus({ preventScroll: true });
+    });
+  }
+
   function init() {
     initSplash();
     initReveal();
+    initEventIcons();
+    initCourtList();
     initMarquee();
     initHeader();
     initRipple();

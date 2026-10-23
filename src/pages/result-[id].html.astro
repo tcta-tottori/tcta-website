@@ -8,7 +8,8 @@
 //   種目の結果画像（ドロー表・リーグ表）を大きく → その下にその種目の優勝者の写真 → 次の種目 …
 // 文字で起こした成績（優勝・準優勝）は、画像の後ろに控えとして置く。
 // クラブ対抗戦だけは、旧サイトで分かれていたページを1つにし、男子1部→8部、女子1部→5部の部の順に並べ直す。
-// 写真だけのページ（ギャラリー）は別ページ（gallery-<id>.html）に分け、ここには入口だけ置く。
+//   部ごとに「リーグ表 → その下に優勝クラブの写真」。
+// 写真だけのページ（ギャラリー＝優勝クラブ以外の当日の写真）があるときだけ、別ページ（gallery-<id>.html）に分けて入口を置く。
 import Base from '../layouts/Base.astro';
 import { groupById, GROUPS_BY_YEAR, photoBlocks, clubDivisions, divisionChampion } from '../data/results.js';
 
@@ -108,7 +109,8 @@ let photoNo = 0;
                   <span class="division__name">{d.name}</span>
                   {champ && <span class="division__champ"><span class="division__award">優勝</span>{champ}</span>}
                 </h2>
-                <div class:list={['rblock', d.sheets.length === 1 && d.photos.length && 'rblock--split']}>
+                {/* リーグ表 → その下に優勝クラブの写真（横には並べない） */}
+                <div class="rblock">
                   {d.sheets.length > 0 && (
                     <div class:list={['rblock__sheet', d.sheets.length > 1 && 'sheets sheets--result']}>
                       {d.sheets.map((sh, i) => (
@@ -119,11 +121,11 @@ let photoNo = 0;
                     </div>
                   )}
                   {d.photos.length > 0 && (
-                    <div class="rblock__photos">
+                    <div class="rblock__photos division__photos">
                       <div class="gallery gallery--winners">
                         {d.photos.map((ph) => (
                           <a class="gallery__item" href={ph.src}>
-                            <img src={ph.src} alt={`${g.title} ${d.name}の写真 ${++photoNo}`} width={ph.w} height={ph.h} loading="lazy" decoding="async">
+                            <img src={ph.src} alt={`${g.title} ${d.name} 優勝クラブの写真 ${++photoNo}`} width={ph.w} height={ph.h} loading="lazy" decoding="async">
                           </a>
                         ))}
                       </div>
