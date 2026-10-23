@@ -6,6 +6,10 @@
 //
 // 並びは、前期日程（男子1部→8部）→ 後期日程（女子1部→4部 → 女子予選会 → 男子予選会）。
 // 年度が終わったら、新しい年度を先頭に足す。
+//
+// photoOrder … 大会ページの「当日の写真」が、どの部の優勝クラブの写真かを並び順で示す（src/data/club-event.js が使う）。
+//   写真の枚数と同じ長さで、同じ部が続くときは同じ名前を繰り返す（男子予選会の 1位・2位 など）。
+//   無い（または枚数が合わない）ときは、写真は従来どおり「当日の写真」の節に並ぶ。
 
 export const CLUB_SEASONS = [
   {
@@ -14,6 +18,7 @@ export const CLUB_SEASONS = [
     terms: [
       {
         slug: 'r8-club-taiko-1', label: '前期日程', event: '男子1部〜8部', date: '2026年5月10日（日）',
+        photoOrder: ['男子1部', '男子2部', '男子3部', '男子4部', '男子5部', '男子6部', '男子7部', '男子8部'],
         divisions: [
           { div: '男子1部', club: 'オレンジ' },
           { div: '男子2部', club: 'doMe' },
@@ -27,6 +32,7 @@ export const CLUB_SEASONS = [
       },
       {
         slug: 'r8-club-taiko-2', label: '後期日程', event: '女子1部〜4部／男女予選会', date: '2026年7月12日（日）',
+        photoOrder: ['男子予選会', '男子予選会', '女子1部', '女子2部', '女子3部', '女子4部', '女子予選会'],
         divisions: [
           { div: '女子1部', club: 'ラフ' },
           { div: '女子2部', club: 'あみたま' },
@@ -58,6 +64,7 @@ export const CLUB_SEASONS = [
       },
       {
         slug: 'r7-club-taiko-2', label: '後期日程', event: '女子1部〜4部／男女予選会', date: '2025年6月1日（日）',
+        photoOrder: ['男子予選会', '男子予選会', '女子1部', '女子2部', '女子3部', '女子4部', '女子予選会'],
         divisions: [
           { div: '女子1部', club: '田園' },
           { div: '女子2部', club: 'スマクロ' },

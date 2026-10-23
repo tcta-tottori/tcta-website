@@ -1,0 +1,79 @@
+// クラブ対抗戦の大会ページ（event-r8-club-taiko-1.html など）を、部ごとの「リーグ表 → その下に優勝クラブの写真」に組み直す。
+// 旧サイトから引き継いだ結果ページ（results.js の clubDivisions）と同じ見せ方にするため。
+//
+// 材料は EmDash の大会1件（events.js の buildEvents が組んだ e）と、club-league.js の年度データ（term）。
+//   結果の画像   … ラベル（「女子予選会 Bリーグ」など）の先頭の「男子1部」「女子予選会」で部にまとめる
+//   当日の写真   … term.photoOrder（写真の並び順に部の名前）で部に付ける。枚数が合わなければ付けない
+//   優勝クラブ   … 管理画面の「成績」があればそれ、無ければ term.divisions
+// 該当しない大会（クラブ対抗戦でない、結果が無い）は null を返し、ページは従来の節の並びで描く。
+
+import { CLUB_SEASONS } from './club-league.js';
+
+/** 「女子予選会 Bリーグ」「男子予選会 Aブロック」「男子8部」→ 部の名前（男子8部／女子予選会）。部でなければ null */
+export const divisionKey = (label) => (String(label || '').match(/^(男子|女子)(\d+部|予選会)/) || [])[0] || null;
+
+/** 部の並び：男子1部→8部、女子1部→5部、そのあとに予選会（女子予選会 → 男子予選会。公式サイトの結果ページと同じ順） */
+const order = (key) => {
+  const m = key.match(/^(男子|女子)(\d+)?(部|予選会)/);
+  if (!m) return 999;
+  if (m[3] === '予選会') return m[1] === '女子' ? 500 : 600;
+  return (m[1] === '男子' ? 0 : 100) + Number(m[2]);
+};
+
+/** slug から年度データの日程（前期・後期）を引く */
+export const clubTermBySlug = (slug) => {
+  for (const season of CLUB_SEASONS) for (const term of season.terms) if (term.slug === slug) return term;
+  return null;
+};
+
+/**
+ * 大会ページ用の部ごとのまとまり。
+ *   { divisions: [{ key, sheets: [img], photos: [img], places: [{ award, name }] }], loose: [img], photosUsed: boolean }
+ * loose は部に対応づけられなかった結果の画像（いまは無い）。photosUsed が true なら「当日の写真」の節は出さない。
+ */
+export function clubEventLayout(e) {
+  if (!e || !/クラブ対抗戦/.test(e.name)) return null;
+  const result = e.sections.find((s) => s.key === 'result');
+  if (!result || !result.images.length) return null;
+  const term = clubTermBySlug(e.slug);
+
+  const map = new Map();
+  const loose = [];
+  const division = (key) => {
+    if (!map.has(key)) map.set(key, { key, order: order(key), sheets: [], photos: [], places: [] });
+    return map.get(key);
+  };
+  for (const img of result.images) {
+    const key = divisionKey(img.label);
+    if (key) division(key).sheets.push(img);
+    else loose.push(img);
+  }
+
+  // 優勝クラブ：管理画面の成績があればそれ、無ければ年度データ
+  if (e.winners.length) {
+    for (const c of e.winners) {
+      const key = divisionKey(c.category);
+      if (!key) continue;
+      const sub = String(c.category).slice(key.length).trim();
+      for (const p of c.places) division(key).places.push({ award: [sub, p.award].filter(Boolean).join(' '), name: p.name });
+    }
+  } else if (term) {
+    for (const d of term.divisions) {
+      const key = divisionKey(d.div);
+      if (!key) continue;
+      const sub = d.div.slice(key.length).trim();
+      division(key).places.push({ award: [sub, d.award || '優勝'].filter(Boolean).join(' '), name: d.club });
+    }
+  }
+
+  // 当日の写真 → 部に付ける（並び順が年度データにあり、枚数が合うときだけ）
+  const photo = e.sections.find((s) => s.key === 'photo');
+  let photosUsed = false;
+  if (photo && term?.photoOrder && term.photoOrder.length === photo.images.length) {
+    photo.images.forEach((img, i) => division(term.photoOrder[i]).photos.push(img));
+    photosUsed = true;
+  }
+
+  const divisions = [...map.values()].sort((a, b) => a.order - b.order);
+  return { divisions, loose, photosUsed, photoCount: photo?.images.length ?? 0 };
+}
