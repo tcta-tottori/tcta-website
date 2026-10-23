@@ -1221,10 +1221,19 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 .tcard--nolink .tcard__go { color: var(--gray-500); }
 .tcard:hover .tcard__go .aw { transform: translateX(4px); }
 
-/* 受付中のバッジの横に申込締切（「締切 10/2」）。受付中のカードだけ */
+/* 受付中のバッジの横に申込締切（「締切 10/2」）。受付中のカードだけ。
+   見落とされないよう赤い太字でゆっくり点滅させる（動きを減らす設定の端末では点滅しない） */
 .tcard__status { display: inline-flex; align-items: center; gap: 10px; min-width: 0; }
-.tcard__due { font: 700 12px/1 var(--fjp); letter-spacing: .02em; color: var(--red); white-space: nowrap; }
-.tcard__due small { font: 400 11px/1 var(--fjp); color: var(--gray-600); margin-right: 4px; }
+.tcard__due {
+  font: 700 13px/1 var(--fjp);
+  letter-spacing: .02em;
+  color: var(--red);
+  white-space: nowrap;
+  animation: due-blink 1.6s ease-in-out infinite;
+}
+.tcard__due small { font: 700 11px/1 var(--fjp); color: var(--red); margin-right: 4px; }
+@keyframes due-blink { 0%, 100% { opacity: 1; } 50% { opacity: .25; } }
+@media (prefers-reduced-motion: reduce) { .tcard__due { animation: none; } }
 
 /* TODAY マーカー */
 .today-marker {
