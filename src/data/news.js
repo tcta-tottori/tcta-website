@@ -26,8 +26,8 @@
 //   （例：大会結果は大会のページに入れてから「結果を掲載しました」と書く。先に書かないこと）
 //   リンク先は必ずサイト内の実在するページにする（例：event-r8-enetopia.html）。
 
-/** トップページに出す件数。これを超えた分は VIEW ALL の中だけに出る。 */
-export const NEWS_VISIBLE = 4;
+/** トップページに出す件数。4件目は薄く重ねて「続きがある」ことだけ見せ、全部は VIEW ALL の中に出る。 */
+export const NEWS_VISIBLE = 3;
 
 /** NEW を付ける期間（日） */
 const NEW_DAYS = 14;
