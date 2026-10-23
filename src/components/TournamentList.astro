@@ -10,7 +10,7 @@
 // 素材の無い大会は4つとも押せない状態で出す（大会名からそのページへは行ける）。
 import Icon from './Icon.astro';
 import { REG_LABEL, STATUS_LABEL, dateCell } from '../data/schedule.js';
-import { eventIcons, ICON_SIZE } from '../data/event-icons.js';
+import { eventIcons } from '../data/event-icons.js';
 import { siteData } from '../lib/cms.js';
 
 const { items, id, caption } = Astro.props;
@@ -89,8 +89,8 @@ const rows = items.map((t) => {
         </dl>
         <div class="tl-item__event">
           {icons.length > 0 && (
-            <span class="tl-item__event-icons" aria-hidden="true">
-              {icons.map((ic) => <img src={ic.src} alt="" width={ICON_SIZE} height={ICON_SIZE} loading="lazy" decoding="async">)}
+            <span class="tl-item__event-icons" data-n={icons.length} aria-hidden="true">
+              {icons.map((ic) => <img src={ic.src} alt="" width={ic.w} height={ic.h} loading="lazy" decoding="async">)}
             </span>
           )}
           <span class="tl-item__event-text"><Icon name="list" class="tl-item__ico" /><span class="visually-hidden">種目：</span>{t.event}</span>

@@ -5,7 +5,7 @@
 // 写真は使わない（種目が一目で分かるようにするため。管理画面の「カードの写真」は無視される）。
 import Icon from './Icon.astro';
 import { STATUS, dateChip } from '../data/tournaments.js';
-import { eventIcons, ICON_SIZE } from '../data/event-icons.js';
+import { eventIcons } from '../data/event-icons.js';
 
 const { tournament } = Astro.props;
 const { date, title, event, venue, status, action } = tournament;
@@ -39,7 +39,7 @@ const Tag = action.href ? 'a' : 'div';
         </div>
         {icons.length > 0 && (
           <span class="tcard__icons" data-n={icons.length} aria-hidden="true">
-            {icons.map((ic) => <img class="tcard__icon" src={ic.src} alt="" width={ICON_SIZE} height={ICON_SIZE} loading="lazy" decoding="async">)}
+            {icons.map((ic) => <img class="tcard__icon" src={ic.src} alt="" width={ic.w} height={ic.h} loading="lazy" decoding="async">)}
           </span>
         )}
       </div>
