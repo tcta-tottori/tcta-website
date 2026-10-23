@@ -1010,9 +1010,31 @@
     });
   }
 
+  /* ---------- 種目のピクトグラムの動き ----------
+     カード1枚ずつ（.evicon ごと）に画面に入った瞬間を見て、そのとき一度だけ動かす（CSS の .evicon.is-on）。
+     カルーセルを横に送って初めて見えたカードも、全件表示を開いて見えたカードも、そのときに動く。
+     IntersectionObserver は横スクロールの中の見え方（枠で切れている分）も含めて判定する。 */
+  function initEventIcons() {
+    var icons = document.querySelectorAll('.evicon');
+    if (!icons.length || reduceMotion) return;
+    if (!('IntersectionObserver' in window)) {
+      Array.prototype.forEach.call(icons, function (el) { el.classList.add('is-on'); });
+      return;
+    }
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (!e.isIntersecting) return;
+        e.target.classList.add('is-on');
+        io.unobserve(e.target);
+      });
+    }, { threshold: 0.6 });
+    Array.prototype.forEach.call(icons, function (el) { io.observe(el); });
+  }
+
   function init() {
     initSplash();
     initReveal();
+    initEventIcons();
     initMarquee();
     initHeader();
     initRipple();
