@@ -1,0 +1,24 @@
+---
+// 大会1件の「要項」のページ（大会情報ページの「要項」ボタンの行き先）。申込用紙の PDF もここに並べる。
+import EventSection from '../components/EventSection.astro';
+import SheetList from '../components/SheetList.astro';
+import { siteData } from '../lib/cms.js';
+
+const { eventBySlug } = await siteData(Astro);
+const e = eventBySlug(Astro.params.slug);
+const outline = e?.sections.find((s) => s.key === 'outline');
+if (!e || !outline) return Astro.rewrite('/404');
+const entry = e.sections.find((s) => s.key === 'entry');
+---
+
+<EventSection e={e} label="要項" en="Outline">
+  <p class="note rv" style="margin-bottom:0">{outline.lead}</p>
+  <div class="rv"><SheetList images={outline.images} pdfs={outline.pdfs} alt={`${e.name} 要項`} /></div>
+  {entry && (
+    <div class="rv" style="margin-top:56px">
+      <h2 class="sub-head">申込用紙</h2>
+      <p class="note" style="margin-bottom:0">{entry.lead}</p>
+      <SheetList images={entry.images} pdfs={entry.pdfs} alt={`${e.name} 申込用紙`} />
+    </div>
+  )}
+</EventSection>

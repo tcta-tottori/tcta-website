@@ -27,3 +27,4 @@ uploads/
 
 # Python のキャッシュ
 __pycache__/
+tools/.cache/

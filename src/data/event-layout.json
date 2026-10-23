@@ -1,0 +1,1678 @@
+{
+ "r8-tobu-singles": [
+  {
+   "label": "男子シングルスA級",
+   "sheets": [
+    "result-01"
+   ],
+   "photos": [
+    "photo-09"
+   ],
+   "captions": [
+    "優勝 米本 叶芽"
+   ]
+  },
+  {
+   "label": "男子シングルスB級",
+   "sheets": [
+    "result-02"
+   ],
+   "photos": [
+    "photo-08"
+   ],
+   "captions": [
+    "優勝"
+   ]
+  },
+  {
+   "label": "男子シングルスC級",
+   "sheets": [
+    "result-03"
+   ],
+   "photos": [
+    "photo-06"
+   ],
+   "captions": [
+    "優勝"
+   ]
+  },
+  {
+   "label": "男子45歳以上シングルス",
+   "sheets": [
+    "result-04"
+   ],
+   "photos": [
+    "photo-03"
+   ],
+   "captions": [
+    "優勝 椿 誠"
+   ]
+  },
+  {
+   "label": "男子55歳以上シングルス",
+   "sheets": [
+    "result-05"
+   ],
+   "photos": [
+    "photo-02"
+   ],
+   "captions": [
+    "優勝 小谷 佳介"
+   ]
+  },
+  {
+   "label": "男子65歳以上シングルス",
+   "sheets": [
+    "result-06"
+   ],
+   "photos": [
+    "photo-07"
+   ],
+   "captions": [
+    "優勝 勝井 節朗"
+   ]
+  },
+  {
+   "label": "女子シングルスA級",
+   "sheets": [
+    "result-07"
+   ],
+   "photos": [
+    "photo-04"
+   ],
+   "captions": [
+    "優勝 荒木 柚那"
+   ]
+  },
+  {
+   "label": "女子シングルスB級",
+   "sheets": [
+    "result-08"
+   ],
+   "photos": [
+    "photo-05"
+   ],
+   "captions": [
+    "優勝 岡田 友子"
+   ]
+  },
+  {
+   "label": "女子45歳以上シングルス",
+   "sheets": [
+    "result-09"
+   ],
+   "photos": [
+    "photo-01"
+   ],
+   "captions": [
+    "優勝 山方 祥子"
+   ]
+  }
+ ],
+ "r8-tobu-doubles": [
+  {
+   "label": "男子ダブルスA級",
+   "sheets": [
+    "result-01"
+   ],
+   "photos": [
+    "photo-05"
+   ],
+   "captions": [
+    "優勝 鶴石・岸本"
+   ]
+  },
+  {
+   "label": "男子ダブルスB級",
+   "sheets": [
+    "result-02"
+   ],
+   "photos": [
+    "photo-07"
+   ],
+   "captions": [
+    "優勝 吉織・中里"
+   ]
+  },
+  {
+   "label": "男子ダブルスC級",
+   "sheets": [
+    "result-03"
+   ],
+   "photos": [
+    "photo-02"
+   ],
+   "captions": [
+    "優勝 松島・西田"
+   ]
+  },
+  {
+   "label": "男子45歳以上ダブルス",
+   "sheets": [
+    "result-04"
+   ],
+   "photos": [
+    "photo-01"
+   ],
+   "captions": [
+    "優勝 山口・野波"
+   ]
+  },
+  {
+   "label": "男子55歳以上ダブルス",
+   "sheets": [
+    "result-05"
+   ],
+   "photos": [
+    "photo-03"
+   ],
+   "captions": [
+    "優勝 霜田・吉田"
+   ]
+  },
+  {
+   "label": "男子65歳以上ダブルス",
+   "sheets": [
+    "result-06"
+   ],
+   "photos": [
+    "photo-06"
+   ],
+   "captions": [
+    "優勝 船本・梶"
+   ]
+  },
+  {
+   "label": "女子45歳以上ダブルス",
+   "sheets": [
+    "result-07"
+   ],
+   "photos": [
+    "photo-04"
+   ],
+   "captions": [
+    "優勝 小林・山形"
+   ]
+  }
+ ],
+ "r8-sasaki": [
+  {
+   "label": "1位トーナメント",
+   "sheets": [
+    "result-05",
+    "result-06",
+    "result-07",
+    "result-08",
+    "result-09",
+    "result-10",
+    "result-11",
+    "result-12",
+    "result-13",
+    "result-07",
+    "result-15",
+    "result-16",
+    "result-17",
+    "result-01"
+   ],
+   "photos": [
+    "photo-07",
+    "photo-08"
+   ],
+   "captions": [
+    "優勝 竹安・楠瀬 ペア",
+    "準優勝 小川・山内 ペア"
+   ]
+  },
+  {
+   "label": "2位トーナメント",
+   "sheets": [
+    "result-02"
+   ],
+   "photos": [
+    "photo-02",
+    "photo-01"
+   ],
+   "captions": [
+    "優勝 石原・高木 ペア",
+    "準優勝 中里・市川 ペア"
+   ]
+  },
+  {
+   "label": "3位トーナメント",
+   "sheets": [
+    "result-03"
+   ],
+   "photos": [
+    "photo-03",
+    "photo-04"
+   ],
+   "captions": [
+    "優勝 吉田・吉田 ペア",
+    "準優勝 福本・浜角 ペア"
+   ]
+  },
+  {
+   "label": "4•5位トーナメント",
+   "sheets": [
+    "result-04"
+   ],
+   "photos": [
+    "photo-05",
+    "photo-06"
+   ],
+   "captions": [
+    "優勝 山下・田苗 ペア",
+    "準優勝 岩本・岩本 ペア"
+   ]
+  }
+ ],
+ "r8-kaicho-spring": [
+  {
+   "label": "1位トーナメント",
+   "sheets": [
+    "result-05",
+    "result-06",
+    "result-07",
+    "result-08",
+    "result-09",
+    "result-10",
+    "result-11",
+    "result-01"
+   ],
+   "photos": [
+    "photo-03",
+    "photo-04"
+   ],
+   "captions": [
+    "優勝 味方でも打倒K",
+    "準優勝 ひみつのケンゴちゃん"
+   ]
+  },
+  {
+   "label": "2位トーナメント",
+   "sheets": [
+    "result-02"
+   ],
+   "photos": [
+    "photo-01",
+    "photo-02"
+   ],
+   "captions": [
+    "優勝 ケンちゃんテニス",
+    "準優勝 プチ・ドーム"
+   ]
+  },
+  {
+   "label": "3・4位トーナメント",
+   "sheets": [
+    "result-04"
+   ],
+   "photos": [
+    "photo-05",
+    "photo-06"
+   ],
+   "captions": [
+    "優勝 ウルトラマリン",
+    "準優勝 バターのいとこ"
+   ]
+  }
+ ],
+ "r8-tottori-univ-open": [
+  {
+   "label": "男子ダブルス",
+   "sheets": [],
+   "photos": [
+    "photo-01",
+    "photo-02"
+   ],
+   "captions": [
+    "優勝 河上・万道 ペア",
+    "準優勝 北村・山本 ペア"
+   ]
+  }
+ ],
+ "r8-ketaka": [
+  {
+   "label": "男子シングルスA級",
+   "sheets": [
+    "result-01"
+   ],
+   "photos": [
+    "photo-03"
+   ],
+   "captions": [
+    "優勝 米本 叶芽"
+   ]
+  },
+  {
+   "label": "男子シングルスB級",
+   "sheets": [
+    "result-02"
+   ],
+   "photos": [
+    "photo-04"
+   ],
+   "captions": [
+    "優勝 井嶋 勇翔"
+   ]
+  },
+  {
+   "label": "男子シングルスC級",
+   "sheets": [
+    "result-03"
+   ],
+   "photos": [
+    "photo-02"
+   ],
+   "captions": [
+    "優勝 森永 愛斗"
+   ]
+  },
+  {
+   "label": "男子45歳以上シングルス",
+   "sheets": [
+    "result-04"
+   ],
+   "photos": [
+    "photo-05"
+   ],
+   "captions": [
+    "優勝 山崎 信博"
+   ]
+  },
+  {
+   "label": "男子65歳以上シングルス",
+   "sheets": [
+    "result-05"
+   ],
+   "photos": [
+    "photo-01"
+   ],
+   "captions": [
+    "優勝 勝井 節朗"
+   ]
+  },
+  {
+   "label": "女子シングルスB級",
+   "sheets": [
+    "result-06"
+   ],
+   "photos": [
+    "photo-06"
+   ],
+   "captions": [
+    "優勝 姫岩 桂子"
+   ]
+  }
+ ],
+ "r8-summer-mix": [
+  {
+   "label": "1位トーナメント",
+   "sheets": [
+    "result-04",
+    "result-05",
+    "result-06",
+    "result-07",
+    "result-08",
+    "result-09",
+    "result-10",
+    "result-11",
+    "result-12",
+    "result-13",
+    "result-01"
+   ],
+   "photos": [
+    "photo-06",
+    "photo-03"
+   ],
+   "captions": [
+    "優勝 竹安・楠瀬",
+    "準優勝 檜垣・岩井"
+   ]
+  },
+  {
+   "label": "2位トーナメント",
+   "sheets": [
+    "result-02"
+   ],
+   "photos": [
+    "photo-04",
+    "photo-05"
+   ],
+   "captions": [
+    "優勝 山根・浅野 ペア",
+    "準優勝 岩田・岩田"
+   ]
+  },
+  {
+   "label": "3位トーナメント",
+   "sheets": [
+    "result-03"
+   ],
+   "photos": [
+    "photo-01",
+    "photo-02"
+   ],
+   "captions": [
+    "優勝 近藤・前田 ペア",
+    "準優勝 山下・山下"
+   ]
+  }
+ ],
+ "r8-dunlop": [
+  {
+   "label": "男子ダブルスA級",
+   "sheets": [
+    "result-01"
+   ],
+   "photos": [
+    "photo-10"
+   ],
+   "captions": [
+    "優勝 岸本・安田ペア"
+   ]
+  },
+  {
+   "label": "男子ダブルスB級",
+   "sheets": [
+    "result-02"
+   ],
+   "photos": [
+    "photo-11"
+   ],
+   "captions": [
+    "優勝 杉山・成川ペア"
+   ]
+  },
+  {
+   "label": "男子ダブルスC級",
+   "sheets": [
+    "result-03"
+   ],
+   "photos": [
+    "photo-05"
+   ],
+   "captions": [
+    "優勝 千酌・鶴石ペア"
+   ]
+  },
+  {
+   "label": "男子ダブルス45歳以上",
+   "sheets": [
+    "result-04"
+   ],
+   "photos": [
+    "photo-04"
+   ],
+   "captions": [
+    "優勝 森本・白石ペア"
+   ]
+  },
+  {
+   "label": "男子ダブルス55歳以上",
+   "sheets": [
+    "result-05"
+   ],
+   "photos": [
+    "photo-06"
+   ],
+   "captions": [
+    "優勝 吉田・霜田ペア"
+   ]
+  },
+  {
+   "label": "男子ダブルス65歳以上",
+   "sheets": [
+    "result-06"
+   ],
+   "photos": [
+    "photo-09"
+   ],
+   "captions": [
+    "優勝 湯浅・逸見ペア"
+   ]
+  },
+  {
+   "label": "女子ダブルスA級",
+   "sheets": [
+    "result-07"
+   ],
+   "photos": [
+    "photo-07"
+   ],
+   "captions": [
+    "優勝 楠瀬・赤井ペア"
+   ]
+  },
+  {
+   "label": "女子ダブルスB級",
+   "sheets": [
+    "result-08"
+   ],
+   "photos": [
+    "photo-01"
+   ],
+   "captions": [
+    "優勝 大谷・大谷ペア"
+   ]
+  },
+  {
+   "label": "女子ダブルス45歳以上",
+   "sheets": [
+    "result-09"
+   ],
+   "photos": [
+    "photo-08"
+   ],
+   "captions": [
+    "優勝 小林・山形ペア"
+   ]
+  },
+  {
+   "label": "女子ダブルス55歳以上",
+   "sheets": [
+    "result-10"
+   ],
+   "photos": [
+    "photo-03"
+   ],
+   "captions": [
+    "優勝 宮原・杉原ペア"
+   ]
+  },
+  {
+   "label": "女子ダブルス65歳以上",
+   "sheets": [
+    "result-11"
+   ],
+   "photos": [
+    "photo-02"
+   ],
+   "captions": [
+    "優勝 三澤・青柳ペア"
+   ]
+  }
+ ],
+ "r8-enetopia": [
+  {
+   "label": "1位トーナメント",
+   "sheets": [
+    "result-01",
+    "result-02",
+    "result-03",
+    "result-04",
+    "result-05",
+    "result-06",
+    "result-07",
+    "result-08",
+    "result-09",
+    "result-10",
+    "result-11",
+    "result-12"
+   ],
+   "photos": [
+    "photo-01",
+    "photo-02",
+    "photo-03",
+    "photo-04"
+   ],
+   "captions": [
+    "優勝 檜垣・橋本",
+    "準優勝 津田・大田",
+    "ベスト4",
+    "ベスト4"
+   ]
+  },
+  {
+   "label": "2位トーナメント",
+   "sheets": [
+    "result-13"
+   ],
+   "photos": [
+    "photo-05",
+    "photo-06",
+    "photo-07",
+    "photo-08"
+   ],
+   "captions": [
+    "優勝 山根・竹内ペア",
+    "準優勝 小川・山内",
+    "ベスト4",
+    "ベスト4 平木・平木"
+   ]
+  },
+  {
+   "label": "3位トーナメント",
+   "sheets": [
+    "result-14"
+   ],
+   "photos": [
+    "photo-09",
+    "photo-10",
+    "photo-11",
+    "photo-12"
+   ],
+   "captions": [
+    "優勝 田中・山﨑ペア",
+    "準優勝 山本・山本",
+    "ベスト4",
+    "ベスト4"
+   ]
+  }
+ ],
+ "r7-tobu-singles": [
+  {
+   "label": "男子シングルスA級",
+   "sheets": [
+    "result-01"
+   ],
+   "photos": [
+    "photo-09"
+   ],
+   "captions": [
+    "優勝 米本 叶芽"
+   ]
+  },
+  {
+   "label": "男子シングルスB級",
+   "sheets": [
+    "result-02"
+   ],
+   "photos": [
+    "photo-02"
+   ],
+   "captions": [
+    "優勝"
+   ]
+  },
+  {
+   "label": "男子シングルスC級",
+   "sheets": [
+    "result-03"
+   ],
+   "photos": [
+    "photo-05"
+   ],
+   "captions": [
+    "優勝"
+   ]
+  },
+  {
+   "label": "男子45歳以上シングルス",
+   "sheets": [
+    "result-04"
+   ],
+   "photos": [
+    "photo-06"
+   ],
+   "captions": [
+    "優勝 山崎 信博"
+   ]
+  },
+  {
+   "label": "男子65歳以上シングルス",
+   "sheets": [
+    "result-06"
+   ],
+   "photos": [
+    "photo-07"
+   ],
+   "captions": [
+    "優勝 勝井 節朗"
+   ]
+  },
+  {
+   "label": "女子シングルスB級",
+   "sheets": [
+    "result-07"
+   ],
+   "photos": [
+    "photo-08"
+   ],
+   "captions": [
+    "優勝 冨林 真悠花"
+   ]
+  }
+ ],
+ "r7-tobu-doubles": [
+  {
+   "label": "男子ダブルスA級",
+   "sheets": [
+    "result-01"
+   ],
+   "photos": [
+    "photo-05"
+   ],
+   "captions": [
+    "優勝 鶴石・岸本"
+   ]
+  },
+  {
+   "label": "男子ダブルスB級",
+   "sheets": [
+    "result-02"
+   ],
+   "photos": [
+    "photo-09"
+   ],
+   "captions": [
+    "優勝 三宅・山下"
+   ]
+  },
+  {
+   "label": "男子65歳以上ダブルス",
+   "sheets": [
+    "result-03"
+   ],
+   "photos": [
+    "photo-08"
+   ],
+   "captions": [
+    "優勝 船本・竹内"
+   ]
+  },
+  {
+   "label": "女子B級ダブルス",
+   "sheets": [
+    "result-04"
+   ],
+   "photos": [
+    "photo-02"
+   ],
+   "captions": [
+    "優勝 桶谷・山内"
+   ]
+  },
+  {
+   "label": "女子45歳以上ダブルス",
+   "sheets": [
+    "result-05"
+   ],
+   "photos": [
+    "photo-07"
+   ],
+   "captions": [
+    "優勝 小林・山形"
+   ]
+  }
+ ],
+ "r7-sasaki": [
+  {
+   "label": "1位トーナメント",
+   "sheets": [
+    "result-01",
+    "result-02",
+    "result-03",
+    "result-04",
+    "result-05",
+    "result-06",
+    "result-07",
+    "result-08",
+    "result-09",
+    "result-11",
+    "result-12",
+    "result-13",
+    "result-14"
+   ],
+   "photos": [
+    "photo-72",
+    "photo-73"
+   ],
+   "captions": [
+    "優勝 平木・荒木 ペア",
+    "準優勝 岸本・三浦 ペア"
+   ]
+  },
+  {
+   "label": "2位トーナメント",
+   "sheets": [
+    "result-15"
+   ],
+   "photos": [
+    "photo-68",
+    "photo-69"
+   ],
+   "captions": [
+    "優勝 福本・笠原 ペア",
+    "準優勝 斉木・斉木 ペア"
+   ]
+  },
+  {
+   "label": "3位トーナメント",
+   "sheets": [
+    "result-16"
+   ],
+   "photos": [
+    "photo-67",
+    "photo-66"
+   ],
+   "captions": [
+    "優勝 永田・細田 ペア",
+    "準優勝 石田・谷口 ペア"
+   ]
+  },
+  {
+   "label": "4位トーナメント",
+   "sheets": [
+    "result-17"
+   ],
+   "photos": [
+    "photo-71",
+    "photo-70"
+   ],
+   "captions": [
+    "優勝 平木・平木 ペア",
+    "準優勝 田中・山﨑 ペア"
+   ]
+  }
+ ],
+ "r7-kaicho-spring": [
+  {
+   "label": "男子A級ダブルス",
+   "sheets": [
+    "result-01",
+    "result-02"
+   ],
+   "photos": [
+    "photo-02"
+   ],
+   "captions": [
+    "優勝 小川・船川 ペア"
+   ]
+  },
+  {
+   "label": "男子B級ダブルス",
+   "sheets": [
+    "result-03",
+    "result-04",
+    "result-05",
+    "result-06",
+    "result-07"
+   ],
+   "photos": [
+    "photo-04"
+   ],
+   "captions": [
+    "優勝 西村・藤田 ペア"
+   ]
+  },
+  {
+   "label": "男子C級ダブルス",
+   "sheets": [
+    "result-08",
+    "result-09"
+   ],
+   "photos": [
+    "photo-01"
+   ],
+   "captions": [
+    "優勝 林・林"
+   ]
+  },
+  {
+   "label": "女子B級ダブルス",
+   "sheets": [
+    "result-10",
+    "result-11"
+   ],
+   "photos": [
+    "photo-03"
+   ],
+   "captions": [
+    "優勝 平尾・馬嶋 ペア"
+   ]
+  }
+ ],
+ "r7-ketaka": [
+  {
+   "label": "男子シングルスA級",
+   "sheets": [
+    "result-01"
+   ],
+   "photos": [
+    "photo-07"
+   ],
+   "captions": [
+    "優勝 船川 凌我"
+   ]
+  },
+  {
+   "label": "男子シングルスB級",
+   "sheets": [
+    "result-02"
+   ],
+   "photos": [
+    "photo-06"
+   ],
+   "captions": [
+    "優勝 山下 陽大"
+   ]
+  },
+  {
+   "label": "男子シングルスC級",
+   "sheets": [
+    "result-03"
+   ],
+   "photos": [
+    "photo-04"
+   ],
+   "captions": [
+    "優勝 片寄 翔太"
+   ]
+  },
+  {
+   "label": "男子55歳以上シングルス",
+   "sheets": [
+    "result-04"
+   ],
+   "photos": [
+    "photo-03"
+   ],
+   "captions": [
+    "優勝 山崎 信博"
+   ]
+  },
+  {
+   "label": "男子65歳以上シングルス",
+   "sheets": [
+    "result-05"
+   ],
+   "photos": [
+    "photo-05"
+   ],
+   "captions": [
+    "優勝 勝井 節朗"
+   ]
+  },
+  {
+   "label": "女子シングルスA級",
+   "sheets": [
+    "result-06"
+   ],
+   "photos": [
+    "photo-01"
+   ],
+   "captions": [
+    "優勝 高木 美穂"
+   ]
+  },
+  {
+   "label": "女子シングルスB級",
+   "sheets": [
+    "result-07"
+   ],
+   "photos": [
+    "photo-02"
+   ],
+   "captions": [
+    "優勝 間島 千紗都"
+   ]
+  }
+ ],
+ "r7-summer-mix": [
+  {
+   "label": "1位トーナメント",
+   "sheets": [
+    "result-01",
+    "result-02",
+    "result-03",
+    "result-04",
+    "result-05",
+    "result-06",
+    "result-07",
+    "result-08"
+   ],
+   "photos": [
+    "photo-07",
+    "photo-09"
+   ],
+   "captions": [
+    "優勝 西山・赤井",
+    "準優勝 遠藤・遠藤"
+   ]
+  },
+  {
+   "label": "2位トーナメント",
+   "sheets": [
+    "result-09"
+   ],
+   "photos": [
+    "photo-04",
+    "photo-05"
+   ],
+   "captions": [
+    "優勝 竹安・楠瀬 ペア",
+    "準優勝 田中・田渕"
+   ]
+  },
+  {
+   "label": "3位トーナメント",
+   "sheets": [
+    "result-10"
+   ],
+   "photos": [
+    "photo-03",
+    "photo-06"
+   ],
+   "captions": [
+    "優勝 杦山・玉川 ペア",
+    "準優勝 岩本・岩本"
+   ]
+  },
+  {
+   "label": "4位・5位トーナメント",
+   "sheets": [
+    "result-11"
+   ],
+   "photos": [
+    "photo-01",
+    "photo-02"
+   ],
+   "captions": [
+    "優勝 藤田・山根 ペア",
+    "準優勝 山下・田苗"
+   ]
+  }
+ ],
+ "r7-dunlop": [
+  {
+   "label": "男子ダブルスA級",
+   "sheets": [
+    "result-01"
+   ],
+   "photos": [
+    "photo-11",
+    "photo-12"
+   ],
+   "captions": [
+    "優勝 斉木・檜垣ペア",
+    "準優勝 岸本・平木ペア"
+   ]
+  },
+  {
+   "label": "男子ダブルスB級",
+   "sheets": [
+    "result-02"
+   ],
+   "photos": [
+    "photo-14",
+    "photo-15"
+   ],
+   "captions": [
+    "優勝 三宅・山下ペア",
+    "準優勝 平井・河上ペア"
+   ]
+  },
+  {
+   "label": "男子ダブルス45歳以上",
+   "sheets": [
+    "result-03"
+   ],
+   "photos": [
+    "photo-09",
+    "photo-10"
+   ],
+   "captions": [
+    "優勝 山口・下川ペア",
+    "準優勝 寺沢・田村ペア"
+   ]
+  },
+  {
+   "label": "男子ダブルス55歳以上",
+   "sheets": [
+    "result-04"
+   ],
+   "photos": [
+    "photo-03",
+    "photo-02"
+   ],
+   "captions": [
+    "優勝 森本・小谷ペア",
+    "準優勝 湯浅・湯浅ペア"
+   ]
+  },
+  {
+   "label": "男子ダブルス65歳以上",
+   "sheets": [
+    "result-05"
+   ],
+   "photos": [
+    "photo-06",
+    "photo-05"
+   ],
+   "captions": [
+    "優勝 竹内・船本ペア",
+    "準優勝 勝井・岡田ペア"
+   ]
+  },
+  {
+   "label": "女子ダブルスA級",
+   "sheets": [
+    "result-06"
+   ],
+   "photos": [
+    "photo-07",
+    "photo-08"
+   ],
+   "captions": [
+    "優勝 楠瀬・川上ペア",
+    "準優勝 荒木・松崎ペア"
+   ]
+  },
+  {
+   "label": "女子ダブルス45歳以上",
+   "sheets": [
+    "result-07"
+   ],
+   "photos": [
+    "photo-04"
+   ],
+   "captions": [
+    "優勝 小林・山形ペア"
+   ]
+  },
+  {
+   "label": "女子ダブルス55歳以上",
+   "sheets": [
+    "result-08"
+   ],
+   "photos": [
+    "photo-01"
+   ],
+   "captions": [
+    "優勝 谷口・大石ペア"
+   ]
+  }
+ ],
+ "r7-enetopia": [
+  {
+   "label": "1位トーナメント",
+   "sheets": [
+    "result-01",
+    "result-02",
+    "result-03",
+    "result-04",
+    "result-05",
+    "result-06"
+   ],
+   "photos": [
+    "photo-12",
+    "photo-13",
+    "photo-01",
+    "photo-05"
+   ],
+   "captions": [
+    "優勝 檜垣・橋本",
+    "準優勝 岸本・三浦",
+    "ベスト4",
+    "ベスト4"
+   ]
+  },
+  {
+   "label": "2位トーナメント",
+   "sheets": [
+    "result-07"
+   ],
+   "photos": [
+    "photo-11",
+    "photo-10",
+    "photo-03",
+    "photo-04"
+   ],
+   "captions": [
+    "優勝",
+    "準優勝 羽馬・杉原",
+    "ベスト4 坪上・高垣",
+    "ベスト4 和気・中川"
+   ]
+  },
+  {
+   "label": "3位トーナメント",
+   "sheets": [
+    "result-08"
+   ],
+   "photos": [
+    "photo-19",
+    "photo-20",
+    "photo-02",
+    "photo-09"
+   ],
+   "captions": [
+    "優勝 井嶋・高木 ペア",
+    "準優勝 西山・小林",
+    "ベスト4",
+    "ベスト4"
+   ]
+  },
+  {
+   "label": "4位・5位トーナメント",
+   "sheets": [
+    "result-09"
+   ],
+   "photos": [
+    "photo-17",
+    "photo-18",
+    "photo-07",
+    "photo-08"
+   ],
+   "captions": [
+    "優勝 山下・田苗 ペア",
+    "準優勝 吉田・吉田",
+    "ベスト4",
+    "ベスト4"
+   ]
+  }
+ ],
+ "r7-prince-open": [
+  {
+   "label": "",
+   "sheets": [
+    "result-01",
+    "result-02",
+    "result-03",
+    "result-04",
+    "result-05",
+    "result-06",
+    "result-07",
+    "result-08",
+    "result-09",
+    "result-10",
+    "result-11"
+   ],
+   "photos": [],
+   "captions": []
+  }
+ ],
+ "r7-kensen-singles": [
+  {
+   "label": "一般男子シングルスA級",
+   "sheets": [
+    "result-01"
+   ],
+   "photos": [
+    "photo-06"
+   ],
+   "captions": [
+    "優勝 安田 彰汰"
+   ]
+  },
+  {
+   "label": "男子45歳以上シングルス",
+   "sheets": [
+    "result-02"
+   ],
+   "photos": [
+    "photo-03"
+   ],
+   "captions": [
+    "優勝 山崎 信博"
+   ]
+  },
+  {
+   "label": "男子55歳以上シングルス",
+   "sheets": [
+    "result-03"
+   ],
+   "photos": [
+    "photo-01"
+   ],
+   "captions": [
+    "優勝 小谷 佳介"
+   ]
+  },
+  {
+   "label": "男子65歳以上シングルス",
+   "sheets": [
+    "result-04"
+   ],
+   "photos": [
+    "photo-04"
+   ],
+   "captions": [
+    "優勝 勝井 節朗"
+   ]
+  },
+  {
+   "label": "一般女子シングルス",
+   "sheets": [
+    "result-05"
+   ],
+   "photos": [
+    "photo-02"
+   ],
+   "captions": [
+    "優勝 川上 梨華"
+   ]
+  }
+ ],
+ "r7-kensen-doubles": [
+  {
+   "label": "一般男子ダブルスA級",
+   "sheets": [
+    "result-01"
+   ],
+   "photos": [],
+   "captions": [
+    "優勝 岸本・平木"
+   ]
+  },
+  {
+   "label": "男子45歳以上ダブルス",
+   "sheets": [
+    "result-02"
+   ],
+   "photos": [],
+   "captions": [
+    "優勝 井崎・戸苅 ペア"
+   ]
+  },
+  {
+   "label": "男子55歳以上ダブルス",
+   "sheets": [
+    "result-03"
+   ],
+   "photos": [],
+   "captions": [
+    "優勝 岩井・砂沢 ペア"
+   ]
+  },
+  {
+   "label": "男子65歳以上ダブルス",
+   "sheets": [
+    "result-04"
+   ],
+   "photos": [],
+   "captions": [
+    "優勝 石崎・岸田 ペア"
+   ]
+  },
+  {
+   "label": "女子45歳以上ダブルス",
+   "sheets": [
+    "result-05"
+   ],
+   "photos": [],
+   "captions": [
+    "優勝 高木・谷口 ペア"
+   ]
+  }
+ ],
+ "r7-kaicho-autumn": [
+  {
+   "label": "1位トーナメント",
+   "sheets": [
+    "result-01",
+    "result-02",
+    "result-03",
+    "result-04",
+    "result-05",
+    "result-06"
+   ],
+   "photos": [],
+   "captions": [
+    "優勝 託児所"
+   ]
+  },
+  {
+   "label": "2位トーナメント",
+   "sheets": [
+    "result-07"
+   ],
+   "photos": [],
+   "captions": [
+    "優勝 ぐんまちゃん"
+   ]
+  },
+  {
+   "label": "3位トーナメント",
+   "sheets": [
+    "result-08"
+   ],
+   "photos": [],
+   "captions": [
+    "優勝 ウルトラマリン"
+   ]
+  },
+  {
+   "label": "4位トーナメント",
+   "sheets": [
+    "result-09"
+   ],
+   "photos": [],
+   "captions": [
+    "優勝 チームどんどんまいあがれ"
+   ]
+  }
+ ],
+ "r7-shicho": [
+  {
+   "label": "男子シングルスA級",
+   "sheets": [
+    "result-01",
+    "result-02",
+    "result-03",
+    "result-04"
+   ],
+   "photos": [
+    "photo-01"
+   ],
+   "captions": [
+    "優勝"
+   ]
+  },
+  {
+   "label": "男子B級シングルス",
+   "sheets": [
+    "result-05",
+    "result-06",
+    "result-07",
+    "result-08",
+    "result-09",
+    "result-10",
+    "result-11",
+    "result-12",
+    "result-13",
+    "result-14",
+    "result-15",
+    "result-16",
+    "result-17"
+   ],
+   "photos": [
+    "photo-02"
+   ],
+   "captions": [
+    "優勝 三宅 諒弥"
+   ]
+  },
+  {
+   "label": "男子C級シングルス",
+   "sheets": [
+    "result-18",
+    "result-19",
+    "result-20"
+   ],
+   "photos": [
+    "photo-05"
+   ],
+   "captions": [
+    "優勝 角田 勝"
+   ]
+  },
+  {
+   "label": "一般女子シングルス",
+   "sheets": [
+    "result-22"
+   ],
+   "photos": [
+    "photo-03"
+   ],
+   "captions": [
+    "優勝 川上 梨華"
+   ]
+  },
+  {
+   "label": "女子B級シングルス",
+   "sheets": [
+    "result-23",
+    "result-24",
+    "result-25"
+   ],
+   "photos": [
+    "photo-04"
+   ],
+   "captions": [
+    "優勝 岩本 理紗子"
+   ]
+  }
+ ],
+ "r7-tottori-univ-singles": [
+  {
+   "label": "女子シングルス",
+   "sheets": [],
+   "photos": [],
+   "captions": [
+    "優勝 間島 千紗都 選手（左）"
+   ]
+  },
+  {
+   "label": "",
+   "sheets": [],
+   "photos": [],
+   "captions": [
+    "準優勝 船越 海希 選手（右）"
+   ]
+  }
+ ],
+ "r7-osaka": [
+  {
+   "label": "男子A級シングルス",
+   "sheets": [
+    "result-01"
+   ],
+   "photos": [
+    "photo-09"
+   ],
+   "captions": [
+    "優勝 白石 直紀"
+   ]
+  },
+  {
+   "label": "男子B級シングルス",
+   "sheets": [
+    "result-02"
+   ],
+   "photos": [],
+   "captions": [
+    "優勝 細川 善貴"
+   ]
+  },
+  {
+   "label": "男子55歳以上シングルス",
+   "sheets": [
+    "result-03"
+   ],
+   "photos": [
+    "photo-07"
+   ],
+   "captions": [
+    "優勝 盛本 貴之"
+   ]
+  },
+  {
+   "label": "男子65歳以上シングルス",
+   "sheets": [
+    "result-04"
+   ],
+   "photos": [
+    "photo-08"
+   ],
+   "captions": [
+    "優勝 勝井 節朗"
+   ]
+  },
+  {
+   "label": "女子45歳以上シングルス",
+   "sheets": [
+    "result-05"
+   ],
+   "photos": [
+    "photo-10"
+   ],
+   "captions": [
+    "優勝 網川 佐知子"
+   ]
+  },
+  {
+   "label": "男子A級ダブルス",
+   "sheets": [
+    "result-06"
+   ],
+   "photos": [
+    "photo-11"
+   ],
+   "captions": [
+    "優勝 岸本・平木"
+   ]
+  },
+  {
+   "label": "男子B級ダブルス",
+   "sheets": [
+    "result-07"
+   ],
+   "photos": [
+    "photo-02"
+   ],
+   "captions": [
+    "優勝 戸杉・細川"
+   ]
+  },
+  {
+   "label": "男子45歳以上ダブルス",
+   "sheets": [
+    "result-08"
+   ],
+   "photos": [
+    "photo-05"
+   ],
+   "captions": [
+    "優勝 星川・渡辺"
+   ]
+  },
+  {
+   "label": "男子65歳以上ダブルス",
+   "sheets": [
+    "result-09"
+   ],
+   "photos": [
+    "photo-04"
+   ],
+   "captions": [
+    "優勝 勝井・岡田"
+   ]
+  },
+  {
+   "label": "女子A級ダブルス",
+   "sheets": [
+    "result-10"
+   ],
+   "photos": [
+    "photo-03"
+   ],
+   "captions": [
+    "優勝 手嶋・細田"
+   ]
+  },
+  {
+   "label": "女子B級ダブルス",
+   "sheets": [
+    "result-11"
+   ],
+   "photos": [
+    "photo-01"
+   ],
+   "captions": [
+    "優勝 三澤・青柳 ペア"
+   ]
+  }
+ ]
+}

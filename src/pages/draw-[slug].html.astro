@@ -1,0 +1,16 @@
+---
+// 大会1件の「ドロー」のページ（大会情報ページの「ドロー」ボタンの行き先）。
+import EventSection from '../components/EventSection.astro';
+import SheetList from '../components/SheetList.astro';
+import { siteData } from '../lib/cms.js';
+
+const { eventBySlug } = await siteData(Astro);
+const e = eventBySlug(Astro.params.slug);
+const draw = e?.sections.find((s) => s.key === 'draw');
+if (!e || !draw) return Astro.rewrite('/404');
+---
+
+<EventSection e={e} label="ドロー" en="Draw">
+  <p class="note rv" style="margin-bottom:0">{draw.lead}</p>
+  <div class="rv"><SheetList images={draw.images} pdfs={draw.pdfs} alt={`${e.name} ドロー`} /></div>
+</EventSection>
