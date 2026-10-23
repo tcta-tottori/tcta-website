@@ -283,12 +283,16 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 }
 
 /* ============ 03. 見出し ============ */
+/* 見出しの型（全ページ共通）：
+     ■ ENGLISH        ← 赤い四角と英語を同じ行に
+     日本語の見出し    ← その下に太字。左端は赤い四角にそろえる
+   markup は 四角 ＋ div（英語, 日本語）のまま。div を display: contents にして、grid で並べ替えている。 */
 .sec-head { position: relative; }
-.sec-head__row { display: flex; gap: 16px; align-items: flex-start; }
+.sec-head__row { display: grid; grid-template-columns: 14px 1fr; column-gap: 12px; row-gap: 6px; align-items: center; }
+.sec-head__row > div { display: contents; }
 .sec-head__mark {
   flex: none;
   width: 14px; height: 14px;
-  margin-top: 6px;
   background: var(--red);
 }
 .sec-head__eyebrow {
@@ -299,7 +303,8 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   text-transform: uppercase;
 }
 .sec-head__title {
-  margin: 2px 0 0;
+  grid-column: 1 / -1;
+  margin: 0;
   font: 700 26px/1.4 var(--fjp);
   letter-spacing: .04em;
   color: var(--ink);
@@ -2242,14 +2247,19 @@ body.jsrv .rv.on .ink-sweep {
 .breadcrumb a:hover { color: var(--red); }
 .breadcrumb__sep { color: var(--gray-300); }
 
+/* ページの見出しも同じ型（■ ENGLISH ／ 次の行に日本語） */
 .page-title-row {
   position: relative;
-  display: flex;
-  gap: 16px;
-  align-items: flex-start;
+  display: grid;
+  grid-template-columns: 14px 1fr;
+  column-gap: 12px;
+  row-gap: 6px;
+  align-items: center;
   margin-top: 20px;
 }
+.page-title-row > div { display: contents; }
 .page-title {
+  grid-column: 1 / -1;
   margin: 0;
   font: 700 26px/1.4 var(--fjp);
   letter-spacing: .04em;
@@ -2257,7 +2267,7 @@ body.jsrv .rv.on .ink-sweep {
 }
 @media (min-width: 1024px) { .page-title { font-size: 38px; } }
 .page-title__en {
-  margin: 8px 0 0;
+  margin: 0;
   font: 700 12px/1.4 var(--flt);
   letter-spacing: .12em;
   color: var(--red);
@@ -3256,18 +3266,28 @@ body.jsrv .rv.on .ink-sweep {
 
 /* 大会1件の中の節。左に赤い縦線を引いて、節の切れ目を分かりやすくする */
 .esec + .esec { margin-top: 64px; }
+/* 大会1件の中の節の見出しも同じ型：■ ENGLISH（枚数）／ 次の行に日本語の太字 */
 .esec__head {
-  display: flex;
-  align-items: baseline;
-  gap: 12px;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: 12px auto 1fr;
+  column-gap: 12px;
+  row-gap: 4px;
+  align-items: center;
 }
+.esec__head::before { content: ""; grid-column: 1; grid-row: 1; width: 12px; height: 12px; background: var(--red); }
+.esec__head .sub-head { grid-column: 1 / -1; grid-row: 2; margin: 0; }
+.esec__head .sub-head::before { display: none; }
 .esec__en {
-  font: 400 12px/1 var(--flt);
-  letter-spacing: .16em;
+  grid-column: 2;
+  grid-row: 1;
+  font: 700 12px/1.4 var(--flt);
+  letter-spacing: .12em;
   text-transform: uppercase;
-  color: var(--gray-500);
+  color: var(--red);
 }
+.esec__head .gallery__count { grid-column: 3; grid-row: 1; justify-self: start; margin-left: 0; }
+/* 英語の無い見出し（ギャラリーなど）は、枚数を英語の位置に */
+.esec__head:not(:has(.esec__en)) .gallery__count { grid-column: 2; }
 
 /* 要項・ドロー・結果の紙面。当日の写真と違い「その場で読めること」が要るので、
    写真のような小さな升目ではなく、1〜2列に大きく並べる。 */
