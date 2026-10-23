@@ -1035,12 +1035,7 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 /* 絵が横長なので、文字の幅を奪わないよう 45% までにして、入り切らなければ折り返す */
 .tcard__icons { display: flex; flex: 0 1 45%; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 6px; }
 /* 絵は横長（高さ 200px に対し幅 300〜550px）なので、高さで大きさを決め、幅は絵に合わせる */
-.tcard__icon {
-  display: block;
-  width: auto;
-  height: 40px;
-  transition: transform .4s var(--ease), filter .4s ease, opacity .4s ease;
-}
+.tcard__icon { height: 40px; transition: transform .4s var(--ease), filter .4s ease, opacity .4s ease; }
 @media (min-width: 640px) { .tcard__icon { height: 44px; } }
 .tcard__icons[data-n="2"] .tcard__icon { height: 32px; }
 .tcard__icons[data-n="3"] .tcard__icon, .tcard__icons[data-n="4"] .tcard__icon { height: 26px; }
@@ -1099,6 +1094,43 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   justify-content: space-between;
   gap: 12px;
 }
+/* ---- 種目のピクトグラム（components/EventIcon.astro） ----
+   高さは外側が決め、幅は絵の縦横比（aspect-ratio）で決まる。中の img は枠いっぱいに重ねる。
+   画面に入ったとき（body.jsrv の .rv.on の中）に一度だけ動く：
+     選手 … 構えてスイング。ボールが右から飛んできて、打ち返される
+     団体戦 … 6人を1人ずつに切って（clip-path）、応援のように順に跳ねる
+   全件表示（.tall）は開いたときに初めて描かれるので、そのときに動く。 */
+.evicon { position: relative; display: block; flex: none; }
+.evicon img { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.evicon .evicon__player { transform-origin: 38% 92%; }
+/* ボールは left / top / height を EventIcon.astro がインラインで置く（絵の中の位置） */
+.evicon .evicon__ball { right: auto; bottom: auto; width: auto; aspect-ratio: 1; transform: translate(-50%, -50%); }
+.evicon .evicon__fig { transform-origin: 50% 100%; }
+body.jsrv .rv.on .evicon__player, .tall .evicon__player { animation: ev-swing 1.2s var(--ease) .15s both; }
+body.jsrv .rv.on .evicon__ball,   .tall .evicon__ball   { animation: ev-ball 1.2s cubic-bezier(.3, .7, .4, 1) .15s both; }
+body.jsrv .rv.on .evicon__fig,    .tall .evicon__fig    { animation: ev-cheer .7s ease-in-out calc(.15s + var(--i) * .07s) 2 both; }
+@keyframes ev-swing {
+  0%   { transform: rotate(0); }
+  30%  { transform: rotate(-9deg) translateX(-2%); }   /* テイクバック */
+  55%  { transform: rotate(8deg) translateX(2%); }     /* インパクト */
+  78%  { transform: rotate(-2deg); }
+  100% { transform: rotate(0); }
+}
+@keyframes ev-ball {
+  0%   { transform: translate(260%, -220%) scale(.7); opacity: 0; }
+  12%  { opacity: 1; }
+  52%  { transform: translate(-50%, -50%); }           /* ラケットに届く */
+  70%  { transform: translate(90%, -170%) scale(.9); } /* 打ち返されて上へ */
+  100% { transform: translate(-50%, -50%); }
+}
+@keyframes ev-cheer {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-10%) scaleY(1.04); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .evicon__player, .evicon__ball, .evicon__fig { animation: none !important; }
+}
+
 /* カルーセルの位置を示す点。押すとその大会まで送る。 */
 .cdots {
   display: flex;
@@ -2387,12 +2419,13 @@ body.jsrv .rv.on .ink-sweep {
 }
 .tl-item__event { flex: 0 1 auto; max-width: 60%; display: flex; flex-direction: column; align-items: flex-end; gap: 8px; text-align: right; }
 .tl-item__event-icons { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px 8px; }
-.tl-item__event-icons img { display: block; width: auto; height: 40px; }
-.tl-item__event-icons[data-n="3"] img, .tl-item__event-icons[data-n="4"] img { height: 32px; }
+.tl-item__event-icons .evicon { height: 40px; }
+.tl-item__event-icons[data-n="3"] .evicon, .tl-item__event-icons[data-n="4"] .evicon { height: 32px; }
 @media (min-width: 640px) {
   .tl-item__event-icons { gap: 12px; }
-  .tl-item__event-icons img, .tl-item__event-icons[data-n="3"] img, .tl-item__event-icons[data-n="4"] img { height: 52px; }
+  .tl-item__event-icons .evicon, .tl-item__event-icons[data-n="3"] .evicon, .tl-item__event-icons[data-n="4"] .evicon { height: 52px; }
 }
+.tl-item--done .tl-item__event-icons .evicon { filter: grayscale(1); opacity: .5; }
 .tl-item__event-text {
   display: inline-flex;
   align-items: flex-start;
@@ -2403,7 +2436,7 @@ body.jsrv .rv.on .ink-sweep {
 }
 .tl-item__event-text .tl-item__ico { flex: none; margin-top: 2px; color: var(--gray-600); }
 .tl-item--done .tl-item__event-text { color: var(--gray-600); }
-.tl-item--done .tl-item__event-icons img { filter: grayscale(1); opacity: .5; }
+
 .tl-item__row { display: flex; align-items: flex-start; gap: 10px; }
 .tl-item__row dt { flex: none; display: flex; align-items: center; height: 24px; color: var(--gray-600); }
 .tl-item__row dd {
