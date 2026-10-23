@@ -9,6 +9,10 @@ import { today } from '../data/tournaments.js';
 import { LINKS_ASSOC, LINKS_OTHER } from '../data/links.js';
 import { NEWS_VISIBLE } from '../data/news.js';
 import { COURTS, mapData, mapLink } from '../data/courts.js';
+import CourtRow from '../components/CourtRow.astro';
+
+/** コート案内の一覧で、最初から見せる施設の数。残りは白いフェードで隠し、ボタンで出す */
+const COURT_VISIBLE = 3;
 
 // 大会カード・お知らせは EmDash から（1 リクエストに 1 回だけ読む）
 const { TOURNAMENTS, NEWS } = await siteData(Astro);
@@ -345,18 +349,21 @@ const upcomingTournaments = TOURNAMENTS.filter((t) => t.status !== 'past');
           <span class="embed-wrap__square" aria-hidden="true"></span>
         </div>
         <div class="rv" style="transition-delay:.1s">
+          {/* 最初は3件だけ。4件目以降はお知らせと同じ白いフェードで隠し、ボタンで全部出す（main.js の initCourtList） */}
           <ul class="sch-list">
-            {COURTS.map((c) => (
-              <li><a class="court-item" href={c.href} {...(c.external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}>
-                <Icon name="pin" class="court-pin" />
-                <span class="sch-item__text">
-                  <span class="sch-item__title">{c.name}</span>
-                  <span class="sch-item__place">{c.note}</span>
-                </span>
-                <span class="ar" aria-hidden="true">{c.external ? '↗' : '→'}</span>
-              </a></li>
-            ))}
+            {COURTS.slice(0, COURT_VISIBLE).map((c) => <CourtRow court={c} />)}
           </ul>
+          {COURTS.length > COURT_VISIBLE && (
+            <div class="court-more" data-court-more>
+              <ul class="sch-list court-more__rest" id="court-more-rest">
+                {COURTS.slice(COURT_VISIBLE).map((c) => <CourtRow court={c} />)}
+              </ul>
+              <div class="court-more__peek" aria-hidden="true"></div>
+              <button class="news-peek__btn court-more__btn" type="button" data-court-more-btn aria-expanded="false" aria-controls="court-more-rest">
+                すべての施設を見る（{COURTS.length}施設）<span class="aw">↓</span>
+              </button>
+            </div>
+          )}
           <p class="embed-caption">コートの予約は鳥取市の公共施設予約システムから行えます。協会が管理・貸出を行っているものではありませんのでご注意ください。</p>
         </div>
 

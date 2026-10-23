@@ -1341,6 +1341,22 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 .news-peek__btn .aw { transition: transform .3s ease; }
 .news-peek__btn:hover .aw { transform: translateY(3px); }
 
+/* コート案内の施設一覧：4件目以降。JS があるとき（.is-js）だけ、1件ぶんの高さに切って白くフェードさせ、
+   ボタンで全部出す。お知らせの5件目の見せ方（.news-list--peek）と同じ調子。 */
+.court-more { position: relative; }
+.court-more.is-js:not(.is-open) .court-more__rest {
+  max-height: 96px;
+  overflow: hidden;
+  opacity: .34;
+  -webkit-mask-image: linear-gradient(180deg, #000 0%, transparent 92%);
+  mask-image: linear-gradient(180deg, #000 0%, transparent 92%);
+  pointer-events: none;
+}
+.court-more__btn { display: none; }
+.court-more.is-js:not(.is-open) .court-more__btn { display: flex; }
+.court-more.is-open .court-more__rest { animation: court-more-in .35s ease both; }
+@keyframes court-more-in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+
 /* VIEW ALL で開く全件表示。画面いっぱいに白い面を出し、右上で閉じる。 */
 .news-all {
   position: fixed;

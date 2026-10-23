@@ -588,7 +588,9 @@
       var NEAR_M = 30000;
       function withLocation(bounds) {
         if (!located) return bounds;
-        var b = L.latLngBounds(bounds);
+        // 複製してから広げる（L.latLngBounds(既存の範囲) は同じものを返すので、そのまま extend すると
+        // 施設の範囲が書き換わり、現在地を消したあともその範囲のままになってしまう）
+        var b = L.latLngBounds(bounds.getSouthWest(), bounds.getNorthEast());
         if (b.getCenter().distanceTo(located.latlng) > NEAR_M) return b;
         return b.extend(located.latlng);
       }
@@ -1031,10 +1033,28 @@
     Array.prototype.forEach.call(icons, function (el) { io.observe(el); });
   }
 
+  /* ---------- コート案内の施設一覧：最初は3件だけ ----------
+     4件目以降はお知らせと同じく白いフェードで隠し、ボタンで全部出す（CSS の .court-more）。
+     JS が無いときは全部そのまま出る（is-js を付けたときだけ隠す）。 */
+  function initCourtList() {
+    var box = document.querySelector('[data-court-more]');
+    if (!box) return;
+    var btn = box.querySelector('[data-court-more-btn]');
+    if (!btn) return;
+    box.classList.add('is-js');
+    btn.addEventListener('click', function () {
+      box.classList.add('is-open');
+      btn.setAttribute('aria-expanded', 'true');
+      var first = box.querySelector('.court-more__rest a');
+      if (first) first.focus({ preventScroll: true });
+    });
+  }
+
   function init() {
     initSplash();
     initReveal();
     initEventIcons();
+    initCourtList();
     initMarquee();
     initHeader();
     initRipple();

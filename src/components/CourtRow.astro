@@ -1,0 +1,14 @@
+---
+// コート案内の一覧の1行（施設名・補足・矢印）。src/data/courts.js の1件を受け取る。
+import Icon from './Icon.astro';
+const { court: c } = Astro.props;
+---
+
+<li><a class="court-item" href={c.href} {...(c.external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}>
+  <Icon name="pin" class="court-pin" />
+  <span class="sch-item__text">
+    <span class="sch-item__title">{c.name}</span>
+    <span class="sch-item__place">{c.note}</span>
+  </span>
+  <span class="ar" aria-hidden="true">{c.external ? '↗' : '→'}</span>
+</a></li>
