@@ -1,0 +1,57 @@
+---
+// クラブ対抗戦の部ごとの結果（src/data/club-event.js の clubEventLayout の1件）。
+// 部の見出し（部の名前＋優勝クラブ）→ リーグ表 → その下に優勝クラブの写真 → 「優勝 ○○」の添え書き。
+// 旧サイトから引き継いだ結果ページ（result-*.html）と同じ見た目（CSS の .division）。
+const { club, name } = Astro.props;
+const anchor = (key) => `div-${key}`;
+const champion = (d) => d.places.map((p) => `${p.award} ${p.name}`).join('　');
+let photoNo = 0;
+---
+
+<nav class="jump rv" style="margin-top:0" aria-label="部へ移動">
+  {club.divisions.map((d) => <a class="jump__link" href={`#${anchor(d.key)}`}>{d.key}</a>)}
+</nav>
+
+{club.divisions.map((d) => (
+  <section class="division rv" id={anchor(d.key)}>
+    <h2 class="division__head">
+      <span class="division__name">{d.key}</span>
+      {d.places.length > 0 && <span class="division__champ">{champion(d)}</span>}
+    </h2>
+    <div class="rblock">
+      {d.sheets.length > 0 && (
+        <div class:list={['rblock__sheet', d.sheets.length > 1 && 'sheets sheets--result']}>
+          {d.sheets.map((sh) => (
+            <a class="sheet sheet--result" href={sh.src}>
+              <img src={sh.src} alt={`${name} ${sh.label ?? d.key}`} width={sh.w} height={sh.h} loading="lazy" decoding="async">
+            </a>
+          ))}
+        </div>
+      )}
+      {d.photos.length > 0 && (
+        <div class="rblock__photos division__photos">
+          <div class="gallery gallery--winners">
+            {d.photos.map((ph) => (
+              <a class="gallery__item" href={ph.src}>
+                <img src={ph.src} alt={`${name} ${d.key} 優勝クラブの写真 ${++photoNo}`} width={ph.w} height={ph.h} loading="lazy" decoding="async">
+              </a>
+            ))}
+          </div>
+          {d.places.length > 0 && (
+            <p class="rblock__caption"><span class="rblock__cat">{d.key}</span>{champion(d)}</p>
+          )}
+        </div>
+      )}
+    </div>
+  </section>
+))}
+
+{club.loose.length > 0 && (
+  <div class="sheets rv" style="margin-top:32px">
+    {club.loose.map((sh) => (
+      <a class="sheet sheet--result" href={sh.src}>
+        <img src={sh.src} alt={`${name} ${sh.label ?? '結果'}`} width={sh.w} height={sh.h} loading="lazy" decoding="async">
+      </a>
+    ))}
+  </div>
+)}
