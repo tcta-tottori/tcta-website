@@ -1029,39 +1029,28 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 .tcard--nolink { cursor: default; }
 .tcard--nolink:hover { transform: none; box-shadow: none; border-color: var(--gray-200); }
 
-/* 種目のピクトグラム。薄い地に、種目の数だけ横に並べる（最大4つ。数が多いほど1つが小さくなる） */
-.tcard__media {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 128px;
-  padding: 16px 20px;
-  background: var(--gray-050);
-  border-bottom: 1px solid var(--gray-200);
-}
-@media (min-width: 640px) { .tcard__media { height: 144px; } }
-.tcard__icons { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; height: 100%; }
+/* 種目のピクトグラム。案内の行のすぐ上に右寄せで並べる（最大4つ。数が多いほど1つが小さくなる） */
+.tcard__icons { display: flex; justify-content: flex-end; align-items: flex-end; gap: 8px; margin-top: 10px; }
 .tcard__icon {
   display: block;
-  flex: 0 1 96px;
-  min-width: 0;
-  width: 96px;
-  height: 100%;
+  width: 56px;
+  height: 56px;
   object-fit: contain;
   transition: transform .4s var(--ease), filter .4s ease, opacity .4s ease;
 }
-.tcard__icons[data-n="3"] .tcard__icon, .tcard__icons[data-n="4"] .tcard__icon { flex-basis: 76px; width: 76px; }
+@media (min-width: 640px) { .tcard__icon { width: 64px; height: 64px; } }
+.tcard__icons[data-n="4"] .tcard__icon { width: 48px; height: 48px; }
+@media (min-width: 640px) { .tcard__icons[data-n="4"] .tcard__icon { width: 56px; height: 56px; } }
 .tcard:hover .tcard__icon { transform: translateY(-2px); }
-.tcard__icon-fallback { width: 40px; height: 40px; color: var(--gray-300); }
 /* 終了した大会はピクトグラムを薄く、文字をグレーに */
 .tcard--past .tcard__icon { filter: grayscale(1); opacity: .45; }
 .tcard--past:hover .tcard__icon { filter: grayscale(0); opacity: 1; }
 .tcard--past .tcard__title { color: var(--gray-600); }
-/* 受付中・本日開催は地を赤みに */
-.tcard--open .tcard__media, .tcard--live .tcard__media { background: var(--red-tint); }
+/* 受付中・本日開催は上端に赤い線 */
+.tcard--open, .tcard--live { border-top: 3px solid var(--red); }
 
-.tcard__body { display: flex; flex-direction: column; justify-content: space-between; gap: 12px; flex: 1; padding: 14px 16px 16px; }
-@media (min-width: 640px) { .tcard__body { padding: 16px 20px 18px; } }
+.tcard__body { display: flex; flex-direction: column; justify-content: space-between; gap: 14px; flex: 1; padding: 16px 16px 16px; }
+@media (min-width: 640px) { .tcard__body { padding: 20px 20px 18px; } }
 .tcard__head { display: flex; gap: 12px; align-items: flex-start; }
 .tcard__title {
   margin: 0;
