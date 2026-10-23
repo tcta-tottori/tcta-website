@@ -1,10 +1,9 @@
 // トップページ「大会情報」カルーセル。内容は EmDash の「大会」コレクションのうち
 // 「トップページの大会カードに出す」にチェックの入ったもの（src/lib/cms.js が読む）。
 //
-// ■ 写真
-//   管理画面の「カードの写真」にアップロードする。移行前に public/assets/img/ に置いた写真は
-//   「取り込みずみの写真の場所」に残してあり、アップロードが無いときはそちらを使う。
-//   どちらも無い大会は、写真が用意できるまで大会名だけのプレースホルダーを表示する。
+// ■ 種目のピクトグラム
+//   カードの上部には写真ではなく、種目の文言（「カードに出す種目の文言」があればそれ、無ければ「種目」）から
+//   選んだピクトグラム（src/data/event-icons.js）を出す。管理画面の「カードの写真」はいまは使わない。
 //
 // ■ 状態（受付状態から決まる）
 //   'past'   終了（モノクロ表示・TODAY より前に並ぶ）
@@ -81,18 +80,8 @@ export function cardAction(t, e) {
 }
 
 /**
- * 会場ロゴ（背景透過・白抜き）。大会カードは写真の上に文字を載せるので、
- * ロゴがある会場はカード下部を文字ではなくロゴで見せる。
- * ここに無い会場は venue の文字がそのまま出る。
- * 画像を足すときは、白インク＋背景透過の PNG を public/assets/img/ に置くこと。
- */
-export const VENUE_LOGOS = {
-  'ヤマタスポーツパーク': { src: 'assets/img/venue-yamata.png', width: 770, height: 80 },
-};
-
-/**
  * EmDash の行から、カードの配列を組み立てる。日付の古い順。
- *   TOURNAMENTS … { date: '2026.10.18', slug, title, event, venue, status, image, imageAlt, action }
+ *   TOURNAMENTS … { date: '2026.10.18', slug, title, event, venue, status, action }
  */
 export function buildCards(rows, { ROWS, eventBySlug }) {
   const base = new Map(ROWS.map((r) => [r.slug, r]));
@@ -108,8 +97,6 @@ export function buildCards(rows, { ROWS, eventBySlug }) {
         event: t.card_event || b.event,
         venue: b.place,
         status: CARD_STATUS[b.status] ?? 'soon',
-        image: t.card_image?.src || t.card_image_path || null,
-        imageAlt: t.card_image?.alt || t.card_image_alt || '',
         liveUrl: t.live_url || null,
         outlineUrl: t.outline_url || null,
         drawUrl: t.draw_url || null,

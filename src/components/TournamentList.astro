@@ -10,6 +10,7 @@
 // 素材の無い大会は4つとも押せない状態で出す（大会名からそのページへは行ける）。
 import Icon from './Icon.astro';
 import { REG_LABEL, STATUS_LABEL, dateCell } from '../data/schedule.js';
+import { eventIcons, ICON_SIZE } from '../data/event-icons.js';
 import { siteData } from '../lib/cms.js';
 
 const { items, id, caption } = Astro.props;
@@ -49,12 +50,12 @@ function notes(t, e) {
 
 const rows = items.map((t) => {
   const e = eventForSchedule(t);
-  return { t, e, date: dateText(t), buttons: buttons(t, e), notes: notes(t, e), badge: STATUS_LABEL[t.status] };
+  return { t, e, date: dateText(t), buttons: buttons(t, e), notes: notes(t, e), badge: STATUS_LABEL[t.status], icons: eventIcons(t.event) };
 });
 ---
 
 <div class="tl" id={id} role="list" aria-label={caption}>
-  {rows.map(({ t, e, date, buttons, notes, badge }) => (
+  {rows.map(({ t, e, date, buttons, notes, badge, icons }) => (
     <article
       class:list={['tl-item rv', t.status === 'done' && 'tl-item--done', t.status === 'open' && 'tl-item--open']}
       data-tags={`${t.status} ${t.reg}`}
@@ -71,23 +72,30 @@ const rows = items.map((t) => {
         </p>
       </header>
 
-      <dl class="tl-item__meta">
-        <div class="tl-item__row">
-          <dt><Icon name="calendar" class="tl-item__ico" /><span class="visually-hidden">日程</span></dt>
-          <dd class="tl-item__date">
-            <span class="tl-item__ymd">{date.ymd}</span><span class="tl-item__dow">{date.dow}</span>
-            {date.note && <span class="tl-item__date-note">{date.note}</span>}
-          </dd>
+      {/* 左に日程・会場、右に種目（ピクトグラム＋文言） */}
+      <div class="tl-item__info">
+        <dl class="tl-item__meta">
+          <div class="tl-item__row">
+            <dt><Icon name="calendar" class="tl-item__ico" /><span class="visually-hidden">日程</span></dt>
+            <dd class="tl-item__date">
+              <span class="tl-item__ymd">{date.ymd}</span><span class="tl-item__dow">{date.dow}</span>
+              {date.note && <span class="tl-item__date-note">{date.note}</span>}
+            </dd>
+          </div>
+          <div class="tl-item__row">
+            <dt><Icon name="pin" class="tl-item__ico" /><span class="visually-hidden">会場</span></dt>
+            <dd>{t.place}</dd>
+          </div>
+        </dl>
+        <div class="tl-item__event">
+          {icons.length > 0 && (
+            <span class="tl-item__event-icons" aria-hidden="true">
+              {icons.map((ic) => <img src={ic.src} alt="" width={ICON_SIZE} height={ICON_SIZE} loading="lazy" decoding="async">)}
+            </span>
+          )}
+          <span class="tl-item__event-text"><Icon name="list" class="tl-item__ico" /><span class="visually-hidden">種目：</span>{t.event}</span>
         </div>
-        <div class="tl-item__row">
-          <dt><Icon name="pin" class="tl-item__ico" /><span class="visually-hidden">会場</span></dt>
-          <dd>{t.place}</dd>
-        </div>
-        <div class="tl-item__row">
-          <dt><Icon name="list" class="tl-item__ico" /><span class="visually-hidden">種目</span></dt>
-          <dd>{t.event}</dd>
-        </div>
-      </dl>
+      </div>
 
       <div class="tl-item__btns">
         {buttons.map((b) =>

@@ -1004,63 +1004,70 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 
 .carousel__nav { display: inline-flex; gap: 10px; }
 
-/* 写真の上に文字を重ねるカード。
-   上：日程チップ＋大会名／下：種目・会場と、進み具合に応じた案内。 */
+/* 大会カード。上に種目のピクトグラム、下に 日程チップ＋大会名／種目・会場／進み具合に応じた案内。 */
 .tcard {
   position: relative;
   flex: none;
   /* 次の大会が右端で少し覗く幅にしてある（初期表示の見え方に効く） */
   width: 68vw;
   max-width: 380px;
-  aspect-ratio: 3 / 2;
   scroll-snap-align: start;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  padding: 16px;
+  border: 1px solid var(--gray-200);
   border-radius: 14px;
   overflow: hidden;
-  background: var(--ink);
-  isolation: isolate;
-  transition: box-shadow .3s ease, transform .3s ease;
+  background: var(--white);
+  color: var(--ink);
+  transition: box-shadow .3s ease, transform .3s ease, border-color .3s ease;
   cursor: pointer;
 }
-@media (min-width: 640px) { .tcard { width: 340px; padding: 20px; } }
+@media (min-width: 640px) { .tcard { width: 340px; } }
 @media (min-width: 1024px) { .tcard { width: 380px; } }
-.tcard:hover { transform: translateY(-4px); box-shadow: var(--shadow-hover); color: inherit; }
+.tcard:hover { transform: translateY(-4px); box-shadow: var(--shadow-hover); border-color: var(--gray-300); color: inherit; }
 /* 遷移先が決まっていないカード（結果待ちなど） */
 .tcard--nolink { cursor: default; }
-.tcard--nolink:hover { transform: none; box-shadow: none; }
+.tcard--nolink:hover { transform: none; box-shadow: none; border-color: var(--gray-200); }
 
-.tcard__media { position: absolute; inset: 0; z-index: -1; }
-.tcard__media img {
-  width: 100%; height: 100%;
-  object-fit: cover;
-  transition: transform .5s ease, filter .5s ease;
+/* 種目のピクトグラム。薄い地に、種目の数だけ横に並べる（最大4つ。数が多いほど1つが小さくなる） */
+.tcard__media {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 128px;
+  padding: 16px 20px;
+  background: var(--gray-050);
+  border-bottom: 1px solid var(--gray-200);
 }
-.tcard:hover .tcard__media img { transform: scale(1.05); }
-/* 写真が未入稿の大会（data の image が null）のつなぎ表示 */
-.tcard__media-empty { position: absolute; inset: 0; background: var(--gray-600); }
-/* 終了した大会はモノクロ、ホバーでカラーに戻る */
-.tcard--past .tcard__media img { filter: grayscale(1); }
-.tcard:hover .tcard__media img { filter: grayscale(0); }
-
-/* 文字を読ませるための覆い。上下を落として中央は写真を見せる。 */
-.tcard__scrim {
-  position: absolute;
-  inset: 0;
-  background:
-    linear-gradient(180deg, rgba(12, 22, 38, .78) 0%, rgba(12, 22, 38, .28) 26%, rgba(12, 22, 38, 0) 44%),
-    linear-gradient(0deg, rgba(12, 22, 38, .86) 0%, rgba(12, 22, 38, .5) 22%, rgba(12, 22, 38, 0) 46%);
+@media (min-width: 640px) { .tcard__media { height: 144px; } }
+.tcard__icons { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; height: 100%; }
+.tcard__icon {
+  display: block;
+  flex: 0 1 96px;
+  min-width: 0;
+  width: 96px;
+  height: 100%;
+  object-fit: contain;
+  transition: transform .4s var(--ease), filter .4s ease, opacity .4s ease;
 }
+.tcard__icons[data-n="3"] .tcard__icon, .tcard__icons[data-n="4"] .tcard__icon { flex-basis: 76px; width: 76px; }
+.tcard:hover .tcard__icon { transform: translateY(-2px); }
+.tcard__icon-fallback { width: 40px; height: 40px; color: var(--gray-300); }
+/* 終了した大会はピクトグラムを薄く、文字をグレーに */
+.tcard--past .tcard__icon { filter: grayscale(1); opacity: .45; }
+.tcard--past:hover .tcard__icon { filter: grayscale(0); opacity: 1; }
+.tcard--past .tcard__title { color: var(--gray-600); }
+/* 受付中・本日開催は地を赤みに */
+.tcard--open .tcard__media, .tcard--live .tcard__media { background: var(--red-tint); }
 
+.tcard__body { display: flex; flex-direction: column; justify-content: space-between; gap: 12px; flex: 1; padding: 14px 16px 16px; }
+@media (min-width: 640px) { .tcard__body { padding: 16px 20px 18px; } }
 .tcard__head { display: flex; gap: 12px; align-items: flex-start; }
 .tcard__title {
   margin: 0;
   font: 700 16px/1.5 var(--fjp);
   letter-spacing: .02em;
-  color: #fff;
-  text-shadow: 0 1px 10px rgba(10, 20, 35, .6);
+  color: var(--ink);
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -1076,8 +1083,7 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   gap: 7px;
   font: 700 14px/1.6 var(--fjp);
   letter-spacing: .02em;
-  color: #fff;
-  text-shadow: 0 1px 10px rgba(10, 20, 35, .6);
+  color: var(--ink);
 }
 .tcard__venue {
   margin: 0;
@@ -1085,31 +1091,13 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   align-items: center;
   gap: 7px;
   font: 400 12px/1.6 var(--fjp);
-  color: rgba(255, 255, 255, .78);
-  text-shadow: 0 1px 10px rgba(10, 20, 35, .6);
+  color: var(--gray-600);
 }
-/* 写真の上に載るので白。埋もれないよう陰を付ける。 */
-.tcard__ico {
-  width: 14px; height: 14px;
-  color: #fff;
-  filter: drop-shadow(0 1px 8px rgba(10, 20, 35, .8));
-}
-/* ロゴのある会場（ヤマタスポーツパーク）は文字の代わりにロゴを出す。
-   白インクの透過 PNG なので、写真の上でもそのまま読める。 */
-.tcard__venue-logo {
-  display: block;
-  flex: none;
-  width: auto;
-  height: 14px;
-  margin-top: 5px;
-  opacity: .9;
-  filter: drop-shadow(0 1px 10px rgba(10, 20, 35, .6));
-}
-@media (min-width: 1024px) { .tcard__venue-logo { height: 16px; } }
+.tcard__ico { width: 14px; height: 14px; flex: none; color: var(--gray-500); }
 .tcard__action {
   margin-top: 10px;
   padding-top: 10px;
-  border-top: 1px solid rgba(255, 255, 255, .28);
+  border-top: 1px solid var(--gray-200);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1176,9 +1164,10 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   gap: 8px;
   font: 700 13px/1 var(--fjp);
   letter-spacing: .02em;
-  color: #fff;
+  color: var(--ink);
 }
-.tcard--nolink .tcard__go { color: rgba(255, 255, 255, .6); }
+.tcard__go .aw { color: var(--red); }
+.tcard--nolink .tcard__go { color: var(--gray-500); }
 .tcard:hover .tcard__go .aw { transform: translateX(4px); }
 
 /* TODAY マーカー */
@@ -1403,17 +1392,11 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 .date-chip__md { font: 700 20px/1 var(--flt); letter-spacing: .02em; color: var(--ink); white-space: nowrap; }
 .date-chip__dow { font: 700 11px/1 var(--flt); letter-spacing: .1em; color: var(--red); white-space: nowrap; }
 
-/* 写真の上に置く日程チップ（大会カード左上）。中身の作りは上と同じ。 */
-.date-chip--on-photo {
-  min-width: 56px;
-  height: 56px;
-  border-radius: 8px;
-  border-color: transparent;
-  box-shadow: 0 2px 14px rgba(10, 20, 35, .35);
-}
-@media (min-width: 640px) { .date-chip--on-photo { min-width: 60px; height: 60px; } }
-.date-chip--on-photo .date-chip__md { font-size: 18px; }
-@media (min-width: 640px) { .date-chip--on-photo .date-chip__md { font-size: 19px; } }
+/* 大会カードの日程チップ。中身の作りは上と同じで、少し小さい。 */
+.date-chip--card { min-width: 56px; height: 56px; border-radius: 8px; background: var(--gray-050); }
+@media (min-width: 640px) { .date-chip--card { min-width: 60px; height: 60px; } }
+.date-chip--card .date-chip__md { font-size: 18px; }
+@media (min-width: 640px) { .date-chip--card .date-chip__md { font-size: 19px; } }
 
 .sch-item__text { min-width: 0; }
 .sch-item__title {
@@ -2396,12 +2379,31 @@ body.jsrv .rv.on .ink-sweep {
 .tl-item--done .tl-item__head .sec-head__mark { background: var(--gray-300); }
 .tl-item--done .tl-item__title { color: var(--gray-600); }
 
+/* 日程・会場を左に、種目（ピクトグラム＋文言）を右に */
+.tl-item__info { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px 24px; margin-top: 20px; }
 .tl-item__meta {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  margin: 20px 0 0;
+  flex: 1 1 0;
+  min-width: 0;
+  margin: 0;
 }
+.tl-item__event { flex: 0 1 auto; max-width: 60%; display: flex; flex-direction: column; align-items: flex-end; gap: 8px; text-align: right; }
+.tl-item__event-icons { display: flex; justify-content: flex-end; gap: 6px; }
+.tl-item__event-icons img { display: block; width: 44px; height: 44px; object-fit: contain; }
+@media (min-width: 640px) { .tl-item__event-icons img { width: 56px; height: 56px; } .tl-item__event-icons { gap: 10px; } }
+.tl-item__event-text {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 8px;
+  font: 700 14px/1.6 var(--fjp);
+  letter-spacing: .03em;
+  color: var(--ink);
+}
+.tl-item__event-text .tl-item__ico { flex: none; margin-top: 2px; color: var(--gray-600); }
+.tl-item--done .tl-item__event-text { color: var(--gray-600); }
+.tl-item--done .tl-item__event-icons img { filter: grayscale(1); opacity: .5; }
 .tl-item__row { display: flex; align-items: flex-start; gap: 10px; }
 .tl-item__row dt { flex: none; display: flex; align-items: center; height: 24px; color: var(--gray-600); }
 .tl-item__row dd {
