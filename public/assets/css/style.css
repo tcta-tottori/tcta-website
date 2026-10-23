@@ -1029,18 +1029,24 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 .tcard--nolink { cursor: default; }
 .tcard--nolink:hover { transform: none; box-shadow: none; border-color: var(--gray-200); }
 
-/* 種目のピクトグラム。案内の行のすぐ上に右寄せで並べる（最大4つ。数が多いほど1つが小さくなる） */
-.tcard__icons { display: flex; justify-content: flex-end; align-items: flex-end; gap: 8px; margin-top: 10px; }
+/* 種目・会場の文字と同じ段。左に文字、右に種目のピクトグラム（最大4つ。数が多いほど1つが小さくなる） */
+.tcard__info { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.tcard__text { display: flex; flex-direction: column; gap: 2px; flex: 1 1 0; min-width: 0; }
+.tcard__icons { display: flex; flex: none; justify-content: flex-end; align-items: center; gap: 4px; }
 .tcard__icon {
   display: block;
-  width: 56px;
-  height: 56px;
+  width: 44px;
+  height: 44px;
   object-fit: contain;
   transition: transform .4s var(--ease), filter .4s ease, opacity .4s ease;
 }
-@media (min-width: 640px) { .tcard__icon { width: 64px; height: 64px; } }
-.tcard__icons[data-n="4"] .tcard__icon { width: 48px; height: 48px; }
-@media (min-width: 640px) { .tcard__icons[data-n="4"] .tcard__icon { width: 56px; height: 56px; } }
+@media (min-width: 640px) { .tcard__icon { width: 48px; height: 48px; } }
+.tcard__icons[data-n="3"] .tcard__icon { width: 38px; height: 38px; }
+.tcard__icons[data-n="4"] .tcard__icon { width: 32px; height: 32px; }
+@media (min-width: 640px) {
+  .tcard__icons[data-n="3"] .tcard__icon { width: 42px; height: 42px; }
+  .tcard__icons[data-n="4"] .tcard__icon { width: 36px; height: 36px; }
+}
 .tcard:hover .tcard__icon { transform: translateY(-2px); }
 /* 終了した大会はピクトグラムを薄く、文字をグレーに */
 .tcard--past .tcard__icon { filter: grayscale(1); opacity: .45; }
@@ -1064,7 +1070,7 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 }
 @media (min-width: 1024px) { .tcard__title { font-size: 17px; } }
 
-.tcard__foot { display: flex; flex-direction: column; gap: 2px; }
+.tcard__foot { display: flex; flex-direction: column; gap: 0; }
 .tcard__event {
   margin: 0;
   display: flex;

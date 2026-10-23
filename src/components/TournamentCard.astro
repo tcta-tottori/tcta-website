@@ -1,6 +1,6 @@
 ---
 // 大会カード1枚。src/data/tournaments.js の buildCards が組んだ1件をそのまま受け取る。
-// 日程チップ＋大会名、種目・会場、種目のピクトグラム（src/data/event-icons.js。種目の文言から選ぶ）、
+// 日程チップ＋大会名、次の段に左：種目・会場、右：種目のピクトグラム（src/data/event-icons.js。種目の文言から選ぶ）、
 // いちばん下に大会の進み具合に応じた案内、の順。
 // 写真は使わない（種目が一目で分かるようにするため。管理画面の「カードの写真」は無視される）。
 import Icon from './Icon.astro';
@@ -31,13 +31,18 @@ const Tag = action.href ? 'a' : 'div';
     </div>
 
     <div class="tcard__foot">
-      <p class="tcard__event"><Icon name="list" class="tcard__ico" />{event}</p>
-      <p class="tcard__venue"><Icon name="pin" class="tcard__ico" />{venue}</p>
-      {icons.length > 0 && (
-        <span class="tcard__icons" data-n={icons.length} aria-hidden="true">
-          {icons.map((ic) => <img class="tcard__icon" src={ic.src} alt="" width={ICON_SIZE} height={ICON_SIZE} loading="lazy" decoding="async">)}
-        </span>
-      )}
+      {/* 左に種目・会場の文字、右に種目のピクトグラム（同じ段に並べる） */}
+      <div class="tcard__info">
+        <div class="tcard__text">
+          <p class="tcard__event"><Icon name="list" class="tcard__ico" />{event}</p>
+          <p class="tcard__venue"><Icon name="pin" class="tcard__ico" />{venue}</p>
+        </div>
+        {icons.length > 0 && (
+          <span class="tcard__icons" data-n={icons.length} aria-hidden="true">
+            {icons.map((ic) => <img class="tcard__icon" src={ic.src} alt="" width={ICON_SIZE} height={ICON_SIZE} loading="lazy" decoding="async">)}
+          </span>
+        )}
+      </div>
       <div class="tcard__action">
         <span class={`badge ${badge.badge}`}>{badge.label}</span>
         <span class="tcard__go">{action.label}{action.href && <span class="aw">→</span>}</span>
