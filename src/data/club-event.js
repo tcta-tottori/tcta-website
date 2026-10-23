@@ -3,7 +3,7 @@
 //
 // 材料は EmDash の大会1件（events.js の buildEvents が組んだ e）と、club-league.js の年度データ（term）。
 //   結果の画像   … ラベル（「女子予選会 Bリーグ」など）の先頭の「男子1部」「女子予選会」で部にまとめる
-//   当日の写真   … term.photoOrder（写真の並び順に部の名前）で部に付ける。枚数が合わなければ付けない
+//   当日の写真   … term.photoMap（部の名前 → 写真のファイル名）で部に付ける。管理画面に無い写真は term.extraPhotos から
 //   優勝クラブ   … 管理画面の「成績」があればそれ、無ければ term.divisions
 // 該当しない大会（クラブ対抗戦でない、結果が無い）は null を返し、ページは従来の節の並びで描く。
 
@@ -66,13 +66,23 @@ export function clubEventLayout(e) {
     }
   }
 
-  // 当日の写真 → 部に付ける（並び順が年度データにあり、枚数が合うときだけ）
+  // 当日の写真 → 部に付ける（年度データの photoMap。ファイル名で引く）
   const photo = e.sections.find((s) => s.key === 'photo');
-  let photosUsed = false;
-  if (photo && term?.photoOrder && term.photoOrder.length === photo.images.length) {
-    photo.images.forEach((img, i) => division(term.photoOrder[i]).photos.push(img));
-    photosUsed = true;
+  const baseName = (src) => String(src).replace(/^.*\//, '').replace(/\.\w+$/, '');
+  const cmsPhotos = new Map((photo?.images ?? []).map((img) => [baseName(img.src), img]));
+  const used = new Set();
+  if (term?.photoMap) {
+    for (const [key, names] of Object.entries(term.photoMap)) {
+      for (const name of names) {
+        const img = cmsPhotos.get(name);
+        const extra = term.extraPhotos?.[name];
+        if (img) { division(key).photos.push(img); used.add(name); }
+        else if (extra) division(key).photos.push({ src: `assets/img/events/${e.slug}/${name}.webp`, label: null, w: extra[0], h: extra[1] });
+      }
+    }
   }
+  // 管理画面の写真が全部どこかの部に付いたら、「当日の写真」の節は出さない
+  const photosUsed = cmsPhotos.size > 0 && [...cmsPhotos.keys()].every((n) => used.has(n));
 
   const divisions = [...map.values()].sort((a, b) => a.order - b.order);
   return { divisions, loose, photosUsed, photoCount: photo?.images.length ?? 0 };
