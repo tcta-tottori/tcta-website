@@ -6,21 +6,31 @@
 // 中身は「概要」＋「節」で、節は大会の進み具合で並びが変わる（events.js を参照）。
 // 終わった大会なら結果が先、これからの大会なら要項が先に来る。
 import Base from '../layouts/Base.astro';
-import ClubDivisions from '../components/ClubDivisions.astro';
+import EventResult from '../components/EventResult.astro';
 import { siteData } from '../lib/cms.js';
 import { clubEventLayout } from '../data/club-event.js';
+import { eventResultLayout } from '../data/event-result.js';
 
 const { EVENTS_BY_DATE, eventBySlug } = await siteData(Astro);
 const e = eventBySlug(Astro.params.slug);
 if (!e) return Astro.rewrite('/404');
 
-// クラブ対抗戦は、結果を部ごとに「リーグ表 → その下に優勝クラブの写真」で出す（club-event.js）。
-// 写真を部に付けたときは「当日の写真」の節は出さない。
+// 結果は、どの大会も旧サイトと同じ構成で出す（EventResult）。
+//   クラブ対抗戦 … 部ごとに「リーグ表 → その下に優勝クラブの写真 → 優勝クラブの名前」（club-event.js）
+//   それ以外    … 種目ごとに「結果表 → その下に入賞者の写真 → 入賞者の名前」（event-result.js）
+// 種目（部）に付いた写真はそこに出すので、「当日の写真」の節に残すのは付かなかった写真だけ。
 const club = clubEventLayout(e);
-const sections = club
-  ? e.sections.filter((s) => s.key !== 'result' && !(s.key === 'photo' && club.photosUsed))
-  : e.sections;
+const layout = club ? null : eventResultLayout(e);
 const resultSection = e.sections.find((s) => s.key === 'result');
+const photoSection = e.sections.find((s) => s.key === 'photo');
+const hasResultBlock = !!(club || layout);
+const restPhotos = club
+  ? (club.photosUsed ? [] : photoSection?.images ?? [])
+  : layout ? layout.restPhotos : photoSection?.images ?? [];
+const sections = e.sections
+  .filter((s) => !(s.key === 'result' && hasResultBlock) && !(s.key === 'photo' && !restPhotos.length))
+  .map((s) => (s.key === 'photo' ? { ...s, images: restPhotos } : s));
+const resultCount = club ? `${club.divisions.length}部` : layout ? `${layout.blocks.length}種目` : '';
 
 // 日付順に並べた中での前後（ページ下部の行き来に使う）
 const idx = EVENTS_BY_DATE.findIndex((x) => x.slug === e.slug);
@@ -73,10 +83,9 @@ const description = `${e.label}に${e.place}で行われる${e.name}（${e.event
         <span style="margin-left:12px">{e.event}　／　{e.place}</span>
       </p>
 
-      {(sections.length + (club ? 1 : 0) + (e.winners.length ? 1 : 0)) > 1 && (
+      {(sections.length + (hasResultBlock ? 1 : 0)) > 1 && (
         <nav class="jump fu" style="animation-delay:.3s" aria-label="このページの内容">
-          {e.winners.length > 0 && <a class="jump__link" href="#winners">成績</a>}
-          {club && <a class="jump__link" href="#result">結果<span class="jump__n">{club.divisions.length}部</span></a>}
+          {hasResultBlock && <a class="jump__link" href="#result">結果{resultCount && <span class="jump__n">{resultCount}</span>}</a>}
           {sections.map((s) => (
             <a class="jump__link" href={`#${s.key}`}>
               {s.label}
@@ -106,57 +115,16 @@ const description = `${e.label}に${e.place}で行われる${e.name}（${e.event
         {e.link && <a class="btn btn--outline mt-24" href={e.link.url} target="_blank" rel="noopener noreferrer">{e.link.label} <span class="aw">↗</span></a>}
       </div>
 
-      {/* 種目ごとの優勝・準優勝（公式サイトの結果ページの文言そのまま） */}
-      {e.winners.length > 0 && (
-        <section class="esec rv" id="winners" style="margin-top:64px">
-          <div class="esec__head">
-            <h2 class="sub-head" style="margin-bottom:0">成績</h2>
-            <span class="esec__en">Winners</span>
-          </div>
-          <div class="deflist mt-24">
-            {e.winners.map((c) => (
-              <div class="deflist__row">
-                <div class="deflist__key">{c.category || '種目'}</div>
-                <div class="deflist__val">
-                  <ul class="place-list">
-                    {c.places.map((p) => (
-                      <li>
-                        <span class="place-list__award">{p.award}</span>
-                        <span class="place-list__name">{p.name}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* クラブ対抗戦の結果：部ごとに リーグ表 → 優勝クラブの写真 */}
-      {club && (
+      {/* 結果：種目（部）ごとに 結果表 → その下に入賞者の写真 → 入賞者の名前 */}
+      {hasResultBlock && (
         <section class="esec rv" id="result" style="margin-top:64px">
           <div class="esec__head">
-            <h2 class="sub-head" style="margin-bottom:0">{resultSection.label}</h2>
-            <span class="esec__en">{resultSection.en}</span>
-            <span class="gallery__count">{club.divisions.length}部</span>
+            <h2 class="sub-head" style="margin-bottom:0">{resultSection?.label ?? '結果'}</h2>
+            <span class="esec__en">{resultSection?.en ?? 'Result'}</span>
+            {resultCount && <span class="gallery__count">{resultCount}</span>}
           </div>
-          <p class="note mt-24">部ごとのリーグ表と、その下に優勝クラブの写真です。画像をタップすると全画面で表示します。</p>
-          <ClubDivisions club={club} name={e.name} />
-          {resultSection.pdfs.length > 0 && (
-            <ul class="mt-32">
-              {resultSection.pdfs.map((p) => (
-                <li><a class="dl-item" href={p.src} target="_blank" rel="noopener noreferrer">
-                  <span class="dl-item__type">PDF</span>
-                  <span class="dl-item__text">
-                    <span class="dl-item__title">{p.label}</span>
-                    <span class="dl-item__note">{p.kb.toLocaleString()}KB／別タブで開きます</span>
-                  </span>
-                  <span class="sqbtn" aria-hidden="true">↓</span>
-                </a></li>
-              ))}
-            </ul>
-          )}
+          <p class="note mt-24">{club ? '部ごとのリーグ表と、その下に優勝クラブの写真です。' : '種目ごとの結果表と、その下に入賞者の写真です。'}画像をタップすると全画面で表示します。</p>
+          <EventResult e={e} club={club} layout={layout} restPhotos={false} />
         </section>
       )}
 

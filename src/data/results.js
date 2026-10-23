@@ -213,7 +213,7 @@ export const divisionOrder = (category) => {
  * 旧サイトの並びは「その部の結果表（リーグ表が何枚か）→ その部の優勝クラブの写真 → 次の部…」なので、
  * まとまりの数と部の数が合えば、n番目のまとまり＝n番目の部と分かる。
  */
-function imageRuns(photos) {
+export function imageRuns(photos) {
   const runs = [];
   for (const p of photos) {
     const last = runs[runs.length - 1];

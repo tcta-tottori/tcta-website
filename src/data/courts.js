@@ -44,6 +44,14 @@ export const COURTS = [
     href: 'lesson.html',
   },
   {
+    id: 'higashi-tomiyasu',
+    name: '東冨安公園テニスコート',
+    short: '東冨安公園',
+    note: '2面・鳥取市交通公園に併設・鳥取県鳥取市南吉方1丁目31',
+    lat: 35.488967, lng: 134.231325,
+    href: '#courts',
+  },
+  {
     id: 'wakabadai',
     name: '若葉台テニス場',
     short: '若葉台',

@@ -1,32 +1,44 @@
 ---
-// 大会1件の「結果」のページの中身（EmDash の大会）。
-//   クラブ対抗戦 … 部ごとに リーグ表 → 優勝クラブの写真（ClubDivisions）
-//   それ以外    … 種目ごとに 結果表 → 入賞者の写真 → 順位（event-result.js。公式サイトと照合した対応）
-//   対応の無い大会 … 結果表の一覧 → 成績の表 → 当日の写真
+// 大会1件の「結果」の中身（EmDash の大会）。大会ページ（event-*.html）と結果だけのページ（result-*.html）で共用。
+// どの大会も同じ構成で出す（旧サイトの結果ページと同じ）。
+//   クラブ対抗戦 … 部ごとに リーグ表 → 優勝クラブの写真 → 優勝クラブの名前（ClubDivisions）
+//   それ以外    … 種目ごとに 結果表 → 入賞者の写真（1枚ずつ名前つき）→ 入賞者の名前の1行（event-result.js）
+// 成績の表は別に出さない（名前は写真の下にある）。
+//
+//   e          … events.js の大会1件
+//   layout     … event-result.js の eventResultLayout(e)。省略すればここで作る
+//   club       … club-event.js の clubEventLayout(e)。省略すればここで作る
+//   restPhotos … どの種目にも付かなかった当日の写真を、この中に「当日の写真」として出すか（既定 true）。
+//                大会ページは自分の節として出すので false を渡す
 import ClubDivisions from './ClubDivisions.astro';
 import SheetList from './SheetList.astro';
 import { clubEventLayout } from '../data/club-event.js';
 import { eventResultLayout } from '../data/event-result.js';
-import { sortByCategory } from '../data/category-order.js';
 
-const { e } = Astro.props;
+const { e, restPhotos: showRest = true } = Astro.props;
+const club = Astro.props.club === undefined ? clubEventLayout(e) : Astro.props.club;
+const layout = club ? null : Astro.props.layout === undefined ? eventResultLayout(e) : Astro.props.layout;
 const result = e.sections.find((s) => s.key === 'result');
-const photo = e.sections.find((s) => s.key === 'photo');
-const club = clubEventLayout(e);
-const layout = club ? null : eventResultLayout(e);
-const winners = sortByCategory(e.winners, (c) => c.category);
 const anchor = (label, i) => `blk-${i}-${String(label).replace(/[^0-9A-Za-z぀-ヿ一-鿿]/g, '')}`;
+const rest = layout?.restPhotos ?? [];
 let photoNo = 0;
 ---
 
-{club && <ClubDivisions club={club} name={e.name} />}
+{club && (
+  <>
+    <ClubDivisions club={club} name={e.name} />
+    {result?.pdfs.length > 0 && <div class="rv"><SheetList pdfs={result.pdfs} alt="" /></div>}
+  </>
+)}
 
 {!club && layout && (
   <>
-    <nav class="jump rv" style="margin-top:0" aria-label="種目へ移動">
-      {layout.blocks.map((b, i) => <a class="jump__link" href={`#${anchor(b.label, i)}`}>{b.label || `結果 ${i + 1}`}</a>)}
-      {layout.restPhotos.length > 0 && <a class="jump__link" href="#photos">当日の写真<span class="jump__n">{layout.restPhotos.length}</span></a>}
-    </nav>
+    {(layout.blocks.length > 1 || (showRest && rest.length > 0)) && (
+      <nav class="jump rv" style="margin-top:0" aria-label="種目へ移動">
+        {layout.blocks.map((b, i) => <a class="jump__link" href={`#${anchor(b.label, i)}`}>{b.label || '結果'}</a>)}
+        {showRest && rest.length > 0 && <a class="jump__link" href="#photos">当日の写真<span class="jump__n">{rest.length}</span></a>}
+      </nav>
+    )}
     {layout.blocks.map((b, i) => (
       <section class="division rv" id={anchor(b.label, i)}>
         <h2 class="division__head">
@@ -34,29 +46,33 @@ let photoNo = 0;
           {b.captions.length > 0 && <span class="division__champ">{b.captions[0]}</span>}
         </h2>
         <div class="rblock">
+          {/* 結果表（ドロー表・リーグ表） */}
           {b.sheets.length > 0 && (
             <div class:list={['rblock__sheet', b.sheets.length > 1 && 'sheets sheets--result']}>
               {b.sheets.map((sh) => (
                 <a class="sheet sheet--result" href={sh.src}>
-                  <img src={sh.src} alt={`${e.name} ${b.label || '結果'}${sh.label ? ' ' + sh.label : ''}`} width={sh.w} height={sh.h} loading="lazy" decoding="async">
+                  <img src={sh.src} alt={`${e.name} ${b.label || '結果'}${sh.label && sh.label !== b.label ? ' ' + sh.label : ''}`} width={sh.w} height={sh.h} loading="lazy" decoding="async">
                   {sh.label && b.sheets.length > 1 && <span class="sheet__cap">{sh.label}</span>}
                 </a>
               ))}
             </div>
           )}
+          {/* その下に入賞者の写真。写真ごとに「優勝 ○○ペア」 */}
           {b.photos.length > 0 && (
             <div class="rblock__photos division__photos">
               <div class="gallery gallery--winners">
                 {b.photos.map((ph) => (
                   <a class="gallery__item" href={ph.src}>
-                    <img src={ph.src} alt={`${e.name} ${b.label} 入賞者の写真 ${++photoNo}`} width={ph.w} height={ph.h} loading="lazy" decoding="async">
+                    <img src={ph.src} alt={`${e.name} ${b.label}${ph.caption ? ' ' + ph.caption : ''} 入賞者の写真 ${++photoNo}`} width={ph.w} height={ph.h} loading="lazy" decoding="async">
+                    {ph.caption && <span class="gallery__cap">{ph.caption}</span>}
                   </a>
                 ))}
               </div>
-              {b.captions.length > 0 && (
-                <p class="rblock__caption">{b.label && <span class="rblock__cat">{b.label}</span>}{b.captions.join('　')}</p>
-              )}
             </div>
+          )}
+          {/* 入賞者の名前（優勝・準優勝・ベスト4 …） */}
+          {b.captions.length > 0 && (
+            <p class="rblock__caption">{b.label && <span class="rblock__cat">{b.label}</span>}{b.captions.join('　')}</p>
           )}
         </div>
       </section>
@@ -68,11 +84,11 @@ let photoNo = 0;
       </div>
     )}
     {result?.pdfs.length > 0 && <div class="rv"><SheetList pdfs={result.pdfs} alt="" /></div>}
-    {layout.restPhotos.length > 0 && (
+    {showRest && rest.length > 0 && (
       <div class="rv" id="photos" style="margin-top:64px">
-        <div class="esec__head"><h2 class="sub-head" style="margin-bottom:0">当日の写真</h2><span class="gallery__count">{layout.restPhotos.length}枚</span></div>
+        <div class="esec__head"><h2 class="sub-head" style="margin-bottom:0">当日の写真</h2><span class="gallery__count">{rest.length}枚</span></div>
         <div class="gallery">
-          {layout.restPhotos.map((ph) => (
+          {rest.map((ph) => (
             <a class="gallery__item" href={ph.src}>
               <img src={ph.src} alt={`${e.name}の写真 ${++photoNo}`} width={ph.w} height={ph.h} loading="lazy" decoding="async">
             </a>
@@ -83,39 +99,5 @@ let photoNo = 0;
   </>
 )}
 
-{!club && !layout && (
-  <>
-    {result && <div class="rv"><SheetList images={result.images} pdfs={result.pdfs} alt={`${e.name} 結果`} /></div>}
-    {winners.length > 0 && (
-      <div class="rv" style="margin-top:64px">
-        <h2 class="sub-head">成績</h2>
-        <div class="deflist">
-          {winners.map((c) => (
-            <div class="deflist__row">
-              <div class="deflist__key">{c.category || '種目'}</div>
-              <div class="deflist__val">
-                <ul class="place-list">
-                  {c.places.map((p) => <li><span class="place-list__award">{p.award}</span><span class="place-list__name">{p.name}</span></li>)}
-                </ul>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    )}
-    {photo && photo.images.length > 0 && (
-      <div class="rv" id="photos" style="margin-top:64px">
-        <div class="esec__head"><h2 class="sub-head" style="margin-bottom:0">当日の写真</h2><span class="gallery__count">{photo.images.length}枚</span></div>
-        <div class="gallery">
-          {photo.images.map((ph) => (
-            <a class="gallery__item" href={ph.src}>
-              <img src={ph.src} alt={`${e.name}の写真 ${++photoNo}`} width={ph.w} height={ph.h} loading="lazy" decoding="async">
-            </a>
-          ))}
-        </div>
-      </div>
-    )}
-  </>
-)}
-
-<p class="note rv">※ 画像をタップすると全画面で表示します。</p>
+{/* 結果の画像も成績も無い（PDF だけなど） */}
+{!club && !layout && result && <div class="rv"><SheetList images={result.images} pdfs={result.pdfs} alt={`${e.name} 結果`} /></div>}
