@@ -1221,6 +1221,11 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 .tcard--nolink .tcard__go { color: var(--gray-500); }
 .tcard:hover .tcard__go .aw { transform: translateX(4px); }
 
+/* 受付中のバッジの横に申込締切（「締切 10/2」）。受付中のカードだけ */
+.tcard__status { display: inline-flex; align-items: center; gap: 10px; min-width: 0; }
+.tcard__due { font: 700 12px/1 var(--fjp); letter-spacing: .02em; color: var(--red); white-space: nowrap; }
+.tcard__due small { font: 400 11px/1 var(--fjp); color: var(--gray-600); margin-right: 4px; }
+
 /* TODAY マーカー */
 .today-marker {
   flex: none;
@@ -1322,7 +1327,7 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 @media (min-width: 1024px) { .news-row { grid-template-columns: 150px 56px 1fr 44px; } }
 @media (min-width: 1024px) { .news-row__title { font-size: 16px; } }
 
-/* 5件目。まだ続きがあることだけ伝えたいので、薄く出して押せなくする。 */
+/* 4件目（NEWS_VISIBLE の次）。まだ続きがあることだけ伝えたいので、薄くフェードさせて押せなくする。 */
 .news-peek { position: relative; }
 .news-list--peek {
   margin-top: 0;
@@ -1350,7 +1355,7 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 .news-peek__btn:hover .aw { transform: translateY(3px); }
 
 /* コート案内の施設一覧：4件目以降。JS があるとき（.is-js）だけ、1件ぶんの高さに切って白くフェードさせ、
-   ボタンで全部出す。お知らせの5件目の見せ方（.news-list--peek）と同じ調子。 */
+   ボタンで全部出す。お知らせの4件目の見せ方（.news-list--peek）と同じ調子。 */
 .court-more { position: relative; }
 .court-more.is-js:not(.is-open) .court-more__rest {
   max-height: 96px;

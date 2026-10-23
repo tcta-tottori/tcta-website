@@ -103,7 +103,8 @@ export function cardAction(t, e) {
 
 /**
  * EmDash の行から、カードの配列を組み立てる。日付の古い順。
- *   TOURNAMENTS … { date: '2026.10.18', slug, title, event, venue, status, action }
+ *   TOURNAMENTS … { date: '2026.10.18', slug, title, event, venue, status, due, action }
+ *   due は申込締切（「10/2」。管理画面の文言そのまま。無ければ ''）。受付中のカードでバッジの横に出す
  */
 export function buildCards(rows, { ROWS, eventBySlug }) {
   const base = new Map(ROWS.map((r) => [r.slug, r]));
@@ -119,6 +120,7 @@ export function buildCards(rows, { ROWS, eventBySlug }) {
         event: t.card_event || b.event,
         venue: b.place,
         status: CARD_STATUS[b.status] ?? 'soon',
+        due: b.due && b.due !== '—' ? b.due : '',
         liveUrl: t.live_url || null,
         outlineUrl: t.outline_url || null,
         drawUrl: t.draw_url || null,

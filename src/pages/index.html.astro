@@ -205,8 +205,8 @@ const upcomingTournaments = TOURNAMENTS.filter((t) => t.status !== 'past');
         </div>
       </div>
 
-      {/* 上から4件だけ出す。5件目があるときは、続きがあることが分かるよう
-          薄く重ねて見せる（押すと VIEW ALL と同じく全件が開く）。 */}
+      {/* 上から3件だけ出す（NEWS_VISIBLE）。4件目があるときは、続きがあることが分かるよう
+          薄くフェードさせて見せる（押すと VIEW ALL と同じく全件が開く）。 */}
       <ul class="news-list">
         {NEWS.slice(0, NEWS_VISIBLE).map((n, i) => <NewsRow item={n} delay={i * 0.08} />)}
       </ul>
