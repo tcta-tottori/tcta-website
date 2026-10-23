@@ -1,27 +1,31 @@
 ---
 // 種目のピクトグラム1つ（src/data/event-icons.js の1件）。
-// 選手の絵は、画面に入ったとき（.rv に .on が付いたとき）に一度だけスイングし、ボールが飛んでくる。
-// 団体戦は6人を1人ずつに切り分け、応援のように順に跳ねる。動きは style.css の .evicon。
-// 大きさは外側（.tcard__icons / .tl-item__event-icons）が高さで決める。幅は絵に合わせて自動。
+// 画面に入ったとき（.rv に .on が付いたとき）に一度だけ動く：
+//   選手 … 絵を「体」と「ラケットを持つ前腕」に分け（同じ画像を clip-path で切る）、前腕を肘を軸に振る。
+//          体は足を軸にわずかに揺れ、ボールが飛んできて打ち返される。
+//   団体戦 … 6人を1人ずつに切り分け、応援のように順に跳ねる。
+// 動きの定義は style.css の .evicon。大きさは外側（.tcard__icons / .tl-item__event-icons）が高さで決める。
 // ボールは絵の中の大きさだと小さすぎて動きが見えないので、1.6 倍にしてある。
 import { BALL_SRC } from '../data/event-icons.js';
 
 const { icon, class: cls } = Astro.props;
 const ratio = `${icon.w} / ${icon.h}`;
+const img = { src: icon.src, alt: '', width: icon.w, height: icon.h, loading: 'lazy', decoding: 'async' };
 ---
 
 <span class:list={['evicon', `evicon--${icon.key}`, cls]} style={`aspect-ratio:${ratio}`} aria-hidden="true">
   {icon.figures
     ? icon.figures.map(([l, r], i) => (
-        <img
-          class="evicon__fig"
-          src={icon.src} alt="" width={icon.w} height={icon.h} loading="lazy" decoding="async"
-          style={`--i:${i};clip-path:inset(0 ${(100 - r).toFixed(1)}% 0 ${l}%)`}
-        >
+        <img class="evicon__fig" {...img} style={`--i:${i};--tilt:${i % 2 ? -1 : 1};clip-path:inset(0 ${(100 - r).toFixed(1)}% 0 ${l}%)`}>
       ))
     : (
       <>
-        <img class="evicon__player" src={icon.src} alt="" width={icon.w} height={icon.h} loading="lazy" decoding="async">
+        {icon.body
+          ? <img class="evicon__body" {...img} style={`clip-path:polygon(${icon.body})`}>
+          : <img class="evicon__body" {...img}>}
+        {(icon.arms ?? []).map((a, i) => (
+          <img class="evicon__arm" {...img} style={`--i:${i};--dir:${a.dir};clip-path:polygon(${a.clip});transform-origin:${a.origin}`}>
+        ))}
         {icon.ball && (
           <img
             class="evicon__ball"
