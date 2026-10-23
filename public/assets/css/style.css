@@ -3095,6 +3095,8 @@ body.jsrv .rv.on .ink-sweep {
   list-style: none;
 }
 .champ__year::-webkit-details-marker { display: none; }
+/* 年度の前に、ほかの見出しと同じ赤い四角 */
+.champ__year::before { content: ""; flex: none; width: 12px; height: 12px; background: var(--red); }
 .champ__year::after {
   content: "＋";
   margin-left: auto;
