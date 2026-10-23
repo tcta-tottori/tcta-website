@@ -2872,9 +2872,14 @@ body.jsrv .rv.on .ink-sweep {
   .rblock--split { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 24px; align-items: start; }
   .rblock--split .gallery.gallery--winners { margin-top: 0; }
 }
-/* 優勝者の名前。写真の下に「男子シングルスA級　優勝 ○○　準優勝 ○○」 */
+/* 入賞者の名前。写真の下に「男子シングルスA級　優勝 ○○　準優勝 ○○」 */
 .rblock__caption { margin: 10px 0 0; font: 400 14px/1.8 var(--fjp); color: var(--gray-800); }
 .rblock__cat { display: inline-block; margin-right: 10px; padding: 1px 8px; border: 1px solid var(--red); font: 700 12px/1.6 var(--fjp); color: var(--red); }
+/* 種目と画像が対応づけられないページでは、入賞者の名前を画像のあとに種目ごとに1行ずつ */
+.rblock__captions { margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--gray-200); }
+.rblock__captions .rblock__caption { margin-top: 6px; }
+/* 写真1枚ごとの名前（「優勝 ○○ペア」）。写真の下に小さく */
+.gallery.gallery--winners .gallery__cap { display: block; padding: 8px 10px; border-top: 1px solid var(--gray-200); font: 700 13px/1.5 var(--fjp); letter-spacing: .02em; color: var(--ink); background: var(--white); }
 .rblock:first-child { margin-top: 0; }
 .rblock + .rblock { margin-top: 48px; }
 .sheet--result { border-radius: 4px; }
