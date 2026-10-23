@@ -11,20 +11,26 @@
 //   部ごとに「リーグ表 → その下に優勝クラブの写真」。
 // 写真だけのページ（ギャラリー＝優勝クラブ以外の当日の写真）があるときだけ、別ページ（gallery-<id>.html）に分けて入口を置く。
 import Base from '../layouts/Base.astro';
+import EventSection from '../components/EventSection.astro';
+import EventResult from '../components/EventResult.astro';
+import { siteData } from '../lib/cms.js';
 import { groupById, GROUPS_BY_YEAR, photoBlocks, clubDivisions, divisionChampion } from '../data/results.js';
+import { sortByCategory } from '../data/category-order.js';
 
+// 令和7年度以降（EmDash の大会）の結果も、同じ URL の形（result-<slug>.html）で出す
 const g = groupById(Astro.params.id);
-if (!g) return Astro.rewrite('/404');
+const ev = g ? null : (await siteData(Astro)).eventBySlug(Astro.params.id);
+if (!g && !(ev && ev.hasResult)) return Astro.rewrite('/404');
 
 // 同じ年度の前後の大会（ページ下部の行き来に使う）
-const year = GROUPS_BY_YEAR.find((y) => y.nendo === g.nendo);
-const idx = year.groups.findIndex((x) => x.id === g.id);
-const prev = year.groups[idx - 1];
-const next = year.groups[idx + 1];
+const year = g ? GROUPS_BY_YEAR.find((y) => y.nendo === g.nendo) : null;
+const idx = g ? year.groups.findIndex((x) => x.id === g.id) : -1;
+const prev = g ? year.groups[idx - 1] : null;
+const next = g ? year.groups[idx + 1] : null;
 
-const head = g.entries[0].t;
-const title = `${g.title}（${g.yearLabel}）｜大会結果｜鳥取市テニス協会`;
-const description = `${g.yearLabel}に行われた${g.title}の結果です。種目ごとの結果表と当日の写真を掲載しています。`;
+const head = g ? g.entries[0].t : null;
+const title = g ? `${g.title}（${g.yearLabel}）｜大会結果｜鳥取市テニス協会` : '';
+const description = g ? `${g.yearLabel}に行われた${g.title}の結果です。種目ごとの結果表と当日の写真を掲載しています。` : '';
 
 // 束ねたページごとに、画像のかたまり・成績・PDFを組む。
 // 結果画像の枚数と種目の数が同じときは、n枚目の結果画像 = n番目の種目とみなし、
@@ -34,7 +40,7 @@ const caption = (c) => c.places
   .map((pl) => `${pl.award} ${pl.name}`)
   .join('　');
 // ギャラリーを別ページに出すときは、その分をここから外す
-const inline = g.galleryHref ? g.entries.filter((e) => e.kind !== 'gallery') : g.entries;
+const inline = !g ? [] : g.galleryHref ? g.entries.filter((e) => e.kind !== 'gallery') : g.entries;
 const parts = inline.map((e) => {
   const blocks = photoBlocks(e.t);
   const sheets = blocks.filter((b) => b.sheet);
@@ -45,22 +51,32 @@ const parts = inline.map((e) => {
     b.category = c?.category ?? null;
     b.caption = c ? caption(c) : '';
   }
-  return { title: inline.length > 1 ? e.title : null, blocks, categories: e.t.categories, pdfs: e.t.pdfs };
+  // 種目の順（予選 → 決勝、男子 → 女子）。種目が分かるまとまりだけ並べ替え、分からないものは元の順のまま最後に
+  const sorted = blocks.every((b) => b.category)
+    ? sortByCategory(blocks, (b) => b.category)
+    : blocks;
+  return { title: inline.length > 1 ? e.title : null, blocks: sorted, categories: sortByCategory(e.t.categories, (c) => c.category), pdfs: e.t.pdfs };
 });
-const hasAny = parts.some((p) => p.blocks.length || p.categories.length || p.pdfs.length) || !!g.galleryHref;
+const hasAny = !!g && (parts.some((p) => p.blocks.length || p.categories.length || p.pdfs.length) || !!g.galleryHref);
 const hasText = parts.some((p) => p.categories.length);
 
 // クラブ対抗戦：部ごとにまとめ直したもの（男子1部→8部、女子1部→5部）
-const club = g.merged ? clubDivisions(g) : null;
+const club = g?.merged ? clubDivisions(g) : null;
 const anchor = (name) => `div-${name.replace(/[^0-9A-Za-z\u3040-\u30ff\u4e00-\u9fff]/g, '')}`;
 
 // ギャラリーの入口に見せる写真（先頭の数枚）
 const GALLERY_PEEK = 8;
-const galleryPeek = g.galleryHref ? g.galleries.flatMap((e) => e.t.photos).slice(0, GALLERY_PEEK) : [];
+const galleryPeek = g?.galleryHref ? g.galleries.flatMap((e) => e.t.photos).slice(0, GALLERY_PEEK) : [];
 let photoNo = 0;
 ---
 
-<Base
+{ev && (
+  <EventSection e={ev} label="結果" en="Result">
+    <EventResult e={ev} />
+  </EventSection>
+)}
+
+{g && <Base
   title={title}
   description={description}
   navActive="results"
@@ -327,4 +343,4 @@ let photoNo = 0;
 
     </div>
   </section>
-</Base>
+</Base>}

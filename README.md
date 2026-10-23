@@ -17,7 +17,10 @@ Cloudflare Workers で公開しています（2026-10-21 に GitHub Pages から
 │   │   │                         リンク集／コート案内）
 │   │   ├── tournaments.astro    大会情報（月ごとのカレンダー・全19大会・状態フィルタ）
 │   │   ├── results.astro        大会結果（年度の選択 → 大会名の一覧）
-│   │   ├── result-[id].astro    令和6年度までの大会1件の結果（results.json）。クラブ対抗戦は年度で1ページ、部の順
+│   │   ├── result-[id].astro    大会1件の結果。令和6年度までは results.json、令和7年度〜は EmDash の大会（result-<slug>.html）。
+│   │   │                         種目ごとに 結果表 → 入賞者の写真 → 順位（予選 → 決勝、男子 → 女子の順）。クラブ対抗戦は部の順
+│   │   ├── outline-[slug].astro 大会1件の要項（＋申込用紙）の独立したページ。大会情報ページの「要項」ボタンの行き先
+│   │   ├── draw-[slug].astro    大会1件のドローの独立したページ。「ドロー」ボタンの行き先
 │   │   ├── gallery-[id].astro   その大会の当日の写真（写真だけのページが12枚以上あるとき、結果とは別に）
 │   │   ├── club.astro           クラブ対抗戦（今年度の各部の結果・編成表・これまでの優勝クラブ）
 │   │   ├── lesson.astro         水曜テニス教室
@@ -38,6 +41,8 @@ Cloudflare Workers で公開しています（2026-10-21 に GitHub Pages から
 │   ├── data/results.json        平成16〜令和6年度の大会結果（旧サイトから引き継いだ正本。EmDash には入れていない）
 │   ├── data/results.js          旧結果の束ね方（分かれていたページを1つに、クラブ対抗戦は部の順に、写真はギャラリーへ）
 │   ├── data/club-league.js      令和7年度〜のクラブ対抗戦の部ごとの優勝クラブ（公式サイトの写し。管理画面の成績があればそちらが優先）
+│   ├── data/event-layout.json   令和7年度〜の大会の「種目 → 結果表 → 入賞者の写真」の対応（tools/match_event_photos.py が公式サイトと照合して作る）
+│   ├── data/event-result.js     その対応で大会ページの結果を組む道具。category-order.js は種目の並び（予選 → 決勝、男子 → 女子）
 │   ├── data/*.json              移行前のデータ（seed の入力。results.json 以外はもう使われない）
 │   └── data/courts.js           コート案内の一覧と地図の唯一の正
 │   ├── worker.ts                Cloudflare Worker の入口（EmDash の定期処理）
@@ -213,6 +218,13 @@ npm run dev                                  # http://localhost:4321 を開く
 - **アイコン** — `src/components/Icon.astro` に置いた面のアイコンを `currentColor` で出します
   （`list` は種目、`pin` は会場・コート）。
 - **通知バーの表示** — トップページと大会情報ページのみ。`Base` に `notice` を渡した場合に出ます。
+- **大会情報ページの4つのボタン** — 要項 → `outline-<slug>.html`、ドロー → `draw-<slug>.html`、結果 → `result-<slug>.html`
+  （それぞれ独立したページ）、申込用紙 → PDF を直接（別タブ）。素材の無いものは押せません。
+  大会ページ（`event-<slug>.html`）は従来どおり全部をまとめて出します。
+- **大会の結果の組み立て** — 管理画面の「結果」の画像と「当日の写真」は別々なので、公式サイト（tottori-tenis.net）の
+  結果ページと画像を照合して「種目 → 結果表 → 入賞者の写真」の対応を `src/data/event-layout.json` に持っています。
+  新しい結果を公式サイトに載せたあと `python3 tools/match_event_photos.py <slug>` を流すと、その大会の対応が加わります
+  （URL → slug は `tools/fetch_winners.py` の PAGES）。対応の無い大会は、結果表の一覧 → 成績 → 当日の写真 の順で出ます。
 - **大会カルーセル** — トップの大会カードは、管理画面の「大会」で「トップページの大会カードに出す」にチェックした
   ものが開催日順に並びます。状態（受付中／受付終了など）は「受付状態」から決まります。
   カードの種目は短い表記で1行に書き切ります（`src/data/tournaments.js` の `shortEvent`。団体戦・○○対抗戦・

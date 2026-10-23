@@ -3,11 +3,11 @@
 //
 //   大会名（左に赤い縦線）＋ 受付状態・登録区分のバッジ
 //   日付（カレンダー印）／会場（地図のピン）
-//   要項・申込書・ドロー・結果 の4つのボタン（素材の無いものは灰色で押せない）
+//   要項・申込用紙・ドロー・結果 の4つのボタン（素材の無いものは灰色で押せない）
 //   備考（締切・予備日・荒天時の扱い・外部の申込先）
 //
-// ボタンの行き先は大会の個別ページ（event-<slug>.html）の該当する節。
-// 素材の無い大会は4つとも押せない状態で出す（大会名からそのページへは行ける）。
+// ボタンの行き先：要項 → outline-<slug>.html、ドロー → draw-<slug>.html、結果 → result-<slug>.html（それぞれ独立したページ）、
+// 申込用紙 → PDF を直接（別タブ）。素材の無い大会は4つとも押せない状態で出す（大会名から大会ページへは行ける）。
 import Icon from './Icon.astro';
 import { REG_LABEL, STATUS_LABEL, dateCell } from '../data/schedule.js';
 import EventIcon from './EventIcon.astro';
@@ -23,19 +23,16 @@ function dateText(t) {
   return { ymd: `${t.date.slice(0, 4)}.${c.md}`, dow: c.dow, note: c.note };
 }
 
-/** 4つのボタン。該当する節が個別ページにあればそこへ飛ばす。 */
+/** 4つのボタン。要項・ドロー・結果はそれぞれの独立したページへ、申込用紙は PDF を直接開く（無ければ大会ページの節へ）。 */
 function buttons(t, e) {
-  const has = (key) => !!e && e.sections.some((s) => s.key === key);
-  const link = (key) => (has(key) ? `${e.url}#${key}` : null);
+  const sec = (key) => e?.sections.find((s) => s.key === key) ?? null;
+  const entry = sec('entry');
+  const entryPdf = entry?.pdfs[0]?.src ?? null;
   return [
-    { key: 'outline', label: '要項', href: link('outline') },
-    { key: 'entry', label: '申込書', href: link('entry') },
-    { key: 'draw', label: 'ドロー', href: link('draw') },
-    {
-      key: 'result',
-      label: '結果',
-      href: e?.hasResult ? `${e.url}#${has('result') ? 'result' : 'winners'}` : null,
-    },
+    { key: 'outline', label: '要項', href: sec('outline') ? `outline-${e.slug}.html` : null },
+    { key: 'entry', label: '申込用紙', href: entryPdf ?? (entry ? `${e.url}#entry` : null), external: !!entryPdf },
+    { key: 'draw', label: 'ドロー', href: sec('draw') ? `draw-${e.slug}.html` : null },
+    { key: 'result', label: '結果', href: e?.hasResult ? `result-${e.slug}.html` : null },
   ];
 }
 
@@ -73,7 +70,7 @@ const rows = items.map((t) => {
         </p>
       </header>
 
-      {/* 左に日程・会場、右に種目（ピクトグラム＋文言） */}
+      {/* 1行目：日程と種目、2行目：会場とピクトグラム（種目の下） */}
       <div class="tl-item__info">
         <dl class="tl-item__meta">
           <div class="tl-item__row">
@@ -101,7 +98,7 @@ const rows = items.map((t) => {
       <div class="tl-item__btns">
         {buttons.map((b) =>
           b.href
-            ? <a class="btn btn--outline tl-btn" href={b.href}>{b.label}<span class="aw" aria-hidden="true">→</span></a>
+            ? <a class="btn btn--outline tl-btn" href={b.href} {...(b.external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}>{b.label}<span class="aw" aria-hidden="true">{b.external ? '↗' : '→'}</span></a>
             : <span class="btn tl-btn tl-btn--off" aria-disabled="true" title="準備中">{b.label}</span>
         )}
       </div>

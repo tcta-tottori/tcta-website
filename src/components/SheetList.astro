@@ -1,0 +1,31 @@
+---
+// 要項・ドロー・結果表などの紙面を、その場で読める大きさで並べる（拡大ボタンは付けない。タップで全画面）。
+// images: [{ src, label, w, h }]、pdfs: [{ src, label, kb }]
+const { images = [], pdfs = [], alt } = Astro.props;
+const isWide = (img) => img.w / img.h > 1.5;
+---
+
+{images.length > 0 && (
+  <div class="sheets">
+    {images.map((img) => (
+      <a class:list={['sheet', isWide(img) && 'sheet--wide']} href={img.src}>
+        <img src={img.src} alt={`${alt}｜${img.label ?? ''}`} width={img.w} height={img.h} loading="lazy" decoding="async">
+        {img.label && <span class="sheet__cap">{img.label}</span>}
+      </a>
+    ))}
+  </div>
+)}
+{pdfs.length > 0 && (
+  <ul class="mt-32">
+    {pdfs.map((p) => (
+      <li><a class="dl-item" href={p.src} target="_blank" rel="noopener noreferrer">
+        <span class="dl-item__type">PDF</span>
+        <span class="dl-item__text">
+          <span class="dl-item__title">{p.label}</span>
+          <span class="dl-item__note">{p.kb.toLocaleString()}KB／別タブで開きます</span>
+        </span>
+        <span class="sqbtn" aria-hidden="true">↓</span>
+      </a></li>
+    ))}
+  </ul>
+)}
