@@ -29,7 +29,7 @@ const telHref = (tel) => `tel:${String(tel).replace(/[^0-9+]/g, '')}`;
         </div>
       </div>
       <p class="page-lead fu" style="animation-delay:.15s">
-        大会と教室で使用している主な会場をご案内します。コートの予約は各施設の予約先へ直接お申し込みください。協会が管理・貸出を行っているものではありませんのでご注意ください。
+        大会と教室で使用している主な会場をご案内します。コートの予約は基本的に鳥取市公共施設予約システムから行えます。協会が管理・貸出を行っているものではありませんのでご注意ください。
       </p>
       {/* 施設へのジャンプ。年度タブと同じ形（.jump__link） */}
       <nav class="jump fu" style="animation-delay:.3s" aria-label="施設へ移動">
@@ -83,17 +83,16 @@ const telHref = (tel) => `tel:${String(tel).replace(/[^0-9+]/g, '')}`;
             )}
             {c.reserve && (
               <div class="deflist__row">
-                <div class="deflist__key">予約・申込</div>
+                <div class="deflist__key">予約</div>
                 <div class="deflist__val">
-                  {c.reserve.label}
-                  {c.reserve.tel && <>（<a href={telHref(c.reserve.tel)}>{c.reserve.tel}</a>）</>}
+                  <a href={c.reserve.url} target="_blank" rel="noopener noreferrer">{c.reserve.label} ↗</a>
                 </div>
               </div>
             )}
-            {c.tel && (
+            {c.contact && (
               <div class="deflist__row">
                 <div class="deflist__key">電話</div>
-                <div class="deflist__val"><a href={telHref(c.tel)}>{c.tel}</a></div>
+                <div class="deflist__val">{c.contact.label}　<a href={telHref(c.contact.tel)}>{c.contact.tel}</a></div>
               </div>
             )}
             {c.link && (
@@ -108,11 +107,11 @@ const telHref = (tel) => `tel:${String(tel).replace(/[^0-9+]/g, '')}`;
 
           {/* 押せる行動：予約（別タブ）／電話／地図 */}
           <div class="cfac__actions">
-            {c.reserve?.url && (
-              <a class="btn btn--primary" href={c.reserve.url} target="_blank" rel="noopener noreferrer">予約・申込先を開く <span class="aw">↗</span></a>
+            {c.reserve && (
+              <a class="btn btn--primary" href={c.reserve.url} target="_blank" rel="noopener noreferrer">コートを予約する <span class="aw">↗</span></a>
             )}
-            {(c.reserve?.tel || c.tel) && (
-              <a class="btn btn--outline" href={telHref(c.reserve?.tel || c.tel)}>電話をかける（{c.reserve?.tel || c.tel}）</a>
+            {c.contact && (
+              <a class="btn btn--outline" href={telHref(c.contact.tel)}>電話をかける（{c.contact.tel}）</a>
             )}
             <a class="btn btn--outline" href={mapLink(c)} target="_blank" rel="noopener noreferrer">地図で見る <span class="aw">↗</span></a>
           </div>
@@ -122,8 +121,8 @@ const telHref = (tel) => `tel:${String(tel).replace(/[^0-9+]/g, '')}`;
       <div class="panel panel--gray rv" style="margin-top:72px">
         <p class="panel__title">施設の予約について</p>
         <p class="prose" style="margin:0">
-          鳥取市のテニスコート（千代・井原公園・東冨安公園）は鳥取市公共施設予約システムから、そのほかの施設は各施設の予約先へ直接お申し込みください。
-          協会が管理・貸出を行っているものではありません。大会・教室の日程はコートの空き状況により変わることがあります。
+          コートの予約は基本的に<a href="https://p-kashikan.jp/tottori/" target="_blank" rel="noopener noreferrer">鳥取市公共施設予約システム ↗</a>から行えます。
+          分からないことは各施設の電話の問い合わせ先へ。協会が管理・貸出を行っているものではありません。
         </p>
         <a class="ghost-link mt-24" href="index.html#courts">トップの地図で場所を見る <span class="aw">→</span></a>
       </div>

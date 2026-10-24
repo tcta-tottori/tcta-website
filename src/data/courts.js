@@ -27,8 +27,8 @@
 //   desc     … 施設の説明（1〜2文）
 //   address  … 住所。分からないものは '' のまま（ページでは「確認中」と出る）
 //   features … 設備の一覧（'夜間照明あり' '屋根付き' など）
-//   reserve  … 予約・申込の案内 { label, url?, tel? }。url があれば別タブで開くボタン、tel があれば電話のボタン
-//   tel      … 施設の電話番号（reserve と別に施設そのものに問い合わせるとき）
+//   reserve  … 予約先 { label, url }。どの施設も基本は鳥取市公共施設予約システム（CITY_RESERVE）
+//   contact  … 電話の問い合わせ先 { label, tel }（施設や管理事務所）。無ければ null
 //   link     … 公式ページ { label, url }
 //
 // ■ href
@@ -36,7 +36,7 @@
 //
 // ※ 住所が '' のものは、協会に確認して埋めること。
 
-/** 鳥取市の公共施設予約システム（市のテニスコートの予約先） */
+/** 鳥取市公共施設予約システム。コートの予約は基本的にここから */
 const CITY_RESERVE = { label: '鳥取市公共施設予約システム', url: 'https://p-kashikan.jp/tottori/' };
 
 export const COURTS = [
@@ -51,8 +51,8 @@ export const COURTS = [
     desc: '鳥取県立布勢総合運動公園（ネーミングライツにより「ヤマタスポーツパーク」）のテニスコート。協会の主催大会の主会場です。',
     address: '鳥取県鳥取市布勢146-1',
     features: ['夜間照明あり'],
-    reserve: { label: 'ヤマタスポーツパーク（布勢総合運動公園）公式サイト', url: 'https://www.fuse-sportspark.com/' },
-    tel: '',
+    reserve: CITY_RESERVE,
+    contact: null,
     link: { label: 'ヤマタスポーツパーク 公式サイト', url: 'https://www.fuse-sportspark.com/' },
     href: 'courts.html#yamata',
     main: true,
@@ -69,7 +69,7 @@ export const COURTS = [
     address: '',
     features: [],
     reserve: CITY_RESERVE,
-    tel: '',
+    contact: null,
     link: null,
     href: 'courts.html#chiyo',
   },
@@ -85,7 +85,7 @@ export const COURTS = [
     address: '鳥取県鳥取市興南町174',
     features: ['夜間照明あり'],
     reserve: CITY_RESERVE,
-    tel: '',
+    contact: null,
     link: { label: '水曜テニス教室のご案内', url: 'lesson.html', internal: true },
     href: 'courts.html#ihara',
   },
@@ -101,7 +101,7 @@ export const COURTS = [
     address: '鳥取県鳥取市南吉方1丁目31',
     features: [],
     reserve: CITY_RESERVE,
-    tel: '',
+    contact: null,
     link: null,
     href: 'courts.html#higashi-tomiyasu',
   },
@@ -116,8 +116,8 @@ export const COURTS = [
     desc: '若葉台ニュータウンにある全天候型3面のコートです。',
     address: '鳥取県鳥取市若葉台南1丁目',
     features: [],
-    reserve: { label: '美保球場管理事務所', tel: '0857-26-0888' },
-    tel: '',
+    reserve: CITY_RESERVE,
+    contact: { label: '美保球場管理事務所', tel: '0857-26-0888' },
     link: { label: '鳥取市 若葉台テニス場', url: 'https://www.city.tottori.lg.jp/site/kasenkouen-kouenn/5792.html' },
     href: 'courts.html#wakabadai',
   },
@@ -132,8 +132,8 @@ export const COURTS = [
     desc: '湖山池のほとりにある全天候型3面のコート。夜間照明があります。',
     address: '鳥取県鳥取市金沢',
     features: ['夜間照明あり'],
-    reserve: { label: '鳥取グリーン', tel: '0857-28-5090' },
-    tel: '',
+    reserve: CITY_RESERVE,
+    contact: { label: '鳥取グリーン', tel: '0857-28-5090' },
     link: { label: '鳥取市 湖山池公園金沢テニス場', url: 'https://www.city.tottori.lg.jp/site/kasenkouen-kouenn/5759.html' },
     href: 'courts.html#kanazawa',
   },
@@ -148,8 +148,8 @@ export const COURTS = [
     desc: '用瀬町運動公園の全天候型（砂入り人工芝）4面のコート。夜間照明があり、最大22時まで使えます。',
     address: '鳥取県鳥取市用瀬町古用瀬660-1',
     features: ['夜間照明あり（22時まで）'],
-    reserve: { label: '用瀬町運動公園', tel: '0858-87-3332' },
-    tel: '0858-87-3332',
+    reserve: CITY_RESERVE,
+    contact: { label: '用瀬町運動公園', tel: '0858-87-3332' },
     link: { label: '用瀬町運動公園 施設案内', url: 'https://mochigase.net/dish.html' },
     href: 'courts.html#mochigase',
   },
@@ -164,8 +164,8 @@ export const COURTS = [
     desc: '屋根付きのコートで、雨の日でも使えます。',
     address: '鳥取県八頭郡八頭町下門尾180',
     features: ['屋根付き'],
-    reserve: { label: '八頭町シルバー人材センター', tel: '0858-72-3351' },
-    tel: '',
+    reserve: CITY_RESERVE,
+    contact: { label: '八頭町シルバー人材センター', tel: '0858-72-3351' },
     link: { label: '八頭町 郡家ふれあいドーム', url: 'https://www.town.yazu.tottori.jp/soshiki/14/1457.html' },
     href: 'courts.html#kooge',
   },
@@ -180,8 +180,8 @@ export const COURTS = [
     desc: '屋根付多目的広場の中にあるクレーコート。雨の日でも使えます。',
     address: '鳥取県八頭郡八頭町徳丸528',
     features: ['屋根付き'],
-    reserve: { label: '八東総合運動公園', tel: '0858-84-2890' },
-    tel: '0858-84-2890',
+    reserve: CITY_RESERVE,
+    contact: { label: '八東総合運動公園', tel: '0858-84-2890' },
     link: { label: '八東総合運動公園（やず観光ナビ）', url: 'https://yazukanko.jp/seeing_play/onsen-park/hatto-sports-park/' },
     href: 'courts.html#hatto',
   },
