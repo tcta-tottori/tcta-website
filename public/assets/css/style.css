@@ -2036,7 +2036,7 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 }
 
 /* ---- コート案内のページ（courts.html）：施設1件 ----
-   写真を画面の幅いっぱいに敷き、その上に番号・施設名・バッジを重ねる（下に向かって暗くして文字を読ませる）
+   写真を画面の幅いっぱいに敷き、その左上に番号・施設名・バッジを重ねる（上を暗くして文字を読ませる）
    → 本文（説明・表）→ 予約・問い合わせのボタンは表と切り離した枠に。 */
 .section--cfac { padding-top: 0; }
 .cfac { scroll-margin-top: 72px; }
@@ -2063,16 +2063,17 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   transition: transform 1.2s var(--ease);
 }
 .cfac__hero:hover .cfac__hero-link img { transform: scale(1.04); }
-/* 写真の上の文字。押しても下の写真のリンクに通す */
+/* 写真の上の文字。写真の左上に置き、上から下へ薄くなる暗い帯で読ませる。押しても下の写真のリンクに通す */
 .cfac__hero-cap {
   position: absolute;
-  inset: auto 0 0;
-  padding: 72px 0 28px;
-  background: linear-gradient(180deg, rgba(26, 26, 26, 0) 0%, rgba(26, 26, 26, .55) 55%, rgba(26, 26, 26, .78) 100%);
+  inset: 0 0 auto;
+  padding: 24px 0 72px;
+  background: linear-gradient(180deg, rgba(26, 26, 26, .78) 0%, rgba(26, 26, 26, .5) 55%, rgba(26, 26, 26, 0) 100%);
   color: var(--white);
+  text-align: left;
   pointer-events: none;
 }
-@media (min-width: 1024px) { .cfac__hero-cap { padding: 120px 0 40px; } }
+@media (min-width: 1024px) { .cfac__hero-cap { padding: 36px 0 120px; } }
 .cfac__hero--noimg .cfac__hero-cap { position: static; padding: 40px 0 28px; background: var(--ink); }
 .cfac__no {
   display: block;
