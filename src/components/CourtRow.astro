@@ -1,10 +1,12 @@
 ---
 // コート案内の一覧の1行（施設名・補足・矢印）。src/data/courts.js の1件を受け取る。
+// 写真（image）がある施設は、行の右端に写真を敷き、中央へ向けて薄くする（文字はその上）。
 import Icon from './Icon.astro';
 const { court: c } = Astro.props;
 ---
 
-<li><a class="court-item" href={c.href} {...(c.external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}>
+<li><a class:list={['court-item', c.image && 'court-item--photo']} href={c.href} {...(c.external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}>
+  {c.image && <span class="court-item__photo" aria-hidden="true"><img src={c.image} alt="" width="960" height="540" loading="lazy" decoding="async"></span>}
   <Icon name="pin" class="court-pin" />
   <span class="sch-item__text">
     <span class="sch-item__title">{c.name}</span>

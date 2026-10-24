@@ -500,6 +500,7 @@
     var allTab = root.querySelector('[data-cmap-all]');
     var locateBtn = root.querySelector('[data-cmap-locate]');
     var msg = root.querySelector('[data-cmap-msg]');
+    var photo = root.querySelector('[data-cmap-photo]');
     if (!el || !tabs.length) return;
 
     var courts;
@@ -599,20 +600,36 @@
         else map.flyToBounds(bounds, Object.assign({ duration: 0.9 }, opts));
       }
 
-      // 施設を1つ選ぶ：そのコート全体が入る範囲に寄る
+      // 左上の施設の写真。写真の無い施設と「すべて」では隠す
+      function showPhoto(c) {
+        if (!photo) return;
+        if (c && c.image) { photo.src = c.image; photo.hidden = false; }
+        else photo.hidden = true;
+      }
+      // 寄せるときの余白。コート全体が真ん中に、まわりに少し余裕がある程度。
+      // 左上は写真の分だけ余計に空け、写真でコートが隠れないようにする
+      var PAD = 40;
+      function padding() {
+        var ph = photo && !photo.hidden ? photo.getBoundingClientRect().height : 0;
+        return { paddingTopLeft: [PAD, PAD + Math.round(ph * 0.6)], paddingBottomRight: [PAD, PAD] };
+      }
+
+      // 施設を1つ選ぶ：そのコート全体が真ん中に入る範囲に寄る（タイルの最大 19 まで寄ってよい）
       function select(i, animate) {
         current = i;
         setActive(i);
         var c = courts[i];
         if (name) name.textContent = c.name;
         if (link) link.href = tabs[i].getAttribute('data-link');
-        go(withLocation(venues[i].bounds), { padding: [56, 56], maxZoom: 18 }, animate);
+        showPhoto(c);
+        go(withLocation(venues[i].bounds), Object.assign({ maxZoom: 19 }, padding()), animate);
       }
 
       // すべて：全施設が入る範囲を出す
       function showAll(animate) {
         current = -1;
         setActive(-1);
+        showPhoto(null);
         if (name) name.textContent = '利用コート ' + courts.length + '施設';
         if (link) link.href = 'https://www.google.com/maps/search/?api=1&query=' + courts[mainIndex].lat + ',' + courts[mainIndex].lng;
         go(withLocation(allBounds), { padding: [48, 48] }, animate);
