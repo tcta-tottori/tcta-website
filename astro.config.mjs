@@ -55,6 +55,7 @@ export default defineConfig({
     '/tennis-day.html': PAGE,
     '/membership.html': PAGE,
     '/links.html': PAGE,
+    '/courts.html': PAGE,
     '/contact.html': PAGE,
   },
 

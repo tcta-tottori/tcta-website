@@ -20,5 +20,6 @@ export const MOBILE_NAV = [
   { key: 'tennis-day', label: 'イベント情報（テニス祭り）', href: 'tennis-day.html' },
   { key: 'about', label: '協会について', href: 'about.html' },
   { key: 'membership', label: '入会案内（協会登録）', href: 'membership.html' },
+  { key: 'courts', label: 'コート案内', href: 'courts.html' },
   { key: 'links', label: 'リンク集', href: 'links.html' },
 ];

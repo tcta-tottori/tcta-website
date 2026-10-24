@@ -202,6 +202,9 @@ npm run dev                                  # http://localhost:4321 を開く
   5件目があるときは続きがあることが分かるよう薄く重ねます。VIEW ALL（または5件目）で3ヶ月分が別画面で開き、
   右上の × か Esc で閉じます。日付が見た時点から2週間以内のものには赤い `NEW` が自動で付くので、
   手で付け外しはしません。「目立たせる」にチェックしたものは全ページ上部の赤い帯にも出ます（これも3ヶ月以内のもの）。
+- **コート案内のページ** — `courts.html`（`src/pages/courts.html.astro`）に全施設の詳細（写真・説明・住所・コート・設備・
+  予約先・電話・公式ページ）を1ページに並べます。トップの一覧の行を押すとその施設の節（`courts.html#<id>`）に飛びます。
+  内容は `src/data/courts.js` の `desc` / `address` / `features` / `reserve` / `tel` / `link`。
 - **コート案内の地図** — `src/data/courts.js` が唯一の正。Leaflet（OpenStreetMap のタイル）で自前に描き、
   コートの面（`src/data/court-shapes.json`）を赤く塗ってピンとラベルを置きます（`public/assets/js/main.js` の
   `initCourtMap`）。上のボタンで施設を切り替え、「すべて」で全施設を一望します。

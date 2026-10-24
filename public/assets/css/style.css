@@ -2035,6 +2035,34 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   color: var(--red);
 }
 
+/* ---- コート案内のページ（courts.html）：施設1件 ----
+   写真（枠なし・角だけ丸い）→ 施設名とバッジ → 説明 → 表（住所・コート・設備・予約先・電話・公式ページ）→ ボタン */
+.cfac { scroll-margin-top: 88px; }
+.cfac__photo { grid-template-columns: 1fr; margin-top: 0; }
+.cfac__photo .gallery__item { border-radius: 6px; }
+.cfac__photo .gallery__item img { aspect-ratio: 16 / 9; border-radius: 6px; }
+.cfac__head { margin-top: 24px; }
+.cfac__name {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  font: 700 22px/1.4 var(--fjp);
+  letter-spacing: .02em;
+  color: var(--ink);
+}
+@media (min-width: 1024px) { .cfac__name { font-size: 24px; } }
+.cfac__badges { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0 0; }
+.cfac__desc { margin: 16px 0 0; font: 400 15px/1.9 var(--fjp); color: var(--gray-800); }
+.cfac .deflist { margin-top: 20px; }
+.cfac__tbd { color: var(--gray-500); }
+.cfac__maplink { display: inline-flex; align-items: center; gap: 4px; margin-left: 12px; font: 700 12px/1.5 var(--fjp); color: var(--red); white-space: nowrap; }
+.cfac__maplink:hover .aw { transform: translateX(3px); }
+.cfac .deflist__val a:not(.cfac__maplink) { color: var(--red); text-decoration: underline; text-underline-offset: 3px; }
+.cfac__actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px; }
+.cfac__actions .btn { width: auto; min-height: 46px; padding: 12px 20px; font-size: 14px; }
+@media (max-width: 639px) { .cfac__actions .btn { width: 100%; } }
+
 /* ============ 13. CTA / フッター ============ */
 .cta {
   display: grid;

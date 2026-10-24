@@ -1,0 +1,134 @@
+---
+// コート案内のページ。協会が使う施設の詳細（写真・説明・住所・コート・設備・予約先・電話・公式ページ）を
+// 1ページに全施設ぶん並べる。内容は src/data/courts.js が唯一の正。
+// トップのコート案内の一覧の行を押すと、このページのその施設の節（#<id>）に飛ぶ。
+import Base from '../layouts/Base.astro';
+import Icon from '../components/Icon.astro';
+import { COURTS, mapLink, courtSpec } from '../data/courts.js';
+
+const title = 'コート案内｜鳥取市テニス協会';
+const description = '鳥取市テニス協会が大会・教室で使用するテニスコートのご案内。住所、コートの面数と種類、予約・申込先、電話番号、公式ページをまとめています。';
+
+/** 電話番号のリンク（数字とハイフン以外を落とす） */
+const telHref = (tel) => `tel:${String(tel).replace(/[^0-9+]/g, '')}`;
+---
+
+<Base title={title} description={description}>
+  <!-- ============ ページヘッダー ============ -->
+  <section class="page-head">
+    <span class="ghost" aria-hidden="true">COURT GUIDE</span>
+    <div class="container">
+      <nav class="breadcrumb" aria-label="パンくず">
+        <a href="index.html">ホーム</a><span class="breadcrumb__sep" aria-hidden="true">›</span><span aria-current="page">コート案内</span>
+      </nav>
+      <div class="page-title-row fu">
+        <span class="sec-head__mark" aria-hidden="true"></span>
+        <div>
+          <p class="page-title__en">Court Guide</p>
+          <h1 class="page-title">コート案内</h1>
+        </div>
+      </div>
+      <p class="page-lead fu" style="animation-delay:.15s">
+        大会と教室で使用している主な会場をご案内します。コートの予約は各施設の予約先へ直接お申し込みください。協会が管理・貸出を行っているものではありませんのでご注意ください。
+      </p>
+      {/* 施設へのジャンプ。年度タブと同じ形（.jump__link） */}
+      <nav class="jump fu" style="animation-delay:.3s" aria-label="施設へ移動">
+        {COURTS.map((c) => <a class="jump__link" href={`#${c.id}`}>{c.short}</a>)}
+      </nav>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container container--result">
+
+      {COURTS.map((c, i) => (
+        <article class="cfac rv" id={c.id} style={i === 0 ? undefined : 'margin-top:72px'}>
+          {/* 写真は枠なしで角だけ丸める。タップで全画面（main.js の initLightbox は .gallery 内の .gallery__item を拾う） */}
+          {c.image && (
+            <div class="gallery cfac__photo">
+              <a class="gallery__item" href={c.image}>
+                <img src={c.image} alt={`${c.name}の写真`} width="960" height="540" loading={i === 0 ? 'eager' : 'lazy'} decoding="async">
+              </a>
+            </div>
+          )}
+
+          <div class="cfac__head">
+            <h2 class="cfac__name"><Icon name="pin" class="court-pin" />{c.name}</h2>
+            <p class="cfac__badges">
+              {c.main && <span class="badge badge--open">主会場</span>}
+              {c.surface && <span class="badge badge--outline">{c.surface}</span>}
+              {c.courts > 0 && <span class="badge badge--outline">{c.courts}面</span>}
+              {c.features.map((f) => <span class="badge badge--tint">{f}</span>)}
+            </p>
+          </div>
+          {c.desc && <p class="cfac__desc">{c.desc}</p>}
+
+          <div class="deflist">
+            <div class="deflist__row">
+              <div class="deflist__key">住所</div>
+              <div class="deflist__val">
+                {c.address || <span class="cfac__tbd">確認中</span>}
+                <a class="cfac__maplink" href={mapLink(c)} target="_blank" rel="noopener noreferrer">Googleマップで開く <span class="aw">↗</span></a>
+              </div>
+            </div>
+            <div class="deflist__row">
+              <div class="deflist__key">コート</div>
+              <div class="deflist__val">{courtSpec(c) || '—'}</div>
+            </div>
+            {c.features.length > 0 && (
+              <div class="deflist__row">
+                <div class="deflist__key">設備</div>
+                <div class="deflist__val">{c.features.join('・')}</div>
+              </div>
+            )}
+            {c.reserve && (
+              <div class="deflist__row">
+                <div class="deflist__key">予約・申込</div>
+                <div class="deflist__val">
+                  {c.reserve.label}
+                  {c.reserve.tel && <>（<a href={telHref(c.reserve.tel)}>{c.reserve.tel}</a>）</>}
+                </div>
+              </div>
+            )}
+            {c.tel && (
+              <div class="deflist__row">
+                <div class="deflist__key">電話</div>
+                <div class="deflist__val"><a href={telHref(c.tel)}>{c.tel}</a></div>
+              </div>
+            )}
+            {c.link && (
+              <div class="deflist__row">
+                <div class="deflist__key">{c.link.internal ? 'ご案内' : '公式ページ'}</div>
+                <div class="deflist__val">
+                  <a href={c.link.url} {...(c.link.internal ? {} : { target: '_blank', rel: 'noopener noreferrer' })}>{c.link.label}{!c.link.internal && ' ↗'}</a>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* 押せる行動：予約（別タブ）／電話／地図 */}
+          <div class="cfac__actions">
+            {c.reserve?.url && (
+              <a class="btn btn--primary" href={c.reserve.url} target="_blank" rel="noopener noreferrer">予約・申込先を開く <span class="aw">↗</span></a>
+            )}
+            {(c.reserve?.tel || c.tel) && (
+              <a class="btn btn--outline" href={telHref(c.reserve?.tel || c.tel)}>電話をかける（{c.reserve?.tel || c.tel}）</a>
+            )}
+            <a class="btn btn--outline" href={mapLink(c)} target="_blank" rel="noopener noreferrer">地図で見る <span class="aw">↗</span></a>
+          </div>
+        </article>
+      ))}
+
+      <div class="panel panel--gray rv" style="margin-top:72px">
+        <p class="panel__title">施設の予約について</p>
+        <p class="prose" style="margin:0">
+          鳥取市のテニスコート（千代・井原公園・東冨安公園）は鳥取市公共施設予約システムから、そのほかの施設は各施設の予約先へ直接お申し込みください。
+          協会が管理・貸出を行っているものではありません。大会・教室の日程はコートの空き状況により変わることがあります。
+        </p>
+        <a class="ghost-link mt-24" href="index.html#courts">トップの地図で場所を見る <span class="aw">→</span></a>
+      </div>
+
+      <p class="note rv">※ 写真をタップすると全画面で表示します。住所・設備・予約先は変わることがあります。最新の情報は各施設にご確認ください。</p>
+    </div>
+  </section>
+</Base>
