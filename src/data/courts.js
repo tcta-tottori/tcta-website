@@ -56,6 +56,7 @@ export const COURTS = [
     short: '東冨安公園',
     note: '2面・鳥取市交通公園に併設・鳥取県鳥取市南吉方1丁目31',
     lat: 35.488967, lng: 134.231325,
+    image: 'assets/img/courts/higashi-tomiyasu.webp',
     href: '#courts',
   },
   {
@@ -64,7 +65,6 @@ export const COURTS = [
     short: '若葉台',
     note: '全天候型3面・鳥取市若葉台南1丁目（申込：美保球場管理事務所 0857-26-0888）',
     lat: 35.445006, lng: 134.257068,
-    image: 'assets/img/courts/wakabadai.webp',
     href: 'https://www.city.tottori.lg.jp/site/kasenkouen-kouenn/5792.html',
     external: true,
   },
