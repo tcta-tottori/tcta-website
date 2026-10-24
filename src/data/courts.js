@@ -56,6 +56,7 @@ export const COURTS = [
     short: '東冨安公園',
     note: '2面・鳥取市交通公園に併設・鳥取県鳥取市南吉方1丁目31',
     lat: 35.488967, lng: 134.231325,
+    image: 'assets/img/courts/higashi-tomiyasu.webp',
     href: '#courts',
   },
   {
