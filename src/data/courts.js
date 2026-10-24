@@ -15,6 +15,10 @@
 //   施設の写真（public/assets/img/courts/<id>.webp、16:9）。地図では選んだ施設の写真を左上に重ね、
 //   一覧では行の右端に敷いて中央へ向けて薄くする。無い施設は写真なしで出る。
 //
+// ■ surface / courts
+//   地図の写真の右に出すサーフェスと面数。サーフェスは協会の確認ずみ（オムニ／クレー／ハード、屋根付きは「室内」を付ける）。
+//   面数は補足の文言と court-shapes.json のコートの数から。空（''／0）のものは出ない。
+//
 // ■ href / external
 //   一覧の行を押したときの遷移先。サイト内に説明ページがあるものはそこへ。
 //   施設の公式ページ（鳥取市・八頭町）に飛ばすものは external: true を付ける（別タブで開く）。
@@ -29,6 +33,7 @@ export const COURTS = [
     note: '主会場・鳥取県立布勢総合運動公園 鳥取県鳥取市布勢146-1',
     lat: 35.498444, lng: 134.177261,
     image: 'assets/img/courts/yamata.webp',
+    surface: 'オムニコート', courts: 16,
     href: '#courts',
     main: true,
   },
@@ -39,6 +44,7 @@ export const COURTS = [
     note: '予備会場（住所は公開前に確認）',
     lat: 35.501477, lng: 134.212893,
     image: 'assets/img/courts/chiyo.webp',
+    surface: 'クレーコート', courts: 12,
     href: '#courts',
   },
   {
@@ -48,6 +54,7 @@ export const COURTS = [
     note: '鳥取県鳥取市興南町174（毎週水曜日のテニス教室会場）',
     lat: 35.485585, lng: 134.232691,
     image: 'assets/img/courts/ihara.webp',
+    surface: 'ハードコート', courts: 4,
     href: 'lesson.html',
   },
   {
@@ -57,6 +64,7 @@ export const COURTS = [
     note: '2面・鳥取市交通公園に併設・鳥取県鳥取市南吉方1丁目31',
     lat: 35.488967, lng: 134.231325,
     image: 'assets/img/courts/higashi-tomiyasu.webp',
+    surface: 'オムニコート', courts: 2,
     href: '#courts',
   },
   {
@@ -66,6 +74,7 @@ export const COURTS = [
     note: '全天候型3面・鳥取市若葉台南1丁目（申込：美保球場管理事務所 0857-26-0888）',
     lat: 35.445006, lng: 134.257068,
     image: 'assets/img/courts/wakabadai.webp',
+    surface: 'オムニコート', courts: 3,
     href: 'https://www.city.tottori.lg.jp/site/kasenkouen-kouenn/5792.html',
     external: true,
   },
@@ -76,6 +85,7 @@ export const COURTS = [
     note: '全天候型3面・夜間照明あり・鳥取市金沢（申込：鳥取グリーン 0857-28-5090）',
     lat: 35.49887, lng: 134.133547,
     image: 'assets/img/courts/kanazawa.webp',
+    surface: 'オムニコート', courts: 3,
     href: 'https://www.city.tottori.lg.jp/site/kasenkouen-kouenn/5759.html',
     external: true,
   },
@@ -86,6 +96,7 @@ export const COURTS = [
     note: '屋根付きコート・八頭郡八頭町下門尾180（予約：八頭町シルバー人材センター 0858-72-3351）',
     lat: 35.4190418, lng: 134.2544146,
     image: 'assets/img/courts/kooge.webp',
+    surface: '室内オムニコート', courts: 0, // 面数は要確認（空のうちは出ない）
     href: 'https://www.town.yazu.tottori.jp/soshiki/14/1457.html',
     external: true,
   },
@@ -96,6 +107,7 @@ export const COURTS = [
     note: '屋根付多目的広場 テニス3面・八頭郡八頭町徳丸528（0858-84-2890）',
     lat: 35.36677, lng: 134.3407,
     image: 'assets/img/courts/hatto.webp',
+    surface: '室内クレーコート', courts: 3,
     href: 'https://yazukanko.jp/seeing_play/onsen-park/hatto-sports-park/',
     external: true,
   },
@@ -105,7 +117,8 @@ import SHAPES from './court-shapes.json';
 
 /** 地図に渡す1施設ぶん（名前・ピンの位置・コートの輪郭・全体表示の範囲） */
 export const mapData = (c) => ({
-  id: c.id, name: c.name, short: c.short, lat: c.lat, lng: c.lng, main: !!c.main, image: c.image ?? null,
+  id: c.id, name: c.name, short: c.short, lat: c.lat, lng: c.lng, main: !!c.main,
+  image: c.image ?? null, surface: c.surface ?? '', faces: c.courts ?? 0,
   courts: SHAPES[c.id]?.courts ?? [],
   area: SHAPES[c.id]?.area ?? null,
   bounds: SHAPES[c.id]?.bounds ?? [[c.lat, c.lng], [c.lat, c.lng]],
