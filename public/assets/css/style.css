@@ -1604,27 +1604,45 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   border: 1px solid var(--gray-200);
   overflow: hidden;
 }
+/* 左端の「すべて」は固定、区切り線の右に施設を1行で並べ、はみ出す分は横にスクロール（スクロールバーは出さない） */
 .cmap__tabs {
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  padding: 14px;
+  align-items: center;
+  padding: 12px 14px;
   border-bottom: 1px solid var(--gray-200);
 }
+.cmap__tab--all { flex: none; }
+.cmap__tabs-scroll {
+  display: flex;
+  flex: 1 1 auto;
+  gap: 6px;
+  min-width: 0;
+  margin-left: 12px;
+  padding: 2px 0 2px 12px;
+  border-left: 1px solid var(--gray-200);
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  scroll-snap-type: x proximity;
+}
+.cmap__tabs-scroll::-webkit-scrollbar { display: none; }
+.cmap__tabs-scroll .cmap__tab { flex: none; scroll-snap-align: start; }
+/* 施設の切り替え。大会結果の年度タブ（.year-tab）と同じ、角を少しだけ丸めた四角。選択中は黒 */
 .cmap__tab {
-  padding: 8px 14px;
+  padding: 9px 12px;
   border: 1px solid var(--gray-300);
-  border-radius: 9999px;
+  border-radius: 2px;
+  background: var(--white);
   font: 700 12px/1 var(--fjp);
   letter-spacing: .04em;
-  color: var(--gray-600);
+  color: var(--gray-800);
   white-space: nowrap;
   transition: background .3s ease, border-color .3s ease, color .3s ease;
 }
 .cmap__tab:hover { border-color: var(--red); color: var(--red); }
 .cmap__tab.is-active {
-  background: var(--red);
-  border-color: var(--red);
+  background: var(--ink);
+  border-color: var(--ink);
   color: #fff;
 }
 .cmap__frame {
@@ -1712,12 +1730,32 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 /* 現在地：青い点（白い縁）と、精度の円 */
 .cmap__map .cloc { fill: #1a73e8; fill-opacity: 1; stroke: var(--white); stroke-width: 3; }
 .cmap__map .cloc-acc { fill: #1a73e8; fill-opacity: .12; stroke: #1a73e8; stroke-width: 1; stroke-opacity: .4; }
-.cmap__tab--locate { display: inline-flex; align-items: center; gap: 6px; margin-left: auto; }
-.cmap__tab--locate[hidden] { display: none; }
+/* 現在地ボタン。地図の左下に重ねる（右下の拡大縮小・帰属表示と重ならない位置）。形は施設タブと同じ */
+.cmap__locate {
+  position: absolute;
+  left: 14px;
+  bottom: 14px;
+  z-index: 1000; /* Leaflet のコントロールと同じ高さ。地図のタイル・ピンより前 */
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 12px;
+  border: 1px solid var(--gray-300);
+  border-radius: 2px;
+  background: var(--white);
+  font: 700 12px/1 var(--fjp);
+  letter-spacing: .04em;
+  color: var(--gray-800);
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(26, 26, 26, .08);
+  transition: background .3s ease, border-color .3s ease, color .3s ease;
+}
+.cmap__locate:hover { border-color: #1a73e8; color: #1a73e8; }
+.cmap__locate[hidden] { display: none; }
 .cmap__locate-dot { width: 8px; height: 8px; border-radius: 50%; background: #1a73e8; box-shadow: 0 0 0 2px var(--white); }
-.cmap__tab--locate.is-active { background: #1a73e8; border-color: #1a73e8; color: #fff; }
-.cmap__tab--locate.is-active:hover { color: #fff; }
-.cmap__tab--locate.is-busy { opacity: .6; cursor: progress; }
+.cmap__locate.is-active { background: #1a73e8; border-color: #1a73e8; color: #fff; }
+.cmap__locate.is-active:hover { color: #fff; }
+.cmap__locate.is-busy { opacity: .6; cursor: progress; }
 /* 位置情報の結果（許可されていない、取れなかった）を知らせる文言。無いときは出さない */
 .cmap__msg { flex: 1; min-width: 0; font: 400 12px/1.5 var(--fjp); color: var(--gray-600); }
 .cmap__msg:empty { display: none; }
@@ -2565,20 +2603,21 @@ body.jsrv .rv.on .ink-sweep {
 .reg--shi { background: var(--red); color: #fff; }
 .reg--free { background: var(--gray-600); color: #fff; }
 
-/* フィルタチップ / タブ */
-.chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 24px; }
+/* フィルタチップ / タブ。年度タブ（.year-tab）と同じ、角を少しだけ丸めた四角。選択中は黒 */
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 24px; }
 .chip {
   min-height: 40px;
-  padding: 9px 18px;
+  padding: 9px 14px;
   border: 1px solid var(--gray-300);
-  border-radius: 9999px;
+  border-radius: 2px;
   background: var(--white);
-  font: 500 13px/1.4 var(--fjp);
+  font: 700 13px/1.4 var(--fjp);
+  letter-spacing: .02em;
   color: var(--gray-800);
   transition: all .25s ease;
 }
 .chip:hover { border-color: var(--red); color: var(--red); }
-.chip.is-active { background: var(--red); border-color: var(--red); color: #fff; }
+.chip.is-active { background: var(--ink); border-color: var(--ink); color: #fff; }
 
 .tabs {
   display: flex;
@@ -2893,7 +2932,10 @@ body.jsrv .rv.on .ink-sweep {
 .rblock__captions { margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--gray-200); }
 .rblock__captions .rblock__caption { margin-top: 6px; }
 /* 写真1枚ごとの名前（「優勝 ○○ペア」）。写真の下に小さく */
-.gallery.gallery--winners .gallery__cap { display: block; padding: 8px 10px; border-top: 1px solid var(--gray-200); font: 700 13px/1.5 var(--fjp); letter-spacing: .02em; color: var(--ink); background: var(--white); }
+.gallery.gallery--winners .gallery__cap { display: block; padding: 8px 2px 0; font: 700 13px/1.5 var(--fjp); letter-spacing: .02em; color: var(--ink); }
+.gallery.gallery--winners .gallery__item { background: none; overflow: visible; }
+.gallery.gallery--winners .gallery__item img { border-radius: 4px; }
+.gallery.gallery--winners .gallery__item:hover img { transform: none; }
 .rblock:first-child { margin-top: 0; }
 .rblock + .rblock { margin-top: 48px; }
 .sheet--result { border-radius: 4px; }
@@ -2965,12 +3007,12 @@ body.jsrv .rv.on .ink-sweep {
 }
 @media (min-width: 640px) { .gallery { grid-template-columns: repeat(3, 1fr); gap: 12px; } }
 @media (min-width: 1024px) { .gallery { grid-template-columns: repeat(4, 1fr); } }
+/* 写真は枠を付けず、写真そのものの角だけ丸める（余白を作らない） */
 .gallery__item {
   display: block;
   overflow: hidden;
+  border-radius: 4px;
   background: var(--gray-050);
-  border: 1px solid var(--gray-200);
-  border-radius: 6px;
 }
 .gallery__item img {
   display: block;
@@ -2978,10 +3020,9 @@ body.jsrv .rv.on .ink-sweep {
   /* img の width/height 属性が高さに効いたままだと、幅だけ縮んで縦長の升目になる */
   height: auto;
   aspect-ratio: 4 / 3;
-  /* 表彰の写真だけでなく、細長いドロー表やスコア表も混ざっている。
-     cover で切ると何の紙か分からなくなるので、全体を収める。 */
-  object-fit: contain;
-  background: var(--white);
+  /* 升目を写真で埋める（白い余白を作らない）。結果表・ドロー表は .sheet で別に出す */
+  object-fit: cover;
+  border-radius: 4px;
   transition: transform .4s var(--ease);
 }
 .gallery__item:hover img { transform: scale(1.04); }
@@ -3264,16 +3305,17 @@ body.jsrv .rv.on .ink-sweep {
 .jump {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 6px;
   margin-top: 28px;
 }
 .jump__link {
   display: inline-flex;
   align-items: baseline;
   gap: 8px;
-  padding: 9px 16px;
+  padding: 9px 14px;
   border: 1px solid var(--gray-300);
-  border-radius: 999px;
+  border-radius: 2px;
+  background: var(--white);
   font: 700 13px/1.5 var(--fjp);
   letter-spacing: .04em;
   color: var(--gray-800);
