@@ -243,53 +243,6 @@ const upcomingTournaments = TOURNAMENTS.filter((t) => t.status !== 'past');
     </div>
   </section>
 
-  <!-- ============ リンク集 ============ -->
-  <section class="section" id="links" aria-labelledby="links-title">
-    <span class="ghost" aria-hidden="true">LINKS</span>
-    <div class="container">
-      <div class="sec-bar rv">
-        <div class="sec-head">
-          <div class="sec-head__row">
-            <span class="sec-head__mark" aria-hidden="true"></span>
-            <div>
-              <p class="sec-head__eyebrow">Links</p>
-              <h2 class="sec-head__title" id="links-title">リンク集</h2>
-            </div>
-          </div>
-        </div>
-        <div class="sec-bar__aside">
-          <a class="ghost-link view-all" href="links.html">
-            <span class="view-all__label">VIEW ALL</span><span class="sqbtn">→</span>
-          </a>
-        </div>
-      </div>
-    </div>
-
-    {/* 2段組み。上段（テニス協会・連盟のHP）は右から左へ、下段（施設・クラブ・
-        協賛など）は左から右へ流れる。振り分けは src/data/links.js の row。
-        画面いっぱいに流したいので、コンテナの外に置いている。 */}
-    <div class="marquee-rows rv">
-        <div class="marquee" data-marquee data-marquee-dir="1">
-          <div class="marquee__track">
-            {marqueeHalf(LINKS_ASSOC).map((l) => <LinkCard link={l} compact />)}
-            {/* ループ用の複製。main.js が scrollWidth の半分で巻き戻すので、
-                前半とまったく同じ枚数・同じ順で並べること。 */}
-            <div style="display:flex" aria-hidden="true">
-              {marqueeHalf(LINKS_ASSOC).map((l) => <LinkCard link={l} compact clone />)}
-            </div>
-          </div>
-        </div>
-        <div class="marquee" data-marquee data-marquee-dir="-1">
-          <div class="marquee__track">
-            {marqueeHalf(LINKS_OTHER).map((l) => <LinkCard link={l} compact />)}
-            <div style="display:flex" aria-hidden="true">
-              {marqueeHalf(LINKS_OTHER).map((l) => <LinkCard link={l} compact clone />)}
-            </div>
-          </div>
-        </div>
-    </div>
-  </section>
-
   <!-- ============ コート案内 ============ -->
   <section class="section section--gray" id="courts" aria-labelledby="courts-title">
     <span class="ghost" aria-hidden="true">COURT GUIDE</span>
@@ -382,6 +335,53 @@ const upcomingTournaments = TOURNAMENTS.filter((t) => t.status !== 'past');
       </div>
     </div>
   </section>
+  <!-- ============ リンク集 ============ -->
+  <section class="section" id="links" aria-labelledby="links-title">
+    <span class="ghost" aria-hidden="true">LINKS</span>
+    <div class="container">
+      <div class="sec-bar rv">
+        <div class="sec-head">
+          <div class="sec-head__row">
+            <span class="sec-head__mark" aria-hidden="true"></span>
+            <div>
+              <p class="sec-head__eyebrow">Links</p>
+              <h2 class="sec-head__title" id="links-title">リンク集</h2>
+            </div>
+          </div>
+        </div>
+        <div class="sec-bar__aside">
+          <a class="ghost-link view-all" href="links.html">
+            <span class="view-all__label">VIEW ALL</span><span class="sqbtn">→</span>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    {/* 2段組み。上段（テニス協会・連盟のHP）は右から左へ、下段（施設・クラブ・
+        協賛など）は左から右へ流れる。振り分けは src/data/links.js の row。
+        画面いっぱいに流したいので、コンテナの外に置いている。 */}
+    <div class="marquee-rows rv">
+        <div class="marquee" data-marquee data-marquee-dir="1">
+          <div class="marquee__track">
+            {marqueeHalf(LINKS_ASSOC).map((l) => <LinkCard link={l} compact />)}
+            {/* ループ用の複製。main.js が scrollWidth の半分で巻き戻すので、
+                前半とまったく同じ枚数・同じ順で並べること。 */}
+            <div style="display:flex" aria-hidden="true">
+              {marqueeHalf(LINKS_ASSOC).map((l) => <LinkCard link={l} compact clone />)}
+            </div>
+          </div>
+        </div>
+        <div class="marquee" data-marquee data-marquee-dir="-1">
+          <div class="marquee__track">
+            {marqueeHalf(LINKS_OTHER).map((l) => <LinkCard link={l} compact />)}
+            <div style="display:flex" aria-hidden="true">
+              {marqueeHalf(LINKS_OTHER).map((l) => <LinkCard link={l} compact clone />)}
+            </div>
+          </div>
+        </div>
+    </div>
+  </section>
+
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
   <script is:inline src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js" crossorigin="anonymous" referrerpolicy="no-referrer" defer></script>
 </Base>
