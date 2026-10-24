@@ -501,6 +501,9 @@
     var locateBtn = root.querySelector('[data-cmap-locate]');
     var msg = root.querySelector('[data-cmap-msg]');
     var photo = root.querySelector('[data-cmap-photo]');
+    var photoImg = root.querySelector('[data-cmap-photo-img]');
+    var photoSurface = root.querySelector('[data-cmap-surface]');
+    var photoFaces = root.querySelector('[data-cmap-faces]');
     if (!el || !tabs.length) return;
 
     var courts;
@@ -600,11 +603,15 @@
         else map.flyToBounds(bounds, Object.assign({ duration: 0.9 }, opts));
       }
 
-      // 左上の施設の写真。写真の無い施設と「すべて」では隠す
+      // 左上の施設の写真（右にサーフェス・面数）。写真の無い施設と「すべて」では隠す
       function showPhoto(c) {
         if (!photo) return;
-        if (c && c.image) { photo.src = c.image; photo.hidden = false; }
-        else photo.hidden = true;
+        if (c && c.image) {
+          if (photoImg) photoImg.src = c.image;
+          if (photoSurface) photoSurface.textContent = c.surface || '';
+          if (photoFaces) photoFaces.textContent = c.faces ? c.faces + '面' : '';
+          photo.hidden = false;
+        } else photo.hidden = true;
       }
       // 寄せるときの余白。コート全体が真ん中に、まわりに少し余裕がある程度。
       // 左上は写真の分だけ余計に空け、写真でコートが隠れないようにする

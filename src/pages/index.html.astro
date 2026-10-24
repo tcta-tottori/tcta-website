@@ -330,8 +330,15 @@ const upcomingTournaments = TOURNAMENTS.filter((t) => t.status !== 'past');
                   タイルは OpenStreetMap。テニスコートの面を赤く塗り、その重心にピンを立てる。
                   上のボタンでその施設のコート全体が入るように寄り、「すべて」で全施設を一望する。 */}
               <div class="cmap__map" data-cmap-map data-courts={JSON.stringify(COURTS.map(mapData))} role="img" aria-label="利用コートの地図"></div>
-              {/* 選んだ施設の写真。地図の左上に重ねる（courts.js の image。「すべて」のときは JS が隠す） */}
-              <img class="cmap__photo" data-cmap-photo src={COURTS[0].image ?? ''} alt="" width="960" height="540" decoding="async" hidden={!COURTS[0].image}>
+              {/* 選んだ施設の写真と、その右にサーフェス・面数。地図の左上に重ねる（courts.js の image / surface / courts。
+                  「すべて」のときは JS が隠す） */}
+              <div class="cmap__photo" data-cmap-photo hidden={!COURTS[0].image}>
+                <img class="cmap__photo-img" data-cmap-photo-img src={COURTS[0].image ?? ''} alt="" width="960" height="540" decoding="async">
+                <span class="cmap__photo-text">
+                  <span class="cmap__photo-surface" data-cmap-surface>{COURTS[0].surface ?? ''}</span>
+                  <span class="cmap__photo-faces" data-cmap-faces>{COURTS[0].courts ? `${COURTS[0].courts}面` : ''}</span>
+                </span>
+              </div>
               {/* 現在地。地図の左下に重ねる。押すと位置情報の許可を求め、許可されれば青い点で出す（main.js の initCourtMap）。
                   位置情報が使えない環境では JS が隠す。 */}
               <button class="cmap__locate" type="button" aria-pressed="false" data-cmap-locate>

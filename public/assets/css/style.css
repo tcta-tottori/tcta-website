@@ -1652,23 +1652,35 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   height: clamp(280px, 85vw, 360px); /* スマホは画面の幅に合わせる */
   background: var(--gray-050);
 }
-/* 選んだ施設の写真。地図の左上に重ねる。地図と見分けがつくよう白い枠を付ける */
+/* 選んだ施設の写真と、その右にサーフェス・面数。地図の左上に重ねる。地図と見分けがつくよう白い枠を付ける */
 .cmap__photo {
   position: absolute;
   top: 12px;
   left: 12px;
   z-index: 1000; /* Leaflet のコントロールと同じ高さ */
-  width: clamp(120px, 36%, 200px);
-  height: auto;
-  aspect-ratio: 16 / 9;
-  object-fit: cover;
-  border: 3px solid var(--white);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 3px;
   border-radius: 4px;
   background: var(--white);
   box-shadow: 0 0 0 1px var(--gray-200), 0 2px 10px rgba(26, 26, 26, .18);
   pointer-events: none;
 }
 .cmap__photo[hidden] { display: none; }
+.cmap__photo-img {
+  display: block;
+  width: clamp(110px, 30vw, 180px);
+  height: auto;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: 2px;
+}
+.cmap__photo-text { display: flex; flex-direction: column; gap: 3px; padding-right: 10px; white-space: nowrap; }
+.cmap__photo-text:not(:has(:not(:empty))) { display: none; }
+.cmap__photo-surface { font: 700 12px/1.3 var(--fjp); letter-spacing: .02em; color: var(--ink); }
+.cmap__photo-faces { font: 700 12px/1.3 var(--flt); letter-spacing: .02em; color: var(--red); }
+.cmap__photo-surface:empty, .cmap__photo-faces:empty { display: none; }
 @media (min-width: 1024px) { .cmap__frame { height: 420px; } }
 /* 自前で描く地図（Leaflet）。読み終わるまでは下敷きを見せる。 */
 .cmap__map {
@@ -1987,18 +1999,21 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 .link-grid .link-card { width: auto; margin-right: 0; }
 
 /* ============ 12. コート案内 ============ */
+/* 1行：ピンと施設名を同じ行に、その下に住所などの補足。矢印は出さない（写真と重なるため） */
 .court-item {
   display: flex;
-  align-items: center;
-  gap: 16px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
   padding: 20px 8px;
   border-bottom: 1px solid var(--gray-200);
   transition: background .3s ease;
   cursor: pointer;
 }
+.court-item__head { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.court-item__place { margin-top: 0; padding-left: 30px; }
 .court-item:hover { background: var(--gray-050); color: inherit; }
 .court-item:hover .sch-item__title { color: var(--red); }
-.court-item:hover .ar { transform: translateX(3px); }
 /* 施設の写真。行の右端に敷き、中央へ向けて薄くする。文字と矢印はその上に */
 .court-item--photo { position: relative; overflow: hidden; }
 .court-item--photo > :not(.court-item__photo) { position: relative; z-index: 1; }
@@ -2012,14 +2027,13 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 }
 .court-item__photo img { display: block; width: 100%; height: 100%; object-fit: cover; transition: transform .5s var(--ease); }
 .court-item--photo:hover .court-item__photo img { transform: scale(1.04); }
-.court-item--photo .sch-item__text { max-width: 72%; }
+.court-item--photo .court-item__head, .court-item--photo .court-item__place { max-width: 72%; }
 .court-item--photo .sch-item__title,
 .court-item--photo .sch-item__place { text-shadow: 0 0 6px var(--white), 0 0 2px var(--white); }
 .court-pin {
   width: 20px; height: 20px;
   color: var(--red);
 }
-.court-item .ar { margin-left: auto; color: var(--red); }
 
 /* ============ 13. CTA / フッター ============ */
 .cta {
