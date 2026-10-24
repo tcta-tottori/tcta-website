@@ -38,29 +38,32 @@ const telHref = (tel) => `tel:${String(tel).replace(/[^0-9+]/g, '')}`;
     </div>
   </section>
 
-  <section class="section">
-    <div class="container container--result">
-
+  <section class="section section--cfac">
       {COURTS.map((c, i) => (
-        <article class="cfac rv" id={c.id} style={i === 0 ? undefined : 'margin-top:72px'}>
-          {/* 写真は枠なしで角だけ丸める。タップで全画面（main.js の initLightbox は .gallery 内の .gallery__item を拾う） */}
-          {c.image && (
-            <div class="gallery cfac__photo">
-              <a class="gallery__item" href={c.image}>
+        <article class="cfac rv" id={c.id}>
+          {/* 写真は画面の幅いっぱいに。その上に番号・施設名・バッジを重ねる。
+              写真の部分を押すと全画面（main.js の initLightbox は .gallery 内の .gallery__item を拾う） */}
+          <div class:list={['cfac__hero gallery', !c.image && 'cfac__hero--noimg']}>
+            {c.image && (
+              <a class="gallery__item cfac__hero-link" href={c.image} aria-label={`${c.name}の写真を全画面で見る`}>
                 <img src={c.image} alt={`${c.name}の写真`} width="960" height="540" loading={i === 0 ? 'eager' : 'lazy'} decoding="async">
               </a>
+            )}
+            <div class="cfac__hero-cap">
+              <div class="container container--result">
+                <span class="cfac__no" aria-hidden="true">{String(i + 1).padStart(2, '0')}</span>
+                <h2 class="cfac__name"><Icon name="pin" class="court-pin" />{c.name}</h2>
+                <p class="cfac__badges">
+                  {c.main && <span class="badge badge--open">主会場</span>}
+                  {c.surface && <span class="badge">{c.surface}</span>}
+                  {c.courts > 0 && <span class="badge">{c.courts}面</span>}
+                  {c.features.map((f) => <span class="badge">{f}</span>)}
+                </p>
+              </div>
             </div>
-          )}
-
-          <div class="cfac__head">
-            <h2 class="cfac__name"><Icon name="pin" class="court-pin" />{c.name}</h2>
-            <p class="cfac__badges">
-              {c.main && <span class="badge badge--open">主会場</span>}
-              {c.surface && <span class="badge badge--outline">{c.surface}</span>}
-              {c.courts > 0 && <span class="badge badge--outline">{c.courts}面</span>}
-              {c.features.map((f) => <span class="badge badge--tint">{f}</span>)}
-            </p>
           </div>
+
+          <div class="container container--result cfac__body">
           {c.desc && <p class="cfac__desc">{c.desc}</p>}
 
           <div class="deflist">
@@ -105,19 +108,24 @@ const telHref = (tel) => `tel:${String(tel).replace(/[^0-9+]/g, '')}`;
             )}
           </div>
 
-          {/* 押せる行動：予約（別タブ）／電話／地図 */}
+          {/* 押せる行動：予約（別タブ）／電話／地図。上の表とは切り離した枠に */}
           <div class="cfac__actions">
-            {c.reserve && (
-              <a class="btn btn--primary" href={c.reserve.url} target="_blank" rel="noopener noreferrer">コートを予約する <span class="aw">↗</span></a>
-            )}
-            {c.contact && (
-              <a class="btn btn--outline" href={telHref(c.contact.tel)}>電話をかける（{c.contact.tel}）</a>
-            )}
-            <a class="btn btn--outline" href={mapLink(c)} target="_blank" rel="noopener noreferrer">地図で見る <span class="aw">↗</span></a>
+            <p class="cfac__actions-title">予約・問い合わせ</p>
+            <div class="cfac__actions-btns">
+              {c.reserve && (
+                <a class="btn btn--primary" href={c.reserve.url} target="_blank" rel="noopener noreferrer">コートを予約する <span class="aw">↗</span></a>
+              )}
+              {c.contact && (
+                <a class="btn btn--outline" href={telHref(c.contact.tel)}>電話をかける（{c.contact.tel}）</a>
+              )}
+              <a class="btn btn--outline" href={mapLink(c)} target="_blank" rel="noopener noreferrer">地図で見る <span class="aw">↗</span></a>
+            </div>
+          </div>
           </div>
         </article>
       ))}
 
+    <div class="container container--result">
       <div class="panel panel--gray rv" style="margin-top:72px">
         <p class="panel__title">施設の予約について</p>
         <p class="prose" style="margin:0">
