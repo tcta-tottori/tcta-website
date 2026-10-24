@@ -29,7 +29,7 @@ const telHref = (tel) => `tel:${String(tel).replace(/[^0-9+]/g, '')}`;
         </div>
       </div>
       <p class="page-lead fu" style="animation-delay:.15s">
-        大会と教室で使用している主な会場をご案内します。コートの予約は基本的に鳥取市公共施設予約システムから行えます。協会が管理・貸出を行っているものではありませんのでご注意ください。
+        大会と教室で使用している主な会場をご案内します。鳥取市の施設の予約は鳥取市公共施設予約システムから、八頭町の施設は電話でお申し込みください。協会が管理・貸出を行っているものではありませんのでご注意ください。
       </p>
       {/* 施設へのジャンプ。年度タブと同じ形（.jump__link） */}
       <nav class="jump fu" style="animation-delay:.3s" aria-label="施設へ移動">
@@ -83,11 +83,13 @@ const telHref = (tel) => `tel:${String(tel).replace(/[^0-9+]/g, '')}`;
                 <div class="deflist__val">{c.features.join('・')}</div>
               </div>
             )}
-            {c.reserve && (
+            {(c.reserve || c.contact) && (
               <div class="deflist__row">
                 <div class="deflist__key">予約</div>
                 <div class="deflist__val">
-                  <a href={c.reserve.url} target="_blank" rel="noopener noreferrer">{c.reserve.label} ↗</a>
+                  {c.reserve
+                    ? <a href={c.reserve.url} target="_blank" rel="noopener noreferrer">{c.reserve.label} ↗</a>
+                    : <>{c.contact.label}へ電話でお申し込みください（<a href={telHref(c.contact.tel)}>{c.contact.tel}</a>）</>}
                 </div>
               </div>
             )}
@@ -115,7 +117,7 @@ const telHref = (tel) => `tel:${String(tel).replace(/[^0-9+]/g, '')}`;
                 <a class="btn btn--primary" href={c.reserve.url} target="_blank" rel="noopener noreferrer">コートを予約する <span class="aw">↗</span></a>
               )}
               {c.contact && (
-                <a class="btn btn--outline" href={telHref(c.contact.tel)}>電話をかける（{c.contact.tel}）</a>
+                <a class:list={['btn', c.reserve ? 'btn--outline' : 'btn--primary']} href={telHref(c.contact.tel)}>電話をかける（{c.contact.tel}）</a>
               )}
               <a class="btn btn--outline" href={mapLink(c)} target="_blank" rel="noopener noreferrer">地図で見る <span class="aw">↗</span></a>
             </div>
@@ -128,8 +130,8 @@ const telHref = (tel) => `tel:${String(tel).replace(/[^0-9+]/g, '')}`;
       <div class="panel panel--gray rv" style="margin-top:72px">
         <p class="panel__title">施設の予約について</p>
         <p class="prose" style="margin:0">
-          コートの予約は基本的に<a href="https://p-kashikan.jp/tottori/" target="_blank" rel="noopener noreferrer">鳥取市公共施設予約システム ↗</a>から行えます。
-          分からないことは各施設の電話の問い合わせ先へ。協会が管理・貸出を行っているものではありません。
+          鳥取市の施設（ヤマタスポーツパーク・千代・井原公園・東冨安公園・若葉台・金沢・用瀬）の予約は<a href="https://p-kashikan.jp/tottori/" target="_blank" rel="noopener noreferrer">鳥取市公共施設予約システム ↗</a>から行えます。
+          八頭町の施設（郡家ふれあいドーム・八東総合運動公園）は電話でお申し込みください。協会が管理・貸出を行っているものではありません。
         </p>
         <a class="ghost-link mt-24" href="index.html#courts">トップの地図で場所を見る <span class="aw">→</span></a>
       </div>
