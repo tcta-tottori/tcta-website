@@ -27,7 +27,8 @@
 //   desc     … 施設の説明（1〜2文）
 //   address  … 住所。分からないものは '' のまま（ページでは「確認中」と出る）
 //   features … 設備の一覧（'夜間照明あり' '屋根付き' など）
-//   reserve  … 予約先 { label, url }。どの施設も基本は鳥取市公共施設予約システム（CITY_RESERVE）
+//   reserve  … 予約先 { label, url }。鳥取市の施設は鳥取市公共施設予約システム（CITY_RESERVE）。
+//              そこで予約できない施設（八頭町の郡家ふれあいドーム・八東総合運動公園）は null にし、電話（contact）で申し込む
 //   contact  … 電話の問い合わせ先 { label, tel }（施設や管理事務所）。無ければ null
 //   link     … 公式ページ { label, url }
 //
@@ -36,7 +37,7 @@
 //
 // ※ 住所が '' のものは、協会に確認して埋めること。
 
-/** 鳥取市公共施設予約システム。コートの予約は基本的にここから */
+/** 鳥取市公共施設予約システム。鳥取市の施設（ヤマタ・千代・井原公園・東冨安公園・若葉台・金沢・用瀬）はここから */
 const CITY_RESERVE = { label: '鳥取市公共施設予約システム', url: 'https://p-kashikan.jp/tottori/' };
 
 export const COURTS = [
@@ -164,7 +165,7 @@ export const COURTS = [
     desc: '屋根付きのコートで、雨の日でも使えます。',
     address: '鳥取県八頭郡八頭町下門尾180',
     features: ['屋根付き'],
-    reserve: CITY_RESERVE,
+    reserve: null, // 鳥取市の予約システムでは予約できない。電話で申し込む
     contact: { label: '八頭町シルバー人材センター', tel: '0858-72-3351' },
     link: { label: '八頭町 郡家ふれあいドーム', url: 'https://www.town.yazu.tottori.jp/soshiki/14/1457.html' },
     href: 'courts.html#kooge',
@@ -180,7 +181,7 @@ export const COURTS = [
     desc: '屋根付多目的広場の中にあるクレーコート。雨の日でも使えます。',
     address: '鳥取県八頭郡八頭町徳丸528',
     features: ['屋根付き'],
-    reserve: CITY_RESERVE,
+    reserve: null, // 鳥取市の予約システムでは予約できない。電話で申し込む
     contact: { label: '八東総合運動公園', tel: '0858-84-2890' },
     link: { label: '八東総合運動公園（やず観光ナビ）', url: 'https://yazukanko.jp/seeing_play/onsen-park/hatto-sports-park/' },
     href: 'courts.html#hatto',
