@@ -669,7 +669,14 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 .hamburger[aria-expanded="true"] span:nth-child(2) { opacity: 0; }
 .hamburger[aria-expanded="true"] span:nth-child(3) { transform: translateY(-8px) rotate(-45deg); }
 
+/* 開閉のアニメーション。
+   開く：白い下地を .2s で出し、項目を上から順に少しずつ遅らせて出す。
+         項目1つは .16s、最初と最後の遅れの差は .15s なので、全体で .3s ほどで開き終わる。
+   閉じる：その逆。下の項目から順に消え（.3s ほど）、消え終わるころに下地をしまう。
+   項目の遅れは --i（上から何番目か）と --n（項目の総数）から計算する（MobileNav.astro が付ける）。 */
 .mobile-nav {
+  --mn-stagger: .15s;   /* 最初の項目と最後の項目の遅れの差 */
+  --mn-item: .16s;      /* 項目1つが出入りする時間 */
   position: fixed;
   inset: 0;
   z-index: 90;
@@ -679,9 +686,33 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   opacity: 0;
   visibility: hidden;
   transform: translateY(-8px);
-  transition: opacity .3s ease, transform .3s var(--ease), visibility .3s;
+  /* 閉じるとき：項目が消え終わるのを待ってから下地を消す */
+  transition: opacity .2s ease var(--mn-stagger), transform .2s var(--ease) var(--mn-stagger), visibility 0s linear calc(var(--mn-stagger) + .2s);
 }
-.mobile-nav.is-open { opacity: 1; visibility: visible; transform: none; }
+.mobile-nav.is-open {
+  opacity: 1; visibility: visible; transform: none;
+  /* 開くとき：下地はすぐ出す */
+  transition: opacity .2s ease, transform .2s var(--ease), visibility 0s;
+}
+.mobile-nav__item {
+  opacity: 0;
+  transform: translateY(-10px);
+  /* 閉じるとき：下の項目ほど早く消える（上の項目が最後） */
+  transition: opacity var(--mn-item) ease, transform var(--mn-item) var(--ease);
+  transition-delay: calc((var(--n, 1) - 1 - var(--i, 0)) / max(var(--n, 1) - 1, 1) * var(--mn-stagger));
+}
+.mobile-nav.is-open .mobile-nav__item {
+  opacity: 1;
+  transform: none;
+  /* 開くとき：上の項目ほど早く出る */
+  transition-delay: calc(var(--i, 0) / max(var(--n, 1) - 1, 1) * var(--mn-stagger));
+}
+@media (prefers-reduced-motion: reduce) {
+  .mobile-nav, .mobile-nav.is-open, .mobile-nav__item, .mobile-nav.is-open .mobile-nav__item {
+    transition: none;
+    transition-delay: 0s;
+  }
+}
 @media (min-width: 1024px) { .mobile-nav { display: none; } }
 .mobile-nav__link {
   display: flex;

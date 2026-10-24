@@ -10,13 +10,16 @@ const { active } = Astro.props;
 ---
 
 <div class="mobile-nav" id="mobile-nav" aria-hidden="true">
-  <nav aria-label="モバイルナビゲーション">
-    {MOBILE_NAV.map((item) => (
+  {/* 開くときは上の項目から順に、閉じるときは下の項目から順に出入りさせる（style.css の .mobile-nav__item）。
+      --i が上から何番目か、--n が項目の総数（お問い合わせボタンを含む）。遅れ時間はこの2つから CSS が計算する。 */}
+  <nav aria-label="モバイルナビゲーション" style={`--n:${MOBILE_NAV.length + 1}`}>
+    {MOBILE_NAV.map((item, i) => (
       <a
-        class:list={['mobile-nav__link', active === item.key && 'is-active']}
+        class:list={['mobile-nav__link', 'mobile-nav__item', active === item.key && 'is-active']}
         href={item.href}
+        style={`--i:${i}`}
       >{item.label} <span class="ar">→</span></a>
     ))}
-    <a class="btn btn--primary" href="contact.html">お問い合わせ <span class="aw">→</span></a>
+    <a class="btn btn--primary mobile-nav__item" href="contact.html" style={`--i:${MOBILE_NAV.length}`}>お問い合わせ <span class="aw">→</span></a>
   </nav>
 </div>
