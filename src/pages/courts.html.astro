@@ -41,7 +41,7 @@ const telHref = (tel) => `tel:${String(tel).replace(/[^0-9+]/g, '')}`;
   <section class="section section--cfac">
       {COURTS.map((c, i) => (
         <article class="cfac rv" id={c.id}>
-          {/* 写真は画面の幅いっぱいに。その上に番号・施設名・バッジを重ねる。
+          {/* 写真は画面の幅いっぱいに。その左上に番号・施設名・バッジを重ねる。
               写真の部分を押すと全画面（main.js の initLightbox は .gallery 内の .gallery__item を拾う） */}
           <div class:list={['cfac__hero gallery', !c.image && 'cfac__hero--noimg']}>
             {c.image && (
