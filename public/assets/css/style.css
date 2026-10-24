@@ -2036,7 +2036,7 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 }
 
 /* ---- コート案内のページ（courts.html）：施設1件 ----
-   写真を画面の幅いっぱいに敷き、その左上に番号・施設名・バッジを重ねる（上を暗くして文字を読ませる）
+   写真を画面の幅いっぱいに敷き、その左上に施設名・バッジを重ねる（暗い帯はほぼ付けず、文字の影で読ませる）
    → 本文（説明・表）→ 予約・問い合わせのボタンは表と切り離した枠に。 */
 .section--cfac { padding-top: 0; }
 .cfac { scroll-margin-top: 72px; }
@@ -2063,26 +2063,18 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   transition: transform 1.2s var(--ease);
 }
 .cfac__hero:hover .cfac__hero-link img { transform: scale(1.04); }
-/* 写真の上の文字。写真の左上に置き、上から下へ薄くなる暗い帯で読ませる。押しても下の写真のリンクに通す */
+/* 写真の上の文字。写真の左上に置く。暗い帯はごく薄くにとどめ、文字の影で読ませる。押しても下の写真のリンクに通す */
 .cfac__hero-cap {
   position: absolute;
   inset: 0 0 auto;
-  padding: 24px 0 72px;
-  background: linear-gradient(180deg, rgba(26, 26, 26, .78) 0%, rgba(26, 26, 26, .5) 55%, rgba(26, 26, 26, 0) 100%);
+  padding: 20px 0 40px;
+  background: linear-gradient(180deg, rgba(26, 26, 26, .22) 0%, rgba(26, 26, 26, 0) 100%);
   color: var(--white);
   text-align: left;
   pointer-events: none;
 }
-@media (min-width: 1024px) { .cfac__hero-cap { padding: 36px 0 120px; } }
+@media (min-width: 1024px) { .cfac__hero-cap { padding: 32px 0 64px; } }
 .cfac__hero--noimg .cfac__hero-cap { position: static; padding: 40px 0 28px; background: var(--ink); }
-.cfac__no {
-  display: block;
-  margin-bottom: 6px;
-  font: 700 13px/1 var(--flt);
-  letter-spacing: .3em;
-  color: rgba(255, 255, 255, .7);
-}
-.cfac__no::before { content: ""; display: inline-block; width: 10px; height: 10px; margin-right: 10px; background: var(--red); vertical-align: 1px; }
 .cfac__name {
   display: flex;
   align-items: center;
@@ -2091,7 +2083,7 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   font: 700 clamp(24px, 6vw, 40px)/1.25 var(--fjp);
   letter-spacing: .02em;
   color: var(--white);
-  text-shadow: 0 2px 12px rgba(0, 0, 0, .35);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, .6), 0 2px 14px rgba(0, 0, 0, .45);
 }
 .cfac__name .court-pin { width: .8em; height: .8em; flex: none; color: var(--red); }
 .cfac__badges { display: flex; flex-wrap: wrap; gap: 6px; margin: 14px 0 0; }
@@ -2099,8 +2091,9 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   background: rgba(255, 255, 255, .14);
   color: var(--white);
   border: 1px solid rgba(255, 255, 255, .55);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, .5);
 }
 .cfac__hero .badge--open { background: var(--red); border-color: var(--red); }
 .cfac__body { margin-top: 28px; }

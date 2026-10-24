@@ -41,7 +41,7 @@ const telHref = (tel) => `tel:${String(tel).replace(/[^0-9+]/g, '')}`;
   <section class="section section--cfac">
       {COURTS.map((c, i) => (
         <article class="cfac rv" id={c.id}>
-          {/* 写真は画面の幅いっぱいに。その左上に番号・施設名・バッジを重ねる。
+          {/* 写真は画面の幅いっぱいに。その左上に施設名・バッジを重ねる。
               写真の部分を押すと全画面（main.js の initLightbox は .gallery 内の .gallery__item を拾う） */}
           <div class:list={['cfac__hero gallery', !c.image && 'cfac__hero--noimg']}>
             {c.image && (
@@ -51,7 +51,6 @@ const telHref = (tel) => `tel:${String(tel).replace(/[^0-9+]/g, '')}`;
             )}
             <div class="cfac__hero-cap">
               <div class="container container--result">
-                <span class="cfac__no" aria-hidden="true">{String(i + 1).padStart(2, '0')}</span>
                 <h2 class="cfac__name"><Icon name="pin" class="court-pin" />{c.name}</h2>
                 <p class="cfac__badges">
                   {c.main && <span class="badge badge--open">主会場</span>}
