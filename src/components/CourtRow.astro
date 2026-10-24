@@ -1,8 +1,10 @@
 ---
-// コート案内の一覧の1行。ピンと施設名を同じ行に、その下に住所などの補足。src/data/courts.js の1件を受け取る。
+// コート案内の一覧の1行。ピンと施設名を同じ行に、その下にサーフェス、さらにその下に面数（夜間照明があれば添える）。
+// src/data/courts.js の1件を受け取る。住所や申込先はコート案内のページ（courts.html）に出す。
 // 写真（image）がある施設は、行の右端に写真を敷き、中央へ向けて薄くする（文字はその上）。矢印は写真と重なるので出さない。
 import Icon from './Icon.astro';
 const { court: c } = Astro.props;
+const lighting = (c.features ?? []).some((f) => String(f).startsWith('夜間照明'));
 ---
 
 <li><a class:list={['court-item', c.image && 'court-item--photo']} href={c.href} {...(c.external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}>
@@ -11,5 +13,8 @@ const { court: c } = Astro.props;
     <Icon name="pin" class="court-pin" />
     <span class="sch-item__title">{c.name}</span>
   </span>
-  <span class="sch-item__place court-item__place">{c.note}</span>
+  <span class="court-item__spec">
+    {c.surface && <span class="court-item__surface">{c.surface}</span>}
+    {c.courts > 0 && <span class="court-item__faces">{c.courts}面{lighting && '（夜間照明あり）'}</span>}
+  </span>
 </a></li>

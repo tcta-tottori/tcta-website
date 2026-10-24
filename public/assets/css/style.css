@@ -1999,7 +1999,7 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 .link-grid .link-card { width: auto; margin-right: 0; }
 
 /* ============ 12. コート案内 ============ */
-/* 1行：ピンと施設名を同じ行に、その下に住所などの補足。矢印は出さない（写真と重なるため） */
+/* 1行：ピンと施設名を同じ行に、その下にサーフェス、さらに面数（夜間照明があれば添える）。矢印は出さない（写真と重なるため） */
 .court-item {
   display: flex;
   flex-direction: column;
@@ -2011,7 +2011,9 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   cursor: pointer;
 }
 .court-item__head { display: flex; align-items: center; gap: 10px; min-width: 0; }
-.court-item__place { margin-top: 0; padding-left: 30px; }
+.court-item__spec { display: flex; flex-direction: column; gap: 2px; padding-left: 30px; font: 400 13px/1.6 var(--fjp); color: var(--gray-600); }
+.court-item__surface { font-weight: 700; color: var(--gray-800); }
+.court-item__faces { letter-spacing: .02em; }
 .court-item:hover { background: var(--gray-050); color: inherit; }
 .court-item:hover .sch-item__title { color: var(--red); }
 /* 施設の写真。行の右端に敷き、中央へ向けて薄くする。文字と矢印はその上に */
@@ -2027,9 +2029,9 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 }
 .court-item__photo img { display: block; width: 100%; height: 100%; object-fit: cover; transition: transform .5s var(--ease); }
 .court-item--photo:hover .court-item__photo img { transform: scale(1.04); }
-.court-item--photo .court-item__head, .court-item--photo .court-item__place { max-width: 72%; }
+.court-item--photo .court-item__head, .court-item--photo .court-item__spec { max-width: 72%; }
 .court-item--photo .sch-item__title,
-.court-item--photo .sch-item__place { text-shadow: 0 0 6px var(--white), 0 0 2px var(--white); }
+.court-item--photo .court-item__spec { text-shadow: 0 0 6px var(--white), 0 0 2px var(--white); }
 .court-pin {
   width: 20px; height: 20px;
   color: var(--red);
