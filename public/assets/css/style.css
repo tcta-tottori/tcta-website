@@ -1604,13 +1604,29 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   border: 1px solid var(--gray-200);
   overflow: hidden;
 }
+/* 左端の「すべて」は固定、区切り線の右に施設を1行で並べ、はみ出す分は横にスクロール（スクロールバーは出さない） */
 .cmap__tabs {
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  padding: 14px;
+  align-items: center;
+  padding: 12px 14px;
   border-bottom: 1px solid var(--gray-200);
 }
+.cmap__tab--all { flex: none; }
+.cmap__tabs-scroll {
+  display: flex;
+  flex: 1 1 auto;
+  gap: 6px;
+  min-width: 0;
+  margin-left: 12px;
+  padding: 2px 0 2px 12px;
+  border-left: 1px solid var(--gray-200);
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  scroll-snap-type: x proximity;
+}
+.cmap__tabs-scroll::-webkit-scrollbar { display: none; }
+.cmap__tabs-scroll .cmap__tab { flex: none; scroll-snap-align: start; }
 .cmap__tab {
   padding: 8px 14px;
   border: 1px solid var(--gray-300);
@@ -1712,12 +1728,32 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 /* 現在地：青い点（白い縁）と、精度の円 */
 .cmap__map .cloc { fill: #1a73e8; fill-opacity: 1; stroke: var(--white); stroke-width: 3; }
 .cmap__map .cloc-acc { fill: #1a73e8; fill-opacity: .12; stroke: #1a73e8; stroke-width: 1; stroke-opacity: .4; }
-.cmap__tab--locate { display: inline-flex; align-items: center; gap: 6px; margin-left: auto; }
-.cmap__tab--locate[hidden] { display: none; }
+/* 現在地ボタン。地図の左下に重ねる（右下の拡大縮小・帰属表示と重ならない位置）。形は施設タブと同じ */
+.cmap__locate {
+  position: absolute;
+  left: 14px;
+  bottom: 14px;
+  z-index: 1000; /* Leaflet のコントロールと同じ高さ。地図のタイル・ピンより前 */
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 12px;
+  border: 1px solid var(--gray-300);
+  border-radius: 2px;
+  background: var(--white);
+  font: 700 12px/1 var(--fjp);
+  letter-spacing: .04em;
+  color: var(--gray-800);
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(26, 26, 26, .08);
+  transition: background .3s ease, border-color .3s ease, color .3s ease;
+}
+.cmap__locate:hover { border-color: #1a73e8; color: #1a73e8; }
+.cmap__locate[hidden] { display: none; }
 .cmap__locate-dot { width: 8px; height: 8px; border-radius: 50%; background: #1a73e8; box-shadow: 0 0 0 2px var(--white); }
-.cmap__tab--locate.is-active { background: #1a73e8; border-color: #1a73e8; color: #fff; }
-.cmap__tab--locate.is-active:hover { color: #fff; }
-.cmap__tab--locate.is-busy { opacity: .6; cursor: progress; }
+.cmap__locate.is-active { background: #1a73e8; border-color: #1a73e8; color: #fff; }
+.cmap__locate.is-active:hover { color: #fff; }
+.cmap__locate.is-busy { opacity: .6; cursor: progress; }
 /* 位置情報の結果（許可されていない、取れなかった）を知らせる文言。無いときは出さない */
 .cmap__msg { flex: 1; min-width: 0; font: 400 12px/1.5 var(--fjp); color: var(--gray-600); }
 .cmap__msg:empty { display: none; }

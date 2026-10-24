@@ -309,29 +309,32 @@ const upcomingTournaments = TOURNAMENTS.filter((t) => t.status !== 'past');
         {/* 施設ごとの地図。上のボタンで切り替える（緯度経度とコートの輪郭は courts.js / court-shapes.json）。 */}
         <div class="rv embed-wrap">
           <div class="cmap" data-cmap>
+            {/* 施設の切り替え。左端に「すべて」を固定し、区切りの右に施設を1行で並べる（はみ出す分は横にスクロール） */}
             <div class="cmap__tabs" role="group" aria-label="地図に出す施設">
-              <button class="cmap__tab" type="button" aria-pressed="false" data-cmap-all>すべて</button>
-              {COURTS.map((c, i) => (
-                <button
-                  class:list={['cmap__tab', i === 0 && 'is-active']}
-                  type="button"
-                  aria-pressed={i === 0 ? 'true' : 'false'}
-                  data-cmap-tab={i}
-                  data-link={mapLink(c)}
-                  data-name={c.name}
-                >{c.short}</button>
-              ))}
-              {/* 現在地。押すと位置情報の許可を求め、許可されれば青い点で出す（main.js の initCourtMap）。
-                  位置情報が使えない環境では JS が隠す。 */}
-              <button class="cmap__tab cmap__tab--locate" type="button" aria-pressed="false" data-cmap-locate>
-                <span class="cmap__locate-dot" aria-hidden="true"></span>現在地
-              </button>
+              <button class="cmap__tab cmap__tab--all" type="button" aria-pressed="false" data-cmap-all>すべて</button>
+              <div class="cmap__tabs-scroll">
+                {COURTS.map((c, i) => (
+                  <button
+                    class:list={['cmap__tab', i === 0 && 'is-active']}
+                    type="button"
+                    aria-pressed={i === 0 ? 'true' : 'false'}
+                    data-cmap-tab={i}
+                    data-link={mapLink(c)}
+                    data-name={c.name}
+                  >{c.short}</button>
+                ))}
+              </div>
             </div>
             <div class="cmap__frame">
               {/* 地図は Leaflet で自前に描く（サイトの白・グレー・赤に合わせるため）。
                   タイルは OpenStreetMap。テニスコートの面を赤く塗り、その重心にピンを立てる。
                   上のボタンでその施設のコート全体が入るように寄り、「すべて」で全施設を一望する。 */}
               <div class="cmap__map" data-cmap-map data-courts={JSON.stringify(COURTS.map(mapData))} role="img" aria-label="利用コートの地図"></div>
+              {/* 現在地。地図の左下に重ねる。押すと位置情報の許可を求め、許可されれば青い点で出す（main.js の initCourtMap）。
+                  位置情報が使えない環境では JS が隠す。 */}
+              <button class="cmap__locate" type="button" aria-pressed="false" data-cmap-locate>
+                <span class="cmap__locate-dot" aria-hidden="true"></span>現在地
+              </button>
               {/* 地図が出せないときの下敷き。タイルが読めない環境ではこれが見える。 */}
               <div class="cmap__fallback" aria-hidden="true">
                 <Icon name="pin" class="cmap__fallback-pin" />
