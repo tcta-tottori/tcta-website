@@ -795,8 +795,8 @@
       if (open) {
         // 開くときは必ずヘッダーを出しておく（閉じるボタンが画面から消えないように）
         header.classList.remove('site-header--hidden');
-        // ヘッダー（通知バーの有無で高さが変わる）の真下から始める
-        menu.style.paddingTop = (header.getBoundingClientRect().bottom + 24) + 'px';
+        // ヘッダー（通知バーの有無で高さが変わる）の下端に合わせる。項目はここから下へ滑り出す（style.css の .mobile-nav__item）
+        menu.style.paddingTop = header.getBoundingClientRect().bottom + 'px';
       }
       toggle.setAttribute('aria-expanded', String(open));
       menu.classList.toggle('is-open', open);
