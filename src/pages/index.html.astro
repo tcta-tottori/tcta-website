@@ -188,25 +188,19 @@ const upcomingTournaments = TOURNAMENTS.filter((t) => t.status !== 'past');
   <section class="section section--flush-top" id="news" aria-labelledby="news-title">
     <span class="ghost" aria-hidden="true">NEWS</span>
     <div class="container">
-      <div class="sec-bar rv">
-        <div class="sec-head">
-          <div class="sec-head__row">
-            <span class="sec-head__mark" aria-hidden="true"></span>
-            <div>
-              <p class="sec-head__eyebrow">News</p>
-              <h2 class="sec-head__title" id="news-title">お知らせ</h2>
-            </div>
+      {/* 見出しの横に VIEW ALL は置かない。全件は一覧の下の「お知らせをすべて見る」で開く。 */}
+      <div class="sec-head rv">
+        <div class="sec-head__row">
+          <span class="sec-head__mark" aria-hidden="true"></span>
+          <div>
+            <p class="sec-head__eyebrow">News</p>
+            <h2 class="sec-head__title" id="news-title">お知らせ</h2>
           </div>
-        </div>
-        <div class="sec-bar__aside">
-          <button class="ghost-link view-all" type="button" data-news-open aria-expanded="false" aria-controls="news-all">
-            <span class="view-all__label">VIEW ALL</span><span class="sqbtn">→</span>
-          </button>
         </div>
       </div>
 
       {/* 上から3件だけ出す（NEWS_VISIBLE）。4件目があるときは、続きがあることが分かるよう
-          薄くフェードさせて見せる（押すと VIEW ALL と同じく全件が開く）。 */}
+          薄くフェードさせて見せる（「お知らせをすべて見る」を押すと全件が開く）。 */}
       <ul class="news-list">
         {NEWS.slice(0, NEWS_VISIBLE).map((n, i) => <NewsRow item={n} delay={i * 0.08} />)}
       </ul>
@@ -215,14 +209,14 @@ const upcomingTournaments = TOURNAMENTS.filter((t) => t.status !== 'past');
           <ul class="news-list news-list--peek" aria-hidden="true">
             <NewsRow item={NEWS[NEWS_VISIBLE]} />
           </ul>
-          <button class="news-peek__btn" type="button" data-news-open aria-controls="news-all">
+          <button class="news-peek__btn" type="button" data-news-open aria-expanded="false" aria-controls="news-all">
             お知らせをすべて見る（{NEWS.length}件）<span class="aw">↓</span>
           </button>
         </div>
       )}
     </div>
 
-    {/* VIEW ALL で開く全件表示。閉じるボタンは右上。 */}
+    {/* 「お知らせをすべて見る」で開く全件表示。閉じるボタンは右上。 */}
     <div class="news-all" id="news-all" hidden>
       <div class="news-all__panel" role="dialog" aria-modal="true" aria-labelledby="news-all-title">
         <div class="container news-all__head">
