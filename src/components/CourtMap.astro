@@ -35,15 +35,11 @@ const single = courts.length === 1;
         タイルは OpenStreetMap。テニスコートの面を赤く塗り、その重心にピンを立てる。
         上のボタンでその施設のコート全体が入るように寄り、「すべて」で全施設を一望する。 */}
     <div class="cmap__map" data-cmap-map data-courts={JSON.stringify(courts.map(mapData))} role="img" aria-label={label}></div>
-    {/* 選んだ施設の写真と、その右にサーフェス・面数。地図の左上に重ねる（courts.js の image / surface / courts。
-        「すべて」のときは JS が隠す） */}
-    <div class="cmap__photo" data-cmap-photo hidden={!courts[0].image}>
+        {/* 選んだ施設の写真。地図の左上に重ねる。タップすると地図の中でしばらく拡大して元に戻る（main.js）。
+        サーフェス・面数などのバッジは地図の下（.cmap__badges）に出す。「すべて」のときは JS が隠す */}
+    <button class="cmap__photo" type="button" data-cmap-photo hidden={!courts[0].image} aria-label="コートの写真を拡大して見る">
       <img class="cmap__photo-img" data-cmap-photo-img src={courts[0].image ?? ''} alt="" width="960" height="540" decoding="async">
-      <span class="cmap__photo-text">
-        <span class="cmap__photo-surface" data-cmap-surface>{courts[0].surface ?? ''}</span>
-        <span class="cmap__photo-faces" data-cmap-faces>{courts[0].courts ? `${courts[0].courts}面` : ''}</span>
-      </span>
-    </div>
+    </button>
     {/* 現在地。地図の左下に重ねる。押すと位置情報の許可を求め、許可されれば青い点で出す（main.js の initCourtMap）。
         位置情報が使えない環境では JS が隠す。 */}
     {/* 地図の種類。標準は航空写真（国土地理院）、「地図」で OpenStreetMap に切り替え（main.js の initCourtMap） */}
@@ -63,6 +59,7 @@ const single = courts.length === 1;
   <div class="cmap__bar">
     <span class="cmap__name" data-cmap-name>{courts[0].name}</span>
     <span class="cmap__msg" data-cmap-msg role="status" aria-live="polite"></span>
+    <div class="cmap__badges" data-cmap-badges aria-label="コートの情報"></div>
     <a class="ghost-link cmap__open" data-cmap-link href={mapLink(courts[0])} target="_blank" rel="noopener noreferrer">
       Googleマップで開く <span class="aw">↗</span>
     </a>

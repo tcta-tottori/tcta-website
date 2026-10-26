@@ -4,31 +4,19 @@
 // トップのコート案内の一覧の行を押すと、このページのその施設の節（#<id>）に飛ぶ。
 import Base from '../layouts/Base.astro';
 import Icon from '../components/Icon.astro';
-import { COURTS, mapLink, courtSpec } from '../data/courts.js';
+import { COURTS, mapLink, courtSpec, surfaceBadge, isLightFeature } from '../data/courts.js';
 
 const title = 'コート案内｜鳥取市テニス協会';
 const description = '鳥取市テニス協会が大会・教室で使用するテニスコートのご案内。住所、コートの面数と種類、予約・申込先、電話番号、公式ページをまとめています。';
 
 /** 電話番号のリンク（数字とハイフン以外を落とす） */
 const telHref = (tel) => `tel:${String(tel).replace(/[^0-9+]/g, '')}`;
-// サーフェスのバッジは画像（public/assets/img/badges/surface-*.webp。オムニ・クレー・ハード）。
-// 「室内オムニコート」のように頭に「室内」が付くものは、同じ画像に「室内」の文字バッジを添える。
-// 対応する画像が無いサーフェスは、これまでどおり文字のバッジで出す。
-const SURFACE_BADGES = [
-  { match: 'オムニコート', img: 'assets/img/badges/surface-omni.webp', w: 600, h: 134 },
-  { match: 'クレーコート', img: 'assets/img/badges/surface-clay.webp', w: 600, h: 136 },
-  { match: 'ハードコート', img: 'assets/img/badges/surface-hard.webp', w: 600, h: 134 },
-];
-const surfaceBadge = (surface) => {
-  const hit = SURFACE_BADGES.find((b) => String(surface ?? '').includes(b.match));
-  return hit ? { ...hit, indoor: String(surface).startsWith('室内') } : null;
-};
-// 夜間照明は濃いめの黄色地に白文字（.badge--light）
-const isLight = (f) => String(f).startsWith('夜間照明');
+// サーフェスのバッジ（画像）と夜間照明の判定は courts.js の surfaceBadge / isLightFeature（地図の下のバッジと共通）
+const isLight = isLightFeature;
 
 ---
 
-<Base title={title} description={description}>
+<Base title={title} description={description} mobileNavActive="courts">
   <!-- ============ ページヘッダー ============ -->
   <section class="page-head">
     <span class="ghost" aria-hidden="true">COURT GUIDE</span>

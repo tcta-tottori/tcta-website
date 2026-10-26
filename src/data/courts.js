@@ -143,7 +143,7 @@ export const COURTS = [
     name: '用瀬町運動公園テニスコート',
     short: '用瀬',
     note: '全天候型4面・夜間照明あり・鳥取市用瀬町古用瀬660-1（0858-87-3332）',
-    lat: 35.333257, lng: 134.202052,
+    lat: 35.33332, lng: 134.20208,
     image: 'assets/img/courts/mochigase.webp',
     surface: 'オムニコート', courts: 4,
     desc: '用瀬町運動公園の全天候型（砂入り人工芝）4面のコート。夜間照明があり、最大22時まで使えます。',
@@ -159,7 +159,7 @@ export const COURTS = [
     name: '郡家ふれあいドーム',
     short: '郡家ドーム',
     note: '屋根付きコート・八頭郡八頭町下門尾180（予約：八頭町シルバー人材センター 0858-72-3351）',
-    lat: 35.4190418, lng: 134.2544146,
+    lat: 35.419102, lng: 134.254408,
     image: 'assets/img/courts/kooge.webp',
     surface: '室内オムニコート', courts: 1,
     desc: '屋根付きのコートで、雨の日でも使えます。',
@@ -175,7 +175,7 @@ export const COURTS = [
     name: '八東総合運動公園',
     short: '八東',
     note: '屋根付多目的広場 テニス3面・八頭郡八頭町徳丸528（0858-84-2890）',
-    lat: 35.36677, lng: 134.3407,
+    lat: 35.367157, lng: 134.339616,
     image: 'assets/img/courts/hatto.webp',
     surface: '室内クレーコート', courts: 2,
     desc: '屋根付多目的広場の中にあるクレーコート。雨の日でも使えます。',
@@ -191,9 +191,25 @@ export const COURTS = [
 import SHAPES from './court-shapes.json';
 
 /** 地図に渡す1施設ぶん（名前・ピンの位置・コートの輪郭・全体表示の範囲・写真・サーフェス・面数） */
+/** サーフェスのバッジ画像（public/assets/img/badges/）。コート案内のページと地図の下のバッジで使う。
+ *  「室内オムニコート」のように頭に「室内」が付くものは indoor: true（同じ画像に「室内」の文字バッジを添える）。
+ *  対応する画像が無いサーフェスは null（文字のバッジで出す）。 */
+const SURFACE_BADGES = [
+  { match: 'オムニコート', img: 'assets/img/badges/surface-omni.webp', w: 600, h: 134 },
+  { match: 'クレーコート', img: 'assets/img/badges/surface-clay.webp', w: 600, h: 136 },
+  { match: 'ハードコート', img: 'assets/img/badges/surface-hard.webp', w: 600, h: 134 },
+];
+export const surfaceBadge = (surface) => {
+  const hit = SURFACE_BADGES.find((b) => String(surface ?? '').includes(b.match));
+  return hit ? { ...hit, indoor: String(surface).startsWith('室内') } : null;
+};
+/** 夜間照明の項目か（濃い黄色のバッジにする） */
+export const isLightFeature = (f) => String(f).startsWith('夜間照明');
+
 export const mapData = (c) => ({
   id: c.id, name: c.name, short: c.short, lat: c.lat, lng: c.lng, main: !!c.main,
   image: c.image ?? null, surface: c.surface ?? '', faces: c.courts ?? 0,
+  badge: surfaceBadge(c.surface), features: c.features ?? [],
   courts: SHAPES[c.id]?.courts ?? [],
   area: SHAPES[c.id]?.area ?? null,
   bounds: SHAPES[c.id]?.bounds ?? [[c.lat, c.lng], [c.lat, c.lng]],
