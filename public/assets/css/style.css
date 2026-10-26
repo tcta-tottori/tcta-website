@@ -2868,7 +2868,13 @@ body.jsrv .rv.on .ink-sweep {
 
 /* 日程・会場を左に、種目（ピクトグラム＋文言）を右に */
 /* 1行目：日付（左）と種目（右）、2行目：会場（左）とピクトグラム（右。種目の下に来る） */
-.tl-item__info { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 16px; row-gap: 10px; align-items: start; margin-top: 20px; }
+/* 左列（日程・会場）は中身の幅を優先し（上限は幅の 54%、ただし「ヤマタスポーツパーク」が入る 180px は確保）、
+   右列（種目・絵）が残りを使う。こうすると会場名が途中で折り返されず、絵のほうが段を増やして収まる */
+.tl-item__info { display: grid; grid-template-columns: fit-content(54%) minmax(0, 1fr); column-gap: 16px; row-gap: 10px; align-items: start; margin-top: 20px; }
+.tl-item__meta .tl-item__row { min-width: 180px; } /* 左列の最小幅（「ヤマタスポーツパーク」が 15px で入る幅） */
+/* 会場名・種目名は文字の途中で折り返さず、区切り（／・）の後ろの <wbr> でだけ折り返す。
+   それでも入り切らないときだけ、はみ出さないよう途中で折る（overflow-wrap: anywhere） */
+.tl-item__place, .tl-item__event-label { word-break: keep-all; overflow-wrap: anywhere; }
 /* dl は箱にせず（display: contents）、日程の行と会場の行をそれぞれ grid の左列に置く */
 .tl-item__meta { display: contents; }
 .tl-item__meta .tl-item__row { grid-column: 1; min-width: 0; }
@@ -2905,6 +2911,13 @@ body.jsrv .rv.on .ink-sweep {
   color: var(--gray-800);
 }
 .tl-item__ico { width: 18px; height: 18px; }
+/* 狭い画面（360px 級）では会場名と種目名を少し小さく・字間を詰めて、どちらも区切り以外で折れないようにする。
+   上の font の一括指定より後ろに置くこと */
+@media (max-width: 374px) {
+  .tl-item__meta .tl-item__row { min-width: 173px; }
+  .tl-item__row dd { font-size: 14px; }
+  .tl-item__event-text { font-size: 13px; letter-spacing: 0; }
+}
 /* 日程は大会カード・個別ページと同じく Barlow の「2026.10.18 SUN」 */
 .tl-item__date { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 10px; }
 .tl-item__ymd { font: 700 18px/24px var(--flt); letter-spacing: .03em; color: var(--ink); }
