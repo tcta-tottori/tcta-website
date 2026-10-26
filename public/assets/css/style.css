@@ -2912,15 +2912,15 @@ body.jsrv .rv.on .ink-sweep {
 .tl-item--done .tl-item__head .sec-head__mark { background: var(--gray-300); }
 .tl-item--done .tl-item__title { color: var(--gray-600); }
 
-/* 日程・会場を左に、種目（ピクトグラム＋文言）を右に */
-/* 1行目：日付（左）と種目（右）、2行目：会場（左）とピクトグラム（右。種目の下に来る） */
-/* 左列（日程・会場）は中身の幅を優先し（上限は幅の 54%、ただし「ヤマタスポーツパーク」が入る 180px は確保）、
-   右列（種目・絵）が残りを使う。こうすると会場名が途中で折り返されず、絵のほうが段を増やして収まる */
-.tl-item__info { display: grid; grid-template-columns: fit-content(54%) minmax(0, 1fr); column-gap: 16px; row-gap: 10px; align-items: start; margin-top: 20px; }
-.tl-item__meta .tl-item__row { min-width: 180px; } /* 左列の最小幅（「ヤマタスポーツパーク」が 15px で入る幅） */
+/* 日程・会場を左に、種目（文言＋ピクトグラム）を右に。
+   画面（枠）をまん中で二つに分け、右半分は左端（まん中の線）にそろえて種目のアイコンと文言を置く。
+   1行目：日付（左）と種目（右・まん中から左揃え）、2行目：会場（左）とピクトグラム（右下） */
+.tl-item__info { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 16px; row-gap: 10px; align-items: start; margin-top: 20px; }
 /* 会場名・種目名は文字の途中で折り返さず、区切り（／・）の後ろの <wbr> でだけ折り返す。
-   それでも入り切らないときだけ、はみ出さないよう途中で折る（overflow-wrap: anywhere） */
-.tl-item__place, .tl-item__event-label { word-break: keep-all; overflow-wrap: anywhere; }
+   会場名は左半分に入り切らなくても途中で折らず、そのまま右へはみ出させる（右半分の2行目は右下の絵だけなので重ならない） */
+.tl-item__place, .tl-item__event-label { word-break: keep-all; }
+.tl-item__event-label { overflow-wrap: anywhere; }
+.tl-item__place { white-space: nowrap; }
 /* dl は箱にせず（display: contents）、日程の行と会場の行をそれぞれ grid の左列に置く */
 .tl-item__meta { display: contents; }
 .tl-item__meta .tl-item__row { grid-column: 1; min-width: 0; }
@@ -2933,8 +2933,8 @@ body.jsrv .rv.on .ink-sweep {
   .tl-item__event-icons .evicon, .tl-item__event-icons[data-n="3"] .evicon, .tl-item__event-icons[data-n="4"] .evicon { height: 52px; }
 }
 .tl-item--done .tl-item__event-icons .evicon { filter: grayscale(1); opacity: .5; }
-.tl-item__event-text { grid-column: 2; grid-row: 1; justify-self: end; text-align: right; }
-.tl-item__event-icons { grid-column: 2; grid-row: 2; justify-self: end; }
+.tl-item__event-text { grid-column: 2; grid-row: 1; justify-self: start; text-align: left; }
+.tl-item__event-icons { grid-column: 2; grid-row: 2; justify-self: end; align-self: end; }
 .tl-item__event-text {
   display: inline-flex;
   align-items: flex-start;
@@ -2944,8 +2944,6 @@ body.jsrv .rv.on .ink-sweep {
   color: var(--ink);
 }
 .tl-item__event-text .tl-item__ico { flex: none; margin-top: 2px; color: var(--gray-600); }
-.tl-item--done .tl-item__event-text { grid-column: 2; grid-row: 1; justify-self: end; text-align: right; }
-.tl-item__event-icons { grid-column: 2; grid-row: 2; justify-self: end; }
 .tl-item__event-text { color: var(--gray-600); }
 
 .tl-item__row { display: flex; align-items: flex-start; gap: 10px; }
@@ -2959,10 +2957,14 @@ body.jsrv .rv.on .ink-sweep {
 .tl-item__ico { width: 18px; height: 18px; }
 /* 狭い画面（360px 級）では会場名と種目名を少し小さく・字間を詰めて、どちらも区切り以外で折れないようにする。
    上の font の一括指定より後ろに置くこと */
-@media (max-width: 374px) {
-  .tl-item__meta .tl-item__row { min-width: 173px; }
+@media (max-width: 639px) {
+  .tl-item__row { gap: 8px; }
   .tl-item__row dd { font-size: 14px; }
   .tl-item__event-text { font-size: 13px; letter-spacing: 0; }
+}
+@media (max-width: 374px) {
+  .tl-item__row dd { font-size: 13px; letter-spacing: 0; }
+  .tl-item__event-icons .evicon, .tl-item__event-icons[data-n="3"] .evicon, .tl-item__event-icons[data-n="4"] .evicon { height: 28px; }
 }
 /* 日程は大会カード・個別ページと同じく Barlow の「2026.10.18 SUN」 */
 .tl-item__date { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 10px; }
@@ -2970,19 +2972,26 @@ body.jsrv .rv.on .ink-sweep {
 .tl-item__dow { font: 700 12px/24px var(--flt); letter-spacing: .1em; color: var(--red); }
 .tl-item__date-note { font: 400 13px/24px var(--fjp); letter-spacing: 0; color: var(--gray-500); }
 .tl-item--done .tl-item__ymd, .tl-item--done .tl-item__dow { color: var(--gray-500); }
+/* 狭い画面では日付を少し小さくして、曜日と同じ行に収める（上の font の一括指定より後ろに置くこと） */
+@media (max-width: 374px) { .tl-item__date { gap: 0 6px; } .tl-item__ymd { font-size: 16px; letter-spacing: .01em; } }
 .tl-item--done .tl-item__row dd { color: var(--gray-600); }
 
-/* 4つのボタン。スマホは2列、640px から4つ横に並べる。 */
+/* 4つのボタン。スマホでも 1 行に 4 つ並べる（小さめ。矢印は 640px から） */
 .tl-item__btns {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 10px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
   margin-top: 24px;
 }
 @media (min-width: 640px) {
-  .tl-item__btns { grid-template-columns: repeat(4, minmax(0, 1fr)); max-width: 760px; gap: 12px; }
+  .tl-item__btns { max-width: 760px; gap: 12px; }
 }
 .tl-btn { width: 100%; gap: 12px; padding-inline: 20px; }
+@media (max-width: 639px) {
+  .tl-btn { justify-content: center; gap: 0; min-height: 44px; padding: 10px 6px; font-size: 13px; letter-spacing: .02em; white-space: nowrap; }
+  .tl-btn .aw { display: none; }
+}
+@media (max-width: 374px) { .tl-btn { font-size: 12px; letter-spacing: 0; padding-inline: 4px; } }
 .tl-btn:hover .aw { transform: translateX(4px); }
 /* まだ素材の無いもの。押せないことが色で分かるよう、枠を消して薄い地にする */
 .tl-btn--off {
