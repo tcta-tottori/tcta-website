@@ -59,7 +59,7 @@ const isLight = isLightFeature;
                   {c.main && <span class="badge badge--open">主会場</span>}
                   {c.surface && (surfaceBadge(c.surface)
                     ? <>
-                        {surfaceBadge(c.surface).indoor && <span class="badge">室内</span>}
+                        {surfaceBadge(c.surface).indoor && <img class="badge badge--img" src={surfaceBadge(c.surface).indoor.img} alt={surfaceBadge(c.surface).indoor.alt} width={surfaceBadge(c.surface).indoor.w} height={surfaceBadge(c.surface).indoor.h} loading="lazy" decoding="async">}
                         <img class="badge badge--img" src={surfaceBadge(c.surface).img} alt={c.surface} width={surfaceBadge(c.surface).w} height={surfaceBadge(c.surface).h} loading="lazy" decoding="async">
                       </>
                     : <span class="badge">{c.surface}</span>)}

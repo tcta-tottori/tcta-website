@@ -26,7 +26,7 @@
 // ■ コート案内のページ（courts.html）に出すもの
 //   desc     … 施設の説明（1〜2文）
 //   address  … 住所。分からないものは '' のまま（ページでは「確認中」と出る）
-//   features … 設備の一覧（'夜間照明あり' '屋根付き' など）
+//   features … 設備の一覧（'夜間照明あり' など。時間は書かない。屋根付きは surface の「室内」で出るので書かない）
 //   reserve  … 予約先 { label, url }。鳥取市の施設は鳥取市公共施設予約システム（CITY_RESERVE）。
 //              そこで予約できない施設（八頭町の郡家ふれあいドーム・八東総合運動公園）は null にし、電話（contact）で申し込む
 //   contact  … 電話の問い合わせ先 { label, tel }（施設や管理事務所）。無ければ null
@@ -148,7 +148,7 @@ export const COURTS = [
     surface: 'オムニコート', courts: 4,
     desc: '用瀬町運動公園の全天候型（砂入り人工芝）4面のコート。夜間照明があり、最大22時まで使えます。',
     address: '鳥取県鳥取市用瀬町古用瀬660-1',
-    features: ['夜間照明あり（22時まで）'],
+    features: ['夜間照明あり'],
     reserve: CITY_RESERVE,
     contact: { label: '用瀬町運動公園', tel: '0858-87-3332' },
     link: { label: '用瀬町運動公園 施設案内', url: 'https://mochigase.net/dish.html' },
@@ -159,12 +159,12 @@ export const COURTS = [
     name: '郡家ふれあいドーム',
     short: '郡家ドーム',
     note: '屋根付きコート・八頭郡八頭町下門尾180（予約：八頭町シルバー人材センター 0858-72-3351）',
-    lat: 35.419102, lng: 134.254408,
+    lat: 35.419098, lng: 134.254402,
     image: 'assets/img/courts/kooge.webp',
     surface: '室内オムニコート', courts: 1,
     desc: '屋根付きのコートで、雨の日でも使えます。',
     address: '鳥取県八頭郡八頭町下門尾180',
-    features: ['屋根付き'],
+    features: [],
     reserve: null, // 鳥取市の予約システムでは予約できない。電話で申し込む
     contact: { label: '八頭町シルバー人材センター', tel: '0858-72-3351' },
     link: { label: '八頭町 郡家ふれあいドーム', url: 'https://www.town.yazu.tottori.jp/soshiki/14/1457.html' },
@@ -175,12 +175,12 @@ export const COURTS = [
     name: '八東総合運動公園',
     short: '八東',
     note: '屋根付多目的広場 テニス3面・八頭郡八頭町徳丸528（0858-84-2890）',
-    lat: 35.367157, lng: 134.339616,
+    lat: 35.367133, lng: 134.339588,
     image: 'assets/img/courts/hatto.webp',
     surface: '室内クレーコート', courts: 2,
     desc: '屋根付多目的広場の中にあるクレーコート。雨の日でも使えます。',
     address: '鳥取県八頭郡八頭町徳丸528',
-    features: ['屋根付き'],
+    features: [],
     reserve: null, // 鳥取市の予約システムでは予約できない。電話で申し込む
     contact: { label: '八東総合運動公園', tel: '0858-84-2890' },
     link: { label: '八東総合運動公園（やず観光ナビ）', url: 'https://yazukanko.jp/seeing_play/onsen-park/hatto-sports-park/' },
@@ -192,8 +192,10 @@ import SHAPES from './court-shapes.json';
 
 /** 地図に渡す1施設ぶん（名前・ピンの位置・コートの輪郭・全体表示の範囲・写真・サーフェス・面数） */
 /** サーフェスのバッジ画像（public/assets/img/badges/）。コート案内のページと地図の下のバッジで使う。
- *  「室内オムニコート」のように頭に「室内」が付くものは indoor: true（同じ画像に「室内」の文字バッジを添える）。
+ *  「室内オムニコート」のように頭に「室内」が付くものは indoor に「屋内」のバッジ画像（INDOOR_BADGE）を入れて返す
+ *  （サーフェスの画像の前に添える。屋根付きの設備バッジはこれと重なるので出さない）。
  *  対応する画像が無いサーフェスは null（文字のバッジで出す）。 */
+export const INDOOR_BADGE = { img: 'assets/img/badges/indoor.webp', w: 600, h: 240, alt: '屋内' };
 const SURFACE_BADGES = [
   { match: 'オムニコート', img: 'assets/img/badges/surface-omni.webp', w: 600, h: 134 },
   { match: 'クレーコート', img: 'assets/img/badges/surface-clay.webp', w: 600, h: 136 },
@@ -201,7 +203,7 @@ const SURFACE_BADGES = [
 ];
 export const surfaceBadge = (surface) => {
   const hit = SURFACE_BADGES.find((b) => String(surface ?? '').includes(b.match));
-  return hit ? { ...hit, indoor: String(surface).startsWith('室内') } : null;
+  return hit ? { ...hit, indoor: String(surface).startsWith('室内') ? INDOOR_BADGE : null } : null;
 };
 /** 夜間照明の項目か（濃い黄色のバッジにする） */
 export const isLightFeature = (f) => String(f).startsWith('夜間照明');

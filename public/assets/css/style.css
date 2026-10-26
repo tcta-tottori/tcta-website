@@ -473,7 +473,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
    出だしは速く、位置につく手前で減速（強めのイーズアウト）。順番の間隔はメニューと同じ緩急
    （上ほど広くゆっくり、下へ行くほど詰まって速く。遅れは (2t - t²) × .3s）で、全体 .5s ほど。
    件数が多い一覧（お知らせは100件超）では、11件目以降はまとめて最後の遅れで出す（--k で頭打ち）。
-   閉じるとき（.is-closing）はその逆で、下から順に、下ほどゆっくり・上へ行くほど速く見出しの下へ戻る。
+   閉じるとき（.is-closing）は順番が逆で、下から順に、下ほどゆっくり・上へ行くほど速く見出しの下へ戻る（動きは開くときと同じく、出だしが速く終わりがゆっくり）。
    開くたびに動きを流し直すのは main.js の initFullPanel（style に --i を持つ要素の animation を付け直す）。 */
 .panel-item {
   --k: min(var(--i, 0), 10);
@@ -488,7 +488,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 }
 .is-closing .panel-item {
   /* 閉じるとき：下の項目から順に。下ほど間隔が広くゆっくり（.35s）、上へ行くほど詰まって速く（.2s） */
-  animation: panel-item-out calc(.35s - .15s * var(--tc)) cubic-bezier(.7, 0, .84, 0) both;
+  animation: panel-item-out calc(.35s - .15s * var(--tc)) cubic-bezier(.16, 1, .3, 1) both;
   animation-delay: calc((2 * var(--tc) - var(--tc) * var(--tc)) * .2s);
 }
 /* 透明度は変えない（見出しの裏と画面の上端で隠れる）。半透明にすると裏の項目の文字が透けて重なり、ぼやけて見える */
@@ -768,7 +768,7 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   --mn-out-short: .2s;  /* 戻る時間：最後に戻る上の行（いちばん速い） */
   --mn-gap: 0px;        /* 項目の間隔（行は隙間なく並べる） */
   --mn-ease-in: cubic-bezier(.16, 1, .3, 1);   /* 速く出て、ゆっくり止まる */
-  --mn-ease-out: cubic-bezier(.7, 0, .84, 0);  /* ゆっくり動き出して、速く引っ込む */
+  --mn-ease-out: cubic-bezier(.16, 1, .3, 1);  /* 閉じるときも、速く動き出してヘッダーの裏に入る手前で減速 */
   position: fixed;
   inset: 0;
   z-index: 90;
@@ -878,40 +878,40 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 ::view-transition-old(mn-sheet) { animation: vt-fade .2s ease .45s both; }
 @keyframes vt-fade { to { opacity: 0; } }
 ::view-transition-group(mn-item-0) { z-index: 20; }
-::view-transition-old(mn-item-0) { animation: vt-row-out-0 0.200s cubic-bezier(.7, 0, .84, 0) both; animation-delay: 0.300s; }
+::view-transition-old(mn-item-0) { animation: vt-row-out-0 0.200s cubic-bezier(.16, 1, .3, 1) both; animation-delay: 0.300s; }
 @keyframes vt-row-out-0 { 0% { opacity: 1; } 99% { opacity: 1; } 100% { opacity: 0; transform: translateY(-300px); } }
 ::view-transition-group(mn-item-1) { z-index: 19; }
-::view-transition-old(mn-item-1) { animation: vt-row-out-1 0.215s cubic-bezier(.7, 0, .84, 0) both; animation-delay: 0.297s; }
+::view-transition-old(mn-item-1) { animation: vt-row-out-1 0.215s cubic-bezier(.16, 1, .3, 1) both; animation-delay: 0.297s; }
 @keyframes vt-row-out-1 { 0% { opacity: 1; } 99% { opacity: 1; } 100% { opacity: 0; transform: translateY(-357px); } }
 ::view-transition-group(mn-item-2) { z-index: 18; }
-::view-transition-old(mn-item-2) { animation: vt-row-out-2 0.230s cubic-bezier(.7, 0, .84, 0) both; animation-delay: 0.288s; }
+::view-transition-old(mn-item-2) { animation: vt-row-out-2 0.230s cubic-bezier(.16, 1, .3, 1) both; animation-delay: 0.288s; }
 @keyframes vt-row-out-2 { 0% { opacity: 1; } 99% { opacity: 1; } 100% { opacity: 0; transform: translateY(-414px); } }
 ::view-transition-group(mn-item-3) { z-index: 17; }
-::view-transition-old(mn-item-3) { animation: vt-row-out-3 0.245s cubic-bezier(.7, 0, .84, 0) both; animation-delay: 0.273s; }
+::view-transition-old(mn-item-3) { animation: vt-row-out-3 0.245s cubic-bezier(.16, 1, .3, 1) both; animation-delay: 0.273s; }
 @keyframes vt-row-out-3 { 0% { opacity: 1; } 99% { opacity: 1; } 100% { opacity: 0; transform: translateY(-471px); } }
 ::view-transition-group(mn-item-4) { z-index: 16; }
-::view-transition-old(mn-item-4) { animation: vt-row-out-4 0.260s cubic-bezier(.7, 0, .84, 0) both; animation-delay: 0.252s; }
+::view-transition-old(mn-item-4) { animation: vt-row-out-4 0.260s cubic-bezier(.16, 1, .3, 1) both; animation-delay: 0.252s; }
 @keyframes vt-row-out-4 { 0% { opacity: 1; } 99% { opacity: 1; } 100% { opacity: 0; transform: translateY(-528px); } }
 ::view-transition-group(mn-item-5) { z-index: 15; }
-::view-transition-old(mn-item-5) { animation: vt-row-out-5 0.275s cubic-bezier(.7, 0, .84, 0) both; animation-delay: 0.225s; }
+::view-transition-old(mn-item-5) { animation: vt-row-out-5 0.275s cubic-bezier(.16, 1, .3, 1) both; animation-delay: 0.225s; }
 @keyframes vt-row-out-5 { 0% { opacity: 1; } 99% { opacity: 1; } 100% { opacity: 0; transform: translateY(-585px); } }
 ::view-transition-group(mn-item-6) { z-index: 14; }
-::view-transition-old(mn-item-6) { animation: vt-row-out-6 0.290s cubic-bezier(.7, 0, .84, 0) both; animation-delay: 0.192s; }
+::view-transition-old(mn-item-6) { animation: vt-row-out-6 0.290s cubic-bezier(.16, 1, .3, 1) both; animation-delay: 0.192s; }
 @keyframes vt-row-out-6 { 0% { opacity: 1; } 99% { opacity: 1; } 100% { opacity: 0; transform: translateY(-642px); } }
 ::view-transition-group(mn-item-7) { z-index: 13; }
-::view-transition-old(mn-item-7) { animation: vt-row-out-7 0.305s cubic-bezier(.7, 0, .84, 0) both; animation-delay: 0.153s; }
+::view-transition-old(mn-item-7) { animation: vt-row-out-7 0.305s cubic-bezier(.16, 1, .3, 1) both; animation-delay: 0.153s; }
 @keyframes vt-row-out-7 { 0% { opacity: 1; } 99% { opacity: 1; } 100% { opacity: 0; transform: translateY(-699px); } }
 ::view-transition-group(mn-item-8) { z-index: 12; }
-::view-transition-old(mn-item-8) { animation: vt-row-out-8 0.320s cubic-bezier(.7, 0, .84, 0) both; animation-delay: 0.108s; }
+::view-transition-old(mn-item-8) { animation: vt-row-out-8 0.320s cubic-bezier(.16, 1, .3, 1) both; animation-delay: 0.108s; }
 @keyframes vt-row-out-8 { 0% { opacity: 1; } 99% { opacity: 1; } 100% { opacity: 0; transform: translateY(-756px); } }
 ::view-transition-group(mn-item-9) { z-index: 11; }
-::view-transition-old(mn-item-9) { animation: vt-row-out-9 0.335s cubic-bezier(.7, 0, .84, 0) both; animation-delay: 0.057s; }
+::view-transition-old(mn-item-9) { animation: vt-row-out-9 0.335s cubic-bezier(.16, 1, .3, 1) both; animation-delay: 0.057s; }
 @keyframes vt-row-out-9 { 0% { opacity: 1; } 99% { opacity: 1; } 100% { opacity: 0; transform: translateY(-813px); } }
 ::view-transition-group(mn-item-10) { z-index: 10; }
-::view-transition-old(mn-item-10) { animation: vt-row-out-10 0.350s cubic-bezier(.7, 0, .84, 0) both; animation-delay: 0.000s; }
+::view-transition-old(mn-item-10) { animation: vt-row-out-10 0.350s cubic-bezier(.16, 1, .3, 1) both; animation-delay: 0.000s; }
 @keyframes vt-row-out-10 { 0% { opacity: 1; } 99% { opacity: 1; } 100% { opacity: 0; transform: translateY(-870px); } }
 ::view-transition-group(mn-item-11) { z-index: 9; }
-::view-transition-old(mn-item-11) { animation: vt-row-out-11 0.350s cubic-bezier(.7, 0, .84, 0) both; animation-delay: 0.000s; }
+::view-transition-old(mn-item-11) { animation: vt-row-out-11 0.350s cubic-bezier(.16, 1, .3, 1) both; animation-delay: 0.000s; }
 @keyframes vt-row-out-11 { 0% { opacity: 1; } 99% { opacity: 1; } 100% { opacity: 0; transform: translateY(-927px); } }
 @media (prefers-reduced-motion: reduce) {
   ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
@@ -1842,29 +1842,22 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 /* 左端の「すべて」は固定、区切り線の右に施設を1行で並べ、はみ出す分は横にスクロール（スクロールバーは出さない） */
 .cmap__tabs {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   padding: 12px 14px;
   border-bottom: 1px solid var(--gray-200);
 }
 .cmap__tab--all { flex: none; }
 /* 施設が1つだけのとき（水曜テニス教室の井原公園）は切り替えの列を出さない */
 .cmap--single .cmap__tabs { display: none; }
-.cmap__tabs-scroll {
-  display: flex;
+.cmap__tabs-wrap {
   flex: 1 1 auto;
-  gap: 6px;
-  min-width: 0;
   margin-left: 12px;
-  padding: 2px 0 2px 12px;
+  padding-left: 12px;
   border-left: 1px solid var(--gray-200);
-  overflow-x: auto;
-  scrollbar-width: none;
-  -webkit-overflow-scrolling: touch;
-  scroll-snap-type: x proximity;
 }
-.cmap__tabs-scroll::-webkit-scrollbar { display: none; }
-.cmap__tabs-scroll .cmap__tab { flex: none; scroll-snap-align: start; }
-/* 施設の切り替え。大会結果の年度タブ（.year-tab）と同じ、角を少しだけ丸めた四角。選択中は黒 */
+.cmap__tabs-scroll { gap: 6px; padding: 2px 0; scroll-snap-type: x proximity; }
+.cmap__tabs-scroll .cmap__tab { scroll-snap-align: start; }
+/* 施設の切り替え。大会結果の年度タブ（.year-tab）と同じ、角を少しだけ丸めた四角。選択中は赤 */
 .cmap__tab {
   padding: 9px 12px;
   border: 1px solid var(--gray-300);
@@ -1878,8 +1871,8 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 }
 .cmap__tab:hover { border-color: var(--red); color: var(--red); }
 .cmap__tab.is-active {
-  background: var(--ink);
-  border-color: var(--ink);
+  background: var(--red);
+  border-color: var(--red);
   color: #fff;
 }
 .cmap__frame {
@@ -3031,7 +3024,56 @@ body.jsrv .rv.on .ink-sweep {
 .reg--shi { background: var(--red); color: #fff; }
 .reg--free { background: var(--gray-600); color: #fff; }
 
-/* フィルタチップ / タブ。年度タブ（.year-tab）と同じ、角を少しだけ丸めた四角。選択中は黒 */
+/* ============ 横に 1 行で並べる列（.hscroll） ============
+   大会結果の年度（令和・平成それぞれ）と地図の施設の列。折り返さず、収まらない分は横にスクロール（スクロールバーは出さない）。
+   はみ出しているあいだは、続きのある側の端を少し透かし、列の下の右端に「scroll →」の案内を出す。
+   端まで送ると透かしと案内は消える（案内の高さぶんの余白は、はみ出している列には常に取っておき、送っても高さが変わらないようにする）。はみ出しの有無と位置は main.js の initHScroll が .is-overflow / .is-start / .is-end で付ける。
+   使い方：<div class="hscroll" data-hscroll><div class="hscroll__track">…</div><span class="hscroll__hint">scroll<span class="hscroll__arrow"></span></span></div> */
+.hscroll { position: relative; min-width: 0; --hs-l: 0px; --hs-r: 0px; }
+.hscroll.is-overflow { padding-bottom: 16px; }
+.hscroll__track {
+  display: flex;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  -webkit-mask-image: linear-gradient(to right, rgba(0, 0, 0, .2), #000 var(--hs-l), #000 calc(100% - var(--hs-r)), rgba(0, 0, 0, .2));
+  mask-image: linear-gradient(to right, rgba(0, 0, 0, .2), #000 var(--hs-l), #000 calc(100% - var(--hs-r)), rgba(0, 0, 0, .2));
+}
+.hscroll__track::-webkit-scrollbar { display: none; }
+.hscroll__track > * { flex: none; }
+.hscroll.is-overflow:not(.is-start) { --hs-l: 36px; }
+.hscroll.is-overflow:not(.is-end) { --hs-r: 48px; }
+.hscroll__hint {
+  position: absolute;
+  top: 100%;
+  right: 2px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: -14px;
+  font: 500 10px/1 var(--flt);
+  letter-spacing: .18em;
+  color: var(--gray-600);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity .3s ease;
+}
+.hscroll.is-overflow:not(.is-end) .hscroll__hint { opacity: 1; }
+.hscroll__arrow { position: relative; width: 30px; height: 1px; background: currentColor; animation: hs-nudge 1.8s ease-in-out infinite; }
+.hscroll__arrow::after {
+  content: '';
+  position: absolute;
+  top: -2.5px; right: 0;
+  width: 6px; height: 6px;
+  border-top: 1px solid currentColor;
+  border-right: 1px solid currentColor;
+  transform: rotate(45deg);
+}
+@keyframes hs-nudge { 50% { transform: translateX(4px); } }
+@media (prefers-reduced-motion: reduce) { .hscroll__arrow { animation: none; } }
+
+/* フィルタチップ / タブ。年度タブ（.year-tab）と同じ、角を少しだけ丸めた四角。選択中は赤 */
 .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 24px; }
 .chip {
   min-height: 40px;
@@ -3045,7 +3087,7 @@ body.jsrv .rv.on .ink-sweep {
   transition: all .25s ease;
 }
 .chip:hover { border-color: var(--red); color: var(--red); }
-.chip.is-active { background: var(--ink); border-color: var(--ink); color: #fff; }
+.chip.is-active { background: var(--red); border-color: var(--red); color: #fff; }
 
 .tabs {
   display: flex;
@@ -3289,7 +3331,7 @@ button.dl-item { width: 100%; text-align: left; }
   .result-tags .badge--tint, .result-tags .dl-item__type { display: none; }
 }
 
-/* 年度の選択。令和・平成の2段に分け、年の数字だけを並べる（21年度分を1列に並べない） */
+/* 年度の選択。令和・平成の2段に分け、年の数字だけをそれぞれ 1 行に並べる（収まらない分は横スクロール：.hscroll） */
 .year-picker {
   display: grid;
   gap: 12px;
@@ -3300,7 +3342,7 @@ button.dl-item { width: 100%; text-align: left; }
 }
 .year-picker__era { display: grid; grid-template-columns: 48px 1fr; gap: 12px; align-items: start; }
 .year-picker__label { padding-top: 8px; font: 700 13px/1.4 var(--fjp); letter-spacing: .08em; color: var(--gray-500); }
-.year-picker__years { display: flex; flex-wrap: wrap; gap: 6px; }
+.year-picker__years { gap: 6px; padding: 2px 0; }
 .year-tab {
   min-width: 52px;
   padding: 7px 10px;
@@ -3314,8 +3356,8 @@ button.dl-item { width: 100%; text-align: left; }
 }
 .year-tab__unit { margin-left: 2px; font: 500 10px/1 var(--fjp); color: var(--gray-500); }
 .year-tab:hover { border-color: var(--red); color: var(--red); }
-.year-tab.is-active { background: var(--ink); border-color: var(--ink); color: #fff; }
-.year-tab.is-active .year-tab__unit { color: rgba(255, 255, 255, .7); }
+.year-tab.is-active { background: var(--red); border-color: var(--red); color: #fff; }
+.year-tab.is-active .year-tab__unit { color: rgba(255, 255, 255, .8); }
 
 /* 年度の見出し。「令和5年度 2023」と「18大会・写真800枚」 */
 .year-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 20px; margin-bottom: 24px; }
