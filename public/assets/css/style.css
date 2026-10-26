@@ -3453,7 +3453,6 @@ button.dl-item { width: 100%; text-align: left; }
 .gallery.gallery--winners .gallery__item:hover img { transform: none; }
 .rblock:first-child { margin-top: 0; }
 .rblock + .rblock { margin-top: 48px; }
-.sheet--result { border-radius: 4px; }
 /* 優勝者の写真。1枚なら横いっぱい、2枚なら半分ずつ、それ以上は折り返す */
 /* （.gallery の定義より前にあるので、打ち消すためにクラスを重ねている） */
 .gallery.gallery--winners { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
@@ -3883,15 +3882,10 @@ button.dl-item { width: 100%; text-align: left; }
    同じ節に縦長の紙と混ざることがあるので、1枚ずつ横いっぱいに広げる。 */
 .sheet--wide { grid-column: 1 / -1; }
 
-.sheet {
-  display: block;
-  overflow: hidden;
-  background: var(--white);
-  border: 1px solid var(--gray-200);
-  border-radius: 6px;
-  transition: border-color .3s ease, box-shadow .3s ease;
-}
-.sheet:hover { border-color: var(--gray-300); box-shadow: var(--shadow-hover); color: inherit; }
+/* 紙面（規約・要項・ドロー・結果表）はそのまま置く。枠も拡大ボタンも付けず、タップで全画面（main.js の lightbox）。
+   添え書き（.sheet__cap）があれば下に小さく */
+.sheet { display: block; color: inherit; }
+.sheet:hover { color: inherit; }
 .sheet img {
   display: block;
   width: 100%;
@@ -3899,17 +3893,12 @@ button.dl-item { width: 100%; text-align: left; }
   background: var(--white);
 }
 .sheet__cap {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 14px;
-  border-top: 1px solid var(--gray-200);
+  display: block;
+  padding: 8px 2px 0;
   font: 700 13px/1.6 var(--fjp);
   letter-spacing: .03em;
-  color: var(--ink);
+  color: var(--gray-800);
 }
-.sheet__cap .sqbtn { flex: none; margin-left: auto; }
-.sheet:hover .sqbtn { background: var(--red); border-color: var(--red); color: #fff; }
 
 /* まだ中身が無い節（結果待ちなど）の言い方 */
 .esec__wait {
