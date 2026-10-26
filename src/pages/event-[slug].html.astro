@@ -11,7 +11,7 @@ import { siteData } from '../lib/cms.js';
 import { clubEventLayout } from '../data/club-event.js';
 import { eventResultLayout } from '../data/event-result.js';
 
-const { EVENTS_BY_DATE, eventBySlug } = await siteData(Astro);
+const { eventBySlug } = await siteData(Astro);
 const e = eventBySlug(Astro.params.slug);
 if (!e) return Astro.rewrite('/404');
 
@@ -31,11 +31,6 @@ const sections = e.sections
   .filter((s) => !(s.key === 'result' && hasResultBlock) && !(s.key === 'photo' && !restPhotos.length))
   .map((s) => (s.key === 'photo' ? { ...s, images: restPhotos } : s));
 const resultCount = club ? `${club.divisions.length}部` : layout ? `${layout.blocks.length}種目` : '';
-
-// 日付順に並べた中での前後（ページ下部の行き来に使う）
-const idx = EVENTS_BY_DATE.findIndex((x) => x.slug === e.slug);
-const newer = EVENTS_BY_DATE[idx - 1];
-const older = EVENTS_BY_DATE[idx + 1];
 
 // 概要の表。値の無い行は出さない。
 const facts = [
@@ -179,20 +174,10 @@ const description = `${e.label}に${e.place}で行われる${e.name}（${e.event
         <p class="esec__wait rv" style="margin-top:64px">この大会の結果は、まとまりしだい掲載します。</p>
       )}
 
-      <nav class="page-nav rv" aria-label="ほかの大会">
-        {newer
-          ? <a class="page-nav__link" href={newer.url}><span class="page-nav__dir">← あとの大会</span><span class="page-nav__title">{newer.displayName}</span></a>
-          : <span></span>}
-        <a class="ghost-link" href="tournaments.html">大会一覧へ</a>
-        {older
-          ? <a class="page-nav__link page-nav__link--next" href={older.url}><span class="page-nav__dir">前の大会 →</span><span class="page-nav__title">{older.displayName}</span></a>
-          : <span></span>}
-      </nav>
-
-      <div class="rv panel panel--gray" style="margin-top:64px">
-        <p class="panel__title">ほかの年度の大会</p>
-        <p class="prose" style="margin:0">平成16年度からの大会結果は、大会結果のページに年度ごとにまとめています。</p>
-        <a class="ghost-link mt-24" href="results.html">大会結果を見る <span class="aw">→</span></a>
+      {/* ページ下部の行き先。前後の大会への行き来は置かず、大会一覧と大会結果（平成16年度からの年度別）へのボタンだけにする。 */}
+      <div class="btn-stack rv" style="margin-top:64px">
+        <a class="btn btn--outline" href="tournaments.html">大会一覧へ <span class="aw">→</span></a>
+        <a class="btn btn--primary" href="results.html">大会結果へ <span class="aw">→</span></a>
       </div>
 
     </div>
