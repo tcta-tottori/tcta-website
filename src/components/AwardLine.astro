@@ -1,14 +1,17 @@
 ---
 // 入賞者の行。順位は画像のバッジ（優勝・準優勝・3位・4位。それ以外は文字）、名前は太字、「選手」「ペア」は普通の太さ。
 // 写真の下の1行（.rblock__caption）と、写真1枚ごとの名前（.gallery__cap）で使う。
-//   items … 成績の配列 [{ award, name, note }]
-//   texts … 「優勝 ○○ 選手」の文字列の配列（管理画面のラベルから拾ったもの）
-//   text  … 同じものを「　」でつないだ1本の文字列
-import { parseAward, placeToAward, awardBadge } from '../data/award.js';
-const { items = null, texts = null, text = null } = Astro.props;
-const list = items ? items.map(placeToAward)
-  : texts ? texts.map((t) => parseAward(t))
-  : String(text ?? '').split('　').filter(Boolean).map((t) => parseAward(t));
+// 名前の表記（シングルスはフルネーム、ダブルスは苗字だけ）は award.js でそろえる。
+//   items    … 成績の配列 [{ award, name, note }]
+//   texts    … 「優勝 ○○ 選手」の文字列の配列（管理画面のラベルから拾ったもの）
+//   text     … 同じものを「　」でつないだ1本の文字列
+//   category … 種目名（ダブルス／ミックスなら、ペアの名前を苗字だけにする）
+import { parseAward, placeToAward, awardBadge, isPairCategory } from '../data/award.js';
+const { items = null, texts = null, text = null, category = '' } = Astro.props;
+const pair = isPairCategory(category);
+const list = items ? items.map((p) => placeToAward(p, pair))
+  : texts ? texts.map((t) => parseAward(t, '', pair))
+  : String(text ?? '').split('　').filter(Boolean).map((t) => parseAward(t, '', pair));
 const shown = list.filter((a) => a.award || a.name);
 ---
 

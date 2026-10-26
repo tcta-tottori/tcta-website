@@ -3370,13 +3370,12 @@ button.dl-item { width: 100%; text-align: left; }
 .year-tab.is-active { background: var(--red); border-color: var(--red); color: #fff; }
 .year-tab.is-active .year-tab__unit { color: rgba(255, 255, 255, .8); }
 
-/* 年度の見出し。「令和5年度 2023」と「18大会・写真800枚」 */
+/* 年度の見出し。「令和5年度 2023」（大会数は出さない） */
 .year-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 20px; margin-bottom: 24px; }
 .year-head__title { margin: 0; font: 700 24px/1.3 var(--fjp); color: var(--ink); }
 .year-head__en { margin-left: 10px; font: 500 14px/1 var(--flt); letter-spacing: .08em; color: var(--gray-500); }
-.year-head__sum { margin: 0; font: 400 14px/1.6 var(--fjp); color: var(--gray-500); }
 
-/* 年度の中の大会一覧。番号・大会名・開催日だけの1行 */
+/* 年度の中の大会一覧。赤い四角・大会名・開催日だけの1行 */
 .rlist { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--gray-200); }
 .rlist__item {
   display: flex;
@@ -3389,14 +3388,14 @@ button.dl-item { width: 100%; text-align: left; }
 }
 .rlist__item:hover { background: var(--gray-050); color: inherit; }
 .rlist__item:hover .rlist__title { color: var(--red); }
-.rlist__no { flex: none; width: 2em; font: 600 13px/1 var(--flt); letter-spacing: .06em; color: var(--gray-500); }
+.rlist__mark { flex: none; align-self: flex-start; width: 10px; height: 10px; margin: 7px 6px 0 0; background: var(--red); } /* 大会名の1行目にそろえる */
 .rlist__title { flex: 1; min-width: 0; font: 700 16px/1.5 var(--fjp); color: var(--ink); transition: color .2s ease; }
 .rlist__date { flex: none; font: 400 13px/1.5 var(--fjp); color: var(--gray-500); }
 .rlist__item .sqbtn { flex: none; }
 .rlist__item:hover .sqbtn { background: var(--red); border-color: var(--red); color: #fff; }
 @media (max-width: 639px) {
   .rlist__item { flex-wrap: wrap; gap: 6px 12px; }
-  .rlist__date { order: 3; width: 100%; padding-left: calc(2em + 12px); }
+  .rlist__date { order: 3; width: 100%; padding-left: calc(10px + 6px + 12px); }
   .rlist__item .sqbtn { display: none; }
 }
 
