@@ -288,7 +288,9 @@
 
   /* ---------- 全画面表示（お知らせ・大会情報） ----------
      VIEW ALL で開き、右上の × か Esc で閉じる。開いている間は背面を止める。 */
-  function initFullPanel(id, openSel, closeSel) {
+  /* opts.shared … { from: セレクタ }：開くとき、ページに見えている行（from）と全画面の中の同じ行（href が同じ）を
+     同一ページのビュートランジションでつなぎ、その場所から全画面での位置へ滑らかに移してから残りを出す（対応ブラウザのみ） */
+  function initFullPanel(id, openSel, closeSel, opts) {
     var panel = document.getElementById(id);
     if (!panel) return;
 
@@ -298,6 +300,8 @@
 
     var closing = null;
     var finishClose = function () {
+      panel.classList.remove('is-vt');
+      panel.querySelectorAll('.is-shared').forEach(function (li) { li.classList.remove('is-shared'); });
       closing = null;
       panel.classList.remove('is-closing');
       panel.hidden = true;
@@ -310,17 +314,43 @@
       });
       if (open) {
         if (closing) { clearTimeout(closing); closing = null; }
-        panel.classList.remove('is-closing');
-        panel.hidden = false;
-        document.body.classList.add('is-locked');
-        panel.scrollTop = 0;
-        // 開くたびに項目の動き（見出しの下から順に滑り出す）を流し直す
-        panel.querySelectorAll('[style*="--i"]').forEach(function (el) {
-          el.style.animation = 'none';
-          void el.offsetWidth;
-          el.style.animation = '';
-        });
-        if (closer) closer.focus();
+        var doOpen = function () {
+          panel.classList.remove('is-closing');
+          panel.hidden = false;
+          document.body.classList.add('is-locked');
+          panel.scrollTop = 0;
+          // 開くたびに項目の動き（見出しの下から順に滑り出す）を流し直す
+          panel.querySelectorAll('[style*="--i"]').forEach(function (el) {
+            el.style.animation = 'none';
+            void el.offsetWidth;
+            el.style.animation = '';
+          });
+          if (closer) closer.focus();
+        };
+        var pairs = sharedPairs();
+        if (pairs.length && document.startViewTransition) {
+          // 名前は「前」はページの行だけ、「後」は全画面の行だけに付ける（同時に付けると重複でトランジションが止まる）
+          panel.classList.add('is-vt');
+          panel.style.setProperty('--s', pairs.length);
+          pairs.forEach(function (pr, i) {
+            pr[0].style.viewTransitionName = 'shared-' + i; pr[0].style.viewTransitionClass = 'shared-row';
+            var li = pr[1].closest('.panel-item'); if (li) li.classList.add('is-shared');
+          });
+          // 名前だけ外す。.is-shared と .is-vt は閉じるまで残す（外すと行の滑り出しの動きが最初から流れ直してしまう）
+          var done = function () {
+            pairs.forEach(function (pr) { pr[1].style.viewTransitionName = ''; pr[1].style.viewTransitionClass = ''; });
+          };
+          var vt = document.startViewTransition(function () {
+            pairs.forEach(function (pr, i) {
+              pr[0].style.viewTransitionName = ''; pr[0].style.viewTransitionClass = '';
+              pr[1].style.viewTransitionName = 'shared-' + i; pr[1].style.viewTransitionClass = 'shared-row';
+            });
+            doOpen();
+          });
+          vt.finished.then(done, done);
+        } else {
+          doOpen();
+        }
       } else if (!panel.hidden && !closing) {
         // 閉じるときは逆の動き（下から順に見出しの下へ戻る）を流してから隠す。動きを減らす設定ならすぐ隠す
         if (reduceMotion || !panel.querySelector('.panel-item')) { finishClose(); return; }
@@ -328,6 +358,22 @@
         closing = setTimeout(finishClose, 520);
       }
     };
+
+    // ページに見えている行と、全画面の中の同じ行（href が同じ）の組
+    function sharedPairs() {
+      if (!opts || !opts.shared || reduceMotion) return [];
+      var froms = document.querySelectorAll(opts.shared.from);
+      var tos = panel.querySelectorAll('a[href]');
+      var pairs = [], used = [];
+      Array.prototype.forEach.call(froms, function (a) {
+        if (panel.contains(a)) return; // 全画面の中の行は「ページに見えている行」ではない
+        var href = a.getAttribute('href');
+        for (var k = 0; k < tos.length; k++) {
+          if (used.indexOf(tos[k]) < 0 && tos[k].getAttribute('href') === href) { pairs.push([a, tos[k]]); used.push(tos[k]); break; }
+        }
+      });
+      return pairs;
+    }
 
     Array.prototype.forEach.call(openers, function (b) {
       b.addEventListener('click', function () { last = b; setOpen(true); });
@@ -1187,13 +1233,9 @@
     initHeader();
     initRipple();
     initPressed();
-    initFullPanel('news-all', '[data-news-open]', '[data-news-close]');
+    initFullPanel('news-all', '[data-news-open]', '[data-news-close]', { shared: { from: '#news .news-row' } });
     initFullPanel('tournaments-all', '[data-tall-open]', '[data-tall-close]');
     initFullPanel('court-all', '[data-court-open]', '[data-court-close]');
-    // イベント情報：過去のテニス祭りの写真・動画（年ごとのパネル。data-tdg="<年>"）
-    document.querySelectorAll('.news-all[data-tdg]').forEach(function (p) {
-      initFullPanel(p.id, '[data-tdg-open="' + p.getAttribute('data-tdg') + '"]', '[data-tdg-close]');
-    });
     initCourtMap();
     initCalendar();
     initFooterDeco();

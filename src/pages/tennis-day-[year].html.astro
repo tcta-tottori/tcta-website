@@ -1,0 +1,102 @@
+---
+// テニス祭り 1回ぶんの専用ページ（tennis-day-<年>.html）。
+// 文面・概要・プログラム・コーチ紹介は src/data/tennisday-archive.js、写真・動画は src/data/tennisday-<年>.json。
+// 募集要項・申込用紙・申込先は過去の回なので載せない。
+import Base from '../layouts/Base.astro';
+import TennisDayGallery from '../components/TennisDayGallery.astro';
+import { TENNISDAY_EVENTS } from '../data/tennisday-archive.js';
+import GALLERY_2026 from '../data/tennisday-2026.json';
+import GALLERY_2025 from '../data/tennisday-2025.json';
+
+const GALLERIES = { 2026: GALLERY_2026, 2025: GALLERY_2025 };
+const year = Number(Astro.params.year);
+const e = TENNISDAY_EVENTS.find((x) => x.year === year);
+if (!e || !GALLERIES[year]) return Astro.rewrite('/404');
+const gallery = GALLERIES[year];
+
+const title = `${e.title}｜イベント情報｜鳥取市テニス協会`;
+const description = `${e.date}に${e.venue}で開催した${e.title}の写真・動画と開催内容。${e.summary}`;
+---
+
+<Base
+  title={title}
+  description={description}
+  navActive="tennis-day"
+  mobileNavActive="tennis-day"
+>
+  <!-- ============ ページヘッダー ============ -->
+  <section class="page-head">
+    <span class="ghost" aria-hidden="true">EVENT</span>
+    <div class="container">
+      <nav class="breadcrumb" aria-label="パンくず">
+        <a href="index.html">ホーム</a><span class="breadcrumb__sep" aria-hidden="true">›</span>
+        <a href="tennis-day.html">イベント情報</a><span class="breadcrumb__sep" aria-hidden="true">›</span>
+        <span aria-current="page">{e.title}</span>
+      </nav>
+      <div class="page-title-row fu">
+        <span class="sec-head__mark" aria-hidden="true"></span>
+        <div>
+          <p class="page-title__en">Event {e.year}</p>
+          <h1 class="page-title">{e.title}</h1>
+        </div>
+      </div>
+      <p class="page-lead fu" style="animation-delay:.15s">{e.lead}</p>
+    </div>
+  </section>
+
+  <section class="section" id="gallery">
+    <div class="container">
+      <div class="rv">
+        <div class="esec__head">
+          <h2 class="sub-head" style="margin-bottom:0">当日の写真・動画</h2>
+          <span class="esec__en">Gallery</span>
+        </div>
+      </div>
+      <div class="mt-24">
+        <TennisDayGallery data={gallery} prefix="gallery" label={e.title} />
+      </div>
+    </div>
+  </section>
+
+  <section class="section section--gray">
+    <div class="container">
+      <div class="rv">
+        <h2 class="sub-head">開催概要</h2>
+        <dl class="deflist">
+          {e.overview.map(([k, v]) => (
+            <div class="deflist__row"><dt class="deflist__key">{k}</dt><dd class="deflist__val" style="margin:0">{v}</dd></div>
+          ))}
+        </dl>
+      </div>
+
+      {e.program && (
+        <div class="rv" style="margin-top:56px">
+          <h2 class="sub-head">当日のプログラム</h2>
+          <div class="card-grid card-grid--3 mt-32">
+            {e.program.map((p) => (
+              <div class="panel">
+                <p style="margin:0;font:700 20px/1 var(--flt);letter-spacing:.04em;color:var(--red)">{p.time}</p>
+                <p style="margin:12px 0 0;font:700 17px/1.5 var(--fjp);letter-spacing:.02em;color:var(--ink)">{p.name}</p>
+                <p style="margin:8px 0 0;font:400 14px/1.8 var(--fjp);color:var(--gray-800)">対象：{p.who}{p.fee && `／参加費：${p.fee}`}</p>
+                {p.note && <p style="margin:6px 0 0;font:400 13px/1.8 var(--fjp);color:var(--gray-600)">{p.note}</p>}
+              </div>
+            ))}
+          </div>
+          <p class="note">※ 開催時のプログラムです。</p>
+        </div>
+      )}
+
+      {e.coach && (
+        <div class="rv panel panel--tint" style="margin-top:56px">
+          <p class="panel__title">コーチ紹介　{e.coach.name}</p>
+          <p class="prose" style="margin:0">{e.coach.text}</p>
+          {gallery.coachChannel && <a class="ghost-link mt-24" href={gallery.coachChannel} target="_blank" rel="noopener noreferrer">加藤コーチの YouTube チャンネル <span class="aw">↗</span></a>}
+        </div>
+      )}
+
+      <div class="btn-stack rv" style="margin-top:64px">
+        <a class="btn btn--outline" href="tennis-day.html">イベント情報の一覧へ <span class="aw">→</span></a>
+      </div>
+    </div>
+  </section>
+</Base>

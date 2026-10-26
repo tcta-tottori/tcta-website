@@ -1,33 +1,12 @@
 ---
 import Base from '../layouts/Base.astro';
+import { TENNISDAY_EVENTS } from '../data/tennisday-archive.js';
 
-// イベント情報のページ。中身は毎年秋の「テニス祭り 鳥取イベント」（テニスの日）。
-// 最新回（2026年）の写真・動画・開催概要と、過去の開催記録（src/data/tennisday-archive.js）を載せる。
+// イベント情報のページ。毎年秋の「テニス祭り 鳥取イベント」（テニスの日）を年ごとのボタンで並べ、
+// 押すとその回の専用ページ（tennis-day-<年>.html）に飛ぶ。中身（写真・動画・概要）は専用ページにある。
 // 鳥取健康テニスは大会なので、ここには載せない（大会情報のページにある）。
-import { TENNISDAY_ARCHIVE } from '../data/tennisday-archive.js';
-
 const title = "イベント情報｜鳥取市テニス協会";
-const description = "鳥取市テニス協会のイベント情報。テニス祭り（テニスの日 鳥取イベント）の開催内容と当日の写真・動画、過去の開催記録。2026年は10月12日（祝）に鳥取県立鳥取産業体育館で、キッズテニス、元プロ 加藤季温コーチのテニスクリニック、ピックルボール体験会などを開催しました。";
-
-// 当日のプログラム（募集要項より・時間順）。参加費の書かれていないものは fee を空にしておく。
-const PROGRAM = [
-  { time: '9:30〜11:30', name: 'キッズテニス', who: '中学生以下', fee: '500円', note: '受付 9:00〜9:20。ラケットの貸し出しあり。申込時に学年とラケットの有無をお知らせください。' },
-  { time: '11:30〜13:00', name: 'コート無料開放', who: 'どなたでも', fee: '無料', note: '2面を開放します。' },
-  { time: '11:30〜13:00', name: 'ピックルボール体験会', who: 'どなたでも', fee: '', note: 'ラケットの貸し出しあり。' },
-  { time: '13:00〜15:00', name: 'テニスクリニック', who: '参加制限なし・定員30名', fee: '1,000円', note: '元プロテニスプレーヤー 加藤季温コーチが指導します。' },
-  { time: '15:10〜', name: 'じゃんけん大会', who: 'クリニック受講生全員', fee: '', note: '豪華景品をご用意しています。' },
-  { time: '15:30〜16:30', name: '加藤プロとタイブレークマッチ', who: '参加ペア募集', fee: '', note: '加藤コーチに挑戦するタイブレークマッチです。' },
-];
-
-const YOUKOU_PDF = { src: 'assets/pdf/tennis-day/2026-tennis-matsuri-youkou.pdf', kb: 783 };
-const YOUKOU_IMG = { src: 'assets/img/tennis-day/2026-youkou.webp', w: 1273, h: 1800 };
-
-// 当日のギャラリー（公式サイトの「2026テニス祭り」から取り込んだもの。写真は tennisday-2026.json）。
-// 過去の回は年ごとの JSON を GALLERIES に登録し、開催記録の gallery: '<年>' から全画面のパネルで開く。
-import TennisDayGallery from '../components/TennisDayGallery.astro';
-import GALLERY from '../data/tennisday-2026.json';
-import GALLERY_2025 from '../data/tennisday-2025.json';
-const GALLERIES = { '2025': GALLERY_2025 };
+const description = "鳥取市テニス協会のイベント情報。毎年秋に開催するテニス祭り（テニスの日 鳥取イベント）の各回のページへ。キッズテニス、元プロコーチのテニスクリニック、ピックルボール体験会などの写真と動画をご覧いただけます。";
 ---
 
 <Base
@@ -36,6 +15,11 @@ const GALLERIES = { '2025': GALLERY_2025 };
   navActive="tennis-day"
   mobileNavActive="tennis-day"
 >
+  {/* 以前はこのページに2026年の写真・動画（#gallery）があった。お知らせなど古いリンクで来たら 2026年の専用ページへ */}
+  <script is:inline>
+    if (location.hash === '#gallery') location.replace('tennis-day-2026.html#gallery');
+  </script>
+
   <!-- ============ ページヘッダー ============ -->
   <section class="page-head">
     <span class="ghost" aria-hidden="true">EVENT</span>
@@ -50,157 +34,38 @@ const GALLERIES = { '2025': GALLERY_2025 };
           <h1 class="page-title">イベント情報</h1>
         </div>
       </div>
-      <p class="page-lead fu" style="animation-delay:.15s">協会では毎年秋に、どなたでも参加できる「テニス祭り 鳥取イベント」（テニスの日）を開催しています。2026年は10月12日（祝）、鳥取県立鳥取産業体育館メインアリーナで、子ども向けのキッズテニスから元プロ 加藤季温コーチのクリニック、ピックルボール体験会までを行いました。当日の写真と動画、過去の開催記録をご覧いただけます。</p>
+      <p class="page-lead fu" style="animation-delay:.15s">協会では毎年秋に、どなたでも参加できる「テニス祭り 鳥取イベント」（テニスの日）を開催しています。各回のボタンを押すと、その回の写真・動画と開催内容のページが開きます。</p>
     </div>
   </section>
 
-  <section class="section" id="gallery">
+  <section class="section">
     <div class="container">
-
       <div class="rv">
         <div class="esec__head">
-          <h2 class="sub-head" style="margin-bottom:0">2026テニス祭り鳥取イベント</h2>
-          <span class="esec__en">2026 Gallery</span>
+          <h2 class="sub-head" style="margin-bottom:0">テニス祭り 鳥取イベント</h2>
+          <span class="esec__en">Tennis Festival</span>
         </div>
-        <p class="note mt-24">先日開催したテニスイベントは、参加者の皆様の熱気に包まれ無事終了しました。たくさんの方にお集まりいただき、誠にありがとうございます。</p>
       </div>
-
-      <div class="mt-24">
-        <TennisDayGallery data={GALLERY} prefix="gallery" label="2026テニス祭り鳥取イベント" />
-      </div>
-    </div>
-  </section>
-
-  <section class="section section--gray">
-    <div class="container">
-
-      <div class="rv">
-        <h2 class="sub-head">開催概要</h2>
-        <dl class="deflist">
-          <div class="deflist__row"><dt class="deflist__key">日時</dt><dd class="deflist__val" style="margin:0">2026年10月12日（月・祝）9:30〜16:30（キッズテニスの受付は 9:00〜）</dd></div>
-          <div class="deflist__row"><dt class="deflist__key">会場</dt><dd class="deflist__val" style="margin:0">鳥取県立鳥取産業体育館 メインアリーナ</dd></div>
-          <div class="deflist__row"><dt class="deflist__key">参加資格</dt><dd class="deflist__val" style="margin:0">どなたでも参加できます（協会登録は不要です）</dd></div>
-          <div class="deflist__row"><dt class="deflist__key">申込</dt><dd class="deflist__val" style="margin:0">キッズテニス・テニスクリニックは事前申込（定員になり次第締切）。募集要項の申込用紙に記入のうえ、下記の問合せ先へお申し込みください。</dd></div>
-          <div class="deflist__row"><dt class="deflist__key">主催</dt><dd class="deflist__val" style="margin:0">鳥取市テニス協会（主管：鳥取市テニス協会普及委員会）</dd></div>
-          <div class="deflist__row"><dt class="deflist__key">共催・協賛</dt><dd class="deflist__val" style="margin:0">共催：遊ポートテニスクラブ／協賛：テニスショップ・フラシーノ</dd></div>
-        </dl>
-      </div>
-
-      <div class="rv" style="margin-top:56px">
-        <h2 class="sub-head">当日のプログラム</h2>
-        <div class="card-grid card-grid--3 mt-32">
-          {PROGRAM.map((p) => (
-            <div class="panel">
-              <p style="margin:0;font:700 20px/1 var(--flt);letter-spacing:.04em;color:var(--red)">{p.time}</p>
-              <p style="margin:12px 0 0;font:700 17px/1.5 var(--fjp);letter-spacing:.02em;color:var(--ink)">{p.name}</p>
-              <p style="margin:8px 0 0;font:400 14px/1.8 var(--fjp);color:var(--gray-800)">対象：{p.who}{p.fee && `／参加費：${p.fee}`}</p>
-              <p style="margin:6px 0 0;font:400 13px/1.8 var(--fjp);color:var(--gray-600)">{p.note}</p>
-            </div>
-          ))}
-        </div>
-        <p class="note">※ 開催時のプログラムです。</p>
-      </div>
-
-      <div class="rv panel panel--tint" style="margin-top:56px">
-        <p class="panel__title">コーチ紹介　加藤 季温（かとう としはる）</p>
-        <p class="prose" style="margin:0">元プロテニスプレーヤー。兵庫県神戸市出身、株式会社KION 代表取締役。2002年 国体優勝、2007年 全日本テニス選手権優勝、全日本大学テニス選手権3連覇、インターハイ優勝、ユニバーシアード日本代表。日本ランキング最高11位。テニスクリニックとタイブレークマッチで指導・対戦していただきました。</p>
-        <a class="ghost-link mt-24" href={GALLERY.coachChannel} target="_blank" rel="noopener noreferrer">加藤コーチの YouTube チャンネル <span class="aw">↗</span></a>
-      </div>
-
-      <div class="rv" style="margin-top:56px">
-        <h2 class="sub-head">募集要項・申込用紙（開催時のもの）</h2>
-        <p class="note" style="margin-bottom:0">当日の募集要項です。画像をタップすると全画面で表示します。</p>
-        <div class="sheets">
-          <a class="sheet" href={YOUKOU_IMG.src}>
-            <img src={YOUKOU_IMG.src} alt="2026テニス祭り鳥取イベント 募集要項" width={YOUKOU_IMG.w} height={YOUKOU_IMG.h} loading="lazy" decoding="async">
-            <span class="sheet__cap">募集要項・申込用紙 <span class="sqbtn" aria-hidden="true">⤢</span></span>
-          </a>
-        </div>
-        <ul class="mt-32">
-          <li><a class="dl-item" href={YOUKOU_PDF.src} target="_blank" rel="noopener noreferrer">
-            <span class="dl-item__type">PDF</span>
-            <span class="dl-item__text">
-              <span class="dl-item__title">2026テニス祭り鳥取 募集要項</span>
-              <span class="dl-item__note">{YOUKOU_PDF.kb.toLocaleString()}KB／別タブで開きます</span>
+      {/* 年ごとのボタン。写真（その回のバナー）・年・名称・日時・会場・内容。カード全体がリンク */}
+      <div class="ev-list">
+        {TENNISDAY_EVENTS.map((e, i) => (
+          <a class="ev-card rv" href={`tennis-day-${e.year}.html`} style={i ? `transition-delay:${i * 0.1}s` : undefined}>
+            <span class="ev-card__media">
+              <img src={e.hero.src} alt="" width={e.hero.w} height={e.hero.h} loading={i === 0 ? 'eager' : 'lazy'} decoding="async">
             </span>
-            <span class="sqbtn" aria-hidden="true">↓</span>
-          </a></li>
-        </ul>
+            <span class="ev-card__body">
+              <span class="ev-card__year">{e.year}</span>
+              <span class="ev-card__title">{e.title}</span>
+              <span class="ev-card__meta">
+                <span class="ev-card__row"><span class="ev-card__key">日時</span>{e.date}</span>
+                <span class="ev-card__row"><span class="ev-card__key">会場</span>{e.venue}</span>
+              </span>
+              <span class="ev-card__summary">{e.summary}</span>
+              <span class="ev-card__go">写真・動画と開催内容を見る <span class="aw">→</span></span>
+            </span>
+          </a>
+        ))}
       </div>
-
-      <div class="rv" style="margin-top:56px">
-        <h2 class="sub-head">お問い合わせ・申込先</h2>
-        <dl class="deflist">
-          <div class="deflist__row"><dt class="deflist__key">フラシーノラケットワークス</dt><dd class="deflist__val" style="margin:0">TEL 0857-32-5578／FAX 0857-32-5579</dd></div>
-          <div class="deflist__row"><dt class="deflist__key">鳥取市テニス協会（普及委員会）</dt><dd class="deflist__val" style="margin:0">安道まり子　090-8362-6190</dd></div>
-        </dl>
-      </div>
-
     </div>
-  </section>
-
-  {/* 過去の開催記録。データは src/data/tennisday-archive.js（新しい年から順）。資料はここから開く。 */}
-  <section class="section" id="archive">
-    <div class="container">
-      <div class="rv">
-        <div class="esec__head">
-          <h2 class="sub-head" style="margin-bottom:0">過去の開催記録</h2>
-          <span class="esec__en">Archive</span>
-        </div>
-        <p class="note mt-24">これまでのテニス祭り（テニスの日 鳥取イベント）の資料です。年ごとに要項・写真・結果などをまとめています。</p>
-      </div>
-      {TENNISDAY_ARCHIVE.map((a) => (
-        <div class="rv panel" style="margin-top:24px" id={`archive-${a.year}`}>
-          <p class="panel__title">{a.year}年　{a.title}</p>
-          <dl class="deflist">
-            <div class="deflist__row"><dt class="deflist__key">日時</dt><dd class="deflist__val" style="margin:0">{a.date}</dd></div>
-            <div class="deflist__row"><dt class="deflist__key">会場</dt><dd class="deflist__val" style="margin:0">{a.venue}</dd></div>
-            {a.summary && <div class="deflist__row"><dt class="deflist__key">内容</dt><dd class="deflist__val" style="margin:0">{a.summary}</dd></div>}
-          </dl>
-          {a.items?.length > 0 && (
-            <ul class="mt-24">
-              {a.items.map((it) => it.kind === 'gallery' ? (
-                <li><button class="dl-item" type="button" data-tdg-open={it.gallery} aria-expanded="false" aria-controls={`tdg-${it.gallery}`}>
-                  <span class="dl-item__type">写真</span>
-                  <span class="dl-item__text"><span class="dl-item__title">{it.label}</span></span>
-                  <span class="sqbtn" aria-hidden="true">→</span>
-                </button></li>
-              ) : (
-                <li><a class="dl-item" href={it.href} {...(it.kind === 'pdf' || it.kind === 'external' ? { target: '_blank', rel: 'noopener noreferrer' } : {})}>
-                  <span class="dl-item__type">{it.kind === 'pdf' ? 'PDF' : it.kind === 'image' ? '写真' : it.kind === 'external' ? 'LINK' : 'PAGE'}</span>
-                  <span class="dl-item__text"><span class="dl-item__title">{it.label}</span></span>
-                  <span class="sqbtn" aria-hidden="true">{it.kind === 'pdf' ? '↓' : it.kind === 'external' ? '↗' : '→'}</span>
-                </a></li>
-              ))}
-            </ul>
-          )}
-        </div>
-      ))}
-    </div>
-
-    {/* 過去の回の写真・動画。お知らせの全件表示と同じ全画面のパネル（main.js の initFullPanel）。
-        開催記録の gallery: '<年>' のボタン（data-tdg-open）で開き、右上の × か Esc で閉じる。 */}
-    {TENNISDAY_ARCHIVE.filter((a) => a.items?.some((it) => it.kind === 'gallery' && GALLERIES[it.gallery])).map((a) => {
-      const g = a.items.find((it) => it.kind === 'gallery').gallery;
-      return (
-        <div class="news-all" id={`tdg-${g}`} data-tdg={g} hidden>
-          <div class="news-all__panel" role="dialog" aria-modal="true" aria-labelledby={`tdg-${g}-title`}>
-            <div class="container news-all__head">
-              <div>
-                <p class="sec-head__eyebrow">Event {a.year}</p>
-                <h2 class="sec-head__title" id={`tdg-${g}-title`}>{a.title}</h2>
-              </div>
-              <button class="close-x" type="button" data-tdg-close aria-label={`${a.title}を閉じる`}>
-                <span aria-hidden="true"></span><span aria-hidden="true"></span><span aria-hidden="true"></span>
-              </button>
-            </div>
-            <div class="container news-all__body tdg__body">
-              <p class="note">{a.date}／{a.venue}</p>
-              <TennisDayGallery data={GALLERIES[g]} prefix={`tdg${g}`} label={a.title} inPanel={true} />
-            </div>
-          </div>
-        </div>
-      );
-    })}
   </section>
 </Base>
