@@ -1,5 +1,10 @@
 ---
 import Base from '../layouts/Base.astro';
+import CourtMap from '../components/CourtMap.astro';
+import { COURTS } from '../data/courts.js';
+
+// 会場の地図はトップのコート案内と同じ自前の地図で、井原公園だけを出す
+const IHARA = COURTS.filter((c) => c.id === 'ihara');
 
 const title = "水曜テニス教室｜鳥取市テニス協会";
 const description = "毎週水曜日、井原公園テニスコートで開催しているレベル別テニス教室。初心者から中級者まで4コースをご用意しています。";
@@ -87,10 +92,8 @@ const description = "毎週水曜日、井原公園テニスコートで開催�
           <a class="btn btn--primary" style="margin-top:24px" href="https://line.me/ti/g2/o2mVMo81uSGX1Cv44BhA0LdAk58tPmPAzHGGEQ?utm_source=invitation&utm_medium=QR_code&utm_campaign=default" target="_blank" rel="noopener noreferrer">LINEグループに参加する <span class="aw">↗</span></a>
         </div>
         <div class="rv" style="transition-delay:.1s">
-          <div class="embed embed--map">
-            <span class="embed__label">Googleマップ埋め込み（井原公園テニスコート）</span>
-            <span class="embed__note">title="井原公園テニスコート"</span>
-          </div>
+          {/* 会場の地図。トップのコート案内と同じ自前の地図（Leaflet）で、井原公園テニスコートだけを出す */}
+          <CourtMap courts={IHARA} label="井原公園テニスコートの地図" />
           <p style="margin:16px 0 0;font:700 15px/1.7 var(--fjp);color:var(--ink)">井原公園テニスコート</p>
           <p style="margin:2px 0 0;font:400 14px/1.8 var(--fjp);color:var(--gray-600)">〒680-0844 鳥取県鳥取市興南町174</p>
         </div>
@@ -98,4 +101,7 @@ const description = "毎週水曜日、井原公園テニスコートで開催�
 
     </div>
   </section>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
+  <script is:inline src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js" crossorigin="anonymous" referrerpolicy="no-referrer" defer></script>
 </Base>

@@ -1,0 +1,65 @@
+---
+// 自前の地図（Leaflet＋OpenStreetMap）。トップのコート案内と、水曜テニス教室（井原公園だけ）で使う。
+// 動きは main.js の initCourtMap（1ページに1つだけ置ける）。使うページでは Leaflet の CSS/JS を読み込むこと：
+//   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" ...>
+//   <script is:inline src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js" ... defer></script>
+//
+//   courts … 出す施設（src/data/courts.js の COURTS の要素）。1件なら切り替えのボタン列を隠す（.cmap--single）
+//   label  … 地図の aria-label
+import Icon from './Icon.astro';
+import { mapData, mapLink } from '../data/courts.js';
+
+const { courts, label = '利用コートの地図' } = Astro.props;
+const single = courts.length === 1;
+---
+
+<div class:list={['cmap', single && 'cmap--single']} data-cmap>
+  {/* 施設の切り替え。左端に「すべて」を固定し、区切りの右に施設を1行で並べる（はみ出す分は横にスクロール） */}
+  <div class="cmap__tabs" role="group" aria-label="地図に出す施設">
+    <button class="cmap__tab cmap__tab--all" type="button" aria-pressed="false" data-cmap-all>すべて</button>
+    <div class="cmap__tabs-scroll">
+      {courts.map((c, i) => (
+        <button
+          class:list={['cmap__tab', i === 0 && 'is-active']}
+          type="button"
+          aria-pressed={i === 0 ? 'true' : 'false'}
+          data-cmap-tab={i}
+          data-link={mapLink(c)}
+          data-name={c.name}
+        >{c.short}</button>
+      ))}
+    </div>
+  </div>
+  <div class="cmap__frame">
+    {/* 地図は Leaflet で自前に描く（サイトの白・グレー・赤に合わせるため）。
+        タイルは OpenStreetMap。テニスコートの面を赤く塗り、その重心にピンを立てる。
+        上のボタンでその施設のコート全体が入るように寄り、「すべて」で全施設を一望する。 */}
+    <div class="cmap__map" data-cmap-map data-courts={JSON.stringify(courts.map(mapData))} role="img" aria-label={label}></div>
+    {/* 選んだ施設の写真と、その右にサーフェス・面数。地図の左上に重ねる（courts.js の image / surface / courts。
+        「すべて」のときは JS が隠す） */}
+    <div class="cmap__photo" data-cmap-photo hidden={!courts[0].image}>
+      <img class="cmap__photo-img" data-cmap-photo-img src={courts[0].image ?? ''} alt="" width="960" height="540" decoding="async">
+      <span class="cmap__photo-text">
+        <span class="cmap__photo-surface" data-cmap-surface>{courts[0].surface ?? ''}</span>
+        <span class="cmap__photo-faces" data-cmap-faces>{courts[0].courts ? `${courts[0].courts}面` : ''}</span>
+      </span>
+    </div>
+    {/* 現在地。地図の左下に重ねる。押すと位置情報の許可を求め、許可されれば青い点で出す（main.js の initCourtMap）。
+        位置情報が使えない環境では JS が隠す。 */}
+    <button class="cmap__locate" type="button" aria-pressed="false" data-cmap-locate>
+      <span class="cmap__locate-dot" aria-hidden="true"></span>現在地
+    </button>
+    {/* 地図が出せないときの下敷き。タイルが読めない環境ではこれが見える。 */}
+    <div class="cmap__fallback" aria-hidden="true">
+      <Icon name="pin" class="cmap__fallback-pin" />
+      <span class="cmap__fallback-text">地図を読み込んでいます</span>
+    </div>
+  </div>
+  <div class="cmap__bar">
+    <span class="cmap__name" data-cmap-name>{courts[0].name}</span>
+    <span class="cmap__msg" data-cmap-msg role="status" aria-live="polite"></span>
+    <a class="ghost-link cmap__open" data-cmap-link href={mapLink(courts[0])} target="_blank" rel="noopener noreferrer">
+      Googleマップで開く <span class="aw">↗</span>
+    </a>
+  </div>
+</div>

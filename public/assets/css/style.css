@@ -1709,6 +1709,8 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   border-bottom: 1px solid var(--gray-200);
 }
 .cmap__tab--all { flex: none; }
+/* 施設が1つだけのとき（水曜テニス教室の井原公園）は切り替えの列を出さない */
+.cmap--single .cmap__tabs { display: none; }
 .cmap__tabs-scroll {
   display: flex;
   flex: 1 1 auto;
