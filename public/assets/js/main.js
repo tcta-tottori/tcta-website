@@ -92,9 +92,9 @@
           io.unobserve(e.target);
         }
       });
-      // 閾値は 0（＋下端マージン）にしておく。割合で判定すると、
-      // 一覧表のように画面より背の高い要素が永久に表示されないことがある。
-    }, { threshold: 0, rootMargin: '0px 0px -60px 0px' });
+      // 閾値は 0 にしておく。割合で判定すると、一覧表のように画面より背の高い要素が永久に表示されないことがある。
+      // 出すタイミングは、要素の上端が画面の下から 1/7（≒14.3%）の線より上に来たとき（画面の 6/7 より上に入ったら出す）。
+    }, { threshold: 0, rootMargin: '0px 0px -14.3% 0px' });
 
     requestAnimationFrame(function () {
       targets.forEach(function (el) { io.observe(el); });

@@ -3419,12 +3419,24 @@ button.dl-item { width: 100%; text-align: left; }
 }
 /* 入賞者の名前。写真の下に「男子シングルスA級　優勝 ○○　準優勝 ○○」 */
 .rblock__caption { margin: 10px 0 0; font: 400 14px/1.8 var(--fjp); color: var(--gray-800); }
-/* 入賞者の行（AwardLine）。順位は画像のバッジ（public/assets/img/badges/award-*.webp。画像の無い順位は文字の枠）、
-   名前は太字、「選手」「ペア」と注記は普通の太さ */
+/* 入賞者の行（AwardLine）。順位のバッジは横の種目の枠（.rblock__cat）と同じ形・大きさで、順位ごとの色の塗りに白文字
+   （1 金・2 銀・3 銅・4 緑、それ以外（ベスト4 など）は灰色）。名前は太字、「選手」「ペア」と注記は普通の太さ */
 .awards { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px 18px; vertical-align: middle; }
-.award { display: inline-flex; align-items: center; gap: 8px; font: 400 14px/1.6 var(--fjp); color: var(--ink); }
-.award__badge { display: block; height: 22px; width: auto; border-radius: 4px; }
-.award__badge--text { padding: 0 8px; border: 1px solid var(--gray-400); font: 700 12px/20px var(--fjp); letter-spacing: .02em; color: var(--gray-800); white-space: nowrap; }
+.award { display: inline-flex; align-items: center; gap: 10px; font: 400 14px/1.6 var(--fjp); color: var(--ink); }
+.award__badge {
+  display: inline-block;
+  padding: 1px 8px;
+  border: 1px solid var(--gray-500);
+  background: var(--gray-500);
+  font: 700 12px/1.6 var(--fjp);
+  letter-spacing: .02em;
+  color: #fff;
+  white-space: nowrap;
+}
+.award__badge--1 { background: #C9A227; border-color: #C9A227; }  /* 優勝：金 */
+.award__badge--2 { background: #8E959C; border-color: #8E959C; }  /* 準優勝：銀 */
+.award__badge--3 { background: #B5683A; border-color: #B5683A; }  /* 3位：銅 */
+.award__badge--4 { background: #2F6E5F; border-color: #2F6E5F; }  /* 4位：緑 */
 .award__name { font-weight: 700; }
 .award__pre, .award__suffix, .award__note { font-weight: 400; }
 .award__suffix { margin-left: 3px; }
@@ -3441,7 +3453,6 @@ button.dl-item { width: 100%; text-align: left; }
 .gallery.gallery--winners .gallery__item:hover img { transform: none; }
 .rblock:first-child { margin-top: 0; }
 .rblock + .rblock { margin-top: 48px; }
-.sheet--result { border-radius: 4px; }
 /* 優勝者の写真。1枚なら横いっぱい、2枚なら半分ずつ、それ以上は折り返す */
 /* （.gallery の定義より前にあるので、打ち消すためにクラスを重ねている） */
 .gallery.gallery--winners { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
@@ -3871,15 +3882,10 @@ button.dl-item { width: 100%; text-align: left; }
    同じ節に縦長の紙と混ざることがあるので、1枚ずつ横いっぱいに広げる。 */
 .sheet--wide { grid-column: 1 / -1; }
 
-.sheet {
-  display: block;
-  overflow: hidden;
-  background: var(--white);
-  border: 1px solid var(--gray-200);
-  border-radius: 6px;
-  transition: border-color .3s ease, box-shadow .3s ease;
-}
-.sheet:hover { border-color: var(--gray-300); box-shadow: var(--shadow-hover); color: inherit; }
+/* 紙面（規約・要項・ドロー・結果表）はそのまま置く。枠も拡大ボタンも付けず、タップで全画面（main.js の lightbox）。
+   添え書き（.sheet__cap）があれば下に小さく */
+.sheet { display: block; color: inherit; }
+.sheet:hover { color: inherit; }
 .sheet img {
   display: block;
   width: 100%;
@@ -3887,17 +3893,12 @@ button.dl-item { width: 100%; text-align: left; }
   background: var(--white);
 }
 .sheet__cap {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 14px;
-  border-top: 1px solid var(--gray-200);
+  display: block;
+  padding: 8px 2px 0;
   font: 700 13px/1.6 var(--fjp);
   letter-spacing: .03em;
-  color: var(--ink);
+  color: var(--gray-800);
 }
-.sheet__cap .sqbtn { flex: none; margin-left: auto; }
-.sheet:hover .sqbtn { background: var(--red); border-color: var(--red); color: #fff; }
 
 /* まだ中身が無い節（結果待ちなど）の言い方 */
 .esec__wait {
