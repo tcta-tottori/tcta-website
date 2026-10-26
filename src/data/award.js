@@ -2,7 +2,7 @@
 // 表示は src/components/AwardLine.astro（順位は画像のバッジ、名前は太字、「選手」「ペア」は普通の太さ）。
 //
 //   parseAward('優勝 米本 叶芽 選手') → { prefix: '', award: '優勝', name: '米本 叶芽', suffix: '選手', note: '' }
-//   awardBadge('優勝')               → { img, alt, w, h }（画像の無い順位（ベスト4 など）は null → 文字のバッジ）
+//   awardBadge('優勝')               → { rank: 1, label: '優勝' }（順位ごとの色の文字バッジ。1 金・2 銀・3 銅・4 緑、それ以外は rank 0 で灰色）
 //
 // 名前の表記はここでそろえる：
 //   シングルス … 記録どおりのフルネーム（「米本 叶芽」。旧サイトから引き継いだ記録で苗字しか無いものはそのまま）
@@ -27,19 +27,17 @@ const pairSurnames = (name) => name.split(/\s*・\s*/).map(surname).filter(Boole
 /** 順位の表記ゆれをそろえる（第３位 → 3位、ベスト ４ → ベスト4） */
 const awardKey = (award) => norm(award).replace(/^第\s*(\d)\s*位$/, '$1位').replace(/\s+/g, '');
 
-/** 順位のバッジ画像（public/assets/img/badges/award-*.webp）。無い順位は null */
-const BADGES = {
-  '優勝': 'award-1', '総合優勝': 'award-1', '1位': 'award-1',
-  '準優勝': 'award-2', '2位': 'award-2',
-  '3位': 'award-3',
-  '4位': 'award-4',
+/** 順位のバッジ。種目の枠（.rblock__cat）と同じ形で、順位ごとの色（style.css の .award__badge--1〜4）。
+ *  1 … 優勝・総合優勝・1位（金）、2 … 準優勝・2位（銀）、3 … 3位（銅）、4 … 4位（緑）、0 … それ以外（ベスト4 など。灰色） */
+const RANKS = {
+  '優勝': 1, '総合優勝': 1, '1位': 1,
+  '準優勝': 2, '2位': 2,
+  '3位': 3,
+  '4位': 4,
 };
-const SIZES = { 'award-1': [211, 120], 'award-2': [258, 120], 'award-3': [211, 120], 'award-4': [202, 120] };
 export function awardBadge(award) {
-  const id = BADGES[awardKey(award)];
-  if (!id) return null;
-  const [w, h] = SIZES[id];
-  return { img: `assets/img/badges/${id}.webp`, alt: norm(award), w, h };
+  const label = norm(award);
+  return { rank: RANKS[awardKey(award)] ?? 0, label };
 }
 
 /** 「優勝 米本 叶芽 選手」→ 順位・名前・「選手」などに分ける。順位の言葉が無ければ award は '' で全体を name に。

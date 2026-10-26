@@ -3419,12 +3419,24 @@ button.dl-item { width: 100%; text-align: left; }
 }
 /* 入賞者の名前。写真の下に「男子シングルスA級　優勝 ○○　準優勝 ○○」 */
 .rblock__caption { margin: 10px 0 0; font: 400 14px/1.8 var(--fjp); color: var(--gray-800); }
-/* 入賞者の行（AwardLine）。順位は画像のバッジ（public/assets/img/badges/award-*.webp。画像の無い順位は文字の枠）、
-   名前は太字、「選手」「ペア」と注記は普通の太さ */
+/* 入賞者の行（AwardLine）。順位のバッジは横の種目の枠（.rblock__cat）と同じ形・大きさで、順位ごとの色の塗りに白文字
+   （1 金・2 銀・3 銅・4 緑、それ以外（ベスト4 など）は灰色）。名前は太字、「選手」「ペア」と注記は普通の太さ */
 .awards { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px 18px; vertical-align: middle; }
-.award { display: inline-flex; align-items: center; gap: 8px; font: 400 14px/1.6 var(--fjp); color: var(--ink); }
-.award__badge { display: block; height: 22px; width: auto; border-radius: 4px; }
-.award__badge--text { padding: 0 8px; border: 1px solid var(--gray-400); font: 700 12px/20px var(--fjp); letter-spacing: .02em; color: var(--gray-800); white-space: nowrap; }
+.award { display: inline-flex; align-items: center; gap: 10px; font: 400 14px/1.6 var(--fjp); color: var(--ink); }
+.award__badge {
+  display: inline-block;
+  padding: 1px 8px;
+  border: 1px solid var(--gray-500);
+  background: var(--gray-500);
+  font: 700 12px/1.6 var(--fjp);
+  letter-spacing: .02em;
+  color: #fff;
+  white-space: nowrap;
+}
+.award__badge--1 { background: #C9A227; border-color: #C9A227; }  /* 優勝：金 */
+.award__badge--2 { background: #8E959C; border-color: #8E959C; }  /* 準優勝：銀 */
+.award__badge--3 { background: #B5683A; border-color: #B5683A; }  /* 3位：銅 */
+.award__badge--4 { background: #2F6E5F; border-color: #2F6E5F; }  /* 4位：緑 */
 .award__name { font-weight: 700; }
 .award__pre, .award__suffix, .award__note { font-weight: 400; }
 .award__suffix { margin-left: 3px; }

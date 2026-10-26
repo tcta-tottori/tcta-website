@@ -1,5 +1,5 @@
 ---
-// 入賞者の行。順位は画像のバッジ（優勝・準優勝・3位・4位。それ以外は文字）、名前は太字、「選手」「ペア」は普通の太さ。
+// 入賞者の行。順位は種目の枠と同じ形のバッジ（順位ごとの色：金・銀・銅・緑、それ以外は灰色）、名前は太字、「選手」「ペア」は普通の太さ。
 // 写真の下の1行（.rblock__caption）と、写真1枚ごとの名前（.gallery__cap）で使う。
 // 名前の表記（シングルスはフルネーム、ダブルスは苗字だけ）は award.js でそろえる。
 //   items    … 成績の配列 [{ award, name, note }]
@@ -22,9 +22,7 @@ const shown = list.filter((a) => a.award || a.name);
       return (
         <span class="award">
           {a.prefix && <span class="award__pre">{a.prefix}</span>}
-          {a.award && (b
-            ? <img class="award__badge" src={b.img} alt={b.alt} width={b.w} height={b.h} loading="lazy" decoding="async" />
-            : <span class="award__badge award__badge--text">{a.award}</span>)}
+          {a.award && <span class:list={['award__badge', `award__badge--${b.rank}`]}>{b.label}</span>}
           {a.name && <span class="award__who"><b class="award__name">{a.name}</b>{a.suffix && <span class="award__suffix">{a.suffix}</span>}{a.note && <span class="award__note">{a.note}</span>}</span>}
         </span>
       );
