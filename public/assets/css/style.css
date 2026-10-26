@@ -483,16 +483,14 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   animation: panel-item-out .3s cubic-bezier(.7, 0, .84, 0) both;
   animation-delay: calc((10 - var(--k)) / 10 * .2s);
 }
-/* 不透明度は動き出してすぐ 1 にする（半透明のあいだは裏の項目の文字が透けて見えてしまうため） */
+/* 透明度は変えない（見出しの裏と画面の上端で隠れる）。半透明にすると裏の項目の文字が透けて重なり、ぼやけて見える */
 @keyframes panel-item-in {
-  0%   { opacity: 0; transform: translateY(calc((100% + 1px) * -1 * (var(--k) + 1) - 40px)); }
-  12%  { opacity: 1; }
-  100% { opacity: 1; transform: none; }
+  from { transform: translateY(calc((100% + 1px) * -1 * (var(--k) + 1) - 40px)); }
+  to   { transform: none; }
 }
 @keyframes panel-item-out {
-  0%   { opacity: 1; transform: none; }
-  85%  { opacity: 1; }
-  100% { opacity: 0; transform: translateY(calc((100% + 1px) * -1 * (var(--k) + 1) - 40px)); }
+  from { transform: none; }
+  to   { transform: translateY(calc((100% + 1px) * -1 * (var(--k) + 1) - 40px)); }
 }
 /* 項目の重なり（z-index）を一覧の中に閉じ込め、追従する見出し（z-index:1）より常に下にする */
 .news-all__body .news-list, .news-all__body .sch-list, .tall__list { isolation: isolate; }
@@ -745,21 +743,19 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   /* 上の項目ほど手前に重ねる */
   position: relative;
   z-index: calc(var(--n, 1) - var(--i, 0));
-  opacity: 0;
   /* 閉じているあいだは、全項目をヘッダーの下の同じ場所に重ねておく
-     （自分の高さ＋間隔 × (順番+1) ぶん上へ。さらに 100px 上げて確実に隠す） */
+     （自分の高さ＋間隔 × (順番+1) ぶん上へ。さらに 100px 上げて確実に隠す）。
+     透明度は変えない（ヘッダーの下端で切り取られるので隠れる）。半透明にすると、ヘッダーと最初の行のあいだで
+     裏の行の文字が透けて重なり、ぼやけて見えてしまう。 */
   transform: translateY(calc((100% + var(--mn-gap)) * -1 * (var(--i, 0) + 1) - 100px));
-  /* 閉じるとき：下の項目ほど早く戻る（上の項目が最後）。透明にするのは戻り切る直前 */
-  transition: transform var(--mn-out) var(--mn-ease-out), opacity .12s ease;
-  transition-delay:
-    calc((var(--n, 1) - 1 - var(--i, 0)) / max(var(--n, 1) - 1, 1) * var(--mn-stagger)),
-    calc((var(--n, 1) - 1 - var(--i, 0)) / max(var(--n, 1) - 1, 1) * var(--mn-stagger) + var(--mn-out) - .12s);
+  /* 閉じるとき：下の項目ほど早く戻る（上の項目が最後） */
+  transition: transform var(--mn-out) var(--mn-ease-out);
+  transition-delay: calc((var(--n, 1) - 1 - var(--i, 0)) / max(var(--n, 1) - 1, 1) * var(--mn-stagger));
 }
 .mobile-nav.is-open .mobile-nav__item {
-  opacity: 1;
   transform: none;
-  /* 開くとき：上の項目ほど早く出る。出た瞬間に見えるようにする */
-  transition: transform var(--mn-in) var(--mn-ease-in), opacity .12s ease;
+  /* 開くとき：上の項目ほど早く出る */
+  transition: transform var(--mn-in) var(--mn-ease-in);
   transition-delay: calc(var(--i, 0) / max(var(--n, 1) - 1, 1) * var(--mn-stagger));
 }
 @media (prefers-reduced-motion: reduce) {
