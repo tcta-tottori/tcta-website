@@ -3028,7 +3028,7 @@ body.jsrv .rv.on .ink-sweep {
    大会結果の年度（令和・平成それぞれ）と地図の施設の列。折り返さず、収まらない分は横にスクロール（スクロールバーは出さない）。
    はみ出しているあいだは、続きのある側の端を少し透かし、列の下の右端に「scroll →」の案内を出す。
    端まで送ると透かしと案内は消える（案内の高さぶんの余白は、はみ出している列には常に取っておき、送っても高さが変わらないようにする）。はみ出しの有無と位置は main.js の initHScroll が .is-overflow / .is-start / .is-end で付ける。
-   使い方：<div class="hscroll" data-hscroll><div class="hscroll__track">…</div><span class="hscroll__hint">scroll<span class="hscroll__arrow"></span></span></div> */
+   使い方：<div class="hscroll" data-hscroll><div class="hscroll__track">…</div><span class="hscroll__hint"><span class="hscroll__arrow"></span>SCROLL</span></div> */
 .hscroll { position: relative; min-width: 0; --hs-l: 0px; --hs-r: 0px; }
 .hscroll.is-overflow { padding-bottom: 16px; }
 .hscroll__track {
@@ -3054,13 +3054,14 @@ body.jsrv .rv.on .ink-sweep {
   margin-top: -14px;
   font: 500 10px/1 var(--flt);
   letter-spacing: .18em;
+  text-transform: uppercase;
   color: var(--gray-600);
   pointer-events: none;
   opacity: 0;
   transition: opacity .3s ease;
 }
 .hscroll.is-overflow:not(.is-end) .hscroll__hint { opacity: 1; }
-.hscroll__arrow { position: relative; width: 30px; height: 1px; background: currentColor; animation: hs-nudge 1.8s ease-in-out infinite; }
+.hscroll__arrow { position: relative; width: 14px; height: 1px; background: currentColor; animation: hs-nudge 1.8s ease-in-out infinite; }
 .hscroll__arrow::after {
   content: '';
   position: absolute;
