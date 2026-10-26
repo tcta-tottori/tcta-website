@@ -11,6 +11,21 @@ const description = '鳥取市テニス協会が大会・教室で使用する�
 
 /** 電話番号のリンク（数字とハイフン以外を落とす） */
 const telHref = (tel) => `tel:${String(tel).replace(/[^0-9+]/g, '')}`;
+// サーフェスのバッジは画像（public/assets/img/badges/surface-*.webp。オムニ・クレー・ハード）。
+// 「室内オムニコート」のように頭に「室内」が付くものは、同じ画像に「室内」の文字バッジを添える。
+// 対応する画像が無いサーフェスは、これまでどおり文字のバッジで出す。
+const SURFACE_BADGES = [
+  { match: 'オムニコート', img: 'assets/img/badges/surface-omni.webp', w: 600, h: 134 },
+  { match: 'クレーコート', img: 'assets/img/badges/surface-clay.webp', w: 600, h: 136 },
+  { match: 'ハードコート', img: 'assets/img/badges/surface-hard.webp', w: 600, h: 134 },
+];
+const surfaceBadge = (surface) => {
+  const hit = SURFACE_BADGES.find((b) => String(surface ?? '').includes(b.match));
+  return hit ? { ...hit, indoor: String(surface).startsWith('室内') } : null;
+};
+// 夜間照明は濃いめの黄色地に白文字（.badge--light）
+const isLight = (f) => String(f).startsWith('夜間照明');
+
 ---
 
 <Base title={title} description={description}>
@@ -54,9 +69,14 @@ const telHref = (tel) => `tel:${String(tel).replace(/[^0-9+]/g, '')}`;
                 <h2 class="cfac__name"><Icon name="pin" class="court-pin" />{c.name}</h2>
                 <p class="cfac__badges">
                   {c.main && <span class="badge badge--open">主会場</span>}
-                  {c.surface && <span class="badge">{c.surface}</span>}
+                  {c.surface && (surfaceBadge(c.surface)
+                    ? <>
+                        {surfaceBadge(c.surface).indoor && <span class="badge">室内</span>}
+                        <img class="badge badge--img" src={surfaceBadge(c.surface).img} alt={c.surface} width={surfaceBadge(c.surface).w} height={surfaceBadge(c.surface).h} loading="lazy" decoding="async">
+                      </>
+                    : <span class="badge">{c.surface}</span>)}
                   {c.courts > 0 && <span class="badge">{c.courts}面</span>}
-                  {c.features.map((f) => <span class="badge">{f}</span>)}
+                  {c.features.map((f) => <span class:list={['badge', isLight(f) && 'badge--light']}>{f}</span>)}
                 </p>
               </div>
             </div>
