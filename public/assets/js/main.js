@@ -540,11 +540,36 @@
         attributionControl: true,
       });
       L.control.zoom({ position: 'bottomright' }).addTo(map);
-      // タイルは OpenStreetMap の標準版（鍵なしで使える）。色は CSS でグレーに落とす
-      L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-        maxZoom: 19,
-      }).addTo(map);
+      /* 下地は2種類。標準は航空写真（国土地理院の全国最新写真。鍵なしで使え、コートの区画まで見える）。
+         「地図」に切り替えると OpenStreetMap の標準版（色は CSS でグレーに落とす）。
+         国土地理院のタイルは 18 までなので、19 では 18 を拡大して出す。 */
+      var layers = {
+        photo: L.tileLayer('https://cyberjapandata.gsi.go.jp/xyz/seamlessphoto/{z}/{x}/{y}.jpg', {
+          attribution: '<a href="https://maps.gsi.go.jp/development/ichiran.html">国土地理院</a>',
+          maxZoom: 19, maxNativeZoom: 18, className: 'ctile-photo',
+        }),
+        map: L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+          maxZoom: 19, className: 'ctile-map',
+        }),
+      };
+      var layerBtns = root.querySelectorAll('[data-cmap-layer]');
+      var currentLayer = null;
+      function setLayer(kind) {
+        if (!layers[kind] || kind === currentLayer) return;
+        if (currentLayer) map.removeLayer(layers[currentLayer]);
+        layers[kind].addTo(map);
+        currentLayer = kind;
+        Array.prototype.forEach.call(layerBtns, function (b) {
+          var on = b.getAttribute('data-cmap-layer') === kind;
+          b.classList.toggle('is-active', on);
+          b.setAttribute('aria-pressed', String(on));
+        });
+      }
+      Array.prototype.forEach.call(layerBtns, function (b) {
+        b.addEventListener('click', function () { setLayer(b.getAttribute('data-cmap-layer')); });
+      });
+      setLayer('photo');
 
       var allBounds = L.latLngBounds([]);
       var venues = courts.map(function (c, i) {

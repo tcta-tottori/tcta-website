@@ -1,5 +1,5 @@
 ---
-// 自前の地図（Leaflet＋OpenStreetMap）。トップのコート案内と、水曜テニス教室（井原公園だけ）で使う。
+// 自前の地図（Leaflet。下地は国土地理院の航空写真、切り替えで OpenStreetMap）。トップのコート案内と、水曜テニス教室（井原公園だけ）で使う。
 // 動きは main.js の initCourtMap（1ページに1つだけ置ける）。使うページでは Leaflet の CSS/JS を読み込むこと：
 //   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" ...>
 //   <script is:inline src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js" ... defer></script>
@@ -46,6 +46,11 @@ const single = courts.length === 1;
     </div>
     {/* 現在地。地図の左下に重ねる。押すと位置情報の許可を求め、許可されれば青い点で出す（main.js の initCourtMap）。
         位置情報が使えない環境では JS が隠す。 */}
+    {/* 地図の種類。標準は航空写真（国土地理院）、「地図」で OpenStreetMap に切り替え（main.js の initCourtMap） */}
+    <div class="cmap__layers" role="group" aria-label="地図の種類">
+      <button class="cmap__layer is-active" type="button" aria-pressed="true" data-cmap-layer="photo">航空写真</button>
+      <button class="cmap__layer" type="button" aria-pressed="false" data-cmap-layer="map">地図</button>
+    </div>
     <button class="cmap__locate" type="button" aria-pressed="false" data-cmap-locate>
       <span class="cmap__locate-dot" aria-hidden="true"></span>現在地
     </button>

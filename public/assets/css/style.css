@@ -1821,6 +1821,7 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   top: 12px;
   left: 12px;
   z-index: 1000; /* Leaflet のコントロールと同じ高さ */
+  max-width: calc(100% - 150px); /* 右上の「航空写真／地図」の切り替えと重ならないように */
   display: flex;
   align-items: center;
   gap: 8px;
@@ -1857,7 +1858,31 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 }
 .cmap__map.is-ready { opacity: 1; }
 /* 地図タイルをサイトの地の色に寄せる。ピンとラベルは別レイヤーなので色が残る */
-.cmap__map .leaflet-tile-pane { filter: grayscale(1) brightness(1.08) contrast(.82); opacity: .9; }
+/* 「地図」（OpenStreetMap）のときだけ色をグレーに落とす。航空写真はそのまま */
+.cmap__map .ctile-map { filter: grayscale(1) brightness(1.08) contrast(.82); opacity: .9; }
+/* 地図の種類の切り替え（航空写真／地図）。地図の右上。施設の切り替えボタンと同じ見た目 */
+.cmap__layers {
+  position: absolute;
+  top: 12px; right: 12px;
+  z-index: 500;
+  display: flex;
+  border: 1px solid var(--gray-300);
+  border-radius: 2px;
+  overflow: hidden;
+  background: var(--white);
+  box-shadow: 0 1px 6px rgba(26, 26, 26, .12);
+}
+.cmap__layer {
+  padding: 8px 10px;
+  font: 700 11px/1 var(--fjp);
+  letter-spacing: .04em;
+  color: var(--gray-800);
+  background: var(--white);
+  transition: background .3s ease, color .3s ease;
+}
+.cmap__layer + .cmap__layer { border-left: 1px solid var(--gray-300); }
+.cmap__layer:hover { color: var(--red); }
+.cmap__layer.is-active { background: var(--ink); color: #fff; }
 .cmap__map .leaflet-control-zoom { border: 1px solid var(--gray-200); border-radius: 0; box-shadow: none; margin: 0 14px 14px 0; }
 .cmap__map .leaflet-control-zoom a {
   width: 32px; height: 32px; line-height: 30px;
