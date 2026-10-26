@@ -53,6 +53,30 @@ const {
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&family=Jost:wght@500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href={CSS}>
+<script is:inline>
+  /* メニューから別のページへ移るときの切り替え（style.css の @view-transition。対応ブラウザのみ）。
+     メニューのリンクを押すと main.js が sessionStorage に印を付けてそのまま移動する。
+     ブラウザは次のページが描ける状態になるまで前のページ（メニューが開いたまま）を見せ続け、
+     描ける状態になったら前のページの「メニューの行・白い下地・ヘッダー」の写しを次のページの上に重ね、
+     行が順にヘッダーの下へ戻る動きを流す（CSS の ::view-transition-old(mn-item-*)）。
+     印が無い移動（通常のリンク・戻る）では切り替えを省き、これまでどおり即座に表示する。 */
+  (function () {
+    var KEY = 'tcta-mn-vt';
+    var has = function () { try { return sessionStorage.getItem(KEY) === '1'; } catch (e) { return false; } };
+    window.addEventListener('pageswap', function (e) {
+      if (e.viewTransition && !has()) e.viewTransition.skipTransition();
+    });
+    window.addEventListener('pagereveal', function (e) {
+      if (!e.viewTransition) return;
+      if (has()) {
+        try { sessionStorage.removeItem(KEY); } catch (x) {}
+        if (e.viewTransition.types) e.viewTransition.types.add('menu');
+      } else {
+        e.viewTransition.skipTransition();
+      }
+    });
+  })();
+</script>
 {splash && (
   <script is:inline>
     /* オープニングを出すかどうかを、本文が描かれる前に決める。

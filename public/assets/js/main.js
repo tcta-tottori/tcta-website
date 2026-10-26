@@ -804,6 +804,19 @@
 
     if (!toggle || !menu) return;
 
+    /* ページを移るときの切り替え（ページ間ビュートランジション）が使えるか。
+       使えるときは、メニューを開いているあいだだけ写しの名前（view-transition-name）を付けておく（style.css 参照） */
+    var VT_KEY = 'tcta-mn-vt';
+    var canVT = !reduceMotion && ('onpageswap' in window) && window.CSS && CSS.supports && CSS.supports('view-transition-name', 'x');
+    var band = menu.querySelector('.mobile-nav__band');
+    var items = menu.querySelectorAll('.mobile-nav__item');
+    var nameFor = function (open) {
+      if (!canVT) return;
+      header.style.viewTransitionName = open ? 'site-header' : '';
+      menu.style.viewTransitionName = open ? 'mn-sheet' : '';
+      if (band) band.style.viewTransitionName = open ? 'mn-band' : '';
+      Array.prototype.forEach.call(items, function (el, i) { el.style.viewTransitionName = open ? 'mn-item-' + i : ''; });
+    };
     var setOpen = function (open) {
       if (open) {
         // 開くときは必ずヘッダーを出しておく（閉じるボタンが画面から消えないように）
@@ -811,6 +824,7 @@
         // ヘッダー（通知バーの有無で高さが変わる）の下端に合わせる。項目はここから下へ滑り出す（style.css の .mobile-nav__item）
         menu.style.paddingTop = header.getBoundingClientRect().bottom + 'px';
       }
+      nameFor(open);
       toggle.setAttribute('aria-expanded', String(open));
       menu.classList.toggle('is-open', open);
       document.body.classList.toggle('is-locked', open);
@@ -820,9 +834,12 @@
     toggle.addEventListener('click', function () {
       setOpen(toggle.getAttribute('aria-expanded') !== 'true');
     });
-    /* メニューのリンクを押したとき：すぐには移動せず、閉じる動き（行が順にヘッダーの下へ戻る）を流し切ってから
-       次のページへ移る。押した時点で次のページの読み込み（prefetch）を始めておくので、閉じ終わった瞬間に
-       次のページが出る。別タブ・修飾キー付き・ページ内リンクはそのまま。動きを減らす設定ならすぐ移動する。 */
+    /* メニューのリンクを押したとき。
+       ・ページ間ビュートランジションが使えるブラウザ：閉じずにそのまま移動を始める。ブラウザは次のページが描ける状態に
+         なるまでこのページ（メニューが開いたまま）を見せ続け、描けるようになったら次のページの上で閉じる動きを流す
+         （Base.astro の pagereveal と style.css の ::view-transition-*）。sessionStorage の印で「メニューから」と伝える。
+       ・使えないブラウザ：閉じる動きを流し切ってから移動する。押した時点で prefetch を始めておく。
+       別タブ・修飾キー付き・ページ内リンクはそのまま。動きを減らす設定ならすぐ移動する。 */
     var closeMs = function () {
       var cs = getComputedStyle(menu);
       var sec = function (v) { var n = parseFloat(v); return isNaN(n) ? 0 : (/ms$/.test(v) ? n / 1000 : n); };
@@ -835,6 +852,10 @@
       var plain = href && href.charAt(0) !== '#' && a.target !== '_blank'
         && !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0;
       if (!plain || reduceMotion) { setOpen(false); return; }
+      if (canVT) {
+        try { sessionStorage.setItem(VT_KEY, '1'); } catch (x) {}
+        return; // 閉じない。そのまま移動（次のページが準備できるまでこの画面にとどまる）
+      }
       e.preventDefault();
       var pre = document.createElement('link');
       pre.rel = 'prefetch'; pre.href = a.href; pre.as = 'document';
