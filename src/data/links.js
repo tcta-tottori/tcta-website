@@ -29,15 +29,18 @@ export const GROUPS = [
   { id: 'sponsor', title: '協賛・関連' },
 ];
 
+/** LINE 公式アカウント。リンク集の「協会の公式アカウント」に出すほか、フッターの SNS（Instagram の横）にも出す。 */
+export const LINE_OFFICIAL = {
+  group: 'official',
+  name: '鳥取市テニス協会 LINE公式アカウント',
+  row: 'other',
+  desc: '大会・教室のお知らせを配信中',
+  url: 'https://lin.ee/1oJQ9mu',
+  banner: 'assets/img/banners/line-official.png',
+};
+
 export const LINKS = [
-  {
-    group: 'official',
-    name: '鳥取市テニス協会 LINE公式アカウント',
-    row: 'other',
-    desc: '大会・教室のお知らせを配信中',
-    url: 'https://lin.ee/1oJQ9mu',
-    banner: 'assets/img/banners/line-official.png',
-  },
+  LINE_OFFICIAL,
   {
     group: 'org',
     name: '鳥取県テニス協会',
