@@ -159,7 +159,7 @@ export const COURTS = [
     name: '郡家ふれあいドーム',
     short: '郡家ドーム',
     note: '屋根付きコート・八頭郡八頭町下門尾180（予約：八頭町シルバー人材センター 0858-72-3351）',
-    lat: 35.419098, lng: 134.254402,
+    lat: 35.419104, lng: 134.254368,
     image: 'assets/img/courts/kooge.webp',
     surface: '室内オムニコート', courts: 1,
     desc: '屋根付きのコートで、雨の日でも使えます。',
