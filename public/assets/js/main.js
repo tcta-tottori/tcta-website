@@ -1081,6 +1081,10 @@
     initFullPanel('news-all', '[data-news-open]', '[data-news-close]');
     initFullPanel('tournaments-all', '[data-tall-open]', '[data-tall-close]');
     initFullPanel('court-all', '[data-court-open]', '[data-court-close]');
+    // イベント情報：過去のテニス祭りの写真・動画（年ごとのパネル。data-tdg="<年>"）
+    document.querySelectorAll('.news-all[data-tdg]').forEach(function (p) {
+      initFullPanel(p.id, '[data-tdg-open="' + p.getAttribute('data-tdg') + '"]', '[data-tdg-close]');
+    });
     initCourtMap();
     initCalendar();
     initFooterDeco();

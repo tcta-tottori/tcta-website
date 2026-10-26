@@ -1,0 +1,77 @@
+---
+// テニス祭り1回ぶんのギャラリー。src/data/tennisday-<年>.json を受け取って、
+//   バナー → 全体の動画（あれば） → コーチ紹介（あれば） → 節ごとに「見出し・一文・見出し写真・写真の升目・動画」
+// の順に出す。イベント情報ページの最新回（ページ本体）と、過去の回（全画面のパネル）の両方で使う。
+//
+//   data      … JSON（hero / video / coaches / blocks[{ id, title, caption, lead, photos, video }]）
+//   prefix    … 節の id の頭（同じページに複数回ぶん出すので重ならないように）
+//   label     … 写真の alt に添える大会名（「2025テニス祭り鳥取イベント」）
+//   inPanel   … 全画面のパネルの中に出すとき true。スクロール連動のリビール（.rv）を付けず、
+//               代わりに節を .panel-item にして、見出しの下から順に滑り出させる（style.css）
+const { data, prefix = 'gallery', label = 'テニス祭り鳥取イベント', inPanel = false } = Astro.props;
+let n = 0; // 節の通し番号（.panel-item の --i）
+const wrap = () => (inPanel ? { class: 'panel-item', style: `--i:${n++}` } : { class: 'rv' });
+---
+
+<div {...wrap()}>
+  <a class="sheet" href={data.hero.src} style="display:block">
+    <img src={data.hero.src} alt={label} width={data.hero.w} height={data.hero.h} loading="lazy" decoding="async">
+  </a>
+  {data.video && (
+    <>
+      <div class="video-embed mt-32">
+        <iframe src={`https://www.youtube-nocookie.com/embed/${data.video}`} title={`${label}（YouTube）`} loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>
+      </div>
+      <p class="note">※ 動画は協会の YouTube チャンネルで公開しています。</p>
+    </>
+  )}
+</div>
+
+{data.coaches?.length > 0 && (
+  <div {...wrap()} style={`${inPanel ? `--i:${n - 1};` : ''}margin-top:40px`}>
+    <h3 class="sub-head">コーチ紹介</h3>
+    <div class="card-grid card-grid--2 mt-24">
+      {data.coaches.map((c) => (
+        <div class="panel">
+          <p style="margin:0;font:400 13px/1.6 var(--fjp);color:var(--gray-600)">{c.title}</p>
+          <p class="panel__title" style="margin-top:4px">{c.name} コーチ</p>
+          <ul class="prose" style="margin:0;padding-left:1.2em">
+            {c.lines.map((l) => <li>{l}</li>)}
+          </ul>
+        </div>
+      ))}
+    </div>
+  </div>
+)}
+
+{data.blocks.map((b) => {
+  const w = wrap();
+  return (
+    <div class={w.class} style={`${w.style ? w.style + ';' : ''}margin-top:56px`} id={`${prefix}-${b.id}`}>
+      <h3 class="sub-head">{b.title}</h3>
+      {b.caption && <p class="note" style="margin-top:0">{b.caption}</p>}
+      {/* 見出し写真。lead は src・w・h を持つオブジェクト */}
+      {b.lead?.src && (
+        <a class="sheet" href={b.lead.src} style="display:block">
+          <img src={b.lead.src} alt={`${b.title}の写真`} width={b.lead.w} height={b.lead.h} loading="lazy" decoding="async">
+        </a>
+      )}
+      {b.photos?.length > 0 && (
+        <div class="gallery">
+          {b.photos.map((ph, i) => (
+            <a class="gallery__item" href={ph.src}>
+              <img src={ph.src} alt={`${label} ${b.title}の写真 ${i + 1}`} width={ph.w} height={ph.h} loading="lazy" decoding="async">
+            </a>
+          ))}
+        </div>
+      )}
+      {b.video && (
+        <div class="video-embed mt-32">
+          <iframe src={`https://www.youtube-nocookie.com/embed/${b.video}`} title={`${label} ${b.title}（YouTube）`} loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>
+        </div>
+      )}
+    </div>
+  );
+})}
+
+<p class={inPanel ? 'note' : 'note rv'} style="margin-top:32px">※ 画像をタップすると全画面で表示します。</p>

@@ -1,0 +1,705 @@
+{
+  "hero": {
+    "src": "assets/img/tennis-day/2025/hero.webp",
+    "w": 1600,
+    "h": 607
+  },
+  "video": null,
+  "coachChannel": "https://www.youtube.com/@to5268/videos",
+  "coaches": [
+    {
+      "name": "加藤 季温",
+      "title": "元プロテニスプレーヤー",
+      "lines": [
+        "兵庫県神戸市出身",
+        "株式会社KION 代表取締役",
+        "2007年 全日本テニス選手権優勝",
+        "日本ランキング最高11位"
+      ]
+    },
+    {
+      "name": "小山 慶大",
+      "title": "元プロテニスプレーヤー",
+      "lines": [
+        "鳥取県鳥取市出身",
+        "日本テニス協会公認Ｓ級エリートコーチ",
+        "ヨネックスアドバイザリースタッフ",
+        "日本ランキング最高23位"
+      ]
+    }
+  ],
+  "blocks": [
+    {
+      "id": "b1",
+      "title": "キッズテニス",
+      "caption": "加藤季温コーチ＆小山慶大コーチのキッズテニスを開催致しました。",
+      "lead": {
+        "src": "assets/img/tennis-day/2025/b1-lead.webp",
+        "w": 1400,
+        "h": 933
+      },
+      "photos": [
+        {
+          "src": "assets/img/tennis-day/2025/b1-photo-01.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b1-photo-02.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b1-photo-03.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b1-photo-04.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b1-photo-05.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b1-photo-06.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b1-photo-07.webp",
+          "w": 1400,
+          "h": 934
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b1-photo-08.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b1-photo-09.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b1-photo-10.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b1-photo-11.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b1-photo-12.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b1-photo-13.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b1-photo-14.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b1-photo-15.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b1-photo-16.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b1-photo-17.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b1-photo-18.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b1-photo-19.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b1-photo-20.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b1-photo-21.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b1-photo-22.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b1-photo-23.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b1-photo-24.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b1-photo-25.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b1-photo-26.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b1-photo-27.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b1-photo-28.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b1-photo-29.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b1-photo-30.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b1-photo-31.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b1-photo-32.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b1-photo-33.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b1-photo-34.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b1-photo-35.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b1-photo-36.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b1-photo-37.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b1-photo-38.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b1-photo-39.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b1-photo-40.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b1-photo-41.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b1-photo-42.webp",
+          "w": 1400,
+          "h": 934
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b1-photo-43.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b1-photo-44.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b1-photo-45.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b1-photo-46.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b1-photo-47.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b1-photo-48.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b1-photo-49.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b1-photo-50.webp",
+          "w": 1400,
+          "h": 933
+        }
+      ],
+      "video": null
+    },
+    {
+      "id": "b2",
+      "title": "ピックルボール体験会",
+      "caption": "加藤 季温コーチのYoutubeチャンネルでピックルボール体験会の様子が公開されました！",
+      "lead": null,
+      "photos": [],
+      "video": "1vrUtPUSlkI"
+    },
+    {
+      "id": "b3",
+      "title": "テニスクリニック",
+      "caption": "加藤季温コーチ＆小山慶大コーチのテニスクリニックを開催致しました。",
+      "lead": {
+        "src": "assets/img/tennis-day/2025/b3-lead.webp",
+        "w": 1400,
+        "h": 933
+      },
+      "photos": [
+        {
+          "src": "assets/img/tennis-day/2025/b3-photo-01.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b3-photo-02.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b3-photo-03.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b3-photo-04.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b3-photo-05.webp",
+          "w": 1400,
+          "h": 934
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b3-photo-06.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b3-photo-07.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b3-photo-08.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b3-photo-09.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b3-photo-10.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b3-photo-11.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b3-photo-12.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b3-photo-13.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b3-photo-14.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b3-photo-15.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b3-photo-16.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b3-photo-17.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b3-photo-18.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b3-photo-19.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b3-photo-20.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b3-photo-21.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b3-photo-22.webp",
+          "w": 1400,
+          "h": 933
+        }
+      ],
+      "video": null
+    },
+    {
+      "id": "b4",
+      "title": "じゃんけん大会",
+      "caption": "ボストンバッグや日傘等のテニス用品に加えて 加藤季温プロが過去に使用していたラケットも景品として用意された じゃんけん大会が行われました。",
+      "lead": null,
+      "photos": [
+        {
+          "src": "assets/img/tennis-day/2025/b4-photo-01.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b4-photo-02.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b4-photo-03.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b4-photo-04.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b4-photo-05.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b4-photo-06.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b4-photo-07.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b4-photo-08.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b4-photo-09.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b4-photo-10.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b4-photo-11.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b4-photo-12.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b4-photo-13.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b4-photo-14.webp",
+          "w": 1400,
+          "h": 933
+        }
+      ],
+      "video": null
+    },
+    {
+      "id": "b5",
+      "title": "タイブレークマッチ",
+      "caption": "加藤季温プロ＆小山慶大コーチペアとタイブレークマッチを行いました。 最後には 加藤季温プロと安田彰汰選手とのシングルス対決が行われました。 加藤季温プロのYoutubeチャンネルで安田彰汰選手とのシングルス対決が公開されました！",
+      "lead": null,
+      "photos": [
+        {
+          "src": "assets/img/tennis-day/2025/b5-photo-01.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b5-photo-02.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b5-photo-03.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b5-photo-04.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b5-photo-05.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b5-photo-06.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b5-photo-07.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b5-photo-08.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b5-photo-09.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b5-photo-10.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b5-photo-11.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b5-photo-12.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b5-photo-13.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b5-photo-14.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b5-photo-15.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b5-photo-16.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b5-photo-17.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b5-photo-18.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b5-photo-19.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b5-photo-20.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b5-photo-21.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b5-photo-22.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b5-photo-23.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b5-photo-24.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b5-photo-25.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b5-photo-26.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b5-photo-27.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b5-photo-28.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b5-photo-29.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b5-photo-30.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b5-photo-31.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b5-photo-32.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b5-photo-33.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b5-photo-34.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b5-photo-35.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b5-photo-36.webp",
+          "w": 1400,
+          "h": 933
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b5-photo-37.webp",
+          "w": 1400,
+          "h": 934
+        },
+        {
+          "src": "assets/img/tennis-day/2025/b5-photo-38.webp",
+          "w": 1400,
+          "h": 933
+        }
+      ],
+      "video": "uRYJMRTQqeA"
+    }
+  ]
+}
