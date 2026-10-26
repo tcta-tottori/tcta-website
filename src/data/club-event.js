@@ -8,17 +8,13 @@
 // 該当しない大会（クラブ対抗戦でない、結果が無い）は null を返し、ページは従来の節の並びで描く。
 
 import { CLUB_SEASONS } from './club-league.js';
+import { clubDivisionOrder } from './results.js';
 
 /** 「女子予選会 Bリーグ」「男子予選会 Aブロック」「男子8部」→ 部の名前（男子8部／女子予選会）。部でなければ null */
 export const divisionKey = (label) => (String(label || '').match(/^(男子|女子)(\d+部|予選会)/) || [])[0] || null;
 
-/** 部の並び：男子1部→8部、女子1部→5部、そのあとに予選会（女子予選会 → 男子予選会。公式サイトの結果ページと同じ順） */
-const order = (key) => {
-  const m = key.match(/^(男子|女子)(\d+)?(部|予選会)/);
-  if (!m) return 999;
-  if (m[3] === '予選会') return m[1] === '女子' ? 500 : 600;
-  return (m[1] === '男子' ? 0 : 100) + Number(m[2]);
-};
+/** 部の並び：男子1部→8部 → 男子予選会 → 女子1部→5部 → 女子予選会（results.js の clubDivisionOrder。クラブ対抗戦のページと同じ） */
+const order = clubDivisionOrder;
 
 /** slug から年度データの日程（前期・後期）を引く */
 export const clubTermBySlug = (slug) => {

@@ -223,6 +223,7 @@
     document.addEventListener('pointerdown', function (e) {
       var host = e.target.closest(RIPPLE_SEL);
       if (!host || host.closest('[aria-hidden="true"]')) return;
+      if (host.classList.contains('mobile-nav__link')) return; // メニューの行は波紋ではなく、文字が赤くなって光る（.is-tapped）
       clear();
 
       // マウスはなぞって画面を送らないので、そのまま出す
@@ -291,6 +292,28 @@
   /* opts.shared … { from: セレクタ, parts: [セレクタ…] }：開くとき、ページに見えている行（from）と全画面の中の同じ行（href が同じ）を
      同一ページのビュートランジションでつなぎ、その場所から全画面での位置へ滑らかに移してから残りを出す（対応ブラウザのみ）。
      parts を渡すと、行の中のその要素（コート案内の写真・施設名・サーフェス）もそれぞれ自分の位置へ別々に移る */
+  /* クラブ対抗戦の年度のアコーディオン（details.champ）。ひらくときは中身の .panel-item が CSS の動きで
+     見出しの裏から順に滑り出す。閉じるときは逆の動き（.is-closing）を流してから閉じる */
+  function initChampAccordion() {
+    document.querySelectorAll('details.champ').forEach(function (d) {
+      var sum = d.querySelector('summary');
+      var body = d.querySelector('.champ__body');
+      if (!sum || !body) return;
+      var closing = null;
+      sum.addEventListener('click', function (e) {
+        if (!d.open || reduceMotion || !body.querySelector('.panel-item')) return; // ひらくときはそのまま
+        e.preventDefault();
+        if (closing) return;
+        body.classList.add('is-closing');
+        closing = setTimeout(function () {
+          body.classList.remove('is-closing');
+          d.open = false;
+          closing = null;
+        }, 450);
+      });
+    });
+  }
+
   /* 横に 1 行で並べる列（.hscroll。大会結果の年度・地図の施設）。はみ出しの有無と位置を class で付け、
      CSS が端の透かしと「scroll →」の案内を出し分ける */
   function initHScroll() {
@@ -969,6 +992,8 @@
     };
     var setOpen = function (open) {
       if (open) {
+        // 前回押した行の印（赤く光った状態）を消す
+        menu.querySelectorAll('.mobile-nav__link.is-tapped').forEach(function (l) { l.classList.remove('is-tapped'); });
         // 開くときは必ずヘッダーを出しておく（閉じるボタンが画面から消えないように）
         header.classList.remove('site-header--hidden');
         // ヘッダー（通知バーの有無で高さが変わる）の下端に合わせる。項目はここから下へ滑り出す（style.css の .mobile-nav__item）
@@ -1000,6 +1025,11 @@
     menu.addEventListener('click', function (e) {
       var a = e.target.closest('a');
       if (!a) return;
+      // 押した行の文字を赤にして、その瞬間に一瞬光らせる（style.css の .mobile-nav__link.is-tapped）
+      if (a.classList.contains('mobile-nav__link')) {
+        menu.querySelectorAll('.mobile-nav__link.is-tapped').forEach(function (l) { if (l !== a) l.classList.remove('is-tapped'); });
+        a.classList.remove('is-tapped'); void a.offsetWidth; a.classList.add('is-tapped');
+      }
       var href = a.getAttribute('href') || '';
       var plain = href && href.charAt(0) !== '#' && a.target !== '_blank'
         && !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0;
@@ -1271,6 +1301,7 @@
     initRipple();
     initPressed();
     initHScroll();
+    initChampAccordion();
     initFullPanel('news-all', '[data-news-open]', '[data-news-close]', { shared: { from: '#news .news-row' } });
     initFullPanel('tournaments-all', '[data-tall-open]', '[data-tall-close]');
     initFullPanel('court-all', '[data-court-open]', '[data-court-close]', { shared: { from: '#courts .court-item', parts: ['.court-item__photo', '.court-item__head', '.court-item__spec'] } });

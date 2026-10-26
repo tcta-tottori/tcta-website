@@ -1,7 +1,7 @@
 ---
 import Base from '../layouts/Base.astro';
 import { siteData } from '../lib/cms.js';
-import { CLUB_GROUPS, clubDivisions, divisionChampion } from '../data/results.js';
+import { CLUB_GROUPS, clubDivisions, divisionChampion, clubDivisionOrder } from '../data/results.js';
 import { CLUB_SEASONS } from '../data/club-league.js';
 
 const title = "クラブ対抗戦｜鳥取市テニス協会";
@@ -24,7 +24,7 @@ const seasons = CLUB_SEASONS.map((season) => ({
 
 // ■ 令和6年度まで（旧サイトから引き継いだ results.json）
 //   旧サイトで「男子1部〜6部」「男子7部・8部」「女子…」と分かれていたページを年度ごとに1つに束ね、
-//   男子1部→8部、女子1部→5部の順に優勝クラブを出す（results.js の clubDivisions）。
+//   男子1部→8部 → 男子予選会 → 女子1部→5部 → 女子予選会 の順に優勝クラブを出す（results.js の clubDivisions）。
 const archive = CLUB_GROUPS.map((g) => ({
   label: g.yearLabel,
   divisions: clubDivisions(g).divisions
@@ -36,11 +36,12 @@ const archive = CLUB_GROUPS.map((g) => ({
   ],
 }));
 
-// ■ 全年度を同じ形にそろえる（新しい年度が先。前期・後期はまとめて1つの一覧に）
+// ■ 全年度を同じ形にそろえる（新しい年度が先。前期・後期はまとめて1つの一覧にし、部の順に並べ直す）
+const byDivision = (a, b) => clubDivisionOrder(a.div) - clubDivisionOrder(b.div);
 const years = [
   ...seasons.map((season) => ({
     label: season.label,
-    divisions: season.terms.flatMap((term) => term.divisions),
+    divisions: season.terms.flatMap((term) => term.divisions).slice().sort(byDivision),
     links: season.terms.filter((t) => t.href).map((t) => ({ label: `${t.label}（${t.event}）の結果表と写真`, href: t.href })),
   })),
   ...archive,
@@ -89,10 +90,9 @@ const years = [
         </ul>
       </div>
 
-      <div class="rv" style="margin-top:56px">
-        <h2 class="sub-head">各年度の優勝クラブ</h2>
-        <p class="sec-head__lead" style="margin-top:8px">年度をひらくと、男子1部から8部、女子1部から5部、予選会の順に各部の優勝クラブが出ます。結果表と当日の写真は、各年度の中のリンクからご覧いただけます。令和6年度までは旧サイトから引き継いだ記録です。</p>
-
+      {/* 各年度の優勝クラブ（年度ごとのアコーディオン。見出しや説明文は置かない）。
+          ひらくと、部の行がメニューと同じく年度の見出しの裏から順に滑り出す（.panel-item。閉じる動きは main.js の initChampAccordion） */}
+      <div class="rv" style="margin-top:56px" role="region" aria-label="各年度の優勝クラブ">
         {years.map((y) => (
           <details class="champ">
             <summary class="champ__year">{y.label}<span class="champ__count">{new Set(y.divisions.map((c) => c.div.replace(/\s.*$/, ''))).size}部</span></summary>
@@ -100,14 +100,14 @@ const years = [
               <div class="champ__block">
                 {y.divisions.length > 0 ? (
                   <ul class="champ__list">
-                    {y.divisions.map((c) => (
-                      <li><span class="champ__div">{c.div}</span><span class="champ__club">{c.award && <span class="champ__award">{c.award}</span>}{c.club}</span></li>
+                    {y.divisions.map((c, i) => (
+                      <li class="panel-item" style={`--i:${i}`}><span class="champ__div">{c.div}</span><span class="champ__club">{c.award && <span class="champ__award">{c.award}</span>}{c.club}</span></li>
                     ))}
                   </ul>
                 ) : (
-                  <p class="champ__none">記録は写真のみです</p>
+                  <p class="champ__none panel-item" style="--i:0">記録は写真のみです</p>
                 )}
-                <ul class="champ__links">
+                <ul class="champ__links panel-item" style={`--i:${Math.max(y.divisions.length, 1)}`}>
                   {y.links.map((l) => (
                     <li><a class="ghost-link" href={l.href}>{l.label} <span class="aw">→</span></a></li>
                   ))}

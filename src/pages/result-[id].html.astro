@@ -251,7 +251,7 @@ let photoNo = 0;
                 {b.caption && (
                   <p class="rblock__caption">
                     {b.category && <span class="rblock__cat">{b.category}</span>}
-                    <AwardLine text={b.caption} />
+                    <AwardLine text={b.caption} category={b.category} />
                   </p>
                 )}
               </div>
@@ -264,7 +264,7 @@ let photoNo = 0;
               {p.loose.map((c) => (
                 <p class="rblock__caption">
                   <span class="rblock__cat">{c.category || '種目'}</span>
-                  <AwardLine items={c.places.filter((pl) => pl.name)} />
+                  <AwardLine items={c.places.filter((pl) => pl.name)} category={c.category} />
                 </p>
               ))}
             </div>

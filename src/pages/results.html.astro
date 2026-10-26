@@ -90,12 +90,11 @@ const eras = ['令和', '平成'].map((era) => ({ era, years: years.filter((y) =
         <div class="tabpanel" id={`panel-${y.nendo}`} role="tabpanel" aria-labelledby={`tab-${y.nendo}`} hidden={i !== 0}>
           <div class="year-head">
             <h3 class="year-head__title">{y.label}<span class="year-head__en">{y.nendo}</span></h3>
-            <p class="year-head__sum">{y.rows.length}大会</p>
           </div>
           <ol class="rlist">
             {y.rows.map((r, n) => (
               <li><a class="rlist__item" href={r.href}>
-                <span class="rlist__no" aria-hidden="true">{String(n + 1).padStart(2, '0')}</span>
+                <span class="rlist__mark" aria-hidden="true"></span>
                 <span class="rlist__title">{r.title}</span>
                 {r.date && <span class="rlist__date">{r.date}</span>}
                 <span class="sqbtn" aria-hidden="true">→</span>

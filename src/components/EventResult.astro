@@ -69,7 +69,7 @@ let photoNo = 0;
                 {b.photos.map((ph) => (
                   <a class="gallery__item" href={ph.src}>
                     <img src={ph.src} alt={`${e.name} ${b.label}${ph.caption ? ' ' + ph.caption : ''} 入賞者の写真 ${++photoNo}`} width={ph.w} height={ph.h} loading="lazy" decoding="async">
-                    {ph.caption && <span class="gallery__cap"><AwardLine texts={[ph.caption]} /></span>}
+                    {ph.caption && <span class="gallery__cap"><AwardLine texts={[ph.caption]} category={b.label} /></span>}
                   </a>
                 ))}
               </div>
@@ -77,7 +77,7 @@ let photoNo = 0;
           )}
           {/* 入賞者の名前（優勝・準優勝・ベスト4 …） */}
           {b.captions.length > 0 && (
-            <p class="rblock__caption">{b.label && <span class="rblock__cat">{b.label}</span>}<AwardLine texts={b.captions} /></p>
+            <p class="rblock__caption">{b.label && <span class="rblock__cat">{b.label}</span>}<AwardLine texts={b.captions} category={b.label} /></p>
           )}
         </div>
       </section>
