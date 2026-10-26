@@ -992,8 +992,9 @@
     };
     var setOpen = function (open) {
       if (open) {
-        // 前回押した行の印（赤く光った状態）を消す
+        // 前回押した行の印（赤く光った状態）を消し、黒に戻していた「今のページ」の行を赤に戻す
         menu.querySelectorAll('.mobile-nav__link.is-tapped').forEach(function (l) { l.classList.remove('is-tapped'); });
+        menu.querySelectorAll('.mobile-nav__link[data-was-active]').forEach(function (l) { l.classList.add('is-active'); l.removeAttribute('data-was-active'); });
         // 開くときは必ずヘッダーを出しておく（閉じるボタンが画面から消えないように）
         header.classList.remove('site-header--hidden');
         // ヘッダー（通知バーの有無で高さが変わる）の下端に合わせる。項目はここから下へ滑り出す（style.css の .mobile-nav__item）
@@ -1025,9 +1026,11 @@
     menu.addEventListener('click', function (e) {
       var a = e.target.closest('a');
       if (!a) return;
-      // 押した行の文字を赤にして、その瞬間に一瞬光らせる（style.css の .mobile-nav__link.is-tapped）
+      // 押した行の文字を赤にして、その瞬間に一瞬光らせる（style.css の .mobile-nav__link.is-tapped）。
+      // 同時に、赤くしてあった「今のページ」の行は黒に戻す（色の transition で同じタイミングで変わる）
       if (a.classList.contains('mobile-nav__link')) {
         menu.querySelectorAll('.mobile-nav__link.is-tapped').forEach(function (l) { if (l !== a) l.classList.remove('is-tapped'); });
+        menu.querySelectorAll('.mobile-nav__link.is-active').forEach(function (l) { if (l !== a) { l.classList.remove('is-active'); l.setAttribute('data-was-active', '1'); } });
         a.classList.remove('is-tapped'); void a.offsetWidth; a.classList.add('is-tapped');
       }
       var href = a.getAttribute('href') || '';
