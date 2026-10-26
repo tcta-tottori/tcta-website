@@ -4,13 +4,15 @@
 // 右にタイトル。タイトルは折り返さず1行に収める。
 import { newsDate, isNew } from '../data/news.js';
 
-const { item, delay = 0 } = Astro.props;
+// index … 全画面の一覧（#news-all）で何番目か。付けると li が .panel-item になり、見出しの下から順に滑り出す（style.css）。
+// reveal … スクロール連動のリビール（.rv）を付けるか。全画面の一覧では false にする（動きが二重になるため）。
+const { item, delay = 0, index = null, reveal = true } = Astro.props;
 const { day, year } = newsDate(item.date);
 const fresh = isNew(item.date);
 ---
 
-<li>
-  <a class="news-row rv" style={delay ? `transition-delay:${delay}s` : undefined} href={item.href}>
+<li class:list={[index != null && 'panel-item']} style={index != null ? `--i:${index}` : undefined}>
+  <a class:list={['news-row', reveal && 'rv']} style={delay ? `transition-delay:${delay}s` : undefined} href={item.href}>
     <span class="news-row__date">
       <span class="news-row__day">{day}</span>
       <span class="news-row__year">{year}</span>

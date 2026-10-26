@@ -296,23 +296,36 @@
     var closer = panel.querySelector(closeSel);
     var last = null;
 
+    var closing = null;
+    var finishClose = function () {
+      closing = null;
+      panel.classList.remove('is-closing');
+      panel.hidden = true;
+      document.body.classList.remove('is-locked');
+      if (last) last.focus();
+    };
     var setOpen = function (open) {
-      panel.hidden = !open;
-      document.body.classList.toggle('is-locked', open);
       Array.prototype.forEach.call(openers, function (b) {
         b.setAttribute('aria-expanded', String(open));
       });
       if (open) {
+        if (closing) { clearTimeout(closing); closing = null; }
+        panel.classList.remove('is-closing');
+        panel.hidden = false;
+        document.body.classList.add('is-locked');
         panel.scrollTop = 0;
-        // 開くたびに並び直しの動きを流し直す
+        // 開くたびに項目の動き（見出しの下から順に滑り出す）を流し直す
         panel.querySelectorAll('[style*="--i"]').forEach(function (el) {
           el.style.animation = 'none';
           void el.offsetWidth;
           el.style.animation = '';
         });
         if (closer) closer.focus();
-      } else if (last) {
-        last.focus();
+      } else if (!panel.hidden && !closing) {
+        // 閉じるときは逆の動き（下から順に見出しの下へ戻る）を流してから隠す。動きを減らす設定ならすぐ隠す
+        if (reduceMotion || !panel.querySelector('.panel-item')) { finishClose(); return; }
+        panel.classList.add('is-closing');
+        closing = setTimeout(finishClose, 520);
       }
     };
 
@@ -321,7 +334,7 @@
     });
     if (closer) closer.addEventListener('click', function () { setOpen(false); });
     document.addEventListener('keydown', function (e) {
-      if (e.key === 'Escape' && !panel.hidden) setOpen(false);
+      if (e.key === 'Escape' && !panel.hidden && !closing) setOpen(false);
     });
   }
 
