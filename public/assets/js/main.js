@@ -515,8 +515,8 @@
     var msg = root.querySelector('[data-cmap-msg]');
     var photo = root.querySelector('[data-cmap-photo]');
     var photoImg = root.querySelector('[data-cmap-photo-img]');
-    var photoSurface = root.querySelector('[data-cmap-surface]');
-    var photoFaces = root.querySelector('[data-cmap-faces]');
+    var badges = root.querySelector('[data-cmap-badges]');
+    var frame = root.querySelector('.cmap__frame');
     if (!el || !tabs.length) return;
 
     var courts;
@@ -644,13 +644,53 @@
       // 左上の施設の写真（右にサーフェス・面数）。写真の無い施設と「すべて」では隠す
       function showPhoto(c) {
         if (!photo) return;
+        unzoomPhoto();
         if (c && c.image) {
           if (photoImg) photoImg.src = c.image;
-          if (photoSurface) photoSurface.textContent = c.surface || '';
-          if (photoFaces) photoFaces.textContent = c.faces ? c.faces + '面' : '';
           photo.hidden = false;
         } else photo.hidden = true;
       }
+      /* 地図の下のバッジ：サーフェス（画像があれば画像。「室内」は文字を添える）→ 面数 → 設備（夜間照明は濃い黄色） */
+      function showBadges(c) {
+        if (!badges) return;
+        badges.textContent = '';
+        if (!c) return;
+        var add = function (text, cls) {
+          var s = document.createElement('span'); s.className = 'badge' + (cls ? ' ' + cls : ''); s.textContent = text; badges.appendChild(s);
+        };
+        if (c.badge) {
+          if (c.badge.indoor) add('室内');
+          var im = document.createElement('img');
+          im.className = 'badge badge--img'; im.src = c.badge.img; im.alt = c.surface || ''; im.width = c.badge.w; im.height = c.badge.h; im.decoding = 'async';
+          badges.appendChild(im);
+        } else if (c.surface) add(c.surface);
+        if (c.faces) add(c.faces + '面');
+        (c.features || []).forEach(function (f) { add(f, /^夜間照明/.test(f) ? 'badge--light' : ''); });
+      }
+      /* 写真のタップ：地図の枠の中いっぱい（余白 12px）まで滑らかに拡大し、しばらくして元に戻る。もう一度押せばすぐ戻る */
+      var zoomTimer = null;
+      function unzoomPhoto() {
+        if (!photo) return;
+        if (zoomTimer) { clearTimeout(zoomTimer); zoomTimer = null; }
+        photo.classList.remove('is-zoomed');
+        photo.style.transform = '';
+      }
+      function zoomPhoto() {
+        if (!photo || !frame) return;
+        if (photo.classList.contains('is-zoomed')) { unzoomPhoto(); return; }
+        var fr = frame.getBoundingClientRect();
+        var pr = photo.getBoundingClientRect();
+        var M = 12;
+        var s = Math.min((fr.width - M * 2) / pr.width, (fr.height - M * 2) / pr.height);
+        if (s <= 1.05) return;
+        // 拡大後に枠の真ん中へ来るよう、左上基点のずれを足す
+        var tx = (fr.width - pr.width * s) / 2 - (pr.left - fr.left);
+        var ty = (fr.height - pr.height * s) / 2 - (pr.top - fr.top);
+        photo.style.transform = 'translate(' + tx + 'px, ' + ty + 'px) scale(' + s + ')';
+        photo.classList.add('is-zoomed');
+        zoomTimer = setTimeout(unzoomPhoto, 3000);
+      }
+      if (photo) photo.addEventListener('click', zoomPhoto);
       // 寄せるときの余白。コート全体が真ん中に、まわりに少し余裕がある程度。
       // 左上は写真の分だけ余計に空け、写真でコートが隠れないようにする
       var PAD = 40;
@@ -667,6 +707,7 @@
         if (name) name.textContent = c.name;
         if (link) link.href = tabs[i].getAttribute('data-link');
         showPhoto(c);
+        showBadges(c);
         go(withLocation(venues[i].bounds), Object.assign({ maxZoom: 19 }, padding()), animate);
       }
 
@@ -675,6 +716,7 @@
         current = -1;
         setActive(-1);
         showPhoto(null);
+        showBadges(null);
         if (name) name.textContent = '利用コート ' + courts.length + '施設';
         if (link) link.href = 'https://www.google.com/maps/search/?api=1&query=' + courts[mainIndex].lat + ',' + courts[mainIndex].lng;
         go(withLocation(allBounds), { padding: [48, 48] }, animate);

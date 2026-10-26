@@ -101,7 +101,8 @@ const {
 
 <ImportantNotice />
 
-<MobileNav active={mobileNavActive} />
+{/* 現在地の赤文字：ページが mobileNavActive を渡していなければ navActive（PC ナビの現在地）を使う */}
+<MobileNav active={mobileNavActive ?? navActive} />
 
 <main id="main">
   <slot />

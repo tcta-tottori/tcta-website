@@ -570,18 +570,23 @@ body.jsrv .rv {
   transition: opacity .7s var(--ease), transform .7s var(--ease);
 }
 body.jsrv .rv.on { opacity: 1; transform: none; }
-/* 現れるブロックの中の写真は、少し拡大した状態（1.08倍）から等倍へ寄る（ズームイン）。
-   .rv の浮き上がり（.7s）より少し長い .9s で、入れ物（.sheet / .gallery__item / .court-item__photo /
-   .cfac__hero / .link-card）は overflow: hidden なので拡大分は枠の中で切れる。
-   ホバーの拡大（scale 1.04）は .on になったあとの通常の規則がそのまま効く。動きを減らす設定では .jsrv が付かないので動かない。 */
-body.jsrv .rv .sheet img,
-body.jsrv .rv .gallery__item img,
-body.jsrv .rv .link-card__banner { transition: transform .9s var(--ease); }
+/* 現れるブロックの中の写真は、少し小さい状態（.92倍）から等倍へ広がる（ズームイン）。
+   .rv の浮き上がりが始まってから .2s 遅れて動き出し、最初は速く・最後はゆっくり（cubic-bezier(.16,1,.3,1)）.9s で収まる。
+   transition ではなく animation にしてあるのは、終わったあとホバーの拡大（scale 1.04）の transition をそのまま効かせるため
+   （fill は backwards：待っているあいだは .92 倍のまま、終わったら通常の規則に戻る）。
+   入れ物（.sheet / .gallery__item / .court-item__photo / .cfac__hero / .link-card）は overflow: hidden。
+   動きを減らす設定では .jsrv が付かないので動かない。 */
 body.jsrv .rv:not(.on) .sheet img,
 body.jsrv .rv:not(.on) .gallery__item img,
 body.jsrv .rv:not(.on) .court-item__photo img,
 body.jsrv .rv:not(.on) .cfac__hero-link img,
-body.jsrv .rv:not(.on) .link-card__banner { transform: scale(1.08); }
+body.jsrv .rv:not(.on) .link-card__banner { transform: scale(.92); }
+body.jsrv .rv.on .sheet img,
+body.jsrv .rv.on .gallery__item img,
+body.jsrv .rv.on .court-item__photo img,
+body.jsrv .rv.on .cfac__hero-link img,
+body.jsrv .rv.on .link-card__banner { animation: rv-zoom .9s cubic-bezier(.16, 1, .3, 1) .2s backwards; }
+@keyframes rv-zoom { from { transform: scale(.92); } to { transform: none; } }
 
 /* 大きな英字は右からスライドインさせる（.section / .page-head は overflow:hidden なので
    画面外へはみ出さずに、横スワイプのように入ってくる）。
@@ -1838,21 +1843,23 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   height: clamp(280px, 85vw, 360px); /* スマホは画面の幅に合わせる */
   background: var(--gray-050);
 }
-/* 選んだ施設の写真と、その右にサーフェス・面数。地図の左上に重ねる。地図と見分けがつくよう白い枠を付ける */
+/* 選んだ施設の写真。地図の左上に重ねる（地図と見分けがつくよう白い枠）。サーフェス・面数などは地図の下のバッジに */
 .cmap__photo {
   position: absolute;
   top: 12px;
   left: 12px;
   z-index: 1000; /* Leaflet のコントロールと同じ高さ */
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  display: block;
   padding: 3px;
   border-radius: 4px;
   background: var(--white);
   box-shadow: 0 0 0 1px var(--gray-200), 0 2px 10px rgba(26, 26, 26, .18);
-  pointer-events: none;
+  cursor: zoom-in;
+  /* タップで拡大：左上を基点に transform で大きくする（main.js が倍率と位置を計算）。しばらくすると元に戻る */
+  transform-origin: top left;
+  transition: transform .55s cubic-bezier(.16, 1, .3, 1), box-shadow .3s ease;
 }
+.cmap__photo.is-zoomed { cursor: zoom-out; z-index: 1100; box-shadow: 0 0 0 1px var(--gray-200), 0 12px 40px rgba(26, 26, 26, .35); }
 .cmap__photo[hidden] { display: none; }
 .cmap__photo-img {
   display: block;
@@ -1862,11 +1869,12 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   object-fit: cover;
   border-radius: 2px;
 }
-.cmap__photo-text { display: flex; flex-direction: column; gap: 3px; padding-right: 10px; white-space: nowrap; }
-.cmap__photo-text:not(:has(:not(:empty))) { display: none; }
-.cmap__photo-surface { font: 700 12px/1.3 var(--fjp); letter-spacing: .02em; color: var(--ink); }
-.cmap__photo-faces { font: 700 12px/1.3 var(--flt); letter-spacing: .02em; color: var(--red); }
-.cmap__photo-surface:empty, .cmap__photo-faces:empty { display: none; }
+/* 地図の下のバッジ（サーフェスの画像・面数・夜間照明など。courts.js の mapData → main.js の showBadges） */
+.cmap__badges { order: 10; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; flex-basis: 100%; } /* 1行目は施設名と「Googleマップで開く」、2行目にバッジ */
+.cmap__badges:empty { display: none; }
+.cmap__badges .badge { background: var(--gray-100); color: var(--gray-800); }
+.cmap__badges .badge--light { background: #D99A00; color: #fff; }
+.cmap__badges .badge--img { background: none; }
 @media (min-width: 1024px) { .cmap__frame { height: 420px; } }
 /* 自前で描く地図（Leaflet）。読み終わるまでは下敷きを見せる。 */
 .cmap__map {
@@ -2019,9 +2027,10 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 .cmap__fallback-text { font: 500 12px/1.6 var(--fjp); }
 .cmap__bar {
   display: flex;
+  flex-wrap: wrap;             /* 2行目にバッジ（.cmap__badges）が入る */
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap: 10px 16px;
   padding: 14px;
   border-top: 1px solid var(--gray-200);
 }
