@@ -851,6 +851,16 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 }
 .mobile-nav__link .ar { color: var(--red); }
 .mobile-nav__link.is-active { color: var(--red); }
+/* 押した行：文字を赤にして、その瞬間に一瞬光る（白く光ってから赤に落ち着く。行の地も薄い赤がさっと引く）。
+   main.js が押したときに .is-tapped を付ける（端末の波紋はこの行には出さない） */
+.mobile-nav__link.is-tapped { color: var(--red); animation: mn-tap-flash .7s ease-out both; }
+@keyframes mn-tap-flash {
+  0%   { color: #fff; background: rgba(216, 35, 42, .2); text-shadow: 0 0 2px #fff, 0 0 12px rgba(216, 35, 42, .95), 0 0 26px rgba(216, 35, 42, .7); }
+  18%  { color: #fff; background: rgba(216, 35, 42, .2); text-shadow: 0 0 2px #fff, 0 0 12px rgba(216, 35, 42, .95), 0 0 26px rgba(216, 35, 42, .7); }
+  50%  { color: var(--red); background: rgba(216, 35, 42, .07); text-shadow: 0 0 8px rgba(216, 35, 42, .6), 0 0 18px rgba(216, 35, 42, .3); }
+  100% { color: var(--red); background: var(--white); text-shadow: 0 0 0 rgba(216, 35, 42, 0); }
+}
+@media (prefers-reduced-motion: reduce) { .mobile-nav__link.is-tapped { animation: none; } }
 .mobile-nav .btn { margin-top: 28px; }
 
 

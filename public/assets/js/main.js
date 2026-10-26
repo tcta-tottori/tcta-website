@@ -223,6 +223,7 @@
     document.addEventListener('pointerdown', function (e) {
       var host = e.target.closest(RIPPLE_SEL);
       if (!host || host.closest('[aria-hidden="true"]')) return;
+      if (host.classList.contains('mobile-nav__link')) return; // メニューの行は波紋ではなく、文字が赤くなって光る（.is-tapped）
       clear();
 
       // マウスはなぞって画面を送らないので、そのまま出す
@@ -991,6 +992,8 @@
     };
     var setOpen = function (open) {
       if (open) {
+        // 前回押した行の印（赤く光った状態）を消す
+        menu.querySelectorAll('.mobile-nav__link.is-tapped').forEach(function (l) { l.classList.remove('is-tapped'); });
         // 開くときは必ずヘッダーを出しておく（閉じるボタンが画面から消えないように）
         header.classList.remove('site-header--hidden');
         // ヘッダー（通知バーの有無で高さが変わる）の下端に合わせる。項目はここから下へ滑り出す（style.css の .mobile-nav__item）
@@ -1022,6 +1025,11 @@
     menu.addEventListener('click', function (e) {
       var a = e.target.closest('a');
       if (!a) return;
+      // 押した行の文字を赤にして、その瞬間に一瞬光らせる（style.css の .mobile-nav__link.is-tapped）
+      if (a.classList.contains('mobile-nav__link')) {
+        menu.querySelectorAll('.mobile-nav__link.is-tapped').forEach(function (l) { if (l !== a) l.classList.remove('is-tapped'); });
+        a.classList.remove('is-tapped'); void a.offsetWidth; a.classList.add('is-tapped');
+      }
       var href = a.getAttribute('href') || '';
       var plain = href && href.charAt(0) !== '#' && a.target !== '_blank'
         && !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0;
