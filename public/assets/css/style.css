@@ -565,6 +565,18 @@ body.jsrv .rv {
   transition: opacity .7s var(--ease), transform .7s var(--ease);
 }
 body.jsrv .rv.on { opacity: 1; transform: none; }
+/* 現れるブロックの中の写真は、少し拡大した状態（1.08倍）から等倍へ寄る（ズームイン）。
+   .rv の浮き上がり（.7s）より少し長い .9s で、入れ物（.sheet / .gallery__item / .court-item__photo /
+   .cfac__hero / .link-card）は overflow: hidden なので拡大分は枠の中で切れる。
+   ホバーの拡大（scale 1.04）は .on になったあとの通常の規則がそのまま効く。動きを減らす設定では .jsrv が付かないので動かない。 */
+body.jsrv .rv .sheet img,
+body.jsrv .rv .gallery__item img,
+body.jsrv .rv .link-card__banner { transition: transform .9s var(--ease); }
+body.jsrv .rv:not(.on) .sheet img,
+body.jsrv .rv:not(.on) .gallery__item img,
+body.jsrv .rv:not(.on) .court-item__photo img,
+body.jsrv .rv:not(.on) .cfac__hero-link img,
+body.jsrv .rv:not(.on) .link-card__banner { transform: scale(1.08); }
 
 /* 大きな英字は右からスライドインさせる（.section / .page-head は overflow:hidden なので
    画面外へはみ出さずに、横スワイプのように入ってくる）。
@@ -2092,6 +2104,7 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
    バナーは 1018×168（およそ6:1）を想定。比率が違うものは切り抜いて合わせる。 */
 .link-card {
   flex: none;
+  overflow: hidden; /* バナーのズームイン（.rv）が枠からはみ出さないように */
   display: grid;
   grid-template-columns: 1fr auto;
   grid-template-areas:
