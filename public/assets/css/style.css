@@ -1519,6 +1519,9 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 .close-x:hover span { background: var(--red); }
 .news-all__body .news-list,
 .news-all__body .sch-list { margin-top: 8px; }
+/* 過去のテニス祭りのパネル：本文の上に少し余白。節は .panel-item で見出しの下から順に出る */
+.tdg__body { padding-top: 24px; isolation: isolate; }
+.tdg__body .panel-item { overflow: visible; }
 
 
 /* 一行タイプ（下層ページのお知らせ） */
@@ -2941,6 +2944,8 @@ body.jsrv .rv.on .ink-sweep {
   letter-spacing: .06em;
   text-align: center;
 }
+/* ボタンで使うとき（開催記録の「写真・動画」。全画面のパネルを開く） */
+button.dl-item { width: 100%; text-align: left; }
 .dl-item__text { min-width: 0; }
 .dl-item__title {
   display: block;
