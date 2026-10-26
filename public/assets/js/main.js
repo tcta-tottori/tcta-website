@@ -1057,34 +1057,17 @@
     Array.prototype.forEach.call(icons, function (el) { io.observe(el); });
   }
 
-  /* ---------- コート案内の施設一覧：最初は3件だけ ----------
-     4件目以降はお知らせと同じく白いフェードで隠し、ボタンで全部出す（CSS の .court-more）。
-     JS が無いときは全部そのまま出る（is-js を付けたときだけ隠す）。 */
-  function initCourtList() {
-    var box = document.querySelector('[data-court-more]');
-    if (!box) return;
-    var btn = box.querySelector('[data-court-more-btn]');
-    if (!btn) return;
-    box.classList.add('is-js');
-    btn.addEventListener('click', function () {
-      box.classList.add('is-open');
-      btn.setAttribute('aria-expanded', 'true');
-      var first = box.querySelector('.court-more__rest a');
-      if (first) first.focus({ preventScroll: true });
-    });
-  }
-
   function init() {
     initSplash();
     initReveal();
     initEventIcons();
-    initCourtList();
     initMarquee();
     initHeader();
     initRipple();
     initPressed();
     initFullPanel('news-all', '[data-news-open]', '[data-news-close]');
     initFullPanel('tournaments-all', '[data-tall-open]', '[data-tall-close]');
+    initFullPanel('court-all', '[data-court-open]', '[data-court-close]');
     initCourtMap();
     initCalendar();
     initFooterDeco();

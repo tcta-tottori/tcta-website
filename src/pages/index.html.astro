@@ -308,17 +308,17 @@ const upcomingTournaments = TOURNAMENTS.filter((t) => t.status !== 'past');
           <span class="embed-wrap__square" aria-hidden="true"></span>
         </div>
         <div class="rv" style="transition-delay:.1s">
-          {/* 最初は3件だけ。4件目以降はお知らせと同じ白いフェードで隠し、ボタンで全部出す（main.js の initCourtList） */}
+          {/* 最初は3件だけ（COURT_VISIBLE）。4件目はお知らせと同じく薄くフェードさせて続きがあることだけ伝え、
+              「すべての施設を見る」で全施設を全画面のパネル（#court-all）に開く（main.js の initFullPanel）。 */}
           <ul class="sch-list">
             {COURTS.slice(0, COURT_VISIBLE).map((c) => <CourtRow court={c} />)}
           </ul>
           {COURTS.length > COURT_VISIBLE && (
-            <div class="court-more" data-court-more>
-              <ul class="sch-list court-more__rest" id="court-more-rest">
-                {COURTS.slice(COURT_VISIBLE).map((c) => <CourtRow court={c} />)}
+            <div class="news-peek">
+              <ul class="sch-list news-list--peek court-peek" aria-hidden="true">
+                <CourtRow court={COURTS[COURT_VISIBLE]} />
               </ul>
-              <div class="court-more__peek" aria-hidden="true"></div>
-              <button class="news-peek__btn court-more__btn" type="button" data-court-more-btn aria-expanded="false" aria-controls="court-more-rest">
+              <button class="news-peek__btn" type="button" data-court-open aria-expanded="false" aria-controls="court-all">
                 すべての施設を見る（{COURTS.length}施設）<span class="aw">↓</span>
               </button>
             </div>
@@ -327,6 +327,28 @@ const upcomingTournaments = TOURNAMENTS.filter((t) => t.status !== 'past');
 
       </div>
     </div>
+
+    {/* 「すべての施設を見る」で開く全施設の一覧。お知らせの全件表示（#news-all）と同じ見た目で、閉じるボタンは右上。 */}
+    {COURTS.length > COURT_VISIBLE && (
+      <div class="news-all" id="court-all" hidden>
+        <div class="news-all__panel" role="dialog" aria-modal="true" aria-labelledby="court-all-title">
+          <div class="container news-all__head">
+            <div>
+              <p class="sec-head__eyebrow">Court Guide</p>
+              <h2 class="sec-head__title" id="court-all-title">コート案内</h2>
+            </div>
+            <button class="close-x" type="button" data-court-close aria-label="コート案内を閉じる">
+              <span aria-hidden="true"></span><span aria-hidden="true"></span><span aria-hidden="true"></span>
+            </button>
+          </div>
+          <div class="container news-all__body">
+            <ul class="sch-list">
+              {COURTS.map((c) => <CourtRow court={c} />)}
+            </ul>
+          </div>
+        </div>
+      </div>
+    )}
   </section>
   <!-- ============ リンク集 ============ -->
   <section class="section" id="links" aria-labelledby="links-title">
