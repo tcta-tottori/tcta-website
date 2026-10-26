@@ -470,21 +470,26 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 /* 全画面の一覧（お知らせ #news-all・コート案内 #court-all・大会情報 #tournaments-all）の項目。
    モバイルメニューと同じ動き：項目は見出しの下に重ねて隠してあり、開くと上から順に滑り出して位置につく。
    上の項目ほど手前（z-index）なので、遅れて出る下の項目は上の項目の裏から出てくるように見える。
-   出だしは速く、位置につく手前で減速（強めのイーズアウト）。項目1つ .4s、遅れの差 .3s で全体 .5s ほど。
+   出だしは速く、位置につく手前で減速（強めのイーズアウト）。順番の間隔はメニューと同じ緩急
+   （上ほど広くゆっくり、下へ行くほど詰まって速く。遅れは (2t - t²) × .3s）で、全体 .5s ほど。
    件数が多い一覧（お知らせは100件超）では、11件目以降はまとめて最後の遅れで出す（--k で頭打ち）。
-   閉じるとき（.is-closing）はその逆で、下から順にゆっくり動き出して速く見出しの下へ戻る。
+   閉じるとき（.is-closing）はその逆で、下から順に、下ほどゆっくり・上へ行くほど速く見出しの下へ戻る。
    開くたびに動きを流し直すのは main.js の initFullPanel（style に --i を持つ要素の animation を付け直す）。 */
 .panel-item {
   --k: min(var(--i, 0), 10);
+  --t: calc(var(--k) / 10);   /* 上から 0〜1（11件目以降は 1） */
+  --tc: calc(1 - var(--t));   /* 下から 0〜1 */
   position: relative;
   z-index: calc(200 - min(var(--i, 0), 199));
   background: var(--white);
-  animation: panel-item-in .4s cubic-bezier(.16, 1, .3, 1) both;
-  animation-delay: calc(var(--k) / 10 * .3s);
+  /* 開くとき：メニューと同じ緩急。上の項目ほど間隔が広くゆっくり（.45s）、下へ行くほど詰まって速く（.25s） */
+  animation: panel-item-in calc(.45s - .2s * var(--t)) cubic-bezier(.16, 1, .3, 1) both;
+  animation-delay: calc((2 * var(--t) - var(--t) * var(--t)) * .3s);
 }
 .is-closing .panel-item {
-  animation: panel-item-out .3s cubic-bezier(.7, 0, .84, 0) both;
-  animation-delay: calc((10 - var(--k)) / 10 * .2s);
+  /* 閉じるとき：下の項目から順に。下ほど間隔が広くゆっくり（.35s）、上へ行くほど詰まって速く（.2s） */
+  animation: panel-item-out calc(.35s - .15s * var(--tc)) cubic-bezier(.7, 0, .84, 0) both;
+  animation-delay: calc((2 * var(--tc) - var(--tc) * var(--tc)) * .2s);
 }
 /* 透明度は変えない（見出しの裏と画面の上端で隠れる）。半透明にすると裏の項目の文字が透けて重なり、ぼやけて見える */
 @keyframes panel-item-in {
@@ -565,6 +570,18 @@ body.jsrv .rv {
   transition: opacity .7s var(--ease), transform .7s var(--ease);
 }
 body.jsrv .rv.on { opacity: 1; transform: none; }
+/* 現れるブロックの中の写真は、少し拡大した状態（1.08倍）から等倍へ寄る（ズームイン）。
+   .rv の浮き上がり（.7s）より少し長い .9s で、入れ物（.sheet / .gallery__item / .court-item__photo /
+   .cfac__hero / .link-card）は overflow: hidden なので拡大分は枠の中で切れる。
+   ホバーの拡大（scale 1.04）は .on になったあとの通常の規則がそのまま効く。動きを減らす設定では .jsrv が付かないので動かない。 */
+body.jsrv .rv .sheet img,
+body.jsrv .rv .gallery__item img,
+body.jsrv .rv .link-card__banner { transition: transform .9s var(--ease); }
+body.jsrv .rv:not(.on) .sheet img,
+body.jsrv .rv:not(.on) .gallery__item img,
+body.jsrv .rv:not(.on) .court-item__photo img,
+body.jsrv .rv:not(.on) .cfac__hero-link img,
+body.jsrv .rv:not(.on) .link-card__banner { transform: scale(1.08); }
 
 /* 大きな英字は右からスライドインさせる（.section / .page-head は overflow:hidden なので
    画面外へはみ出さずに、横スワイプのように入ってくる）。
@@ -713,18 +730,20 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
    開くと上の項目から順に滑り出して自分の位置につく。上の項目ほど手前に重ねてあるので、
    遅れて出る下の項目は上の項目の裏（下の層）から出てくるように見える（行の背景を白にして裏にいるあいだは隠す）。
    出だしは速く、位置につく手前でぐっと減速する（強めのイーズアウト）。
-   項目1つは .4s かけるが、減速が強いので見た目には .25s ほどで止まって見える。
-   最初と最後の項目の遅れの差は .3s なので、全体で .5s ほどで開き終わる。
-   閉じる：その逆。下の項目から順に、ゆっくり動き出して速くヘッダーの下へ戻る（イーズイン）。
-   戻り終わるころに白い下地をしまう。
+   順番の間隔には緩急を付ける：開くときは上の行ほど間隔が広く・1行の動きもゆっくり（.45s）、
+   下へ行くほど間隔が詰まり・速く（.25s）。遅れは t = 順番/(総数-1) として (2t - t²) × .3s（イーズアウトの曲線）。
+   閉じる：その逆。下の行から順に、下の行ほど間隔が広く・ゆっくり（.35s）、上へ行くほど詰まって速く（.2s）。
+   どちらも全体で .5s ほど。戻り終わるころに白い下地をしまう。
    白い下地は開いた瞬間に出す（フェードさせると、下地が透けているあいだヘッダーの下に暗いヒーロー写真が見えて
    一瞬黒く見える）。
    nav の上端（＝ヘッダーの下端）で clip-path により切り取るので、ヘッダーより上にはみ出た項目は見えない。
-   項目の遅れは --i（上から何番目か）と --n（項目の総数）から計算する（MobileNav.astro が付ける）。 */
+   項目の順番は --i（上から何番目か）と --n（項目の総数）で渡される（MobileNav.astro が付ける）。 */
 .mobile-nav {
   --mn-stagger: .3s;    /* 最初の項目と最後の項目の遅れの差 */
-  --mn-in: .4s;         /* 項目1つが出てくる時間（イーズアウトなので見た目はもっと短い） */
-  --mn-out: .3s;        /* 項目1つが戻る時間 */
+  --mn-in: .45s;        /* 出てくる時間：最初の行（いちばんゆっくり） */
+  --mn-in-short: .25s;  /* 出てくる時間：最後の行（いちばん速い） */
+  --mn-out: .35s;       /* 戻る時間：最初に戻る下の行（いちばんゆっくり）。main.js も閉じ終わりの時間の計算に使う */
+  --mn-out-short: .2s;  /* 戻る時間：最後に戻る上の行（いちばん速い） */
   --mn-gap: 0px;        /* 項目の間隔（行は隙間なく並べる） */
   --mn-ease-in: cubic-bezier(.16, 1, .3, 1);   /* 速く出て、ゆっくり止まる */
   --mn-ease-out: cubic-bezier(.7, 0, .84, 0);  /* ゆっくり動き出して、速く引っ込む */
@@ -774,15 +793,18 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
      透明度は変えない（ヘッダーの下端で切り取られるので隠れる）。半透明にすると、ヘッダーと最初の行のあいだで
      裏の行の文字が透けて重なり、ぼやけて見えてしまう。 */
   transform: translateY(calc((100% + var(--mn-gap)) * -1 * (var(--i, 0) + 1) - 100px));
-  /* 閉じるとき：下の項目ほど早く戻る（上の項目が最後） */
-  transition: transform var(--mn-out) var(--mn-ease-out);
-  transition-delay: calc((var(--n, 1) - 1 - var(--i, 0)) / max(var(--n, 1) - 1, 1) * var(--mn-stagger));
+  /* 順番を 0〜1 に直したもの。--t は上から、--tc は下から数えたときの位置 */
+  --t: calc(var(--i, 0) / max(var(--n, 1) - 1, 1));
+  --tc: calc(1 - var(--t));
+  /* 閉じるとき：下の行から順に。下の行ほど間隔が広くゆっくり、上へ行くほど詰まって速く */
+  transition: transform calc(var(--mn-out) - (var(--mn-out) - var(--mn-out-short)) * var(--tc)) var(--mn-ease-out);
+  transition-delay: calc((2 * var(--tc) - var(--tc) * var(--tc)) * var(--mn-stagger));
 }
 .mobile-nav.is-open .mobile-nav__item {
   transform: none;
-  /* 開くとき：上の項目ほど早く出る */
-  transition: transform var(--mn-in) var(--mn-ease-in);
-  transition-delay: calc(var(--i, 0) / max(var(--n, 1) - 1, 1) * var(--mn-stagger));
+  /* 開くとき：上の行から順に。上の行ほど間隔が広くゆっくり、下へ行くほど詰まって速く */
+  transition: transform calc(var(--mn-in) - (var(--mn-in) - var(--mn-in-short)) * var(--t)) var(--mn-ease-in);
+  transition-delay: calc((2 * var(--t) - var(--t) * var(--t)) * var(--mn-stagger));
 }
 @media (prefers-reduced-motion: reduce) {
   .mobile-nav, .mobile-nav.is-open, .mobile-nav__item, .mobile-nav.is-open .mobile-nav__item {
@@ -819,54 +841,55 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
    重なり順：ヘッダー > 帯 > 行（上の行ほど手前） > 下地 > 次のページ（root）。
    行は画面の上へ大きく動かして確実に外へ出し（上から n 番目の行で 300px + 57px × n）、動き終えた瞬間に消す
    （途中で止めるとヘッダーの写しが消えたあとに行の写しが残って見える）。
-   時間：行 0〜.6s（下から順、1行 .3s）→ 下地 .55〜.75s で消える → 帯 .6〜.8s → ヘッダー .65〜.85s。 */
+   行の順番の間隔はメニューの閉じる動きと同じ緩急（下の行ほど広くゆっくり .35s、上へ行くほど詰まって速く .2s。
+   遅れは下から t として (2t - t²) × .3s）。行は 0〜.5s で戻り終わる → 下地 .45〜.65s で消える → 帯 .5〜.7s → ヘッダー .55〜.75s。 */
 @view-transition { navigation: auto; }
 /* 前のページ本体はすぐ消し、次のページをそのまま出す（下地と行の裏に次のページが見えている状態） */
 ::view-transition-old(root) { animation: none; opacity: 0; }
 ::view-transition-new(root) { animation: none; }
 ::view-transition-group(site-header) { z-index: 30; }
-::view-transition-old(site-header) { animation: vt-fade .2s ease .65s both; }
+::view-transition-old(site-header) { animation: vt-fade .2s ease .55s both; }
 ::view-transition-new(site-header) { animation: none; }
 ::view-transition-group(mn-band) { z-index: 25; }
-::view-transition-old(mn-band) { animation: vt-fade .2s ease .6s both; }
+::view-transition-old(mn-band) { animation: vt-fade .2s ease .5s both; }
 ::view-transition-group(mn-sheet) { z-index: 1; }
-::view-transition-old(mn-sheet) { animation: vt-fade .2s ease .55s both; }
+::view-transition-old(mn-sheet) { animation: vt-fade .2s ease .45s both; }
 @keyframes vt-fade { to { opacity: 0; } }
 ::view-transition-group(mn-item-0) { z-index: 20; }
-::view-transition-old(mn-item-0) { animation: vt-row-out-0 .3s cubic-bezier(.7, 0, .84, 0) both; animation-delay: 0.30s; }
+::view-transition-old(mn-item-0) { animation: vt-row-out-0 0.200s cubic-bezier(.7, 0, .84, 0) both; animation-delay: 0.300s; }
 @keyframes vt-row-out-0 { 0% { opacity: 1; } 99% { opacity: 1; } 100% { opacity: 0; transform: translateY(-300px); } }
 ::view-transition-group(mn-item-1) { z-index: 19; }
-::view-transition-old(mn-item-1) { animation: vt-row-out-1 .3s cubic-bezier(.7, 0, .84, 0) both; animation-delay: 0.27s; }
+::view-transition-old(mn-item-1) { animation: vt-row-out-1 0.215s cubic-bezier(.7, 0, .84, 0) both; animation-delay: 0.297s; }
 @keyframes vt-row-out-1 { 0% { opacity: 1; } 99% { opacity: 1; } 100% { opacity: 0; transform: translateY(-357px); } }
 ::view-transition-group(mn-item-2) { z-index: 18; }
-::view-transition-old(mn-item-2) { animation: vt-row-out-2 .3s cubic-bezier(.7, 0, .84, 0) both; animation-delay: 0.24s; }
+::view-transition-old(mn-item-2) { animation: vt-row-out-2 0.230s cubic-bezier(.7, 0, .84, 0) both; animation-delay: 0.288s; }
 @keyframes vt-row-out-2 { 0% { opacity: 1; } 99% { opacity: 1; } 100% { opacity: 0; transform: translateY(-414px); } }
 ::view-transition-group(mn-item-3) { z-index: 17; }
-::view-transition-old(mn-item-3) { animation: vt-row-out-3 .3s cubic-bezier(.7, 0, .84, 0) both; animation-delay: 0.21s; }
+::view-transition-old(mn-item-3) { animation: vt-row-out-3 0.245s cubic-bezier(.7, 0, .84, 0) both; animation-delay: 0.273s; }
 @keyframes vt-row-out-3 { 0% { opacity: 1; } 99% { opacity: 1; } 100% { opacity: 0; transform: translateY(-471px); } }
 ::view-transition-group(mn-item-4) { z-index: 16; }
-::view-transition-old(mn-item-4) { animation: vt-row-out-4 .3s cubic-bezier(.7, 0, .84, 0) both; animation-delay: 0.18s; }
+::view-transition-old(mn-item-4) { animation: vt-row-out-4 0.260s cubic-bezier(.7, 0, .84, 0) both; animation-delay: 0.252s; }
 @keyframes vt-row-out-4 { 0% { opacity: 1; } 99% { opacity: 1; } 100% { opacity: 0; transform: translateY(-528px); } }
 ::view-transition-group(mn-item-5) { z-index: 15; }
-::view-transition-old(mn-item-5) { animation: vt-row-out-5 .3s cubic-bezier(.7, 0, .84, 0) both; animation-delay: 0.15s; }
+::view-transition-old(mn-item-5) { animation: vt-row-out-5 0.275s cubic-bezier(.7, 0, .84, 0) both; animation-delay: 0.225s; }
 @keyframes vt-row-out-5 { 0% { opacity: 1; } 99% { opacity: 1; } 100% { opacity: 0; transform: translateY(-585px); } }
 ::view-transition-group(mn-item-6) { z-index: 14; }
-::view-transition-old(mn-item-6) { animation: vt-row-out-6 .3s cubic-bezier(.7, 0, .84, 0) both; animation-delay: 0.12s; }
+::view-transition-old(mn-item-6) { animation: vt-row-out-6 0.290s cubic-bezier(.7, 0, .84, 0) both; animation-delay: 0.192s; }
 @keyframes vt-row-out-6 { 0% { opacity: 1; } 99% { opacity: 1; } 100% { opacity: 0; transform: translateY(-642px); } }
 ::view-transition-group(mn-item-7) { z-index: 13; }
-::view-transition-old(mn-item-7) { animation: vt-row-out-7 .3s cubic-bezier(.7, 0, .84, 0) both; animation-delay: 0.09s; }
+::view-transition-old(mn-item-7) { animation: vt-row-out-7 0.305s cubic-bezier(.7, 0, .84, 0) both; animation-delay: 0.153s; }
 @keyframes vt-row-out-7 { 0% { opacity: 1; } 99% { opacity: 1; } 100% { opacity: 0; transform: translateY(-699px); } }
 ::view-transition-group(mn-item-8) { z-index: 12; }
-::view-transition-old(mn-item-8) { animation: vt-row-out-8 .3s cubic-bezier(.7, 0, .84, 0) both; animation-delay: 0.06s; }
+::view-transition-old(mn-item-8) { animation: vt-row-out-8 0.320s cubic-bezier(.7, 0, .84, 0) both; animation-delay: 0.108s; }
 @keyframes vt-row-out-8 { 0% { opacity: 1; } 99% { opacity: 1; } 100% { opacity: 0; transform: translateY(-756px); } }
 ::view-transition-group(mn-item-9) { z-index: 11; }
-::view-transition-old(mn-item-9) { animation: vt-row-out-9 .3s cubic-bezier(.7, 0, .84, 0) both; animation-delay: 0.03s; }
+::view-transition-old(mn-item-9) { animation: vt-row-out-9 0.335s cubic-bezier(.7, 0, .84, 0) both; animation-delay: 0.057s; }
 @keyframes vt-row-out-9 { 0% { opacity: 1; } 99% { opacity: 1; } 100% { opacity: 0; transform: translateY(-813px); } }
 ::view-transition-group(mn-item-10) { z-index: 10; }
-::view-transition-old(mn-item-10) { animation: vt-row-out-10 .3s cubic-bezier(.7, 0, .84, 0) both; animation-delay: 0.00s; }
+::view-transition-old(mn-item-10) { animation: vt-row-out-10 0.350s cubic-bezier(.7, 0, .84, 0) both; animation-delay: 0.000s; }
 @keyframes vt-row-out-10 { 0% { opacity: 1; } 99% { opacity: 1; } 100% { opacity: 0; transform: translateY(-870px); } }
 ::view-transition-group(mn-item-11) { z-index: 9; }
-::view-transition-old(mn-item-11) { animation: vt-row-out-11 .3s cubic-bezier(.7, 0, .84, 0) both; animation-delay: 0.00s; }
+::view-transition-old(mn-item-11) { animation: vt-row-out-11 0.350s cubic-bezier(.7, 0, .84, 0) both; animation-delay: 0.000s; }
 @keyframes vt-row-out-11 { 0% { opacity: 1; } 99% { opacity: 1; } 100% { opacity: 0; transform: translateY(-927px); } }
 @media (prefers-reduced-motion: reduce) {
   ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
@@ -2092,6 +2115,7 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
    バナーは 1018×168（およそ6:1）を想定。比率が違うものは切り抜いて合わせる。 */
 .link-card {
   flex: none;
+  overflow: hidden; /* バナーのズームイン（.rv）が枠からはみ出さないように */
   display: grid;
   grid-template-columns: 1fr auto;
   grid-template-areas:
@@ -2844,7 +2868,13 @@ body.jsrv .rv.on .ink-sweep {
 
 /* 日程・会場を左に、種目（ピクトグラム＋文言）を右に */
 /* 1行目：日付（左）と種目（右）、2行目：会場（左）とピクトグラム（右。種目の下に来る） */
-.tl-item__info { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 16px; row-gap: 10px; align-items: start; margin-top: 20px; }
+/* 左列（日程・会場）は中身の幅を優先し（上限は幅の 54%、ただし「ヤマタスポーツパーク」が入る 180px は確保）、
+   右列（種目・絵）が残りを使う。こうすると会場名が途中で折り返されず、絵のほうが段を増やして収まる */
+.tl-item__info { display: grid; grid-template-columns: fit-content(54%) minmax(0, 1fr); column-gap: 16px; row-gap: 10px; align-items: start; margin-top: 20px; }
+.tl-item__meta .tl-item__row { min-width: 180px; } /* 左列の最小幅（「ヤマタスポーツパーク」が 15px で入る幅） */
+/* 会場名・種目名は文字の途中で折り返さず、区切り（／・）の後ろの <wbr> でだけ折り返す。
+   それでも入り切らないときだけ、はみ出さないよう途中で折る（overflow-wrap: anywhere） */
+.tl-item__place, .tl-item__event-label { word-break: keep-all; overflow-wrap: anywhere; }
 /* dl は箱にせず（display: contents）、日程の行と会場の行をそれぞれ grid の左列に置く */
 .tl-item__meta { display: contents; }
 .tl-item__meta .tl-item__row { grid-column: 1; min-width: 0; }
@@ -2881,6 +2911,13 @@ body.jsrv .rv.on .ink-sweep {
   color: var(--gray-800);
 }
 .tl-item__ico { width: 18px; height: 18px; }
+/* 狭い画面（360px 級）では会場名と種目名を少し小さく・字間を詰めて、どちらも区切り以外で折れないようにする。
+   上の font の一括指定より後ろに置くこと */
+@media (max-width: 374px) {
+  .tl-item__meta .tl-item__row { min-width: 173px; }
+  .tl-item__row dd { font-size: 14px; }
+  .tl-item__event-text { font-size: 13px; letter-spacing: 0; }
+}
 /* 日程は大会カード・個別ページと同じく Barlow の「2026.10.18 SUN」 */
 .tl-item__date { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 10px; }
 .tl-item__ymd { font: 700 18px/24px var(--flt); letter-spacing: .03em; color: var(--ink); }

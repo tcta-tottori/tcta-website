@@ -50,6 +50,11 @@ const rows = items.map((t) => {
   const e = eventForSchedule(t);
   return { t, e, date: dateText(t), buttons: buttons(t, e), notes: notes(t, e), badge: STATUS_LABEL[t.status], icons: eventIcons(t.event) };
 });
+// 会場名・種目名は文字の途中で折り返さない（CSS の word-break: keep-all）。
+// 「／」「/」「・」の区切りの後ろと「（」の前にだけ折り返してよい位置（<wbr>）を入れる。テンプレート側で parts を <wbr> でつなぐ。
+// 区切りの後ろ（／ / ・）と、開き括弧「（」の前で折り返してよい（括弧が行末に残らないように）
+const parts = (text) => String(text ?? '').split(/(?<=[／/・])|(?=（)/);
+
 ---
 
 <div class="tl" id={id} role="list" aria-label={caption}>
@@ -82,7 +87,8 @@ const rows = items.map((t) => {
           </div>
           <div class="tl-item__row">
             <dt><Icon name="pin" class="tl-item__ico" /><span class="visually-hidden">会場</span></dt>
-            <dd>{t.place}</dd>
+            {/* 会場名は途中で折り返さない（.tl-item__place）。「／」「・」の区切りの後ろだけ折り返してよい（<wbr>） */}
+            <dd class="tl-item__place">{parts(t.place).map((part, i, arr) => <>{part}{i < arr.length - 1 && <wbr />}</>)}</dd>
           </div>
         </dl>
         <div class="tl-item__event">
@@ -91,7 +97,7 @@ const rows = items.map((t) => {
               {icons.map((ic) => <EventIcon icon={ic} />)}
             </span>
           )}
-          <span class="tl-item__event-text"><Icon name="list" class="tl-item__ico" /><span class="visually-hidden">種目：</span>{t.event}</span>
+          <span class="tl-item__event-text"><Icon name="list" class="tl-item__ico" /><span class="visually-hidden">種目：</span><span class="tl-item__event-label">{parts(t.event).map((part, i, arr) => <>{part}{i < arr.length - 1 && <wbr />}</>)}</span></span>
         </div>
       </div>
 
