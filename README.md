@@ -212,7 +212,7 @@ npm run dev                                  # http://localhost:4321 を開く
 - **コート案内のページ** — `courts.html`（`src/pages/courts.html.astro`）に全施設の詳細（写真・説明・住所・コート・設備・
   予約先・電話・公式ページ）を1ページに並べます。トップの一覧の行を押すとその施設の節（`courts.html#<id>`）に飛びます。
   内容は `src/data/courts.js` の `desc` / `address` / `features` / `reserve` / `tel` / `link`。
-- **コート案内の地図** — `src/data/courts.js` が唯一の正。Leaflet（OpenStreetMap のタイル）で自前に描き、
+- **コート案内の地図** — `src/data/courts.js` が唯一の正。Leaflet で自前に描き（下地は国土地理院の航空写真。右上の切り替えで OpenStreetMap の地図にもできます）、
   コートの面（`src/data/court-shapes.json`）を赤く塗ってピンとラベルを置きます（`public/assets/js/main.js` の
   `initCourtMap`）。上のボタンで施設を切り替え、「すべて」で全施設を一望します。
   「すべて」では主会場（`main: true` のヤマタスポーツパーク）のピンとラベルを赤くして最前面に出し、
