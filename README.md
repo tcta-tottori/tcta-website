@@ -175,6 +175,8 @@ npm run dev                                  # http://localhost:4321 を開く
 - **協会の SNS** — YouTube・Instagram・X・Facebook のアカウント名は管理画面の Settings → Social に入れます。
   入れたものだけが全ページのフッター（ロゴの下）とリンク集の「協会の公式アカウント」に出ます
   （`src/data/social.js` がハンドルを URL に直し、`Icon.astro` の面のアイコンで示します）。
+  LINE 公式アカウントだけは管理画面ではなく `src/data/links.js` の `LINE_OFFICIAL`（URL 固定）から、
+  フッターの Instagram の横に出します（リンク集ではバナーとして出ます）。
 - **リンクのバナー** — トップのマーキーは白いカードの枠を出さず、バナーそのものを見せます。
   押している間だけ太い赤枠が出ます。手を離してから3秒でまた流れ出します。
   バナーを別タブで開くと `mouseleave` が来ないまま離れることがあるので、
