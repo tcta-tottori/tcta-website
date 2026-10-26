@@ -91,7 +91,8 @@ const years = [
       </div>
 
       {/* 各年度の優勝クラブ（年度ごとのアコーディオン。見出しや説明文は置かない）。
-          ひらくと、部の行がメニューと同じく年度の見出しの裏から順に滑り出す（.panel-item。閉じる動きは main.js の initChampAccordion） */}
+          ひらくと、部の行がメニューと同じく年度の見出しの裏から順に滑り出す（.panel-item。閉じる動きは main.js の initChampAccordion）。
+          一覧の下のリンクは行のあとにふわっと出す（.champ__after） */}
       <div class="rv" style="margin-top:56px" role="region" aria-label="各年度の優勝クラブ">
         {years.map((y) => (
           <details class="champ">
@@ -105,9 +106,9 @@ const years = [
                     ))}
                   </ul>
                 ) : (
-                  <p class="champ__none panel-item" style="--i:0">記録は写真のみです</p>
+                  <p class="champ__none champ__after">記録は写真のみです</p>
                 )}
-                <ul class="champ__links panel-item" style={`--i:${Math.max(y.divisions.length, 1)}`}>
+                <ul class="champ__links champ__after">
                   {y.links.map((l) => (
                     <li><a class="ghost-link" href={l.href}>{l.label} <span class="aw">→</span></a></li>
                   ))}

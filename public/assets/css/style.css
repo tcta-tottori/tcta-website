@@ -3691,9 +3691,13 @@ button.dl-item { width: 100%; text-align: left; }
 }
 .champ[open] > .champ__year::after { content: "－"; }
 .champ__count { font: 400 12px/1 var(--flt); color: var(--gray-500); }
-/* 中身は見出しの裏から順に滑り出す（.panel-item）。上にはみ出した分は見せない（見出しの下から出てくるように見せる） */
-.champ__body { padding: 0 4px 24px; overflow: hidden; }
-.champ__list { isolation: isolate; }
+/* 部の行は一覧（ul）の上端の裏から順に滑り出す（.panel-item）。はみ出した分は一覧の箱で切り取る（overflow）ので、
+   見出しと最初の行のあいだの余白に裏の行が見えることはない。一覧の下のリンクは行のあとにふわっと出す */
+.champ__body { padding: 0 4px 24px; }
+.champ__list { isolation: isolate; overflow: hidden; }
+.champ__after { animation: fadeup .4s var(--ease) .45s both; }
+.is-closing .champ__after { animation: none; opacity: 0; }
+@media (prefers-reduced-motion: reduce) { .champ__after { animation: none; } }
 .champ__block + .champ__block { margin-top: 24px; }
 .champ__title {
   display: inline-flex;
