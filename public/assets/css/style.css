@@ -854,14 +854,13 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 /* 今のページの行は赤。別の行を押したときは、押した行が赤く光るのと同じタイミングで黒に戻る
    （main.js が .is-active を外す。色の transition は上の .mobile-nav__item の transition に入れてある） */
 .mobile-nav__link.is-active { color: var(--red); }
-/* 押した行：文字を赤にして、その瞬間に一瞬光る（白く光ってから赤に落ち着く。行の地も薄い赤がさっと引く）。
+/* 押した行：文字を赤にして、その瞬間に文字だけが一瞬光る（白く光ってから一瞬で赤に戻る。行の地は塗らない）。
    main.js が押したときに .is-tapped を付ける（端末の波紋はこの行には出さない） */
-.mobile-nav__link.is-tapped { color: var(--red); animation: mn-tap-flash .7s ease-out both; }
+.mobile-nav__link.is-tapped { color: var(--red); animation: mn-tap-flash .4s linear both; }
+/* 文字だけが一瞬（0.2秒）白く光り、そのあと一瞬で普通の赤文字に戻る（行の地は塗らない）。そのまま閉じる動きへ */
 @keyframes mn-tap-flash {
-  0%   { color: #fff; background: rgba(216, 35, 42, .2); text-shadow: 0 0 2px #fff, 0 0 12px rgba(216, 35, 42, .95), 0 0 26px rgba(216, 35, 42, .7); }
-  18%  { color: #fff; background: rgba(216, 35, 42, .2); text-shadow: 0 0 2px #fff, 0 0 12px rgba(216, 35, 42, .95), 0 0 26px rgba(216, 35, 42, .7); }
-  50%  { color: var(--red); background: rgba(216, 35, 42, .07); text-shadow: 0 0 8px rgba(216, 35, 42, .6), 0 0 18px rgba(216, 35, 42, .3); }
-  100% { color: var(--red); background: var(--white); text-shadow: 0 0 0 rgba(216, 35, 42, 0); }
+  0%, 48%   { color: #fff; text-shadow: 0 0 2px #fff, 0 0 12px rgba(216, 35, 42, .95), 0 0 26px rgba(216, 35, 42, .7); }
+  52%, 100% { color: var(--red); text-shadow: none; }
 }
 @media (prefers-reduced-motion: reduce) { .mobile-nav__link.is-tapped { animation: none; } }
 .mobile-nav .btn { margin-top: 28px; }
