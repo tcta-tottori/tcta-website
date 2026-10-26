@@ -13,6 +13,9 @@ const { active } = Astro.props;
   {/* 開くときは上の項目から順に、閉じるときは下の項目から順に出入りさせる（style.css の .mobile-nav__item）。
       --i が上から何番目か、--n が項目の総数（お問い合わせボタンを含む）。遅れ時間はこの2つから CSS が計算する。 */}
   <nav aria-label="モバイルナビゲーション" style={`--n:${MOBILE_NAV.length + 1}`}>
+    {/* ヘッダーと最初の行のあいだの余白を覆う白い帯（style.css の .mobile-nav__band）。
+        ページを移るときの切り替え（ビュートランジション）でも帯として写すので、擬似要素ではなく実要素にしてある */}
+    <span class="mobile-nav__band" aria-hidden="true"></span>
     {MOBILE_NAV.map((item, i) => (
       <a
         class:list={['mobile-nav__link', 'mobile-nav__item', active === item.key && 'is-active']}

@@ -751,11 +751,10 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   /* 上だけ切り取る（左右と下は余白ぶん広げて、フォーカスの枠が切れないように） */
   clip-path: inset(0 -24px -24px -24px);
 }
-/* ヘッダーと最初の行のあいだの余白（24px）を白い帯で覆う。
+/* ヘッダーと最初の行のあいだの余白（24px）を白い帯で覆う（MobileNav.astro の .mobile-nav__band）。
    下の行はここを通って最初の行の裏へ潜るので、覆わないと通り過ぎる一瞬だけ文字が見えてしまう。
    帯は全行より手前に置く（行の z-index は項目数まで）。 */
-.mobile-nav nav::before {
-  content: '';
+.mobile-nav__band {
   position: absolute;
   top: 0; left: -24px; right: -24px;
   height: 24px;
@@ -805,6 +804,70 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 .mobile-nav__link .ar { color: var(--red); }
 .mobile-nav__link.is-active { color: var(--red); }
 .mobile-nav .btn { margin-top: 28px; }
+
+
+/* ============ メニューからページを移るときの切り替え（ページ間ビュートランジション） ============
+   対応ブラウザでは、メニューのリンクを押したあと次のページが描ける状態になるまでメニューを開いたまま待ち、
+   描ける状態になったら次のページの上に前のページの「行・白い下地・帯・ヘッダー」の写しを重ねて、
+   閉じる動き（行が下から順にヘッダーの下へ戻り、戻り終わってから下地が消える）を流す。
+   流すかどうかは Base.astro の pageswap / pagereveal が決める（メニューから移るときだけ。それ以外は省く）。
+   写しの名前（view-transition-name）は main.js がメニューを開くときに付ける：
+     mn-sheet … 白い下地（.mobile-nav）／ mn-band … ヘッダー下の帯／ mn-item-<n> … 行／ site-header … ヘッダー
+   重なり順：ヘッダー > 帯 > 行（上の行ほど手前） > 下地 > 次のページ（root）。
+   行は画面の上へ大きく動かして確実に外へ出し（上から n 番目の行で 300px + 57px × n）、動き終えた瞬間に消す
+   （途中で止めるとヘッダーの写しが消えたあとに行の写しが残って見える）。
+   時間：行 0〜.6s（下から順、1行 .3s）→ 下地 .55〜.75s で消える → 帯 .6〜.8s → ヘッダー .65〜.85s。 */
+@view-transition { navigation: auto; }
+/* 前のページ本体はすぐ消し、次のページをそのまま出す（下地と行の裏に次のページが見えている状態） */
+::view-transition-old(root) { animation: none; opacity: 0; }
+::view-transition-new(root) { animation: none; }
+::view-transition-group(site-header) { z-index: 30; }
+::view-transition-old(site-header) { animation: vt-fade .2s ease .65s both; }
+::view-transition-new(site-header) { animation: none; }
+::view-transition-group(mn-band) { z-index: 25; }
+::view-transition-old(mn-band) { animation: vt-fade .2s ease .6s both; }
+::view-transition-group(mn-sheet) { z-index: 1; }
+::view-transition-old(mn-sheet) { animation: vt-fade .2s ease .55s both; }
+@keyframes vt-fade { to { opacity: 0; } }
+::view-transition-group(mn-item-0) { z-index: 20; }
+::view-transition-old(mn-item-0) { animation: vt-row-out-0 .3s cubic-bezier(.7, 0, .84, 0) both; animation-delay: 0.30s; }
+@keyframes vt-row-out-0 { 0% { opacity: 1; } 99% { opacity: 1; } 100% { opacity: 0; transform: translateY(-300px); } }
+::view-transition-group(mn-item-1) { z-index: 19; }
+::view-transition-old(mn-item-1) { animation: vt-row-out-1 .3s cubic-bezier(.7, 0, .84, 0) both; animation-delay: 0.27s; }
+@keyframes vt-row-out-1 { 0% { opacity: 1; } 99% { opacity: 1; } 100% { opacity: 0; transform: translateY(-357px); } }
+::view-transition-group(mn-item-2) { z-index: 18; }
+::view-transition-old(mn-item-2) { animation: vt-row-out-2 .3s cubic-bezier(.7, 0, .84, 0) both; animation-delay: 0.24s; }
+@keyframes vt-row-out-2 { 0% { opacity: 1; } 99% { opacity: 1; } 100% { opacity: 0; transform: translateY(-414px); } }
+::view-transition-group(mn-item-3) { z-index: 17; }
+::view-transition-old(mn-item-3) { animation: vt-row-out-3 .3s cubic-bezier(.7, 0, .84, 0) both; animation-delay: 0.21s; }
+@keyframes vt-row-out-3 { 0% { opacity: 1; } 99% { opacity: 1; } 100% { opacity: 0; transform: translateY(-471px); } }
+::view-transition-group(mn-item-4) { z-index: 16; }
+::view-transition-old(mn-item-4) { animation: vt-row-out-4 .3s cubic-bezier(.7, 0, .84, 0) both; animation-delay: 0.18s; }
+@keyframes vt-row-out-4 { 0% { opacity: 1; } 99% { opacity: 1; } 100% { opacity: 0; transform: translateY(-528px); } }
+::view-transition-group(mn-item-5) { z-index: 15; }
+::view-transition-old(mn-item-5) { animation: vt-row-out-5 .3s cubic-bezier(.7, 0, .84, 0) both; animation-delay: 0.15s; }
+@keyframes vt-row-out-5 { 0% { opacity: 1; } 99% { opacity: 1; } 100% { opacity: 0; transform: translateY(-585px); } }
+::view-transition-group(mn-item-6) { z-index: 14; }
+::view-transition-old(mn-item-6) { animation: vt-row-out-6 .3s cubic-bezier(.7, 0, .84, 0) both; animation-delay: 0.12s; }
+@keyframes vt-row-out-6 { 0% { opacity: 1; } 99% { opacity: 1; } 100% { opacity: 0; transform: translateY(-642px); } }
+::view-transition-group(mn-item-7) { z-index: 13; }
+::view-transition-old(mn-item-7) { animation: vt-row-out-7 .3s cubic-bezier(.7, 0, .84, 0) both; animation-delay: 0.09s; }
+@keyframes vt-row-out-7 { 0% { opacity: 1; } 99% { opacity: 1; } 100% { opacity: 0; transform: translateY(-699px); } }
+::view-transition-group(mn-item-8) { z-index: 12; }
+::view-transition-old(mn-item-8) { animation: vt-row-out-8 .3s cubic-bezier(.7, 0, .84, 0) both; animation-delay: 0.06s; }
+@keyframes vt-row-out-8 { 0% { opacity: 1; } 99% { opacity: 1; } 100% { opacity: 0; transform: translateY(-756px); } }
+::view-transition-group(mn-item-9) { z-index: 11; }
+::view-transition-old(mn-item-9) { animation: vt-row-out-9 .3s cubic-bezier(.7, 0, .84, 0) both; animation-delay: 0.03s; }
+@keyframes vt-row-out-9 { 0% { opacity: 1; } 99% { opacity: 1; } 100% { opacity: 0; transform: translateY(-813px); } }
+::view-transition-group(mn-item-10) { z-index: 10; }
+::view-transition-old(mn-item-10) { animation: vt-row-out-10 .3s cubic-bezier(.7, 0, .84, 0) both; animation-delay: 0.00s; }
+@keyframes vt-row-out-10 { 0% { opacity: 1; } 99% { opacity: 1; } 100% { opacity: 0; transform: translateY(-870px); } }
+::view-transition-group(mn-item-11) { z-index: 9; }
+::view-transition-old(mn-item-11) { animation: vt-row-out-11 .3s cubic-bezier(.7, 0, .84, 0) both; animation-delay: 0.00s; }
+@keyframes vt-row-out-11 { 0% { opacity: 1; } 99% { opacity: 1; } 100% { opacity: 0; transform: translateY(-927px); } }
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
+}
 
 /* ============ 07. ヒーロー ============ */
 .hero {
