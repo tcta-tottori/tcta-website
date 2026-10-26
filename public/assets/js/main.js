@@ -290,6 +290,25 @@
      VIEW ALL で開き、右上の × か Esc で閉じる。開いている間は背面を止める。 */
   /* opts.shared … { from: セレクタ }：開くとき、ページに見えている行（from）と全画面の中の同じ行（href が同じ）を
      同一ページのビュートランジションでつなぎ、その場所から全画面での位置へ滑らかに移してから残りを出す（対応ブラウザのみ） */
+  /* 横に 1 行で並べる列（.hscroll。大会結果の年度・地図の施設）。はみ出しの有無と位置を class で付け、
+     CSS が端の透かしと「scroll →」の案内を出し分ける */
+  function initHScroll() {
+    document.querySelectorAll('[data-hscroll]').forEach(function (box) {
+      var track = box.querySelector('.hscroll__track');
+      if (!track) return;
+      var update = function () {
+        var over = track.scrollWidth > track.clientWidth + 1;
+        box.classList.toggle('is-overflow', over);
+        box.classList.toggle('is-start', track.scrollLeft <= 1);
+        box.classList.toggle('is-end', track.scrollLeft >= track.scrollWidth - track.clientWidth - 1);
+      };
+      track.addEventListener('scroll', update, { passive: true });
+      window.addEventListener('resize', update);
+      if (window.ResizeObserver) new ResizeObserver(update).observe(track);
+      update();
+    });
+  }
+
   function initFullPanel(id, openSel, closeSel, opts) {
     var panel = document.getElementById(id);
     if (!panel) return;
@@ -660,6 +679,13 @@
           allTab.classList.toggle('is-active', i < 0);
           allTab.setAttribute('aria-pressed', String(i < 0));
         }
+        // 選んだ施設のボタンが列の外に隠れていたら、見える位置まで列を送る（地図のピンから選んだときなど）
+        var tab = i >= 0 && tabs[i];
+        if (tab && tab.parentNode && tab.parentNode.scrollWidth > tab.parentNode.clientWidth) {
+          var tr = tab.parentNode, r = tab.getBoundingClientRect(), tb = tr.getBoundingClientRect(), dx = 0;
+          if (r.left < tb.left) dx = r.left - tb.left - 12; else if (r.right > tb.right) dx = r.right - tb.right + 12;
+          if (dx) tr.scrollTo({ left: tr.scrollLeft + dx, behavior: reduceMotion ? 'auto' : 'smooth' });
+        }
         // 地図の上の見た目。「すべて」のときは主会場を赤くして最前面に（他のラベルに隠れないように）
         var lit = i < 0 ? mainIndex : i;
         venues.forEach(function (v, k) {
@@ -696,7 +722,7 @@
           photo.hidden = false;
         } else photo.hidden = true;
       }
-      /* 地図の下のバッジ：サーフェス（画像があれば画像。「室内」は文字を添える）→ 面数 → 設備（夜間照明は濃い黄色） */
+      /* 地図の下のバッジ：屋内（画像）→ サーフェス（画像があれば画像）→ 面数 → 設備（夜間照明は濃い黄色） */
       function showBadges(c) {
         if (!badges) return;
         badges.textContent = '';
@@ -704,11 +730,14 @@
         var add = function (text, cls) {
           var s = document.createElement('span'); s.className = 'badge' + (cls ? ' ' + cls : ''); s.textContent = text; badges.appendChild(s);
         };
-        if (c.badge) {
-          if (c.badge.indoor) add('室内');
+        var addImg = function (b, alt) {
           var im = document.createElement('img');
-          im.className = 'badge badge--img'; im.src = c.badge.img; im.alt = c.surface || ''; im.width = c.badge.w; im.height = c.badge.h; im.decoding = 'async';
+          im.className = 'badge badge--img'; im.src = b.img; im.alt = alt; im.width = b.w; im.height = b.h; im.decoding = 'async';
           badges.appendChild(im);
+        };
+        if (c.badge) {
+          if (c.badge.indoor) addImg(c.badge.indoor, c.badge.indoor.alt);
+          addImg(c.badge, c.surface || '');
         } else if (c.surface) add(c.surface);
         if (c.faces) add(c.faces + '面');
         (c.features || []).forEach(function (f) { add(f, /^夜間照明/.test(f) ? 'badge--light' : ''); });
@@ -1233,6 +1262,7 @@
     initHeader();
     initRipple();
     initPressed();
+    initHScroll();
     initFullPanel('news-all', '[data-news-open]', '[data-news-close]', { shared: { from: '#news .news-row' } });
     initFullPanel('tournaments-all', '[data-tall-open]', '[data-tall-close]');
     initFullPanel('court-all', '[data-court-open]', '[data-court-close]');

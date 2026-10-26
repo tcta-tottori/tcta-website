@@ -1842,29 +1842,22 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 /* 左端の「すべて」は固定、区切り線の右に施設を1行で並べ、はみ出す分は横にスクロール（スクロールバーは出さない） */
 .cmap__tabs {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   padding: 12px 14px;
   border-bottom: 1px solid var(--gray-200);
 }
 .cmap__tab--all { flex: none; }
 /* 施設が1つだけのとき（水曜テニス教室の井原公園）は切り替えの列を出さない */
 .cmap--single .cmap__tabs { display: none; }
-.cmap__tabs-scroll {
-  display: flex;
+.cmap__tabs-wrap {
   flex: 1 1 auto;
-  gap: 6px;
-  min-width: 0;
   margin-left: 12px;
-  padding: 2px 0 2px 12px;
+  padding-left: 12px;
   border-left: 1px solid var(--gray-200);
-  overflow-x: auto;
-  scrollbar-width: none;
-  -webkit-overflow-scrolling: touch;
-  scroll-snap-type: x proximity;
 }
-.cmap__tabs-scroll::-webkit-scrollbar { display: none; }
-.cmap__tabs-scroll .cmap__tab { flex: none; scroll-snap-align: start; }
-/* 施設の切り替え。大会結果の年度タブ（.year-tab）と同じ、角を少しだけ丸めた四角。選択中は黒 */
+.cmap__tabs-scroll { gap: 6px; padding: 2px 0; scroll-snap-type: x proximity; }
+.cmap__tabs-scroll .cmap__tab { scroll-snap-align: start; }
+/* 施設の切り替え。大会結果の年度タブ（.year-tab）と同じ、角を少しだけ丸めた四角。選択中は赤 */
 .cmap__tab {
   padding: 9px 12px;
   border: 1px solid var(--gray-300);
@@ -1878,8 +1871,8 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 }
 .cmap__tab:hover { border-color: var(--red); color: var(--red); }
 .cmap__tab.is-active {
-  background: var(--ink);
-  border-color: var(--ink);
+  background: var(--red);
+  border-color: var(--red);
   color: #fff;
 }
 .cmap__frame {
@@ -3031,7 +3024,56 @@ body.jsrv .rv.on .ink-sweep {
 .reg--shi { background: var(--red); color: #fff; }
 .reg--free { background: var(--gray-600); color: #fff; }
 
-/* フィルタチップ / タブ。年度タブ（.year-tab）と同じ、角を少しだけ丸めた四角。選択中は黒 */
+/* ============ 横に 1 行で並べる列（.hscroll） ============
+   大会結果の年度（令和・平成それぞれ）と地図の施設の列。折り返さず、収まらない分は横にスクロール（スクロールバーは出さない）。
+   はみ出しているあいだは、続きのある側の端を少し透かし、列の下の右端に「scroll →」の案内を出す。
+   端まで送ると透かしと案内は消える（案内の高さぶんの余白は、はみ出している列には常に取っておき、送っても高さが変わらないようにする）。はみ出しの有無と位置は main.js の initHScroll が .is-overflow / .is-start / .is-end で付ける。
+   使い方：<div class="hscroll" data-hscroll><div class="hscroll__track">…</div><span class="hscroll__hint">scroll<span class="hscroll__arrow"></span></span></div> */
+.hscroll { position: relative; min-width: 0; --hs-l: 0px; --hs-r: 0px; }
+.hscroll.is-overflow { padding-bottom: 16px; }
+.hscroll__track {
+  display: flex;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  -webkit-mask-image: linear-gradient(to right, rgba(0, 0, 0, .2), #000 var(--hs-l), #000 calc(100% - var(--hs-r)), rgba(0, 0, 0, .2));
+  mask-image: linear-gradient(to right, rgba(0, 0, 0, .2), #000 var(--hs-l), #000 calc(100% - var(--hs-r)), rgba(0, 0, 0, .2));
+}
+.hscroll__track::-webkit-scrollbar { display: none; }
+.hscroll__track > * { flex: none; }
+.hscroll.is-overflow:not(.is-start) { --hs-l: 36px; }
+.hscroll.is-overflow:not(.is-end) { --hs-r: 48px; }
+.hscroll__hint {
+  position: absolute;
+  top: 100%;
+  right: 2px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: -14px;
+  font: 500 10px/1 var(--flt);
+  letter-spacing: .18em;
+  color: var(--gray-600);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity .3s ease;
+}
+.hscroll.is-overflow:not(.is-end) .hscroll__hint { opacity: 1; }
+.hscroll__arrow { position: relative; width: 30px; height: 1px; background: currentColor; animation: hs-nudge 1.8s ease-in-out infinite; }
+.hscroll__arrow::after {
+  content: '';
+  position: absolute;
+  top: -2.5px; right: 0;
+  width: 6px; height: 6px;
+  border-top: 1px solid currentColor;
+  border-right: 1px solid currentColor;
+  transform: rotate(45deg);
+}
+@keyframes hs-nudge { 50% { transform: translateX(4px); } }
+@media (prefers-reduced-motion: reduce) { .hscroll__arrow { animation: none; } }
+
+/* フィルタチップ / タブ。年度タブ（.year-tab）と同じ、角を少しだけ丸めた四角。選択中は赤 */
 .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 24px; }
 .chip {
   min-height: 40px;
@@ -3045,7 +3087,7 @@ body.jsrv .rv.on .ink-sweep {
   transition: all .25s ease;
 }
 .chip:hover { border-color: var(--red); color: var(--red); }
-.chip.is-active { background: var(--ink); border-color: var(--ink); color: #fff; }
+.chip.is-active { background: var(--red); border-color: var(--red); color: #fff; }
 
 .tabs {
   display: flex;
@@ -3289,7 +3331,7 @@ button.dl-item { width: 100%; text-align: left; }
   .result-tags .badge--tint, .result-tags .dl-item__type { display: none; }
 }
 
-/* 年度の選択。令和・平成の2段に分け、年の数字だけを並べる（21年度分を1列に並べない） */
+/* 年度の選択。令和・平成の2段に分け、年の数字だけをそれぞれ 1 行に並べる（収まらない分は横スクロール：.hscroll） */
 .year-picker {
   display: grid;
   gap: 12px;
@@ -3300,7 +3342,7 @@ button.dl-item { width: 100%; text-align: left; }
 }
 .year-picker__era { display: grid; grid-template-columns: 48px 1fr; gap: 12px; align-items: start; }
 .year-picker__label { padding-top: 8px; font: 700 13px/1.4 var(--fjp); letter-spacing: .08em; color: var(--gray-500); }
-.year-picker__years { display: flex; flex-wrap: wrap; gap: 6px; }
+.year-picker__years { gap: 6px; padding: 2px 0; }
 .year-tab {
   min-width: 52px;
   padding: 7px 10px;
@@ -3314,8 +3356,8 @@ button.dl-item { width: 100%; text-align: left; }
 }
 .year-tab__unit { margin-left: 2px; font: 500 10px/1 var(--fjp); color: var(--gray-500); }
 .year-tab:hover { border-color: var(--red); color: var(--red); }
-.year-tab.is-active { background: var(--ink); border-color: var(--ink); color: #fff; }
-.year-tab.is-active .year-tab__unit { color: rgba(255, 255, 255, .7); }
+.year-tab.is-active { background: var(--red); border-color: var(--red); color: #fff; }
+.year-tab.is-active .year-tab__unit { color: rgba(255, 255, 255, .8); }
 
 /* 年度の見出し。「令和5年度 2023」と「18大会・写真800枚」 */
 .year-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 20px; margin-bottom: 24px; }

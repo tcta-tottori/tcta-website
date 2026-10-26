@@ -14,10 +14,11 @@ const single = courts.length === 1;
 ---
 
 <div class:list={['cmap', single && 'cmap--single']} data-cmap>
-  {/* 施設の切り替え。左端に「すべて」を固定し、区切りの右に施設を1行で並べる（はみ出す分は横にスクロール） */}
+  {/* 施設の切り替え。左端に「すべて」を固定し、区切りの右に施設を1行で並べる（はみ出す分は横にスクロール。端を透かして「scroll →」を出す：.hscroll） */}
   <div class="cmap__tabs" role="group" aria-label="地図に出す施設">
     <button class="cmap__tab cmap__tab--all" type="button" aria-pressed="false" data-cmap-all>すべて</button>
-    <div class="cmap__tabs-scroll">
+    <div class="hscroll cmap__tabs-wrap" data-hscroll>
+      <div class="cmap__tabs-scroll hscroll__track">
       {courts.map((c, i) => (
         <button
           class:list={['cmap__tab', i === 0 && 'is-active']}
@@ -28,6 +29,8 @@ const single = courts.length === 1;
           data-name={c.name}
         >{c.short}</button>
       ))}
+      </div>
+      <span class="hscroll__hint" aria-hidden="true">scroll<span class="hscroll__arrow"></span></span>
     </div>
   </div>
   <div class="cmap__frame">
