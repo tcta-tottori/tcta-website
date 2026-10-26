@@ -868,7 +868,9 @@
     var closeMs = function () {
       var cs = getComputedStyle(menu);
       var sec = function (v) { var n = parseFloat(v); return isNaN(n) ? 0 : (/ms$/.test(v) ? n / 1000 : n); };
-      return Math.round((sec(cs.getPropertyValue('--mn-stagger')) + sec(cs.getPropertyValue('--mn-out'))) * 1000) || 600;
+      // 閉じ終わるのは、最後（いちばん上）の行：遅れの最大（--mn-stagger）＋その行の戻る時間（--mn-out-short）
+      var last = sec(cs.getPropertyValue('--mn-out-short')) || sec(cs.getPropertyValue('--mn-out'));
+      return Math.round((sec(cs.getPropertyValue('--mn-stagger')) + last) * 1000) || 500;
     };
     menu.addEventListener('click', function (e) {
       var a = e.target.closest('a');
