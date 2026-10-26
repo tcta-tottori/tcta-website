@@ -473,7 +473,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
    出だしは速く、位置につく手前で減速（強めのイーズアウト）。順番の間隔はメニューと同じ緩急
    （上ほど広くゆっくり、下へ行くほど詰まって速く。遅れは (2t - t²) × .3s）で、全体 .5s ほど。
    件数が多い一覧（お知らせは100件超）では、11件目以降はまとめて最後の遅れで出す（--k で頭打ち）。
-   閉じるとき（.is-closing）はその逆で、下から順に、下ほどゆっくり・上へ行くほど速く見出しの下へ戻る。
+   閉じるとき（.is-closing）は順番が逆で、下から順に、下ほどゆっくり・上へ行くほど速く見出しの下へ戻る（動きは開くときと同じく、出だしが速く終わりがゆっくり）。
    開くたびに動きを流し直すのは main.js の initFullPanel（style に --i を持つ要素の animation を付け直す）。 */
 .panel-item {
   --k: min(var(--i, 0), 10);
@@ -488,7 +488,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 }
 .is-closing .panel-item {
   /* 閉じるとき：下の項目から順に。下ほど間隔が広くゆっくり（.35s）、上へ行くほど詰まって速く（.2s） */
-  animation: panel-item-out calc(.35s - .15s * var(--tc)) cubic-bezier(.7, 0, .84, 0) both;
+  animation: panel-item-out calc(.35s - .15s * var(--tc)) cubic-bezier(.16, 1, .3, 1) both;
   animation-delay: calc((2 * var(--tc) - var(--tc) * var(--tc)) * .2s);
 }
 /* 透明度は変えない（見出しの裏と画面の上端で隠れる）。半透明にすると裏の項目の文字が透けて重なり、ぼやけて見える */
@@ -768,7 +768,7 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   --mn-out-short: .2s;  /* 戻る時間：最後に戻る上の行（いちばん速い） */
   --mn-gap: 0px;        /* 項目の間隔（行は隙間なく並べる） */
   --mn-ease-in: cubic-bezier(.16, 1, .3, 1);   /* 速く出て、ゆっくり止まる */
-  --mn-ease-out: cubic-bezier(.7, 0, .84, 0);  /* ゆっくり動き出して、速く引っ込む */
+  --mn-ease-out: cubic-bezier(.16, 1, .3, 1);  /* 閉じるときも、速く動き出してヘッダーの裏に入る手前で減速 */
   position: fixed;
   inset: 0;
   z-index: 90;
@@ -878,40 +878,40 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 ::view-transition-old(mn-sheet) { animation: vt-fade .2s ease .45s both; }
 @keyframes vt-fade { to { opacity: 0; } }
 ::view-transition-group(mn-item-0) { z-index: 20; }
-::view-transition-old(mn-item-0) { animation: vt-row-out-0 0.200s cubic-bezier(.7, 0, .84, 0) both; animation-delay: 0.300s; }
+::view-transition-old(mn-item-0) { animation: vt-row-out-0 0.200s cubic-bezier(.16, 1, .3, 1) both; animation-delay: 0.300s; }
 @keyframes vt-row-out-0 { 0% { opacity: 1; } 99% { opacity: 1; } 100% { opacity: 0; transform: translateY(-300px); } }
 ::view-transition-group(mn-item-1) { z-index: 19; }
-::view-transition-old(mn-item-1) { animation: vt-row-out-1 0.215s cubic-bezier(.7, 0, .84, 0) both; animation-delay: 0.297s; }
+::view-transition-old(mn-item-1) { animation: vt-row-out-1 0.215s cubic-bezier(.16, 1, .3, 1) both; animation-delay: 0.297s; }
 @keyframes vt-row-out-1 { 0% { opacity: 1; } 99% { opacity: 1; } 100% { opacity: 0; transform: translateY(-357px); } }
 ::view-transition-group(mn-item-2) { z-index: 18; }
-::view-transition-old(mn-item-2) { animation: vt-row-out-2 0.230s cubic-bezier(.7, 0, .84, 0) both; animation-delay: 0.288s; }
+::view-transition-old(mn-item-2) { animation: vt-row-out-2 0.230s cubic-bezier(.16, 1, .3, 1) both; animation-delay: 0.288s; }
 @keyframes vt-row-out-2 { 0% { opacity: 1; } 99% { opacity: 1; } 100% { opacity: 0; transform: translateY(-414px); } }
 ::view-transition-group(mn-item-3) { z-index: 17; }
-::view-transition-old(mn-item-3) { animation: vt-row-out-3 0.245s cubic-bezier(.7, 0, .84, 0) both; animation-delay: 0.273s; }
+::view-transition-old(mn-item-3) { animation: vt-row-out-3 0.245s cubic-bezier(.16, 1, .3, 1) both; animation-delay: 0.273s; }
 @keyframes vt-row-out-3 { 0% { opacity: 1; } 99% { opacity: 1; } 100% { opacity: 0; transform: translateY(-471px); } }
 ::view-transition-group(mn-item-4) { z-index: 16; }
-::view-transition-old(mn-item-4) { animation: vt-row-out-4 0.260s cubic-bezier(.7, 0, .84, 0) both; animation-delay: 0.252s; }
+::view-transition-old(mn-item-4) { animation: vt-row-out-4 0.260s cubic-bezier(.16, 1, .3, 1) both; animation-delay: 0.252s; }
 @keyframes vt-row-out-4 { 0% { opacity: 1; } 99% { opacity: 1; } 100% { opacity: 0; transform: translateY(-528px); } }
 ::view-transition-group(mn-item-5) { z-index: 15; }
-::view-transition-old(mn-item-5) { animation: vt-row-out-5 0.275s cubic-bezier(.7, 0, .84, 0) both; animation-delay: 0.225s; }
+::view-transition-old(mn-item-5) { animation: vt-row-out-5 0.275s cubic-bezier(.16, 1, .3, 1) both; animation-delay: 0.225s; }
 @keyframes vt-row-out-5 { 0% { opacity: 1; } 99% { opacity: 1; } 100% { opacity: 0; transform: translateY(-585px); } }
 ::view-transition-group(mn-item-6) { z-index: 14; }
-::view-transition-old(mn-item-6) { animation: vt-row-out-6 0.290s cubic-bezier(.7, 0, .84, 0) both; animation-delay: 0.192s; }
+::view-transition-old(mn-item-6) { animation: vt-row-out-6 0.290s cubic-bezier(.16, 1, .3, 1) both; animation-delay: 0.192s; }
 @keyframes vt-row-out-6 { 0% { opacity: 1; } 99% { opacity: 1; } 100% { opacity: 0; transform: translateY(-642px); } }
 ::view-transition-group(mn-item-7) { z-index: 13; }
-::view-transition-old(mn-item-7) { animation: vt-row-out-7 0.305s cubic-bezier(.7, 0, .84, 0) both; animation-delay: 0.153s; }
+::view-transition-old(mn-item-7) { animation: vt-row-out-7 0.305s cubic-bezier(.16, 1, .3, 1) both; animation-delay: 0.153s; }
 @keyframes vt-row-out-7 { 0% { opacity: 1; } 99% { opacity: 1; } 100% { opacity: 0; transform: translateY(-699px); } }
 ::view-transition-group(mn-item-8) { z-index: 12; }
-::view-transition-old(mn-item-8) { animation: vt-row-out-8 0.320s cubic-bezier(.7, 0, .84, 0) both; animation-delay: 0.108s; }
+::view-transition-old(mn-item-8) { animation: vt-row-out-8 0.320s cubic-bezier(.16, 1, .3, 1) both; animation-delay: 0.108s; }
 @keyframes vt-row-out-8 { 0% { opacity: 1; } 99% { opacity: 1; } 100% { opacity: 0; transform: translateY(-756px); } }
 ::view-transition-group(mn-item-9) { z-index: 11; }
-::view-transition-old(mn-item-9) { animation: vt-row-out-9 0.335s cubic-bezier(.7, 0, .84, 0) both; animation-delay: 0.057s; }
+::view-transition-old(mn-item-9) { animation: vt-row-out-9 0.335s cubic-bezier(.16, 1, .3, 1) both; animation-delay: 0.057s; }
 @keyframes vt-row-out-9 { 0% { opacity: 1; } 99% { opacity: 1; } 100% { opacity: 0; transform: translateY(-813px); } }
 ::view-transition-group(mn-item-10) { z-index: 10; }
-::view-transition-old(mn-item-10) { animation: vt-row-out-10 0.350s cubic-bezier(.7, 0, .84, 0) both; animation-delay: 0.000s; }
+::view-transition-old(mn-item-10) { animation: vt-row-out-10 0.350s cubic-bezier(.16, 1, .3, 1) both; animation-delay: 0.000s; }
 @keyframes vt-row-out-10 { 0% { opacity: 1; } 99% { opacity: 1; } 100% { opacity: 0; transform: translateY(-870px); } }
 ::view-transition-group(mn-item-11) { z-index: 9; }
-::view-transition-old(mn-item-11) { animation: vt-row-out-11 0.350s cubic-bezier(.7, 0, .84, 0) both; animation-delay: 0.000s; }
+::view-transition-old(mn-item-11) { animation: vt-row-out-11 0.350s cubic-bezier(.16, 1, .3, 1) both; animation-delay: 0.000s; }
 @keyframes vt-row-out-11 { 0% { opacity: 1; } 99% { opacity: 1; } 100% { opacity: 0; transform: translateY(-927px); } }
 @media (prefers-reduced-motion: reduce) {
   ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
