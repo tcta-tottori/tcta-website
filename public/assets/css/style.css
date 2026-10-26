@@ -464,12 +464,39 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   0%, 100% { opacity: 1; transform: none; }
   50%      { opacity: .45; transform: scale(.92); }
 }
-@keyframes news-all-in { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
-/* 横並びから縦並びへ。右から滑り込んで、少し縮んだ状態から等倍に収まる。 */
-@keyframes tall-in {
-  from { opacity: 0; transform: translate3d(34px, 10px, 0) scale(.96); }
-  to   { opacity: 1; transform: none; }
+/* 全画面の一覧（お知らせ #news-all・コート案内 #court-all・大会情報 #tournaments-all）の項目。
+   モバイルメニューと同じ動き：項目は見出しの下に重ねて隠してあり、開くと上から順に滑り出して位置につく。
+   上の項目ほど手前（z-index）なので、遅れて出る下の項目は上の項目の裏から出てくるように見える。
+   出だしは速く、位置につく手前で減速（強めのイーズアウト）。項目1つ .4s、遅れの差 .3s で全体 .5s ほど。
+   件数が多い一覧（お知らせは100件超）では、11件目以降はまとめて最後の遅れで出す（--k で頭打ち）。
+   閉じるとき（.is-closing）はその逆で、下から順にゆっくり動き出して速く見出しの下へ戻る。
+   開くたびに動きを流し直すのは main.js の initFullPanel（style に --i を持つ要素の animation を付け直す）。 */
+.panel-item {
+  --k: min(var(--i, 0), 10);
+  position: relative;
+  z-index: calc(200 - min(var(--i, 0), 199));
+  background: var(--white);
+  animation: panel-item-in .4s cubic-bezier(.16, 1, .3, 1) both;
+  animation-delay: calc(var(--k) / 10 * .3s);
 }
+.is-closing .panel-item {
+  animation: panel-item-out .3s cubic-bezier(.7, 0, .84, 0) both;
+  animation-delay: calc((10 - var(--k)) / 10 * .2s);
+}
+/* 不透明度は動き出してすぐ 1 にする（半透明のあいだは裏の項目の文字が透けて見えてしまうため） */
+@keyframes panel-item-in {
+  0%   { opacity: 0; transform: translateY(calc((100% + 1px) * -1 * (var(--k) + 1) - 40px)); }
+  12%  { opacity: 1; }
+  100% { opacity: 1; transform: none; }
+}
+@keyframes panel-item-out {
+  0%   { opacity: 1; transform: none; }
+  85%  { opacity: 1; }
+  100% { opacity: 0; transform: translateY(calc((100% + 1px) * -1 * (var(--k) + 1) - 40px)); }
+}
+/* 項目の重なり（z-index）を一覧の中に閉じ込め、追従する見出し（z-index:1）より常に下にする */
+.news-all__body .news-list, .news-all__body .sch-list, .tall__list { isolation: isolate; }
+@media (prefers-reduced-motion: reduce) { .panel-item, .is-closing .panel-item { animation: none; } }
 
 /* 見出しの塗り替え。薄いグレーで出しきってから 0.1秒 そのまま置き、
    残りの 0.9秒 で白いスラッシュが左から右へ走り、通ったところが黒くなる。
@@ -669,36 +696,36 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 .hamburger[aria-expanded="true"] span:nth-child(2) { opacity: 0; }
 .hamburger[aria-expanded="true"] span:nth-child(3) { transform: translateY(-8px) rotate(-45deg); }
 
-/* 開閉のアニメーション。
-   項目は1枚ずつのカード。閉じているあいだはぜんぶヘッダーの下（1枚下の層）に重ねて隠してあり、
-   開くと上のカードから順に滑り出して自分の位置につく。上のカードほど手前に重ねてあるので、
-   遅れて出る下のカードは上のカードの裏（下の層）から出てくるように見える。
+/* 開閉のアニメーション（見た目は下線つきの行のまま。動きだけ、1枚ずつの札を配るように出す）。
+   閉じているあいだは全項目をヘッダーの下（1枚下の層）に重ねて隠してあり、
+   開くと上の項目から順に滑り出して自分の位置につく。上の項目ほど手前に重ねてあるので、
+   遅れて出る下の項目は上の項目の裏（下の層）から出てくるように見える（行の背景を白にして裏にいるあいだは隠す）。
    出だしは速く、位置につく手前でぐっと減速する（強めのイーズアウト）。
-   カード1枚は .4s かけるが、減速が強いので見た目には .25s ほどで止まって見える。
-   最初と最後のカードの遅れの差は .3s なので、全体で .5s ほどで開き終わる。
-   閉じる：その逆。下のカードから順に、ゆっくり動き出して速くヘッダーの下へ戻る（イーズイン）。
+   項目1つは .4s かけるが、減速が強いので見た目には .25s ほどで止まって見える。
+   最初と最後の項目の遅れの差は .3s なので、全体で .5s ほどで開き終わる。
+   閉じる：その逆。下の項目から順に、ゆっくり動き出して速くヘッダーの下へ戻る（イーズイン）。
    戻り終わるころに白い下地をしまう。
    白い下地は開いた瞬間に出す（フェードさせると、下地が透けているあいだヘッダーの下に暗いヒーロー写真が見えて
    一瞬黒く見える）。
-   nav の上端（＝ヘッダーの下端）で clip-path により切り取るので、ヘッダーより上にはみ出たカードは見えない。
-   カードの遅れは --i（上から何番目か）と --n（カードの総数）から計算する（MobileNav.astro が付ける）。 */
+   nav の上端（＝ヘッダーの下端）で clip-path により切り取るので、ヘッダーより上にはみ出た項目は見えない。
+   項目の遅れは --i（上から何番目か）と --n（項目の総数）から計算する（MobileNav.astro が付ける）。 */
 .mobile-nav {
-  --mn-stagger: .3s;    /* 最初のカードと最後のカードの遅れの差 */
-  --mn-in: .4s;         /* カード1枚が出てくる時間（イーズアウトなので見た目はもっと短い） */
-  --mn-out: .3s;        /* カード1枚が戻る時間 */
-  --mn-gap: 10px;       /* カードの間隔 */
+  --mn-stagger: .3s;    /* 最初の項目と最後の項目の遅れの差 */
+  --mn-in: .4s;         /* 項目1つが出てくる時間（イーズアウトなので見た目はもっと短い） */
+  --mn-out: .3s;        /* 項目1つが戻る時間 */
+  --mn-gap: 0px;        /* 項目の間隔（行は隙間なく並べる） */
   --mn-ease-in: cubic-bezier(.16, 1, .3, 1);   /* 速く出て、ゆっくり止まる */
   --mn-ease-out: cubic-bezier(.7, 0, .84, 0);  /* ゆっくり動き出して、速く引っ込む */
   position: fixed;
   inset: 0;
   z-index: 90;
   background: var(--white);
-  /* 上の余白はヘッダーの下端まで。その下の 20px は nav 側に持たせる（切り取りの線をヘッダーの下端に合わせるため） */
+  /* 上の余白はヘッダーの下端まで。その下の 24px は nav 側に持たせる（切り取りの線をヘッダーの下端に合わせるため） */
   padding: var(--header-h) var(--gutter) 40px;
   overflow-y: auto;
   opacity: 0;
   visibility: hidden;
-  /* 閉じるとき：カードが戻り終わるのを待ってから下地を消す */
+  /* 閉じるとき：項目が戻り終わるのを待ってから下地を消す */
   transition: opacity .2s ease calc(var(--mn-stagger) + var(--mn-out) - .1s), visibility 0s linear calc(var(--mn-stagger) + var(--mn-out) + .1s);
 }
 .mobile-nav.is-open {
@@ -710,19 +737,19 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   display: flex;
   flex-direction: column;
   gap: var(--mn-gap);
-  padding-top: 20px;
-  /* 上だけ切り取る（左右と下は余白ぶん広げて、カードの影やフォーカスの枠が切れないように） */
+  padding-top: 24px;
+  /* 上だけ切り取る（左右と下は余白ぶん広げて、フォーカスの枠が切れないように） */
   clip-path: inset(0 -24px -24px -24px);
 }
 .mobile-nav__item {
-  /* 上のカードほど手前に重ねる */
+  /* 上の項目ほど手前に重ねる */
   position: relative;
   z-index: calc(var(--n, 1) - var(--i, 0));
   opacity: 0;
-  /* 閉じているあいだは、全カードをヘッダーの下の同じ場所に重ねておく
+  /* 閉じているあいだは、全項目をヘッダーの下の同じ場所に重ねておく
      （自分の高さ＋間隔 × (順番+1) ぶん上へ。さらに 100px 上げて確実に隠す） */
   transform: translateY(calc((100% + var(--mn-gap)) * -1 * (var(--i, 0) + 1) - 100px));
-  /* 閉じるとき：下のカードほど早く戻る（上のカードが最後）。透明にするのは戻り切る直前 */
+  /* 閉じるとき：下の項目ほど早く戻る（上の項目が最後）。透明にするのは戻り切る直前 */
   transition: transform var(--mn-out) var(--mn-ease-out), opacity .12s ease;
   transition-delay:
     calc((var(--n, 1) - 1 - var(--i, 0)) / max(var(--n, 1) - 1, 1) * var(--mn-stagger)),
@@ -731,7 +758,7 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 .mobile-nav.is-open .mobile-nav__item {
   opacity: 1;
   transform: none;
-  /* 開くとき：上のカードほど早く出る。出た瞬間に見えるようにする */
+  /* 開くとき：上の項目ほど早く出る。出た瞬間に見えるようにする */
   transition: transform var(--mn-in) var(--mn-ease-in), opacity .12s ease;
   transition-delay: calc(var(--i, 0) / max(var(--n, 1) - 1, 1) * var(--mn-stagger));
 }
@@ -742,24 +769,22 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   }
 }
 @media (min-width: 1024px) { .mobile-nav { display: none; } }
-/* 1枚ずつのカード。白地に薄い枠と影で、重なったときに上下の層が分かるようにする。 */
+/* 行の見た目は以前のまま（下線つき）。背景の白は、開く途中で上の行の裏に隠れているあいだ見えないようにするため。 */
 .mobile-nav__link {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  min-height: 58px;
-  padding: 10px 18px;
+  min-height: 56px;
+  padding: 8px 4px;
   background: var(--white);
-  border: 1px solid var(--gray-200);
-  border-radius: 6px;
-  box-shadow: 0 2px 10px rgba(26, 26, 26, .08);
+  border-bottom: 1px solid var(--gray-200);
   font: 700 16px/1.5 var(--fjp);
   letter-spacing: .02em;
   color: var(--ink);
 }
 .mobile-nav__link .ar { color: var(--red); }
 .mobile-nav__link.is-active { color: var(--red); }
-.mobile-nav .btn { margin-top: 18px; box-shadow: 0 2px 10px rgba(26, 26, 26, .12); }
+.mobile-nav .btn { margin-top: 28px; }
 
 /* ============ 07. ヒーロー ============ */
 .hero {
@@ -1245,7 +1270,6 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   background: var(--white);
   overflow-y: auto;
   overscroll-behavior: contain;
-  animation: news-all-in .3s var(--ease) both;
 }
 .tall[hidden] { display: none; }
 .tall__panel { min-height: 100%; padding-bottom: 64px; }
@@ -1268,10 +1292,8 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 }
 @media (min-width: 768px) { .tall__list { grid-template-columns: repeat(2, 1fr); gap: 20px; } }
 @media (min-width: 1200px) { .tall__list { grid-template-columns: repeat(3, 1fr); } }
-/* 横から流れ込んで縦に落ち着く。順番に遅らせて、並び替わって見えるようにする。 */
-.tall__item { animation: tall-in .5s var(--ease) both; animation-delay: calc(var(--i) * .06s); }
+/* 出入りの動きは .panel-item（上の共通ルール） */
 .tall__item .tcard { width: 100%; max-width: none; }
-@media (prefers-reduced-motion: reduce) { .tall, .tall__item { animation: none; } }
 .tall__more { margin-top: 32px; }
 
 .tcard__go {
@@ -1432,7 +1454,7 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
    全施設は「すべての施設を見る」で全画面のパネル（.news-all）に開く。 */
 .court-peek { max-height: 96px; overflow: hidden; }
 
-/* VIEW ALL で開く全件表示。画面いっぱいに白い面を出し、右上で閉じる。 */
+/* 全件表示（お知らせ・コート案内）。画面いっぱいに白い面を出し、右上で閉じる。項目の動きは .panel-item。 */
 .news-all {
   position: fixed;
   inset: 0;
@@ -1440,10 +1462,8 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   background: var(--white);
   overflow-y: auto;
   overscroll-behavior: contain;
-  animation: news-all-in .3s var(--ease) both;
 }
 .news-all[hidden] { display: none; }
-@media (prefers-reduced-motion: reduce) { .news-all { animation: none; } }
 .news-all__panel { min-height: 100%; padding-bottom: 64px; }
 .news-all__head {
   position: sticky;

@@ -160,7 +160,7 @@ const upcomingTournaments = TOURNAMENTS.filter((t) => t.status !== 'past');
       </div>
     </div>
 
-    {/* VIEW ALL で開く全件表示。横並びのカードが縦に並び直して出てくる。 */}
+    {/* VIEW ALL で開く全件表示。カードが見出しの下から順に滑り出す（style.css の .panel-item）。 */}
     <div class="tall" id="tournaments-all" hidden>
       <div class="tall__panel" role="dialog" aria-modal="true" aria-labelledby="tall-title">
         <div class="container tall__head">
@@ -175,7 +175,7 @@ const upcomingTournaments = TOURNAMENTS.filter((t) => t.status !== 'past');
         <div class="container tall__body">
           <div class="tall__list">
             {TOURNAMENTS.map((t, i) => (
-              <div class="tall__item" style={`--i:${i}`}><TournamentCard tournament={t} /></div>
+              <div class="tall__item panel-item" style={`--i:${i}`}><TournamentCard tournament={t} /></div>
             ))}
           </div>
           <a class="btn btn--outline tall__more" href="tournaments.html">年間の大会日程・カレンダーを見る <span class="aw">→</span></a>
@@ -230,7 +230,7 @@ const upcomingTournaments = TOURNAMENTS.filter((t) => t.status !== 'past');
         </div>
         <div class="container news-all__body">
           <ul class="news-list">
-            {NEWS.map((n) => <NewsRow item={n} />)}
+            {NEWS.map((n, i) => <NewsRow item={n} index={i} reveal={false} />)}
           </ul>
         </div>
       </div>
@@ -343,7 +343,7 @@ const upcomingTournaments = TOURNAMENTS.filter((t) => t.status !== 'past');
           </div>
           <div class="container news-all__body">
             <ul class="sch-list">
-              {COURTS.map((c) => <CourtRow court={c} />)}
+              {COURTS.map((c, i) => <CourtRow court={c} index={i} />)}
             </ul>
           </div>
         </div>

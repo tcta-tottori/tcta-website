@@ -3,11 +3,12 @@
 // src/data/courts.js の1件を受け取る。住所や申込先はコート案内のページ（courts.html）に出す。
 // 写真（image）がある施設は、行の右端に写真を敷き、中央へ向けて薄くする（文字はその上）。矢印は写真と重なるので出さない。
 import Icon from './Icon.astro';
-const { court: c } = Astro.props;
+// index … 全画面の一覧（#court-all）で何番目か。付けると li が .panel-item になり、見出しの下から順に滑り出す（style.css）。
+const { court: c, index = null } = Astro.props;
 const lighting = (c.features ?? []).some((f) => String(f).startsWith('夜間照明'));
 ---
 
-<li><a class:list={['court-item', c.image && 'court-item--photo']} href={c.href} {...(c.external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}>
+<li class:list={[index != null && 'panel-item']} style={index != null ? `--i:${index}` : undefined}><a class:list={['court-item', c.image && 'court-item--photo']} href={c.href} {...(c.external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}>
   {c.image && <span class="court-item__photo" aria-hidden="true"><img src={c.image} alt="" width="960" height="540" loading="lazy" decoding="async"></span>}
   <span class="court-item__head">
     <Icon name="pin" class="court-pin" />
