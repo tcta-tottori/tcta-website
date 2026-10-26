@@ -7,14 +7,14 @@ import { LINK_GROUPS, LINE_OFFICIAL } from '../data/links.js';
 // 協会の SNS（管理画面 → Settings → Social）
 const { SOCIAL } = await siteData(Astro);
 
-// 「協会の公式アカウント」は画像のボタン（LINE・Instagram・YouTube。public/assets/img/sns/）で出す。
+// 「協会の公式アカウント」は画像のボタン（YouTube・Instagram・LINE の順。public/assets/img/sns/）で出す。
 // 入会案内のボタンと同じく縦に積む（スマホは幅いっぱい、広い画面では内容幅）。URL は LINE が links.js、
 // Instagram・YouTube が管理画面の Social 設定。設定の無いものは出さない。
 const social = (key) => SOCIAL.find((x) => x.key === key)?.url;
 const SNS_BUTTONS = [
-  { key: 'line', url: LINE_OFFICIAL.url, img: 'assets/img/sns/line-button.webp', w: 1600, h: 303, alt: '鳥取市テニス協会 LINE 公式アカウント（大会・教室のお知らせを配信中）' },
-  { key: 'instagram', url: social('instagram'), img: 'assets/img/sns/instagram-button.webp', w: 1600, h: 318, alt: '鳥取市テニス協会 Instagram（大会・教室の写真を投稿中）' },
   { key: 'youtube', url: social('youtube'), img: 'assets/img/sns/youtube-button.webp', w: 1600, h: 310, alt: '鳥取市テニス協会 YouTube（大会や教室の動画を配信中）' },
+  { key: 'instagram', url: social('instagram'), img: 'assets/img/sns/instagram-button.webp', w: 1600, h: 318, alt: '鳥取市テニス協会 Instagram（大会・教室の写真を投稿中）' },
+  { key: 'line', url: LINE_OFFICIAL.url, img: 'assets/img/sns/line-button.webp', w: 1600, h: 303, alt: '鳥取市テニス協会 LINE 公式アカウント（大会・教室のお知らせを配信中）' },
 ].filter((b) => b.url);
 // LINE はボタンで出すので、公式アカウントのバナー一覧からは外す
 const itemsOf = (g) => (g.id === 'official' ? g.items.filter((l) => l !== LINE_OFFICIAL) : g.items);
