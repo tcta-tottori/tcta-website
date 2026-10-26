@@ -1844,7 +1844,6 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   top: 12px;
   left: 12px;
   z-index: 1000; /* Leaflet のコントロールと同じ高さ */
-  max-width: calc(100% - 150px); /* 右上の「航空写真／地図」の切り替えと重ならないように */
   display: flex;
   align-items: center;
   gap: 8px;
@@ -1883,10 +1882,10 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 /* 地図タイルをサイトの地の色に寄せる。ピンとラベルは別レイヤーなので色が残る */
 /* 「地図」（OpenStreetMap）のときだけ色をグレーに落とす。航空写真はそのまま */
 .cmap__map .ctile-map { filter: grayscale(1) brightness(1.08) contrast(.82); opacity: .9; }
-/* 地図の種類の切り替え（航空写真／地図）。地図の右上。施設の切り替えボタンと同じ見た目 */
+/* 地図の種類の切り替え（航空写真／地図）。地図の右下、＋－の上（左上の写真カードと重ならない位置）。施設の切り替えボタンと同じ見た目 */
 .cmap__layers {
   position: absolute;
-  top: 12px; right: 12px;
+  right: 14px; bottom: 110px;
   z-index: 500;
   display: flex;
   border: 1px solid var(--gray-300);
