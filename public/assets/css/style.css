@@ -500,8 +500,9 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   from { transform: none; }
   to   { transform: translateY(calc((100% + 1px) * -1 * (var(--k) + 1) - 40px)); }
 }
-/* お知らせの全画面：トップに見えている行は、その場所から全画面での位置へ滑らかに移ってから（同一ページのビュートランジション。
-   main.js の initFullPanel が行に view-transition-name を付ける）、残りの行が見出しの下から順に出る。
+/* お知らせ・コート案内の全画面：トップに見えている行は、その場所から全画面での位置へ滑らかに移ってから（同一ページのビュートランジション。
+   main.js の initFullPanel が行に view-transition-name を付ける。コート案内は写真・施設名・サーフェスもそれぞれ別に移る）、
+   残りの行が見出しの下から順に出る。動きは出だしが速く、最後はゆっくり止まる。
    移る行（.is-shared）は滑り出しの動きを止め、残りの行は移り終わる .45s ぶん遅らせる */
 .news-all:not(.is-closing) .panel-item.is-shared { animation: none; }
 .news-all.is-vt:not(.is-closing) .panel-item:not(.is-shared) {

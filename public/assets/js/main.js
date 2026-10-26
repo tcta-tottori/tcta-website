@@ -288,8 +288,9 @@
 
   /* ---------- 全画面表示（お知らせ・大会情報） ----------
      VIEW ALL で開き、右上の × か Esc で閉じる。開いている間は背面を止める。 */
-  /* opts.shared … { from: セレクタ }：開くとき、ページに見えている行（from）と全画面の中の同じ行（href が同じ）を
-     同一ページのビュートランジションでつなぎ、その場所から全画面での位置へ滑らかに移してから残りを出す（対応ブラウザのみ） */
+  /* opts.shared … { from: セレクタ, parts: [セレクタ…] }：開くとき、ページに見えている行（from）と全画面の中の同じ行（href が同じ）を
+     同一ページのビュートランジションでつなぎ、その場所から全画面での位置へ滑らかに移してから残りを出す（対応ブラウザのみ）。
+     parts を渡すと、行の中のその要素（コート案内の写真・施設名・サーフェス）もそれぞれ自分の位置へ別々に移る */
   /* 横に 1 行で並べる列（.hscroll。大会結果の年度・地図の施設）。はみ出しの有無と位置を class で付け、
      CSS が端の透かしと「scroll →」の案内を出し分ける */
   function initHScroll() {
@@ -383,12 +384,19 @@
       if (!opts || !opts.shared || reduceMotion) return [];
       var froms = document.querySelectorAll(opts.shared.from);
       var tos = panel.querySelectorAll('a[href]');
-      var pairs = [], used = [];
+      var pairs = [], used = [], parts = opts.shared.parts || [];
       Array.prototype.forEach.call(froms, function (a) {
         if (panel.contains(a)) return; // 全画面の中の行は「ページに見えている行」ではない
         var href = a.getAttribute('href');
         for (var k = 0; k < tos.length; k++) {
-          if (used.indexOf(tos[k]) < 0 && tos[k].getAttribute('href') === href) { pairs.push([a, tos[k]]); used.push(tos[k]); break; }
+          if (used.indexOf(tos[k]) < 0 && tos[k].getAttribute('href') === href) {
+            pairs.push([a, tos[k]]); used.push(tos[k]);
+            parts.forEach(function (sel) {
+              var pa = a.querySelector(sel), pb = tos[k].querySelector(sel);
+              if (pa && pb) pairs.push([pa, pb]);
+            });
+            break;
+          }
         }
       });
       return pairs;
@@ -1265,7 +1273,7 @@
     initHScroll();
     initFullPanel('news-all', '[data-news-open]', '[data-news-close]', { shared: { from: '#news .news-row' } });
     initFullPanel('tournaments-all', '[data-tall-open]', '[data-tall-close]');
-    initFullPanel('court-all', '[data-court-open]', '[data-court-close]');
+    initFullPanel('court-all', '[data-court-open]', '[data-court-close]', { shared: { from: '#courts .court-item', parts: ['.court-item__photo', '.court-item__head', '.court-item__spec'] } });
     initCourtMap();
     initCalendar();
     initFooterDeco();
