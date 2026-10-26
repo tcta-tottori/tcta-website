@@ -820,8 +820,27 @@
     toggle.addEventListener('click', function () {
       setOpen(toggle.getAttribute('aria-expanded') !== 'true');
     });
+    /* メニューのリンクを押したとき：すぐには移動せず、閉じる動き（行が順にヘッダーの下へ戻る）を流し切ってから
+       次のページへ移る。押した時点で次のページの読み込み（prefetch）を始めておくので、閉じ終わった瞬間に
+       次のページが出る。別タブ・修飾キー付き・ページ内リンクはそのまま。動きを減らす設定ならすぐ移動する。 */
+    var closeMs = function () {
+      var cs = getComputedStyle(menu);
+      var sec = function (v) { var n = parseFloat(v); return isNaN(n) ? 0 : (/ms$/.test(v) ? n / 1000 : n); };
+      return Math.round((sec(cs.getPropertyValue('--mn-stagger')) + sec(cs.getPropertyValue('--mn-out'))) * 1000) || 600;
+    };
     menu.addEventListener('click', function (e) {
-      if (e.target.closest('a')) setOpen(false);
+      var a = e.target.closest('a');
+      if (!a) return;
+      var href = a.getAttribute('href') || '';
+      var plain = href && href.charAt(0) !== '#' && a.target !== '_blank'
+        && !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0;
+      if (!plain || reduceMotion) { setOpen(false); return; }
+      e.preventDefault();
+      var pre = document.createElement('link');
+      pre.rel = 'prefetch'; pre.href = a.href; pre.as = 'document';
+      document.head.appendChild(pre);
+      setOpen(false);
+      setTimeout(function () { window.location.href = a.href; }, closeMs());
     });
     document.addEventListener('keydown', function (e) {
       if (e.key === 'Escape' && toggle.getAttribute('aria-expanded') === 'true') {
