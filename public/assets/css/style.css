@@ -819,15 +819,16 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   /* 順番を 0〜1 に直したもの。--t は上から、--tc は下から数えたときの位置 */
   --t: calc(var(--i, 0) / max(var(--n, 1) - 1, 1));
   --tc: calc(1 - var(--t));
-  /* 閉じるとき：下の行から順に。下の行ほど間隔が広くゆっくり、上へ行くほど詰まって速く */
-  transition: transform calc(var(--mn-out) - (var(--mn-out) - var(--mn-out-short)) * var(--tc)) var(--mn-ease-out);
-  transition-delay: calc((2 * var(--tc) - var(--tc) * var(--tc)) * var(--mn-stagger));
+  /* 閉じるとき：下の行から順に。下の行ほど間隔が広くゆっくり、上へ行くほど詰まって速く。
+     文字の色（今のページの赤 → 黒）は遅れなしで変える（行を押したときに同じタイミングで戻す） */
+  transition: transform calc(var(--mn-out) - (var(--mn-out) - var(--mn-out-short)) * var(--tc)) var(--mn-ease-out), color .35s ease-out;
+  transition-delay: calc((2 * var(--tc) - var(--tc) * var(--tc)) * var(--mn-stagger)), 0s;
 }
 .mobile-nav.is-open .mobile-nav__item {
   transform: none;
   /* 開くとき：上の行から順に。上の行ほど間隔が広くゆっくり、下へ行くほど詰まって速く */
-  transition: transform calc(var(--mn-in) - (var(--mn-in) - var(--mn-in-short)) * var(--t)) var(--mn-ease-in);
-  transition-delay: calc((2 * var(--t) - var(--t) * var(--t)) * var(--mn-stagger));
+  transition: transform calc(var(--mn-in) - (var(--mn-in) - var(--mn-in-short)) * var(--t)) var(--mn-ease-in), color .35s ease-out;
+  transition-delay: calc((2 * var(--t) - var(--t) * var(--t)) * var(--mn-stagger)), 0s;
 }
 @media (prefers-reduced-motion: reduce) {
   .mobile-nav, .mobile-nav.is-open, .mobile-nav__item, .mobile-nav.is-open .mobile-nav__item {
@@ -850,6 +851,8 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   color: var(--ink);
 }
 .mobile-nav__link .ar { color: var(--red); }
+/* 今のページの行は赤。別の行を押したときは、押した行が赤く光るのと同じタイミングで黒に戻る
+   （main.js が .is-active を外す。色の transition は上の .mobile-nav__item の transition に入れてある） */
 .mobile-nav__link.is-active { color: var(--red); }
 /* 押した行：文字を赤にして、その瞬間に一瞬光る（白く光ってから赤に落ち着く。行の地も薄い赤がさっと引く）。
    main.js が押したときに .is-tapped を付ける（端末の波紋はこの行には出さない） */
