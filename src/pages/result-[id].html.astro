@@ -14,6 +14,7 @@
 import Base from '../layouts/Base.astro';
 import EventSection from '../components/EventSection.astro';
 import EventResult from '../components/EventResult.astro';
+import AwardLine from '../components/AwardLine.astro';
 import { siteData } from '../lib/cms.js';
 import { groupById, GROUPS_BY_YEAR, photoBlocks, imageRuns, clubDivisions, divisionChampion } from '../data/results.js';
 import { sortByCategory } from '../data/category-order.js';
@@ -121,9 +122,12 @@ let photoNo = 0;
       {club && (
         <>
           {/* 部へのジャンプ。長いページなので、見たい部へすぐ飛べるように */}
-          <nav class="jump rv" style="margin-top:0" aria-label="部へ移動">
-            {club.divisions.map((d) => <a class="jump__link" href={`#${anchor(d.name)}`}>{d.name}</a>)}
-            {g.galleryHref && <a class="jump__link" href="#gallery">ギャラリー<span class="jump__n">{g.galleryPhotos}</span></a>}
+          <nav class="jump jump--scroll hscroll rv" data-hscroll style="margin-top:0" aria-label="部へ移動">
+            <div class="jump__track hscroll__track">
+              {club.divisions.map((d) => <a class="jump__link" href={`#${anchor(d.name)}`}>{d.name}</a>)}
+              {g.galleryHref && <a class="jump__link" href="#gallery">ギャラリー<span class="jump__n">{g.galleryPhotos}</span></a>}
+            </div>
+            <span class="hscroll__hint" aria-hidden="true"><span class="hscroll__arrow"></span>SCROLL</span>
           </nav>
 
           {club.divisions.map((d) => {
@@ -132,7 +136,6 @@ let photoNo = 0;
               <section class="division rv" id={anchor(d.name)}>
                 <h2 class="division__head">
                   <span class="division__name">{d.name}</span>
-                  {champ && <span class="division__champ"><span class="division__award">優勝</span>{champ}</span>}
                 </h2>
                 {/* リーグ表 → その下に優勝クラブの写真（横には並べない） */}
                 <div class="rblock">
@@ -160,7 +163,7 @@ let photoNo = 0;
                   {caption(d) && (
                     <p class="rblock__caption">
                       <span class="rblock__cat">{d.name}</span>
-                      {caption(d)}
+                      <AwardLine items={d.places.filter((pl) => pl.name)} />
                     </p>
                   )}
                 </div>
@@ -222,7 +225,6 @@ let photoNo = 0;
               {b.category && (
                 <h2 class="division__head">
                   <span class="division__name">{b.category}</span>
-                  {b.caption && <span class="division__champ">{b.caption.split('　')[0]}</span>}
                 </h2>
               )}
               <div class="rblock">
@@ -249,7 +251,7 @@ let photoNo = 0;
                 {b.caption && (
                   <p class="rblock__caption">
                     {b.category && <span class="rblock__cat">{b.category}</span>}
-                    {b.caption}
+                    <AwardLine text={b.caption} />
                   </p>
                 )}
               </div>
@@ -262,7 +264,7 @@ let photoNo = 0;
               {p.loose.map((c) => (
                 <p class="rblock__caption">
                   <span class="rblock__cat">{c.category || '種目'}</span>
-                  {caption(c)}
+                  <AwardLine items={c.places.filter((pl) => pl.name)} />
                 </p>
               ))}
             </div>
