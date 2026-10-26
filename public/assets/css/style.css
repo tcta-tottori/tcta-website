@@ -494,6 +494,17 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 }
 /* 項目の重なり（z-index）を一覧の中に閉じ込め、追従する見出し（z-index:1）より常に下にする */
 .news-all__body .news-list, .news-all__body .sch-list, .tall__list { isolation: isolate; }
+/* 見出しと最初の項目のあいだの余白も見出しと同じ白で覆う（下の項目がここを通り過ぎる一瞬に文字が見えないように）。
+   余白の高さ：お知らせ・コート案内は 8px（.news-all__body の一覧の margin-top）、大会情報は 28px（.tall__body の padding-top） */
+.news-all__head::after, .tall__head::after {
+  content: '';
+  position: absolute;
+  top: calc(100% + 1px); left: 0; right: 0; /* 見出しの下線（1px）の下から */
+  height: 8px;
+  background: var(--white);
+  pointer-events: none;
+}
+.tall__head::after { height: 28px; }
 @media (prefers-reduced-motion: reduce) { .panel-item, .is-closing .panel-item { animation: none; } }
 
 /* 見出しの塗り替え。薄いグレーで出しきってから 0.1秒 そのまま置き、
@@ -732,12 +743,25 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   transition: none;
 }
 .mobile-nav nav {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: var(--mn-gap);
   padding-top: 24px;
   /* 上だけ切り取る（左右と下は余白ぶん広げて、フォーカスの枠が切れないように） */
   clip-path: inset(0 -24px -24px -24px);
+}
+/* ヘッダーと最初の行のあいだの余白（24px）を白い帯で覆う。
+   下の行はここを通って最初の行の裏へ潜るので、覆わないと通り過ぎる一瞬だけ文字が見えてしまう。
+   帯は全行より手前に置く（行の z-index は項目数まで）。 */
+.mobile-nav nav::before {
+  content: '';
+  position: absolute;
+  top: 0; left: -24px; right: -24px;
+  height: 24px;
+  background: var(--white);
+  z-index: 1000;
+  pointer-events: none;
 }
 .mobile-nav__item {
   /* 上の項目ほど手前に重ねる */

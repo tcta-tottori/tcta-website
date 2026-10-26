@@ -24,7 +24,7 @@ Cloudflare Workers で公開しています（2026-10-21 に GitHub Pages から
 │   │   ├── gallery-[id].astro   その大会の当日の写真（写真だけのページが12枚以上あるとき、結果とは別に）
 │   │   ├── club.astro           クラブ対抗戦（今年度の各部の結果・編成表・これまでの優勝クラブ）
 │   │   ├── lesson.astro         水曜テニス教室
-│   │   ├── tennis-day.astro     テニス祭り（テニスの日）
+│   │   ├── tennis-day.astro     イベント情報（テニス祭り。開催記録は data/tennisday-archive.js）
 │   │   ├── membership.astro     協会登録（入会案内）
 │   │   ├── about.astro          協会について
 │   │   ├── links.astro          リンク集
