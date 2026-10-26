@@ -291,6 +291,28 @@
   /* opts.shared … { from: セレクタ, parts: [セレクタ…] }：開くとき、ページに見えている行（from）と全画面の中の同じ行（href が同じ）を
      同一ページのビュートランジションでつなぎ、その場所から全画面での位置へ滑らかに移してから残りを出す（対応ブラウザのみ）。
      parts を渡すと、行の中のその要素（コート案内の写真・施設名・サーフェス）もそれぞれ自分の位置へ別々に移る */
+  /* クラブ対抗戦の年度のアコーディオン（details.champ）。ひらくときは中身の .panel-item が CSS の動きで
+     見出しの裏から順に滑り出す。閉じるときは逆の動き（.is-closing）を流してから閉じる */
+  function initChampAccordion() {
+    document.querySelectorAll('details.champ').forEach(function (d) {
+      var sum = d.querySelector('summary');
+      var body = d.querySelector('.champ__body');
+      if (!sum || !body) return;
+      var closing = null;
+      sum.addEventListener('click', function (e) {
+        if (!d.open || reduceMotion || !body.querySelector('.panel-item')) return; // ひらくときはそのまま
+        e.preventDefault();
+        if (closing) return;
+        body.classList.add('is-closing');
+        closing = setTimeout(function () {
+          body.classList.remove('is-closing');
+          d.open = false;
+          closing = null;
+        }, 450);
+      });
+    });
+  }
+
   /* 横に 1 行で並べる列（.hscroll。大会結果の年度・地図の施設）。はみ出しの有無と位置を class で付け、
      CSS が端の透かしと「scroll →」の案内を出し分ける */
   function initHScroll() {
@@ -1271,6 +1293,7 @@
     initRipple();
     initPressed();
     initHScroll();
+    initChampAccordion();
     initFullPanel('news-all', '[data-news-open]', '[data-news-close]', { shared: { from: '#news .news-row' } });
     initFullPanel('tournaments-all', '[data-tall-open]', '[data-tall-close]');
     initFullPanel('court-all', '[data-court-open]', '[data-court-close]', { shared: { from: '#courts .court-item', parts: ['.court-item__photo', '.court-item__head', '.court-item__spec'] } });

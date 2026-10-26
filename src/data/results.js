@@ -77,7 +77,7 @@ export const ALL_RESULTS = RESULTS.flatMap((y) =>
  *   ・「佐々木杯」と「佐々木杯（写真）」
  * results.json もその単位のままなので、同じ大会を1つに束ねる。
  * 詳細ページ（result-*.html）も束ねた単位で1ページ。
- * クラブ対抗戦は年度の中の全ページを1つに束ね、部の順（男子1部→8部、女子1部→5部）に並べ直す（下の clubDivisions）。
+ * クラブ対抗戦は年度の中の全ページを1つに束ね、部の順（男子1部→8部 → 男子予選会 → 女子1部→5部 → 女子予選会）に並べ直す（下の clubDivisions）。
  * 写真だけのページ（ギャラリー）は、結果のある大会では別ページ（gallery-*.html）に出す。
  * ====================================================================== */
 
@@ -201,11 +201,17 @@ export function divisionOf(category) {
   return { name: `${m[1]}${m[2]}部`, gender: m[1] === '男子' ? 0 : 1, no: Number(m[2]), zone: m[3] };
 }
 
-/** 部の並び順。男子1部→8部、女子1部→5部、部の形でないものは最後 */
-export const divisionOrder = (category) => {
-  const d = divisionOf(category);
-  return d ? d.gender * 100 + d.no : 999;
+/** クラブ対抗戦の部の並び順（クラブ対抗戦のページ・大会ページ共通）。
+ *  男子1部→8部 → 男子予選会 → 女子1部→5部 → 女子予選会。部の形でないものは最後。
+ *  「女子予選会 Bリーグ」「男子8部Aゾーン」のように後ろに何か付いていてもよい */
+export const clubDivisionOrder = (name) => {
+  const m = toAscii(name || '').replace(/\s+/g, '').match(/^(男子|女子)(\d+)?(部|予選会)/);
+  if (!m) return 999;
+  const base = m[1] === '男子' ? 0 : 100;
+  return base + (m[3] === '予選会' ? 50 : Number(m[2]));
 };
+/** 部の並び順（上と同じ。旧名） */
+export const divisionOrder = clubDivisionOrder;
 
 /**
  * 画像を「結果表（1枚以上）→ 写真（0枚以上）」のひとまとまりに切る。

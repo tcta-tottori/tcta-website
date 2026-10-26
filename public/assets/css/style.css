@@ -3668,7 +3668,9 @@ button.dl-item { width: 100%; text-align: left; }
 }
 .champ[open] > .champ__year::after { content: "－"; }
 .champ__count { font: 400 12px/1 var(--flt); color: var(--gray-500); }
-.champ__body { padding: 0 4px 24px; }
+/* 中身は見出しの裏から順に滑り出す（.panel-item）。上にはみ出した分は見せない（見出しの下から出てくるように見せる） */
+.champ__body { padding: 0 4px 24px; overflow: hidden; }
+.champ__list { isolation: isolate; }
 .champ__block + .champ__block { margin-top: 24px; }
 .champ__title {
   display: inline-flex;
