@@ -12,6 +12,7 @@
 //                大会ページは自分の節として出すので false を渡す
 import ClubDivisions from './ClubDivisions.astro';
 import SheetList from './SheetList.astro';
+import AwardLine from './AwardLine.astro';
 import { clubEventLayout } from '../data/club-event.js';
 import { eventResultLayout } from '../data/event-result.js';
 
@@ -33,17 +34,21 @@ let photoNo = 0;
 
 {!club && layout && (
   <>
+    {/* 種目のボタンは 1 行に並べ、収まらない分は横スクロール（.hscroll。端を透かして「→SCROLL」） */}
     {(layout.blocks.length > 1 || (showRest && rest.length > 0)) && (
-      <nav class="jump rv" style="margin-top:0" aria-label="種目へ移動">
-        {layout.blocks.map((b, i) => <a class="jump__link" href={`#${anchor(b.label, i)}`}>{b.label || '結果'}</a>)}
-        {showRest && rest.length > 0 && <a class="jump__link" href="#photos">当日の写真<span class="jump__n">{rest.length}</span></a>}
+      <nav class="jump jump--scroll hscroll rv" data-hscroll style="margin-top:0" aria-label="種目へ移動">
+        <div class="jump__track hscroll__track">
+          {layout.blocks.map((b, i) => <a class="jump__link" href={`#${anchor(b.label, i)}`}>{b.label || '結果'}</a>)}
+          {showRest && rest.length > 0 && <a class="jump__link" href="#photos">当日の写真<span class="jump__n">{rest.length}</span></a>}
+        </div>
+        <span class="hscroll__hint" aria-hidden="true"><span class="hscroll__arrow"></span>SCROLL</span>
       </nav>
     )}
     {layout.blocks.map((b, i) => (
       <section class="division rv" id={anchor(b.label, i)}>
+        {/* 見出しは種目名だけ。入賞者の名前は写真の下（.rblock__caption）にだけ出す */}
         <h2 class="division__head">
           <span class="division__name">{b.label || '結果'}</span>
-          {b.captions.length > 0 && <span class="division__champ">{b.captions[0]}</span>}
         </h2>
         <div class="rblock">
           {/* 結果表（ドロー表・リーグ表） */}
@@ -64,7 +69,7 @@ let photoNo = 0;
                 {b.photos.map((ph) => (
                   <a class="gallery__item" href={ph.src}>
                     <img src={ph.src} alt={`${e.name} ${b.label}${ph.caption ? ' ' + ph.caption : ''} 入賞者の写真 ${++photoNo}`} width={ph.w} height={ph.h} loading="lazy" decoding="async">
-                    {ph.caption && <span class="gallery__cap">{ph.caption}</span>}
+                    {ph.caption && <span class="gallery__cap"><AwardLine texts={[ph.caption]} /></span>}
                   </a>
                 ))}
               </div>
@@ -72,7 +77,7 @@ let photoNo = 0;
           )}
           {/* 入賞者の名前（優勝・準優勝・ベスト4 …） */}
           {b.captions.length > 0 && (
-            <p class="rblock__caption">{b.label && <span class="rblock__cat">{b.label}</span>}{b.captions.join('　')}</p>
+            <p class="rblock__caption">{b.label && <span class="rblock__cat">{b.label}</span>}<AwardLine texts={b.captions} /></p>
           )}
         </div>
       </section>

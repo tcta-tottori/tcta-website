@@ -1,22 +1,26 @@
 ---
 // クラブ対抗戦の部ごとの結果（src/data/club-event.js の clubEventLayout の1件）。
-// 部の見出し（部の名前＋優勝クラブ）→ リーグ表 → その下に優勝クラブの写真 → 「優勝 ○○」の添え書き。
+// 部の見出し（部の名前）→ リーグ表 → その下に優勝クラブの写真 → 「優勝 ○○」の添え書き（優勝クラブの名前は写真の下にだけ出す）。
 // 旧サイトから引き継いだ結果ページ（result-*.html）と同じ見た目（CSS の .division）。
+import AwardLine from './AwardLine.astro';
 const { club, name } = Astro.props;
 const anchor = (key) => `div-${key}`;
-const champion = (d) => d.places.map((p) => `${p.award} ${p.name}`).join('　');
 let photoNo = 0;
 ---
 
-<nav class="jump rv" style="margin-top:0" aria-label="部へ移動">
-  {club.divisions.map((d) => <a class="jump__link" href={`#${anchor(d.key)}`}>{d.key}</a>)}
+{/* 部のボタンは 1 行に並べ、収まらない分は横スクロール（.hscroll。端を透かして「→SCROLL」） */}
+<nav class="jump jump--scroll hscroll rv" data-hscroll style="margin-top:0" aria-label="部へ移動">
+  <div class="jump__track hscroll__track">
+    {club.divisions.map((d) => <a class="jump__link" href={`#${anchor(d.key)}`}>{d.key}</a>)}
+  </div>
+  <span class="hscroll__hint" aria-hidden="true"><span class="hscroll__arrow"></span>SCROLL</span>
 </nav>
 
 {club.divisions.map((d) => (
   <section class="division rv" id={anchor(d.key)}>
+    {/* 見出しは部の名前だけ。優勝クラブは写真の下（.rblock__caption）にだけ出す */}
     <h2 class="division__head">
       <span class="division__name">{d.key}</span>
-      {d.places.length > 0 && <span class="division__champ">{champion(d)}</span>}
     </h2>
     <div class="rblock">
       {d.sheets.length > 0 && (
@@ -38,7 +42,7 @@ let photoNo = 0;
             ))}
           </div>
           {d.places.length > 0 && (
-            <p class="rblock__caption"><span class="rblock__cat">{d.key}</span>{champion(d)}</p>
+            <p class="rblock__caption"><span class="rblock__cat">{d.key}</span><AwardLine items={d.places} /></p>
           )}
         </div>
       )}
