@@ -1,8 +1,13 @@
 ---
 import Base from '../layouts/Base.astro';
 
-const title = "テニス祭り｜鳥取市テニス協会";
-const description = "鳥取市テニス協会のテニス祭り（テニスの日）。2026年10月12日（祝）、鳥取県立鳥取産業体育館メインアリーナで開催。キッズテニス、元プロ 加藤季温コーチのテニスクリニック、ピックルボール体験会など。協会登録は不要、どなたでも参加できます。";
+// イベント情報のページ。中身は毎年秋の「テニス祭り 鳥取イベント」（テニスの日）。
+// 最新回（2026年）の写真・動画・開催概要と、過去の開催記録（src/data/tennisday-archive.js）を載せる。
+// 鳥取健康テニスは大会なので、ここには載せない（大会情報のページにある）。
+import { TENNISDAY_ARCHIVE } from '../data/tennisday-archive.js';
+
+const title = "イベント情報｜鳥取市テニス協会";
+const description = "鳥取市テニス協会のイベント情報。テニス祭り（テニスの日 鳥取イベント）の開催内容と当日の写真・動画、過去の開催記録。2026年は10月12日（祝）に鳥取県立鳥取産業体育館で、キッズテニス、元プロ 加藤季温コーチのテニスクリニック、ピックルボール体験会などを開催しました。";
 
 // 当日のプログラム（募集要項より・時間順）。参加費の書かれていないものは fee を空にしておく。
 const PROGRAM = [
@@ -33,16 +38,16 @@ let photoNo = 0;
     <span class="ghost" aria-hidden="true">EVENT</span>
     <div class="container">
       <nav class="breadcrumb" aria-label="パンくず">
-        <a href="index.html">ホーム</a><span class="breadcrumb__sep" aria-hidden="true">›</span><span aria-current="page">テニス祭り</span>
+        <a href="index.html">ホーム</a><span class="breadcrumb__sep" aria-hidden="true">›</span><span aria-current="page">イベント情報</span>
       </nav>
       <div class="page-title-row fu">
         <span class="sec-head__mark" aria-hidden="true"></span>
         <div>
           <p class="page-title__en">Event</p>
-          <h1 class="page-title">テニス祭り</h1>
+          <h1 class="page-title">イベント情報</h1>
         </div>
       </div>
-      <p class="page-lead fu" style="animation-delay:.15s">2026年10月12日（祝）、鳥取県立鳥取産業体育館メインアリーナで「テニス祭り 鳥取イベント」を開催しました。子ども向けのキッズテニスから、元プロ 加藤季温コーチのクリニック、ピックルボール体験会まで。たくさんの方にお集まりいただき、ありがとうございました。当日の写真と動画をご覧いただけます。</p>
+      <p class="page-lead fu" style="animation-delay:.15s">協会では毎年秋に、どなたでも参加できる「テニス祭り 鳥取イベント」（テニスの日）を開催しています。2026年は10月12日（祝）、鳥取県立鳥取産業体育館メインアリーナで、子ども向けのキッズテニスから元プロ 加藤季温コーチのクリニック、ピックルボール体験会までを行いました。当日の写真と動画、過去の開催記録をご覧いただけます。</p>
     </div>
   </section>
 
@@ -51,8 +56,8 @@ let photoNo = 0;
 
       <div class="rv">
         <div class="esec__head">
-          <h2 class="sub-head" style="margin-bottom:0">イベントギャラリー</h2>
-          <span class="esec__en">Gallery</span>
+          <h2 class="sub-head" style="margin-bottom:0">2026テニス祭り鳥取イベント</h2>
+          <span class="esec__en">2026 Gallery</span>
         </div>
         <p class="note mt-24">先日開催したテニスイベントは、参加者の皆様の熱気に包まれ無事終了しました。たくさんの方にお集まりいただき、誠にありがとうございます。</p>
         <a class="sheet mt-24" href={GALLERY.hero.src} style="display:block">
@@ -152,24 +157,40 @@ let photoNo = 0;
         </dl>
       </div>
 
-      <div class="rv" style="margin-top:56px">
-        <h2 class="sub-head">鳥取健康テニス</h2>
-        <p class="prose" style="max-width:46em">春と秋の年2回、一般の部とジュニアの部に分けて開催しています。協会登録がなくても参加できる大会です。一般はダブルス、ジュニアはシングルスで行います。</p>
-        <div class="card-grid card-grid--2 mt-32">
-          <div class="panel">
-            <p style="margin:0;font:700 15px/1.5 var(--fjp);letter-spacing:.02em;color:var(--ink)">第70回（春期）</p>
-            <p style="margin:10px 0 0;font:700 22px/1 var(--flt);letter-spacing:.04em;color:var(--red)">2026.05.02 <span style="font-size:14px">SAT</span></p>
-            <p style="margin:12px 0 0;font:400 14px/1.8 var(--fjp);color:var(--gray-800)">一般：男女ダブルス／ジュニア：男女シングルス</p>
-          </div>
-          <div class="panel">
-            <p style="margin:0;font:700 15px/1.5 var(--fjp);letter-spacing:.02em;color:var(--ink)">第71回（秋期）</p>
-            <p style="margin:10px 0 0;font:700 22px/1 var(--flt);letter-spacing:.04em;color:var(--red)">2026.11.07 <span style="font-size:14px">SAT</span></p>
-            <p style="margin:12px 0 0;font:400 14px/1.8 var(--fjp);color:var(--gray-800)">一般：男女ダブルス／ジュニア：男女シングルス</p>
-          </div>
-        </div>
-        <p class="note">※ 荒天の場合は中止となります（予備日なし）。</p>
-      </div>
+    </div>
+  </section>
 
+  {/* 過去の開催記録。データは src/data/tennisday-archive.js（新しい年から順）。資料はここから開く。 */}
+  <section class="section" id="archive">
+    <div class="container">
+      <div class="rv">
+        <div class="esec__head">
+          <h2 class="sub-head" style="margin-bottom:0">過去の開催記録</h2>
+          <span class="esec__en">Archive</span>
+        </div>
+        <p class="note mt-24">これまでのテニス祭り（テニスの日 鳥取イベント）の資料です。年ごとに要項・写真・結果などをまとめています。</p>
+      </div>
+      {TENNISDAY_ARCHIVE.map((a) => (
+        <div class="rv panel" style="margin-top:24px" id={`archive-${a.year}`}>
+          <p class="panel__title">{a.year}年　{a.title}</p>
+          <dl class="deflist">
+            <div class="deflist__row"><dt class="deflist__key">日時</dt><dd class="deflist__val" style="margin:0">{a.date}</dd></div>
+            <div class="deflist__row"><dt class="deflist__key">会場</dt><dd class="deflist__val" style="margin:0">{a.venue}</dd></div>
+            {a.summary && <div class="deflist__row"><dt class="deflist__key">内容</dt><dd class="deflist__val" style="margin:0">{a.summary}</dd></div>}
+          </dl>
+          {a.items?.length > 0 && (
+            <ul class="mt-24">
+              {a.items.map((it) => (
+                <li><a class="dl-item" href={it.href} {...(it.kind === 'pdf' || it.kind === 'external' ? { target: '_blank', rel: 'noopener noreferrer' } : {})}>
+                  <span class="dl-item__type">{it.kind === 'pdf' ? 'PDF' : it.kind === 'image' ? '写真' : it.kind === 'external' ? 'LINK' : 'PAGE'}</span>
+                  <span class="dl-item__text"><span class="dl-item__title">{it.label}</span></span>
+                  <span class="sqbtn" aria-hidden="true">{it.kind === 'pdf' ? '↓' : it.kind === 'external' ? '↗' : '→'}</span>
+                </a></li>
+              ))}
+            </ul>
+          )}
+        </div>
+      ))}
     </div>
   </section>
 </Base>
