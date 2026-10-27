@@ -847,13 +847,14 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 /* 今のページの行は赤。別の行を押したときは、押した行が赤く光るのと同じタイミングで黒に戻る
    （main.js が .is-active を外す。色の transition は上の .mobile-nav__item の transition に入れてある） */
 .mobile-nav__link.is-active { color: var(--red); }
-/* 押した行：文字を赤にして、その瞬間に文字だけが一瞬光る（白く光ってから一瞬で赤に戻る。行の地は塗らない）。
+/* 押した行：文字を赤にして、その瞬間に文字の周りから赤いネオンの光が一瞬漏れる（行の地は塗らない）。
    main.js が押したときに .is-tapped を付ける（端末の波紋はこの行には出さない） */
-.mobile-nav__link.is-tapped { color: var(--red); animation: mn-tap-flash .4s linear both; }
-/* 文字だけが一瞬（0.2秒）白く光り、そのあと一瞬で普通の赤文字に戻る（行の地は塗らない）。そのまま閉じる動きへ */
-@keyframes mn-tap-flash {
-  0%, 48%   { color: #fff; text-shadow: 0 0 2px #fff, 0 0 12px rgba(216, 35, 42, .95), 0 0 26px rgba(216, 35, 42, .7); }
-  52%, 100% { color: var(--red); text-shadow: none; }
+.mobile-nav__link.is-tapped { color: var(--red); animation: mn-tap-neon .55s ease-out both; }
+/* 文字は赤のまま。その周りから赤いネオンの光が一瞬だけ漏れて（text-shadow のにじみ）、すっと消える。行の地は塗らない */
+@keyframes mn-tap-neon {
+  0%   { color: var(--red); text-shadow: 0 0 1px rgba(255, 120, 125, .9), 0 0 6px rgba(216, 35, 42, .95), 0 0 16px rgba(216, 35, 42, .8), 0 0 32px rgba(216, 35, 42, .55), 0 0 56px rgba(216, 35, 42, .3); }
+  25%  { text-shadow: 0 0 1px rgba(255, 120, 125, .9), 0 0 6px rgba(216, 35, 42, .95), 0 0 16px rgba(216, 35, 42, .8), 0 0 32px rgba(216, 35, 42, .55), 0 0 56px rgba(216, 35, 42, .3); }
+  100% { color: var(--red); text-shadow: 0 0 0 rgba(216, 35, 42, 0); }
 }
 @media (prefers-reduced-motion: reduce) { .mobile-nav__link.is-tapped { animation: none; } }
 .mobile-nav .btn { margin-top: 28px; }
