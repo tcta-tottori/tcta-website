@@ -1,0 +1,43 @@
+{
+	// 会員登録・大会エントリー一元管理システム（members/）の Worker。
+	// 公式サイト本体（ルートの wrangler.jsonc / tcta-site）とは別の Worker・別の D1 として配備する。
+	// 設計書どおり「会員ポータルは別プロジェクト（サブドメイン）」の構成。
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "tcta-members",
+	"main": "src/index.ts",
+	"compatibility_date": "2026-02-24",
+	"compatibility_flags": ["nodejs_compat"],
+
+	// 会員マスター（正本）。手元では .wrangler/state に SQLite として作られる。
+	// 本番は `wrangler d1 create tcta-members` で作り、database_id をここに書く。
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "tcta-members",
+			"database_id": "00000000-0000-0000-0000-000000000000",
+			"migrations_dir": "migrations"
+		}
+	],
+
+	// CSS などの静的ファイル（Worker が先に動き、/style.css だけ assets から返る）
+	"assets": { "directory": "./public" },
+
+	// 定期実行（締切リマインド・締切処理・退会者の連絡先削除・日次バックアップ）。毎日 09:00 JST。
+	"triggers": { "crons": ["0 0 * * *"] },
+
+	// 公開してよい設定。秘密（DATA_KEY など）は .dev.vars（手元）/ wrangler secret put（本番）。
+	"vars": {
+		"APP_ENV": "production",
+		"APP_NAME": "テニス協会 会員ポータル",
+		"BASE_URL": "https://members.tottori-tenis.net",
+		"MAIL_FROM": "noreply@tottori-tenis.net"
+	},
+
+	"observability": { "enabled": true }
+
+	// 日次バックアップの保存先（設計書: R2 に 90 日保持）。使うときにコメントを外す。
+	// "r2_buckets": [{ "binding": "BACKUP", "bucket_name": "tcta-members-backup" }],
+
+	// 通知メール（Cloudflare Email Sending）。使うときにコメントを外す。無いときは mail_outbox に貯める。
+	// "send_email": [{ "name": "MAIL" }]
+}

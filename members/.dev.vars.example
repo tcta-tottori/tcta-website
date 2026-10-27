@@ -1,0 +1,23 @@
+# 手元（wrangler dev）用の秘密情報。`npm run setup` がこのファイルを .dev.vars に複製する。
+# 本番は `wrangler secret put <名前>` で入れる（.dev.vars は本番に使わない）。
+
+# 手元は開発モード。管理画面は Cloudflare Access の代わりに /admin/login で管理者を選べる。
+APP_ENV=development
+BASE_URL=http://localhost:8787
+
+# 住所・電話・メールの列暗号化の鍵（32 バイトを base64）。本番は必ず作り直す:
+#   node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
+DATA_KEY=ZGV2LW9ubHkta2V5LWRvLW5vdC11c2UtaW4tcHJvZC0wMQ==
+
+# Stripe。STRIPE_SECRET_KEY が無いときは手元のシミュレータ（/dev/stripe/…）で決済を模擬する。
+# Webhook の署名検証はシミュレータでも同じ鍵・同じ方式で行う。
+STRIPE_WEBHOOK_SECRET=whsec_dev_only_secret
+# STRIPE_SECRET_KEY=sk_test_...
+
+# 事務局画面を Cloudflare Access で守るとき（本番）。両方を入れると Access の JWT を検証する。
+# CF_ACCESS_TEAM_DOMAIN=tcta
+# CF_ACCESS_AUD=...
+
+# 公開フォームのボット対策（Turnstile）。入れると登録・ログイン画面に出る。
+# TURNSTILE_SITE_KEY=
+# TURNSTILE_SECRET_KEY=
