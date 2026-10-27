@@ -3614,7 +3614,8 @@ button.dl-item { width: 100%; text-align: left; }
   font: 400 28px/1 var(--flt);
   transition: background .2s ease;
 }
-.lightbox__btn:hover { background: rgba(255, 255, 255, .2); }
+/* ホバーで明るくするのはマウスのときだけ（タッチでは押したあともホバーが残り、白い紙面の上で白くなって見えなくなる） */
+@media (hover: hover) { .lightbox__btn:hover { background: rgba(255, 255, 255, .2); } }
 .lightbox__close { flex: none; }
 .lightbox__stage {
   flex: 1;
@@ -3650,6 +3651,9 @@ button.dl-item { width: 100%; text-align: left; }
   background: rgba(0, 0, 0, .35);
   font-size: 40px;
 }
+/* 前後のボタンは白い紙面の上に重なることが多いので、ホバー・押したあとも暗いまま（白くしない） */
+@media (hover: hover) { .lightbox__nav:hover { background: rgba(0, 0, 0, .55); } }
+.lightbox__nav:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
 .lightbox__nav--prev { left: 6px; }
 .lightbox__nav--next { right: 6px; }
 .lightbox__nav[hidden] { display: none; }
