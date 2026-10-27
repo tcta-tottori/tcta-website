@@ -1,0 +1,34 @@
+---
+// 大会ページ（と要項・ドロー・結果のページ）の上部に出す日程・会場・種目。
+// 大会情報の一覧（TournamentList）の1件と同じ形・同じ CSS（.tl-item__info）。ピクトグラムは出さない。
+//   日付（カレンダー印。「2026.03.22 SUN」、期間・祝日の一言）／会場（地図のピン）／種目（一覧の印）
+import Icon from './Icon.astro';
+import { dateCell } from '../data/schedule.js';
+
+const { e } = Astro.props;
+const c = dateCell(e);
+const date = { ymd: `${String(e.date).slice(0, 4)}.${c.md}`, dow: c.dow, note: c.note };
+// 会場名・種目名は文字の途中で折り返さない。「／」「・」の後ろと「（」の前でだけ折り返してよい（TournamentList と同じ）
+const parts = (text) => String(text ?? '').split(/(?<=[／/・])|(?=（)/);
+---
+
+<div class="tl-item__info tl-item__info--head">
+  <dl class="tl-item__meta">
+    <div class="tl-item__row">
+      <dt><Icon name="calendar" class="tl-item__ico" /><span class="visually-hidden">日程</span></dt>
+      <dd class="tl-item__date">
+        <span class="tl-item__ymd">{date.ymd}</span><span class="tl-item__dow">{date.dow}</span>
+        {date.note && <span class="tl-item__date-note">{date.note}</span>}
+      </dd>
+    </div>
+    <div class="tl-item__row">
+      <dt><Icon name="pin" class="tl-item__ico" /><span class="visually-hidden">会場</span></dt>
+      <dd class="tl-item__place">{parts(e.place).map((part, i, arr) => <>{part}{i < arr.length - 1 && <wbr />}</>)}</dd>
+    </div>
+  </dl>
+  {e.event && (
+    <div class="tl-item__event">
+      <span class="tl-item__event-text"><Icon name="list" class="tl-item__ico" /><span class="visually-hidden">種目：</span><span class="tl-item__event-label">{parts(e.event).map((part, i, arr) => <>{part}{i < arr.length - 1 && <wbr />}</>)}</span></span>
+    </div>
+  )}
+</div>

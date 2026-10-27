@@ -2,6 +2,7 @@
 // 大会1件の「要項」「ドロー」「結果」それぞれの独立したページの土台。
 // 見出し（■ ENGLISH ／ 日本語）、パンくず、期日・会場、本文（slot）、大会ページへの戻り、の順。
 import Base from '../layouts/Base.astro';
+import EventMeta from './EventMeta.astro';
 
 const { e, label, en, ghost = en.toUpperCase() } = Astro.props;
 const title = `${e.displayName} ${label}｜大会情報｜鳥取市テニス協会`;
@@ -25,10 +26,11 @@ const description = `${e.label}に${e.place}で行われる${e.name}（${e.event
           <h1 class="page-title">{e.name}　{label}</h1>
         </div>
       </div>
-      <p class="page-lead fu" style="animation-delay:.15s">
+      {/* 受付状態のバッジと、日程・会場・種目（大会情報の一覧と同じ形。ピクトグラムは無し） */}
+      <p class="page-lead page-lead--tags fu" style="animation-delay:.15s">
         <span class={`badge ${e.badge.badge}`}>{e.badge.label}</span>
-        <span style="margin-left:12px">{e.label}　／　{e.event}　／　{e.place}</span>
       </p>
+      <div class="fu" style="animation-delay:.2s"><EventMeta e={e} /></div>
     </div>
   </section>
 

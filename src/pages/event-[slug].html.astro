@@ -7,6 +7,7 @@
 // 終わった大会なら結果が先、これからの大会なら要項が先に来る。
 import Base from '../layouts/Base.astro';
 import EventResult from '../components/EventResult.astro';
+import EventMeta from '../components/EventMeta.astro';
 import { siteData } from '../lib/cms.js';
 import { clubEventLayout } from '../data/club-event.js';
 import { eventResultLayout } from '../data/event-result.js';
@@ -68,15 +69,16 @@ const description = `${e.label}に${e.place}で行われる${e.name}（${e.event
       <div class="page-title-row fu">
         <span class="sec-head__mark" aria-hidden="true"></span>
         <div>
-          <p class="page-title__en">{e.chip.md}<span style="margin-left:10px">{e.chip.dow}</span></p>
+          <p class="page-title__en">{e.hasResult ? 'Result' : 'Entry'}</p>
           <h1 class="page-title">{e.name}</h1>
         </div>
       </div>
-      <p class="page-lead fu" style="animation-delay:.15s">
+      {/* 受付状態・登録区分のバッジと、日程・会場・種目（大会情報の一覧と同じ形。ピクトグラムは無し） */}
+      <p class="page-lead page-lead--tags fu" style="animation-delay:.15s">
         <span class={`badge ${e.badge.badge}`}>{e.badge.label}</span>
         <span class={`reg reg--${e.reg}`} style="margin-left:8px">{e.regLabel}</span>
-        <span style="margin-left:12px">{e.event}　／　{e.place}</span>
       </p>
+      <div class="fu" style="animation-delay:.2s"><EventMeta e={e} /></div>
 
       {(sections.length + (hasResultBlock ? 1 : 0)) > 1 && (
         <nav class="jump fu" style="animation-delay:.3s" aria-label="このページの内容">
