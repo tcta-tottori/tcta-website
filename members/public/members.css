@@ -4,6 +4,21 @@
    ポータル固有の部品（表・フォーム・バッジ・カード・状態の帯）を同じ規則で整える。
    ========================================================================== */
 
+/* ---- 文字のロゴ（協会ロゴの代わり。赤い四角＋英字＋日本語）---- */
+.brand { display: inline-flex; align-items: center; gap: 10px; color: var(--ink); }
+.brand__mark { flex: none; width: 24px; height: 24px; background: var(--red); }
+.brand__text { display: flex; flex-direction: column; gap: 2px; line-height: 1; }
+.brand__en { font: 700 15px/1 var(--fdisp); letter-spacing: .14em; white-space: nowrap; }
+.brand__ja { font: 500 10px/1 var(--fjp); letter-spacing: .12em; color: var(--gray-600); white-space: nowrap; }
+@media (min-width: 1024px) { .brand__mark { width: 28px; height: 28px; } .brand__en { font-size: 17px; } .brand__ja { font-size: 11px; } }
+.brand--white { color: #fff; }
+.brand--white .brand__ja { color: rgba(255, 255, 255, .7); }
+.site-footer .brand { align-items: flex-start; }
+.site-footer .brand__mark { width: 28px; height: 28px; }
+.site-footer .brand__en { font-size: 16px; white-space: normal; line-height: 1.25; }
+.site-footer .brand__ja { font-size: 11px; }
+.site-footer__brand { padding-right: 16px; }
+
 /* ---- ヘッダー：ロゴの横の小さな札（会員ポータル／事務局）---- */
 .site-header__logo { align-items: center; gap: 12px; }
 .site-header__tag {
@@ -178,3 +193,10 @@ form.inline { display: inline; }
 
 /* ---- 事務局のページは本文を広く使う ---- */
 body.is-admin .portal-body { max-width: none; }
+
+/* ---- 参加資格の判定 ---- */
+.elig { display: inline-block; padding: 2px 8px; border-radius: 2px; font: 700 12px/1.6 var(--fjp); letter-spacing: .02em; white-space: nowrap; }
+.elig--ok { border: 1px solid var(--ink); color: var(--ink); }
+.elig--ng { background: var(--red-tint); color: var(--red-dark); }
+p.elig { display: inline-block; margin: 0 0 8px; padding: 6px 12px; font-size: 14px; }
+.elig-rows { margin: 8px 0 0; padding: 0; list-style: none; font: 400 14px/1.8 var(--fjp); color: var(--gray-800); }

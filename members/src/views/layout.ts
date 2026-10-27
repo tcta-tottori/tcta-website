@@ -6,7 +6,8 @@
 import { html, raw } from 'hono/html';
 import type { HtmlEscapedString } from 'hono/utils/html';
 import type { Ctx } from '../app';
-import { isDemo, isProd } from '../env';
+import { type Env, isDemo, isProd } from '../env';
+import { all } from '../lib/db';
 import { takeFlash } from '../lib/session';
 import { STATUS_LABEL, type Admin, type Member, ROLE_LABEL } from '../types';
 
@@ -92,8 +93,8 @@ export function page(c: Ctx, o: LayoutOpts): H {
 
 <header class="site-header">
   <div class="container site-header__inner">
-    <a class="site-header__logo" href="${homeHref}" aria-label="鳥取市テニス協会 会員ポータル">
-      <img src="/assets/img/logo.png" alt="鳥取市テニス協会 TOTTORI-CITY TENNIS ASSOCIATION" width="701" height="240">
+    <a class="site-header__logo" href="${homeHref}" aria-label="${env.APP_NAME} ホーム">
+      ${brand(env, false)}
       <span class="site-header__tag">${o.admin ? '事務局' : '会員ポータル'}${isDemo(env) ? html` <em>DEMO</em>` : ''}</span>
     </a>
     <nav class="nav ${o.admin ? 'nav--admin' : ''}" aria-label="グローバルナビゲーション">
@@ -147,7 +148,7 @@ ${dev ? html`<div class="demo-bar" role="region" aria-label="デモ環境の案�
   ${!o.admin ? cta(o.member ?? null) : ''}
 </main>
 
-${footer(siteUrl, o.admin ?? null)}
+${footer(c, siteUrl, o.admin ?? null)}
 
 <script src="/members.js" defer></script>
 <script src="/assets/js/main.js" defer></script>
@@ -164,7 +165,7 @@ function memberItems(m: Member | null, siteUrl: string): NavItem[] {
     items.push({ href: '/login', label: '会員登録' });
   }
   items.push({ href: '/admin', label: '事務局' });
-  items.push({ href: siteUrl, label: '公式サイト', external: true });
+  items.push({ href: siteUrl, label: '協会サイト', external: true });
   return items;
 }
 
@@ -244,14 +245,23 @@ const FOOTER_DOTS = [
   '--x:20.5%;--y:26.3%;--s:85px;--c:#232323;--d:10.1s;--delay:-7.8s;--dx:1px;--dy:7px;--depth:0.65;--r:-0.0deg',
 ];
 
-function footer(siteUrl: string, admin: Admin | null) {
+/* 文字のロゴ。協会のロゴ画像は使わず、参加するどの協会にも通用する共通ブランドにする（赤い四角＋英字＋日本語） */
+function brand(env: Env, white: boolean) {
+  const en = env.APP_BRAND_EN || 'TENNIS MEMBERS';
+  return html`<span class="brand ${white ? 'brand--white' : ''}"><span class="brand__mark" aria-hidden="true"></span><span class="brand__text"><span class="brand__en">${en}</span><span class="brand__ja">${env.APP_NAME.replace(/（デモ）$/, '')}</span></span></span>`;
+}
+
+async function footer(c: Ctx, siteUrl: string, admin: Admin | null) {
+  const env = c.env;
+  // 参加している協会を並べる（共同利用の主体が分かるように）
+  const assocs = await all<{ name: string }>(env.DB, "SELECT name FROM associations ORDER BY (id LIKE '%pref%') DESC, name").catch(() => [] as { name: string }[]);
   return html`
 <footer class="site-footer">
   <div class="footer-deco" aria-hidden="true">${FOOTER_DOTS.map((s) => html`<span class="footer-dot" style="${s}"></span>`)}</div>
   <div class="container site-footer__grid">
     <div class="site-footer__brand">
-      <img src="/assets/img/logo-white.png" alt="鳥取市テニス協会 TOTTORI-CITY TENNIS ASSOCIATION" width="648" height="240">
-      <p class="site-footer__note">会員登録・大会エントリー一元管理システム</p>
+      ${brand(env, true)}
+      <p class="site-footer__note">会員登録・大会エントリー一元管理システム${assocs.length ? html`<br>参加協会: ${assocs.map((a) => a.name).join('・')}` : ''}</p>
     </div>
     <div><a class="fw fw--head" href="/">会員ポータル</a></div>
     <div>
@@ -265,7 +275,7 @@ function footer(siteUrl: string, admin: Admin | null) {
       <a class="fw fw--sub" href="/shop">ショップ代行入力</a>
     </div>
     <div>
-      <a class="fw fw--head fw--head-tight" href="${siteUrl}" target="_blank" rel="noopener">公式サイト</a>
+      <a class="fw fw--head fw--head-tight" href="${siteUrl}" target="_blank" rel="noopener">協会サイト</a>
       <a class="fw fw--sub" href="${siteUrl}tournaments.html" target="_blank" rel="noopener">大会情報</a>
       <a class="fw fw--sub" href="${siteUrl}membership.html" target="_blank" rel="noopener">入会案内</a>
     </div>
@@ -275,7 +285,7 @@ function footer(siteUrl: string, admin: Admin | null) {
       <a class="fw" href="#">プライバシーポリシー</a>
       <a class="fw" href="#">会員情報共同利用規程</a>
     </div>
-    <span class="site-footer__copy">© Tottori-City Tennis Association All Rights Reserved.</span>
+    <span class="site-footer__copy">© ${env.APP_BRAND_EN || "Tennis Members"} — ${assocs.length ? "参加協会の共同利用システム" : "テニス協会 共同利用システム"}</span>
   </div>
 </footer>`;
 }

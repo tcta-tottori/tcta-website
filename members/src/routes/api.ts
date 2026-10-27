@@ -7,13 +7,15 @@ import { sha256Hex } from '../lib/crypto';
 import { all, nowIso, one, run } from '../lib/db';
 import { verifyStripeSignature } from '../lib/stripe';
 import { getPayment, markPaid } from '../services/payments';
-import type { Tournament, TournamentEvent } from '../types';
+import type { Association, Tournament, TournamentEvent } from '../types';
+import { describeRule, parseRule } from '../services/eligibility';
 
 export const api = new Hono<{ Bindings: Env }>();
 
 api.get('/v1/health', (c) => c.json({ ok: true, env: c.env.APP_ENV, at: nowIso() }));
 
 api.get('/v1/tournaments', async (c) => {
+  const assocs = await all<Association>(c.env.DB, 'SELECT * FROM associations ORDER BY id');
   const rows = await all<Tournament & { association_name: string }>(
     c.env.DB,
     `SELECT t.*, a.name AS association_name FROM tournaments t JOIN associations a ON a.id = t.association_id WHERE t.status IN ('open','closed') ORDER BY t.held_on`,
@@ -21,7 +23,9 @@ api.get('/v1/tournaments', async (c) => {
   return c.json({
     tournaments: rows.map((t) => ({
       id: t.id, name: t.name, association: t.association_name, heldOn: t.held_on, venue: t.venue, entryStart: t.entry_start, entryEnd: t.entry_end,
-      status: t.status, events: (JSON.parse(t.events_json) as TournamentEvent[]).map((e) => ({ code: e.code, name: e.name, classes: e.classes, fee: e.fee })),
+      status: t.status,
+      eligibility: { description: describeRule(parseRule(t), assocs, t.held_on), rule: parseRule(t), partnerRule: t.partner_rule, note: t.eligibility },
+      events: (JSON.parse(t.events_json) as TournamentEvent[]).map((e) => ({ code: e.code, name: e.name, classes: e.classes, fee: e.fee })),
       entryUrl: `${c.env.BASE_URL}/tournaments/${t.id}`,
     })),
   });

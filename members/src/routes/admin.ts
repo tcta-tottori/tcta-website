@@ -13,6 +13,7 @@ import { createSession, destroySession, flash, readSession } from '../lib/sessio
 import { ulid } from '../lib/ulid';
 import { createMember, decryptContact, findSameNameMembers, normalizeKana, updateMember } from '../services/members';
 import { cancelEntry, getPayment, markPaid } from '../services/payments';
+import { checkEligibility, parseCustomRule, parseRule, presetFor, RULE_PRESETS, ruleToCustomText, shortRule } from '../services/eligibility';
 import { canApproveRegistration, canConfirmPayment, canCreateTournament, canEditMembers, canExportMembers, canImport, canManageAdmins, canViewPii, canViewTournament, memberScope, ownsTournament } from '../services/permissions';
 import { type Admin, type Association, CATEGORY_LABEL, type Club, type Entry, METHOD_LABEL, type Member, type Payment, type Registration, ROLE_LABEL, type Tournament, type TournamentEvent, STATUS_LABEL } from '../types';
 import { badge, page } from '../views/layout';
@@ -298,11 +299,15 @@ admin.get('/tournaments', async (c) => {
       (SELECT COUNT(*) FROM entries e WHERE e.tournament_id = t.id AND e.status = 'confirmed') AS n_confirmed,
       (SELECT COUNT(*) FROM entries e WHERE e.tournament_id = t.id AND e.status = 'pending_payment') AS n_pending
       FROM tournaments t JOIN associations a ON a.id = t.association_id ORDER BY t.held_on DESC`)).filter((t) => canViewTournament(a, t));
+  const assocs = await all<Association>(c.env.DB, 'SELECT * FROM associations ORDER BY id');
   const body = html`${canCreateTournament(a) ? html`<p><a class="btn primary" href="/admin/tournaments/new">大会を作る</a></p>` : ''}
-    <div class="tbl"><table><tr><th>大会</th><th>主催</th><th>開催日</th><th>受付</th><th>確定</th><th>支払待ち</th><th>状態</th></tr>
-    ${rows.map((t) => html`<tr><td><a href="/admin/tournaments/${t.id}">${t.name}</a></td><td>${t.association_name}</td><td>${fmtDate(t.held_on)}</td><td>${fmtDate(t.entry_start)}〜${fmtDate(t.entry_end)}</td><td>${t.n_confirmed}</td><td>${t.n_pending}</td><td>${badge(t.status)}</td></tr>`)}</table></div>`;
+    <div class="tbl"><table><tr><th>大会</th><th>主催</th><th>開催日</th><th>受付</th><th>必要な登録</th><th>確定</th><th>支払待ち</th><th>状態</th></tr>
+    ${rows.map((t) => html`<tr><td><a href="/admin/tournaments/${t.id}">${t.name}</a></td><td>${t.association_name}</td><td>${fmtDate(t.held_on)}</td><td>${fmtDate(t.entry_start)}〜${fmtDate(t.entry_end)}</td><td>${shortRule(parseRule(t), assocs)}</td><td>${t.n_confirmed}</td><td>${t.n_pending}</td><td>${badge(t.status)}</td></tr>`)}</table></div>`;
   return c.html(page(c, { title: '大会', body, admin: a, wide: true }));
 });
+
+/** 県協会の ID（定型「県登録が必要」で使う）。協会コード P を県協会とみなす */
+const PREF_ID = 'tottori-pref';
 
 function tournamentForm(t: Tournament | null, assocs: Association[], a: Admin) {
   const methods = t ? (JSON.parse(t.payment_methods_json) as string[]) : ['stripe', 'bank'];
@@ -313,8 +318,13 @@ function tournamentForm(t: Tournament | null, assocs: Association[], a: Admin) {
     <label>会場 <input type="text" name="venue" value="${t?.venue ?? ''}"></label>
     <label>受付開始 <input type="date" name="entry_start" required value="${t?.entry_start ?? todayJst()}"></label>
     <label>受付締切 <input type="date" name="entry_end" required value="${t?.entry_end ?? ''}"></label>
-    <label>参加資格（表示用） <input type="text" name="eligibility" value="${t?.eligibility ?? '主催協会の当年度登録者'}"></label>
-    <label class="check"><input type="checkbox" name="requires_registration" ${!t || t.requires_registration ? 'checked' : ''}> 主催協会の当年度登録（承認済み）を必須にする</label>
+    <label>参加資格（必要な年度登録）</label>
+    <p class="mute">主催協会は上で選んだ協会、県協会は「${assocs.find((s) => s.id === PREF_ID)?.name ?? '県協会'}」です。年度は開催日で判定し、承認済みの年度登録だけを数えます。</p>
+    <div class="radio-list">${RULE_PRESETS.map((pr) => html`<label><input type="radio" name="rule_preset" value="${pr.key}" ${(t ? presetFor(parseRule(t), t.association_id, PREF_ID) : 'host') === pr.key ? 'checked' : ''}> ${pr.label}</label>`)}</div>
+    <label>協会コードで指定 <textarea name="rule_custom" style="min-height:80px">${t ? ruleToCustomText(parseRule(t), assocs) : ''}</textarea></label>
+    <p class="mute">1 行 1 選択肢（いずれかの行を満たせばよい）。行の中は「+」で結ぶと両方必要。例: 「P+T」と「K」の 2 行 ＝「県と鳥取市の両方」または「倉吉市」。使えるコード: ${assocs.map((s) => `${s.code}＝${s.name}`).join('、')}</p>
+    <label>ペアの扱い <select name="partner_rule"><option value="same" ${(t?.partner_rule ?? 'same') === 'same' ? 'selected' : ''}>ペアも同じ条件を満たす必要がある</option><option value="none" ${t?.partner_rule === 'none' ? 'selected' : ''}>代表だけ判定する（ペアは問わない）</option></select></label>
+    <label>参加資格の補足（表示用・任意） <input type="text" name="eligibility" value="${t?.eligibility ?? ''}" placeholder="例: 70 歳以上はシニアの部のみ"></label>
     <label>種目 <textarea name="events">${eventsText(t)}</textarea></label><p class="mute">${EVENT_HELP}</p>
     <label>使える支払方法</label>${Object.entries(METHOD_LABEL).map(([k, l]) => html`<label class="check"><input type="checkbox" name="methods" value="${k}" ${methods.includes(k) ? 'checked' : ''}> ${l}</label>`)}
     <label>締切時に支払待ちのエントリーを <select name="unpaid_policy"><option value="hold" ${t?.unpaid_policy !== 'cancel' ? 'selected' : ''}>保留して事務局が判断</option><option value="cancel" ${t?.unpaid_policy === 'cancel' ? 'selected' : ''}>自動キャンセル</option></select></label>
@@ -337,15 +347,31 @@ async function saveTournament(c: C, existing: Tournament | null) {
   const events = parseEvents(f.events ?? '');
   if (!events.length || events.some((e) => !e.code || !e.name)) { flash(c, '種目の書式が正しくありません', 'err'); return c.redirect(existing ? `/admin/tournaments/${existing.id}/edit` : '/admin/tournaments/new'); }
   const methods = f.all('methods').filter((m) => m in METHOD_LABEL);
+  const assocs = await all<Association>(c.env.DB, 'SELECT * FROM associations ORDER BY id');
+  const back = existing ? `/admin/tournaments/${existing.id}/edit` : '/admin/tournaments/new';
+  const preset = RULE_PRESETS.find((p) => p.key === f.rule_preset) ?? RULE_PRESETS[0];
+  let rule = preset.key === 'custom' ? null : preset.build(assocId, assocs.some((s) => s.id === PREF_ID) ? PREF_ID : null);
+  if (preset.key !== 'custom' && rule === null) { flash(c, 'この定型には県協会の登録が必要ですが、県協会がありません', 'err'); return c.redirect(back); }
+  if (preset.key === 'custom') {
+    const parsed = parseCustomRule(f.rule_custom ?? '', assocs);
+    if ('error' in parsed) { flash(c, parsed.error, 'err'); return c.redirect(back); }
+    rule = parsed;
+  }
   const id = existing?.id ?? `T-${ulid().slice(-8)}`;
-  const vals = [assocId, f.name.trim(), f.held_on, f.venue || null, f.entry_start, f.entry_end, f.eligibility || null, f.requires_registration ? 1 : 0, JSON.stringify(events), JSON.stringify(methods.length ? methods : ['bank']), f.unpaid_policy === 'cancel' ? 'cancel' : 'hold', f.capacity ? Number(f.capacity) : null, ['draft', 'open', 'closed'].includes(f.status) ? f.status : 'draft'];
-  if (existing) await run(c.env.DB, `UPDATE tournaments SET association_id = ?, name = ?, held_on = ?, venue = ?, entry_start = ?, entry_end = ?, eligibility = ?, requires_registration = ?, events_json = ?, payment_methods_json = ?, unpaid_policy = ?, capacity = ?, status = ? WHERE id = ?`, ...vals, id);
-  else await run(c.env.DB, `INSERT INTO tournaments (id, association_id, name, held_on, venue, entry_start, entry_end, eligibility, requires_registration, events_json, payment_methods_json, unpaid_policy, capacity, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, id, ...vals, nowIso());
+  const vals = [assocId, f.name.trim(), f.held_on, f.venue || null, f.entry_start, f.entry_end, f.eligibility || null, rule!.length ? 1 : 0, JSON.stringify(rule), f.partner_rule === 'none' ? 'none' : 'same', JSON.stringify(events), JSON.stringify(methods.length ? methods : ['bank']), f.unpaid_policy === 'cancel' ? 'cancel' : 'hold', f.capacity ? Number(f.capacity) : null, ['draft', 'open', 'closed'].includes(f.status) ? f.status : 'draft'];
+  if (existing) await run(c.env.DB, `UPDATE tournaments SET association_id = ?, name = ?, held_on = ?, venue = ?, entry_start = ?, entry_end = ?, eligibility = ?, requires_registration = ?, eligibility_json = ?, partner_rule = ?, events_json = ?, payment_methods_json = ?, unpaid_policy = ?, capacity = ?, status = ? WHERE id = ?`, ...vals, id);
+  else await run(c.env.DB, `INSERT INTO tournaments (id, association_id, name, held_on, venue, entry_start, entry_end, eligibility, requires_registration, eligibility_json, partner_rule, events_json, payment_methods_json, unpaid_policy, capacity, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, id, ...vals, nowIso());
   await audit(c.env, { ...actor(c), action: existing ? 'tournament.update' : 'tournament.create', target: `tournament:${id}`, after: { name: f.name, status: f.status } });
   flash(c, '大会を保存しました');
   return c.redirect(`/admin/tournaments/${id}`);
 }
 admin.post('/tournaments', async (c) => (canCreateTournament(A(c)) ? saveTournament(c, null) : c.text('forbidden', 403)));
+
+function describeRuleForAdmin(t: Tournament, assocs: Association[]) {
+  const rule = parseRule(t);
+  if (!rule.length) return '誰でも参加できる（登録不要）';
+  return rule.map((row) => row.map((id) => assocs.find((a) => a.id === id)?.name ?? id).join(' ＋ ')).join('、または ');
+}
 
 async function loadOwned(c: C): Promise<Tournament | null> {
   const t = await one<Tournament>(c.env.DB, 'SELECT * FROM tournaments WHERE id = ?', c.req.param('id'));
@@ -384,12 +410,19 @@ admin.get('/tournaments/:id', async (c) => {
   const events = JSON.parse(t.events_json) as TournamentEvent[];
   const evName = (code: string) => events.find((e) => e.code === code)?.name ?? code;
   const tokens = await all<{ label: string | null; expires_at: string; created_at: string; last_used_at: string | null }>(c.env.DB, 'SELECT label, expires_at, created_at, last_used_at FROM api_tokens WHERE tournament_id = ? ORDER BY created_at DESC', t.id);
+  const assocsAll = await all<Association>(c.env.DB, 'SELECT * FROM associations ORDER BY id');
+  // ペア・代表の参加資格（取込みや承認の取消で後から足りなくなることがあるので、一覧でも確かめる）
+  const eligOf = new Map<string, boolean>();
+  for (const r of rows) {
+    for (const id of [r.member_id, r.partner_member_id]) if (id && !eligOf.has(id)) eligOf.set(id, (await checkEligibility(c.env, id, t, assocsAll)).ok);
+  }
+  const eligMark = (id: string | null) => (id && parseRule(t).length ? (eligOf.get(id) ? '' : html` <span class="elig elig--ng" title="年度登録が足りません">登録不足</span>`) : '');
   const owns = ownsTournament(a, t);
-  const body = html`<div class="card"><dl class="kv"><dt>開催日</dt><dd>${fmtDate(t.held_on)} ${t.venue ?? ''}</dd><dt>受付</dt><dd>${fmtDate(t.entry_start)}〜${fmtDate(t.entry_end)}</dd><dt>状態</dt><dd>${badge(t.status)}</dd><dt>支払方法</dt><dd>${(JSON.parse(t.payment_methods_json) as string[]).map((k) => METHOD_LABEL[k]?.split('（')[0]).join(' / ')}</dd><dt>締切時の支払待ち</dt><dd>${t.unpaid_policy === 'cancel' ? '自動キャンセル' : '保留（事務局判断）'}</dd></dl>
+  const body = html`<div class="card"><dl class="kv"><dt>開催日</dt><dd>${fmtDate(t.held_on)} ${t.venue ?? ''}</dd><dt>受付</dt><dd>${fmtDate(t.entry_start)}〜${fmtDate(t.entry_end)}</dd><dt>状態</dt><dd>${badge(t.status)}</dd><dt>支払方法</dt><dd>${(JSON.parse(t.payment_methods_json) as string[]).map((k) => METHOD_LABEL[k]?.split('（')[0]).join(' / ')}</dd><dt>締切時の支払待ち</dt><dd>${t.unpaid_policy === 'cancel' ? '自動キャンセル' : '保留（事務局判断）'}</dd><dt>参加資格</dt><dd>${describeRuleForAdmin(t, assocsAll)}${t.partner_rule === 'same' && parseRule(t).length ? '（ペアも同じ条件）' : ''}</dd></dl>
     <div class="actions">${canCreateTournament(a) ? html`<a class="btn btn--outline" href="/admin/tournaments/${t.id}/edit">編集</a>` : ''}${owns ? html`<a class="btn btn--outline" href="/admin/tournaments/${t.id}/entries.csv">ドロー会議用 CSV</a>${t.status === 'open' ? html`<form method="post" action="/admin/tournaments/${t.id}/close" class="inline"><button class="btn--outline">受付を締め切る</button></form>` : ''}` : ''}</div></div>
     <h2>エントリー（${rows.filter((r) => r.status === 'confirmed').length} 組確定 / ${rows.filter((r) => r.status === 'pending_payment').length} 組支払待ち）</h2>
     <div class="tbl"><table><tr><th>種目</th><th>クラス</th><th>代表</th><th>ペア</th><th>経路</th><th>支払</th><th>状態</th><th></th></tr>
-    ${rows.map((r) => html`<tr><td>${evName(r.event_code)}</td><td>${r.class ?? '—'}</td><td>${r.p1_no ?? ''} ${r.p1}<br><span class="mute">${r.p1_club ?? ''}</span></td><td>${r.p2 ? html`${r.p2}${r.p2_status === 'provisional' ? html` ${badge('provisional')}` : ''}<br><span class="mute">${r.p2_club ?? ''}</span>` : '—'}</td><td>${r.source}</td><td>${r.pay_status ? badge(r.pay_status) : '—'} <span class="mute">${METHOD_LABEL[r.method ?? '']?.split('（')[0] ?? ''}</span></td><td>${badge(r.status)}</td>
+    ${rows.map((r) => html`<tr><td>${evName(r.event_code)}</td><td>${r.class ?? '—'}</td><td>${r.p1_no ?? ''} ${r.p1}${eligMark(r.member_id)}<br><span class="mute">${r.p1_club ?? ''}</span></td><td>${r.p2 ? html`${r.p2}${r.p2_status === 'provisional' ? html` ${badge('provisional')}` : ''}${t.partner_rule === 'same' ? eligMark(r.partner_member_id) : ''}<br><span class="mute">${r.p2_club ?? ''}</span>` : '—'}</td><td>${r.source}</td><td>${r.pay_status ? badge(r.pay_status) : '—'} <span class="mute">${METHOD_LABEL[r.method ?? '']?.split('（')[0] ?? ''}</span></td><td>${badge(r.status)}</td>
       <td>${owns && r.status !== 'cancelled' ? html`${r.pay_status === 'pending' && r.method !== 'stripe' ? html`<form method="post" action="/admin/payments/${r.payment_id}/confirm" class="inline"><input type="hidden" name="back" value="/admin/tournaments/${t.id}"><button class="small">入金確認</button></form> ` : ''}<form method="post" action="/admin/entries/${r.id}/cancel" class="inline"><input type="hidden" name="back" value="/admin/tournaments/${t.id}"><button class="small btn--outline">キャンセル</button></form>` : ''}</td></tr>`)}
     ${rows.length === 0 ? html`<tr><td colspan="8">エントリーはまだありません</td></tr>` : ''}
     </table></div>

@@ -24,6 +24,7 @@
 	"vars": {
 		"APP_ENV": "production",
 		"APP_NAME": "テニス協会 会員ポータル",
+		"APP_BRAND_EN": "TOTTORI TENNIS MEMBERS",
 		"BASE_URL": "",
 		"SITE_URL": "https://tcta-site.tcta-admin-worker.workers.dev/",
 		"MAIL_FROM": "noreply@tottori-tenis.net"
@@ -45,6 +46,7 @@
 			"vars": {
 				"APP_ENV": "demo",
 				"APP_NAME": "テニス協会 会員ポータル（デモ）",
+				"APP_BRAND_EN": "TOTTORI TENNIS MEMBERS",
 				"BASE_URL": "",
 				"SITE_URL": "https://tcta-site.tcta-admin-worker.workers.dev/",
 				"MAIL_FROM": "noreply@example.com"

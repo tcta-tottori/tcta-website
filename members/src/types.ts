@@ -18,7 +18,7 @@ export interface Registration {
 export interface TournamentEvent { code: string; name: string; classes: string[]; fee: number; teamSize: number }
 export interface Tournament {
   id: string; association_id: string; name: string; held_on: string; venue: string | null; entry_start: string; entry_end: string;
-  eligibility: string | null; requires_registration: number; events_json: string; payment_methods_json: string;
+  eligibility: string | null; requires_registration: number; eligibility_json: string; partner_rule: string; events_json: string; payment_methods_json: string;
   unpaid_policy: string; capacity: number | null; status: string; created_at: string;
 }
 export interface Entry {

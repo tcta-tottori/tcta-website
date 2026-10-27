@@ -6,13 +6,14 @@ import type { Env } from '../env';
 import { audit } from '../lib/audit';
 import { blindIndex, decrypt, encrypt, normalizeEmail, randomToken, sha256Hex } from '../lib/crypto';
 import { all, nowIso, one, run } from '../lib/db';
-import { currentFiscalYear, fiscalYear, fmtDate, fmtDateTime, inRenewalWindow, todayJst, yen } from '../lib/fiscal';
+import { currentFiscalYear, fmtDate, fmtDateTime, inRenewalWindow, todayJst, yen } from '../lib/fiscal';
 import { sendMail } from '../lib/mail';
 import { rateLimit } from '../lib/ratelimit';
 import { createCheckoutUrl } from '../lib/stripe';
 import { createSession, destroySession, flash, readSession } from '../lib/session';
 import { ulid } from '../lib/ulid';
-import { createMember, decryptContact, findMemberByEmail, findSameNameMembers, getMember, hasApprovedRegistration, searchMembers, updateMember } from '../services/members';
+import { createMember, decryptContact, findMemberByEmail, findSameNameMembers, getMember, searchMembers, updateMember } from '../services/members';
+import { checkEligibility, describeRule, parseRule, shortRule } from '../services/eligibility';
 import { createPayment, getPayment } from '../services/payments';
 import { type Association, type Club, type Entry, type Member, METHOD_LABEL, type Payment, type PaymentMethod, type Registration, SEX_LABEL, type Tournament, type TournamentEvent, CATEGORY_LABEL } from '../types';
 import { badge, page } from '../views/layout';
@@ -332,36 +333,54 @@ portal.post('/registrations/new', requireMember, async (c) => {
 
 // ---------- 大会 ----------
 portal.get('/tournaments', async (c) => {
+  const m = c.get('member');
+  const assocs = await all<Association>(c.env.DB, "SELECT * FROM associations ORDER BY (id LIKE '%pref%') DESC, name");
   const rows = await all<Tournament & { association_name: string }>(c.env.DB, `SELECT t.*, a.name AS association_name FROM tournaments t JOIN associations a ON a.id = t.association_id WHERE t.status IN ('open','closed') ORDER BY t.held_on`);
-  const body = html`<div class="tbl"><table><tr><th>大会</th><th>主催</th><th>開催日</th><th>会場</th><th>受付期間</th><th>状態</th></tr>
-    ${rows.map((t) => html`<tr><td><a href="/tournaments/${t.id}">${t.name}</a></td><td>${t.association_name}</td><td>${fmtDate(t.held_on)}</td><td>${t.venue ?? ''}</td><td>${fmtDate(t.entry_start)}〜${fmtDate(t.entry_end)}</td><td>${badge(t.status)}</td></tr>`)}
+  const elig = new Map<string, Awaited<ReturnType<typeof checkEligibility>>>();
+  if (m) for (const t of rows) elig.set(t.id, await checkEligibility(c.env, m.id, t, assocs));
+  const body = html`
+    <p class="mute">「必要な登録」は協会コードで示します（${assocs.map((a) => `${a.code}＝${a.name}`).join('、')}）。「＋」は両方必要、「or」はどちらかでよい、という意味です。${m ? '「あなた」の列は、いまの年度登録で出場できるかの判定です。' : 'ログインすると、出場できるかどうかを大会ごとに判定します。'}</p>
+    <div class="tbl"><table><tr><th>大会</th><th>主催</th><th>開催日</th><th>受付期間</th><th>必要な登録</th>${m ? html`<th>あなた</th>` : ''}<th>状態</th></tr>
+    ${rows.map((t) => {
+      const e = elig.get(t.id);
+      return html`<tr><td><a href="/tournaments/${t.id}">${t.name}</a></td><td>${t.association_name}</td><td>${fmtDate(t.held_on)}</td><td>${fmtDate(t.entry_start)}〜${fmtDate(t.entry_end)}</td><td>${shortRule(parseRule(t), assocs)}</td>${m ? html`<td>${e?.ok ? html`<span class="elig elig--ok">出場できます</span>` : html`<span class="elig elig--ng" title="${e?.reason ?? ''}">登録が足りません</span>`}</td>` : ''}<td>${badge(t.status)}</td></tr>`;
+    })}
   </table></div>`;
-  return c.html(page(c, { title: '大会一覧', body, member: c.get('member') }));
+  return c.html(page(c, { title: '大会一覧', body, member: m, wide: true, lead: '県協会・各市協会の大会をまとめて一覧にしています。大会ごとに必要な年度登録が違います（市登録だけでよい大会、県登録が必要な大会、両方が必要な大会、誰でも参加できる大会）。' }));
 });
 
 async function loadTournament(env: Env, id: string) {
   const t = await one<Tournament & { association_name: string; fy_start: number }>(env.DB, `SELECT t.*, a.name AS association_name, a.fiscal_year_start_month AS fy_start FROM tournaments t JOIN associations a ON a.id = t.association_id WHERE t.id = ?`, id);
   if (!t) return null;
-  return { t, events: JSON.parse(t.events_json) as TournamentEvent[], methods: JSON.parse(t.payment_methods_json) as PaymentMethod[] };
+  const assocs = await all<Association>(env.DB, 'SELECT * FROM associations ORDER BY id');
+  return { t, assocs, events: JSON.parse(t.events_json) as TournamentEvent[], methods: JSON.parse(t.payment_methods_json) as PaymentMethod[] };
 }
 
 portal.get('/tournaments/:id', async (c) => {
   const m = c.get('member');
   const x = await loadTournament(c.env, c.req.param('id'));
   if (!x) return c.notFound();
-  const { t, events, methods } = x;
+  const { t, assocs, events, methods } = x;
   const today = todayJst();
   const acceptingNow = t.status === 'open' && t.entry_start <= today && today <= t.entry_end;
-  let eligible: boolean | null = null;
-  if (m && t.requires_registration) eligible = await hasApprovedRegistration(c.env, m.id, t.association_id, fiscalYear(t.held_on, t.fy_start));
+  const rule = parseRule(t);
+  const e = m ? await checkEligibility(c.env, m.id, t, assocs) : null;
   const body = html`
     <div class="card">
-      <dl class="kv"><dt>主催</dt><dd>${t.association_name}</dd><dt>開催日</dt><dd>${fmtDate(t.held_on)}</dd><dt>会場</dt><dd>${t.venue ?? '—'}</dd><dt>受付期間</dt><dd>${fmtDate(t.entry_start)}〜${fmtDate(t.entry_end)}</dd><dt>参加資格</dt><dd>${t.eligibility ?? '—'}</dd><dt>支払方法</dt><dd>${methods.map((k) => METHOD_LABEL[k]).join(' / ')}</dd><dt>状態</dt><dd>${badge(t.status)}</dd></dl>
+      <dl class="kv"><dt>主催</dt><dd>${t.association_name}</dd><dt>開催日</dt><dd>${fmtDate(t.held_on)}</dd><dt>会場</dt><dd>${t.venue ?? '—'}</dd><dt>受付期間</dt><dd>${fmtDate(t.entry_start)}〜${fmtDate(t.entry_end)}</dd><dt>支払方法</dt><dd>${methods.map((k) => METHOD_LABEL[k]).join(' / ')}</dd><dt>状態</dt><dd>${badge(t.status)}</dd></dl>
+    </div>
+    <h2>参加資格</h2>
+    <div class="card">
+      <p><b>${describeRule(rule, assocs, t.held_on)}</b>${t.eligibility ? html`<br><span class="mute">${t.eligibility}</span>` : ''}</p>
+      ${rule.length && t.partner_rule === 'same' ? html`<p class="mute">ダブルスはペアも同じ条件を満たしている必要があります。</p>` : ''}
+      ${e ? (e.ok ? html`<p class="elig elig--ok">${e.open ? 'どなたでも参加できる大会です' : 'あなたは条件を満たしています'}</p>` : html`<p class="elig elig--ng">あなたは${e.reason}</p>
+        <ul class="elig-rows">${e.rows.map((r) => html`<li>${r.satisfied ? '✓' : '✗'} ${r.assocIds.map((id) => assocs.find((a) => a.id === id)?.name ?? id).join(' ＋ ')}${r.missing.length ? html` <span class="mute">（足りない: ${r.missing.map((x) => `${x.name} ${x.fy}年度`).join('、')}）</span>` : ''}</li>`)}</ul>
+        <div class="actions"><a class="btn" href="/registrations/new">年度登録を申請する <span class="aw">→</span></a></div>`) : html`<p class="mute">ログインすると、あなたの年度登録で出場できるかを判定します。</p>`}
     </div>
     <h2>種目</h2>
-    <div class="tbl"><table><tr><th>種目</th><th>クラス</th><th>参加費</th></tr>${events.map((e) => html`<tr><td>${e.name}</td><td>${e.classes.join(' / ') || '—'}</td><td>${yen(e.fee)}</td></tr>`)}</table></div>
+    <div class="tbl"><table><tr><th>種目</th><th>クラス</th><th>参加費</th></tr>${events.map((ev) => html`<tr><td>${ev.name}</td><td>${ev.classes.join(' / ') || '—'}</td><td>${yen(ev.fee)}</td></tr>`)}</table></div>
     <div class="actions">
-      ${!acceptingNow ? html`<span class="mute">受付期間外です</span>` : !m ? html`<a class="btn primary" href="/login">ログインしてエントリー</a>` : eligible === false ? html`<span class="warn">${t.association_name}の${fiscalYear(t.held_on, t.fy_start)}年度登録（承認済み）が必要です。</span><a class="btn" href="/registrations/new">年度登録へ</a>` : html`<a class="btn primary" href="/tournaments/${t.id}/entry">エントリーする</a>`}
+      ${!acceptingNow ? html`<span class="mute">受付期間外です</span>` : !m ? html`<a class="btn primary" href="/login">ログインしてエントリー <span class="aw">→</span></a>` : e && !e.ok ? html`<span class="warn">年度登録が足りないためエントリーできません。</span>` : html`<a class="btn primary" href="/tournaments/${t.id}/entry">エントリーする <span class="aw">→</span></a>`}
     </div>`;
   return c.html(page(c, { title: t.name, body, member: m }));
 });
@@ -370,9 +389,11 @@ portal.get('/tournaments/:id/entry', requireMember, async (c) => {
   const m = c.get('member')!;
   const x = await loadTournament(c.env, c.req.param('id') ?? '');
   if (!x) return c.notFound();
-  const { t, events, methods } = x;
+  const { t, assocs, events, methods } = x;
   const q = c.req.query('q') ?? '';
   const results = q ? (await searchMembers(c.env, q)).filter((r) => r.id !== m.id) : [];
+  const partnerOk = new Map<string, boolean>();
+  if (t.partner_rule === 'same') for (const r of results) partnerOk.set(r.id, (await checkEligibility(c.env, r.id, t, assocs)).ok);
   const body = html`
     <form method="get" action="/tournaments/${t.id}/entry" class="card">
       <h2>ペアを探す（ダブルスのとき）</h2>
@@ -387,7 +408,7 @@ portal.get('/tournaments/:id/entry', requireMember, async (c) => {
       <label>ペア（ダブルスのみ）</label>
       <div class="radio-list">
         <label><input type="radio" name="partner" value="" checked> 無し（シングルス）</label>
-        ${results.map((r) => html`<label><input type="radio" name="partner" value="${r.id}"> ${r.name}（${r.kana}）${r.member_no ? ' ' + r.member_no : ''} / ${r.club_name ?? '—'} ${r.status === 'provisional' ? badge('provisional') : ''}</label>`)}
+        ${results.map((r) => html`<label><input type="radio" name="partner" value="${r.id}"> ${r.name}（${r.kana}）${r.member_no ? ' ' + r.member_no : ''} / ${r.club_name ?? '—'} ${r.status === 'provisional' ? badge('provisional') : ''} ${partnerOk.has(r.id) ? (partnerOk.get(r.id) ? html`<span class="elig elig--ok">出場可</span>` : html`<span class="elig elig--ng">登録不足</span>`) : ''}</label>`)}
         <label><input type="radio" name="partner" value="new"> 未登録のペアを氏名で登録（仮会員）</label>
       </div>
       <div class="indent"><input type="text" name="new_name" placeholder="氏名"> <input type="text" name="new_kana" placeholder="ふりがな"> <input type="text" name="new_club" placeholder="クラブ名"></div>
@@ -404,7 +425,7 @@ export interface EntryInput { tournamentId: string; memberId: string; eventCode:
 export async function createEntry(env: Env, i: EntryInput, ip: string | null): Promise<{ ok: true; entryId: string; paymentId: string } | { ok: false; error: string }> {
   const x = await loadTournament(env, i.tournamentId);
   if (!x) return { ok: false, error: '大会がありません' };
-  const { t, events, methods } = x;
+  const { t, assocs, events, methods } = x;
   const today = todayJst();
   if (i.source === 'web' && !(t.status === 'open' && t.entry_start <= today && today <= t.entry_end)) return { ok: false, error: '受付期間外です' };
   if (t.status !== 'open') return { ok: false, error: '受付中の大会ではありません' };
@@ -414,11 +435,13 @@ export async function createEntry(env: Env, i: EntryInput, ip: string | null): P
   if (!methods.includes(i.method)) return { ok: false, error: 'この大会で使えない支払方法です' };
   const member = await getMember(env, i.memberId);
   if (!member) return { ok: false, error: '会員がありません' };
-  if (t.requires_registration && !(await hasApprovedRegistration(env, member.id, t.association_id, fiscalYear(t.held_on, t.fy_start)))) return { ok: false, error: `${t.association_name}の当年度登録（承認済み）が必要です` };
+  const own = await checkEligibility(env, member.id, t, assocs);
+  if (!own.ok) return { ok: false, error: `${member.name} さんは${own.reason}` };
   let partnerId: string | null = null;
   if (ev.teamSize === 2) {
     if (i.newPartner) {
       if (!i.newPartner.name || !i.newPartner.kana) return { ok: false, error: 'ペアの氏名とふりがなを入れてください' };
+      if (t.partner_rule === 'same' && parseRule(t).length) return { ok: false, error: 'この大会はペアにも年度登録が必要です。ペアの方の年度登録（または代理登録）を先に済ませてください' };
       let clubId: string | null = null;
       if (i.newPartner.club) {
         const cl = await one<Club>(env.DB, 'SELECT * FROM clubs WHERE name = ?', i.newPartner.club.trim());
@@ -432,6 +455,10 @@ export async function createEntry(env: Env, i: EntryInput, ip: string | null): P
       const p = await getMember(env, i.partnerId);
       if (!p || p.status === 'withdrawn') return { ok: false, error: 'ペアの会員が見つかりません' };
       if (p.id === member.id) return { ok: false, error: '自分自身をペアにはできません' };
+      if (t.partner_rule === 'same') {
+        const pe = await checkEligibility(env, p.id, t, assocs);
+        if (!pe.ok) return { ok: false, error: `ペアの ${p.name} さんは${pe.reason}` };
+      }
       partnerId = p.id;
     } else return { ok: false, error: 'ダブルスはペアを選んでください' };
   }

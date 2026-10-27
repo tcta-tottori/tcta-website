@@ -70,14 +70,19 @@ export async function seedDemo(env: Env): Promise<void> {
     { code: 'WD', name: '女子ダブルス', classes: ['A', 'B'], fee: 3000, teamSize: 2 },
     { code: 'MS', name: '男子シングルス', classes: [], fee: 2000, teamSize: 1 },
   ]);
+  // 参加資格の組み合わせを一通り（設計の検討用）。rule は「いずれかの行を満たす。行の中はすべて必要」
   const tournaments = [
-    { id: 'T-DEMO-OPEN', assoc: 'tottori-city', name: `鳥取市秋季ダブルス大会（Phase 1 試行）`, held: addDays(today, 30), venue: '鳥取市営コート', start: addDays(today, -7), end: addDays(today, 14), status: 'open', methods: ['stripe', 'bank', 'paypay', 'cash'], policy: 'hold' },
-    { id: 'T-DEMO-PREF', assoc: 'tottori-pref', name: `鳥取県選手権（県主催）`, held: addDays(today, 45), venue: '県立コート', start: addDays(today, -3), end: addDays(today, 21), status: 'open', methods: ['stripe', 'bank'], policy: 'cancel' },
-    { id: 'T-DEMO-CLOSED', assoc: 'tottori-city', name: `鳥取市春季シングルス大会（締切済み）`, held: addDays(today, -60), venue: '鳥取市営コート', start: addDays(today, -120), end: addDays(today, -80), status: 'closed', methods: ['bank', 'cash'], policy: 'hold' },
+    { id: 'T-DEMO-OPEN', assoc: 'tottori-city', name: `鳥取市秋季ダブルス大会（Phase 1 試行）`, held: addDays(today, 30), venue: '鳥取市営コート', start: addDays(today, -7), end: addDays(today, 14), status: 'open', methods: ['stripe', 'bank', 'paypay', 'cash'], policy: 'hold', rule: [['tottori-city']], note: '鳥取市登録が必要です（県登録だけでは出場できません）' },
+    { id: 'T-DEMO-PREF', assoc: 'tottori-pref', name: `鳥取県選手権（県主催）`, held: addDays(today, 45), venue: '県立コート', start: addDays(today, -3), end: addDays(today, 21), status: 'open', methods: ['stripe', 'bank'], policy: 'cancel', rule: [['tottori-pref']], note: '県登録が必要です' },
+    { id: 'T-DEMO-OPEN2', assoc: 'tottori-city', name: `鳥取市オープンシングルス（市 または 県登録）`, held: addDays(today, 40), venue: '鳥取市営コート', start: addDays(today, -5), end: addDays(today, 18), status: 'open', methods: ['stripe', 'bank', 'cash'], policy: 'hold', rule: [['tottori-city'], ['tottori-pref']], note: '鳥取市登録か県登録のどちらかがあれば出場できます' },
+    { id: 'T-DEMO-BOTH', assoc: 'tottori-city', name: `県選手権 鳥取市予選（県＋市登録）`, held: addDays(today, 35), venue: '鳥取市営コート', start: addDays(today, -5), end: addDays(today, 16), status: 'open', methods: ['stripe', 'bank'], policy: 'hold', rule: [['tottori-pref', 'tottori-city']], note: '県登録と鳥取市登録の両方が必要です' },
+    { id: 'T-DEMO-YONAGO', assoc: 'yonago-city', name: `米子市ダブルス選手権`, held: addDays(today, 50), venue: '米子市営コート', start: addDays(today, -2), end: addDays(today, 25), status: 'open', methods: ['stripe', 'bank'], policy: 'hold', rule: [['yonago-city']], note: '米子市登録が必要です' },
+    { id: 'T-DEMO-ANYONE', assoc: 'tottori-city', name: `鳥取市ふれあいテニス大会（どなたでも）`, held: addDays(today, 28), venue: '鳥取市営コート', start: addDays(today, -7), end: addDays(today, 12), status: 'open', methods: ['stripe', 'bank', 'cash'], policy: 'hold', rule: [], note: '年度登録のない方も参加できます', partner: 'none' },
+    { id: 'T-DEMO-CLOSED', assoc: 'tottori-city', name: `鳥取市春季シングルス大会（締切済み）`, held: addDays(today, -60), venue: '鳥取市営コート', start: addDays(today, -120), end: addDays(today, -80), status: 'closed', methods: ['bank', 'cash'], policy: 'hold', rule: [['tottori-city']], note: null },
   ];
   for (const t of tournaments) {
-    await run(env.DB, `INSERT INTO tournaments (id, association_id, name, held_on, venue, entry_start, entry_end, eligibility, requires_registration, events_json, payment_methods_json, unpaid_policy, capacity, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?, 64, ?, ?)`,
-      t.id, t.assoc, t.name, t.held, t.venue, t.start, t.end, '主催協会の当年度登録者', events, JSON.stringify(t.methods), t.policy, t.status, now);
+    await run(env.DB, `INSERT INTO tournaments (id, association_id, name, held_on, venue, entry_start, entry_end, eligibility, requires_registration, eligibility_json, partner_rule, events_json, payment_methods_json, unpaid_policy, capacity, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 64, ?, ?)`,
+      t.id, t.assoc, t.name, t.held, t.venue, t.start, t.end, t.note, t.rule.length ? 1 : 0, JSON.stringify(t.rule), t.partner ?? 'same', events, JSON.stringify(t.methods), t.policy, t.status, now);
   }
   // 既存のエントリー（確定 1 件・支払待ち 1 件）
   const pe = await createPayment(env, { kind: 'entry', associationId: 'tottori-city', payerMemberId: ids[2], amount: 3000, method: 'stripe' });

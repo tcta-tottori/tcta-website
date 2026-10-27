@@ -150,6 +150,33 @@ try {
   check(mails.some((m) => m.to_addr === 'sato@example.com' && m.subject.includes('ペアにエントリー')), 'ペアに通知が届く（なりすまし対策）');
   check(mails.some((m) => m.to_addr === 'smoke@example.com' && m.subject.includes('エントリー確定')), '本人に確定通知が届く');
 
+  console.log('\n[4b] 参加資格の判定（大会ごとに必要な年度登録が違う）');
+  // smoke 会員は鳥取市登録のみ
+  r = await member.get('/tournaments');
+  check(r.text.includes('出場できます') && r.text.includes('登録が足りません'), '一覧に大会ごとの可否が出る');
+  r = await member.get('/tournaments/T-DEMO-PREF');
+  check(r.text.includes('鳥取県テニス協会') && r.text.includes('年度登録（承認済み）が必要'), '県登録が必要な大会は市登録だけでは出られない');
+  r = await member.post('/tournaments/T-DEMO-PREF/entry', { event: 'MS', class: '', partner: '', method: 'bank' });
+  check(r.status === 302 && r.location?.includes('/entry'), '資格の無い大会へのエントリーは拒否');
+  r = await member.get('/tournaments/T-DEMO-BOTH');
+  check(r.text.includes('足りない: 鳥取県テニス協会'), '県＋市が必要な大会は、足りない側（県）を示す');
+  r = await member.get('/tournaments/T-DEMO-OPEN2');
+  check(r.text.includes('あなたは条件を満たしています'), '市 または 県 の大会は市登録だけで出られる');
+  r = await member.get('/tournaments/T-DEMO-YONAGO');
+  check(r.text.includes('米子市テニス協会') && !r.text.includes('あなたは条件を満たしています'), '米子市登録が必要な大会には出られない');
+  r = await member.get('/tournaments/T-DEMO-ANYONE');
+  check(r.text.includes('どなたでも参加できる'), '登録不要の大会は誰でも参加できる');
+  r = await member.post('/tournaments/T-DEMO-ANYONE/entry', { event: 'MS', class: '', partner: '', method: 'bank' });
+  check(r.status === 302 && r.location?.startsWith('/pay/'), '登録不要の大会にはエントリーできる');
+  // ペアの資格: 高橋（倉吉＋県）は鳥取市登録が無いので、市登録必須の大会のペアにはなれない
+  r = await member.get('/tournaments/T-DEMO-OPEN/entry?q=たかはし');
+  const takahashi = pick(r.text, /name="partner" value="([0-9A-Z]{26})"> 高橋 健/);
+  check(takahashi && r.text.includes('登録不足'), 'ペア検索で登録不足のペアが分かる');
+  r = await member.post('/tournaments/T-DEMO-OPEN/entry', { event: 'MD', class: 'B', partner: takahashi, method: 'bank' });
+  check(r.status === 302 && r.location?.includes('/entry'), '登録不足のペアとのエントリーは拒否');
+  r = await anon.get('/api/v1/tournaments');
+  check(JSON.parse(r.text).tournaments.some((t) => t.id === 'T-DEMO-BOTH' && t.eligibility.rule.length === 1 && t.eligibility.rule[0].length === 2), '公開 API に参加資格のルールが出る');
+
   console.log('\n[5] 運営アプリ向け JSON と権限');
   r = await admin.post('/admin/tournaments/T-DEMO-OPEN/tokens', { label: 'smoke', days: '30' });
   const token = pick(r.text, /entries\.json\?token=([A-Za-z0-9_-]+)/);

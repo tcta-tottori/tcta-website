@@ -5,6 +5,8 @@ export interface Env {
   MAIL?: { send(message: unknown): Promise<void> };
   APP_ENV: string;
   APP_NAME: string;
+  /** 英字のブランド名（ヘッダー・フッターの文字ロゴ）。特定の協会名は入れない */
+  APP_BRAND_EN?: string;
   BASE_URL: string;
   MAIL_FROM?: string;
   /** 公式サイト本体の URL（ヘッダー・フッターのリンク先） */
