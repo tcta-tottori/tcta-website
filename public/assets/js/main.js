@@ -289,9 +289,30 @@
 
   /* ---------- 全画面表示（お知らせ・大会情報） ----------
      VIEW ALL で開き、右上の × か Esc で閉じる。開いている間は背面を止める。 */
-  /* opts.shared … { from: セレクタ, parts: [セレクタ…] }：開くとき、ページに見えている行（from）と全画面の中の同じ行（href が同じ）を
-     同一ページのビュートランジションでつなぎ、その場所から全画面での位置へ滑らかに移してから残りを出す（対応ブラウザのみ）。
-     parts を渡すと、行の中のその要素（コート案内の写真・施設名・サーフェス）もそれぞれ自分の位置へ別々に移る */
+  /* opts.title … { from: セレクタ, to: セレクタ }：開くとき、ページにある節の見出し（from の中の英語と日本語）と
+     全画面の上部の見出し（to の中の同じもの）を同一ページのビュートランジションでつなぎ、見出しだけをその場所から
+     画面の上部へ滑らかに移してから、行をメニューと同じく見出しの下から順に出す（対応ブラウザのみ）。
+     見出しの入れ物（div）は display: contents で箱が無いので、中の .sec-head__eyebrow と .sec-head__title に名前を付ける。
+     開いている間は、収まり切らない側（下、送ったあとは上も）の端を白く透かし、端まで送ると透かしを消す（.is-top / .is-bottom） */
+  /* コート案内の行（トップと全画面の一覧）を押したとき。写真と施設名に名前を付けてからそのまま移動し、
+     コート案内のページ（courts.html#<施設>）で同じ施設の写真・名前につなぐ（ページ間ビュートランジション。Base.astro の pagereveal）。
+     sessionStorage の印に施設の id を入れて「コート案内の行から」と伝える */
+  function initCourtLinks() {
+    var canVT = !reduceMotion && ('onpageswap' in window) && window.CSS && CSS.supports && CSS.supports('view-transition-name', 'x');
+    if (!canVT) return;
+    document.addEventListener('click', function (e) {
+      var a = e.target.closest('a.court-item[href*="courts.html#"]');
+      if (!a || a.target === '_blank' || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
+      var id = a.getAttribute('href').split('#')[1];
+      if (!id) return;
+      try { sessionStorage.setItem('tcta-court-vt', id); } catch (x) { return; }
+      var img = a.querySelector('.court-item__photo img');
+      var name = a.querySelector('.sch-item__title');
+      if (img) img.style.viewTransitionName = 'court-photo';
+      if (name) name.style.viewTransitionName = 'court-name';
+    });
+  }
+
   /* クラブ対抗戦の年度のアコーディオン（details.champ）。ひらくときは中身の .panel-item が CSS の動きで
      見出しの裏から順に滑り出す。閉じるときは逆の動き（.is-closing）を流してから閉じる */
   function initChampAccordion() {
@@ -341,10 +362,20 @@
     var closer = panel.querySelector(closeSel);
     var last = null;
 
+    // 上下の端の透かし（CSS の .news-all__fade）。はみ出しの有無と位置で付け外す
+    var head = panel.querySelector('.news-all__head, .tall__head');
+    var fades = function () {
+      if (head) panel.style.setProperty('--panel-head', Math.round(head.getBoundingClientRect().height) + 'px');
+      var over = panel.scrollHeight > panel.clientHeight + 1;
+      panel.classList.toggle('is-top', !over || panel.scrollTop <= 1);
+      panel.classList.toggle('is-bottom', !over || panel.scrollTop >= panel.scrollHeight - panel.clientHeight - 1);
+    };
+    panel.addEventListener('scroll', fades, { passive: true });
+    window.addEventListener('resize', fades);
+
     var closing = null;
     var finishClose = function () {
       panel.classList.remove('is-vt');
-      panel.querySelectorAll('.is-shared').forEach(function (li) { li.classList.remove('is-shared'); });
       closing = null;
       panel.classList.remove('is-closing');
       panel.hidden = true;
@@ -369,25 +400,25 @@
             el.style.animation = '';
           });
           if (closer) closer.focus();
+          fades();
         };
-        var pairs = sharedPairs();
-        if (pairs.length && document.startViewTransition) {
-          // 名前は「前」はページの行だけ、「後」は全画面の行だけに付ける（同時に付けると重複でトランジションが止まる）
-          panel.classList.add('is-vt');
-          panel.style.setProperty('--s', pairs.length);
-          pairs.forEach(function (pr, i) {
-            pr[0].style.viewTransitionName = 'shared-' + i; pr[0].style.viewTransitionClass = 'shared-row';
-            var li = pr[1].closest('.panel-item'); if (li) li.classList.add('is-shared');
+        var from = opts && opts.title && !reduceMotion ? document.querySelector(opts.title.from) : null;
+        var to = from ? panel.querySelector(opts.title.to) : null;
+        var moves = [];
+        if (from && to) {
+          [['.sec-head__eyebrow', 'panel-eyebrow'], ['.sec-head__title', 'panel-title']].forEach(function (m) {
+            var a = from.querySelector(m[0]), c = to.querySelector(m[0]);
+            if (a && c) moves.push([a, c, m[1]]);
           });
-          // 名前だけ外す。.is-shared と .is-vt は閉じるまで残す（外すと行の滑り出しの動きが最初から流れ直してしまう）
-          var done = function () {
-            pairs.forEach(function (pr) { pr[1].style.viewTransitionName = ''; pr[1].style.viewTransitionClass = ''; });
-          };
+        }
+        if (moves.length && document.startViewTransition) {
+          // 見出しだけを移す。名前は「前」はページの見出しだけ、「後」は全画面の見出しだけに付ける（同時に付けると重複で止まる）。
+          // .is-vt は閉じるまで残す（行の滑り出しを見出しが移り終わるまで遅らせる。外すと動きが最初から流れ直す）
+          panel.classList.add('is-vt');
+          moves.forEach(function (m) { m[0].style.viewTransitionName = m[2]; });
+          var done = function () { moves.forEach(function (m) { m[1].style.viewTransitionName = ''; }); };
           var vt = document.startViewTransition(function () {
-            pairs.forEach(function (pr, i) {
-              pr[0].style.viewTransitionName = ''; pr[0].style.viewTransitionClass = '';
-              pr[1].style.viewTransitionName = 'shared-' + i; pr[1].style.viewTransitionClass = 'shared-row';
-            });
+            moves.forEach(function (m) { m[0].style.viewTransitionName = ''; m[1].style.viewTransitionName = m[2]; });
             doOpen();
           });
           vt.finished.then(done, done);
@@ -401,29 +432,6 @@
         closing = setTimeout(finishClose, 520);
       }
     };
-
-    // ページに見えている行と、全画面の中の同じ行（href が同じ）の組
-    function sharedPairs() {
-      if (!opts || !opts.shared || reduceMotion) return [];
-      var froms = document.querySelectorAll(opts.shared.from);
-      var tos = panel.querySelectorAll('a[href]');
-      var pairs = [], used = [], parts = opts.shared.parts || [];
-      Array.prototype.forEach.call(froms, function (a) {
-        if (panel.contains(a)) return; // 全画面の中の行は「ページに見えている行」ではない
-        var href = a.getAttribute('href');
-        for (var k = 0; k < tos.length; k++) {
-          if (used.indexOf(tos[k]) < 0 && tos[k].getAttribute('href') === href) {
-            pairs.push([a, tos[k]]); used.push(tos[k]);
-            parts.forEach(function (sel) {
-              var pa = a.querySelector(sel), pb = tos[k].querySelector(sel);
-              if (pa && pb) pairs.push([pa, pb]);
-            });
-            break;
-          }
-        }
-      });
-      return pairs;
-    }
 
     Array.prototype.forEach.call(openers, function (b) {
       b.addEventListener('click', function () { last = b; setOpen(true); });
@@ -1305,9 +1313,10 @@
     initPressed();
     initHScroll();
     initChampAccordion();
-    initFullPanel('news-all', '[data-news-open]', '[data-news-close]', { shared: { from: '#news .news-row' } });
+    initFullPanel('news-all', '[data-news-open]', '[data-news-close]', { title: { from: '#news .sec-head__row > div', to: '.news-all__head > div' } });
     initFullPanel('tournaments-all', '[data-tall-open]', '[data-tall-close]');
-    initFullPanel('court-all', '[data-court-open]', '[data-court-close]', { shared: { from: '#courts .court-item', parts: ['.court-item__photo', '.court-item__head', '.court-item__spec'] } });
+    initFullPanel('court-all', '[data-court-open]', '[data-court-close]', { title: { from: '#courts .sec-head__row > div', to: '.news-all__head > div' } });
+    initCourtLinks();
     initCourtMap();
     initCalendar();
     initFooterDeco();
