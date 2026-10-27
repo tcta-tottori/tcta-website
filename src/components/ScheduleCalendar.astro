@@ -4,20 +4,25 @@
 // 全月ぶんのマス目は最初から書き出しておき、表示の切り替えだけをJSが行うので、
 // JSが動かない環境でも先頭の月は読める。
 import { siteData } from '../lib/cms.js';
-import { STATUS_LABEL, byMonth, monthGrid } from '../data/schedule.js';
+import { STATUS_LABEL, byMonth, monthGrid, todayJST } from '../data/schedule.js';
 
 const { SCHEDULE } = await siteData(Astro);
 
 const DOW = ['日', '月', '火', '水', '木', '金', '土'];
 const months = byMonth(SCHEDULE).map((m) => ({ ...m, ...monthGrid(m) }));
+// 最初に出す月は今月（日本時間）。今月に大会が無ければその次の月、年度の最後より後なら最後の月。
+// 今日のマス（.is-today）は点滅させる。描いたページが残っていても合うよう、main.js の initCalendar が見た時点の日付で付け直す
+const today = todayJST();
+const start = months.findIndex((m) => m.key >= today.slice(0, 7));
+const initial = start < 0 ? months.length - 1 : start;
 // 大会がまだ 1 件も無いとき（配備直後など）は、カレンダーを出さずに一言だけ出す
-const first = months[0];
+const first = months[initial];
 ---
 
 {!first && <p class="note">大会が登録されるとカレンダーが表示されます。</p>}
 {first && (
 
-<div class="cal" data-calendar>
+<div class="cal" data-calendar data-cal-initial={initial}>
   <div class="cal__bar">
     <button class="circle-btn" type="button" data-cal-prev aria-label="前の月へ" disabled>←</button>
     <p class="cal__label" data-cal-label aria-live="polite">
@@ -35,12 +40,13 @@ const first = months[0];
     <section
       class="cal__month"
       data-cal-month={i}
+      data-key={m.key}
       data-month={String(m.month).padStart(2, '0')}
       data-en={m.en}
       data-year={m.year}
       data-count={`${m.items.length}大会`}
       aria-label={`${m.year}年${m.month}月の大会`}
-      hidden={i !== 0}
+      hidden={i !== initial}
     >
       <div class="cal__grid" role="presentation">
         {DOW.map((d, j) => (
@@ -55,8 +61,11 @@ const first = months[0];
                   c.items.length && 'is-on',
                   c.dow === 0 && 'is-sun',
                   c.dow === 6 && 'is-sat',
+                  c.iso === today && 'is-today',
                 ]}
+                data-date={c.iso}
                 title={c.items.length ? c.items.map((t) => t.name).join(' / ') : undefined}
+                aria-current={c.iso === today ? 'date' : undefined}
               >{c.day}</span>
         ))}
       </div>

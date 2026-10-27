@@ -599,7 +599,22 @@
 
     prev.addEventListener('click', function () { show(at - 1); });
     next.addEventListener('click', function () { show(at + 1); });
-    show(0);
+
+    // 今日（日本時間）のマスを点滅させ、今月（無ければその次の月）から出す。描いたページが残っていても合うように、見た時点で付け直す
+    var today = null;
+    try {
+      today = new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Tokyo', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
+    } catch (e) {}
+    var start = parseInt(root.getAttribute('data-cal-initial') || '0', 10) || 0;
+    if (today) {
+      root.querySelectorAll('.cal__cell.is-today').forEach(function (c) { c.classList.remove('is-today'); c.removeAttribute('aria-current'); });
+      var cell = root.querySelector('.cal__cell[data-date="' + today + '"]');
+      if (cell) { cell.classList.add('is-today'); cell.setAttribute('aria-current', 'date'); }
+      var ym = today.slice(0, 7), found = -1;
+      for (var k = 0; k < months.length; k++) { if ((months[k].getAttribute('data-key') || '') >= ym) { found = k; break; } }
+      start = found < 0 ? months.length - 1 : found;
+    }
+    show(start);
   }
 
   /* ---------- コート案内の地図 ----------

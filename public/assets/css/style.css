@@ -1827,6 +1827,20 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   color: #fff;
   font-weight: 700;
 }
+/* 今日。赤い枠を点滅させる（開催日と重なるときは赤い地の外側で点滅） */
+.cal__cell.is-today { position: relative; font-weight: 700; }
+.cal__cell.is-today:not(.is-on) { color: var(--red); }
+.cal__cell.is-today::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border: 2px solid var(--red);
+  border-radius: 4px;
+  pointer-events: none;
+  animation: blink 1.4s ease-in-out infinite;
+}
+.cal__cell.is-on.is-today::after { inset: -4px; border-radius: 6px; }
+@media (prefers-reduced-motion: reduce) { .cal__cell.is-today::after { animation: none; } }
 
 .cal__list { margin-top: 20px; display: flex; flex-direction: column; }
 @media (min-width: 768px) { .cal__list { margin-top: 0; } }
