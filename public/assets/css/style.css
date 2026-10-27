@@ -847,15 +847,9 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 /* 今のページの行は赤。別の行を押したときは、押した行が赤く光るのと同じタイミングで黒に戻る
    （main.js が .is-active を外す。色の transition は上の .mobile-nav__item の transition に入れてある） */
 .mobile-nav__link.is-active { color: var(--red); }
-/* 押した行：文字を赤にして、その瞬間に文字の周りから赤いネオンの光が一瞬漏れる（行の地は塗らない）。
+/* 押した行：文字を赤にするだけ（光らせない・行の地は塗らない）。
    main.js が押したときに .is-tapped を付ける（端末の波紋はこの行には出さない） */
-.mobile-nav__link.is-tapped { color: var(--red); animation: mn-tap-neon .55s ease-out both; }
-/* 文字は赤のまま。その周りから赤いネオンの光が一瞬だけ漏れて（text-shadow のにじみ）、すっと消える。行の地は塗らない */
-@keyframes mn-tap-neon {
-  0%   { color: var(--red); text-shadow: 0 0 1px rgba(255, 120, 125, .9), 0 0 6px rgba(216, 35, 42, .95), 0 0 16px rgba(216, 35, 42, .8), 0 0 32px rgba(216, 35, 42, .55), 0 0 56px rgba(216, 35, 42, .3); }
-  25%  { text-shadow: 0 0 1px rgba(255, 120, 125, .9), 0 0 6px rgba(216, 35, 42, .95), 0 0 16px rgba(216, 35, 42, .8), 0 0 32px rgba(216, 35, 42, .55), 0 0 56px rgba(216, 35, 42, .3); }
-  100% { color: var(--red); text-shadow: 0 0 0 rgba(216, 35, 42, 0); }
-}
+.mobile-nav__link.is-tapped { color: var(--red); }  /* 光らせない。文字が赤に変わるだけ（色の transition は .mobile-nav__item に） */
 @media (prefers-reduced-motion: reduce) { .mobile-nav__link.is-tapped { animation: none; } }
 .mobile-nav .btn { margin-top: 28px; }
 
@@ -3418,7 +3412,7 @@ button.dl-item { width: 100%; text-align: left; }
 .year-head__title { margin: 0; font: 700 24px/1.3 var(--fjp); color: var(--ink); }
 .year-head__en { margin-left: 10px; font: 500 14px/1 var(--flt); letter-spacing: .08em; color: var(--gray-500); }
 
-/* 年度の中の大会一覧。赤い四角・大会名・開催日だけの1行 */
+/* 年度の中の大会一覧。赤い四角・大会名、その下に日付（カレンダー印）と種目（一覧の印）。大会情報の一覧と同じ形 */
 .rlist { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--gray-200); }
 .rlist__item {
   display: flex;
@@ -3432,13 +3426,18 @@ button.dl-item { width: 100%; text-align: left; }
 .rlist__item:hover { background: var(--gray-050); color: inherit; }
 .rlist__item:hover .rlist__title { color: var(--red); }
 .rlist__mark { flex: none; align-self: flex-start; width: 10px; height: 10px; margin: 7px 6px 0 0; background: var(--red); } /* 大会名の1行目にそろえる */
-.rlist__title { flex: 1; min-width: 0; font: 700 16px/1.5 var(--fjp); color: var(--ink); transition: color .2s ease; }
-.rlist__date { flex: none; font: 400 13px/1.5 var(--fjp); color: var(--gray-500); }
+.rlist__body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.rlist__title { display: block; min-width: 0; font: 700 16px/1.5 var(--fjp); color: var(--ink); transition: color .2s ease; }
+.rlist__meta { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 18px; font: 400 13px/1.6 var(--fjp); letter-spacing: .02em; color: var(--gray-600); }
+.rlist__when, .rlist__what { display: inline-flex; align-items: center; gap: 8px; min-width: 0; }
+.rlist__ico { width: 16px; height: 16px; flex: none; color: var(--gray-500); }
+.rlist__ymd { font: 700 15px/1 var(--flt); letter-spacing: .03em; color: var(--ink); }
+.rlist__dow { font: 700 11px/1 var(--flt); letter-spacing: .1em; color: var(--red); }
+.rlist__note { color: var(--gray-500); }
 .rlist__item .sqbtn { flex: none; }
 .rlist__item:hover .sqbtn { background: var(--red); border-color: var(--red); color: #fff; }
 @media (max-width: 639px) {
-  .rlist__item { flex-wrap: wrap; gap: 6px 12px; }
-  .rlist__date { order: 3; width: 100%; padding-left: calc(10px + 6px + 12px); }
+  .rlist__item { gap: 6px 12px; }
   .rlist__item .sqbtn { display: none; }
 }
 
@@ -3488,7 +3487,7 @@ button.dl-item { width: 100%; text-align: left; }
 .rblock + .rblock { margin-top: 48px; }
 /* 優勝者の写真。1枚なら横いっぱい、2枚なら半分ずつ、それ以上は折り返す */
 /* （.gallery の定義より前にあるので、打ち消すためにクラスを重ねている） */
-.gallery.gallery--winners { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
+.gallery.gallery--winners { display: flex; flex-wrap: wrap; gap: 28px 20px; margin-top: 12px; }  /* 入賞者の写真が続くときは少し余白を空ける */
 .gallery.gallery--winners .gallery__item { flex: 1 1 300px; max-width: 100%; }
 .gallery.gallery--winners .gallery__item img { aspect-ratio: auto; height: auto; }
 .deflist__group { padding: 20px 4px 6px; font: 700 13px/1.5 var(--fjp); letter-spacing: .08em; color: var(--red); }

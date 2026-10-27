@@ -1,7 +1,9 @@
 ---
 import Base from '../layouts/Base.astro';
+import Icon from '../components/Icon.astro';
 import { siteData } from '../lib/cms.js';
-import { GROUPS_BY_YEAR } from '../data/results.js';
+import { GROUPS_BY_YEAR, legacyMeta } from '../data/results.js';
+import { dateCell } from '../data/schedule.js';
 
 // 令和7年度以降は EmDash の大会から、令和6年度までは旧サイトから引き継いだ results.json から
 const { EVENTS_BY_NENDO } = await siteData(Astro);
@@ -18,14 +20,21 @@ const eraOf = (nendo) => (Number(nendo) >= 2019
   ? { era: '令和', n: Number(nendo) - 2018 }
   : { era: '平成', n: Number(nendo) - 1988 });
 
+// 各大会の行：大会名の下に、大会情報の一覧と同じ形の日付（カレンダー印「2026.03.22 SUN」）と種目（一覧の印）。
+// 令和7年度以降は管理画面の大会から。令和6年度までは旧サイトのデータから分かる範囲で（results.js の legacyMeta。日付はほとんど残っていない）
+const when = (date, label) => {
+  if (!date) return null;
+  const c = dateCell({ date, label });
+  return { ymd: `${String(date).slice(0, 4)}.${c.md}`, dow: c.dow, note: c.note };
+};
 const years = [
   ...EVENTS_BY_NENDO.map((y) => ({
     nendo: y.nendo, label: y.label,
-    rows: y.events.map((e) => ({ href: e.url, title: e.displayName, date: e.label })),
+    rows: y.events.map((e) => ({ href: e.url, title: e.displayName, when: when(e.date, e.label), event: e.event || null })),
   })),
   ...GROUPS_BY_YEAR.map((y) => ({
     nendo: y.nendo, label: y.label,
-    rows: y.groups.map((g) => ({ href: g.href, title: g.title, date: g.entries[0].t.date })),
+    rows: y.groups.map((g) => { const m = legacyMeta(g); return { href: g.href, title: g.title, when: when(m.date, ''), event: m.event }; }),
   })),
 ].map((y) => ({ ...y, ...eraOf(y.nendo) }));
 
@@ -95,8 +104,15 @@ const eras = ['令和', '平成'].map((era) => ({ era, years: years.filter((y) =
             {y.rows.map((r, n) => (
               <li><a class="rlist__item" href={r.href}>
                 <span class="rlist__mark" aria-hidden="true"></span>
-                <span class="rlist__title">{r.title}</span>
-                {r.date && <span class="rlist__date">{r.date}</span>}
+                <span class="rlist__body">
+                  <span class="rlist__title">{r.title}</span>
+                  {(r.when || r.event) && (
+                    <span class="rlist__meta">
+                      {r.when && <span class="rlist__when"><Icon name="calendar" class="rlist__ico" /><span class="visually-hidden">日程</span><span class="rlist__ymd">{r.when.ymd}</span><span class="rlist__dow">{r.when.dow}</span>{r.when.note && <span class="rlist__note">{r.when.note}</span>}</span>}
+                      {r.event && <span class="rlist__what"><Icon name="list" class="rlist__ico" /><span class="visually-hidden">種目</span>{r.event}</span>}
+                    </span>
+                  )}
+                </span>
                 <span class="sqbtn" aria-hidden="true">→</span>
               </a></li>
             ))}

@@ -289,6 +289,37 @@ export function photoBlocks(t) {
   return blocks;
 }
 
+/* 旧サイトから引き継いだ束ね1件の、日付と種目（大会結果の一覧に出す）。分かる範囲で：
+ *   date  … どれかのページに「平成26年4月13日」「令和５年５月７日」の形の日付があれば YYYY-MM-DD（無ければ null。ほとんどのページに無い）
+ *   event … 種目名から組み立てる。クラブ対抗戦は「男子1部〜8部・女子1部〜5部」、ミックスは「ミックスダブルス」、
+ *           それ以外は「男女シングルス・ダブルス」のように性別＋種目。「1位トーナメント」だけの団体戦は「団体戦」 */
+export function legacyMeta(g) {
+  let date = null;
+  for (const e of g.entries) {
+    const m = toAscii(e.t.date || '').replace(/\s+/g, '').match(/^(令和|平成)(\d+)年(\d+)月(\d+)日/);
+    if (m) { const y = (m[1] === '令和' ? 2018 : 1988) + Number(m[2]); date = `${y}-${String(m[3]).padStart(2, '0')}-${String(m[4]).padStart(2, '0')}`; break; }
+  }
+  const cats = g.entries.flatMap((e) => e.t.categories.map((c) => toAscii(c.category)));
+  const titles = g.entries.map((e) => e.t.title).join(' ');
+  let event = null;
+  if (g.merged) {
+    const no = (gender) => Math.max(0, ...cats.map((c) => (c.match(new RegExp(`^${gender}(\\d+)部`)) || [])[1] || 0).map(Number));
+    const parts = [];
+    if (no('男子')) parts.push(`男子1部〜${no('男子')}部`);
+    if (no('女子')) parts.push(`女子1部〜${no('女子')}部`);
+    event = parts.join('・') || '団体戦';
+  } else if (/ミックス/.test(cats.join(' ') + titles)) {
+    event = 'ミックスダブルス';
+  } else {
+    const src = cats.join(' ') + ' ' + titles;
+    const types = ['シングルス', 'ダブルス'].filter((t) => src.includes(t));
+    const genders = ['男子', '女子'].filter((x) => cats.some((c) => c.startsWith(x)));
+    if (types.length) event = (genders.length === 2 ? '男女' : genders[0] || '') + types.join('・');
+    else if (/団体/.test(titles) || cats.some((c) => /^\d+位(・\d+位)?トーナメント$/.test(c))) event = '団体戦';
+  }
+  return { date, event };
+}
+
 /** 全年度の束ね（詳細ページの生成と、一覧の並びに使う）。新しい年度が先、年度の中は旧サイトの順。 */
 export const GROUPS_BY_YEAR = RESULTS.map((y) => ({
   nendo: y.nendo,
