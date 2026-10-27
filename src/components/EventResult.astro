@@ -46,10 +46,7 @@ let photoNo = 0;
     )}
     {layout.blocks.map((b, i) => (
       <section class="division rv" id={anchor(b.label, i)}>
-        {/* 見出しは種目名だけ。入賞者の名前は写真の下（.rblock__caption）にだけ出す */}
-        <h2 class="division__head">
-          <span class="division__name">{b.label || '結果'}</span>
-        </h2>
+        {/* 見出しは置かない（種目名はリーグ表・ドロー表の画像の中にある）。入賞者の名前は写真1枚ずつの下に */}
         <div class="rblock">
           {/* 結果表（ドロー表・リーグ表） */}
           {b.sheets.length > 0 && (
@@ -57,28 +54,37 @@ let photoNo = 0;
               {b.sheets.map((sh) => (
                 <a class="sheet sheet--result" href={sh.src}>
                   <img src={sh.src} alt={`${e.name} ${b.label || '結果'}${sh.label && sh.label !== b.label ? ' ' + sh.label : ''}`} width={sh.w} height={sh.h} loading="lazy" decoding="async">
-                  {sh.label && b.sheets.length > 1 && <span class="sheet__cap">{sh.label}</span>}
                 </a>
               ))}
             </div>
           )}
-          {/* その下に入賞者の写真。写真ごとに「優勝 ○○ペア」 */}
-          {b.photos.length > 0 && (
-            <div class="rblock__photos division__photos">
-              <div class="gallery gallery--winners">
-                {b.photos.map((ph) => (
-                  <a class="gallery__item" href={ph.src}>
-                    <img src={ph.src} alt={`${e.name} ${b.label}${ph.caption ? ' ' + ph.caption : ''} 入賞者の写真 ${++photoNo}`} width={ph.w} height={ph.h} loading="lazy" decoding="async">
-                    {ph.caption && <span class="gallery__cap"><AwardLine texts={[ph.caption]} category={b.label} /></span>}
-                  </a>
+          {/* その下に入賞者の写真。写真1枚ずつの下に「種目 ｜ 優勝 ○○」。
+              写真のラベルに名前があればそれ、無ければ成績（優勝 → 準優勝 → …）を写真の順に1つずつ。
+              写真より成績が多いぶん（写真の無い入賞者）は、写真のあとに1行ずつ */}
+          {(() => {
+            const own = b.photos.some((ph) => ph.caption);
+            const caps = b.photos.map((ph, k) => (own ? ph.caption : b.captions[k]) ?? null);
+            const rest = own ? [] : b.captions.slice(b.photos.length);
+            return (
+              <>
+                {b.photos.length > 0 && (
+                  <div class="rblock__photos division__photos">
+                    <div class="gallery gallery--winners">
+                      {b.photos.map((ph, k) => (
+                        <a class="gallery__item" href={ph.src}>
+                          <img src={ph.src} alt={`${e.name} ${b.label}${caps[k] ? ' ' + caps[k] : ''} 入賞者の写真 ${++photoNo}`} width={ph.w} height={ph.h} loading="lazy" decoding="async">
+                          {caps[k] && <span class="gallery__cap">{b.label && <span class="rblock__cat">{b.label}</span>}<AwardLine texts={[caps[k]]} category={b.label} /></span>}
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {rest.map((c) => (
+                  <p class="rblock__caption">{b.label && <span class="rblock__cat">{b.label}</span>}<AwardLine texts={[c]} category={b.label} /></p>
                 ))}
-              </div>
-            </div>
-          )}
-          {/* 入賞者の名前（優勝・準優勝・ベスト4 …） */}
-          {b.captions.length > 0 && (
-            <p class="rblock__caption">{b.label && <span class="rblock__cat">{b.label}</span>}<AwardLine texts={b.captions} category={b.label} /></p>
-          )}
+              </>
+            );
+          })()}
         </div>
       </section>
     ))}

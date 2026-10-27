@@ -3447,9 +3447,9 @@ button.dl-item { width: 100%; text-align: left; }
 /* 種目と画像が対応づけられないページでは、入賞者の名前を画像のあとに種目ごとに1行ずつ */
 .rblock__captions { margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--gray-200); }
 .rblock__captions .rblock__caption { margin-top: 6px; }
-/* 写真1枚ごとの名前（「優勝 ○○ペア」）。写真の下に小さく */
-.gallery.gallery--winners .gallery__cap { display: block; padding: 8px 2px 0; font: 400 13px/1.5 var(--fjp); letter-spacing: .02em; color: var(--ink); }
-.gallery.gallery--winners .gallery__cap .award { font-size: 13px; }
+/* 写真1枚ごとの入賞者（「種目 ｜ 優勝 ○○」）。写真の下に */
+.gallery.gallery--winners .gallery__cap { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; padding: 10px 2px 0; font: 400 14px/1.6 var(--fjp); letter-spacing: .02em; color: var(--ink); }
+.gallery.gallery--winners .gallery__cap .rblock__cat { margin-right: 0; }
 .gallery.gallery--winners .gallery__item { background: none; overflow: visible; }
 .gallery.gallery--winners .gallery__item img { border-radius: 4px; }
 .gallery.gallery--winners .gallery__item:hover img { transform: none; }
