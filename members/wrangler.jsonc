@@ -1,0 +1,57 @@
+{
+	// 会員登録・大会エントリー一元管理システム（members/）の Worker。
+	// 公式サイト本体（ルートの wrangler.jsonc / tcta-site）とは別の Worker・別の D1 として配備する。
+	// 設計書どおり「会員ポータルは別プロジェクト（サブドメイン）」の構成。
+	//
+	// 環境は 2 つ:
+	//   既定（wrangler deploy）         … 本番。APP_ENV=production、秘密は wrangler secret put で入れる
+	//   demo（wrangler deploy --env demo）… 他の人が触って確かめるデモ。デモデータ投入・送信箱・Stripe シミュレータが使える
+	// D1 は database_id を書かなければ最初の deploy で名前どおりに作られる（公式サイト本体と同じやり方）。
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "tcta-members",
+	"main": "src/index.ts",
+	"compatibility_date": "2026-02-24",
+	"compatibility_flags": ["nodejs_compat"],
+	"d1_databases": [
+		{ "binding": "DB", "database_name": "tcta-members", "migrations_dir": "migrations" }
+	],
+	// CSS などの静的ファイル（Worker が先に動き、/style.css だけ assets から返る）
+	"assets": { "directory": "./public" },
+	// 定期実行（締切リマインド・締切処理・退会者の連絡先削除・日次バックアップ）。毎日 09:00 JST。
+	"triggers": { "crons": ["0 0 * * *"] },
+	// 公開してよい設定。秘密（DATA_KEY など）は .dev.vars（手元）/ wrangler secret put（本番）。
+	// BASE_URL を空にするとアクセスされた URL から自動で決まる。
+	"vars": {
+		"APP_ENV": "production",
+		"APP_NAME": "テニス協会 会員ポータル",
+		"APP_BRAND_EN": "TOTTORI TENNIS MEMBERS",
+		"BASE_URL": "",
+		"SITE_URL": "https://tcta-site.tcta-admin-worker.workers.dev/",
+		"MAIL_FROM": "noreply@tottori-tenis.net"
+	},
+	"observability": { "enabled": true },
+	// 日次バックアップの保存先（設計書: R2 に 90 日保持）。使うときにコメントを外す。
+	// "r2_buckets": [{ "binding": "BACKUP", "bucket_name": "tcta-members-backup" }],
+	// 通知メール（Cloudflare Email Sending）。使うときにコメントを外す。無いときは mail_outbox に貯める。
+	// "send_email": [{ "name": "MAIL" }],
+
+	"env": {
+		"demo": {
+			"name": "tcta-members-demo",
+			"d1_databases": [
+				{ "binding": "DB", "database_name": "tcta-members-demo", "migrations_dir": "migrations" }
+			],
+			"assets": { "directory": "./public" },
+			"triggers": { "crons": ["0 0 * * *"] },
+			"vars": {
+				"APP_ENV": "demo",
+				"APP_NAME": "テニス協会 会員ポータル（デモ）",
+				"APP_BRAND_EN": "TOTTORI TENNIS MEMBERS",
+				"BASE_URL": "",
+				"SITE_URL": "https://tcta-site.tcta-admin-worker.workers.dev/",
+				"MAIL_FROM": "noreply@example.com"
+			},
+			"observability": { "enabled": true }
+		}
+	}
+}

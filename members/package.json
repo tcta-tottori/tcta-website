@@ -1,0 +1,29 @@
+{
+  "name": "tcta-members",
+  "version": "0.1.0",
+  "description": "テニス協会 会員登録・大会エントリー一元管理システム（Phase 1 動作確認用サンプル）",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "sync-assets": "node scripts/sync-assets.mjs",
+    "setup": "node scripts/setup.mjs",
+    "dev": "wrangler dev --test-scheduled",
+    "db:migrate": "wrangler d1 migrations apply tcta-members --local",
+    "db:migrate:remote": "wrangler d1 migrations apply tcta-members --remote",
+    "db:reset": "node scripts/setup.mjs --reset",
+    "typecheck": "tsc --noEmit",
+    "test": "node scripts/smoke.mjs",
+    "deploy": "wrangler deploy",
+    "predev": "npm run sync-assets",
+    "predeploy": "npm run sync-assets",
+    "pretest": "npm run sync-assets"
+  },
+  "dependencies": {
+    "hono": "^4.13.14"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20261019.1",
+    "typescript": "^5.9.3",
+    "wrangler": "^4.151.3"
+  }
+}

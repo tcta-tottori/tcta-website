@@ -1,0 +1,7 @@
+node_modules/
+.wrangler/
+.dev.vars
+worker-configuration.d.ts
+dist/
+# 本体サイトから複製する（scripts/sync-assets.mjs）
+public/assets/

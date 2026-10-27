@@ -1,0 +1,202 @@
+/* ==========================================================================
+   会員ポータル（members/）の上書きスタイル。
+   本体サイトの style.css（デザイン仕様 v3.1：白地に赤は入口だけ・直角・細い罫線）の上に読み、
+   ポータル固有の部品（表・フォーム・バッジ・カード・状態の帯）を同じ規則で整える。
+   ========================================================================== */
+
+/* ---- 文字のロゴ（協会ロゴの代わり。赤い四角＋英字＋日本語）---- */
+.brand { display: inline-flex; align-items: center; gap: 10px; color: var(--ink); }
+.brand__mark { flex: none; width: 24px; height: 24px; background: var(--red); }
+.brand__text { display: flex; flex-direction: column; gap: 2px; line-height: 1; }
+.brand__en { font: 700 15px/1 var(--fdisp); letter-spacing: .14em; white-space: nowrap; }
+.brand__ja { font: 500 10px/1 var(--fjp); letter-spacing: .12em; color: var(--gray-600); white-space: nowrap; }
+@media (min-width: 1024px) { .brand__mark { width: 28px; height: 28px; } .brand__en { font-size: 17px; } .brand__ja { font-size: 11px; } }
+.brand--white { color: #fff; }
+.brand--white .brand__ja { color: rgba(255, 255, 255, .7); }
+.site-footer .brand { align-items: flex-start; }
+.site-footer .brand__mark { width: 28px; height: 28px; }
+.site-footer .brand__en { font-size: 16px; white-space: normal; line-height: 1.25; }
+.site-footer .brand__ja { font-size: 11px; }
+.site-footer__brand { padding-right: 16px; }
+
+/* ---- ヘッダー：ロゴの横の小さな札（会員ポータル／事務局）---- */
+.site-header__logo { align-items: center; gap: 12px; }
+.site-header__tag {
+  display: none;
+  padding: 4px 8px;
+  border: 1px solid var(--ink);
+  font: 700 11px/1 var(--fjp);
+  letter-spacing: .12em;
+  color: var(--ink);
+  white-space: nowrap;
+}
+.site-header__tag em { font: 700 10px/1 var(--flt); font-style: normal; color: var(--red); margin-left: 4px; }
+@media (min-width: 640px) { .site-header__tag { display: inline-block; } }
+.header-contact-form { display: contents; }
+button.header-contact { cursor: pointer; }
+/* 事務局は項目が多いので、少し詰める */
+@media (min-width: 1024px) {
+  .nav--admin { gap: 18px; }
+  .nav--admin .nav__link { font-size: 14px; }
+}
+@media (min-width: 1200px) { .nav--admin { gap: 24px; } }
+.mobile-nav form.mobile-nav__item { margin-top: 28px; }
+.mobile-nav form.mobile-nav__item .btn { width: 100%; margin-top: 0; }
+
+/* ---- デモ／開発の案内の帯（本体の通知バーと同じ置き方。赤は使わない）---- */
+.demo-bar { background: var(--gray-050); border-bottom: 1px solid var(--gray-200); }
+.demo-bar__inner { display: flex; align-items: flex-start; gap: 12px; padding-top: 8px; padding-bottom: 8px; font: 400 12px/1.7 var(--fjp); color: var(--gray-600); }
+.demo-bar__label { flex: none; margin-top: 3px; padding: 2px 7px; border: 1px solid var(--gray-300); font: 700 10px/1 var(--flt); letter-spacing: .14em; color: var(--gray-600); }
+.demo-bar a { text-decoration: underline; text-underline-offset: 2px; }
+
+/* ---- 本文の幅 ---- */
+.section--portal { padding-top: 40px; }
+@media (min-width: 1024px) { .section--portal { padding-top: 56px; } }
+.portal-body { max-width: 880px; }
+.portal-body--wide { max-width: none; }
+.portal-body > * + * { margin-top: 24px; }
+.portal-body > h2 + * { margin-top: 0; }
+
+/* ---- 操作の結果（1 回だけ出る帯）---- */
+.flash { margin: 0 0 28px; padding: 16px 20px; border: 1px solid var(--gray-200); border-left: 4px solid var(--red); background: var(--gray-050); font: 700 15px/1.7 var(--fjp); color: var(--ink); }
+.flash--err { background: var(--red-tint); border-color: rgba(216, 35, 42, .25); border-left-color: var(--red); color: var(--red-dark); }
+
+/* ---- 見出し（本体の .sub-head と同じ型）---- */
+.portal-body h2 {
+  display: flex; gap: 12px; align-items: flex-start;
+  margin: 44px 0 16px;
+  font: 700 20px/1.5 var(--fjp); letter-spacing: .03em; color: var(--ink);
+}
+.portal-body h2::before { content: ""; flex: none; width: 12px; height: 12px; margin-top: 8px; background: var(--red); }
+@media (min-width: 1024px) { .portal-body h2 { font-size: 22px; } }
+.portal-body > h2:first-child, .card > h2:first-child, .card h2:first-child { margin-top: 0; }
+.card h2 { margin-top: 0; }
+.portal-body h3 { margin: 24px 0 10px; font: 700 17px/1.5 var(--fjp); letter-spacing: .02em; color: var(--ink); }
+.card > h3:first-child { margin-top: 0; }
+
+/* ---- 文章 ---- */
+.portal-body p:not([class]) { margin: 0 0 12px; font: 400 15px/1.9 var(--fjp); letter-spacing: .02em; color: var(--gray-800); }
+.portal-body p:not([class]):last-child { margin-bottom: 0; }
+.portal-body .mute, .portal-body p.mute { font: 400 13px/1.8 var(--fjp); color: var(--gray-500); }
+.warn { color: var(--red-dark); font-weight: 700; }
+.ok { color: var(--ink); font-weight: 700; }
+.portal-body code { font: 500 13px/1.6 ui-monospace, Menlo, monospace; background: var(--gray-100); padding: 1px 6px; }
+.portal-body pre { margin: 12px 0; padding: 16px; background: var(--gray-050); border: 1px solid var(--gray-200); font: 400 13px/1.7 ui-monospace, Menlo, monospace; color: var(--ink); overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; }
+.portal-body a:not(.btn):not(.badge) { text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--gray-300); }
+.portal-body a:not(.btn):hover { color: var(--red); text-decoration-color: var(--red); }
+details summary { cursor: pointer; font: 700 14px/1.6 var(--fjp); color: var(--ink); padding: 8px 0; }
+
+/* ---- カード（本体の .panel と同じ）---- */
+.card { background: var(--white); border: 1px solid var(--gray-200); padding: 24px; }
+@media (min-width: 1024px) { .card { padding: 32px; } }
+.card--gray { background: var(--gray-050); }
+.grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
+@media (min-width: 640px) { .grid { grid-template-columns: repeat(2, 1fr); } }
+@media (min-width: 1024px) { .grid { grid-template-columns: repeat(3, 1fr); gap: 24px; } }
+.grid .card { margin: 0; }
+.grid .card h3 { margin-top: 0; }
+
+/* 数字の札（ダッシュボード）。本体の登録費（.fee）と同じ Barlow の太字 */
+.stat { background: var(--white); border: 1px solid var(--gray-200); padding: 22px 24px 20px; }
+.stat b { display: block; font: 700 36px/1 var(--flt); letter-spacing: .02em; color: var(--red); }
+.stat span { display: block; margin-top: 10px; font: 700 13px/1.5 var(--fjp); letter-spacing: .02em; color: var(--gray-600); }
+
+/* ---- 表（本体の .fee-table と同じ）---- */
+.tbl { overflow-x: auto; -webkit-overflow-scrolling: touch; border-top: 1px solid var(--gray-300); }
+.tbl table { width: 100%; border-collapse: collapse; background: var(--white); font: 400 14px/1.6 var(--fjp); }
+.tbl th, .tbl td { padding: 12px 14px; border-bottom: 1px solid var(--gray-200); text-align: left; vertical-align: middle; white-space: nowrap; }
+.tbl thead th, .tbl tr:first-child th { background: var(--gray-050); font: 700 13px/1.5 var(--fjp); letter-spacing: .04em; color: var(--ink); }
+.tbl td.wrap-text { white-space: normal; min-width: 16em; }
+.tbl td .mute { display: inline; }
+.tbl .badge { vertical-align: middle; }
+
+/* ---- 定義リスト（本体の .deflist）---- */
+.kv { display: grid; grid-template-columns: 1fr; gap: 0; margin: 0; border-top: 1px solid var(--gray-200); }
+.kv dt { padding: 12px 4px 2px; font: 700 13px/1.6 var(--fjp); letter-spacing: .04em; color: var(--ink); }
+.kv dd { margin: 0; padding: 0 4px 12px; border-bottom: 1px solid var(--gray-200); font: 400 15px/1.8 var(--fjp); color: var(--gray-800); }
+@media (min-width: 640px) {
+  .kv { grid-template-columns: 160px 1fr; }
+  .kv dt { padding: 14px 4px; border-bottom: 1px solid var(--gray-200); }
+  .kv dd { padding: 14px 4px; }
+}
+
+/* ---- ボタン（本体の .btn / .btn--primary / .btn--outline）---- */
+.portal-body button, .portal-body .btn, .btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 16px;
+  width: auto; min-height: 48px; padding: 12px 24px;
+  border-radius: 4px; border: 1px solid var(--ink);
+  background: var(--white); color: var(--ink);
+  font: 700 15px/1 var(--fjp); letter-spacing: .04em; cursor: pointer; text-decoration: none !important;
+  transition: background .3s ease, border-color .3s ease, color .3s ease;
+}
+.portal-body button:hover, .portal-body .btn:hover { border-color: var(--red); color: var(--red); background: var(--white); }
+.portal-body .primary, .portal-body .btn--primary, .btn--primary { background: var(--red); border-color: var(--red); color: #fff; }
+.portal-body .primary:hover, .portal-body .btn--primary:hover { background: var(--red-dark); border-color: var(--red-dark); color: #fff; }
+.portal-body .btn--outline { border-color: var(--gray-300); color: var(--gray-800); background: var(--white); }
+.portal-body .small { min-height: 36px; padding: 6px 12px; font-size: 13px; font-weight: 700; letter-spacing: .02em; }
+.portal-body button.link { min-height: 0; padding: 0; border: 0; background: none; color: var(--ink); text-decoration: underline !important; font-weight: 400; }
+.primary .ripple, .btn--primary .ripple { background: #fff; }
+form.inline { display: inline; }
+.actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-top: 24px; }
+.actions .mute { margin: 0; }
+.tbl form.inline + form.inline { margin-left: 6px; }
+
+/* ---- フォーム（本体の .form__label / .input / .checkbox）---- */
+.portal-body form.card { max-width: none; }
+.portal-body label { display: flex; flex-direction: column; gap: 8px; margin: 20px 0 0; font: 700 15px/1.6 var(--fjp); letter-spacing: .02em; color: var(--ink); }
+.portal-body label:first-child { margin-top: 0; }
+.portal-body input[type=text], .portal-body input[type=email], .portal-body input[type=number], .portal-body input[type=date], .portal-body input[type=tel],
+.portal-body select, .portal-body textarea {
+  width: 100%; max-width: 520px; min-height: 52px; padding: 13px 16px;
+  background: var(--white); border: 1px solid var(--gray-300); border-radius: 4px;
+  font: 400 16px/1.6 var(--fjp); color: var(--ink);
+  transition: border-color .25s ease, box-shadow .25s ease;
+}
+.portal-body textarea { min-height: 160px; max-width: none; resize: vertical; font: 400 14px/1.7 ui-monospace, Menlo, monospace; }
+.portal-body input:focus, .portal-body select:focus, .portal-body textarea:focus { border-color: var(--red); box-shadow: 0 0 0 3px rgba(216, 35, 42, .12); outline: none; }
+.portal-body input[type=checkbox], .portal-body input[type=radio] { width: 22px; height: 22px; margin: 0; flex: none; accent-color: var(--red); }
+.portal-body label.inline, .portal-body label.check, .radio-list label {
+  flex-direction: row; align-items: flex-start; gap: 12px; margin: 10px 0 0;
+  font: 400 15px/1.7 var(--fjp); color: var(--gray-800); cursor: pointer;
+}
+.portal-body label.check input, .radio-list label input { margin-top: 2px; }
+.radio-list { margin-top: 8px; }
+.radio-list label { margin: 0; padding: 10px 0; border-bottom: 1px solid var(--gray-200); }
+.radio-list label:last-child { border-bottom: 0; }
+.radio-list .badge { margin-left: 4px; }
+.indent { margin: 8px 0 8px 34px; display: flex; flex-wrap: wrap; gap: 8px; }
+.indent input { max-width: 220px !important; }
+/* 検索窓のように 1 行に並べる入力＋ボタン */
+.portal-body form > input[type=text] + button, .portal-body form > input[type=text] + .btn { margin-left: 8px; vertical-align: top; }
+.portal-body form > input[type=text] { display: inline-block; width: auto; min-width: 240px; vertical-align: top; }
+
+/* ---- バッジ（本体の .badge の規則）---- */
+.badge { min-width: 56px; height: 24px; padding: 0 9px; font-size: 11px; }
+
+/* ---- 手順（本体の .steps / .step はそのまま使う）---- */
+
+/* ---- 受付中の大会（トップ）---- */
+.tlist { display: grid; grid-template-columns: 1fr; gap: 16px; }
+@media (min-width: 640px) { .tlist { grid-template-columns: repeat(2, 1fr); } }
+.tcard-s { display: flex; flex-direction: column; gap: 10px; background: var(--white); border: 1px solid var(--gray-200); padding: 22px 22px 20px; transition: box-shadow .3s ease, transform .3s ease, border-color .3s ease; }
+.tcard-s:hover { transform: translateY(-3px); box-shadow: var(--shadow-hover); border-color: var(--gray-300); color: inherit; }
+.tcard-s__assoc { font: 700 12px/1.4 var(--fjp); letter-spacing: .06em; color: var(--red); }
+.tcard-s__title { margin: 0; font: 700 18px/1.5 var(--fjp); letter-spacing: .02em; color: var(--ink); }
+.tcard-s__meta { display: flex; flex-wrap: wrap; gap: 4px 14px; font: 400 13px/1.6 var(--fjp); color: var(--gray-600); }
+.tcard-s__date { font: 700 15px/1.4 var(--flt); letter-spacing: .03em; color: var(--ink); }
+.tcard-s__go { display: inline-flex; align-items: center; gap: 8px; margin-top: 4px; font: 700 14px/1 var(--fjp); color: var(--ink); text-decoration: none !important; }
+.tcard-s__go .aw { color: var(--red); }
+.tcard-s:hover .tcard-s__go .aw { transform: translateX(4px); }
+
+/* ---- フッターのロゴの下の一言 ---- */
+.site-footer__note { margin: 16px 0 0; font: 400 12px/1.7 var(--fjp); color: rgba(255, 255, 255, .6); }
+
+/* ---- 事務局のページは本文を広く使う ---- */
+body.is-admin .portal-body { max-width: none; }
+
+/* ---- 参加資格の判定 ---- */
+.elig { display: inline-block; padding: 2px 8px; border-radius: 2px; font: 700 12px/1.6 var(--fjp); letter-spacing: .02em; white-space: nowrap; }
+.elig--ok { border: 1px solid var(--ink); color: var(--ink); }
+.elig--ng { background: var(--red-tint); color: var(--red-dark); }
+p.elig { display: inline-block; margin: 0 0 8px; padding: 6px 12px; font-size: 14px; }
+.elig-rows { margin: 8px 0 0; padding: 0; list-style: none; font: 400 14px/1.8 var(--fjp); color: var(--gray-800); }
