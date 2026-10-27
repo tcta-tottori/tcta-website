@@ -614,4 +614,5 @@ def main():
             json.dump(results, fh, ensure_ascii=False, separators=(',', ':'))
         print('results.json を更新しました', file=sys.stderr)
 
-main()
+if __name__ == '__main__':
+    main()
