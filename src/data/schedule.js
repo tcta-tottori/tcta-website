@@ -47,14 +47,40 @@ export const nendoLabel = (nendo) => NENDO_LABEL[nendo] ?? `令和${Number(nendo
 /** いまの年度（西暦）。3月はじまり。 */
 export const CURRENT_NENDO = '2026';
 
+/** 日本時間のいま（UTC のミリ秒）。Cloudflare 上でも端末でも同じ基準で比べるため、締切も UTC のミリ秒にして比べる */
+const JST_OFFSET = 9 * 60 * 60 * 1000;
+/** 日本時間の今日 'YYYY-MM-DD' */
+export function todayJST(now = Date.now()) {
+  return new Date(now + JST_OFFSET).toISOString().slice(0, 10);
+}
+/**
+ * 申込締切の日時（日本時間の 20:00）を UTC のミリ秒で。締切は「10/23」の形（年は書かれていない）なので、
+ * 大会の開催日の年を当て、締切の月が開催月より後なら前の年（年明け開催で締切が年内）。読めない形（「12月」など）は null
+ */
+export function dueAt(due, date) {
+  const m = String(due ?? '').trim().match(/^(\d{1,2})\/(\d{1,2})$/);
+  if (!m || !date) return null;
+  const [y, em] = String(date).split('-').map(Number);
+  const month = Number(m[1]), day = Number(m[2]);
+  const year = month > em ? y - 1 : y;
+  return Date.UTC(year, month - 1, day, 20, 0, 0) - JST_OFFSET;
+}
+/** 受付中の大会は、締切日の 20:00（日本時間）を過ぎたら自動で受付終了にする（管理画面を直さなくてもよいように） */
+export function autoStatus(status, due, date, now = Date.now()) {
+  if (status !== 'open') return status;
+  const at = dueAt(due, date);
+  return at !== null && now >= at ? 'closed' : status;
+}
+
 /** EmDash の 1 行を、移行前の schedule.json の 1 行と同じ形にする。 */
 export function scheduleRow(t) {
+  const date = String(t.date ?? '').slice(0, 10);
   return {
     slug: t.slug,
     nendo: String(t.nendo ?? ''),
     no: t.no || '',
     kind: KIND_KEY[t.kind] ?? 'main',
-    date: String(t.date ?? '').slice(0, 10),
+    date,
     label: t.label || '',
     spareDate: t.spare_date || '',
     spareNote: t.spare_note || '',
@@ -63,7 +89,7 @@ export function scheduleRow(t) {
     event: t.event || '',
     place: t.place || '',
     due: t.due || '',
-    status: STATE_KEY[t.state] ?? 'soon',
+    status: autoStatus(STATE_KEY[t.state] ?? 'soon', t.due, date),
     reg: REG_KEY[t.reg] ?? 'free',
   };
 }
