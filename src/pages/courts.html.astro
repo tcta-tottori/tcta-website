@@ -54,8 +54,10 @@ const isLight = isLightFeature;
             )}
             <div class="cfac__hero-cap">
               <div class="container container--result">
-                <h2 class="cfac__name"><Icon name="pin" class="court-pin" />{c.name}</h2>
-                <p class="cfac__badges">
+                {/* 写真が出たあとで文字を出す。施設名とバッジのあいだに線があるつもりで、施設名はその線から上へ、
+                    バッジは線から下へ滑り出す（.cfac__cap-top / .cfac__cap-bottom が切り取りの箱。style.css） */}
+                <div class="cfac__cap-top"><h2 class="cfac__name"><Icon name="pin" class="court-pin" />{c.name}</h2></div>
+                <div class="cfac__cap-bottom"><p class="cfac__badges">
                   {c.main && <span class="badge badge--open">主会場</span>}
                   {c.surface && (surfaceBadge(c.surface)
                     ? <>
@@ -65,7 +67,7 @@ const isLight = isLightFeature;
                     : <span class="badge">{c.surface}</span>)}
                   {c.courts > 0 && <span class="badge">{c.courts}面</span>}
                   {c.features.map((f) => <span class:list={['badge', isLight(f) && 'badge--light']}>{f}</span>)}
-                </p>
+                </p></div>
               </div>
             </div>
           </div>
