@@ -3420,7 +3420,7 @@ button.dl-item { width: 100%; text-align: left; }
   .rblock--split .gallery.gallery--winners { margin-top: 0; }
 }
 /* 入賞者の名前。写真の下に「男子シングルスA級　優勝 ○○　準優勝 ○○」 */
-.rblock__caption { margin: 10px 0 0; font: 400 14px/1.8 var(--fjp); color: var(--gray-800); }
+.rblock__caption { margin: 10px 0 0; font: 400 14px/1.8 var(--fjp); color: var(--gray-800); text-align: center; }  /* 写真の無い入賞者の行も中央そろえ */
 /* 入賞者の行（AwardLine）。順位のバッジは横の種目の枠（.rblock__cat）と同じ形・大きさで、順位ごとの色の塗りに白文字
    （1 金・2 銀・3 銅・4 緑、それ以外（ベスト4 など）は灰色）。名前は太字、「選手」「ペア」と注記は普通の太さ */
 .awards { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px 18px; vertical-align: middle; }
@@ -3448,7 +3448,7 @@ button.dl-item { width: 100%; text-align: left; }
 .rblock__captions { margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--gray-200); }
 .rblock__captions .rblock__caption { margin-top: 6px; }
 /* 写真1枚ごとの入賞者（「種目 ｜ 優勝 ○○」）。写真の下に */
-.gallery.gallery--winners .gallery__cap { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; padding: 10px 2px 0; font: 400 14px/1.6 var(--fjp); letter-spacing: .02em; color: var(--ink); }
+.gallery.gallery--winners .gallery__cap { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px 10px; padding: 10px 2px 0; font: 400 14px/1.6 var(--fjp); letter-spacing: .02em; color: var(--ink); text-align: center; }  /* 写真の幅を基準に中央そろえ */
 .gallery.gallery--winners .gallery__cap .rblock__cat { margin-right: 0; }
 .gallery.gallery--winners .gallery__item { background: none; overflow: visible; }
 .gallery.gallery--winners .gallery__item img { border-radius: 4px; }
