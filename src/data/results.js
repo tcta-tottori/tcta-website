@@ -6,7 +6,19 @@
 //   ・大会ごとの写真（WebP に変換して public/assets/img/results/<年度>/ へ）
 //   ・結果PDF（public/assets/pdf/results/）
 //   ・旧サイトの元ページのURL
+//   ・開催日（date）と会場（venue）
 // を大会単位で持っている。
+//
+// ■ 開催日と会場
+//   旧サイトの結果ページには日付がほとんど書かれていない。date と venue は、
+//   手元の過去資料（年間の大会日程、大会ごとのドロー・プログラム・要綱のPDF、
+//   旧サイトのドロー／ギャラリーのページ）から tools/fill_dates.py が起こしたもの。
+//   date は「令和6年4月7日」の形の文字列で、並べ替えに使う YYYY-MM-DD は
+//   下の legacyMeta がここから作る。dateSource はどの資料から採ったかの控えで、
+//   画面には出さない。dateSource が年間日程のPDF（○○taikai-nittei.pdf /
+//   ○○tournament-schedule.pdf）になっているものは「予定されていた日」で、
+//   予備日に順延された大会はずれている可能性がある。ドロー・プログラム・結果表から
+//   採ったものは実際に行われた日。327大会のうち282件に日付が入っている。
 //
 // ■ 手で直すとき
 //   results.json を直接編集してよい。題名の誤字や、本文から会場として
@@ -320,11 +332,28 @@ export function legacyMeta(g) {
   return { date, event };
 }
 
-/** 全年度の束ね（詳細ページの生成と、一覧の並びに使う）。新しい年度が先、年度の中は旧サイトの順。 */
+/**
+ * 年度の中を開催順に並べ替える。
+ * 旧サイトは年度の中の並びがまちまちで（尾坂杯が先頭に来ている年度がある）、
+ * 一覧は「開催順に並びます」と書いているので、日付が全部そろっている年度だけ並べ替える。
+ * 1つでも日付の分からない大会があるとかえって混ざるので、その年度は旧サイトの順のまま。
+ */
+function sortByDate(groups) {
+  const dates = groups.map((g) => legacyMeta(g).date);
+  if (dates.some((d) => !d)) return groups;
+  return groups
+    .map((g, i) => ({ g, i, d: dates[i] }))
+    .sort((a, b) => (a.d < b.d ? -1 : a.d > b.d ? 1 : a.i - b.i))
+    .map((x) => x.g);
+}
+
+/** 全年度の束ね（詳細ページの生成と、一覧の並びに使う）。新しい年度が先、年度の中は開催順。 */
 export const GROUPS_BY_YEAR = RESULTS.map((y) => ({
   nendo: y.nendo,
   label: y.label,
-  groups: groupYear(y).map((g) => ({ ...g, id: g.entries[0].t.id, nendo: y.nendo, yearLabel: y.label })),
+  groups: sortByDate(
+    groupYear(y).map((g) => ({ ...g, id: g.entries[0].t.id, nendo: y.nendo, yearLabel: y.label })),
+  ),
 }));
 
 /** 旧サイトの1ページ（tournament.id）→ 束ねたページの id */
