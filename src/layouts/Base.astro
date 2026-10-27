@@ -61,16 +61,31 @@ const {
      行が順にヘッダーの下へ戻る動きを流す（CSS の ::view-transition-old(mn-item-*)）。
      印が無い移動（通常のリンク・戻る）では切り替えを省き、これまでどおり即座に表示する。 */
   (function () {
-    var KEY = 'tcta-mn-vt';
-    var has = function () { try { return sessionStorage.getItem(KEY) === '1'; } catch (e) { return false; } };
+    var KEY = 'tcta-mn-vt';          // メニューから
+    var COURT = 'tcta-court-vt';     // コート案内の行から（値は施設の id。写真と施設名をつないで移る）
+    var get = function (k) { try { return sessionStorage.getItem(k); } catch (e) { return null; } };
+    var del = function (k) { try { sessionStorage.removeItem(k); } catch (e) {} };
     window.addEventListener('pageswap', function (e) {
-      if (e.viewTransition && !has()) e.viewTransition.skipTransition();
+      if (e.viewTransition && get(KEY) !== '1' && !get(COURT)) e.viewTransition.skipTransition();
     });
     window.addEventListener('pagereveal', function (e) {
       if (!e.viewTransition) return;
-      if (has()) {
-        try { sessionStorage.removeItem(KEY); } catch (x) {}
+      var court = get(COURT);
+      if (get(KEY) === '1') {
+        del(KEY);
         if (e.viewTransition.types) e.viewTransition.types.add('menu');
+      } else if (court) {
+        del(COURT);
+        var art = document.getElementById(court);
+        var img = art && art.querySelector('.cfac__hero-link img');
+        var name = art && art.querySelector('.cfac__name');
+        if (!art || !img) { e.viewTransition.skipTransition(); return; }
+        art.scrollIntoView();  // 写しを撮る前に、その施設が画面に入る位置へ
+        img.style.viewTransitionName = 'court-photo';
+        if (name) name.style.viewTransitionName = 'court-name';
+        if (e.viewTransition.types) e.viewTransition.types.add('court');
+        var clear = function () { img.style.viewTransitionName = ''; if (name) name.style.viewTransitionName = ''; };
+        e.viewTransition.finished.then(clear, clear);
       } else {
         e.viewTransition.skipTransition();
       }
