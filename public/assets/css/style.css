@@ -3488,7 +3488,7 @@ button.dl-item { width: 100%; text-align: left; }
 .rblock + .rblock { margin-top: 48px; }
 /* 優勝者の写真。1枚なら横いっぱい、2枚なら半分ずつ、それ以上は折り返す */
 /* （.gallery の定義より前にあるので、打ち消すためにクラスを重ねている） */
-.gallery.gallery--winners { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
+.gallery.gallery--winners { display: flex; flex-wrap: wrap; gap: 28px 20px; margin-top: 12px; }  /* 入賞者の写真が続くときは少し余白を空ける */
 .gallery.gallery--winners .gallery__item { flex: 1 1 300px; max-width: 100%; }
 .gallery.gallery--winners .gallery__item img { aspect-ratio: auto; height: auto; }
 .deflist__group { padding: 20px 4px 6px; font: 700 13px/1.5 var(--fjp); letter-spacing: .08em; color: var(--red); }

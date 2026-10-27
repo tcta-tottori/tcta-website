@@ -34,38 +34,55 @@ const head = g ? g.entries[0].t : null;
 const title = g ? `${g.title}（${g.yearLabel}）｜大会結果｜鳥取市テニス協会` : '';
 const description = g ? `${g.yearLabel}に行われた${g.title}の結果です。種目ごとの結果表と当日の写真を掲載しています。` : '';
 
-// 束ねたページごとに、画像のかたまり・入賞者・PDFを組む。
-// 画像を「結果表（1枚以上）→ 写真」のまとまりに切り、まとまりの数が種目の数と同じなら n番目のまとまり = n番目の種目
-// とみなして、その種目の入賞者（優勝・準優勝・第3位・ベスト4）の名前を写真の下に添える（旧サイトの並びがその順だったため）。
-// 合わないときは結果画像1枚ごとに切り直して同じことを試み、それでも合わなければ種目が分からないので、
-// 入賞者の名前は画像のあとに種目ごとに並べる（loose）。
-const caption = (c) => c.places
-  .filter((pl) => pl.name)
-  .map((pl) => `${pl.award} ${pl.name}${pl.note ? (/^[（(]/.test(pl.note) ? pl.note : `（${pl.note}）`) : ''}`)
-  .join('　');
+// 束ねたページごとに、画像のかたまり・入賞者・PDFを組む。できるだけ写真と入賞者の名前をセットにする。
+// 画像を「結果表（1枚以上）→ 写真」のまとまりに切り、次の順に試す（旧サイトの並びが種目順だったため）：
+//   1. まとまりの数 ＝ 種目の数        … n番目のまとまり ＝ n番目の種目。その種目の入賞者を写真1枚ずつに添える
+//   2. 結果画像の数 ＝ 種目の数        … 結果画像1枚ごとに切り直して同じこと
+//   3. まとまりの数 ＝ 入賞者の数      … n番目のまとまり ＝ n番目の入賞者（同じ種目に優勝が2人いて、それぞれ表と写真があるときなど）
+//   4. 結果画像の数 ＝ 入賞者の数      … 結果画像1枚ごとに切り直して同じこと
+//   5. 写真の数 ＝ 入賞者の数          … 種目は分からないが、写真の順に入賞者を1人ずつ添える
+//   6. それでも合わなければ、入賞者の名前は画像のあとに種目ごとに並べる（loose）
+// 各まとまり：{ sheets, photos, category, caps: 写真ごとの入賞者 { category, text } か null, extra: 写真の無い入賞者 }
+const placeText = (pl) => `${pl.award} ${pl.name}${pl.note ? (/^[（(]/.test(pl.note) ? pl.note : `（${pl.note}）`) : ''}`;
+const placesOf = (c) => c.places.filter((pl) => pl.name).map((pl) => ({ category: c.category, text: placeText(pl) }));
 // ギャラリーを別ページに出すときは、その分をここから外す
 const inline = !g ? [] : g.galleryHref ? g.entries.filter((e) => e.kind !== 'gallery') : g.entries;
 const parts = inline.map((e) => {
   const cats = e.t.categories;
+  const flat = cats.flatMap(placesOf);
   const runs = imageRuns(e.t.photos);
   const perSheet = photoBlocks(e.t).map((b) => ({ sheets: b.sheet ? [b.sheet] : [], photos: b.photos }));
-  let blocks;
-  let aligned = true;
-  if (cats.length && runs.length === cats.length && runs.some((r) => r.sheets.length)) blocks = runs;
-  else if (cats.length && perSheet.filter((b) => b.sheets.length).length === cats.length) blocks = perSheet;
-  else { blocks = runs; aligned = false; }
-  let n = 0;
-  for (const b of blocks) {
-    const c = aligned && b.sheets.length ? cats[n++] : null;
-    b.category = c?.category ?? null;
-    b.caption = c ? caption(c) : '';
+  const withSheet = (list) => list.filter((b) => b.sheets.length);
+  let blocks = runs;
+  let loose = [];
+  const give = (b, category, places) => {
+    b.category = category;
+    b.caps = b.photos.map((_, k) => places[k] ?? null);
+    b.extra = places.slice(b.photos.length);
+  };
+  const fill = (list, units, pick) => { let n = 0; for (const b of list) { const u = b.sheets.length ? units[n++] : null; if (u) pick(b, u); else give(b, null, []); } };
+  if (cats.length && runs.length === cats.length && runs.some((r) => r.sheets.length)) {
+    fill(runs, cats, (b, c) => give(b, c.category, placesOf(c)));
+  } else if (cats.length && withSheet(perSheet).length === cats.length) {
+    blocks = perSheet; fill(perSheet, cats, (b, c) => give(b, c.category, placesOf(c)));
+  } else if (flat.length && runs.length === flat.length && runs.some((r) => r.sheets.length)) {
+    fill(runs, flat, (b, p) => give(b, p.category, [p]));
+  } else if (flat.length && withSheet(perSheet).length === flat.length) {
+    blocks = perSheet; fill(perSheet, flat, (b, p) => give(b, p.category, [p]));
+  } else {
+    const photos = runs.reduce((s, r) => s + r.photos.length, 0);
+    if (flat.length && photos === flat.length) {
+      let n = 0;
+      for (const b of runs) { b.category = null; b.caps = b.photos.map(() => flat[n++]); b.extra = []; }
+    } else {
+      for (const b of runs) { b.category = null; b.caps = b.photos.map(() => null); b.extra = []; }
+      loose = flat;
+    }
   }
-  // 種目の順（予選 → 決勝、男子 → 女子）。種目が分かるまとまりだけ並べ替え、分からないものは元の順のまま最後に
-  const sorted = blocks.every((b) => b.category)
-    ? sortByCategory(blocks, (b) => b.category)
-    : blocks;
+  // 種目の順（予選 → 決勝、男子 → 女子）。種目が分かるまとまりだけ並べ替え、分からないものは元の順のまま
+  const sorted = blocks.length && blocks.every((b) => b.category) ? sortByCategory(blocks, (b) => b.category) : blocks;
   const categories = sortByCategory(e.t.categories, (c) => c.category);
-  return { title: inline.length > 1 ? e.title : null, blocks: sorted, categories, loose: aligned ? [] : categories.filter((c) => caption(c)), pdfs: e.t.pdfs };
+  return { title: inline.length > 1 ? e.title : null, blocks: sorted, categories, loose, pdfs: e.t.pdfs };
 });
 const hasAny = !!g && (parts.some((p) => p.blocks.length || p.categories.length || p.pdfs.length) || !!g.galleryHref);
 
@@ -234,40 +251,33 @@ let photoNo = 0;
                     ))}
                   </div>
                 )}
-                {(() => {
-                  const caps = String(b.caption || '').split('　').filter(Boolean);
-                  return (
-                    <>
-                      {b.photos.length > 0 && (
-                        <div class="rblock__photos division__photos">
-                          <div class="gallery gallery--winners">
-                            {b.photos.map((ph, k) => (
-                              <a class="gallery__item" href={ph.src}>
-                                <img src={ph.src} alt={`${g.title}${b.category ? ' ' + b.category : ''} 入賞者の写真 ${++photoNo}`} width={ph.w} height={ph.h} loading="lazy" decoding="async">
-                                {caps[k] && <span class="gallery__cap">{b.category && <span class="rblock__cat">{b.category}</span>}<AwardLine texts={[caps[k]]} category={b.category} /></span>}
-                              </a>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                      {/* 写真の無い入賞者は1行ずつ */}
-                      {caps.slice(b.photos.length).map((c) => (
-                        <p class="rblock__caption">{b.category && <span class="rblock__cat">{b.category}</span>}<AwardLine texts={[c]} category={b.category} /></p>
+                {b.photos.length > 0 && (
+                  <div class="rblock__photos division__photos">
+                    <div class="gallery gallery--winners">
+                      {b.photos.map((ph, k) => (
+                        <a class="gallery__item" href={ph.src}>
+                          <img src={ph.src} alt={`${g.title}${(b.caps[k]?.category || b.category) ? ' ' + (b.caps[k]?.category || b.category) : ''} 入賞者の写真 ${++photoNo}`} width={ph.w} height={ph.h} loading="lazy" decoding="async">
+                          {b.caps[k] && <span class="gallery__cap">{b.caps[k].category && <span class="rblock__cat">{b.caps[k].category}</span>}<AwardLine texts={[b.caps[k].text]} category={b.caps[k].category} /></span>}
+                        </a>
                       ))}
-                    </>
-                  );
-                })()}
+                    </div>
+                  </div>
+                )}
+                {/* 写真の無い入賞者は1行ずつ */}
+                {b.extra.map((c) => (
+                  <p class="rblock__caption">{c.category && <span class="rblock__cat">{c.category}</span>}<AwardLine texts={[c.text]} category={c.category} /></p>
+                ))}
               </div>
             </section>
           ))}
 
-          {/* 種目と画像が対応づけられないページ：入賞者の名前を種目ごとに1行ずつ */}
+          {/* 種目と画像が対応づけられないページ：入賞者の名前を画像のあとに1人ずつ */}
           {p.loose.length > 0 && (
             <div class="rblock__captions rv">
               {p.loose.map((c) => (
                 <p class="rblock__caption">
                   <span class="rblock__cat">{c.category || '種目'}</span>
-                  <AwardLine items={c.places.filter((pl) => pl.name)} category={c.category} />
+                  <AwardLine texts={[c.text]} category={c.category} />
                 </p>
               ))}
             </div>
