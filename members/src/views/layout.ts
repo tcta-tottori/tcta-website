@@ -2,7 +2,7 @@
 import { html, raw } from 'hono/html';
 import type { HtmlEscapedString } from 'hono/utils/html';
 import type { Ctx } from '../app';
-import { isProd } from '../env';
+import { isDemo, isProd } from '../env';
 import { takeFlash } from '../lib/session';
 import { STATUS_LABEL, type Admin, type Member, ROLE_LABEL } from '../types';
 
@@ -40,7 +40,7 @@ export function page(c: Ctx, o: LayoutOpts): H {
     <nav>${nav}</nav>
   </div>
 </header>
-${dev ? html`<div class="devbar wrap">開発モード（サンプル）: メールは <a href="/dev/mailbox">送信箱</a> に届きます。Stripe は <a href="/dev">シミュレータ</a>。事務局は <a href="/admin/login">管理者を選んでログイン</a>。</div>` : ''}
+${dev ? html`<div class="devbar wrap">${isDemo(env) ? 'デモ環境' : '開発モード'}（サンプル・架空のデータ）: <a href="/dev">はじめに読む</a> ／ メールは <a href="/dev/mailbox">送信箱</a> に届きます ／ Stripe は <a href="/dev">シミュレータ</a> ／ 事務局は <a href="/admin/login">管理者を選んでログイン</a></div>` : ''}
 <main class="wrap ${o.wide ? 'wide' : ''}">
   ${f ? html`<div class="flash ${f.kind}">${f.msg}</div>` : ''}
   <h1>${o.title}</h1>

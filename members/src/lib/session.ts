@@ -15,7 +15,7 @@ export async function createSession(c: Ctx, kind: SessionKind, subject: string):
   const id = randomToken(32);
   const expires = new Date(Date.now() + TTL[kind] * 1000).toISOString();
   await run(c.env.DB, 'INSERT INTO sessions (id, kind, subject, expires_at, created_at) VALUES (?, ?, ?, ?, ?)', id, kind, subject, expires, nowIso());
-  setCookie(c, COOKIE[kind], id, { httpOnly: true, secure: isProd(c.env), sameSite: 'Lax', path: '/', maxAge: TTL[kind] });
+  setCookie(c, COOKIE[kind], id, { httpOnly: true, secure: isProd(c.env) || c.req.url.startsWith('https:'), sameSite: 'Lax', path: '/', maxAge: TTL[kind] });
 }
 
 export async function readSession(c: Ctx, kind: SessionKind): Promise<string | null> {

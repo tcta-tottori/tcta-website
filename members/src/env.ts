@@ -17,6 +17,8 @@ export interface Env {
 }
 
 export const isProd = (env: Env) => env.APP_ENV === 'production';
+/** 公開デモ（誰でも触れる。デモデータ投入・送信箱・Stripe シミュレータ・選択式の事務局ログインが有効） */
+export const isDemo = (env: Env) => env.APP_ENV === 'demo';
 
 export function requireSecret(env: Env, name: 'DATA_KEY' | 'STRIPE_WEBHOOK_SECRET'): string {
   const v = env[name];

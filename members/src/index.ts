@@ -3,7 +3,9 @@ import { Hono } from 'hono';
 import { csrf } from 'hono/csrf';
 import { secureHeaders } from 'hono/secure-headers';
 import type { Vars } from './app';
-import { type Env, isProd } from './env';
+import { type Env, isDemo, isProd } from './env';
+import { one } from './lib/db';
+import { seedDemo } from './seed';
 import { readSession } from './lib/session';
 import { runJobs } from './jobs';
 import { getMember } from './services/members';
@@ -38,6 +40,18 @@ app.use('*', async (c, next) => {
 app.use('*', async (c, next) => {
   if (c.req.path.startsWith('/api/') || c.req.path.startsWith('/webhooks/')) return next();
   return csrf()(c, next);
+});
+
+// BASE_URL が空なら、アクセスされた URL から決める（workers.dev でも独自ドメインでも設定なしで動く）
+app.use('*', async (c, next) => {
+  if (!c.env.BASE_URL) c.env.BASE_URL = new URL(c.req.url).origin;
+  await next();
+});
+
+// デモ環境では、最初に誰かがトップを開いたときに空ならデモデータを入れる（空の画面にならないように）
+app.use('/', async (c, next) => {
+  if (isDemo(c.env) && !(await one(c.env.DB, 'SELECT 1 AS ok FROM associations LIMIT 1'))) await seedDemo(c.env);
+  await next();
 });
 
 // ログイン状態の解決（会員・事務局）
