@@ -19,10 +19,10 @@ export const SCHEDULE_PDF = { src: 'assets/pdf/events/r8-schedule.pdf', kb: 86 }
 
 /** 節の見出しと説明。key は素材の「種類」と対応する。 */
 export const SECTIONS = {
-  outline: { label: '要項', en: 'Outline', lead: '募集要項です。画像をタップすると全画面で表示します。' },
+  outline: { label: '要項', en: 'Outline', lead: '募集要項です。' },
   entry: { label: '申込用紙', en: 'Entry', lead: '印刷してお使いください。' },
   draw: { label: 'ドロー', en: 'Draw', lead: '組み合わせです。当日の変更は会場の掲示が優先します。' },
-  result: { label: '結果', en: 'Result', lead: '種目ごとの結果です。画像をタップすると全画面で表示します。' },
+  result: { label: '結果', en: 'Result', lead: '種目ごとの結果です。' },
   photo: { label: '当日の写真', en: 'Photo', lead: '' },
 };
 

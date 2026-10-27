@@ -118,7 +118,6 @@ const description = `${e.label}に${e.place}で行われる${e.name}（${e.event
             <span class="esec__en">{resultSection?.en ?? 'Result'}</span>
             {resultCount && <span class="gallery__count">{resultCount}</span>}
           </div>
-          <p class="note mt-24">{club ? '部ごとのリーグ表と、その下に優勝クラブの写真です。' : '種目ごとの結果表と、その下に入賞者の写真です。'}画像をタップすると全画面で表示します。</p>
           <EventResult e={e} club={club} layout={layout} restPhotos={false} />
         </section>
       )}

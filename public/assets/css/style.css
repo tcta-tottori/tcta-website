@@ -2704,8 +2704,8 @@ body.jsrv .rv.on .ink-sweep {
    背景の英字も白地用の濃さに戻す。 */
 .page-head--plain { background: var(--white); border-bottom: 0; }
 .page-head--plain .ghost { color: var(--ghost); }
-/* 見出しの直下に置く絞り込み。トップの「終了した大会／今後の大会」の列にあたる。 */
-.page-head__chips { position: relative; margin: 28px 0 0; }
+/* 大会一覧の絞り込み（灰色の帯には入れず、一覧のすぐ上） */
+.chips--list { margin: 28px 0 0; }
 
 
 .breadcrumb {
@@ -3420,7 +3420,7 @@ button.dl-item { width: 100%; text-align: left; }
   .rblock--split .gallery.gallery--winners { margin-top: 0; }
 }
 /* 入賞者の名前。写真の下に「男子シングルスA級　優勝 ○○　準優勝 ○○」 */
-.rblock__caption { margin: 10px 0 0; font: 400 14px/1.8 var(--fjp); color: var(--gray-800); }
+.rblock__caption { margin: 10px 0 0; font: 400 14px/1.8 var(--fjp); color: var(--gray-800); text-align: center; }  /* 写真の無い入賞者の行も中央そろえ */
 /* 入賞者の行（AwardLine）。順位のバッジは横の種目の枠（.rblock__cat）と同じ形・大きさで、順位ごとの色の塗りに白文字
    （1 金・2 銀・3 銅・4 緑、それ以外（ベスト4 など）は灰色）。名前は太字、「選手」「ペア」と注記は普通の太さ */
 .awards { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px 18px; vertical-align: middle; }
@@ -3447,9 +3447,9 @@ button.dl-item { width: 100%; text-align: left; }
 /* 種目と画像が対応づけられないページでは、入賞者の名前を画像のあとに種目ごとに1行ずつ */
 .rblock__captions { margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--gray-200); }
 .rblock__captions .rblock__caption { margin-top: 6px; }
-/* 写真1枚ごとの名前（「優勝 ○○ペア」）。写真の下に小さく */
-.gallery.gallery--winners .gallery__cap { display: block; padding: 8px 2px 0; font: 400 13px/1.5 var(--fjp); letter-spacing: .02em; color: var(--ink); }
-.gallery.gallery--winners .gallery__cap .award { font-size: 13px; }
+/* 写真1枚ごとの入賞者（「種目 ｜ 優勝 ○○」）。写真の下に */
+.gallery.gallery--winners .gallery__cap { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px 10px; padding: 10px 2px 0; font: 400 14px/1.6 var(--fjp); letter-spacing: .02em; color: var(--ink); text-align: center; }  /* 写真の幅を基準に中央そろえ */
+.gallery.gallery--winners .gallery__cap .rblock__cat { margin-right: 0; }
 .gallery.gallery--winners .gallery__item { background: none; overflow: visible; }
 .gallery.gallery--winners .gallery__item img { border-radius: 4px; }
 .gallery.gallery--winners .gallery__item:hover img { transform: none; }

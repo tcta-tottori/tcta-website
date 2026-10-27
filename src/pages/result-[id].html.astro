@@ -82,7 +82,6 @@ let photoNo = 0;
 {ev && (
   <EventSection e={ev} label="結果" en="Result">
     <EventResult e={ev} />
-    <p class="note rv">※ 画像をタップすると全画面で表示します。</p>
   </EventSection>
 )}
 
@@ -134,10 +133,7 @@ let photoNo = 0;
             const champ = divisionChampion(d);
             return (
               <section class="division rv" id={anchor(d.name)}>
-                <h2 class="division__head">
-                  <span class="division__name">{d.name}</span>
-                </h2>
-                {/* リーグ表 → その下に優勝クラブの写真（横には並べない） */}
+                {/* 見出しは置かない（部の名前はリーグ表の中にある）。リーグ表 → その下に優勝クラブの写真（横には並べない） */}
                 <div class="rblock">
                   {d.sheets.length > 0 && (
                     <div class:list={['rblock__sheet', d.sheets.length > 1 && 'sheets sheets--result']}>
@@ -148,24 +144,29 @@ let photoNo = 0;
                       ))}
                     </div>
                   )}
-                  {d.photos.length > 0 && (
-                    <div class="rblock__photos division__photos">
-                      <div class="gallery gallery--winners">
-                        {d.photos.map((ph) => (
-                          <a class="gallery__item" href={ph.src}>
-                            <img src={ph.src} alt={`${g.title} ${d.name} 優勝クラブの写真 ${++photoNo}`} width={ph.w} height={ph.h} loading="lazy" decoding="async">
-                          </a>
+                  {(() => {
+                    const places = d.places.filter((pl) => pl.name);
+                    return (
+                      <>
+                        {d.photos.length > 0 && (
+                          <div class="rblock__photos division__photos">
+                            <div class="gallery gallery--winners">
+                              {d.photos.map((ph, k) => (
+                                <a class="gallery__item" href={ph.src}>
+                                  <img src={ph.src} alt={`${g.title} ${d.name} 優勝クラブの写真 ${++photoNo}`} width={ph.w} height={ph.h} loading="lazy" decoding="async">
+                                  {places[k] && <span class="gallery__cap"><span class="rblock__cat">{d.name}</span><AwardLine items={[places[k]]} /></span>}
+                                </a>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        {/* 写真の無い入賞クラブは1行ずつ（写真が無ければリーグ表の下） */}
+                        {places.slice(d.photos.length).map((pl) => (
+                          <p class="rblock__caption"><span class="rblock__cat">{d.name}</span><AwardLine items={[pl]} /></p>
                         ))}
-                      </div>
-                    </div>
-                  )}
-                  {/* 優勝クラブ（と2位・3位）の名前。写真の下、無ければリーグ表の下 */}
-                  {caption(d) && (
-                    <p class="rblock__caption">
-                      <span class="rblock__cat">{d.name}</span>
-                      <AwardLine items={d.places.filter((pl) => pl.name)} />
-                    </p>
-                  )}
+                      </>
+                    );
+                  })()}
                 </div>
               </section>
             );
@@ -222,11 +223,7 @@ let photoNo = 0;
           {/* 種目ごとに 結果表 → その下に入賞者の写真 → 入賞者の名前（EmDash の大会の結果と同じ型） */}
           {p.blocks.map((b, i) => (
             <section class:list={[b.category ? 'division' : 'rblock', 'rv']} id={b.category ? `${anchor(b.category)}-${i}` : undefined}>
-              {b.category && (
-                <h2 class="division__head">
-                  <span class="division__name">{b.category}</span>
-                </h2>
-              )}
+              {/* 見出しは置かない（種目名は結果表の中にある） */}
               <div class="rblock">
                 {b.sheets.length > 0 && (
                   <div class:list={['rblock__sheet', b.sheets.length > 1 && 'sheets sheets--result']}>
@@ -237,23 +234,29 @@ let photoNo = 0;
                     ))}
                   </div>
                 )}
-                {b.photos.length > 0 && (
-                  <div class="rblock__photos division__photos">
-                    <div class="gallery gallery--winners">
-                      {b.photos.map((ph) => (
-                        <a class="gallery__item" href={ph.src}>
-                          <img src={ph.src} alt={`${g.title}${b.category ? ' ' + b.category : ''} 入賞者の写真 ${++photoNo}`} width={ph.w} height={ph.h} loading="lazy" decoding="async">
-                        </a>
+                {(() => {
+                  const caps = String(b.caption || '').split('　').filter(Boolean);
+                  return (
+                    <>
+                      {b.photos.length > 0 && (
+                        <div class="rblock__photos division__photos">
+                          <div class="gallery gallery--winners">
+                            {b.photos.map((ph, k) => (
+                              <a class="gallery__item" href={ph.src}>
+                                <img src={ph.src} alt={`${g.title}${b.category ? ' ' + b.category : ''} 入賞者の写真 ${++photoNo}`} width={ph.w} height={ph.h} loading="lazy" decoding="async">
+                                {caps[k] && <span class="gallery__cap">{b.category && <span class="rblock__cat">{b.category}</span>}<AwardLine texts={[caps[k]]} category={b.category} /></span>}
+                              </a>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      {/* 写真の無い入賞者は1行ずつ */}
+                      {caps.slice(b.photos.length).map((c) => (
+                        <p class="rblock__caption">{b.category && <span class="rblock__cat">{b.category}</span>}<AwardLine texts={[c]} category={b.category} /></p>
                       ))}
-                    </div>
-                  </div>
-                )}
-                {b.caption && (
-                  <p class="rblock__caption">
-                    {b.category && <span class="rblock__cat">{b.category}</span>}
-                    <AwardLine text={b.caption} category={b.category} />
-                  </p>
-                )}
+                    </>
+                  );
+                })()}
               </div>
             </section>
           ))}
@@ -310,8 +313,6 @@ let photoNo = 0;
           <p style="margin:0">この大会は記録が残っていません。</p>
         </div>
       )}
-
-      <p class="note rv">※ 画像をタップすると全画面で表示します。</p>
 
       <nav class="page-nav rv" aria-label="同じ年度の大会">
         {prev

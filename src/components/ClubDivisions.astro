@@ -18,10 +18,7 @@ let photoNo = 0;
 
 {club.divisions.map((d) => (
   <section class="division rv" id={anchor(d.key)}>
-    {/* 見出しは部の名前だけ。優勝クラブは写真の下（.rblock__caption）にだけ出す */}
-    <h2 class="division__head">
-      <span class="division__name">{d.key}</span>
-    </h2>
+    {/* 見出しは置かない（部の名前はリーグ表の画像の中にある）。優勝クラブは写真1枚ずつの下に */}
     <div class="rblock">
       {d.sheets.length > 0 && (
         <div class:list={['rblock__sheet', d.sheets.length > 1 && 'sheets sheets--result']}>
@@ -35,17 +32,19 @@ let photoNo = 0;
       {d.photos.length > 0 && (
         <div class="rblock__photos division__photos">
           <div class="gallery gallery--winners">
-            {d.photos.map((ph) => (
+            {d.photos.map((ph, k) => (
               <a class="gallery__item" href={ph.src}>
                 <img src={ph.src} alt={`${name} ${d.key} 優勝クラブの写真 ${++photoNo}`} width={ph.w} height={ph.h} loading="lazy" decoding="async">
+                {d.places[k] && <span class="gallery__cap"><span class="rblock__cat">{d.key}</span><AwardLine items={[d.places[k]]} /></span>}
               </a>
             ))}
           </div>
-          {d.places.length > 0 && (
-            <p class="rblock__caption"><span class="rblock__cat">{d.key}</span><AwardLine items={d.places} /></p>
-          )}
         </div>
       )}
+      {/* 写真の無い入賞クラブは1行ずつ */}
+      {d.places.slice(d.photos.length).map((pl) => (
+        <p class="rblock__caption"><span class="rblock__cat">{d.key}</span><AwardLine items={[pl]} /></p>
+      ))}
     </div>
   </section>
 ))}

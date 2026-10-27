@@ -50,11 +50,6 @@ const GCAL = {
         </div>
       </div>
       <p class="page-lead fu" style="animation-delay:.15s">令和8年度（2026年度）に鳥取市テニス協会が主催・主管する大会の一覧です。エントリー締切、会場、必要な登録区分をあわせて掲載しています。日程は天候等により変更になる場合があります。</p>
-      <div class="chips page-head__chips fu" style="animation-delay:.3s" data-filter-group data-filter-target="#r8-list" role="group" aria-label="大会一覧の絞り込み">
-        <button class="chip is-active" type="button" data-filter="all" aria-pressed="true">すべて（{count.all}）</button>
-        <button class="chip" type="button" data-filter="open" aria-pressed="false">受付中（{count.open}）</button>
-        <button class="chip" type="button" data-filter="done" aria-pressed="false">終了（{count.done}）</button>
-      </div>
     </div>
   </section>
 
@@ -72,6 +67,13 @@ const GCAL = {
       </div>
 
       <p class="note mt-24">要項・申込用紙・ドロー・結果は、掲載ずみのものだけボタンが押せます。申込用紙は PDF がそのまま開きます。大会名をタップすると、その大会のページで全部まとめて見られます。</p>
+
+      {/* 絞り込み。灰色の帯（ページ上部）には入れず、一覧のすぐ上に置く */}
+      <div class="chips chips--list rv" data-filter-group data-filter-target="#r8-list" role="group" aria-label="大会一覧の絞り込み">
+        <button class="chip is-active" type="button" data-filter="all" aria-pressed="true">すべて（{count.all}）</button>
+        <button class="chip" type="button" data-filter="open" aria-pressed="false">受付中（{count.open}）</button>
+        <button class="chip" type="button" data-filter="done" aria-pressed="false">終了（{count.done}）</button>
+      </div>
 
       <TournamentList items={SCHEDULE} id="r8-list" caption="令和8年度 大会一覧" />
       <p class="note" id="r8-list-empty" hidden>該当する大会はありません。</p>
