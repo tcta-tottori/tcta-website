@@ -18,12 +18,19 @@
 //   画面には出さない。dateSource が年間日程のPDF（○○taikai-nittei.pdf /
 //   ○○tournament-schedule.pdf）になっているものは「予定されていた日」で、
 //   予備日に順延された大会はずれている可能性がある。ドロー・プログラム・結果表から
-//   391大会のうち311件に日付が入っている。
+//   452大会のうち366件に日付が入っている。
 //
 // ■ どこから起こしたか
 //   最初の巡回（scrape_output）は旧サイトの年度一覧から辿れるページしか見ていなかった。
 //   一覧から外れていた結果ページ（クラブ対抗戦の平成19・22〜25・27年度、2016・2023年度など）は
-//   tools/restore_missing.py が旧サイト丸ごとの控えから拾い直して足してある。
+//   tools/restore_missing.py が旧サイト丸ごとの控えから拾い直して足してある
+//   （成績のあるページ64件、写真だけのギャラリー61件）。
+//
+// ■ 一覧での束ね方
+//   旧サイトは1つの大会を「結果」「ギャラリー」「予選」「決勝」と別ページにしていて、
+//   題名のつけ方もばらばらだった。groupYear は、ページ名と題名から割り出した
+//   大会の種類（legacyKind）が同じものを1枚のカードに束ね、いちばん大会名らしい
+//   題名を選んで出す。
 //
 // ■ 手で直すとき
 //   results.json を直接編集してよい。題名の誤字や、本文から会場として
@@ -190,7 +197,9 @@ export function groupYear(year) {
       groups.push({ title: GROUP_TITLE[t.id] ?? t.title, entries: [{ t, title: t.title, kind }] });
     }
   }
-  for (const g of groups) {
+  const out = mergeByKind(groups);
+  for (const g of out) {
+    if (!g.merged) g.title = tidyGroupTitle(g.title);
     for (const e of g.entries) e.title = subTitle(g.title, e.title.replace(/（写真）$|（PDF）$/, ''));
     g.photos = g.entries.reduce((n, e) => n + e.t.photos.length, 0);
     g.pdfs = g.entries.flatMap((e) => e.t.pdfs);
@@ -201,15 +210,92 @@ export function groupYear(year) {
     g.galleryPhotos = g.galleries.reduce((n, e) => n + e.t.photos.length, 0);
     g.galleryHref = g.results.length && g.galleryPhotos >= GALLERY_MIN ? `gallery-${g.entries[0].t.id}.html` : null;
   }
-  return groups;
+  return out;
 }
 
 /* ---- クラブ対抗戦 ---- */
 
 /** クラブ対抗戦のページかどうか（旧サイトの id で判定） */
-export const isClubLeague = (t) => /club-?taiko/.test(t.id);
+export const isClubLeague = (t) => /club-?taiko|club-?gallery|clubtaiko/.test(t.id);
 
 const toAscii = (str) => str.replace(/[０-９Ａ-Ｚａ-ｚ]/g, (ch) => String.fromCharCode(ch.charCodeAt(0) - 0xfee0));
+
+/* ----------------------------------------------------------------------
+ * 同じ大会のページをまとめる「種類キー」
+ *
+ * 旧サイトは1つの大会を「結果」「ギャラリー」「予選」「決勝」と別ページにしていて、
+ * 題名のつけ方もページごとにばらばら（「鳥取ガス杯」「第15回鳥取ガス杯ギャラリー」）。
+ * 題名だけでは束ねられないので、ページのファイル名と題名から大会の種類を割り出して束ねる。
+ * tools/fill_dates.py の kind_from_slug と同じ決め方。
+ * ---------------------------------------------------------------------- */
+function legacyKind(t) {
+  const s = (t.id || '').toLowerCase();
+  const title = toAscii(t.title || '').replace(/\s+/g, '');
+  const hs = (...w) => w.some((x) => s.includes(x));
+  const ht = (...w) => w.some((x) => title.includes(x));
+  if (hs('club-taiko', 'clubtaiko')) return 'club';
+  if (hs('tobu', 'toubu', 'to-bu')) return ht('ダブルス') ? 'tobu_d' : ht('シングルス') ? 'tobu_s' : hs('-d') ? 'tobu_d' : hs('-s') ? 'tobu_s' : 'tobu';
+  if (hs('kaicho', 'kaichou', 'kaicno')) return hs('-f') || ht('秋') ? 'kaicho_f' : hs('-s') || ht('春') ? 'kaicho_s' : 'kaicho';
+  if (hs('kenko')) return ht('秋') ? 'kenko_f' : 'kenko_s';
+  if (hs('sasaki')) return 'sasaki';
+  if (hs('ketaka')) return hs('cup') || ht('カップ') ? 'ketaka_cup' : 'ketaka_open';
+  if (hs('summer')) return 'summer_mix';
+  if (hs('dunlop', 'dunrop')) return 'dunlop';
+  if (hs('enetopia', 'enetpia')) return 'enetopia';
+  if (hs('prince')) return 'prince';
+  if (hs('kensen')) return ht('ダブルス') ? 'kensen_d' : ht('シングルス') ? 'kensen_s' : hs('-d') ? 'kensen_d' : hs('-s') ? 'kensen_s' : 'kensen';
+  if (hs('sicho', 'shicho', 'sichou', 'shichou')) return 'shicho';
+  if (hs('osaka', 'situnai', 'sitsunai')) return ht('ダブルス') ? 'osaka_d' : ht('シングルス') ? 'osaka_s' : 'osaka';
+  if (hs('gashai', 'gas-hai', 'gus-hai', 'gushai', 'torigas')) return 'gas';
+  if (hs('kokutai')) return 'kokutai';
+  if (hs('zennihon', 'all-japan', 'alljapan')) return 'alljapan';
+  if (hs('toridai')) return ht('ダブルス') ? 'toridai_d' : ht('シングルス') ? 'toridai_s' : 'toridai';
+  return null;
+}
+
+/** 束ねたカードに出す題名。大会名らしく、飾りの少ないものを選んで整える。 */
+const EVENT_WORD = /杯|選手権|オープン|トーナメント|ミックス|対抗|予選会|フェスタ|カップ/;
+const TITLE_JUNK = /^(決勝|予選|順位別|女子|男子|シングルス|ダブルス|ギャラリ|写真)/;
+
+function bestTitle(entries) {
+  const score = (e) => {
+    const t = e.t.title || '';
+    let v = e.t.categories.reduce((n, c) => n + c.places.length, 0) * 5;
+    if (EVENT_WORD.test(t)) v += 60;
+    if (/ギャラリ|写真|入賞者/.test(t)) v -= 60;
+    if (TITLE_JUNK.test(t)) v -= 120;
+    v -= Math.abs(t.length - 12);
+    return v;
+  };
+  const best = entries.slice().sort((a, b) => score(b) - score(a))[0].t.title || '';
+  return tidyGroupTitle(best, /(予選|決勝|結果|入賞者|優勝者|（写真）|ギャラリ[ーｰ]?[0-9]*)+$/);
+}
+
+/** カードの題名から「入賞者」「ギャラリー」などの飾りを落とす（3文字以上残るときだけ） */
+function tidyGroupTitle(title, re = /(入賞者|優勝者|ギャラリ[ーｰ]?[0-9]*)+$/) {
+  const tidy = (title || '').replace(re, '').trim();
+  return tidy.length >= 3 ? tidy : title;
+}
+
+/** 同じ種類の束ねを1つにする（「鳥取ガス杯」「第15回鳥取ガス杯ギャラリー」など） */
+function mergeByKind(groups) {
+  const byKind = new Map();
+  const out = [];
+  for (const g of groups) {
+    const kinds = new Set(g.entries.map((e) => legacyKind(e.t)).filter(Boolean));
+    const k = g.merged || kinds.size !== 1 ? null : [...kinds][0];
+    const head = byKind.get(k);
+    if (k && head) {
+      head.entries.push(...g.entries);
+    } else {
+      if (k) byKind.set(k, g);
+      out.push(g);
+    }
+  }
+  for (const g of out) if (!g.merged && g.entries.length > 1) g.title = bestTitle(g.entries);
+  return out;
+}
+
 
 /** 「男子8部Aゾーン」→ { name: '男子8部', gender: 0, no: 8, zone: 'Aゾーン' }。部の形でなければ null */
 export function divisionOf(category) {
@@ -340,14 +426,19 @@ export function legacyMeta(g) {
 /**
  * 年度の中を開催順に並べ替える。
  * 旧サイトは年度の中の並びがまちまちで（尾坂杯が先頭に来ている年度がある）、
- * 一覧は「開催順に並びます」と書いているので、日付が全部そろっている年度だけ並べ替える。
- * 1つでも日付の分からない大会があるとかえって混ざるので、その年度は旧サイトの順のまま。
+ * 一覧は「開催順に並びます」と書いているので、分かっている日付で並べ直す。
+ * 日付の分からない大会は、旧サイトでその直前にあった大会のすぐ後ろに残す
+ * （先頭にあるものは、最初に日付の分かる大会に合わせる）。
  */
 function sortByDate(groups) {
   const dates = groups.map((g) => legacyMeta(g).date);
-  if (dates.some((d) => !d)) return groups;
+  if (dates.every((d) => !d)) return groups;
+  const keys = dates.slice();
+  for (let i = 1; i < keys.length; i++) if (!keys[i]) keys[i] = keys[i - 1];
+  const first = keys.find(Boolean);
+  for (let i = 0; i < keys.length; i++) if (!keys[i]) keys[i] = first;
   return groups
-    .map((g, i) => ({ g, i, d: dates[i] }))
+    .map((g, i) => ({ g, i, d: keys[i] }))
     .sort((a, b) => (a.d < b.d ? -1 : a.d > b.d ? 1 : a.i - b.i))
     .map((x) => x.g);
 }

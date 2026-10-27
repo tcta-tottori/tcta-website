@@ -357,7 +357,7 @@ def main():
                     t['categories'] = cats
 
     # ---- 控えにしか無い結果ページを集める
-    found, unplaced = [], []
+    found, unplaced, photo_only = [], [], []
     for key in sorted(html_files):
         if key in known or not RESULT_NAME.search(key) or SKIP_NAME.match(key):
             continue
@@ -365,6 +365,8 @@ def main():
         cats = read_page(src)
         rows = sum(len(c['places']) for c in cats)
         if not rows:
+            # 成績が読めないページ（ギャラリー）。写真だけでも残すので、あとでまとめて見る。
+            photo_only.append((key, src))
             continue
         raw_title = page_title(src)
         title = tidy_title(raw_title)
@@ -426,13 +428,50 @@ def main():
     for key, title, rows in unplaced:
         review.append(['年度が決められず見送り', '', key, title, rows, '', '', ''])
 
+    # ---- 成績が読めないページ（ギャラリー）。大会名と写真だけでも残す。
+    #      同じ年度に同じ大会があれば「○○（写真）」として束ねられるようにする。
+    for f, _t in skipped:
+        photo_only.append((f['key'], f['src']))
+    galleries = []
+    for key, src in photo_only:
+        imgs = [n for n in page_images(src) if n.lower() in image_files]
+        if len(imgs) < 3:
+            continue
+        raw_title = page_title(src)
+        title = tidy_title(raw_title)
+        kind = FD.kind_from_slug(key, title)
+        nendo, how = decide_nendo(key, raw_title, body_text(src), kind,
+                                  slug_nendo, scraped_nendo, anchors)
+        if nendo is None or str(nendo) not in years:
+            review.append(['写真・年度が決められず見送り', '', key, title, 0, len(imgs), '', ''])
+            continue
+        nendo = str(nendo)
+        parent = None
+        if kind:
+            cands = [t for t in years[nendo]['tournaments']
+                     if FD.kind_from_slug(t['id'][len(nendo) + 1:].lower(), t['title']) == kind
+                     and sum(len(c['places']) for c in t['categories'])
+                     and not re.search(r'（写真）$', t['title'])]
+            if cands:
+                parent = max(cands, key=lambda t: sum(len(c['places']) for c in t['categories']))
+        name = title
+        if parent:
+            base = re.sub(r'(ギャラリ[ーｰ]?[0-9]*|入賞者)$', '', parent['title']).strip()
+            if len(base) >= 3:
+                name = base + '（写真）'
+        if not name:
+            name = 'ギャラリー'
+        galleries.append({'key': key, 'src': src, 'title': name, 'nendo': nendo,
+                          'kind': kind, 'cats': [], 'rows': 0, 'how': how, 'images': imgs})
+        review.append(['写真だけ追加', nendo, key, name, 0, len(imgs), how, ''])
+
     with open(REVIEW, 'w', encoding='utf-8', newline='') as fh:
         wtr = csv.writer(fh, delimiter='\t')
         wtr.writerow(['区分', '年度', 'ページ', '題名', '成績行', '写真', '年度の決め方', '優勝者'])
         wtr.writerows(review)
     print(f'入れ直し {refilled} / 追加 {len(added)} / 既存に合流 {len(merged)} / '
           f'既存を差し替え {len(upgraded)} / 重複で見送り {len(skipped)} / '
-          f'年度が決められず {len(unplaced)}', file=sys.stderr)
+          f'写真だけ追加 {len(galleries)} / 年度が決められず {len(unplaced)}', file=sys.stderr)
     print('一覧を書きました: ' + REVIEW, file=sys.stderr)
 
     if not write:
@@ -455,7 +494,7 @@ def main():
         have = {p['src'] for p in t['photos']}
         t['photos'] = t['photos'] + [p for p in photos_of(f) if p['src'] not in have]
 
-    for f in added:
+    for f in added + galleries:
         t = {
             'id': f'{f["nendo"]}-{f["key"]}',
             'title': f['title'],

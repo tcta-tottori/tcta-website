@@ -421,6 +421,11 @@ def canon(s):
     for a, b in SPELLING: s = s.replace(a, b)
     return re.sub(r'[-_ .]', '', s)
 
+# 名前の頭は同じでも別の大会の資料。スラッグ側に同じ語が無ければ使わない。
+OTHER_EVENT = ('chugoku', 'nishinihon', 'westjapan', 'kinki', 'kyotango', 'kotoura',
+               'geopark', 'niku', 'yonex', 'jr-', 'junior', 'kids', 'stepup', 'school')
+
+
 def doc_rank(name):
     n = name.lower()
     if 'result' in n: return 6
@@ -494,17 +499,23 @@ def main():
         short = canon(TAIL_SD.sub('', base)) or canon(base) or c
         mark = sd_mark(slug)
         out = []
+        def ok(name):
+            low = name.lower()
+            return not any(w in low and w not in slug.lower() for w in OTHER_EVENT)
+
         for key, lst in docs.items():
             if len(key) < 7: continue
             if key.startswith(c) or (len(c) > len(key) and c.startswith(key)):
-                out += [(r + 10, n, k) for r, n, k in lst]
+                out += [(r + 10, n, k) for r, n, k in lst if ok(n)]
             elif short != c and (key.startswith(short) or (len(short) > len(key) and short.startswith(key))):
                 # シングルスの大会にダブルスの資料を当てない
                 out += [(r, n, k) for r, n, k in lst
-                        if not (mark and sd_mark(n) and sd_mark(n) != mark)]
+                        if ok(n) and not (mark and sd_mark(n) and sd_mark(n) != mark)]
         return sorted(out, key=lambda x: -x[0])
 
-    FNAME_DATE = re.compile(r'(?:^|[-_])([0-9]{1,2})-([0-9]{1,2})(?:[-_]|$)')
+    # 「2023club-taiko-7-16-result-103」のような、名前の途中に挟まった月日だけを見る。
+    # 末尾の「-1-1」は写真の通し番号なので拾わない。
+    FNAME_DATE = re.compile(r'[-_]([0-9]{1,2})-([0-9]{1,2})[-_]')
     ERA_LABEL = lambda y: (f'令和{y-2018}年' if y >= 2019 else f'平成{y-1988}年')
 
     rows = []
