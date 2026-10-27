@@ -2708,6 +2708,7 @@ body.jsrv .rv.on .ink-sweep {
 .chips--list { margin: 28px 0 0; }
 
 
+
 .breadcrumb {
   position: relative;
   display: flex;
@@ -2754,6 +2755,9 @@ body.jsrv .rv.on .ink-sweep {
   letter-spacing: .03em;
   color: var(--gray-800);
 }
+/* 大会ページの上部：バッジの行と、その下の日程・会場・種目（大会情報の一覧と同じ .tl-item__info）。.page-lead のあとに置く */
+.page-lead--tags { display: flex; align-items: center; max-width: none; margin-top: 20px; }
+.tl-item__info--head { position: relative; max-width: 760px; margin-top: 18px; }
 
 /* 小見出し（h3 相当） */
 .sub-head {
