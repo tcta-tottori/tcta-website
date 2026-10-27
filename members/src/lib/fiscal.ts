@@ -45,6 +45,12 @@ export function yen(n: number | null | undefined): string {
   return n == null ? '—' : `${n.toLocaleString('ja-JP')}円`;
 }
 
+/** 日本時間のその日（YYYY-MM-DD）が UTC の ISO 文字列でどの範囲か [開始, 終了)。created_at（UTC）との比較に使う。 */
+export function jstDayRange(dayIso: string): [string, string] {
+  const start = new Date(dayIso.slice(0, 10) + 'T00:00:00+09:00');
+  return [start.toISOString(), new Date(start.getTime() + 86400000).toISOString()];
+}
+
 export function addDays(iso: string, days: number): string {
   const d = new Date(iso.slice(0, 10) + 'T00:00:00Z');
   d.setUTCDate(d.getUTCDate() + days);

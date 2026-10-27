@@ -1,7 +1,7 @@
 // Worker の入口。会員ポータル / 事務局 / ショップ / API / 開発モードを 1 つの Hono アプリにまとめる。
 import { Hono } from 'hono';
 import { csrf } from 'hono/csrf';
-import { secureHeaders } from 'hono/secure-headers';
+import { NONCE, secureHeaders } from 'hono/secure-headers';
 import type { Vars } from './app';
 import { type Env, isDemo, isProd } from './env';
 import { one } from './lib/db';
@@ -23,8 +23,11 @@ app.use('*', async (c, next) => {
   return secureHeaders({
     contentSecurityPolicy: {
       defaultSrc: ["'self'"],
-      scriptSrc: turnstile ? ['https://challenges.cloudflare.com'] : ["'none'"],
-      styleSrc: ["'self'"],
+      // 本体サイトと同じ main.js（同一オリジン）と、ページ切り替え用の nonce 付きインラインスクリプトだけ
+      scriptSrc: ["'self'", NONCE, ...(turnstile ? ['https://challenges.cloudflare.com'] : [])],
+      // 本体の style.css はメニューやフッターの四角の位置を style 属性で渡すので、インラインの style 属性を許す
+      styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
+      fontSrc: ["'self'", 'https://fonts.gstatic.com'],
       imgSrc: ["'self'", 'data:'],
       frameSrc: turnstile ? ['https://challenges.cloudflare.com'] : ["'none'"],
       formAction: ["'self'", 'https://checkout.stripe.com'],

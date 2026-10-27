@@ -7,7 +7,7 @@ import { accessEnabled, verifyAccessJwt } from '../lib/access';
 import { audit } from '../lib/audit';
 import { decrypt, randomToken, sha256Hex } from '../lib/crypto';
 import { all, nowIso, one, run } from '../lib/db';
-import { currentFiscalYear, fmtDate, fmtDateTime, todayJst, yen } from '../lib/fiscal';
+import { currentFiscalYear, fmtDate, fmtDateTime, jstDayRange, todayJst, yen } from '../lib/fiscal';
 import { sendMail } from '../lib/mail';
 import { createSession, destroySession, flash, readSession } from '../lib/session';
 import { ulid } from '../lib/ulid';
@@ -83,7 +83,7 @@ admin.get('/', async (c) => {
   }
   if (scope) stats.push([`${fy}年度 登録者`, await n(`SELECT COUNT(*) AS n FROM registrations WHERE association_id = ? AND fiscal_year = ? AND status = 'approved'`, scope, fy)]);
   stats.push(['受付中の大会', await n(`SELECT COUNT(*) AS n FROM tournaments WHERE status = 'open'${scope ? ' AND association_id = ?' : ''}`, ...(scope ? [scope] : []))]);
-  stats.push(['本日のエントリー', await n(`SELECT COUNT(*) AS n FROM entries WHERE substr(created_at, 1, 10) = ?`, todayJst())]);
+  stats.push(['本日のエントリー', await n(`SELECT COUNT(*) AS n FROM entries WHERE created_at >= ? AND created_at < ?`, ...jstDayRange(todayJst()))]);
   const body = html`<div class="grid">${stats.map(([l, v]) => html`<div class="stat"><b>${v}</b><span>${l}</span></div>`)}</div>
     <div class="card"><h2>このロールでできること</h2>${roleHelp(a)}</div>`;
   return c.html(page(c, { title: 'ダッシュボード', body, admin: a }));
@@ -192,10 +192,10 @@ admin.get('/registrations', async (c) => {
       WHERE r.association_id = ? AND r.status = ? ORDER BY r.created_at DESC LIMIT 300`,
     a.association_id, status,
   );
-  const body = html`<p>${['pending', 'approved', 'rejected'].map((s) => html`<a class="btn small ${s === status ? '' : 'ghost'}" href="/admin/registrations?status=${s}">${STATUS_LABEL[s]}</a> `)}</p>
+  const body = html`<p>${['pending', 'approved', 'rejected'].map((s) => html`<a class="btn small ${s === status ? '' : 'btn--outline'}" href="/admin/registrations?status=${s}">${STATUS_LABEL[s]}</a> `)}</p>
     <div class="tbl"><table><tr><th>申請日</th><th>年度</th><th>会員番号</th><th>氏名</th><th>クラブ</th><th>区分</th><th>登録料</th><th>支払</th><th>経路</th><th></th></tr>
     ${rows.map((r) => html`<tr><td>${fmtDate(r.created_at)}</td><td>${r.fiscal_year}</td><td>${r.member_no ?? '—'}</td><td><a href="/admin/members/${r.member_id}">${r.name}</a></td><td>${r.club_name ?? '—'}</td><td>${CATEGORY_LABEL[r.category]}</td><td>${yen(r.fee)}</td><td>${badge(r.pay_status)} <span class="mute">${METHOD_LABEL[r.method]?.split('（')[0]}</span></td><td>${r.source}</td>
-      <td>${r.status === 'pending' ? html`${r.pay_status === 'pending' ? html`<form method="post" action="/admin/payments/${r.payment_id}/confirm" class="inline"><input type="hidden" name="back" value="/admin/registrations"><button class="small">入金確認</button></form> ` : ''}${r.pay_status === 'paid' ? html`<form method="post" action="/admin/registrations/${r.id}/approve" class="inline"><button class="small primary">承認</button></form> ` : ''}<form method="post" action="/admin/registrations/${r.id}/reject" class="inline"><button class="small ghost">却下</button></form>` : ''}</td></tr>`)}
+      <td>${r.status === 'pending' ? html`${r.pay_status === 'pending' ? html`<form method="post" action="/admin/payments/${r.payment_id}/confirm" class="inline"><input type="hidden" name="back" value="/admin/registrations"><button class="small">入金確認</button></form> ` : ''}${r.pay_status === 'paid' ? html`<form method="post" action="/admin/registrations/${r.id}/approve" class="inline"><button class="small primary">承認</button></form> ` : ''}<form method="post" action="/admin/registrations/${r.id}/reject" class="inline"><button class="small btn--outline">却下</button></form>` : ''}</td></tr>`)}
     ${rows.length === 0 ? html`<tr><td colspan="10">該当なし</td></tr>` : ''}
     </table></div>`;
   return c.html(page(c, { title: '年度登録の承認', body, admin: a, wide: true }));
@@ -247,7 +247,7 @@ admin.get('/payments', async (c) => {
     <div class="tbl"><table><tr><th>作成日</th><th>内容</th><th>支払者</th><th>金額</th><th>方法</th><th>メモ</th><th></th></tr>
     ${visible.map((p) => html`<tr><td>${fmtDate(p.created_at)}</td><td class="wrap-text">${p.note ?? p.kind}</td><td>${p.member_no ?? ''} ${p.payer_name ?? '—'}</td><td>${yen(p.amount)}</td><td>${METHOD_LABEL[p.method]?.split('（')[0]}</td>
       <td><form method="post" action="/admin/payments/${p.id}/confirm" class="inline"><input type="text" name="note" placeholder="通帳の日付・名義など" style="max-width:220px"> <button class="small primary">入金確認</button></form></td>
-      <td><form method="post" action="/admin/payments/${p.id}/cancel" class="inline"><button class="small ghost">取消</button></form></td></tr>`)}
+      <td><form method="post" action="/admin/payments/${p.id}/cancel" class="inline"><button class="small btn--outline">取消</button></form></td></tr>`)}
     ${visible.length === 0 ? html`<tr><td colspan="7">消込待ちはありません</td></tr>` : ''}
     </table></div>`;
   return c.html(page(c, { title: '入金の消込', body, admin: a, wide: true }));
@@ -320,7 +320,7 @@ function tournamentForm(t: Tournament | null, assocs: Association[], a: Admin) {
     <label>締切時に支払待ちのエントリーを <select name="unpaid_policy"><option value="hold" ${t?.unpaid_policy !== 'cancel' ? 'selected' : ''}>保留して事務局が判断</option><option value="cancel" ${t?.unpaid_policy === 'cancel' ? 'selected' : ''}>自動キャンセル</option></select></label>
     <label>定員（組） <input type="number" name="capacity" value="${t?.capacity ?? ''}"></label>
     <label>状態 <select name="status">${['draft', 'open', 'closed'].map((s) => html`<option value="${s}" ${(t?.status ?? 'draft') === s ? 'selected' : ''}>${STATUS_LABEL[s]}</option>`)}</select></label>
-    <div class="actions"><button class="primary">保存</button><a class="btn ghost" href="/admin/tournaments">戻る</a></div></form>`;
+    <div class="actions"><button class="primary">保存</button><a class="btn btn--outline" href="/admin/tournaments">戻る</a></div></form>`;
 }
 
 admin.get('/tournaments/new', async (c) => {
@@ -386,11 +386,11 @@ admin.get('/tournaments/:id', async (c) => {
   const tokens = await all<{ label: string | null; expires_at: string; created_at: string; last_used_at: string | null }>(c.env.DB, 'SELECT label, expires_at, created_at, last_used_at FROM api_tokens WHERE tournament_id = ? ORDER BY created_at DESC', t.id);
   const owns = ownsTournament(a, t);
   const body = html`<div class="card"><dl class="kv"><dt>開催日</dt><dd>${fmtDate(t.held_on)} ${t.venue ?? ''}</dd><dt>受付</dt><dd>${fmtDate(t.entry_start)}〜${fmtDate(t.entry_end)}</dd><dt>状態</dt><dd>${badge(t.status)}</dd><dt>支払方法</dt><dd>${(JSON.parse(t.payment_methods_json) as string[]).map((k) => METHOD_LABEL[k]?.split('（')[0]).join(' / ')}</dd><dt>締切時の支払待ち</dt><dd>${t.unpaid_policy === 'cancel' ? '自動キャンセル' : '保留（事務局判断）'}</dd></dl>
-    <div class="actions">${canCreateTournament(a) ? html`<a class="btn ghost" href="/admin/tournaments/${t.id}/edit">編集</a>` : ''}${owns ? html`<a class="btn ghost" href="/admin/tournaments/${t.id}/entries.csv">ドロー会議用 CSV</a>${t.status === 'open' ? html`<form method="post" action="/admin/tournaments/${t.id}/close" class="inline"><button class="ghost">受付を締め切る</button></form>` : ''}` : ''}</div></div>
+    <div class="actions">${canCreateTournament(a) ? html`<a class="btn btn--outline" href="/admin/tournaments/${t.id}/edit">編集</a>` : ''}${owns ? html`<a class="btn btn--outline" href="/admin/tournaments/${t.id}/entries.csv">ドロー会議用 CSV</a>${t.status === 'open' ? html`<form method="post" action="/admin/tournaments/${t.id}/close" class="inline"><button class="btn--outline">受付を締め切る</button></form>` : ''}` : ''}</div></div>
     <h2>エントリー（${rows.filter((r) => r.status === 'confirmed').length} 組確定 / ${rows.filter((r) => r.status === 'pending_payment').length} 組支払待ち）</h2>
     <div class="tbl"><table><tr><th>種目</th><th>クラス</th><th>代表</th><th>ペア</th><th>経路</th><th>支払</th><th>状態</th><th></th></tr>
     ${rows.map((r) => html`<tr><td>${evName(r.event_code)}</td><td>${r.class ?? '—'}</td><td>${r.p1_no ?? ''} ${r.p1}<br><span class="mute">${r.p1_club ?? ''}</span></td><td>${r.p2 ? html`${r.p2}${r.p2_status === 'provisional' ? html` ${badge('provisional')}` : ''}<br><span class="mute">${r.p2_club ?? ''}</span>` : '—'}</td><td>${r.source}</td><td>${r.pay_status ? badge(r.pay_status) : '—'} <span class="mute">${METHOD_LABEL[r.method ?? '']?.split('（')[0] ?? ''}</span></td><td>${badge(r.status)}</td>
-      <td>${owns && r.status !== 'cancelled' ? html`${r.pay_status === 'pending' && r.method !== 'stripe' ? html`<form method="post" action="/admin/payments/${r.payment_id}/confirm" class="inline"><input type="hidden" name="back" value="/admin/tournaments/${t.id}"><button class="small">入金確認</button></form> ` : ''}<form method="post" action="/admin/entries/${r.id}/cancel" class="inline"><input type="hidden" name="back" value="/admin/tournaments/${t.id}"><button class="small ghost">キャンセル</button></form>` : ''}</td></tr>`)}
+      <td>${owns && r.status !== 'cancelled' ? html`${r.pay_status === 'pending' && r.method !== 'stripe' ? html`<form method="post" action="/admin/payments/${r.payment_id}/confirm" class="inline"><input type="hidden" name="back" value="/admin/tournaments/${t.id}"><button class="small">入金確認</button></form> ` : ''}<form method="post" action="/admin/entries/${r.id}/cancel" class="inline"><input type="hidden" name="back" value="/admin/tournaments/${t.id}"><button class="small btn--outline">キャンセル</button></form>` : ''}</td></tr>`)}
     ${rows.length === 0 ? html`<tr><td colspan="8">エントリーはまだありません</td></tr>` : ''}
     </table></div>
     ${owns ? html`<h2>大会運営アプリ向け API（読み取り専用トークン）</h2>
@@ -504,7 +504,7 @@ admin.get('/merges', async (c) => {
   const body = html`<p class="mute">同姓同名・旧姓などで別人のデータが結合されないよう、自動結合はせず事務局が確定します。結合は監査ログに残り、取り消せます。</p>
     <div class="tbl"><table><tr><th>理由</th><th>残す会員</th><th>重複の候補</th><th>状態</th><th></th></tr>
     ${rows.map((r) => html`<tr><td class="wrap-text">${r.reason}</td><td><a href="/admin/members/${r.k_id}">${r.k_no ?? ''} ${r.k_name}</a>（${r.k_kana}）<br><span class="mute">${r.k_club ?? '—'} ${badge(r.k_status)}</span></td><td><a href="/admin/members/${r.d_id}">${r.d_no ?? ''} ${r.d_name}</a>（${r.d_kana}）<br><span class="mute">${r.d_club ?? '—'} ${badge(r.d_status)}</span></td><td>${r.status === 'open' ? '未確認' : r.status === 'merged' ? `結合済み（${r.decided_by}）` : '別人'}</td>
-      <td>${r.status === 'open' ? html`<form method="post" action="/admin/merges/${r.id}/merge" class="inline"><button class="small primary">同一人物として結合</button></form> <form method="post" action="/admin/merges/${r.id}/dismiss" class="inline"><button class="small ghost">別人</button></form>` : r.status === 'merged' ? html`<form method="post" action="/admin/merges/${r.id}/undo" class="inline"><button class="small ghost">結合を取り消す</button></form>` : ''}</td></tr>`)}
+      <td>${r.status === 'open' ? html`<form method="post" action="/admin/merges/${r.id}/merge" class="inline"><button class="small primary">同一人物として結合</button></form> <form method="post" action="/admin/merges/${r.id}/dismiss" class="inline"><button class="small btn--outline">別人</button></form>` : r.status === 'merged' ? html`<form method="post" action="/admin/merges/${r.id}/undo" class="inline"><button class="small btn--outline">結合を取り消す</button></form>` : ''}</td></tr>`)}
     ${rows.length === 0 ? html`<tr><td colspan="5">候補はありません</td></tr>` : ''}</table></div>`;
   return c.html(page(c, { title: '名寄せ', body, admin: a, wide: true }));
 });
@@ -568,7 +568,7 @@ admin.get('/admins', async (c) => {
   const tournaments = await all<Tournament>(c.env.DB, 'SELECT * FROM tournaments ORDER BY held_on DESC');
   const body = html`<p class="mute">本番では Cloudflare Access のグループにも同じメールを入れます（Access を通った人のメールがこの表に無ければ入れません）。年 1 回の権限棚卸しはこの表で行います。</p>
     <div class="tbl"><table><tr><th>氏名</th><th>メール</th><th>協会</th><th>ロール</th><th>担当大会</th><th>有効</th><th></th></tr>
-    ${rows.map((r) => html`<tr><td>${r.name}</td><td>${r.email}</td><td>${r.association_name ?? '—'}</td><td>${ROLE_LABEL[r.role]}</td><td>${(JSON.parse(r.tournament_ids_json) as string[]).join(', ')}</td><td>${r.active ? '有効' : '停止'}</td><td><form method="post" action="/admin/admins/${r.id}/toggle" class="inline"><button class="small ghost">${r.active ? '停止' : '再開'}</button></form></td></tr>`)}</table></div>
+    ${rows.map((r) => html`<tr><td>${r.name}</td><td>${r.email}</td><td>${r.association_name ?? '—'}</td><td>${ROLE_LABEL[r.role]}</td><td>${(JSON.parse(r.tournament_ids_json) as string[]).join(', ')}</td><td>${r.active ? '有効' : '停止'}</td><td><form method="post" action="/admin/admins/${r.id}/toggle" class="inline"><button class="small btn--outline">${r.active ? '停止' : '再開'}</button></form></td></tr>`)}</table></div>
     <form method="post" action="/admin/admins" class="card"><h3>管理者を追加</h3>
       <label>氏名 <input type="text" name="name" required></label><label>メール <input type="email" name="email" required></label>
       <label>協会 <select name="association_id"><option value="">—（システム管理者）</option>${assocs.map((s) => html`<option value="${s.id}">${s.name}</option>`)}</select></label>

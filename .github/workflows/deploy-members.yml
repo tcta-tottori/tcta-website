@@ -42,6 +42,8 @@ jobs:
           cache-dependency-path: members/package-lock.json
       - run: npm ci
       - run: npm run typecheck
+      # 公式サイト本体の CSS / JS / ロゴを members/public/assets に複製する（見た目と動きを本体にそろえる）
+      - run: npm run sync-assets
       - name: Deploy worker (creates the D1 database on first run)
         run: npx wrangler deploy $WRANGLER_ENV_FLAG
       - name: Apply D1 migrations

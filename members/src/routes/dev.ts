@@ -23,19 +23,19 @@ dev.get('/', async (c) => {
       <div class="tbl"><table><tr>${Object.keys(n).map((k) => html`<th>${k}</th>`)}</tr><tr>${Object.values(n).map((v) => html`<td>${v}</td>`)}</tr></table></div>
       <div class="actions">
         <form method="post" action="/dev/seed"><button class="primary">デモデータを投入（既存を消して入れ直す）</button></form>
-        <form method="post" action="/dev/reset"><button class="ghost">すべて消す（監査ログは消えない）</button></form>
+        <form method="post" action="/dev/reset"><button class="btn--outline">すべて消す（監査ログは消えない）</button></form>
       </div>
     </div>
     <div class="card">
       <h2>動作確認の手順</h2>
-      <ol class="steps">
-        <li><a href="/login">ログイン / 会員登録</a> で任意のメールを入れ、<a href="/dev/mailbox">送信箱</a> のリンクを開く</li>
-        <li>プロフィールを入れて会員になる → マイページから年度登録（振込）</li>
-        <li><a href="/admin/login">事務局（鳥取市 事務局）</a>でログインし、消込 → 年度登録を承認</li>
-        <li>会員で <a href="/tournaments">大会</a> にエントリー（ペアは会員番号・氏名で検索）→ Stripe で支払（シミュレータ）</li>
-        <li>事務局の大会画面でトークンを発行し、<code>/api/v1/tournaments/T-DEMO-OPEN/entries.json?token=…</code> を開く</li>
-        <li><a href="/__scheduled?cron=0+0+*+*+*">定期実行</a> を手で動かし、<a href="/admin/audit">監査ログ</a> を見る</li>
-      </ol>
+      <div class="steps">
+        <div class="step"><p class="step__title">会員登録</p><p class="step__text"><a href="/login">ログイン / 会員登録</a> で任意のメールを入れ、<a href="/dev/mailbox">送信箱</a> のリンクを開く</p></div>
+        <div class="step"><p class="step__title">年度登録</p><p class="step__text">プロフィールを入れて会員になる → マイページから年度登録（振込）</p></div>
+        <div class="step"><p class="step__title">事務局で承認</p><p class="step__text"><a href="/admin/login">事務局（鳥取市 事務局）</a>でログインし、消込 → 年度登録を承認</p></div>
+        <div class="step"><p class="step__title">大会エントリー</p><p class="step__text">会員で <a href="/tournaments">大会</a> にエントリー（ペアは会員番号・氏名で検索）→ Stripe で支払（シミュレータ）</p></div>
+        <div class="step"><p class="step__title">運営アプリ連携</p><p class="step__text">事務局の大会画面でトークンを発行し、<code>/api/v1/tournaments/T-DEMO-OPEN/entries.json?token=…</code> を開く</p></div>
+        <div class="step"><p class="step__title">定期実行と監査</p><p class="step__text"><a href="/__scheduled?cron=0+0+*+*+*">定期実行</a> を手で動かし、<a href="/admin/audit">監査ログ</a> を見る</p></div>
+      </div>
       <p class="mute">デモ会員のメール: yamada@example.com（クラブ管理）/ sato@example.com / suzuki@example.com / tanaka@example.com（年度登録 承認待ち）</p>
     </div>`;
   return c.html(page(c, { title: '開発モード', body }));
@@ -57,7 +57,7 @@ dev.get('/mailbox', async (c) => {
   const rows = await all<{ id: string; to_addr: string; subject: string; body: string; created_at: string }>(c.env.DB, 'SELECT * FROM mail_outbox ORDER BY created_at DESC LIMIT 50');
   const body = html`
     <p class="mute">Email Sending の代わりに貯めた通知メール。本文の URL はそのまま開けます。</p>
-    <form method="post" action="/dev/mailbox/clear"><button class="ghost small">空にする</button></form>
+    <form method="post" action="/dev/mailbox/clear"><button class="btn--outline small">空にする</button></form>
     ${rows.length === 0 ? html`<p>まだありません。</p>` : rows.map((m) => html`<div class="card"><div class="mute">${fmtDateTime(m.created_at)} → ${m.to_addr}</div><h3>${m.subject}</h3><pre>${linkify(m.body)}</pre></div>`)}`;
   return c.html(page(c, { title: '送信箱（開発モード）', body }));
 });
@@ -85,9 +85,9 @@ dev.get('/stripe/:id', async (c) => {
       <dl class="kv"><dt>支払 ID</dt><dd>${p.id}</dd><dt>金額</dt><dd>${yen(p.amount)}</dd><dt>状態</dt><dd>${p.status}</dd></dl>
       <div class="actions">
         <form method="post" action="/dev/stripe/${p.id}/pay"><button class="primary">カードで支払う（成功）</button></form>
-        <form method="post" action="/dev/stripe/${p.id}/pay"><input type="hidden" name="tamper" value="1"><button class="ghost">金額を改ざんした Webhook を送る（拒否される）</button></form>
-        <form method="post" action="/dev/stripe/${p.id}/pay"><input type="hidden" name="badsig" value="1"><button class="ghost">署名の無い Webhook を送る（拒否される）</button></form>
-        <a class="btn ghost" href="/pay/${p.id}">戻る</a>
+        <form method="post" action="/dev/stripe/${p.id}/pay"><input type="hidden" name="tamper" value="1"><button class="btn--outline">金額を改ざんした Webhook を送る（拒否される）</button></form>
+        <form method="post" action="/dev/stripe/${p.id}/pay"><input type="hidden" name="badsig" value="1"><button class="btn--outline">署名の無い Webhook を送る（拒否される）</button></form>
+        <a class="btn btn--outline" href="/pay/${p.id}">戻る</a>
       </div>
     </div>`;
   return c.html(page(c, { title: 'Stripe 決済（シミュレータ）', body, member: c.get('member') }));

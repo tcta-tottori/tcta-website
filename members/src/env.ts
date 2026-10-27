@@ -7,6 +7,8 @@ export interface Env {
   APP_NAME: string;
   BASE_URL: string;
   MAIL_FROM?: string;
+  /** 公式サイト本体の URL（ヘッダー・フッターのリンク先） */
+  SITE_URL?: string;
   DATA_KEY?: string;
   STRIPE_SECRET_KEY?: string;
   STRIPE_WEBHOOK_SECRET?: string;

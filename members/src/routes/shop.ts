@@ -6,7 +6,7 @@ import { clientIp, form, type Vars } from '../app';
 import type { Env } from '../env';
 import { audit } from '../lib/audit';
 import { all, nowIso, one, run } from '../lib/db';
-import { currentFiscalYear, fmtDateTime, todayJst, yen } from '../lib/fiscal';
+import { currentFiscalYear, fmtDateTime, jstDayRange, todayJst, yen } from '../lib/fiscal';
 import { flash } from '../lib/session';
 import { ulid } from '../lib/ulid';
 import { createMember, searchMembers } from '../services/members';
@@ -105,18 +105,19 @@ shop.post('/registration', async (c) => {
 
 shop.get('/today', async (c) => {
   const a = c.get('admin')!;
-  const today = todayJst();
-  const rows = await all<Entry & { t_name: string; p1: string; p2: string | null; receipt_no: string | null; amount: number }>(c.env.DB, `SELECT e.*, t.name AS t_name, m1.name AS p1, m2.name AS p2, p.receipt_no, p.amount FROM entries e JOIN tournaments t ON t.id = e.tournament_id JOIN members m1 ON m1.id = e.member_id LEFT JOIN members m2 ON m2.id = e.partner_member_id LEFT JOIN payments p ON p.id = e.payment_id WHERE e.source = 'shop' AND e.created_by = ? AND substr(e.created_at, 1, 10) = ? ORDER BY e.created_at DESC`, a.email, today);
+  const [from, to] = jstDayRange(todayJst());
+  const rows = await all<Entry & { t_name: string; p1: string; p2: string | null; receipt_no: string | null; amount: number }>(c.env.DB, `SELECT e.*, t.name AS t_name, m1.name AS p1, m2.name AS p2, p.receipt_no, p.amount FROM entries e JOIN tournaments t ON t.id = e.tournament_id JOIN members m1 ON m1.id = e.member_id LEFT JOIN members m2 ON m2.id = e.partner_member_id LEFT JOIN payments p ON p.id = e.payment_id WHERE e.source = 'shop' AND e.created_by = ? AND e.created_at >= ? AND e.created_at < ? ORDER BY e.created_at DESC`, a.email, from, to);
   const body = html`<p class="mute">本日このショップで入力した分だけが出ます。入力ミスは当日中に取り消せます（翌日以降は事務局へ）。</p>
     <div class="tbl"><table><tr><th>時刻</th><th>大会</th><th>種目</th><th>申込者</th><th>ペア</th><th>金額</th><th>領収書</th><th>状態</th><th></th></tr>
-    ${rows.map((r) => html`<tr><td>${fmtDateTime(r.created_at)}</td><td>${r.t_name}</td><td>${r.event_code}${r.class ? ' ' + r.class : ''}</td><td>${r.p1}</td><td>${r.p2 ?? '—'}</td><td>${yen(r.amount)}</td><td>${r.receipt_no ?? '—'}</td><td>${badge(r.status)}</td><td>${r.status !== 'cancelled' ? html`<form method="post" action="/shop/entries/${r.id}/cancel" class="inline"><button class="small ghost">取り消す</button></form>` : ''}</td></tr>`)}
+    ${rows.map((r) => html`<tr><td>${fmtDateTime(r.created_at)}</td><td>${r.t_name}</td><td>${r.event_code}${r.class ? ' ' + r.class : ''}</td><td>${r.p1}</td><td>${r.p2 ?? '—'}</td><td>${yen(r.amount)}</td><td>${r.receipt_no ?? '—'}</td><td>${badge(r.status)}</td><td>${r.status !== 'cancelled' ? html`<form method="post" action="/shop/entries/${r.id}/cancel" class="inline"><button class="small btn--outline">取り消す</button></form>` : ''}</td></tr>`)}
     ${rows.length === 0 ? html`<tr><td colspan="9">本日の入力はまだありません</td></tr>` : ''}</table></div>`;
   return c.html(page(c, { title: '本日の入力', body, admin: a, wide: true }));
 });
 
 shop.post('/entries/:id/cancel', async (c) => {
   const a = c.get('admin')!;
-  const e = await one<Entry>(c.env.DB, `SELECT * FROM entries WHERE id = ? AND source = 'shop' AND created_by = ? AND substr(created_at, 1, 10) = ?`, c.req.param('id'), a.email, todayJst());
+  const [from, to] = jstDayRange(todayJst());
+  const e = await one<Entry>(c.env.DB, `SELECT * FROM entries WHERE id = ? AND source = 'shop' AND created_by = ? AND created_at >= ? AND created_at < ?`, c.req.param('id'), a.email, from, to);
   if (!e) { flash(c, '当日のご自身の入力だけ取り消せます', 'err'); return c.redirect('/shop/today'); }
   await cancelEntry(c.env, e.id, 'ショップが当日中に取消', { actorType: 'shop', actor: a.email, ip: clientIp(c) });
   flash(c, '取り消しました');

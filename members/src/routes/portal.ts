@@ -32,21 +32,23 @@ portal.get('/', async (c) => {
   const m = c.get('member');
   const open = await all<Tournament & { association_name: string }>(c.env.DB, `SELECT t.*, a.name AS association_name FROM tournaments t JOIN associations a ON a.id = t.association_id WHERE t.status = 'open' ORDER BY t.entry_end LIMIT 5`);
   const body = html`
-    <div class="hero">
-      <h2>1 回登録すれば、どの協会のどの大会にもエントリーできます</h2>
-      <p>県協会・鳥取市・倉吉市・米子市で共通の会員マスターを持ち、Web エントリーと入金確認を一本化します。</p>
-      ${m ? html`<a class="btn primary" href="/me">マイページへ</a>` : html`<a class="btn primary" href="/login">メールアドレスで登録 / ログイン</a>`}
-    </div>
     <h2>受付中の大会</h2>
-    ${open.length === 0 ? html`<p class="mute">いまは受付中の大会がありません。<a href="/dev">開発モード</a>からデモデータを入れると表示されます。</p>` : html`<div class="grid">${open.map((t) => html`<div class="card"><div class="mute">${t.association_name}</div><h3><a href="/tournaments/${t.id}">${t.name}</a></h3><div>${fmtDate(t.held_on)} ${t.venue ?? ''}</div><div class="mute">締切 ${fmtDate(t.entry_end)}</div></div>`)}</div>`}
-    <h2>流れ</h2>
-    <ol class="steps">
-      <li>メールアドレスを入れると届くリンクを開く（パスワード不要）</li>
-      <li>氏名・ふりがな・クラブ・連絡先を 1 回だけ入力</li>
-      <li>年度登録（協会を選んで登録料を支払う → 事務局が承認）</li>
-      <li>大会を選び、種目とペアを選んで参加費を支払う → 入金確認で確定</li>
-    </ol>`;
-  return c.html(page(c, { title: '会員ポータル', body, member: m }));
+    ${open.length === 0
+      ? html`<p class="mute">いまは受付中の大会がありません。<a href="/dev">デモ</a>からデモデータを入れると表示されます。</p>`
+      : html`<div class="tlist">${open.map((t) => html`<a class="tcard-s" href="/tournaments/${t.id}">
+          <span class="tcard-s__assoc">${t.association_name}</span>
+          <span class="tcard-s__title">${t.name}</span>
+          <span class="tcard-s__meta"><span class="tcard-s__date">${fmtDate(t.held_on)}</span><span>${t.venue ?? ''}</span><span>締切 ${fmtDate(t.entry_end)}</span></span>
+          <span class="tcard-s__go">大会の詳細 <span class="aw">→</span></span>
+        </a>`)}</div>`}
+    <div class="actions">${m ? html`<a class="btn btn--primary" href="/me">マイページへ <span class="aw">→</span></a>` : html`<a class="btn btn--primary" href="/login">メールアドレスで登録 / ログイン <span class="aw">→</span></a>`}<a class="btn" href="/tournaments">大会一覧 <span class="aw">→</span></a></div>
+    <h2>エントリーまでの流れ</h2>
+    <div class="steps">
+      <div class="step"><p class="step__title">メールで本人確認</p><p class="step__text">メールアドレスを入れると届くリンクを開くだけ。パスワードはありません。</p></div>
+      <div class="step"><p class="step__title">会員情報を 1 回だけ入力</p><p class="step__text">氏名・ふりがな・クラブ・連絡先。県協会・市協会で共通の会員番号が発番されます。</p></div>
+      <div class="step"><p class="step__title">年度登録 → 大会エントリー</p><p class="step__text">登録する協会を選んで登録料を支払い、事務局の承認後に大会へ。入金が確認でき次第エントリーが確定します。</p></div>
+    </div>`;
+  return c.html(page(c, { title: '会員ポータル', body, member: m, lead: '県協会・鳥取市・倉吉市・米子市で共通の会員マスターを持ち、Web エントリーと入金確認を一本化します。1 回登録すれば、どの協会のどの大会にもエントリーできます。' }));
 });
 
 // ---------- マジックリンク ----------
@@ -218,7 +220,7 @@ portal.get('/me', requireMember, async (c) => {
         <dt>電話</dt><dd>${contact.phone ?? '—'}</dd>
         <dt>住所</dt><dd>${contact.postal ? `〒${contact.postal} ` : ''}${contact.address ?? '—'}</dd>
       </dl>
-      <div class="actions"><a class="btn ghost" href="/me/profile">会員情報を変更</a></div>
+      <div class="actions"><a class="btn btn--outline" href="/me/profile">会員情報を変更</a></div>
     </div>
     <h2>年度登録</h2>
     <div class="tbl"><table><tr><th>年度</th><th>協会</th><th>区分</th><th>登録料</th><th>支払</th><th>状態</th></tr>
@@ -226,7 +228,7 @@ portal.get('/me', requireMember, async (c) => {
     </table></div>
     <div class="actions">
       <a class="btn primary" href="/registrations/new">${fy}年度の登録を申請</a>
-      ${renew ? html`<a class="btn ghost" href="/registrations/new?fy=${fy + 1}">${fy + 1}年度の継続登録</a>` : ''}
+      ${renew ? html`<a class="btn btn--outline" href="/registrations/new?fy=${fy + 1}">${fy + 1}年度の継続登録</a>` : ''}
     </div>
     <h2>大会エントリー</h2>
     <div class="tbl"><table><tr><th>大会</th><th>開催日</th><th>種目</th><th>ペア</th><th>支払</th><th>状態</th></tr>
@@ -234,7 +236,7 @@ portal.get('/me', requireMember, async (c) => {
     </table></div>
     <div class="actions"><a class="btn" href="/tournaments">受付中の大会</a></div>
     <h2>退会</h2>
-    <form method="post" action="/me/withdraw" class="card"><p class="mute">退会すると年度登録・エントリーは無効になります。住所・電話・メールは 2 年後に削除され、氏名と大会成績の履歴だけが残ります。</p><label class="check"><input type="checkbox" name="sure" required> 退会する</label><div><button class="ghost">退会を申請</button></div></form>`;
+    <form method="post" action="/me/withdraw" class="card"><p class="mute">退会すると年度登録・エントリーは無効になります。住所・電話・メールは 2 年後に削除され、氏名と大会成績の履歴だけが残ります。</p><label class="check"><input type="checkbox" name="sure" required> 退会する</label><div><button class="btn--outline">退会を申請</button></div></form>`;
   return c.html(page(c, { title: 'マイページ', body, member: m }));
 });
 
@@ -245,7 +247,7 @@ portal.get('/me/profile', requireMember, async (c) => {
   const body = html`<div class="card"><form method="post" action="/me/profile">
     ${profileFields(clubs, assocs, { name: m.name, kana: m.kana, sex: m.sex, birth_year: m.birth_year, phone: contact.phone, postal: contact.postal, address: contact.address, club_id: m.club_id }, false)}
     <label>メールアドレス <input type="email" name="email" required value="${contact.email ?? ''}"></label>
-    <div class="actions"><button class="primary">保存</button><a class="btn ghost" href="/me">戻る</a></div></form></div>`;
+    <div class="actions"><button class="primary">保存</button><a class="btn btn--outline" href="/me">戻る</a></div></form></div>`;
   return c.html(page(c, { title: '会員情報の変更', body, member: m }));
 });
 
@@ -298,7 +300,7 @@ portal.get('/registrations/new', requireMember, async (c) => {
           <label><input type="radio" name="method" value="bank"> ${METHOD_LABEL.bank}（事務局が確認）</label>
           <label><input type="radio" name="method" value="paypay"> ${METHOD_LABEL.paypay}（事務局が確認）</label>
         </div>
-        <div class="actions"><button class="primary">申請して支払いへ</button><a class="btn ghost" href="/me">戻る</a></div>
+        <div class="actions"><button class="primary">申請して支払いへ</button><a class="btn btn--outline" href="/me">戻る</a></div>
       </form>
     </div>`;
   return c.html(page(c, { title: `${fy}年度の登録`, body, member: m }));
@@ -391,7 +393,7 @@ portal.get('/tournaments/:id/entry', requireMember, async (c) => {
       <div class="indent"><input type="text" name="new_name" placeholder="氏名"> <input type="text" name="new_kana" placeholder="ふりがな"> <input type="text" name="new_club" placeholder="クラブ名"></div>
       <label>支払方法</label>
       <div class="radio-list">${methods.map((k, i) => html`<label><input type="radio" name="method" value="${k}" ${i === 0 ? 'checked' : ''}> ${METHOD_LABEL[k]}${k === 'stripe' ? '（自動で確定）' : k === 'cash' ? '（ショップで現金を渡すと確定）' : '（事務局が確認して確定）'}</label>`)}</div>
-      <div class="actions"><button class="primary">エントリーして支払いへ</button><a class="btn ghost" href="/tournaments/${t.id}">戻る</a></div>
+      <div class="actions"><button class="primary">エントリーして支払いへ</button><a class="btn btn--outline" href="/tournaments/${t.id}">戻る</a></div>
     </form>`;
   return c.html(page(c, { title: `エントリー: ${t.name}`, body, member: m }));
 });
@@ -481,7 +483,7 @@ portal.get('/pay/:id', requireMember, async (c) => {
   const body = html`<div class="card">
     <dl class="kv"><dt>内容</dt><dd>${p.note ?? (p.kind === 'entry' ? '大会参加費' : '年度登録料')}</dd><dt>支払先</dt><dd>${a.name}</dd><dt>金額</dt><dd><b>${yen(p.amount)}</b></dd><dt>方法</dt><dd>${METHOD_LABEL[p.method]}</dd><dt>状態</dt><dd>${badge(p.status)}</dd></dl>
     ${how}
-    <div class="actions"><a class="btn ghost" href="/me">マイページへ</a></div></div>`;
+    <div class="actions"><a class="btn btn--outline" href="/me">マイページへ</a></div></div>`;
   return c.html(page(c, { title: 'お支払い', body, member: m }));
 });
 

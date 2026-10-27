@@ -25,6 +25,7 @@
 		"APP_ENV": "production",
 		"APP_NAME": "テニス協会 会員ポータル",
 		"BASE_URL": "",
+		"SITE_URL": "https://tcta-site.tcta-admin-worker.workers.dev/",
 		"MAIL_FROM": "noreply@tottori-tenis.net"
 	},
 	"observability": { "enabled": true },
@@ -45,6 +46,7 @@
 				"APP_ENV": "demo",
 				"APP_NAME": "テニス協会 会員ポータル（デモ）",
 				"BASE_URL": "",
+				"SITE_URL": "https://tcta-site.tcta-admin-worker.workers.dev/",
 				"MAIL_FROM": "noreply@example.com"
 			},
 			"observability": { "enabled": true }

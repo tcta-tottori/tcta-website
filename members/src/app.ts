@@ -3,7 +3,7 @@ import type { Hono, Context } from 'hono';
 import type { Env } from './env';
 import type { Admin, Member } from './types';
 
-export type Vars = { member: Member | null; admin: Admin | null };
+export type Vars = { member: Member | null; admin: Admin | null; secureHeadersNonce?: string };
 export type App = Hono<{ Bindings: Env; Variables: Vars }>;
 export type Ctx = Context<{ Bindings: Env; Variables: Vars }>;
 

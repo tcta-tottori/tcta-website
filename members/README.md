@@ -51,6 +51,20 @@ npm run dev        # http://localhost:8787
 デモの管理者: `sysadmin@`（システム管理者）/ `tottori-admin@`（鳥取市 協会管理）/ `pref-admin@`（県 協会管理）/
 `unei@`（大会運営・秋季ダブルス担当）/ `viewer@`（閲覧）/ `shop@`（ショップ）。いずれも `example.com`。
 
+## 見た目と動き（公式サイト本体にそろえる）
+
+画面は公式サイト本体（リポジトリ直下の Astro サイト）と同じ CSS / JS を使います。
+`scripts/sync-assets.mjs` が `../public/assets` の `style.css`・`main.js`・ロゴ画像を `members/public/assets/` に複製し、
+`npm run dev` / `npm test` / `npm run deploy`（と GitHub Actions）の前に自動で走ります（複製先は Git 管理外）。
+本体のデザインが変わればポータルも追従します。
+
+- レイアウト（`src/views/layout.ts`）は本体の `Base.astro` と同じ骨組み：追従ヘッダー、右上の赤いブロック、
+  ハンバーガーの札配りメニュー、ページ見出しのスラッシュ塗り替え、背景の大きな英字、スクロールで現れるブロック、
+  押したときの波紋、CTA、漂う四角のフッター
+- ポータル固有の部品（表・フォーム・バッジ・カード）は `public/members.css` で本体の規則（赤は入口だけ・直角・細い罫線）に合わせて上書き
+- `public/members.js` は本文のブロックに `.rv` を付けるだけ。動きは本体の `main.js` が担う
+- スクリプトは同一オリジンのファイルと nonce 付きの 1 本だけ（CSP）。Google Fonts は本体と同じ
+
 ## 構成
 
 ```
@@ -69,8 +83,8 @@ members/
 │   ├── seed.ts           デモデータ
 │   ├── services/         members（暗号化・会員番号・検索・名寄せ）、payments（消込→確定→通知）、permissions（ロール表）
 │   ├── lib/              crypto（AES-GCM 列暗号化・盲検索 HMAC）、access（Cloudflare Access JWT）、stripe、mail、session、audit、ratelimit、ulid、fiscal
-│   └── views/layout.ts   共通レイアウト（JS 無し）
-├── public/style.css
+│   └── views/layout.ts   共通レイアウト（本体の Base.astro と同じ骨組み）
+├── public/members.css, members.js   本体にそろえるための上書き（本体の assets は sync-assets が複製）
 └── scripts/setup.mjs, smoke.mjs
 ```
 
@@ -78,7 +92,7 @@ members/
 
 | 設計書の要素 | この実装 | 本番で必要なこと |
 | --- | --- | --- |
-| Pages（会員ポータル・管理画面） | 同じ Worker がサーバー描画（JS 無し） | そのまま配備可。Astro 側に「エントリーする」ボタンを置く |
+| Pages（会員ポータル・管理画面） | 同じ Worker がサーバー描画。本体サイトと同じ CSS / JS で見た目をそろえる | そのまま配備可。Astro 側に「エントリーする」ボタンを置く |
 | Workers API（Hono） | `src/` 全体 | — |
 | D1（会員マスター） | `migrations/` | `wrangler d1 create tcta-members` して `database_id` を書く |
 | R2（日次バックアップ 90 日） | `jobs.ts` の backup（バインディングがある時だけ） | `wrangler.jsonc` の `r2_buckets` を有効化 |
