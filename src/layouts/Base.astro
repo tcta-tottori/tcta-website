@@ -81,6 +81,7 @@ const {
         var name = art && art.querySelector('.cfac__name');
         if (!art || !img) { e.viewTransition.skipTransition(); return; }
         art.scrollIntoView();  // 写しを撮る前に、その施設が画面に入る位置へ
+        art.classList.add('on', 'cfac--vt');  // その施設はすぐ見せる（文字の滑り出しと写真のズームは流さない。style.css）
         img.style.viewTransitionName = 'court-photo';
         if (name) name.style.viewTransitionName = 'court-name';
         if (e.viewTransition.types) e.viewTransition.types.add('court');

@@ -2370,7 +2370,21 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   text-shadow: 0 1px 2px rgba(0, 0, 0, .6), 0 2px 14px rgba(0, 0, 0, .45);
 }
 .cfac__name .court-pin { width: .8em; height: .8em; flex: none; color: var(--red); }
-.cfac__badges { display: flex; flex-wrap: wrap; gap: 6px; margin: 14px 0 0; }
+.cfac__badges { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; }
+/* 写真が出たあとで文字を出す。施設名とバッジのあいだに線があるつもりで、施設名はその線から上へ、バッジは線から下へ滑り出す。
+   .cfac__cap-top / .cfac__cap-bottom が切り取りの箱（線の位置＝上の箱の下端・下の箱の上端）。
+   写真の動き（rv-zoom .2s 遅れ + .9s）がほぼ収まった .75s から。動きを減らす設定（.jsrv 無し）では動かさない */
+.cfac__cap-top { overflow: hidden; padding-bottom: 6px; }
+.cfac__cap-bottom { overflow: hidden; margin-top: 8px; padding-top: 2px; }
+body.jsrv .cfac.rv:not(.on) .cfac__name { transform: translateY(115%); opacity: 0; }
+body.jsrv .cfac.rv:not(.on) .cfac__badges { transform: translateY(-115%); opacity: 0; }
+body.jsrv .cfac.rv.on .cfac__name { animation: cfac-name-in .6s cubic-bezier(.16, 1, .3, 1) .75s both; }
+body.jsrv .cfac.rv.on .cfac__badges { animation: cfac-badges-in .6s cubic-bezier(.16, 1, .3, 1) .85s both; }
+@keyframes cfac-name-in { from { transform: translateY(115%); opacity: 0; } 30% { opacity: 1; } to { transform: none; opacity: 1; } }
+@keyframes cfac-badges-in { from { transform: translateY(-115%); opacity: 0; } 30% { opacity: 1; } to { transform: none; opacity: 1; } }
+/* コート案内の行からつないで来た施設（Base.astro の pagereveal が .cfac--vt を付ける）は、写真と施設名がページ間の
+   ビュートランジションで移ってくるので、この文字の動きと写真のズームは流さない */
+body.jsrv .cfac.rv.on.cfac--vt .cfac__name, body.jsrv .cfac.rv.on.cfac--vt .cfac__badges, body.jsrv .cfac.rv.on.cfac--vt .cfac__hero-link img { animation: none; transform: none; opacity: 1; }
 .cfac__hero .badge {
   background: rgba(255, 255, 255, .14);
   color: var(--white);
