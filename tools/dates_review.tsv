@@ -1,0 +1,328 @@
+年度	id	大会名	種類	日付	曜日	会場	確からしさ	出典
+2024	2024-2024tobu-s	東部地区テニス選手権シングルス	tobu_s	令和6年3月24日	日	ヤマタスポーツパークテニスコート	75	2024tobu-s-program.pdf
+2024	2024-2024tobu-d	東部地区テニス選手権ダブルス	tobu_d	令和6年3月31日	日	ヤマタスポーツパークテニスコート	75	2024tobu-d-draw.pdf
+2024	2024-2024sasaki-hai	佐々木杯ミックスダブルス	sasaki	令和6年4月7日	日	ヤマタスポーツパークテニスコート	75	2024sasaki-hai-draw.pdf
+2024	2024-2024sasaki-hai-gallery	佐々木杯ミックスダブルス（写真）	sasaki	令和6年4月7日	日	ヤマタスポーツパークテニスコート	65	2024sasaki-hai-draw.pdf
+2024	2024-2024club-taiko-m1-6	クラブ対抗戦男子1部〜6部	club_zenki	令和6年5月12日	日		20	ファイル名:2024club-taiko-5-12-result-001.webp
+2024	2024-2024club-taiko-w1-2	女子1部・2部	club_zenki	令和6年5月12日	日		20	ファイル名:2024club-taiko-5-12-result-013.webp
+2024	2024-2024club-taiko-m7-8	クラブ対抗戦男子7部・8部	club_kouki	令和6年6月23日	日	ヤマタスポーツパークテニスコート	200	2024club-taiko-6-24-yoko.pdf
+2024	2024-2024club-taiko-w345	女子3〜5部	club_kouki	令和6年6月23日	日	ヤマタスポーツパークテニスコート	200	2024club-taiko-6-24-yoko.pdf
+2024	2024-2024ketaka-cup	気高カップサマーシングルス	ketaka_cup	令和6年7月15日	月	気高コート	75	2024ketaka-cup-draw2.pdf
+2024	2024-2024summer-mix	サマーミックステニス	summer_mix	令和6年7月28日	日		75	2024summer-mix-draw.pdf
+2024	2024-2024summer-mix-gallery	サマーミックステニス（写真）	summer_mix	令和6年7月28日	日		65	2024summer-mix-draw.pdf
+2024	2024-2024kensen-d	鳥取県テニス選手権ダブルス	kensen_d	令和6年8月4日	日	ヤマタスポーツパークテニスコート	75	2024kensen-d-draw.pdf
+2024	2024-2024dunlop	ダンロップテニストーナメント鳥取大会	dunlop	令和6年8月25日	日		75	2024dunlop-draw.pdf
+2024	2024-2024kensen-s	鳥取県テニス選手権シングルス	kensen_s	令和6年9月1日	日	ヤマタスポーツパークテニスコート	75	2024kensen-s-draw.pdf
+2024	2024-2024prince-open	プリンスオープンチーム対抗戦・ギャラリー	prince	令和6年10月6日	日		75	2024prince-open-draw1.pdf
+2024	2024-2024toridai-open-s	鳥大オープンシングルス	toridai_s	令和6年9月29日	日		74	2024toridai-open-s-yoko.pdf
+2024	2024-2024toridai-open-s-2	鳥大オープンシングルス（PDF）	toridai_s	令和6年9月29日	日		64	2024toridai-open-s-yoko.pdf
+2024	2024-2024shicho-hai	鳥取市長杯シングルス	shicho	令和6年11月4日	月	ヤマタスポーツパークテニスコート	75	2024shicho-hai-draw.pdf
+2024	2024-2024enetopia-cup	エネトピア杯ミックスダブルス	enetopia	令和6年11月10日	日	ヤマタスポーツパークテニスコート	75	2024enetpiacup-draw.pdf
+2024	2024-2024kaicho-hai-f	会長杯テニス大会団体戦	kaicho_f	令和6年11月17日	日	ヤマタスポーツパークテニスコート	75	2024kaicho-hai-f-draw.pdf
+2024	2024-2025osaka-hai	第52回尾坂杯鳥取室内テニス選手権	osaka	令和7年1月11日	土	鳥取市民体育館	45	2025osakahai-d-draw.pdf
+2024	2024-2024toridai-open-d	鳥大オープンダブルス	toridai_d	令和6年3月9日	土		74	2024toridai-open-d-yoko.pdf
+2023	2023-2023tobu-s	東部地区テニス選手権シングルス	tobu_s	令和5年3月19日	日	ヤマタスポーツパークテニスコート	73	2023tobu-s-entry.pdf
+2023	2023-2023tobu-s-gallery	東部地区テニス選手権シングルス（写真）	tobu_s	令和5年3月19日	日	ヤマタスポーツパークテニスコート	63	2023tobu-s-entry.pdf
+2023	2023-2023tobu-d	東部地区テニス選手権ダブルス	tobu_d	令和5年3月26日	日	ヤマタスポーツパークテニスコート	73	2023tobu-d-entry.pdf
+2023	2023-2023tobu-d-gallery	東部地区テニス選手権ダブルス（写真）	tobu_d	令和5年3月26日	日	ヤマタスポーツパークテニスコート	63	2023tobu-d-entry.pdf
+2023	2023-2023kaicho-hai-s	会長杯(春の部)団体戦	kaicho_s	令和5年4月2日	日	ヤマタスポーツパークテニスコート	63	2023kaichou-hai-dantaisen-entry.pdf
+2023	2023-2023kaicho-hai-s-gallery	会長杯(春の部)団体戦（写真）	kaicho_s	令和5年4月2日	日	鳥取市営千代テニス場	60	2023tournament-schedule.pdf
+2023	2023-2023sasaki-hai	佐々木杯ミックスダブルス	sasaki	令和5年4月9日	日	ヤマタスポーツパークテニスコート	73	2023sasaki-hai-entry.pdf
+2023	2023-2023sasaki-hai-gallery	佐々木杯ミックスダブルス（写真）	sasaki	令和5年4月9日	日	ヤマタスポーツパークテニスコート	63	2023sasaki-hai-entry.pdf
+2023	2023-2023club-taiko-m1-6	クラブ対抗戦男子1部〜6部	club_zenki	令和5年5月7日	日	鳥取市営千代テニス場	60	2023tournament-schedule.pdf
+2023	2023-2023club-taiko-w1-2	女子1部・2部	club_zenki	令和5年5月7日	日	鳥取市営千代テニス場	60	2023tournament-schedule.pdf
+2023	2023-2023club-taiko-5-7-gallery	ギャラリー	club	令和５年５月７日		ヤマタスポーツパークテニスコート	100	既存
+2023	2023-2023club-taiko-m7-8	クラブ対抗戦男子7部・8部	club_kouki	令和5年7月16日	日		60	2023tournament-schedule.pdf
+2023	2023-2023club-taiko-w345	女子3部〜5部	club_kouki	令和5年7月16日	日		60	2023tournament-schedule.pdf
+2023	2023-2023club-taiko-7-16-gallery	ギャラリー	club	令和５年７月16日		ヤマタスポーツパークテニスコート	100	既存
+2023	2023-2023ketaka-cup	第8回気高カップサマーシングルス	ketaka_cup	令和5年7月30日	日	気高コート	73	2023ketaka-cup-entry.pdf
+2023	2023-2023summer-mix	サマーミックステニス大会	summer_mix	令和5年8月20日	日	湖山池テニスコート	75	2023summer-mix-program.pdf
+2023	2023-2023dunlop	ダンロップテニストーナメント	dunlop	令和5年10月21日	土		74	2023dunlop-chugoku-yoko.pdf
+2023	2023-2023toridai-open-s	鳥大オープンシングルス	toridai_s	令和5年9月10日	日		63	2023toridai-open-entry.pdf
+2023	2023-2023prince-open	2023プリンスオープン団体戦	prince	令和5年9月30日	土		75	2023prince-open-draw.pdf
+2023	2023-2023kensen-s	鳥取県テニス選手権シングルス	kensen_s	令和5年10月15日	日	ヤマタスポーツパークテニスコート	73	2023kensen-s-entry.pdf
+2023	2023-2023enetopia-cup	エネトピア杯	enetopia	令和5年10月22日	日	ヤマタスポーツパークテニスコート	73	2023enetopia-cup-entry.pdf
+2023	2023-2023enetopia-cup-gallery	エネトピア杯（写真）	enetopia	令和5年10月22日	日	ヤマタスポーツパークテニスコート	63	2023enetopia-cup-entry.pdf
+2023	2023-2023kensen-d	鳥取県テニス選手権ダブルス	kensen_d	令和5年11月5日	日	ヤマタスポーツパークテニスコート	73	2023kensen-d-entry.pdf
+2023	2023-2023sicho-hai	市長杯テニス大会	shicho	令和5年11月3日	金	ヤマタスポーツパークテニスコート	73	2023sicho-hai-entry.pdf
+2023	2023-2023kaicho-hai-d	会長杯（秋の部）ダブルス	kaicho_f	令和5年11月12日	日	ヤマタスポーツパークテニスコート	73	2023kaicho-hai-d-entry.pdf
+2023	2023-2024osaka-hai-s	尾坂杯鳥取室内テニス選手権シングルス	osaka_s	令和6年1月28日	日		60	2023tournament-schedule.pdf
+2023	2023-2024osaka-hai-d	尾坂杯鳥取室内テニス選手権ダブルス	osaka_d	令和6年1月28日	日		60	2023tournament-schedule.pdf
+2022	2022-2022tobu-s	東部地区テニス選手権シングルス	tobu_s	令和4年5月15日	日	ヤマタスポーツパークテニスコート	75	2022tobu-s-draw.pdf
+2022	2022-2022tobu-d	東部地区テニス選手権ダブルス	tobu_d	令和4年3月27日	日	ヤマタスポーツパークテニスコート	74	2022tobu-d-yoko1.pdf
+2022	2022-2022club-taiko-m1-6	クラブ対抗男子1部〜6部	club_zenki	令和4年5月22日	日		60	2022tournament-schedule.pdf
+2022	2022-2022club-taiko-m7-8	男子7・8部	club_kouki	令和4年6月19日	日		60	2022tournament-schedule.pdf
+2022	2022-2022club-taiko-w1-2	クラブ対抗戦女子1部・2部	club_zenki	令和4年5月22日	日		60	2022tournament-schedule.pdf
+2022	2022-2022club-taiko-w345	女子3・4・5部	club_kouki	令和4年6月19日	日		60	2022tournament-schedule.pdf
+2022	2022-2022kaicho-hai-d	会長杯（春の部）ダブルス	kaicho_s	令和4年4月3日	日	ヤマタスポーツパークテニスコート	73	2022kaicho-hai-d-entry.pdf
+2022	2022-2022sasaki-hai	佐々木杯テニス大会	sasaki	令和4年4月10日	日	鳥取市営千代テニス場	60	2022tournament-schedule.pdf
+2022	2022-2022toridai-open-d	鳥大オープンダブルス	toridai_d	令和4年7月10日	日		74	2022toridai-open-d-yoko.pdf
+2022	2022-2022ketaka-cup	気高カップサマーシングルス	ketaka_cup	令和4年7月17日	日	気高コート	73	2022ketaka-cup-entry.pdf
+2022	2022-2022summer-mix	サマーミックステニス	summer_mix	令和4年8月21日	日		75	2022summer-mix-program.pdf
+2022	2022-2022dunlop	ダンロップテニストーナメント鳥取大会	dunlop	令和4年10月22日	土		74	2022dunlop-chugoku-yoko.pdf
+2022	2022-2022enetopia-cup	エネトピア杯ミックスダブルス	enetopia	令和4年9月25日	日	鳥取市営千代テニス場	60	2022tournament-schedule.pdf
+2022	2022-2022kensen-s	鳥取県テニス選手権シングルス	kensen_s	令和4年10月23日	日		73	2022kensen-s-entry.pdf
+2022	2022-2022sicho-hai	市長杯テニス大会	shicho	令和4年11月3日	木	ヤマタスポーツパークテニスコート	73	2022sicho-hai-entry.pdf
+2022	2022-2022prince-open	プリンスオープンチーム対抗戦	prince	令和4年11月6日	日		75	2022prince-open-draw.pdf
+2022	2022-2022prince-open-gallrey	ギャラリー	prince	令和4年11月6日	日		65	2022prince-open-draw.pdf
+2022	2022-2022kensen-d	鳥取県テニス選手権ダブルス	kensen_d	令和4年11月13日	日	ヤマタスポーツパークテニスコート	73	2022kensen-d-entry.pdf
+2022	2022-2022kaicho-hai-f	会長杯秋の部団体戦	kaicho_f	令和4年11月20日	日	ヤマタスポーツパークテニスコート	75	2022kaicho-hai-f-draw.pdf
+2022	2022-2023osaka-hai-d	尾坂杯鳥取室内選手権ダブルス	osaka_d					
+2022	2022-2023osaka-hai-s	尾坂杯鳥取室内選手権シングルス	osaka_s	令和4年12月3日	土	鳥取産業体育館	60	2022tournament-schedule.pdf
+2021	2021-2022osaka-hai-d	尾坂杯鳥取室内選手権ダブルス	osaka_d					
+2021	2021-2022osaka-hai-s	シングルス	osaka_s	令和3年12月4日	土	鳥取産業体育館	60	2021tournament-schedule.pdf
+2021	2021-2021kaicho-hai-f	会長杯(秋の部)ダブルス	kaicho_f	令和3年11月23日	火	ヤマタスポーツパークテニスコート	73	2021kaicho-hai-f-entry.pdf
+2021	2021-2021kensen-d	鳥取県テニス選手権ダブルス	kensen_d	令和3年11月21日	日	ヤマタスポーツパークテニスコート	75	2021kensen-d-draw.pdf
+2021	2021-2021sasaki-hai	佐々木杯テニス大会	sasaki	令和3年11月14日	日	ヤマタスポーツパークテニスコート	75	2021sasaki-hai-draw.pdf
+2021	2021-2021kensen-s	鳥取県テニス選手権シングルス	kensen_s	令和3年11月7日	日	ヤマタスポーツパークテニスコート	73	2021kensen-s-entry.pdf
+2021	2021-2021sicho-hai	第36回市長杯テニス大会	shicho	令和3年11月3日	水	ヤマタスポーツパークテニスコート	75	2021shicho-hai-draw.pdf
+2021	2021-2021enetopia	エネトピア杯	enetopia	令和3年9月20日	月	ヤマタスポーツパークテニスコート	75	2021enetopia-draw.pdf
+2021	2021-2021dunlop	ダンロップトーナメント	dunlop	令和3年8月29日	日		75	2021dunlop-draw.pdf
+2021	2021-2021summer-mix	サマーミックステニス	summer_mix	令和3年8月22日	日		73	2021summer-mix-entry.pdf
+2021	2021-2021ketaka-cup	気高カップサマーシングルス	ketaka_cup	令和3年7月25日	日	気高コート	75	2021ketaka-cup-draw.pdf
+2021	2021-2021all-japan	全日本テニス選手権鳥取県予選	alljapan	令和3年7月22日	木	湖山池テニスコート	75	2021alljapan-tottori-draw.pdf
+2021	2021-2021club-taiko-m7-8	クラブ対抗戦男子７部・8部	club_kouki	令和3年5月23日	日	布勢コート	60	2021tournament-schedule.pdf
+2021	2021-2021club-taiko-w345	女子3・4・5部	club_kouki	令和3年5月23日	日	布勢コート	60	2021tournament-schedule.pdf
+2021	2021-2021club-taiko-m1-6	クラブ対抗戦男子1部〜6部	club_zenki	令和3年5月9日	日	布勢コート	60	2021tournament-schedule.pdf
+2021	2021-2021club-taiko-w1-2	女子1・２部	club_zenki	令和3年5月9日	日	布勢コート	60	2021tournament-schedule.pdf
+2021	2021-2021kaicho-hai-s	会長杯（春の部）団体戦	kaicho_s	令和3年4月4日	日	布勢コート	63	2021kaicho-hai-team-entry.pdf
+2021	2021-2021tobu-s	東部地区選手権シングルス	tobu_s	令和3年3月28日	日	コカ・コーラウエストスポーツパークテニスコート	63	2021tobu-entry-d1.pdf
+2021	2021-2021tobu-d	ダブルス	tobu_d	令和3年3月28日	日	コカ・コーラウエストスポーツパークテニスコート	63	2021tobu-entry-d.pdf
+2020	2020-2021osaka-hai-result-2	尾坂杯男子A級・B級・C級・45歳以上・55歳以上シングルス・女子45歳以上シングルス	osaka_s	令和3年1月10日	日	鳥取県民体育館	65	2021osakahai-draw.pdf
+2020	2020-2021osaka-hai-result-1	尾坂杯女子A級・B級・45歳以上ダブルス・男子A級・B級ダブルス	osaka_d	令和3年1月10日	日	鳥取県民体育館	65	2021osakahai-draw.pdf
+2020	2020-2020toridai-open-s	鳥大オープンシングルス	toridai_s	令和2年12月13日	日		74	2020toridai-open-s-yoko.pdf
+2020	2020-2020kaicho-hai-f	会長杯(秋の部)団体戦	kaicho_f	令和2年11月22日	日	コカ・コーラウエストスポーツパークテニスコート	75	2020kaicho-hai-f-draw.pdf
+2020	2020-2020club-taiko-m78result	クラブ対抗戦男子7・8部	club_kouki	令和2年11月15日	日	コカ・コーラウエストスポーツパークテニスコート	60	2020tournament-schedule.pdf
+2020	2020-2020club-taiko-w345result	女子3・4・5部	club_kouki	令和2年11月15日	日	コカ・コーラウエストスポーツパークテニスコート	60	2020tournament-schedule.pdf
+2020	2020-2020sicho-hai	市長杯テニス大会	shicho	令和2年11月3日	火	コカ・コーラウエストスポーツパークテニスコート	75	2020sicho-hai-draw.pdf
+2020	2020-2020kensen-s	鳥取県テニス選手権シングルス	kensen_s	令和2年11月1日	日	南谷コート	75	2020kensen-s-draw.pdf
+2020	2020-2020club-taiko-10-25	クラブ対抗戦男子1〜6部	club_zenki	令和2年11月15日	日	気高コート	74	2020club-taiko-10-25-yoko.pdf
+2020	2020-2020club-taiko-10-25-result-w1-2	女子1部・2部	club_zenki	令和2年10月25日	日	コカ・コーラウエストスポーツパークテニスコート	60	2020tournament-schedule.pdf
+2020	2020-2020enetopia-cup	エネトピア杯テニス大会	enetopia	令和2年7月5日	日	コカ・コーラウエストスポーツパークテニスコート	60	2020tournament-schedule.pdf
+2020	2020-2020toridai-open-d	鳥大オープンダブルス	toridai_d					
+2020	2020-2020dunlop	ダンロップスリクソントーナメント	dunlop	令和2年8月30日	日	コカ・コーラウエストスポーツパークテニスコート	73	2020dunlop-entry.pdf
+2020	2020-2020ketaka-cup	気高カップサマーシングルス	ketaka_cup	令和2年7月26日	日	気高コート	73	2020ketaka-cup-entry.pdf
+2020	2020-2020summer-mix	サマーミックス	summer_mix	令和2年7月23日	木	コカ・コーラウエストスポーツパークテニスコート	73	2020summer-mix-entry.pdf
+2020	2020-2020all-japan-tennis-tottori	全日本テニス選手権鳥取県予選	alljapan	令和2年7月19日	日	コカ・コーラウエストスポーツパークテニスコート	73	2020all-japan-tennis-tottori-entry.pdf
+2020	2020-2020sasaki-hai	佐々木杯テニス大会	sasaki	令和2年7月5日	日	コカ・コーラウエストスポーツパークテニスコート	75	2020sasaki-hai-draw.pdf
+2019	2019-2019sicho-hai-result-001	鳥取市長杯テニス大会	shicho	令和1年11月23日	土	コカ・コーラウエストスポーツパークテニスコート	60	2019taikai-nittei.pdf
+2019	2019-2019kaicho-hai-f	会長杯(秋の部団体戦）	kaicho_f	令和1年11月4日	月	コカ・コーラウエストスポーツパークテニスコート	75	2019kaicho-hai-f-draw.pdf
+2019	2019-2019prince-open	プリンスオープン	prince	令和1年9月21日	土	コカ・コーラウエストスポーツパークテニスコート	75	2019prince-open-draw1.pdf
+2019	2019-2020osaka-hai	第47回尾坂杯鳥取室内テニス選手権	osaka	令和2年1月25日	土	鳥取産業体育館	75	2020osakahai-draw-001.pdf
+2019	2019-2019enetopia-cup	第24回エネトピア杯テニス大会	enetopia	令和1年11月24日	日	コカ・コーラウエストスポーツパークテニスコート	75	2019enetopiacup-draw.pdf
+2019	2019-2019clubtaiko-m7-w34	クラブ対抗戦男子7部・女子3部・女子4部	club_kouki	令和1年9月23日	月	コカ・コーラウエストスポーツパークテニスコート	60	2019taikai-nittei.pdf
+2019	2019-2019clubtaiko-m8	男子8部	club_kouki	令和1年9月23日	月	コカ・コーラウエストスポーツパークテニスコート	60	2019taikai-nittei.pdf
+2019	2019-2019clubtaiko-w5	女子5部	club_kouki	令和1年9月23日	月	コカ・コーラウエストスポーツパークテニスコート	60	2019taikai-nittei.pdf
+2019	2019-2019dunlop	ダンロップスリクソントーナメント	dunlop	令和1年8月4日	日	コカ・コーラウエストスポーツパークテニスコート	75	2019dunlop-draw.pdf
+2019	2019-2019ketaka-cup	気高カップサマーシングルス	ketaka_cup	令和1年7月28日	日	気高コート	75	2019ketaka-cup-draw.pdf
+2019	2019-r1-summer-mix	サマーミックステニス	summer_mix	令和1年7月27日	土	コカ・コーラウエストスポーツパークテニスコート	60	2019taikai-nittei.pdf
+2019	2019-2019club-taiko-7-14	クラブ対抗戦男子１部〜６部・女子１部・２部	club_zenki	令和1年9月23日	月	コカ・コーラウエストスポーツパークテニスコート	65	2019club-taiko-9-23draw.pdf
+2019	2019-2019toridai-open-d	2019鳥大オープンダブルス	toridai_d	令和1年7月6日	土		74	2019toridai-open-d-yoko.pdf
+2019	2019-2019all-japan-tottori	全日本テニス選手権鳥取県予選	alljapan	令和1年6月2日	日	コカ・コーラウエストスポーツパークテニスコート	74	2019all-japan-tottori-yoko.pdf
+2019	2019-2019sasaki-hai	平成31年度佐々木杯ミックスダブルス	sasaki	令和1年4月14日	日	コカ・コーラウエストスポーツパークテニスコート	75	2019sasaki-hai-draw.pdf
+2019	2019-2019kaicho-hai-s	平成31年度会長杯（春の部）男女ダブルス	kaicho_s	令和1年4月7日	日	コカ・コーラウエストスポーツパークテニスコート	75	2019kaicho-hai-s-draw1.pdf
+2019	2019-2019tobu	第48回東部地区テニス選手権大会	tobu	令和1年3月31日	日	コカ・コーラウエストスポーツパークテニスコート	75	2019tobu-d-draw1.pdf
+2018	2018-2019osaka-hai	第46回尾坂杯鳥取室内テニス選手権	osaka	平成30年12月22日	土	鳥取産業体育館	60	2018taikai-nittei.jpg
+2018	2018-2018toridai-open-s	鳥大オープンシングルス	toridai_s	平成30年12月8日	土		74	2018toridai-open-s-yoko.pdf
+2018	2018-2018kaicho-hai-f	会長杯(秋の部団体戦）	kaicho_f	平成30年11月23日	金	コカ・コーラウエストスポーツパークテニスコート	75	2018kaicho-hai-f-draw.pdf
+2018	2018-2018kensen-d	鳥取県テニス選手権大会ダブルス	kensen_d	平成30年11月18日	日	コカ・コーラウエストスポーツパークテニスコート	75	2018kensen-d-draw.pdf
+2018	2018-2018kensen-s	鳥取県テニス選手権大会シングルス	kensen_s	平成30年10月14日	日	コカ・コーラウエストスポーツパークテニスコート	75	2018kensen-s-draw.pdf
+2018	2018-2018enetopia-cup	第23回エネトピア杯テニス大会	enetopia	平成30年9月17日	月	コカ・コーラウエストスポーツパークテニスコート	75	2018enetopiacup-draw.pdf
+2018	2018-2018dunlop	ダンロップテニストーナメント	dunlop	平成30年8月26日	日	コカ・コーラウエストスポーツパークテニスコート	75	2018dunlop-draw.pdf
+2018	2018-2018summer-mix	サマーミックステニス大会	summer_mix	平成30年7月29日	日	コカ・コーラウエストスポーツパークテニスコート	60	2018taikai-nittei.jpg
+2018	2018-2018ketaka-cup	第３回気高カップサマーシングルス	ketaka_cup	平成30年7月22日	日	気高コート	75	2018ketaka-cup-draw.pdf
+2018	2018-2018all-japan	全日本テニス選手権鳥取県予選	alljapan	平成30年7月16日	月	コカ・コーラウエストスポーツパークテニスコート	75	2018all-japan-tottori-draw.pdf
+2018	2018-2018sicho-hai	鳥取市長杯テニス大会	shicho	平成30年7月15日	日	コカ・コーラウエストスポーツパークテニスコート	75	2018sichohai-draw.pdf
+2018	2018-2018prince-open	2018プリンスオープン	prince	平成30年7月1日	日	コカ・コーラウエストスポーツパークテニスコート	73	2018princeopen-entry.pdf
+2018	2018-2018prince-open-gallrey	ギャラリー	prince	平成30年7月1日	日	コカ・コーラウエストスポーツパークテニスコート	63	2018princeopen-entry.pdf
+2018	2018-2018club-taiko-m8	クラブ対抗戦男子８部	club_kouki	平成30年6月24日	日	コカ・コーラウエストスポーツパークテニスコート	60	2018taikai-nittei.jpg
+2018	2018-2018club-taiko-w5	女子5部	club_kouki	平成30年6月24日	日	コカ・コーラウエストスポーツパークテニスコート	60	2018taikai-nittei.jpg
+2018	2018-2018club-taiko-m7w34	男子7部･女子３部･４部	club_kouki	平成30年6月24日	日	コカ・コーラウエストスポーツパークテニスコート	60	2018taikai-nittei.jpg
+2018	2018-2018club-taiko-5-13	クラブ対抗戦男子1部〜6部・女子1部・2部	club_zenki	平成30年6月24日	日		62	2018club-taiko-6-24-op.pdf
+2018	2018-2018sasaki-hai	平成30年度佐々木杯仮	sasaki	平成30年4月15日	日	コカ・コーラウエストスポーツパークテニスコート	75	2018sasakihai-draw.pdf
+2018	2018-2018kaicho-hai-s	平成30年度会長杯春の部	kaicho_s	平成30年4月8日	日	コカ・コーラウエストスポーツパークテニスコート	75	2018kaicho-hai-s-draw.pdf
+2018	2018-2018tobu-d	平成30年東部地区テニス選手権ダブルス	tobu_d	平成30年4月1日	日	コカ・コーラウエストスポーツパークテニスコート	75	2018tobu-d-draw.pdf
+2018	2018-2018tobu-s	東部地区テニス選手権シングルス	tobu_s	平成30年3月25日	日	コカ・コーラウエストスポーツパークテニスコート	73	2018tobu-s-entry.pdf
+2017	2017-2018osaka-hai	第45回尾坂杯鳥取室内テニス選手権	osaka	平成30年1月8日	月		60	2017tournament-schedule.pdf
+2017	2017-2017toridai-open-s	鳥大オープン冬季シングルス	toridai_s	平成29年12月10日	日		74	2017toridai-open-s-yoko.pdf
+2017	2017-2017sasaki-hai	佐々木杯テニス大会	sasaki	平成29年11月23日	木	コカ・コーラウエストスポーツパークテニスコート	75	2017sasaki-hai-draw.pdf
+2017	2017-2017kaicho-hai-f	会長杯（秋の部）団体戦	kaicho_f	平成29年4月16日	日	コカ・コーラウエストスポーツパークテニスコート	65	2017kaicho-hai-s-draw.pdf
+2017	2017-2017shicho-hai	第32回鳥取市市長杯テニス大会	shicho	平成29年11月3日	金	コカ・コーラウエストスポーツパークテニスコート	75	2017sicho-hai-draw.pdf
+2017	2017-2017kensen-d	鳥取県テニス選手権ダブルス	kensen_d	平成29年10月29日	日	コカ・コーラウエストスポーツパークテニスコート	73	2017kensen-d-entry.pdf
+2017	2017-2017gus-hai	第22回鳥取ガス杯テニス大会	gas	平成29年10月1日	日	コカ・コーラウエストスポーツパークテニスコート	60	2017tournament-schedule.pdf
+2017	2017-2017gus-hai-gallrey	ギャラリー	gas	平成29年10月1日	日	コカ・コーラウエストスポーツパークテニスコート	60	2017tournament-schedule.pdf
+2017	2017-2017dunrop	第40回ダンロップスリクソントーナメント	dunlop	平成29年8月27日	日	コカ・コーラウエストスポーツパークテニスコート	75	2017dunlop-draw.pdf
+2017	2017-2017summer-mix	サマーミックステニス大会	summer_mix	平成29年8月20日	日	コカ・コーラウエストスポーツパークテニスコート	60	2017tournament-schedule.pdf
+2017	2017-2017ketakacup	気高カップサマーシングルス	ketaka_cup	平成29年7月30日	日	気高コート	75	2017ketakacup-draw.pdf
+2017	2017-2017all-japan-tottori	2017全日本選手権鳥取県予選	alljapan	平成29年7月23日	日	コカ・コーラウエストスポーツパークテニスコート	75	2017all-japan-tottori-draw.pdf
+2017	2017-2017club-taiko-m7w34result	クラブ対抗戦男子７部・女子3部・女子4部	club_kouki	平成29年4月16日	日	コカ・コーラウエストスポーツパークテニスコート	60	2017tournament-schedule.pdf
+2017	2017-2017club-taiko-m8	クラブ対抗戦男子8部	club_kouki	平成29年4月16日	日	コカ・コーラウエストスポーツパークテニスコート	60	2017tournament-schedule.pdf
+2017	2017-2017club-taiko-w5	女子5部	club_kouki	平成29年4月16日	日	コカ・コーラウエストスポーツパークテニスコート	60	2017tournament-schedule.pdf
+2017	2017-2017prince-open	プリンスオープンチーム対抗戦	prince	平成29年5月28日	日	コカ・コーラウエストスポーツパークテニスコート	74	2017prince-open-tottori-yoko.pdf
+2017	2017-2017prince-open-gallrey	ギャラリー	prince	平成29年5月28日	日	コカ・コーラウエストスポーツパークテニスコート	64	2017prince-open-tottori-yoko.pdf
+2017	2017-2017kaicno-hai-s	会長杯テニス大会（春の部）	kaicho_s	平成29年4月16日	日	コカ・コーラウエストスポーツパークテニスコート	75	2017kaicho-hai-s-draw.pdf
+2017	2017-2017club-taiko-4-9	鳥取市テニス協会クラブ対抗戦前期日程	club_zenki	平成29年6月17日	土	コカ・コーラウエストスポーツパークテニスコート	64	2017club-taiko-yoko.pdf
+2017	2017-2017tobu-s	東部地区テニス選手権大会シングルス	tobu_s	平成29年3月26日	日	コカ・コーラウエストスポーツパークテニスコート	63	2017tobu-entry-s1.pdf
+2017	2017-2017tobu-d	ダブルス	tobu_d	平成29年3月26日	日	コカ・コーラウエストスポーツパークテニスコート	63	2017tobu-entry-s1.pdf
+2016	2016-2017osaka-hai	第44回尾坂杯鳥取室内テニス選手権	osaka	平成29年1月9日	月	鳥取県民体育館	60	2016meeting-schedule.pdf
+2016	2016-2016toridai-open-s	2016鳥大オープンシングルス	toridai_s	平成28年12月4日	日		74	2016toridai-open-s-yoko1.pdf
+2016	2016-2016kensen-d	鳥取県テニス選手権ダブルス	kensen_d	平成28年10月23日	日	コカ・コーラウエストスポーツパークテニスコート	75	2016kensen-d-draw.pdf
+2016	2016-2016kaicho-hai-f	鳥取市テニス協会会長杯テニス大会団体戦	kaicho_f	平成28年11月20日	日	コカ・コーラウエストスポーツパークテニスコート	64	2016kaichou-hai-aki- yoko.pdf
+2016	2016-2016sicho-hai-rusult	第31回鳥取市長杯テニス大会	shicho	平成28年11月3日	木	コカ・コーラウエストスポーツパークテニスコート	60	2016meeting-schedule.pdf
+2016	2016-2016sasakihai	2016佐々木杯テニス大会	sasaki	平成28年10月30日	日	コカ・コーラウエストスポーツパークテニスコート	75	2016sasaki-hai-draw.pdf
+2016	2016-2016kensen-s	鳥取県テニス選手権シングルス	kensen_s	平成28年10月2日	日	コカ・コーラウエストスポーツパークテニスコート	75	2016kensen-s-draw.pdf
+2016	2016-2016gas-hai	第21回鳥取ガス杯テニス大会	gas	平成28年9月22日	木	コカ・コーラウエストスポーツパークテニスコート	60	2016meeting-schedule.pdf
+2016	2016-2016gas-hai-gallrey	ギャラリー	gas	平成28年9月22日	木	コカ・コーラウエストスポーツパークテニスコート	60	2016meeting-schedule.pdf
+2016	2016-2016dunlop	第39回ダンロップスリクソントーナメント	dunlop	平成28年9月19日	月	コカ・コーラウエストスポーツパークテニスコート	75	2016dunlop-draw.pdf
+2016	2016-2016summer-mix	サマーミックステニス大会	summer_mix	平成28年7月31日	日	コカ・コーラウエストスポーツパークテニスコート	60	2016meeting-schedule.pdf
+2016	2016-2016all-japan	全日本テニス選手権鳥取県予選会	alljapan	平成28年7月18日	月	コカ・コーラウエストスポーツパークテニスコート	75	2016alljapan-tottori-draw.pdf
+2016	2016-2016toridai-open-d	鳥大オープンダブルス	toridai_d	平成28年7月17日	日		64	2016toridai-open-yoko.pdf
+2016	2016-2016ketaka-cup	気高カップサマーシングルス	ketaka_cup	平成28年7月3日	日	気高コート	74	2016ketaka-cup-yoko.pdf
+2016	2016-2016prince-open	プリンスオープンチーム対抗戦	prince	平成28年6月18日	土	コカ・コーラウエストスポーツパークテニスコート	74	2016princeopen-yoko.pdf
+2016	2016-2016prince-open-gallrey	ギャラリー	prince	平成28年6月18日	土	コカ・コーラウエストスポーツパークテニスコート	72	2016princeopen.pdf
+2016	2016-2016kaicho-hai-s	第45回会長杯テニス大会	kaicho_s	平成28年11月20日	日	コカ・コーラウエストスポーツパークテニスコート	64	2016kaichou-hai-aki- yoko.pdf
+2016	2016-2016tobu-d	東部選手権ダブルス	tobu_d	平成28年4月3日	日	コカ・コーラウエストスポーツパークテニスコート	60	2016meeting-schedule.pdf
+2016	2016-2016tobu-s	東部選手権シングルス	tobu_s	平成28年3月27日	日	コカ・コーラウエストスポーツパークテニスコート	60	2016meeting-schedule.pdf
+2015	2015-2016osaka-hai	第43回尾坂杯鳥取室内テニス選手権	osaka	平成28年1月10日	日	鳥取市民体育館	75	2016osaka-hai-draw.pdf
+2015	2015-2015toridai-open-s	鳥大オープンシングルス	toridai_s	平成27年11月29日	日		72	2015toridai-open-s1.pdf
+2015	2015-2015sicho-hai	第30回市長杯テニス大会	shicho	平成27年11月23日	月	コカ・コーラウエストスポーツパークテニスコート	74	2015sicho-hai-yoko.pdf
+2015	2015-2015kaicho-hai-f	会長杯(秋の部)団体戦	kaicho_f	平成27年11月22日	日	コカ・コーラウエストスポーツパークテニスコート	74	2015kaicho-hai-f-yoko.pdf
+2015	2015-2015sasakihai	佐々木杯テニス大会	sasaki	平成27年10月12日	月	コカ・コーラウエストスポーツパークテニスコート	74	2015sasakihai-yoko.pdf
+2015	2015-2015gas-hai	第20回鳥取ガス杯	gas	平成27年9月27日	日	コカ・コーラウエストスポーツパークテニスコート	60	2015taikai-nittei.pdf
+2015	2015-2015gas-hai-gallrey	ギャラリー	gas	平成27年9月27日	日	コカ・コーラウエストスポーツパークテニスコート	60	2015taikai-nittei.pdf
+2015	2015-2015kensen-s	鳥取県テニス選手権シングルス	kensen_s	平成27年9月20日	日	コカ・コーラウエストスポーツパークテニスコート	75	2015kensen-s-draw.pdf
+2015	2015-2015kensen-s-gallrey	ギャラリー	kensen_s	平成27年9月20日	日	コカ・コーラウエストスポーツパークテニスコート	65	2015kensen-s-draw.pdf
+2015	2015-2015kensen-d	鳥取県テニス選手権ダブルス	kensen_d	平成27年11月3日	火	コカ・コーラウエストスポーツパークテニスコート	74	2015kensen-d-yoko.pdf
+2015	2015-2015dunlop	第38回ダンロップスリクソントーナメント	dunlop	平成27年8月23日	日	コカ・コーラウエストスポーツパークテニスコート	60	2015taikai-nittei.pdf
+2015	2015-2015ketaka-open	第40回気高オープンテニストーナメント	ketaka_open	平成27年8月2日	日	気高コート	60	2015taikai-nittei.pdf
+2015	2015-2015toridai-open-d	2015鳥大オープンダブルス	toridai_d	平成27年11月29日	日		62	2015toridai-open-s1.pdf
+2015	2015-2015all-japan-tennis-tottori	全日本テニス選手権鳥取県予選	alljapan	平成27年7月19日	日	コカ・コーラウエストスポーツパークテニスコート	74	2015all-japan-tennis-tottori-yoko.pdf
+2015	2015-2015summer-mix	サマーミックステニス大会	summer_mix	平成27年7月18日	土	コカ・コーラウエストスポーツパークテニスコート	60	2015taikai-nittei.pdf
+2015	2015-2015prince-open	2015プリンスオープン決勝トーナメント	prince	平成27年5月23日	土	コカ・コーラウエストスポーツパークテニスコート	72	2015prince-open-tottori.pdf
+2015	2015-2015prince-open-gallrey	ギャラリー	prince	平成27年5月23日	土	コカ・コーラウエストスポーツパークテニスコート	62	2015prince-open-tottori.pdf
+2015	2015-43th-kaicho-hai	第43回会長杯(春の部)テニス大会	kaicho_s	平成27年4月12日	日	コカ・コーラウエストスポーツパークテニスコート	72	43th-kaicho-hai-gallrey.html
+2015	2015-43th-kaicho-hai-gallrey	ギャラリー	kaicho	平成27年4月12日			100	既存
+2015	2015-h27-tobu-s	東部地区テニス選手権シングルス	tobu_s	平成27年3月29日	日	コカ・コーラウエストスポーツパークテニスコート	65	h27-tobu-draw.pdf
+2015	2015-h27-tobu-d	ダブルス	tobu_d	平成27年3月29日	日	コカ・コーラウエストスポーツパークテニスコート	75	h27-tobu-draw.pdf
+2014	2014-h27-osakahai	第42回尾坂杯鳥取室内テニス選手権	osaka	平成27年1月10日	土	鳥取県民体育館	60	2014meeting-schedule.jpg
+2014	2014-2014-toridaiopen-s	平成26年鳥大オープンシングルス	toridai_s					
+2014	2014-h26kaicho-hai-f	会長杯(秋の部)団体戦	kaicho_f	平成26年11月24日	月	コカ・コーラウエストスポーツパークテニスコート	72	h26kaicho-hai-f-gallrey.html
+2014	2014-h26kaicho-hai-f-gallrey	ギャラリ	kaicho_f	平成26年11月24日	月	コカ・コーラウエストスポーツパークテニスコート	72	h26kaicho-hai-f-gallrey.html
+2014	2014-2014shichohai	第29回鳥取市長杯テニス大会	shicho	平成26年11月23日	日	コカ・コーラウエストスポーツパークテニスコート	60	2014meeting-schedule.jpg
+2014	2014-h26kensen-d	平成26年鳥取県テニス選手権ダブルス	kensen_d	平成26年11月16日	日	コカ・コーラウエストスポーツパークテニスコート	60	2014meeting-schedule.jpg
+2014	2014-2014kensen-s	シングルス	kensen_s	平成26年10月13日	月	コカ・コーラウエストスポーツパークテニスコート	60	2014meeting-schedule.jpg
+2014	2014-h26ketaka-op	第39回気高オープンテニス	ketaka_open	平成26年8月3日	日	コカ・コーラウエストスポーツパークテニスコート	60	2014meeting-schedule.jpg
+2014	2014-2014summer-mix	サマーミックステニス大会	summer_mix	平成26年7月19日	土	コカ・コーラウエストスポーツパークテニスコート	60	2014meeting-schedule.jpg
+2014	2014-2014all-japan-tottori-q	全日本テニス選手権鳥取県予選	alljapan	平成26年7月21日	月	コカ・コーラウエストスポーツパークテニスコート	72	2014all-japan-tottori-q-galley.html
+2014	2014-2014all-japan-tottori-q-galley	ギャラリー	alljapan	平成26年7月21日	月	コカ・コーラウエストスポーツパークテニスコート	72	2014all-japan-tottori-q-galley.html
+2014	2014-h26-clubtaiko-result-m7-8	クラブ対抗戦男子7部・8部	club_kouki	平成26年6月29日	日	コカ・コーラウエストスポーツパークテニスコート	60	2014meeting-schedule.jpg
+2014	2014-h26-clubtaiko-result-w3-5	女子3部〜5部	club_kouki	平成26年6月29日	日	コカ・コーラウエストスポーツパークテニスコート	60	2014meeting-schedule.jpg
+2014	2014-h26-clubtaiko-result-w1-2	クラブ対抗戦女子1部・2部	club_zenki	平成26年6月22日	日	コカ・コーラウエストスポーツパークテニスコート	60	2014meeting-schedule.jpg
+2014	2014-h26-clubtaiko-result-m1-6	男子1部〜6部	club_zenki	平成26年6月22日	日	コカ・コーラウエストスポーツパークテニスコート	60	2014meeting-schedule.jpg
+2014	2014-2014toridai-open-d	鳥大オープンダブルス	toridai_d					
+2014	2014-2014sasaki-hai	佐々木杯テニス大会	sasaki	平成26年4月27日	日	コカ・コーラウエストスポーツパークテニスコート	60	2014meeting-schedule.jpg
+2014	2014-h26-kaicho-hai-s	2014会長杯（春）	kaicho_s	平成26年4月13日			100	既存
+2014	2014-h26tobu-result-s	東部選手権シングルス	tobu_s	平成26年4月6日	日	コカ・コーラウエストスポーツパークテニスコート	60	2014meeting-schedule.jpg
+2014	2014-h26tobu-result-d	ダブルス	tobu_d	平成26年3月30日	日	コカ・コーラウエストスポーツパークテニスコート	60	2014meeting-schedule.jpg
+2013	2013-h26-osakahai-result-m	尾坂杯鳥取室内男子	osaka					
+2013	2013-h26-osakahai-result-w	女子	osaka					
+2013	2013-h25sasaki-hai-q	佐々木杯予選リーグ	sasaki					
+2013	2013-h25sasaki-hai-f	順位別トーナメント	sasaki					
+2013	2013-h25shicho-hai	第28回市長杯テニス大会	shicho					
+2013	2013-h25toridai-open-s	鳥大オープンシングルス	toridai_s					
+2013	2013-h25kensen-d	鳥取県テニス選手権ダブルス	kensen_d					
+2013	2013-h25kensen-s	鳥取県テニス選手権シングルス	kensen_s					
+2013	2013-h25kaichohai-team-result-q	会長杯団体戦	kaicho					
+2013	2013-2013dunlop	第36回ダンロップテニストーナメント	dunlop					
+2013	2013-38th-ketakaopen	第38回気高オープンテニストーナメント	ketaka_open	平成25年8月4日	日	気高コート	46	38th-ketakaopen-result.pdf
+2013	2013-2013summer-mix	2013サマーミックステニス	summer_mix					
+2013	2013-2013alljapan-tottori	2013全日本テニス選手権鳥取県予選	alljapan					
+2013	2013-2013kokutaiyosen-reslt	平成25年度国体東部地区予選	kokutai					
+2013	2013-h25kaichouhai-s	第39回会長杯（春）決勝T	kaicho_s	平成25年9月23日	月	コカ・コーラウエストスポーツパークテニスコート	62	h25kaichohai-team-galley.html
+2013	2013-2013toubu-s	第42回東部選手権シングルス	tobu_s	平成25年３月31日		コカ・コーラウェストテニスパーク	100	既存
+2013	2013-2013toubu-d	第42回東部選手権ダブルス	tobu_d	平成25年３月24日		コカ・コーラウェストテニスパーク	100	既存
+2013	2013-2013prince	プリンスカップ鳥取大会	prince					
+2012	2012-40th-osakahai-result-s	第40回尾坂杯鳥取室内シングルス	osaka_s	平成25年1月		県民体育館	100	既存
+2012	2012-40th-osakahai-result-d	第40回尾坂杯鳥取室内ダブルス	osaka_d	平成25年1月6日		県民体育館	100	既存
+2012	2012-40th-osakahai-result-d-2	第40回尾坂杯鳥取室内ダブルス（PDF）	osaka_d	平成25年1月6日	日	鳥取県民体育館	76	40th-osakahai-result-d.html
+2012	2012-h24-aki-toridaiopen	2012鳥大オープンシングルス	toridai_s					
+2012	2012-h24-f-kaichohai	平成24年会長会（秋）団体戦	kaicho_f	平成24年11月23日	金	布勢コート	60	h24taikai-nittei.pdf
+2012	2012-h24gashai	第17回鳥取ガス杯	gas	平成24年11月18日	日	コカ・コーラウエストスポーツパークテニスコート	200	h24taikai-nittei.pdf（結果ページの11月28日は曜日が合わない）
+2012	2012-2012shichohai	第27回鳥取市長杯テニス大会	shicho	平成24年11月4日			100	既存
+2012	2012-h24sasakihai	佐々木杯テニス大会	sasaki	平成24年11月3日	土	コカ・コーラウエストスポーツパークテニスコート	72	h24sasakihai-gallery.html
+2012	2012-h24-summermix	サマーミックステニス大会	summer_mix	平成24年7月28日	土	布勢コート	60	h24taikai-nittei.pdf
+2012	2012-h24sasakihai-gallery	佐々木杯テニス大会（写真）	sasaki	平成24年11月3日	土	コカ・コーラウエストスポーツパークテニスコート	72	h24sasakihai-gallery.html
+2012	2012-h24dunlop	第35回ダンロップテニストーナメント	dunlop	平成24年9月2日	日	布勢コート	60	h24taikai-nittei.pdf
+2012	2012-37th-ketaka	第37回気高オープンテニストーナメント	ketaka_open	平成24年7月22日	日	気高コート	46	37th-ketaka-result.pdf
+2012	2012-2012alljapantennis-tottori	全日本テニス鳥取県予選	alljapan	平成24年7月16日	月	コカ・コーラウエストスポーツパークテニスコート	72	2012alljapantennis-tottori-gallery.html
+2012	2012-2012alljapantennis-tottori-gallery	決勝戦ギャラリー	alljapan	平成24年７月16日		コカ・コーラウェストスポーツパーク・テニスコート	100	既存
+2012	2012-h24toridai-open	鳥大オープンダブルス	toridai_d	平成24年6月10日	日		46	h24toridai-open-result.pdf
+2012	2012-12kokutaiyosen	国体東部地区予選	kokutai	平成24年4月15日	日	布勢コート	60	h24taikai-nittei.pdf
+2012	2012-h24toubu-result-ms	第41回東部地区テニス選手権大会シングルス	tobu_s	平成24年3月25日	日	布勢コート	60	h24taikai-nittei.pdf
+2012	2012-h24toubu-result-d	ダブルス	tobu_d	平成24年4月1日	日	布勢コート	60	h24taikai-nittei.pdf
+2012	2012-12tottoriresult	プリンスカップ鳥取大会	prince					
+2011	2011-2012tottorisitunai-1-8	鳥取室内女子ダブルス	osaka_d					
+2011	2011-2012tottorisitunai-1-9	男子ダブルス	osaka_d					
+2011	2011-2012tottorisitunai-mas-mcs-m45s-wabs	男女シングルス	osaka_s					
+2011	2011-2011toridaiopen-w	鳥大オープンシングルス	toridai_s					
+2011	2011-2011-kaichohai-f	会長杯（秋）	kaicho_f	平成23年11月23日			100	既存
+2011	2011-2011-sichohai	第26回鳥取市長杯テニス大会	shicho	平成23年11月20日			100	既存
+2011	2011-11th-gashai-q	第16回鳥取ガス杯予選	gas	平成23年10月23日	日	コカ・コーラウエストスポーツパークテニスコート	10	2011-gashai-final-result.html（同じ大会の別ページから）
+2011	2011-2011-gashai-final	決勝	gas	平成23年10月23日	日	コカ・コーラウエストスポーツパークテニスコート	76	2011-gashai-final-result.html
+2011	2011-11dunlop	第34回ダンロップテニストーナメント	dunlop	平成23年9月23日	金	コカ・コーラウエストスポーツパークテニスコート	200	11dunlop-result.pdf（画像のため目視）
+2011	2011-11ketaka	第36回気高オープンテニストーナメント	ketaka_open	平成23年7月31日	日	気高コート	46	11ketaka-result.pdf
+2011	2011-2011summermix	サマーミックス	summer_mix	平成23年7月30日	土	コカ・コーラウエストスポーツパークテニスコート	72	2011summermix-gallery.html
+2011	2011-11zennihon	全日本テニス選手権大会鳥取県予選	alljapan	平成23年7月3日	日	コカ・コーラウエストスポーツパークテニスコート	200	11zennihon-result.pdf（画像のため目視）
+2011	2011-2011toridaiopen	鳥大オープンダブルス	toridai_d					
+2011	2011-11kokutaiyosen	国体東部地区予選	kokutai					
+2011	2011-2011kaichohai-md	会長杯（春）男子	kaicho_s					
+2011	2011-2011kaichohai-wd	女子	kaicho					
+2011	2011-2011tobu-result-s	第40回東部地区テニス選手権大会シングルス	tobu_s					
+2011	2011-2011tobu-result-w	ダブルス	tobu_d					
+2010	2010-2010prince-result1	2010プリンスカップ鳥取大会	prince					
+2010	2010-15thgashai-q	鳥取ガス杯予選	gas	平成22年9月23日	木	コカ・コーラウエストスポーツパークテニスコート	76	15thgashai-q-result.html
+2010	2010-15thgashai-f	決勝	gas	平成22年9月23日	木	コカ・コーラウエストスポーツパークテニスコート	76	15thgashai-f-result.html
+2010	2010-25th-sichohai	第25回鳥取市長杯テニス大会	shicho					
+2010	2010-h22sasakihai	佐々木杯テニス大会	sasaki					
+2010	2010-h22summermix	サマーミックス	summer_mix					
+2010	2010-2010toridaiopen	2010鳥大オープンシングルス	toridai_s					
+2009	2009-h21-kenkotennis	健康テニス	kenko_s	平成21年5月10日	日	鳥取市営千代テニス場	60	09taikai-nittei.pdf
+2009	2009-h21-ketaka	気高オープン	ketaka_open	平成21年8月2日	日	気高コート	60	09taikai-nittei.pdf
+2009	2009-h21-sasakihai	佐々木杯	sasaki	平成21年11月3日	火	布勢コート	60	09taikai-nittei.pdf
+2009	2009-h21-sichouhai	市長杯	shicho	平成21年11月22日	日	布勢コート	60	09taikai-nittei.pdf
+2009	2009-h21-to-bu	東部選手権	tobu	平成21年7月19日	日	布勢コート	60	09taikai-nittei.pdf
+2008	2008-08summer-mix	サマーミックス	summer_mix					
+2008	2008-h20-kaichouhai-d	会長杯	kaicho					
+2008	2008-h20-prince	プリンスカップ	prince					
+2008	2008-h20-tobu	東部選手権	tobu	平成20年5月5日	月	鳥取市営千代テニス場	46	h20-tobu-result.pdf
+2008	2008-h20-zennihon	全日本選手権鳥取県予選	alljapan	平成20年7月20日	日	コカ・コーラウエストスポーツパークテニスコート	46	h20-zennihon-result.pdf
+2007	2007-h19-gashai	ガス杯	gas	平成19年9月30日	日	布勢コート	46	h19-gashai-result.pdf
+2007	2007-h19-kaichouhai	会長杯	kaicho					
+2007	2007-h19-kensen	鳥取県選手権	kensen	平成19年10月8日	月	布勢コート	46	h19-kensen-result.pdf
+2007	2007-h19-sasakihai	佐々木杯	sasaki					
+2007	2007-h19-sichohai	市長杯	shicho	平成19年11月4日	日	布勢コート	46	h19-sichohai-result.pdf
+2007	2007-h19-tobu	東部選手権	tobu	平成19年3月25日	日	布勢コート	46	h19tobu-result1.pdf
+2007	2007-h19-toridai-d	鳥大オープンダブルス	toridai_d	平成19年6月30日	土		46	h19-toridai-d--result.pdf
+2007	2007-h19-zennihon	全日本テニス選手権鳥取県予選	alljapan	平成19年7月15日	日	布勢コート	46	h19-zennihon-result.pdf
+2006	2006-h18-dunlop	ダンロップテニストーナメント	dunlop	平成18年8月27日	日	布勢コート	46	h18-dunlop-result.pdf
+2006	2006-h18-kaichohai	会長杯	kaicho					
+2006	2006-h18-kensen	鳥取県選手権	kensen	平成18年9月18日	月	布勢コート	46	h18kensen-result.pdf
+2006	2006-h18-ketaka	気高オープン	ketaka_open	平成18年7月30日	日	気高コート	46	h18-ketaka-result.pdf
+2006	2006-h18-kokutai	国体東部地区予選	kokutai	平成18年5月27日	土	布勢コート	46	h18-kokutai-result.pdf
+2006	2006-h18-tobu	東部選手権	tobu	平成18年3月26日	日	布勢コート	46	h18-tobu-result.pdf
+2006	2006-h18-zennihon	全日本テニス選手権鳥取県予選	alljapan	平成18年7月2日	日	布勢コート	46	h18-zennihon-result.pdf
+2005	2005-h17-dunlop	ダンロップテニストーナメント	dunlop	平成17年9月4日	日	布勢コート	46	h17-dunlop-result.pdf
+2005	2005-h17-kaichohai	会長杯	kaicho					
+2005	2005-h17-kensen	鳥取県選手権	kensen	平成17年9月23日	金	布勢コート	46	h17-kensen-result.pdf
+2005	2005-h17-ketaka	気高オープン	ketaka_open	平成17年7月31日	日	気高コート	46	h17-ketaka-result.pdf
+2005	2005-h17-sasakihai	佐々木杯	sasaki					
+2005	2005-h17-sichohai	市長杯	shicho	平成17年11月3日	木	布勢コート	46	h17-sichohai-result.pdf
+2005	2005-h17-summer	サマーナイトミックス	summer_mix	平成17年7月30日	土	布勢コート	46	h17-summer-result.pdf
+2005	2005-h17-zennihon	全日本テニス選手権鳥取県予選	alljapan	平成17年7月17日	日	布勢コート	46	h17-zennihon-result.pdf
+2004	2004-h16-dunlop	ダンロップテニストーナメント	dunlop	平成16年8月22日	日	布勢コート	46	h16-dunlop-result.pdf
+2004	2004-h16-gashai	鳥取ガス杯	gas	平成16年11月7日	日	布勢コート	46	h16-gashai-result.pdf
+2004	2004-h16-kensen	鳥取県選手権	kensen	平成16年9月26日	日	布勢コート	46	h16-kensen-result.pdf
+2004	2004-h16-sasakihai	佐々木杯	sasaki	平成16年9月23日	木	布勢コート	76	h16-sasakihai-result.pdf
+2004	2004-h16-sichohai	市長杯	shicho	平成16年11月21日	日	布勢コート	46	h16-sichohai-result.pdf
+2004	2004-h16-situnai	鳥取室内選手権	osaka_s					
+2004	2004-h16-summer	サマーマイトミックス	summer_mix	平成16年8月7日	土	布勢コート	46	h16-summer-result.pdf
