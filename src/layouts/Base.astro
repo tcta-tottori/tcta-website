@@ -3,6 +3,7 @@ import SiteHeader from '../components/SiteHeader.astro';
 import MobileNav from '../components/MobileNav.astro';
 import Cta from '../components/Cta.astro';
 import SiteFooter from '../components/SiteFooter.astro';
+import DecoSquares from '../components/DecoSquares.astro';
 import SiteSplash from '../components/SiteSplash.astro';
 import ImportantNotice from '../components/ImportantNotice.astro';
 /* CSS と JS の URL に中身のハッシュを付ける。
@@ -110,6 +111,9 @@ const {
 </head>
 <body>
 {splash && <SiteSplash />}
+
+{/* サイト全体の固定背景：白地に、ごく薄い四角を散らしてゆっくり漂わせる（フッターと同じ作りの白地版。style.css の .site-bg） */}
+<DecoSquares class="site-bg" tone="light" />
 
 <a class="skip-link" href="#main">本文へスキップ</a>
 

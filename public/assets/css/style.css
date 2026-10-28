@@ -988,7 +988,7 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   /* ヘッダーは追従しないので、その高さを引いた残り＝ちょうど1画面ぶん。
      ここで次のセクションが覗かないようにしている。 */
   min-height: calc(100svh - var(--header-h) - 1px);
-  background: var(--white);
+  background: transparent;  /* 白地の固定背景（.site-bg）を透かす */
   overflow: hidden;
 }
 @supports not (height: 100svh) { .hero { min-height: calc(100vh - var(--header-h) - 1px); } }
@@ -2641,6 +2641,13 @@ body.jsrv .rv.on .ink-sweep {
 }
 @media (prefers-reduced-motion: reduce) {
   .footer-dot { animation: none; }
+}
+/* サイト全体の固定背景（Base.astro。白地に薄い四角）。画面に固定して本文の裏に敷く。
+   背景を塗っていない区画（白い区画）から透けて見える。灰色の帯や写真の区画では隠れる。
+   スクロール中の上下（--sy）は main.js の initSiteBg が、ページ全体の進み具合から書き込む */
+.site-bg {
+  position: fixed;
+  z-index: -1;
 }
 .site-footer__grid {
   position: relative;

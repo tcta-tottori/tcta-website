@@ -984,6 +984,31 @@
     place();
   }
 
+  /* ---------- サイト全体の固定背景（白地の四角） ----------
+     フッターの四角と同じく、漂う動きは CSS の transform、スクロールの上下はこちらが translate に書き込む。
+     ページの先頭で +、最後で − になるようにして、本文より遅れて上へ流れるように見せる。 */
+  function initSiteBg() {
+    var bg = document.querySelector('.site-bg');
+    if (!bg || reduceMotion) return;
+
+    var RANGE = 240; // 先頭から最後までで動かす量（px）。四角ごとの --depth（0.2〜1.7）を掛ける
+    var ticking = false;
+    var place = function () {
+      ticking = false;
+      var max = document.documentElement.scrollHeight - window.innerHeight;
+      var done = max > 0 ? Math.min(Math.max(window.scrollY / max, 0), 1) : 0;
+      bg.style.setProperty('--sy', ((.5 - done) * RANGE).toFixed(1) + 'px');
+    };
+    var onScroll = function () {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(place);
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll);
+    place();
+  }
+
   /* ---------- TODAY の日付（見ている時点の日本時間） ----------
      ビルド時の日付を書き出してあるので、JS が動く環境だけ今日の日付に差し替える。 */
   function initToday() {
@@ -1359,6 +1384,7 @@
     initCourtMap();
     initCalendar();
     initFooterDeco();
+    initSiteBg();
     initToday();
     initCarousel();
     initFilters();
