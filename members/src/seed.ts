@@ -28,6 +28,7 @@ export async function seedDemo(env: Env): Promise<{ fresh: boolean; added: numbe
     { id: 'tottori-city', code: 'T', name: '鳥取市テニス協会', fee: 3000, order: 2 },
     { id: 'kurayoshi-city', code: 'K', name: '倉吉市テニス協会', fee: 2000, order: 3 },
     { id: 'yonago-city', code: 'Y', name: '米子市テニス協会', fee: 2500, order: 4 },
+    { id: 'sakaiminato-city', code: 'S', name: '境港市テニス協会', fee: 2000, order: 5 },
   ];
   for (const a of assocs) {
     await run(env.DB, `INSERT OR IGNORE INTO associations (id, code, name, annual_fee, fiscal_year_start_month, reg_note, bank_info, paypay_info, stripe_account, created_at, sort_order) VALUES (?, ?, ?, ?, 4, ?, ?, ?, ?, ?, ?)`,
@@ -35,7 +36,7 @@ export async function seedDemo(env: Env): Promise<{ fresh: boolean; added: numbe
   }
   const clubs = [
     ['club-tottori-lc', '鳥取ローンテニスクラブ', '鳥取市'], ['club-koyama', '湖山テニスクラブ', '鳥取市'], ['club-tottori-univ', '鳥取大学テニス部', '鳥取市'],
-    ['club-kurayoshi', '倉吉テニスクラブ', '倉吉市'], ['club-yonago', '米子ローンテニスクラブ', '米子市'],
+    ['club-kurayoshi', '倉吉テニスクラブ', '倉吉市'], ['club-yonago', '米子ローンテニスクラブ', '米子市'], ['club-sakaiminato', '境港テニスクラブ', '境港市'],
   ];
   for (const [id, name, area] of clubs) await run(env.DB, `INSERT OR IGNORE INTO clubs (id, name, area, created_at) VALUES (?, ?, ?, ?)`, id, name, area, now);
 
@@ -47,6 +48,7 @@ export async function seedDemo(env: Env): Promise<{ fresh: boolean; added: numbe
     { fn: '田中', gn: '美咲', fk: 'たなか', gk: 'みさき', sex: 'female', birth: 2004, email: 'tanaka@example.com', phone: '090-0000-0004', postal: '680-0004', address: '鳥取市湖山町南4-4', club: 'club-tottori-univ', home: 'tottori-city', reg: [], pendingReg: 'tottori-city' },
     { fn: '高橋', gn: '健', fk: 'たかはし', gk: 'けん', sex: 'male', birth: 1995, email: 'takahashi@example.com', phone: '090-0000-0005', postal: '682-0001', address: '倉吉市駄経寺町5-5', club: 'club-kurayoshi', home: 'kurayoshi-city', reg: ['kurayoshi-city', 'tottori-pref'] },
     { fn: '伊藤', gn: '由美', fk: 'いとう', gk: 'ゆみ', sex: 'female', birth: 1988, email: 'ito@example.com', phone: '090-0000-0006', postal: '683-0001', address: '米子市加茂町6-6', club: 'club-yonago', home: 'yonago-city', reg: ['yonago-city'] },
+    { fn: '松本', gn: '浩二', fk: 'まつもと', gk: 'こうじ', sex: 'male', birth: 1980, email: 'matsumoto@example.com', phone: '090-0000-0010', postal: '684-0004', address: '境港市大正町10-10', club: 'club-sakaiminato', home: 'sakaiminato-city', reg: ['sakaiminato-city', 'tottori-pref'] },
     { fn: '渡辺', gn: '翔', fk: 'わたなべ', gk: 'しょう', sex: 'male', birth: 1999, email: null, phone: null, postal: null, address: null, club: 'club-koyama', home: 'tottori-city', reg: [], status: 'provisional' as const },
     { fn: '山田', gn: '太郎', fk: 'やまだ', gk: 'たろう', sex: null, birth: null, email: null, phone: null, postal: null, address: null, club: null, home: 'tottori-city', reg: [], status: 'provisional' as const, dupOf: 0 },
   ];
@@ -100,6 +102,7 @@ export async function seedDemo(env: Env): Promise<{ fresh: boolean; added: numbe
     { id: 'T-DEMO-OPEN2', assoc: 'tottori-city', name: `鳥取市オープンシングルス（市 または 県登録）`, held: addDays(today, 40), venue: '鳥取市営コート', start: addDays(today, -5), end: addDays(today, 18), status: 'open', methods: ['stripe', 'bank', 'cash'], policy: 'hold', rule: [['tottori-city'], ['tottori-pref']], note: '鳥取市登録か県登録のどちらかがあれば出場できます' },
     { id: 'T-DEMO-BOTH', assoc: 'tottori-city', name: `県選手権 鳥取市予選（県＋市登録）`, held: addDays(today, 35), venue: '鳥取市営コート', start: addDays(today, -5), end: addDays(today, 16), status: 'open', methods: ['stripe', 'bank'], policy: 'hold', rule: [['tottori-pref', 'tottori-city']], note: '県登録と鳥取市登録の両方が必要です' },
     { id: 'T-DEMO-YONAGO', assoc: 'yonago-city', name: `米子市ダブルス選手権`, held: addDays(today, 50), venue: '米子市営コート', start: addDays(today, -2), end: addDays(today, 25), status: 'open', methods: ['stripe', 'bank'], policy: 'hold', rule: [['yonago-city']], note: '米子市登録が必要です' },
+    { id: 'T-DEMO-SAKAI', assoc: 'sakaiminato-city', name: `境港市民テニス大会`, held: addDays(today, 55), venue: '境港市営コート', start: addDays(today, -1), end: addDays(today, 28), status: 'open', methods: ['bank', 'cash'], policy: 'hold', rule: [['sakaiminato-city']], note: '境港市登録が必要です' },
     { id: 'T-DEMO-ANYONE', assoc: 'tottori-city', name: `鳥取市ふれあいテニス大会（どなたでも）`, held: addDays(today, 28), venue: '鳥取市営コート', start: addDays(today, -7), end: addDays(today, 12), status: 'open', methods: ['stripe', 'bank', 'cash'], policy: 'hold', rule: [], note: '年度登録のない方も参加できます', partner: 'none' },
     { id: 'T-DEMO-CLOSED', assoc: 'tottori-city', name: `鳥取市春季シングルス大会（締切済み）`, held: addDays(today, -60), venue: '鳥取市営コート', start: addDays(today, -120), end: addDays(today, -80), status: 'closed', methods: ['bank', 'cash'], policy: 'hold', rule: [['tottori-city']], note: null },
   ];
@@ -121,6 +124,7 @@ export async function seedDemo(env: Env): Promise<{ fresh: boolean; added: numbe
     ['sysadmin@example.com', '広報局長（システム管理者）', null, 'sysadmin', '[]'],
     ['tottori-admin@example.com', '鳥取市 事務局', 'tottori-city', 'assoc_admin', '[]'],
     ['pref-admin@example.com', '県協会 事務局', 'tottori-pref', 'assoc_admin', '[]'],
+    ['sakaiminato-admin@example.com', '境港市 事務局', 'sakaiminato-city', 'assoc_admin', '[]'],
     ['unei@example.com', '大会運営（秋季ダブルス担当）', 'tottori-city', 'tournament', JSON.stringify(['T-DEMO-OPEN'])],
     ['viewer@example.com', '鳥取市 閲覧のみ', 'tottori-city', 'viewer', '[]'],
     ['shop@example.com', 'テニスショップ', 'tottori-city', 'shop', '[]'],

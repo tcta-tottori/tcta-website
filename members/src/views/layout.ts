@@ -243,7 +243,7 @@ function cta(m: Member | null) {
           ? html`<p class="cta__text">年度登録が承認されていれば、受付中の大会にそのままエントリーできます。ペアは会員番号か氏名で選ぶだけ。参加費の入金が確認でき次第、エントリーは確定します。</p>
                  <a class="btn btn--primary" href="/tournaments">受付中の大会を見る <span class="aw">→</span></a>`
           : html`<p class="cta__text">メールアドレスだけで登録できます。パスワードはいりません。</p>
-                 <p class="cta__text">氏名・ふりがな・所属・連絡先を 1 回入力すれば、県協会・鳥取市・倉吉市・米子市のどの大会にもログインしてエントリーできます。</p>
+                 <p class="cta__text">氏名・ふりがな・所属・連絡先を 1 回入力すれば、県協会・鳥取市・倉吉市・米子市・境港市のどの大会にもログインしてエントリーできます。</p>
                  <p class="cta__close">登録は一度だけ。あとは大会を選ぶだけです。</p>
                  <a class="btn btn--primary" href="/login">メールアドレスで登録する <span class="aw">→</span></a>`}
       </div>

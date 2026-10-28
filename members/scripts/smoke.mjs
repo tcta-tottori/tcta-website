@@ -110,7 +110,7 @@ try {
   r = await member.post('/signup', { ...sig, birth_y: '1990', birth_m: '4', postal: '680-00011' });
   check(r.status === 302 && r.location === '/signup' && decodeURIComponent(r.headers.get('set-cookie') ?? '').includes('ハイフンなし'), '郵便番号が 7 桁でなければ登録できない');
   r = await member.get('/signup');
-  check(r.text.indexOf('鳥取県テニス協会') < r.text.indexOf('鳥取市テニス協会') && r.text.indexOf('鳥取市テニス協会') < r.text.indexOf('倉吉市テニス協会') && r.text.indexOf('倉吉市テニス協会') < r.text.indexOf('米子市テニス協会'), '主な登録先は 県 → 鳥取市 → 倉吉市 → 米子市 の順');
+  check(r.text.indexOf('鳥取県テニス協会') < r.text.indexOf('鳥取市テニス協会') && r.text.indexOf('鳥取市テニス協会') < r.text.indexOf('倉吉市テニス協会') && r.text.indexOf('倉吉市テニス協会') < r.text.indexOf('米子市テニス協会') && r.text.indexOf('米子市テニス協会') < r.text.indexOf('境港市テニス協会'), '主な登録先は 県 → 鳥取市 → 倉吉市 → 米子市 → 境港市 の順');
   check(r.text.includes('ハイフンなし') && !r.text.includes('list="clubs-list" data-club-other'), '郵便番号にハイフンなしの注意書き、クラブ名の手入力欄に候補の▼が無い');
   r = await member.post('/signup', { family_name: '煙', given_name: '試験', family_kana: 'ケムリ', given_kana: 'ｼｹﾝ', sex: 'male', birth_era: 'heisei', birth_y: '2', birth_m: '4', club_sel: '__other__', club_other: '煙テニスクラブ', home: 'tottori-city', phone: '090-1234-5678', postal: '680-0001', address: '鳥取市テスト1-1', consent: 'on' });
   check(r.status === 302 && r.location === '/me', '会員登録 → マイページへ');
@@ -216,6 +216,8 @@ try {
   check(r.text.includes('あなたは条件を満たしています'), '市 または 県 の大会は市登録だけで出られる');
   r = await member.get('/tournaments/T-DEMO-YONAGO');
   check(r.text.includes('米子市テニス協会') && !r.text.includes('あなたは条件を満たしています'), '米子市登録が必要な大会には出られない');
+  r = await member.get('/tournaments/T-DEMO-SAKAI');
+  check(r.text.includes('境港市テニス協会') && !r.text.includes('あなたは条件を満たしています'), '境港市登録が必要な大会には出られない');
   r = await member.get('/tournaments/T-DEMO-ANYONE');
   check(r.text.includes('どなたでも参加できる'), '登録不要の大会は誰でも参加できる');
   r = await member.post('/tournaments/T-DEMO-ANYONE/entry', { event: 'MS', class: '', partner: '', method: 'bank' });
