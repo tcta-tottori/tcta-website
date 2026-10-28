@@ -5,8 +5,9 @@
    ========================================================================== */
 
 /* ---- ポータルのロゴ画像（public/img/logo.png。黒地では logo-white.png）---- */
-.brand-logo { display: block; height: 40px; width: auto; }
-@media (min-width: 1024px) { .brand-logo { height: 52px; } }
+/* 本体の .site-header__logo img（28/36px）より優先させる */
+.site-header__logo .brand-logo { display: block; height: 44px; width: auto; }
+@media (min-width: 1024px) { .site-header__logo .brand-logo { height: 60px; } }
 .site-footer .brand-logo { height: auto; width: 220px; max-width: 100%; }
 @media (min-width: 1024px) { .site-footer .brand-logo { width: 240px; } }
 
