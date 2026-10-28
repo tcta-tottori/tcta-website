@@ -288,6 +288,12 @@ form .secnote { margin-top: 24px; }
 .portal-body .zip-search input[type=search]:focus { outline: none; border-color: var(--ink); }
 .zip-search__msg { margin: 8px 0 0 !important; font-size: 12px !important; }
 
+.birth__age { margin: 8px 0 0 !important; font: 400 14px/1.6 var(--fjp) !important; color: var(--gray-800) !important; }
+.birth__age:empty { display: none; }
+.birth__age b { font: 700 18px/1 var(--flt), var(--fjp); color: var(--red); margin-left: 4px; }
+.portal-body .age { display: inline-block; margin-left: 4px; padding: 1px 6px; border: 1px solid var(--gray-300); border-radius: 3px; font: 700 11px/1.5 var(--fjp); color: var(--gray-800); white-space: nowrap; }
+.portal-body td.num { white-space: nowrap; }
+
 /* 手入力のクラブ名など、テキスト欄に候補リストの▼を出さない */
 .portal-body input::-webkit-calendar-picker-indicator { display: none !important; opacity: 0; }
 

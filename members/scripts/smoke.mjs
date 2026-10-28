@@ -117,6 +117,9 @@ try {
   r = await member.get('/me');
   check(r.text.includes('煙 試験') && /T-\d\d-\d{4}/.test(r.text), '会員番号（T-yy-nnnn）が発番される');
   check(r.text.includes('090-1234-5678'), '本人は自分の電話番号を見られる');
+  const jst = new Date(Date.now() + 9 * 3600 * 1000);
+  const smokeAge = jst.getUTCFullYear() - 1990 - (4 > jst.getUTCMonth() + 1 ? 1 : 0);
+  check(r.text.includes('1990年4月（平成2年）・' + smokeAge + '歳'), 'マイページに生年月と年齢が出る');
   check(r.text.includes('煙テニスクラブ'), '所属を手入力すると新しいクラブとして登録される');
   check(r.text.includes('（けむりしけん）'), 'カタカナ・半角カナのふりがなはひらがなに直して保存される');
   r = await member.get('/me/profile');
@@ -245,12 +248,15 @@ try {
   check(r.status === 403, '大会運営ロールは名簿を見られない');
   r = await unei.get('/admin/tournaments/T-DEMO-OPEN');
   check(r.status === 200 && r.text.includes('煙 試験'), '大会運営は担当大会のエントリーを見られる');
+  check(/煙 試験 <span class="age">\d+歳<\/span>/.test(r.text), '大会のエントリー一覧に大会当日の年齢が出る');
   r = await unei.get('/admin/tournaments/T-DEMO-PREF');
   check(r.status === 404, '担当外の大会は見られない');
   r = await admin.get('/admin/members?q=けむり');
+  check(r.text.includes('<th>年齢</th>') && r.text.includes('>' + smokeAge + '歳<'), '会員一覧に年齢が出る');
   const memberId = pick(r.text, /\/admin\/members\/([0-9A-Z]{26})/);
   r = await admin.get(`/admin/members/${memberId}`);
   check(r.text.includes('090-1234-5678') && r.text.includes('監査ログに記録'), '協会管理は連絡先を見られ、閲覧が記録される');
+  check(r.text.includes('満' + smokeAge + '歳'), '会員詳細に満年齢が出る');
   r = await admin.post('/admin/members/export.csv', { purpose: 'smoke test' });
   check(r.status === 200 && r.text.includes('"煙","試験","けむり","しけん"'), '名簿 CSV を目的つきで出力（姓・名・せい・めいの列）');
 

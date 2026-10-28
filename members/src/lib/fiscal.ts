@@ -56,3 +56,19 @@ export function addDays(iso: string, days: number): string {
   d.setUTCDate(d.getUTCDate() + days);
   return d.toISOString().slice(0, 10);
 }
+
+/** 生年月から、ある日（既定は今日・日本時間）の満年齢。日は持たないので誕生月に入ったら 1 つ上がるものとする。
+    月が分からなければ [若い方, 上の方] の幅で返す。生年が無ければ null。 */
+export function ageAt(year: number | null | undefined, month: number | null | undefined, atIso?: string | null, now = new Date()): number | [number, number] | null {
+  if (!year) return null;
+  const [ay, am] = (atIso || todayJst(now)).slice(0, 10).split('-').map(Number);
+  if (!month) return [ay - year - 1, ay - year];
+  return ay - year - (month > am ? 1 : 0);
+}
+
+/** 画面に出す年齢の表記（例 "32歳"・"31〜32歳"・"—"） */
+export function ageLabel(year: number | null | undefined, month: number | null | undefined, atIso?: string | null, now = new Date()): string {
+  const a = ageAt(year, month, atIso, now);
+  if (a === null) return '—';
+  return Array.isArray(a) ? `${a[0]}〜${a[1]}歳` : `${a}歳`;
+}
