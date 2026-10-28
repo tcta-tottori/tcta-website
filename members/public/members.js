@@ -128,9 +128,9 @@
   });
 
   /* ---------- 生年月ピッカー ----------
-     元のプルダウン（年・月）はフォーム送信用に残して隠し、代わりにボタンとパネルを出す。
-     パネルは元号の見出し付きで年を並べ、値が空なら 30 歳前後の年を真ん中に見せる（勝手には選ばない）。
-     年を選ぶと月のマス目に進む。スマホでは画面下から出るシートになる。 */
+     元のプルダウン（年・月）はフォーム送信用に残して隠し、代わりにボタンを出す。
+     押すと画面の中央にダイアログを開き、① 生まれた年 → ② 生まれた月 の順に選んで「決定」で入れる。
+     年は元号ごとの一覧（西暦・和暦・年齢を 1 行に）。値が空なら 30 歳前後の年を真ん中に見せる（勝手には選ばない）。 */
   var eraOf = function (y) {
     if (y >= 2019) return ['令和', y - 2018];
     if (y >= 1989) return ['平成', y - 1988];
@@ -138,51 +138,51 @@
     return ['大正', y - 1911];
   };
   var wareki = function (y) { var e = eraOf(y); return e[0] + (e[1] === 1 ? '元' : e[1]) + '年'; };
-  document.querySelectorAll('[data-birth]').forEach(function (box) {
+  var ageOf = function (y, m) { var d = new Date(); return d.getFullYear() - y - (m > d.getMonth() + 1 ? 1 : 0); }; // 誕生月に入ったら 1 つ上がる
+  var ageThisYear = function (y) { return new Date().getFullYear() - y; };
+  document.querySelectorAll('[data-birth]').forEach(function (box, idx) {
     var ySel = box.querySelector('[data-birth-year]');
     var mSel = box.querySelector('[data-birth-month]');
     if (!ySel || !mSel) return;
     var form = ySel.form;
-    var thisYear = Number(box.getAttribute('data-this-year')) || new Date().getFullYear();
-    var defYear = Number(box.getAttribute('data-default-year')) || thisYear - 30;
+    var defYear = Number(box.getAttribute('data-default-year')) || new Date().getFullYear() - 30;
     var years = [];
     for (var k = 0; k < ySel.options.length; k++) if (ySel.options[k].value) years.push(Number(ySel.options[k].value));
     var required = ySel.required;
     ySel.required = false; mSel.required = false; // 隠したまま必須だと送信時に止まるので JS で確かめる
     box.classList.add('is-enhanced');
+    var ageOut = box.querySelector('[data-birth-age]');
 
     var btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'birth__btn';
     btn.setAttribute('aria-haspopup', 'dialog');
-    btn.setAttribute('aria-expanded', 'false');
     box.querySelector('.birth__label').insertAdjacentElement('afterend', btn);
 
-    var panel = document.createElement('div');
-    panel.className = 'birth__panel';
-    panel.setAttribute('role', 'dialog');
-    panel.setAttribute('aria-label', '生年月を選ぶ');
-    panel.hidden = true;
-    btn.insertAdjacentElement('afterend', panel);
+    // ダイアログは body 直下に置く（本文のアニメーションの影響を受けずに画面中央に固定するため）
+    var dlg = document.createElement('div');
+    dlg.className = 'bp';
+    dlg.hidden = true;
+    dlg.innerHTML = '<div class="bp__backdrop" data-close></div>'
+      + '<div class="bp__dialog" role="dialog" aria-modal="true" aria-labelledby="bp-title-' + idx + '" tabindex="-1"></div>';
+    document.body.appendChild(dlg);
+    var panel = dlg.querySelector('.bp__dialog');
 
-    var ageOut = box.querySelector('[data-birth-age]');
-    var ageOf = function (y, m) { var d = new Date(); return d.getFullYear() - y - (m > d.getMonth() + 1 ? 1 : 0); }; // 誕生月に入ったら 1 つ上がる
     var paint = function () {
       var y = Number(ySel.value), m = Number(mSel.value);
-      if (ageOut) ageOut.innerHTML = y && m ? '現在の年齢 <b>満' + ageOf(y, m) + '歳</b>' : '';
-      if (y && m) btn.innerHTML = '<span class="birth__val">' + y + '年 ' + m + '月</span><span class="birth__sub">' + wareki(y) + '・満' + ageOf(y, m) + '歳</span>';
-      else if (y) btn.innerHTML = '<span class="birth__val">' + y + '年 —月</span><span class="birth__sub">' + wareki(y) + '・月を選んでください</span>';
-      else btn.innerHTML = '<span class="birth__ph">生年月を選ぶ</span><span class="birth__sub">タップして年と月を選びます</span>';
+      if (y && m) btn.innerHTML = '<span class="birth__val">' + y + '年 ' + m + '月 <small>（' + wareki(y) + '）</small></span><span class="birth__chg">変更</span>';
+      else btn.innerHTML = '<span class="birth__ph">生まれた年と月を選ぶ</span><span class="birth__chg">選ぶ</span>';
       btn.classList.toggle('is-empty', !(y && m));
+      if (ageOut) ageOut.innerHTML = y && m ? '現在の年齢 <b>満' + ageOf(y, m) + '歳</b>' : '';
     };
 
-    var step = 'year';
+    var step = 'year', py = 0, pm = 0; // 選んでいる途中の値（「決定」までは元の欄に入れない）
     var render = function () {
-      var y = Number(ySel.value), m = Number(mSel.value);
       var h = [];
-      h.push('<div class="birth__head"><button type="button" class="birth__tab' + (step === 'year' ? ' is-on' : '') + '" data-go="year">' + (y ? y + '年' : '年') + '</button>'
-        + '<button type="button" class="birth__tab' + (step === 'month' ? ' is-on' : '') + '" data-go="month"' + (y ? '' : ' disabled') + '>' + (m ? m + '月' : '月') + '</button>'
-        + '<button type="button" class="birth__close" data-close aria-label="閉じる">×</button></div>');
+      h.push('<div class="bp__head"><p class="bp__title" id="bp-title-' + idx + '">生年月を選ぶ</p><button type="button" class="bp__x" data-close aria-label="閉じる"></button></div>');
+      h.push('<ol class="bp__steps">'
+        + '<li class="' + (step === 'year' ? 'is-on' : 'is-done') + '"><button type="button" data-go="year"><span>1</span>生まれた年<b>' + (py ? py + '年' : '未選択') + '</b></button></li>'
+        + '<li class="' + (step === 'month' ? 'is-on' : '') + '"><button type="button" data-go="month"' + (py ? '' : ' disabled') + '><span>2</span>生まれた月<b>' + (pm ? pm + '月' : '未選択') + '</b></button></li></ol>');
       if (step === 'year') {
         var groups = [];
         years.forEach(function (yy) {
@@ -190,63 +190,70 @@
           if (!groups.length || groups[groups.length - 1].era !== e) groups.push({ era: e, ys: [] });
           groups[groups.length - 1].ys.push(yy);
         });
-        h.push('<div class="birth__jump">' + groups.map(function (g) { return '<button type="button" data-jump="' + g.era + '">' + g.era + '</button>'; }).join('') + '</div>');
-        h.push('<div class="birth__years" data-years>');
+        h.push('<div class="bp__jump" role="group" aria-label="元号で探す">' + groups.map(function (g) { return '<button type="button" data-jump="' + g.era + '">' + g.era + '</button>'; }).join('') + '</div>');
+        h.push('<div class="bp__cols" aria-hidden="true"><span>西暦</span><span>和暦</span><span>今年の年齢</span></div>');
+        h.push('<div class="bp__body" data-years>');
         groups.forEach(function (g) {
-          h.push('<p class="birth__era" data-era="' + g.era + '">' + g.era + '</p><div class="birth__grid">');
+          h.push('<p class="bp__era" data-era="' + g.era + '">' + g.era + '</p>');
           g.ys.forEach(function (yy) {
-            h.push('<button type="button" class="birth__cell' + (yy === y ? ' is-on' : '') + (yy === defYear && !y ? ' is-hint' : '') + '" data-y="' + yy + '"><b>' + yy + '</b><small>' + wareki(yy).replace(/^(令和|平成|昭和|大正)/, '') + '</small><small>' + (thisYear - yy) + '歳</small></button>');
+            h.push('<button type="button" class="bp__row' + (yy === py ? ' is-on' : '') + (yy === defYear && !py ? ' is-hint' : '') + '" data-y="' + yy + '">'
+              + '<b>' + yy + '年</b><span>' + wareki(yy) + '</span><span>' + ageThisYear(yy) + '歳' + (yy === defYear && !py ? '<em>目安</em>' : '') + '</span></button>');
           });
-          h.push('</div>');
         });
         h.push('</div>');
       } else {
-        h.push('<div class="birth__months">');
-        for (var mm = 1; mm <= 12; mm++) h.push('<button type="button" class="birth__cell birth__m' + (mm === m ? ' is-on' : '') + '" data-m="' + mm + '"><b>' + mm + '<span>月</span></b></button>');
-        h.push('</div>');
+        h.push('<div class="bp__body bp__body--month"><p class="bp__lead"><b>' + py + '年（' + wareki(py) + '）</b>生まれ。月を選んでください。</p><div class="bp__months">');
+        for (var mm = 1; mm <= 12; mm++) h.push('<button type="button" class="bp__m' + (mm === pm ? ' is-on' : '') + '" data-m="' + mm + '">' + mm + '<small>月</small></button>');
+        h.push('</div></div>');
       }
+      h.push('<div class="bp__foot"><p class="bp__sum">' + (py && pm ? py + '年' + pm + '月生まれ<span>満' + ageOf(py, pm) + '歳</span>' : py ? py + '年生まれ<span>次に月を選んでください</span>' : '<span>まず生まれた年を選んでください</span>') + '</p>'
+        + '<button type="button" class="bp__ok" data-ok' + (py && pm ? '' : ' disabled') + '>決定</button></div>');
       panel.innerHTML = h.join('');
       if (step === 'year') {
         var list = panel.querySelector('[data-years]');
-        var target = panel.querySelector('[data-y="' + (y || defYear) + '"]');
-        if (list && target) list.scrollTop = target.offsetTop - list.offsetTop - list.clientHeight / 2 + target.offsetHeight / 2;
+        var target = panel.querySelector('[data-y="' + (py || defYear) + '"]');
+        if (list && target) list.scrollTop = target.offsetTop - list.clientHeight / 2 + target.offsetHeight / 2;
       }
     };
-    var open = function (to) {
-      step = to || (ySel.value && !mSel.value ? 'month' : 'year');
-      panel.hidden = false;
-      box.classList.add('is-open');
-      btn.setAttribute('aria-expanded', 'true');
+    var open = function () {
+      py = Number(ySel.value) || 0; pm = Number(mSel.value) || 0;
+      step = py && !pm ? 'month' : 'year';
+      dlg.hidden = false;
+      document.documentElement.classList.add('bp-lock');
       render();
+      panel.focus();
     };
     var close = function () {
-      panel.hidden = true;
-      box.classList.remove('is-open');
-      btn.setAttribute('aria-expanded', 'false');
+      dlg.hidden = true;
+      document.documentElement.classList.remove('bp-lock');
+      btn.focus();
     };
-    btn.addEventListener('click', function () { if (panel.hidden) open(); else close(); });
-    panel.addEventListener('click', function (e) {
-      var t = e.target.closest('button');
+    btn.addEventListener('click', open);
+    dlg.addEventListener('click', function (e) {
+      var t = e.target.closest('[data-close],button');
       if (!t) return;
-      if (t.hasAttribute('data-close')) { close(); btn.focus(); return; }
+      if (t.hasAttribute('data-close')) { close(); return; }
+      if (t.hasAttribute('data-ok')) {
+        ySel.value = String(py); mSel.value = String(pm);
+        box.classList.remove('is-invalid');
+        paint(); close(); return;
+      }
       if (t.getAttribute('data-go')) { step = t.getAttribute('data-go'); render(); return; }
       if (t.getAttribute('data-jump')) {
         var list = panel.querySelector('[data-years]');
         var head = panel.querySelector('[data-era="' + t.getAttribute('data-jump') + '"]');
-        if (list && head) list.scrollTo({ top: head.offsetTop - list.offsetTop, behavior: 'smooth' });
+        if (list && head) list.scrollTo({ top: head.offsetTop, behavior: 'smooth' });
         return;
       }
-      if (t.getAttribute('data-y')) { ySel.value = t.getAttribute('data-y'); box.classList.remove('is-invalid'); step = 'month'; paint(); render(); return; }
-      if (t.getAttribute('data-m')) { mSel.value = t.getAttribute('data-m'); box.classList.remove('is-invalid'); paint(); close(); btn.focus(); }
+      if (t.getAttribute('data-y')) { py = Number(t.getAttribute('data-y')); step = 'month'; render(); return; }
+      if (t.getAttribute('data-m')) { pm = Number(t.getAttribute('data-m')); render(); var ok = panel.querySelector('[data-ok]'); if (ok) ok.focus(); }
     });
-    document.addEventListener('click', function (e) { if (!panel.hidden && e.target.isConnected && !box.contains(e.target)) close(); });
-    document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !panel.hidden) { close(); btn.focus(); } });
+    dlg.addEventListener('keydown', function (e) { if (e.key === 'Escape') close(); });
     if (form && required) form.addEventListener('submit', function (e) {
       if (ySel.value && mSel.value) return;
       e.preventDefault();
       box.classList.add('is-invalid');
       btn.scrollIntoView({ block: 'center', behavior: 'smooth' });
-      open();
     });
     paint();
   });
