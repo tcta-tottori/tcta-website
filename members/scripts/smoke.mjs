@@ -243,9 +243,32 @@ try {
   r = await shop.get('/admin/members');
   check(r.status === 302 && r.location === '/shop', 'ショップは事務局画面に入れない');
 
+  console.log('\n[6b] 削除依頼（退会ボタンの代わり）');
+  r = await member.get('/me');
+  check(!r.text.includes('退会を申請') && r.text.includes('href="/me/deletion"'), 'マイページに退会ボタンは無く、削除依頼へのリンクがある');
+  r = await member.post('/me/deletion', { reason: 'smoke test', sure: 'on' });
+  check(r.status === 302 && r.location === '/me', '削除を依頼できる');
+  r = await admin.get('/admin/deletions');
+  const delId = pick(r.text, /action="\/admin\/deletions\/([0-9A-Z]{26})\/done"/);
+  check(delId && r.text.includes('煙 試験'), '事務局の削除依頼一覧に出る');
+  r = await admin.post(`/admin/deletions/${delId}/done`);
+  check(r.status === 302, '事務局が削除を実行');
+  r = await member.get('/me');
+  check(r.status === 302 && r.location === '/login', '削除後はログインが切れる');
+  r = await admin.get(`/admin/members/${memberId}`);
+  check(r.text.includes('削除済み') && !r.text.includes('090-1234-5678') && r.text.includes('煙 試験'), '連絡先は消え、氏名は残る');
+
   console.log('\n[7] 定期実行と監査ログ');
   r = await anon.get('/__scheduled?cron=0+0+*+*+*');
   check(r.status === 200, '定期実行（締切処理・リマインド・バックアップ）が動く');
+  r = await admin.get('/admin/members?q=こばやし');
+  const oldId = pick(r.text, /\/admin\/members\/([0-9A-Z]{26})/);
+  r = await admin.get(`/admin/members/${oldId}`);
+  check(r.text.includes('削除済み') && !r.text.includes('090-0000-0009'), '何年度も登録のない会員の連絡先は定期実行で自動削除される');
+  r = await admin.get('/admin/members?q=やまだ');
+  const yamadaId = pick(r.text, /\/admin\/members\/([0-9A-Z]{26})/);
+  r = await admin.get(`/admin/members/${yamadaId}`);
+  check(r.text.includes('090-0000-0001'), '今年度登録のある会員の連絡先は残る');
   r = await admin.get('/admin/audit?q=entry.confirm');
   check(r.text.includes('stripe:webhook'), '監査ログに Webhook の確定が残る');
   r = await admin.get('/admin/audit?q=member.view_pii');

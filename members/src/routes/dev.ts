@@ -19,7 +19,7 @@ dev.get('/', async (c) => {
   const body = html`
     <div class="card">
       <h2>デモデータ</h2>
-      <p class="mute">協会 4・クラブ 5・会員 8（仮会員 2 名、名寄せ候補 1 組）・大会 3・管理者 6 を入れます。何度でもやり直せます。</p>
+      <p class="mute">協会 4・クラブ 5・会員 9（仮会員 2 名、名寄せ候補 1 組）・大会 3・管理者 6 を入れます。何度でもやり直せます。</p>
       <div class="tbl"><table><tr>${Object.keys(n).map((k) => html`<th>${k}</th>`)}</tr><tr>${Object.values(n).map((v) => html`<td>${v}</td>`)}</tr></table></div>
       <div class="actions">
         <form method="post" action="/dev/seed"><button class="primary">デモデータを投入（既存を消して入れ直す）</button></form>

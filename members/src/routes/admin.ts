@@ -14,6 +14,7 @@ import { ulid } from '../lib/ulid';
 import { checkNames, composeKana, composeName, createMember, decryptContact, findOrCreateClub, findSameNameMembers, namesFromForm, normalizeKana, resolveClub, updateMember } from '../services/members';
 import { clubLabel, clubSelect, nameFields } from '../views/forms';
 import { securityNote } from '../views/security';
+import { purgeContacts } from '../services/retention';
 import { cancelEntry, getPayment, markPaid } from '../services/payments';
 import { checkEligibility, parseCustomRule, parseRule, presetFor, RULE_PRESETS, ruleToCustomText, shortRule } from '../services/eligibility';
 import { canApproveRegistration, canConfirmPayment, canCreateTournament, canEditMembers, canExportMembers, canImport, canManageAdmins, canViewPii, canViewTournament, memberScope, ownsTournament } from '../services/permissions';
@@ -83,6 +84,7 @@ admin.get('/', async (c) => {
     stats.push(['年度登録 承認待ち', await n(`SELECT COUNT(*) AS n FROM registrations r JOIN payments p ON p.id = r.payment_id WHERE r.association_id = ? AND r.status = 'pending' AND p.status = 'paid'`, scope)]);
     stats.push(['消込待ち（振込・PayPay・現金）', await n(`SELECT COUNT(*) AS n FROM payments WHERE association_id = ? AND status = 'pending' AND method <> 'stripe'`, scope)]);
     stats.push(['名寄せ候補', await n(`SELECT COUNT(*) AS n FROM merge_candidates WHERE status = 'open'`)]);
+    stats.push(['削除依頼（未対応）', await n(`SELECT COUNT(*) AS n FROM deletion_requests d JOIN members m ON m.id = d.member_id WHERE d.status = 'open' AND (m.home_association_id = ? OR EXISTS (SELECT 1 FROM registrations r WHERE r.member_id = m.id AND r.association_id = ?))`, scope, scope)]);
   }
   if (scope) stats.push([`${fy}年度 登録者`, await n(`SELECT COUNT(*) AS n FROM registrations WHERE association_id = ? AND fiscal_year = ? AND status = 'approved'`, scope, fy)]);
   stats.push(['受付中の大会', await n(`SELECT COUNT(*) AS n FROM tournaments WHERE status = 'open'${scope ? ' AND association_id = ?' : ''}`, ...(scope ? [scope] : []))]);
@@ -153,7 +155,8 @@ admin.get('/members/:id', async (c) => {
   const regs = await all<Registration & { association_name: string }>(c.env.DB, 'SELECT r.*, a.name AS association_name FROM registrations r JOIN associations a ON a.id = r.association_id WHERE r.member_id = ? ORDER BY r.fiscal_year DESC', m.id);
   const entries = await all<Entry & { t_name: string }>(c.env.DB, 'SELECT e.*, t.name AS t_name FROM entries e JOIN tournaments t ON t.id = e.tournament_id WHERE e.member_id = ? OR e.partner_member_id = ? ORDER BY e.created_at DESC', m.id, m.id);
   let pii = html`<p class="mute">このロールでは住所・電話・メールを閲覧できません。</p>`;
-  if (canViewPii(a)) {
+  if (m.contacts_purged_at) pii = html`<p class="mute">連絡先は ${fmtDate(m.contacts_purged_at)} に削除済みです（最小保有の規則または本人の依頼による）。</p>`;
+  else if (canViewPii(a)) {
     const ct = await decryptContact(c.env, m);
     await audit(c.env, { ...actor(c), action: 'member.view_pii', target: `member:${m.id}` });
     pii = html`<dl class="kv"><dt>メール</dt><dd>${ct.email ?? '—'}</dd><dt>電話</dt><dd>${ct.phone ?? '—'}</dd><dt>住所</dt><dd>${ct.postal ? `〒${ct.postal} ` : ''}${ct.address ?? '—'}</dd></dl><p class="mute">この閲覧は監査ログに記録されました。</p>
@@ -161,7 +164,7 @@ admin.get('/members/:id', async (c) => {
         ${nameFields(m)}
         ${clubSelect(await all<Club>(c.env.DB, 'SELECT * FROM clubs ORDER BY name'), m.club_id)}
         <label>メール <input type="email" name="email" value="${ct.email ?? ''}"></label><label>電話 <input type="tel" name="phone" value="${ct.phone ?? ''}"></label><label>郵便番号 <input type="text" name="postal" value="${ct.postal ?? ''}" inputmode="numeric"></label><label>住所 <input type="text" name="address" value="${ct.address ?? ''}"></label>
-        <label>状態 <select name="status">${['active', 'provisional', 'withdrawn'].map((s) => html`<option value="${s}" ${s === m.status ? 'selected' : ''}>${STATUS_LABEL[s]}</option>`)}</select></label>
+        <label>状態 <select name="status">${['active', 'provisional', 'withdrawn'].map((s) => html`<option value="${s}" ${s === m.status ? 'selected' : ''}>${s === 'withdrawn' ? '退会（削除依頼に対応した会員など）' : STATUS_LABEL[s]}</option>`)}</select></label>
         <div class="actions"><button class="primary">保存</button></div></form></details>` : ''}`;
   }
   const body = html`<div class="card"><dl class="kv"><dt>会員番号</dt><dd><b>${m.member_no ?? '—'}</b></dd><dt>氏名</dt><dd>${m.name}（${m.kana}）</dd><dt>所属</dt><dd>${clubLabel(club?.name)}</dd><dt>状態</dt><dd>${badge(m.status)}</dd><dt>生年</dt><dd>${m.birth_year ?? '—'}</dd><dt>登録日</dt><dd>${fmtDateTime(m.created_at)}</dd></dl></div>
@@ -585,6 +588,52 @@ admin.post('/merges/:id/:act', async (c) => {
     flash(c, '結合を取り消しました。年度登録・エントリーの付け替えは会員詳細から確認してください');
   }
   return c.redirect('/admin/merges');
+});
+
+// ---------- 登録情報の削除依頼 ----------
+admin.get('/deletions', async (c) => {
+  const a = A(c);
+  if (!canEditMembers(a)) return c.text('forbidden', 403);
+  const rows = await all<{ id: string; member_id: string; reason: string | null; status: string; handled_by: string | null; handled_at: string | null; note: string | null; created_at: string; member_no: string | null; name: string; contacts_purged_at: string | null; open_entries: number; pending_payments: number }>(
+    c.env.DB,
+    `SELECT d.*, m.member_no, m.name, m.contacts_purged_at,
+            (SELECT COUNT(*) FROM entries e JOIN tournaments t ON t.id = e.tournament_id WHERE (e.member_id = m.id OR e.partner_member_id = m.id) AND e.status <> 'cancelled' AND t.status = 'open') AS open_entries,
+            (SELECT COUNT(*) FROM payments p WHERE p.payer_member_id = m.id AND p.status = 'pending') AS pending_payments
+       FROM deletion_requests d JOIN members m ON m.id = d.member_id
+      WHERE m.home_association_id = ? OR EXISTS (SELECT 1 FROM registrations r WHERE r.member_id = m.id AND r.association_id = ?)
+      ORDER BY d.status = 'open' DESC, d.created_at DESC LIMIT 200`,
+    a.association_id, a.association_id,
+  );
+  const body = html`<p class="mute">本人からの削除依頼です。30 日以内に対応してください。「削除する」でメール・電話・住所を消し、ログインできなくします。氏名・所属と大会成績の記録は残ります。受付中のエントリーや未払いがある場合は、先に本人と相談してください。</p>
+    <div class="tbl"><table><tr><th>依頼日</th><th>会員</th><th>理由</th><th>確認事項</th><th>状態</th><th></th></tr>
+    ${rows.map((r) => html`<tr><td>${fmtDate(r.created_at)}</td><td><a href="/admin/members/${r.member_id}">${r.member_no ?? ''} ${r.name}</a></td><td class="wrap-text">${r.reason ?? '—'}</td>
+      <td class="wrap-text">${r.open_entries ? html`<span class="warn">受付中のエントリー ${r.open_entries} 件</span> ` : ''}${r.pending_payments ? html`<span class="warn">未払い ${r.pending_payments} 件</span>` : ''}${!r.open_entries && !r.pending_payments ? 'なし' : ''}</td>
+      <td>${r.status === 'open' ? html`<span class="badge badge--tint">未対応</span>` : r.status === 'done' ? html`<span class="badge badge--outline">削除済み</span><br><span class="mute">${r.handled_by} ${fmtDateTime(r.handled_at)}</span>` : html`<span class="badge badge--muted">取り下げ</span><br><span class="mute">${r.note ?? ''}</span>`}</td>
+      <td>${r.status === 'open' ? html`<div class="cell-actions"><form method="post" action="/admin/deletions/${r.id}/done"><button class="small primary">削除する</button></form><form method="post" action="/admin/deletions/${r.id}/withdrawn" class="inline"><input type="text" name="note" placeholder="取り下げの理由"> <button class="small btn--outline">取り下げ</button></form></div>` : ''}</td></tr>`)}
+    ${rows.length === 0 ? html`<tr><td colspan="6">削除依頼はありません</td></tr>` : ''}</table></div>`;
+  return c.html(page(c, { title: '登録情報の削除依頼', body, admin: a, wide: true }));
+});
+
+admin.post('/deletions/:id/:act', async (c) => {
+  const a = A(c);
+  if (!canEditMembers(a)) return c.text('forbidden', 403);
+  const d = await one<{ id: string; member_id: string; status: string }>(c.env.DB, 'SELECT * FROM deletion_requests WHERE id = ?', c.req.param('id'));
+  if (!d || d.status !== 'open') return c.redirect('/admin/deletions');
+  const inScope = await one(c.env.DB, `SELECT 1 AS ok FROM members m WHERE m.id = ? AND (m.home_association_id = ? OR EXISTS (SELECT 1 FROM registrations r WHERE r.member_id = m.id AND r.association_id = ?))`, d.member_id, a.association_id, a.association_id);
+  if (!inScope) return c.text('forbidden', 403);
+  const f = await form(c);
+  const now = nowIso();
+  if (c.req.param('act') === 'done') {
+    await purgeContacts(c.env, d.member_id, { ...actor(c), reason: '本人からの削除依頼' });
+    await run(c.env.DB, `UPDATE members SET status = 'withdrawn', withdrawn_at = COALESCE(withdrawn_at, ?), updated_at = ? WHERE id = ?`, now, now, d.member_id);
+    await run(c.env.DB, `UPDATE deletion_requests SET status = 'done', handled_by = ?, handled_at = ? WHERE id = ?`, a.email, now, d.id);
+    flash(c, '連絡先を削除しました（氏名と成績の記録は残ります）');
+  } else if (c.req.param('act') === 'withdrawn') {
+    await run(c.env.DB, `UPDATE deletion_requests SET status = 'withdrawn', handled_by = ?, handled_at = ?, note = ? WHERE id = ?`, a.email, now, f.note || null, d.id);
+    await audit(c.env, { ...actor(c), action: 'member.deletion_request_withdrawn', target: `member:${d.member_id}`, after: { note: f.note } });
+    flash(c, '削除依頼を取り下げにしました');
+  }
+  return c.redirect('/admin/deletions');
 });
 
 // ---------- 監査ログ ----------

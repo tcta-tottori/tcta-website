@@ -29,7 +29,7 @@ interface NavItem { href: string; label: string; en?: boolean; external?: boolea
 
 const EN_BY_PATH: [RegExp, string][] = [
   [/^\/admin\/tournaments/, 'TOURNAMENTS'], [/^\/admin\/members/, 'MEMBERS'], [/^\/admin\/registrations/, 'REGISTRATION'],
-  [/^\/admin\/payments/, 'PAYMENTS'], [/^\/admin\/audit/, 'AUDIT LOG'], [/^\/admin\/merges|^\/admin\/import/, 'IMPORT'],
+  [/^\/admin\/payments/, 'PAYMENTS'], [/^\/admin\/audit/, 'AUDIT LOG'], [/^\/admin\/merges|^\/admin\/import/, 'IMPORT'], [/^\/admin\/deletions|^\/me\/deletion/, 'DELETION'],
   [/^\/admin/, 'ADMIN'], [/^\/shop/, 'SHOP'], [/^\/tournaments/, 'TOURNAMENTS'], [/^\/me/, 'MY PAGE'],
   [/^\/login|^\/signup|^\/auth/, 'LOGIN'], [/^\/registrations/, 'REGISTRATION'], [/^\/pay/, 'PAYMENT'],
   [/^\/club/, 'CLUB'], [/^\/dev/, 'DEMO'], [/^\/security/, 'SECURITY'], [/^\/privacy/, 'PRIVACY'], [/^\/$/, 'MEMBERS'],
@@ -177,7 +177,7 @@ function adminItems(a: Admin): NavItem[] {
   } else {
     items.push({ href: '/admin', label: 'HOME', en: true });
     if (a.role !== 'sysadmin') items.push({ href: '/admin/members', label: '会員' });
-    if (a.role === 'assoc_admin') items.push({ href: '/admin/registrations', label: '年度登録' }, { href: '/admin/payments', label: '消込' }, { href: '/admin/merges', label: '名寄せ' }, { href: '/admin/import', label: '取込み' });
+    if (a.role === 'assoc_admin') items.push({ href: '/admin/registrations', label: '年度登録' }, { href: '/admin/payments', label: '消込' }, { href: '/admin/merges', label: '名寄せ' }, { href: '/admin/import', label: '取込み' }, { href: '/admin/deletions', label: '削除依頼' });
     if (a.role === 'tournament') items.push({ href: '/admin/payments', label: '消込' });
     items.push({ href: '/admin/tournaments', label: '大会' });
     if (a.role === 'sysadmin' || a.role === 'assoc_admin') items.push({ href: '/admin/audit', label: '監査ログ' });

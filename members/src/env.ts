@@ -11,6 +11,8 @@ export interface Env {
   MAIL_FROM?: string;
   /** 公式サイト本体の URL（ヘッダー・フッターのリンク先） */
   SITE_URL?: string;
+  /** 最後に登録した年度から何年度で連絡先を消すか（既定 2） */
+  CONTACT_RETENTION_YEARS?: string;
   DATA_KEY?: string;
   STRIPE_SECRET_KEY?: string;
   STRIPE_WEBHOOK_SECRET?: string;
