@@ -1,6 +1,5 @@
 ---
 import Base from '../layouts/Base.astro';
-import LinkCard from '../components/LinkCard.astro';
 import { siteData } from '../lib/cms.js';
 import { LINK_GROUPS, LINE_OFFICIAL } from '../data/links.js';
 
@@ -48,25 +47,53 @@ const description = "鳥取市テニス協会に関係する団体・施設の�
 
   <section class="section">
     <div class="container">
-      {LINK_GROUPS.map((g, i) => (
-        <div class="rv" style={i === 0 ? undefined : 'margin-top:56px'}>
-          <h2 class="sub-head">{g.title}</h2>
-          {g.id === 'official' && SNS_BUTTONS.length > 0 && (
-            <div class="sns-buttons">
-              {SNS_BUTTONS.map((b) => (
-                <a class="sns-button" href={b.url} target="_blank" rel="me noopener noreferrer">
-                  <img src={b.img} alt={b.alt} width={b.w} height={b.h} loading="lazy" decoding="async">
-                </a>
-              ))}
-            </div>
-          )}
-          {itemsOf(g).length > 0 && (
-            <div class="link-grid">
-              {itemsOf(g).map((l) => <LinkCard link={l} />)}
-            </div>
-          )}
+      {/* 種類のタブ（すべて／協会の公式アカウント／関係団体 …）。1行に並べ、収まらない分は横スクロール。
+          押した種類だけを出す（main.js の initFilters。大会情報の絞り込みと同じ仕組み） */}
+      <div class="ltabs hscroll" data-hscroll>
+        <div class="ltabs__track hscroll__track" data-filter-group data-filter-target="#link-list" role="group" aria-label="リンクの種類">
+          <button class="chip ltab is-active" type="button" data-filter="all" aria-pressed="true">すべて</button>
+          {LINK_GROUPS.map((g) => <button class="chip ltab" type="button" data-filter={g.id} aria-pressed="false">{g.title}</button>)}
         </div>
-      ))}
+        <span class="hscroll__hint" aria-hidden="true"><span class="hscroll__arrow"></span>SCROLL</span>
+      </div>
+
+      <div id="link-list">
+        {LINK_GROUPS.map((g) => (
+          <div class="lgroup" data-tags={g.id}>
+            <h2 class="sub-head rv">{g.title}</h2>
+            {g.id === 'official' && SNS_BUTTONS.length > 0 && (
+              <div class="sns-buttons rv">
+                {SNS_BUTTONS.map((b) => (
+                  <a class="sns-button" href={b.url} target="_blank" rel="me noopener noreferrer">
+                    <img src={b.img} alt={b.alt} width={b.w} height={b.h} loading="lazy" decoding="async">
+                  </a>
+                ))}
+              </div>
+            )}
+            {itemsOf(g).length > 0 && (
+              <ul class="llist">
+                {itemsOf(g).map((l) => (
+                  <li class="rv">
+                    {/* バナーを白い枠の中央に大きく → 団体名と ↗ → 説明（全文） */}
+                    <a class="litem" href={l.url} target="_blank" rel="noopener noreferrer">
+                      <span class="litem__media">
+                        {l.banner
+                          ? <img src={l.banner} alt="" width="1018" height="168" loading="lazy" decoding="async">
+                          : <span class="litem__noimg">{l.name}</span>}
+                      </span>
+                      <span class="litem__head">
+                        <span class="litem__name">{l.name}</span>
+                        <span class="litem__ext" aria-hidden="true">↗</span>
+                      </span>
+                      {l.desc && <span class="litem__desc">{l.desc}</span>}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        ))}
+      </div>
     </div>
   </section>
 </Base>

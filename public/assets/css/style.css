@@ -2721,6 +2721,54 @@ body.jsrv .rv.on .ink-sweep {
    縦に積み、スマホは幅いっぱい、広い画面では 360px。画像は横幅に合わせて縮め、上下の余白ぶんだけ切り取って
    高さ 54px に収める（object-fit: cover。文字と印は中央に収まっている）。角丸は画像のものを切り落とすので CSS で付け直す */
 .sns-buttons { display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px; }
+
+/* ============ リンク集ページ ============
+   上に種類のタブ（下線で選択中を示す。横スクロール）、その下に種類ごとの一覧。
+   1件は「白い枠の中央にバナー → 団体名と ↗ → 説明（全文）」。スマホは1列、640px から2列、1024px から3列 */
+.ltabs { margin: 0 0 40px; }
+.ltabs__track { gap: 28px; padding: 4px 0 2px; }
+.ltabs .chip.ltab {
+  min-height: 0;
+  padding: 8px 2px 10px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  background: none;
+  font: 700 15px/1.4 var(--fjp);
+  letter-spacing: .04em;
+  color: var(--gray-600);
+  white-space: nowrap;
+}
+.ltabs .chip.ltab:hover { color: var(--ink); border-color: transparent; }
+.ltabs .chip.ltab.is-active, .ltabs .chip.ltab.is-active:hover { background: none; border-color: var(--ink); color: var(--ink); }
+.lgroup[hidden] { display: none; }
+.lgroup + .lgroup { margin-top: 64px; }
+.llist { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: 1fr; gap: 48px 32px; }
+@media (min-width: 640px) { .llist { grid-template-columns: repeat(2, 1fr); } }
+@media (min-width: 1024px) { .llist { grid-template-columns: repeat(3, 1fr); gap: 56px 36px; } }
+.litem { display: flex; flex-direction: column; gap: 10px; color: inherit; }
+.litem:hover { color: inherit; }
+.litem__media {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 3.6 / 1;
+  padding: 4% 5%;
+  overflow: hidden;
+  background: var(--white);
+  border: 1px solid var(--gray-200);
+  transition: border-color .3s ease;
+}
+.litem__media img { display: block; width: 100%; height: auto; max-height: 100%; object-fit: contain; border-radius: 4px; transition: transform .5s var(--ease); }
+.litem:hover .litem__media { border-color: var(--gray-300); }
+.litem:hover .litem__media img { transform: scale(1.03); }
+.litem__noimg { font: 700 15px/1.5 var(--fjp); color: var(--gray-500); text-align: center; }
+.litem__head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 4px; }
+.litem__name { font: 700 18px/1.4 var(--fjp); letter-spacing: .04em; color: var(--ink); transition: color .2s ease; }
+.litem__ext { flex: none; font: 400 24px/1 var(--flt); color: var(--ink); transition: transform .3s ease, color .2s ease; }
+.litem:hover .litem__name, .litem:hover .litem__ext { color: var(--red); }
+.litem:hover .litem__ext { transform: translate(2px, -2px); }
+.litem__desc { font: 400 14px/1.9 var(--fjp); letter-spacing: .04em; color: var(--gray-800); }
 .sns-button {
   display: block;
   width: 100%;
