@@ -52,10 +52,10 @@ export const LINKS = [
   },
   {
     group: 'org',
-    name: 'JLTF鳥取県支部',
+    name: '日本女子テニス連盟 鳥取県支部',
     row: 'assoc',
-    desc: '日本レディーステニス連盟の県支部',
-    url: 'https://jltftottori.fc2.page/',
+    desc: '日本女子テニス連盟（JLTF）の県支部',
+    url: 'https://jltf-tottori.sakura.ne.jp/wp/',
     banner: 'assets/img/banners/jltf-tottori.png',
   },
   {
@@ -81,6 +81,14 @@ export const LINKS = [
     desc: '鳥取県西部の大会情報',
     url: 'https://yonago-tta.sfnc.jp/index.html',
     banner: 'assets/img/banners/yonago-tennis.png',
+  },
+  {
+    group: 'nearby',
+    name: '境港市テニス協会',
+    row: 'assoc',
+    desc: '境港市の大会情報',
+    url: 'https://sakaiminato-tennis.jimdofree.com/',
+    banner: 'assets/img/banners/sakaiminato-tennis.png',
   },
   {
     group: 'nearby',
