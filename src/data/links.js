@@ -56,7 +56,7 @@ export const LINKS = [
     row: 'assoc',
     desc: '中国地方の大会情報',
     url: 'https://www.chugoku-ta.jp/',
-    banner: 'assets/img/banners/chugoku-tennis.png',
+    banner: 'assets/img/banners/chugoku-tennis.jpg',
   },
   {
     group: 'org',
