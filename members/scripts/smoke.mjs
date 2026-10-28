@@ -86,11 +86,18 @@ try {
   check(r.status === 302 && r.location === '/signup', '未登録メール → 会員登録フォームへ');
   r = await member.get(new URL(link).pathname);
   check(r.status === 302 && r.location === '/login', 'リンクは 1 回限り');
-  r = await member.post('/signup', { name: '煙 試験', kana: 'けむりしけん', sex: 'male', birth_year: '1990', club_id: 'club-koyama', home: 'tottori-city', phone: '090-1234-5678', postal: '680-0001', address: '鳥取市テスト1-1', consent: 'on' });
+  r = await member.post('/signup', { family_name: '煙', given_name: '試験', family_kana: 'けむり', given_kana: 'しけん', sex: 'male', birth_year: '1990', club_sel: '__other__', club_other: '煙テニスクラブ', home: 'tottori-city', phone: '090-1234-5678', postal: '680-0001', address: '鳥取市テスト1-1', consent: 'on' });
   check(r.status === 302 && r.location === '/me', '会員登録 → マイページへ');
   r = await member.get('/me');
   check(r.text.includes('煙 試験') && /T-\d\d-\d{4}/.test(r.text), '会員番号（T-yy-nnnn）が発番される');
   check(r.text.includes('090-1234-5678'), '本人は自分の電話番号を見られる');
+  check(r.text.includes('煙テニスクラブ'), '所属を手入力すると新しいクラブとして登録される');
+  r = await member.post('/me/profile', { family_name: '煙', given_name: '試験', family_kana: 'けむり', given_kana: 'しけん', sex: 'male', birth_year: '1990', club_sel: '__free__', club_other: '', email: 'smoke@example.com', phone: '090-1234-5678', postal: '680-0001', address: '鳥取市テスト1-1' });
+  r = await member.get('/me');
+  check(r.text.includes('<dd>フリー</dd>'), '所属を「フリー（無所属）」にできる');
+  r = await anon.get('/api/v1/postal/6800001');
+  check(r.status === 200 || r.status === 502, '郵便番号 → 住所の API が応答する（外部に出られない環境では 502）');
+  if (r.status === 200) check(JSON.parse(r.text).address.includes('鳥取'), '郵便番号 680-0001 は鳥取県の住所');
 
   console.log('\n[2] 年度登録（振込）');
   const now = new Date(Date.now() + 9 * 3600 * 1000); // JST
@@ -203,7 +210,7 @@ try {
   r = await admin.get(`/admin/members/${memberId}`);
   check(r.text.includes('090-1234-5678') && r.text.includes('監査ログに記録'), '協会管理は連絡先を見られ、閲覧が記録される');
   r = await admin.post('/admin/members/export.csv', { purpose: 'smoke test' });
-  check(r.status === 200 && r.text.includes('煙 試験'), '名簿 CSV を目的つきで出力');
+  check(r.status === 200 && r.text.includes('"煙","試験","けむり","しけん"'), '名簿 CSV を目的つきで出力（姓・名・せい・めいの列）');
 
   console.log('\n[6] ショップ代行入力（現金）');
   r = await shop.get('/admin/login');

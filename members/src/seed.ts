@@ -29,24 +29,24 @@ export async function seedDemo(env: Env): Promise<void> {
   }
   const clubs = [
     ['club-tottori-lc', '鳥取ローンテニスクラブ', '鳥取市'], ['club-koyama', '湖山テニスクラブ', '鳥取市'], ['club-tottori-univ', '鳥取大学テニス部', '鳥取市'],
-    ['club-kurayoshi', '倉吉テニスクラブ', '倉吉市'], ['club-yonago', '米子ローンテニスクラブ', '米子市'], ['club-free', 'クラブ無所属', null],
+    ['club-kurayoshi', '倉吉テニスクラブ', '倉吉市'], ['club-yonago', '米子ローンテニスクラブ', '米子市'],
   ];
   for (const [id, name, area] of clubs) await run(env.DB, `INSERT INTO clubs (id, name, area, created_at) VALUES (?, ?, ?, ?)`, id, name, area, now);
 
   const fy = currentFiscalYear(4);
   const demo = [
-    { name: '山田 太郎', kana: 'やまだたろう', sex: 'male', birth: 1985, email: 'yamada@example.com', phone: '090-0000-0001', postal: '680-0001', address: '鳥取市栄町1-1', club: 'club-tottori-lc', home: 'tottori-city', reg: ['tottori-city', 'tottori-pref'], manager: true },
-    { name: '佐藤 花子', kana: 'さとうはなこ', sex: 'female', birth: 1990, email: 'sato@example.com', phone: '090-0000-0002', postal: '680-0002', address: '鳥取市本町2-2', club: 'club-tottori-lc', home: 'tottori-city', reg: ['tottori-city'] },
-    { name: '鈴木 一郎', kana: 'すずきいちろう', sex: 'male', birth: 1972, email: 'suzuki@example.com', phone: '090-0000-0003', postal: '680-0003', address: '鳥取市湖山町3-3', club: 'club-koyama', home: 'tottori-city', reg: ['tottori-city'] },
-    { name: '田中 美咲', kana: 'たなかみさき', sex: 'female', birth: 2004, email: 'tanaka@example.com', phone: '090-0000-0004', postal: '680-0004', address: '鳥取市湖山町南4-4', club: 'club-tottori-univ', home: 'tottori-city', reg: [], pendingReg: 'tottori-city' },
-    { name: '高橋 健', kana: 'たかはしけん', sex: 'male', birth: 1995, email: 'takahashi@example.com', phone: '090-0000-0005', postal: '682-0001', address: '倉吉市駄経寺町5-5', club: 'club-kurayoshi', home: 'kurayoshi-city', reg: ['kurayoshi-city', 'tottori-pref'] },
-    { name: '伊藤 由美', kana: 'いとうゆみ', sex: 'female', birth: 1988, email: 'ito@example.com', phone: '090-0000-0006', postal: '683-0001', address: '米子市加茂町6-6', club: 'club-yonago', home: 'yonago-city', reg: ['yonago-city'] },
-    { name: '渡辺 翔', kana: 'わたなべしょう', sex: 'male', birth: 1999, email: null, phone: null, postal: null, address: null, club: 'club-koyama', home: 'tottori-city', reg: [], status: 'provisional' as const },
-    { name: '山田 太郎', kana: 'やまだたろう', sex: null, birth: null, email: null, phone: null, postal: null, address: null, club: 'club-free', home: 'tottori-city', reg: [], status: 'provisional' as const, dupOf: 0 },
+    { fn: '山田', gn: '太郎', fk: 'やまだ', gk: 'たろう', sex: 'male', birth: 1985, email: 'yamada@example.com', phone: '090-0000-0001', postal: '680-0001', address: '鳥取市栄町1-1', club: 'club-tottori-lc', home: 'tottori-city', reg: ['tottori-city', 'tottori-pref'], manager: true },
+    { fn: '佐藤', gn: '花子', fk: 'さとう', gk: 'はなこ', sex: 'female', birth: 1990, email: 'sato@example.com', phone: '090-0000-0002', postal: '680-0002', address: '鳥取市本町2-2', club: 'club-tottori-lc', home: 'tottori-city', reg: ['tottori-city'] },
+    { fn: '鈴木', gn: '一郎', fk: 'すずき', gk: 'いちろう', sex: 'male', birth: 1972, email: 'suzuki@example.com', phone: '090-0000-0003', postal: '680-0003', address: '鳥取市湖山町3-3', club: 'club-koyama', home: 'tottori-city', reg: ['tottori-city'] },
+    { fn: '田中', gn: '美咲', fk: 'たなか', gk: 'みさき', sex: 'female', birth: 2004, email: 'tanaka@example.com', phone: '090-0000-0004', postal: '680-0004', address: '鳥取市湖山町南4-4', club: 'club-tottori-univ', home: 'tottori-city', reg: [], pendingReg: 'tottori-city' },
+    { fn: '高橋', gn: '健', fk: 'たかはし', gk: 'けん', sex: 'male', birth: 1995, email: 'takahashi@example.com', phone: '090-0000-0005', postal: '682-0001', address: '倉吉市駄経寺町5-5', club: 'club-kurayoshi', home: 'kurayoshi-city', reg: ['kurayoshi-city', 'tottori-pref'] },
+    { fn: '伊藤', gn: '由美', fk: 'いとう', gk: 'ゆみ', sex: 'female', birth: 1988, email: 'ito@example.com', phone: '090-0000-0006', postal: '683-0001', address: '米子市加茂町6-6', club: 'club-yonago', home: 'yonago-city', reg: ['yonago-city'] },
+    { fn: '渡辺', gn: '翔', fk: 'わたなべ', gk: 'しょう', sex: 'male', birth: 1999, email: null, phone: null, postal: null, address: null, club: 'club-koyama', home: 'tottori-city', reg: [], status: 'provisional' as const },
+    { fn: '山田', gn: '太郎', fk: 'やまだ', gk: 'たろう', sex: null, birth: null, email: null, phone: null, postal: null, address: null, club: null, home: 'tottori-city', reg: [], status: 'provisional' as const, dupOf: 0 },
   ];
   const ids: string[] = [];
   for (const d of demo) {
-    const m = await createMember(env, { name: d.name, kana: d.kana, sex: d.sex, birthYear: d.birth, email: d.email, phone: d.phone, postal: d.postal, address: d.address, clubId: d.club, homeAssociationId: d.home, status: d.status ?? 'active', consented: Boolean(d.email) });
+    const m = await createMember(env, { familyName: d.fn, givenName: d.gn, familyKana: d.fk, givenKana: d.gk, sex: d.sex, birthYear: d.birth, email: d.email, phone: d.phone, postal: d.postal, address: d.address, clubId: d.club, homeAssociationId: d.home, status: d.status ?? 'active', consented: Boolean(d.email) });
     ids.push(m.id);
     if (d.manager) await run(env.DB, 'UPDATE members SET club_manager = 1 WHERE id = ?', m.id);
     for (const aid of d.reg) {

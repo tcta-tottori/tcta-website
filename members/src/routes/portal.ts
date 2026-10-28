@@ -12,7 +12,8 @@ import { rateLimit } from '../lib/ratelimit';
 import { createCheckoutUrl } from '../lib/stripe';
 import { createSession, destroySession, flash, readSession } from '../lib/session';
 import { ulid } from '../lib/ulid';
-import { createMember, decryptContact, findMemberByEmail, findSameNameMembers, getMember, searchMembers, updateMember } from '../services/members';
+import { composeKana, composeName, createMember, decryptContact, findMemberByEmail, findOrCreateClub, findSameNameMembers, getMember, namesFromForm, resolveClub, searchMembers, updateMember } from '../services/members';
+import { clubDatalist, clubLabel, clubSelect, nameFields, nameInputs } from '../views/forms';
 import { checkEligibility, describeRule, parseRule, shortRule } from '../services/eligibility';
 import { createPayment, getPayment } from '../services/payments';
 import { type Association, type Club, type Entry, type Member, METHOD_LABEL, type Payment, type PaymentMethod, type Registration, SEX_LABEL, type Tournament, type TournamentEvent, CATEGORY_LABEL } from '../types';
@@ -139,17 +140,17 @@ async function lookups(env: Env) {
   return { clubs: await all<Club>(env.DB, 'SELECT * FROM clubs ORDER BY name'), assocs: await all<Association>(env.DB, 'SELECT * FROM associations ORDER BY id') };
 }
 
-function profileFields(clubs: Club[], assocs: Association[], v: Partial<{ name: string; kana: string; sex: string | null; birth_year: number | null; phone: string | null; postal: string | null; address: string | null; club_id: string | null; home: string | null }>, withHome: boolean) {
+function profileFields(clubs: Club[], assocs: Association[], v: Partial<{ family_name: string; given_name: string; family_kana: string; given_kana: string; sex: string | null; birth_year: number | null; phone: string | null; postal: string | null; address: string | null; club_id: string | null; home: string | null }>, withHome: boolean) {
   return html`
-    <label>氏名 <input type="text" name="name" required value="${v.name ?? ''}"></label>
-    <label>ふりがな <input type="text" name="kana" required value="${v.kana ?? ''}" placeholder="やまだたろう"></label>
+    ${nameFields(v)}
     <label>性別 <select name="sex"><option value="">—</option>${Object.entries(SEX_LABEL).map(([k, l]) => html`<option value="${k}" ${v.sex === k ? 'selected' : ''}>${l}</option>`)}</select></label>
     <label>生年（年齢区分の判定にだけ使います） <input type="number" name="birth_year" min="1900" max="2030" value="${v.birth_year ?? ''}"></label>
-    <label>所属クラブ <select name="club_id">${clubs.map((cl) => html`<option value="${cl.id}" ${v.club_id === cl.id ? 'selected' : ''}>${cl.name}</option>`)}</select></label>
+    ${clubSelect(clubs, v.club_id)}
     ${withHome ? html`<label>主な登録先の協会（会員番号の接頭辞になります） <select name="home">${assocs.map((a) => html`<option value="${a.id}" ${v.home === a.id ? 'selected' : ''}>${a.name}</option>`)}</select></label>` : ''}
-    <label>電話番号 <input type="tel" name="phone" value="${v.phone ?? ''}"></label>
-    <label>郵便番号 <input type="text" name="postal" value="${v.postal ?? ''}"></label>
-    <label>住所 <input type="text" name="address" value="${v.address ?? ''}"></label>`;
+    <label>電話番号 <input type="tel" name="phone" value="${v.phone ?? ''}" autocomplete="tel"></label>
+    <label>郵便番号 <input type="text" name="postal" value="${v.postal ?? ''}" inputmode="numeric" placeholder="6800001" autocomplete="postal-code"></label>
+    <p class="mute">郵便番号を入れると住所を自動で入れます。番地・建物名は続けて入力してください。</p>
+    <label>住所 <input type="text" name="address" value="${v.address ?? ''}" autocomplete="street-address"></label>`;
 }
 
 portal.get('/signup', async (c) => {
@@ -174,17 +175,19 @@ portal.post('/signup', async (c) => {
   if (!emailEnc) return c.redirect('/login');
   const email = (await decrypt(c.env, emailEnc))!;
   const f = await form(c);
-  if (!f.name?.trim() || !f.kana?.trim()) { flash(c, '氏名とふりがなは必須です', 'err'); return c.redirect('/signup'); }
+  const names = namesFromForm(f);
+  if (!names) { flash(c, '姓・名・せい・めいはすべて必須です', 'err'); return c.redirect('/signup'); }
   const ip = clientIp(c);
   if (await findMemberByEmail(c.env, email)) { flash(c, 'このメールは登録済みです', 'err'); return c.redirect('/login'); }
+  const clubId = await resolveClub(c.env, f.club_sel, f.club_other);
 
   // 名寄せ: 氏名＋ふりがなが一致する「仮会員」（ペア指定・ショップ代行・取込みで作られた本人未確認のレコード）があれば紐づける
-  const same = await findSameNameMembers(c.env, f.name, f.kana);
+  const same = await findSameNameMembers(c.env, composeName(names.familyName, names.givenName), composeKana(names.familyKana, names.givenKana));
   const provisional = same.filter((m) => m.status === 'provisional' && !m.email_hash);
   let member: Member;
   if (provisional.length === 1) {
     member = provisional[0];
-    await updateMember(c.env, member.id, { email, phone: f.phone || null, postal: f.postal || null, address: f.address || null, sex: f.sex || null, birthYear: f.birth_year ? Number(f.birth_year) : null, clubId: f.club_id || null, status: 'active' });
+    await updateMember(c.env, member.id, { names, email, phone: f.phone || null, postal: f.postal || null, address: f.address || null, sex: f.sex || null, birthYear: f.birth_year ? Number(f.birth_year) : null, clubId, status: 'active' });
     await run(c.env.DB, 'UPDATE members SET consented_at = ?, home_association_id = COALESCE(home_association_id, ?) WHERE id = ?', nowIso(), f.home || null, member.id);
     if (!member.member_no && f.home) {
       const assoc = await one<Association>(c.env.DB, 'SELECT * FROM associations WHERE id = ?', f.home);
@@ -196,7 +199,7 @@ portal.post('/signup', async (c) => {
     await audit(c.env, { actorType: 'member', actor: member.id, action: 'member.claim_provisional', target: `member:${member.id}`, ip });
     member = (await getMember(c.env, member.id))!;
   } else {
-    member = await createMember(c.env, { name: f.name, kana: f.kana, sex: f.sex || null, birthYear: f.birth_year ? Number(f.birth_year) : null, email, phone: f.phone || null, postal: f.postal || null, address: f.address || null, clubId: f.club_id || null, homeAssociationId: f.home || null, status: 'active', consented: true });
+    member = await createMember(c.env, { ...names, sex: f.sex || null, birthYear: f.birth_year ? Number(f.birth_year) : null, email, phone: f.phone || null, postal: f.postal || null, address: f.address || null, clubId, homeAssociationId: f.home || null, status: 'active', consented: true });
     await audit(c.env, { actorType: 'member', actor: member.id, action: 'member.create', target: `member:${member.id}`, after: { source: 'web' }, ip });
     // 同姓同名の既存会員がいるときは自動結合せず、事務局が確認する候補にする
     for (const s of same) {
@@ -226,7 +229,7 @@ portal.get('/me', requireMember, async (c) => {
       <dl class="kv">
         <dt>会員番号</dt><dd><b>${m.member_no ?? '—'}</b></dd>
         <dt>氏名</dt><dd>${m.name}（${m.kana}）</dd>
-        <dt>クラブ</dt><dd>${club?.name ?? '—'}</dd>
+        <dt>所属</dt><dd>${clubLabel(club?.name)}</dd>
         <dt>メール</dt><dd>${contact.email ?? '—'}</dd>
         <dt>電話</dt><dd>${contact.phone ?? '—'}</dd>
         <dt>住所</dt><dd>${contact.postal ? `〒${contact.postal} ` : ''}${contact.address ?? '—'}</dd>
@@ -256,7 +259,7 @@ portal.get('/me/profile', requireMember, async (c) => {
   const contact = await decryptContact(c.env, m);
   const { clubs, assocs } = await lookups(c.env);
   const body = html`<div class="card"><form method="post" action="/me/profile">
-    ${profileFields(clubs, assocs, { name: m.name, kana: m.kana, sex: m.sex, birth_year: m.birth_year, phone: contact.phone, postal: contact.postal, address: contact.address, club_id: m.club_id }, false)}
+    ${profileFields(clubs, assocs, { family_name: m.family_name, given_name: m.given_name, family_kana: m.family_kana, given_kana: m.given_kana, sex: m.sex, birth_year: m.birth_year, phone: contact.phone, postal: contact.postal, address: contact.address, club_id: m.club_id }, false)}
     <label>メールアドレス <input type="email" name="email" required value="${contact.email ?? ''}"></label>
     <div class="actions"><button class="primary">保存</button><a class="btn btn--outline" href="/me">戻る</a></div></form></div>`;
   return c.html(page(c, { title: '会員情報の変更', body, member: m }));
@@ -268,9 +271,12 @@ portal.post('/me/profile', requireMember, async (c) => {
   const email = normalizeEmail(f.email ?? '');
   const other = email ? await findMemberByEmail(c.env, email) : null;
   if (other && other.id !== m.id) { flash(c, 'そのメールアドレスは別の会員が使っています', 'err'); return c.redirect('/me/profile'); }
+  const names = namesFromForm(f);
+  if (!names) { flash(c, '姓・名・せい・めいはすべて必須です', 'err'); return c.redirect('/me/profile'); }
+  const clubId = await resolveClub(c.env, f.club_sel, f.club_other);
   const before = { name: m.name, kana: m.kana, club_id: m.club_id };
-  await updateMember(c.env, m.id, { name: f.name, kana: f.kana, sex: f.sex || null, birthYear: f.birth_year ? Number(f.birth_year) : null, email, phone: f.phone || null, postal: f.postal || null, address: f.address || null, clubId: f.club_id || null });
-  await audit(c.env, { actorType: 'member', actor: m.id, action: 'member.update', target: `member:${m.id}`, before, after: { name: f.name, kana: f.kana, club_id: f.club_id, contact_changed: true }, ip: clientIp(c) });
+  await updateMember(c.env, m.id, { names, sex: f.sex || null, birthYear: f.birth_year ? Number(f.birth_year) : null, email, phone: f.phone || null, postal: f.postal || null, address: f.address || null, clubId });
+  await audit(c.env, { actorType: 'member', actor: m.id, action: 'member.update', target: `member:${m.id}`, before, after: { name: composeName(names.familyName, names.givenName), kana: composeKana(names.familyKana, names.givenKana), club_id: clubId, contact_changed: true }, ip: clientIp(c) });
   flash(c, '会員情報を更新しました。全協会に反映されます');
   return c.redirect('/me');
 });
@@ -404,6 +410,7 @@ portal.get('/tournaments/:id/entry', requireMember, async (c) => {
   const results = q ? (await searchMembers(c.env, q)).filter((r) => r.id !== m.id) : [];
   const partnerOk = new Map<string, boolean>();
   if (t.partner_rule === 'same') for (const r of results) partnerOk.set(r.id, (await checkEligibility(c.env, r.id, t, assocs)).ok);
+  const clubs = await all<Club>(c.env.DB, 'SELECT * FROM clubs ORDER BY name');
   const body = html`
     <form method="get" action="/tournaments/${t.id}/entry" class="card">
       <h2>ペアを探す（ダブルスのとき）</h2>
@@ -418,10 +425,10 @@ portal.get('/tournaments/:id/entry', requireMember, async (c) => {
       <label>ペア（ダブルスのみ）</label>
       <div class="radio-list">
         <label><input type="radio" name="partner" value="" checked> 無し（シングルス）</label>
-        ${results.map((r) => html`<label><input type="radio" name="partner" value="${r.id}"> ${r.name}（${r.kana}）${r.member_no ? ' ' + r.member_no : ''} / ${r.club_name ?? '—'} ${r.status === 'provisional' ? badge('provisional') : ''} ${partnerOk.has(r.id) ? (partnerOk.get(r.id) ? html`<span class="elig elig--ok">出場可</span>` : html`<span class="elig elig--ng">登録不足</span>`) : ''}</label>`)}
+        ${results.map((r) => html`<label><input type="radio" name="partner" value="${r.id}"> ${r.name}（${r.kana}）${r.member_no ? ' ' + r.member_no : ''} / ${clubLabel(r.club_name)} ${r.status === 'provisional' ? badge('provisional') : ''} ${partnerOk.has(r.id) ? (partnerOk.get(r.id) ? html`<span class="elig elig--ok">出場可</span>` : html`<span class="elig elig--ng">登録不足</span>`) : ''}</label>`)}
         <label><input type="radio" name="partner" value="new"> 未登録のペアを氏名で登録（仮会員）</label>
       </div>
-      <div class="indent"><input type="text" name="new_name" placeholder="氏名"> <input type="text" name="new_kana" placeholder="ふりがな"> <input type="text" name="new_club" placeholder="クラブ名"></div>
+      <div class="indent">${nameInputs('new')} <input type="text" name="new_club" list="clubs-list" placeholder="所属（空ならフリー）"></div>${clubDatalist(clubs)}
       <label>支払方法</label>
       <div class="radio-list">${methods.map((k, i) => html`<label><input type="radio" name="method" value="${k}" ${i === 0 ? 'checked' : ''}> ${METHOD_LABEL[k]}${k === 'stripe' ? '（自動で確定）' : k === 'cash' ? '（ショップで現金を渡すと確定）' : '（事務局が確認して確定）'}</label>`)}</div>
       <div class="actions"><button class="primary">エントリーして支払いへ</button><a class="btn btn--outline" href="/tournaments/${t.id}">戻る</a></div>
@@ -429,7 +436,7 @@ portal.get('/tournaments/:id/entry', requireMember, async (c) => {
   return c.html(page(c, { title: `エントリー: ${t.name}`, body, member: m }));
 });
 
-export interface EntryInput { tournamentId: string; memberId: string; eventCode: string; klass: string | null; partnerId: string | null; newPartner?: { name: string; kana: string; club: string } | null; method: PaymentMethod; source: 'web' | 'shop' | 'club'; createdBy: string }
+export interface EntryInput { tournamentId: string; memberId: string; eventCode: string; klass: string | null; partnerId: string | null; newPartner?: { familyName: string; givenName: string; familyKana: string; givenKana: string; club: string } | null; method: PaymentMethod; source: 'web' | 'shop' | 'club'; createdBy: string }
 
 /** エントリー作成の共通処理（Web・ショップ代行・クラブ一括が同じ経路に合流する）。 */
 export async function createEntry(env: Env, i: EntryInput, ip: string | null): Promise<{ ok: true; entryId: string; paymentId: string } | { ok: false; error: string }> {
@@ -450,15 +457,10 @@ export async function createEntry(env: Env, i: EntryInput, ip: string | null): P
   let partnerId: string | null = null;
   if (ev.teamSize === 2) {
     if (i.newPartner) {
-      if (!i.newPartner.name || !i.newPartner.kana) return { ok: false, error: 'ペアの氏名とふりがなを入れてください' };
+      if (!i.newPartner.familyName.trim() || !i.newPartner.givenName.trim() || !i.newPartner.familyKana.trim() || !i.newPartner.givenKana.trim()) return { ok: false, error: 'ペアの姓・名・せい・めいを入れてください' };
       if (t.partner_rule === 'same' && parseRule(t).length) return { ok: false, error: 'この大会はペアにも年度登録が必要です。ペアの方の年度登録（または代理登録）を先に済ませてください' };
-      let clubId: string | null = null;
-      if (i.newPartner.club) {
-        const cl = await one<Club>(env.DB, 'SELECT * FROM clubs WHERE name = ?', i.newPartner.club.trim());
-        if (cl) clubId = cl.id;
-        else { clubId = `club-${ulid().toLowerCase()}`; await run(env.DB, 'INSERT INTO clubs (id, name, created_at) VALUES (?, ?, ?)', clubId, i.newPartner.club.trim(), nowIso()); }
-      }
-      const p = await createMember(env, { name: i.newPartner.name, kana: i.newPartner.kana, clubId, homeAssociationId: null, status: 'provisional' });
+      const clubId = await findOrCreateClub(env, i.newPartner.club);
+      const p = await createMember(env, { ...i.newPartner, clubId, homeAssociationId: null, status: 'provisional' });
       await audit(env, { actorType: i.source === 'web' ? 'member' : i.source === 'shop' ? 'shop' : 'member', actor: i.createdBy, action: 'member.create_provisional', target: `member:${p.id}`, after: { reason: 'ペア指定' }, ip });
       partnerId = p.id;
     } else if (i.partnerId) {
@@ -497,7 +499,7 @@ portal.post('/tournaments/:id/entry', requireMember, async (c) => {
   const r = await createEntry(c.env, {
     tournamentId: c.req.param('id') ?? '', memberId: m.id, eventCode: f.event, klass: f.class || null,
     partnerId: f.partner && f.partner !== 'new' ? f.partner : null,
-    newPartner: f.partner === 'new' ? { name: f.new_name?.trim() ?? '', kana: f.new_kana?.trim() ?? '', club: f.new_club?.trim() ?? '' } : null,
+    newPartner: f.partner === 'new' ? { familyName: f.new_family ?? '', givenName: f.new_given ?? '', familyKana: f.new_family_kana ?? '', givenKana: f.new_given_kana ?? '', club: f.new_club?.trim() ?? '' } : null,
     method: f.method as PaymentMethod, source: 'web', createdBy: m.id,
   }, clientIp(c));
   if (!r.ok) { flash(c, r.error, 'err'); return c.redirect(`/tournaments/${c.req.param('id')}/entry`); }
@@ -553,7 +555,7 @@ portal.get('/club', requireMember, async (c) => {
     </form>
     <h2>会員を追加（代理登録）</h2>
     <form method="post" action="/club/members" class="card"><p class="mute">本人がログインできない会員を氏名だけで仮登録します。本人が同じ氏名・ふりがなでメール登録すると自動で紐づきます。</p>
-      <input type="text" name="name" placeholder="氏名" required> <input type="text" name="kana" placeholder="ふりがな" required> <button>追加</button></form>`;
+      <div class="indent" style="margin-left:0">${nameInputs('new')}</div><button>追加</button></form>`;
   return c.html(page(c, { title: `クラブ管理: ${club.name}`, body, member: m }));
 });
 
@@ -561,7 +563,9 @@ portal.post('/club/members', requireMember, async (c) => {
   const m = c.get('member')!;
   if (!m.club_manager || !m.club_id) return c.notFound();
   const f = await form(c);
-  const p = await createMember(c.env, { name: f.name, kana: f.kana, clubId: m.club_id, homeAssociationId: m.home_association_id, status: 'provisional' });
+  const names = namesFromForm(f, 'new');
+  if (!names) { flash(c, '姓・名・せい・めいをすべて入れてください', 'err'); return c.redirect('/club'); }
+  const p = await createMember(c.env, { ...names, clubId: m.club_id, homeAssociationId: m.home_association_id, status: 'provisional' });
   await audit(c.env, { actorType: 'member', actor: m.id, action: 'member.create_provisional', target: `member:${p.id}`, after: { reason: 'クラブ代理登録' }, ip: clientIp(c) });
   flash(c, `${p.name} さんを仮会員として追加しました`);
   return c.redirect('/club');

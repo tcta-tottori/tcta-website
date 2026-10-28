@@ -31,6 +31,21 @@ api.get('/v1/tournaments', async (c) => {
   });
 });
 
+/** 郵便番号 → 住所（日本郵便のデータを配る zipcloud を Worker 経由で引く。ブラウザからは同一オリジンだけに通信する）。 */
+api.get('/v1/postal/:code', async (c) => {
+  const code = (c.req.param('code') ?? '').replace(/\D/g, '');
+  if (code.length !== 7) return c.json({ ok: false, error: '郵便番号は 7 桁で入れてください' }, 400);
+  try {
+    const res = await fetch(`https://zipcloud.ibsnet.co.jp/api/search?zipcode=${code}`, { cf: { cacheTtl: 86400, cacheEverything: true } } as RequestInit);
+    const j = (await res.json()) as { results: { address1: string; address2: string; address3: string }[] | null };
+    const r = j.results?.[0];
+    if (!r) return c.json({ ok: false, error: '該当する住所がありません' }, 404);
+    return c.json({ ok: true, zipcode: code, prefecture: r.address1, city: r.address2, town: r.address3, address: `${r.address1}${r.address2}${r.address3}` }, 200, { 'Cache-Control': 'public, max-age=86400' });
+  } catch {
+    return c.json({ ok: false, error: '住所の検索に失敗しました' }, 502);
+  }
+});
+
 /** 大会運営・ドロー・ライブスコアアプリが読む確定エントリー。Bearer か ?token= の読み取り専用トークン（大会単位・有効期限付き）。 */
 api.get('/v1/tournaments/:id/entries.json', async (c) => {
   const auth = c.req.header('Authorization');
