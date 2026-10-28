@@ -2642,12 +2642,18 @@ body.jsrv .rv.on .ink-sweep {
 @media (prefers-reduced-motion: reduce) {
   .footer-dot { animation: none; }
 }
-/* サイト全体の固定背景（Base.astro。白地に薄い四角）。画面に固定して本文の裏に敷く。
+/* サイト全体の固定背景（Base.astro。白地に枠だけの四角）。画面に固定して本文の裏に敷く。
    背景を塗っていない区画（白い区画）から透けて見える。灰色の帯や写真の区画では隠れる。
-   スクロール中の上下（--sy）は main.js の initSiteBg が、ページ全体の進み具合から書き込む */
+   スクロールでは動かさず、漂う動き（footer-drift）だけを一定に続ける */
 .site-bg {
   position: fixed;
   z-index: -1;
+}
+.site-bg .footer-dot {
+  background: none;
+  border: 1px solid var(--c);
+  translate: none;
+  will-change: transform;
 }
 .site-footer__grid {
   position: relative;
