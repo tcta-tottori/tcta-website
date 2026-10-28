@@ -230,3 +230,23 @@ form .secnote { margin-top: 24px; }
 .tbl form.inline { white-space: nowrap; }
 .portal-body .bullet-list + form { margin-top: 24px; }
 .cell-actions { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
+
+/* ---- 事務局: まとまりの中のタブ（本体の .tabs / .tab）---- */
+.admin-tabs { margin: -8px 0 28px; }
+.admin-tabs .tab { text-decoration: none !important; }
+.admin-tabs .tab.is-active::after { transform: scaleX(1); }
+
+/* ---- 事務局: やること ---- */
+.todo { display: flex; flex-direction: column; border-top: 1px solid var(--gray-200); margin-bottom: 24px; }
+.todo__item { display: grid; grid-template-columns: 64px 1fr auto; align-items: center; gap: 12px; padding: 14px 8px; border-bottom: 1px solid var(--gray-200); color: var(--gray-500); text-decoration: none !important; transition: background .2s ease; }
+.todo__item:hover { background: var(--gray-050); color: var(--ink); }
+.todo__item b { font: 700 28px/1 var(--flt); color: var(--gray-300); text-align: right; }
+.todo__item span { font: 700 15px/1.5 var(--fjp); }
+.todo__item em { display: block; font: 400 12px/1.5 var(--fjp); font-style: normal; color: var(--red-dark); }
+.todo__item .aw { color: var(--gray-300); }
+.todo__item.is-due { color: var(--ink); }
+.todo__item.is-due b { color: var(--red); }
+.todo__item.is-due .aw { color: var(--red); }
+a.stat { display: block; text-decoration: none !important; color: inherit; transition: border-color .2s ease; }
+a.stat:hover { border-color: var(--red); }
+details.card > summary { margin: 0; }

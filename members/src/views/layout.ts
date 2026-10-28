@@ -29,7 +29,7 @@ interface NavItem { href: string; label: string; en?: boolean; external?: boolea
 
 const EN_BY_PATH: [RegExp, string][] = [
   [/^\/admin\/tournaments/, 'TOURNAMENTS'], [/^\/admin\/members/, 'MEMBERS'], [/^\/admin\/registrations/, 'REGISTRATION'],
-  [/^\/admin\/payments/, 'PAYMENTS'], [/^\/admin\/audit/, 'AUDIT LOG'], [/^\/admin\/merges|^\/admin\/import/, 'IMPORT'], [/^\/admin\/deletions|^\/me\/deletion/, 'DELETION'],
+  [/^\/admin\/payments/, 'PAYMENTS'], [/^\/admin\/associations|^\/admin\/admins/, 'SETTINGS'], [/^\/admin\/audit/, 'AUDIT LOG'], [/^\/admin\/merges|^\/admin\/import/, 'IMPORT'], [/^\/admin\/deletions|^\/me\/deletion/, 'DELETION'],
   [/^\/admin/, 'ADMIN'], [/^\/shop/, 'SHOP'], [/^\/tournaments/, 'TOURNAMENTS'], [/^\/me/, 'MY PAGE'],
   [/^\/login|^\/signup|^\/auth/, 'LOGIN'], [/^\/registrations/, 'REGISTRATION'], [/^\/pay/, 'PAYMENT'],
   [/^\/club/, 'CLUB'], [/^\/dev/, 'DEMO'], [/^\/security/, 'SECURITY'], [/^\/privacy/, 'PRIVACY'], [/^\/$/, 'MEMBERS'],
@@ -46,7 +46,17 @@ export function page(c: Ctx, o: LayoutOpts): H {
 
   // ナビの項目（会員側・事務局側）
   const items: NavItem[] = o.admin ? adminItems(o.admin) : memberItems(o.member ?? null, siteUrl);
-  const isActive = (it: NavItem) => !it.external && (it.href === '/' ? path === '/' : path.startsWith(it.href));
+  const groups = o.admin ? adminGroups(o.admin) : [];
+  const act = o.admin ? activeTab(groups, path) : { group: null, href: null };
+  const isActive = (it: NavItem) => {
+    if (it.external) return false;
+    if (o.admin && act.group) return it.href === act.group.tabs[0].href;
+    return it.href === '/' ? path === '/' : path.startsWith(it.href);
+  };
+  // まとまりの中に画面が 2 つ以上あれば、ページ上部にタブを出す（本体サイトの .tabs と同じ見た目）
+  const subTabs = act.group && act.group.tabs.length > 1
+    ? html`<nav class="tabs admin-tabs" aria-label="${act.group.label}の画面">${act.group.tabs.map((t) => html`<a class="tab ${t.href === act.href ? 'is-active' : ''}" href="${t.href}" ${t.href === act.href ? raw('aria-current="page"') : ''}>${t.label}</a>`)}</nav>`
+    : '';
   const homeHref = o.admin ? (o.admin.role === 'shop' ? '/shop' : '/admin') : '/';
   // 右上の赤いブロック（本体の「お問い合わせ」の位置）: ログイン／ログアウト
   const contact = o.admin
@@ -138,6 +148,7 @@ ${dev ? html`<div class="demo-bar" role="region" aria-label="デモ環境の案�
 
   <section class="section section--portal">
     <div class="container">
+      ${subTabs}
       ${f ? html`<div class="flash flash--${f.kind} fu" role="status">${f.msg}</div>` : ''}
       <div class="portal-body ${o.wide ? 'portal-body--wide' : ''}">
         ${o.body}
@@ -170,19 +181,43 @@ function memberItems(m: Member | null, siteUrl: string): NavItem[] {
   return items;
 }
 
-function adminItems(a: Admin): NavItem[] {
-  const items: NavItem[] = [];
-  if (a.role === 'shop') {
-    items.push({ href: '/shop', label: '代行入力' }, { href: '/shop/today', label: '本日の入力' });
-  } else {
-    items.push({ href: '/admin', label: 'HOME', en: true });
-    if (a.role !== 'sysadmin') items.push({ href: '/admin/members', label: '会員' });
-    if (a.role === 'assoc_admin') items.push({ href: '/admin/registrations', label: '年度登録' }, { href: '/admin/payments', label: '消込' }, { href: '/admin/merges', label: '名寄せ' }, { href: '/admin/import', label: '取込み' }, { href: '/admin/deletions', label: '削除依頼' });
-    if (a.role === 'tournament') items.push({ href: '/admin/payments', label: '消込' });
-    items.push({ href: '/admin/tournaments', label: '大会' });
-    if (a.role === 'sysadmin' || a.role === 'assoc_admin') items.push({ href: '/admin/audit', label: '監査ログ' });
-    if (a.role === 'sysadmin') items.push({ href: '/admin/admins', label: '管理者' }, { href: '/admin/associations', label: '協会' });
+/* 管理者メニュー。項目が多いので 5 つのまとまり（ホーム・会員・受付・大会・設定）にし、
+   まとまりの中の画面はページ上部のタブで切り替える。ロールごとに見せる画面だけを入れる。 */
+interface AdminGroup { label: string; en?: boolean; tabs: { href: string; label: string }[] }
+
+function adminGroups(a: Admin): AdminGroup[] {
+  if (a.role === 'shop') return [{ label: '代行入力', tabs: [{ href: '/shop', label: '代行入力' }, { href: '/shop/today', label: '本日の入力' }] }];
+  const g: AdminGroup[] = [{ label: 'HOME', en: true, tabs: [{ href: '/admin', label: 'ダッシュボード' }] }];
+  const isAssoc = a.role === 'assoc_admin';
+  if (a.role !== 'sysadmin') g.push({ label: '会員', tabs: [
+    { href: '/admin/members', label: '会員一覧' },
+    ...(isAssoc ? [{ href: '/admin/deletions', label: '削除依頼' }, { href: '/admin/merges', label: '名寄せ' }, { href: '/admin/import', label: '名簿の取込み' }] : []),
+  ] });
+  if (isAssoc || a.role === 'tournament') g.push({ label: '受付', tabs: [
+    ...(isAssoc ? [{ href: '/admin/registrations', label: '年度登録の承認' }] : []),
+    { href: '/admin/payments', label: '入金の確認（消込）' },
+  ] });
+  g.push({ label: '大会', tabs: [{ href: '/admin/tournaments', label: '大会一覧' }, ...(isAssoc || a.role === 'sysadmin' ? [{ href: '/admin/tournaments/new', label: '大会を作る' }] : [])] });
+  if (isAssoc || a.role === 'sysadmin') g.push({ label: '設定', tabs: [
+    { href: '/admin/audit', label: '監査ログ' },
+    { href: '/admin/associations', label: '協会の設定' },
+    ...(a.role === 'sysadmin' ? [{ href: '/admin/admins', label: '管理者' }] : []),
+  ] });
+  return g;
+}
+
+/** いま開いている画面がどのまとまりのどのタブか（長く一致するものを優先） */
+function activeTab(groups: AdminGroup[], path: string): { group: AdminGroup | null; href: string | null } {
+  let best: { group: AdminGroup; href: string } | null = null;
+  for (const group of groups) for (const t of group.tabs) {
+    const hit = t.href === '/admin' ? path === '/admin' || path === '/admin/' : path === t.href || path.startsWith(t.href + '/');
+    if (hit && (!best || t.href.length > best.href.length)) best = { group, href: t.href };
   }
+  return best ?? { group: null, href: null };
+}
+
+function adminItems(a: Admin): NavItem[] {
+  const items: NavItem[] = adminGroups(a).map((g) => ({ href: g.tabs[0].href, label: g.label, en: g.en }));
   items.push({ href: '/', label: '会員ポータル' });
   return items;
 }
