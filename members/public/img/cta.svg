@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1068" viewBox="0 0 1600 1068">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#EDEDED"/>
+    </linearGradient>
+    <pattern id="dots" width="12" height="12" patternUnits="userSpaceOnUse">
+      <circle cx="6" cy="6" r="1.1" fill="#C9C9C9"/>
+    </pattern>
+    <clipPath id="ballClip"><circle cx="1240" cy="300" r="120"/></clipPath>
+  </defs>
+  <rect width="1600" height="1068" fill="url(#sky)"/>
+  <!-- ハーフトーンドット（右上） -->
+  <rect x="1100" y="80" width="420" height="420" fill="url(#dots)" opacity=".6"/>
+  <!-- コート（上から見た図。少し傾ける） -->
+  <g transform="translate(800 640) rotate(-9)">
+    <rect x="-620" y="-330" width="1240" height="660" fill="#E5E5E5"/>
+    <g fill="none" stroke="#FFFFFF" stroke-width="9">
+      <rect x="-560" y="-280" width="1120" height="560"/>
+      <line x1="-560" y1="-212" x2="560" y2="-212"/>
+      <line x1="-560" y1="212" x2="560" y2="212"/>
+      <line x1="-345" y1="-212" x2="-345" y2="212"/>
+      <line x1="345" y1="-212" x2="345" y2="212"/>
+      <line x1="-345" y1="0" x2="345" y2="0"/>
+    </g>
+    <!-- ネット -->
+    <line x1="0" y1="-300" x2="0" y2="300" stroke="#3D3D3D" stroke-width="7"/>
+    <line x1="0" y1="-300" x2="0" y2="300" stroke="#FFFFFF" stroke-width="2" stroke-dasharray="4 10"/>
+  </g>
+  <!-- ボール（協会のロゴと同じ赤） -->
+  <g>
+    <circle cx="1240" cy="300" r="120" fill="#D8232A"/>
+    <g clip-path="url(#ballClip)" fill="none" stroke="#FFFFFF" stroke-width="14" stroke-linecap="round">
+      <path d="M1130 220 C 1190 270, 1190 330, 1130 380"/>
+      <path d="M1350 220 C 1290 270, 1290 330, 1350 380"/>
+    </g>
+    <ellipse cx="1240" cy="470" rx="110" ry="14" fill="#1A1A1A" opacity=".08"/>
+  </g>
+  <!-- レッドスクエア（左下で画面外へ半分はみ出す） -->
+  <rect x="-32" y="900" width="64" height="64" fill="#D8232A"/>
+</svg>
