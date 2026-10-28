@@ -22,8 +22,15 @@ dev.get('/', async (c) => {
       <p class="mute">協会 4・クラブ 5・会員 9（仮会員 2 名、名寄せ候補 1 組）・大会 3・管理者 6 を入れます。何度でもやり直せます。</p>
       <div class="tbl"><table><tr>${Object.keys(n).map((k) => html`<th>${k}</th>`)}</tr><tr>${Object.values(n).map((v) => html`<td>${v}</td>`)}</tr></table></div>
       <div class="actions">
-        <form method="post" action="/dev/seed"><button class="primary">デモデータを投入（既存を消して入れ直す）</button></form>
-        <form method="post" action="/dev/reset"><button class="btn--outline">すべて消す（監査ログは消えない）</button></form>
+        <form method="post" action="/dev/seed"><button class="primary">足りないデモデータを補う</button></form>
+      </div>
+      <p class="mute">補うだけなので、試しに入れた会員登録・年度登録・エントリーは消えません。</p>
+      <details><summary>すべて消して最初からやり直す</summary>
+        <form method="post" action="/dev/reset" class="card card--gray"><p class="warn">試しに入れた会員登録・年度登録・エントリーもすべて消えます（監査ログだけは残ります）。他の人も同じデモを使っています。</p>
+          <label>確かめのため「リセット」と入力 <input type="text" name="confirm" required autocomplete="off"></label>
+          <div class="actions"><button class="btn--outline">すべて消して最初から</button></div></form>
+      </details>
+      <div>
       </div>
     </div>
     <div class="card">
@@ -42,14 +49,16 @@ dev.get('/', async (c) => {
 });
 
 dev.post('/seed', async (c) => {
-  await resetAll(c.env);
-  await seedDemo(c.env);
-  flash(c, 'デモデータを投入しました');
+  const r = await seedDemo(c.env);
+  flash(c, r.fresh ? 'デモデータを入れました' : `足りないデモデータを補いました（会員 ${r.added} 名を追加）。試しに入れた内容はそのままです`);
   return c.redirect('/dev');
 });
 dev.post('/reset', async (c) => {
+  const f = await c.req.parseBody();
+  if (f['confirm'] !== 'リセット') { flash(c, '「リセット」と入力したときだけ消します', 'err'); return c.redirect('/dev'); }
   await resetAll(c.env);
-  flash(c, 'データを消しました');
+  await seedDemo(c.env);
+  flash(c, 'すべて消して、デモデータを入れ直しました');
   return c.redirect('/dev');
 });
 

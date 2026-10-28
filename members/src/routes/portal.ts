@@ -140,7 +140,7 @@ portal.post('/logout', async (c) => {
 
 // ---------- 会員登録（初回） ----------
 async function lookups(env: Env) {
-  return { clubs: await all<Club>(env.DB, 'SELECT * FROM clubs ORDER BY name'), assocs: await all<Association>(env.DB, 'SELECT * FROM associations ORDER BY id') };
+  return { clubs: await all<Club>(env.DB, 'SELECT * FROM clubs ORDER BY name'), assocs: await all<Association>(env.DB, "SELECT * FROM associations ORDER BY (id LIKE '%pref%') DESC, code") };
 }
 
 function profileFields(clubs: Club[], assocs: Association[], v: Partial<{ family_name: string; given_name: string; family_kana: string; given_kana: string; sex: string | null; birth_year: number | null; phone: string | null; postal: string | null; address: string | null; club_id: string | null; home: string | null }>, withHome: boolean) {
@@ -149,7 +149,7 @@ function profileFields(clubs: Club[], assocs: Association[], v: Partial<{ family
     <label>性別 <select name="sex"><option value="">—</option>${Object.entries(SEX_LABEL).map(([k, l]) => html`<option value="${k}" ${v.sex === k ? 'selected' : ''}>${l}</option>`)}</select></label>
     ${birthYearFields(v.birth_year)}
     ${clubSelect(clubs, v.club_id)}
-    ${withHome ? html`<label>主な登録先の協会（会員番号の接頭辞になります） <select name="home">${assocs.map((a) => html`<option value="${a.id}" ${v.home === a.id ? 'selected' : ''}>${a.name}</option>`)}</select></label>` : ''}
+    ${withHome ? html`<label>主に登録する協会（会員番号の頭文字になります） <select name="home" required><option value="">選んでください</option>${assocs.map((a) => html`<option value="${a.id}" ${v.home === a.id ? 'selected' : ''}>${a.name}</option>`)}</select></label>` : ''}
     <label>電話番号 <input type="tel" name="phone" value="${v.phone ?? ''}" autocomplete="tel"></label>
     <label>郵便番号 <input type="text" name="postal" value="${v.postal ?? ''}" inputmode="numeric" placeholder="6800001" autocomplete="postal-code"></label>
     <p class="mute">郵便番号を入れると住所を自動で入れます。番地・建物名は続けて入力してください。</p>
@@ -181,6 +181,7 @@ portal.post('/signup', async (c) => {
   const f = await form(c);
   const names = namesFromForm(f);
   if (typeof names === 'string') { flash(c, names, 'err'); return c.redirect('/signup'); }
+  if (!f.home || !(await one(c.env.DB, 'SELECT 1 AS ok FROM associations WHERE id = ?', f.home))) { flash(c, '主に登録する協会を選んでください', 'err'); return c.redirect('/signup'); }
   const ip = clientIp(c);
   if (await findMemberByEmail(c.env, email)) { flash(c, 'このメールは登録済みです', 'err'); return c.redirect('/login'); }
   const clubId = await resolveClub(c.env, f.club_sel, f.club_other);
@@ -246,6 +247,7 @@ portal.get('/me', requireMember, async (c) => {
     <div class="tbl"><table><tr><th>年度</th><th>協会</th><th>区分</th><th>登録料</th><th>支払</th><th>状態</th></tr>
       ${regs.length === 0 ? html`<tr><td colspan="6">まだ年度登録がありません。</td></tr>` : regs.map((r) => html`<tr><td>${r.fiscal_year}年度</td><td>${r.association_name}</td><td>${CATEGORY_LABEL[r.category] ?? r.category}</td><td>${yen(r.fee)}</td><td>${r.pay_status ? badge(r.pay_status) : '—'}</td><td>${badge(r.status)}</td></tr>`)}
     </table></div>
+    ${regs.some((r) => r.status === 'pending') ? html`<p class="mute">申請中の年度登録は、${regs.some((r) => r.status === 'pending' && r.pay_status === 'pending') ? '入金の確認（Stripe は自動、振込・PayPay・現金は事務局）と、' : ''}事務局の承認が済むと「承認済み」になり、大会にエントリーできるようになります。${!isProd(c.env) ? html`デモでは <a href="/admin/login">事務局（登録先の協会の事務局）</a>で「受付」→ 入金確認・承認をすると反映されます。` : ''}</p>` : ''}
     <div class="actions">
       <a class="btn primary" href="/registrations/new">${fy}年度の登録を申請</a>
       ${renew ? html`<a class="btn btn--outline" href="/registrations/new?fy=${fy + 1}">${fy + 1}年度の継続登録</a>` : ''}

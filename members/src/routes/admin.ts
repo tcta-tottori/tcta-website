@@ -79,21 +79,71 @@ admin.get('/', async (c) => {
   const scope = a.association_id;
   const fy = currentFiscalYear(4);
   const n = async (sql: string, ...p: unknown[]) => (await one<{ n: number }>(c.env.DB, sql, ...p))?.n ?? 0;
-  const stats: [string, number][] = [];
+  // やること（件数が 0 でないものを先に）。押すとその画面へ
+  const todo: { label: string; n: number; href: string; note?: string }[] = [];
   if (a.role === 'assoc_admin') {
-    stats.push(['年度登録 承認待ち', await n(`SELECT COUNT(*) AS n FROM registrations r JOIN payments p ON p.id = r.payment_id WHERE r.association_id = ? AND r.status = 'pending' AND p.status = 'paid'`, scope)]);
-    stats.push(['消込待ち（振込・PayPay・現金）', await n(`SELECT COUNT(*) AS n FROM payments WHERE association_id = ? AND status = 'pending' AND method <> 'stripe'`, scope)]);
-    stats.push(['名寄せ候補', await n(`SELECT COUNT(*) AS n FROM merge_candidates WHERE status = 'open'`)]);
-    stats.push(['削除依頼（未対応）', await n(`SELECT COUNT(*) AS n FROM deletion_requests d JOIN members m ON m.id = d.member_id WHERE d.status = 'open' AND (m.home_association_id = ? OR EXISTS (SELECT 1 FROM registrations r WHERE r.member_id = m.id AND r.association_id = ?))`, scope, scope)]);
+    todo.push({ label: '年度登録の承認待ち（入金済み）', n: await n(`SELECT COUNT(*) AS n FROM registrations r JOIN payments p ON p.id = r.payment_id WHERE r.association_id = ? AND r.status = 'pending' AND p.status = 'paid'`, scope), href: '/admin/registrations' });
+    todo.push({ label: '入金の確認待ち（振込・PayPay・現金）', n: await n(`SELECT COUNT(*) AS n FROM payments WHERE association_id = ? AND status = 'pending' AND method <> 'stripe'`, scope), href: '/admin/payments' });
+    todo.push({ label: '削除依頼（未対応）', n: await n(`SELECT COUNT(*) AS n FROM deletion_requests d JOIN members m ON m.id = d.member_id WHERE d.status = 'open' AND (m.home_association_id = ? OR EXISTS (SELECT 1 FROM registrations r WHERE r.member_id = m.id AND r.association_id = ?))`, scope, scope), href: '/admin/deletions', note: '30 日以内に対応' });
+    todo.push({ label: '名寄せの候補', n: await n(`SELECT COUNT(*) AS n FROM merge_candidates WHERE status = 'open'`), href: '/admin/merges' });
   }
-  if (scope) stats.push([`${fy}年度 登録者`, await n(`SELECT COUNT(*) AS n FROM registrations WHERE association_id = ? AND fiscal_year = ? AND status = 'approved'`, scope, fy)]);
-  stats.push(['受付中の大会', await n(`SELECT COUNT(*) AS n FROM tournaments WHERE status = 'open'${scope ? ' AND association_id = ?' : ''}`, ...(scope ? [scope] : []))]);
-  stats.push(['本日のエントリー', await n(`SELECT COUNT(*) AS n FROM entries WHERE created_at >= ? AND created_at < ?`, ...jstDayRange(todayJst()))]);
-  const body = html`<div class="grid">${stats.map(([l, v]) => html`<div class="stat"><b>${v}</b><span>${l}</span></div>`)}</div>
-    <div class="card"><h2>このロールでできること</h2>${roleHelp(a)}</div>
+  if (a.role === 'tournament') {
+    const ids = JSON.parse(a.tournament_ids_json) as string[];
+    if (ids.length) todo.push({ label: '担当大会の入金確認待ち', n: await n(`SELECT COUNT(DISTINCT p.id) AS n FROM payments p JOIN entries e ON e.payment_id = p.id WHERE p.status = 'pending' AND p.method <> 'stripe' AND e.tournament_id IN (${ids.map(() => '?').join(',')})`, ...ids), href: '/admin/payments' });
+  }
+  const facts: [string, number, string][] = [];
+  if (scope) facts.push([`${fy}年度 登録者`, await n(`SELECT COUNT(*) AS n FROM registrations WHERE association_id = ? AND fiscal_year = ? AND status = 'approved'`, scope, fy), '/admin/members']);
+  facts.push(['受付中の大会', await n(`SELECT COUNT(*) AS n FROM tournaments WHERE status = 'open'${scope ? ' AND association_id = ?' : ''}`, ...(scope ? [scope] : [])), '/admin/tournaments']);
+  facts.push(['本日のエントリー', await n(`SELECT COUNT(*) AS n FROM entries e JOIN tournaments t ON t.id = e.tournament_id WHERE e.created_at >= ? AND e.created_at < ?${scope ? ' AND t.association_id = ?' : ''}`, ...jstDayRange(todayJst()), ...(scope ? [scope] : [])), '/admin/tournaments']);
+
+  // 最近の受付（会員登録・年度登録・エントリー）。会員やショップが入れたものがすぐここに出る
+  const recent = await recentActivity(c, a);
+  const open = todo.filter((t) => t.n > 0);
+  const body = html`
+    <h2>やること</h2>
+    ${todo.length === 0 ? html`<p class="mute">このロールで対応する手続きはありません。</p>` : open.length === 0 ? html`<p class="ok">いま対応が必要なものはありません。</p>` : ''}
+    ${todo.length ? html`<div class="todo">${[...open, ...todo.filter((t) => t.n === 0)].map((t) => html`<a class="todo__item ${t.n ? 'is-due' : ''}" href="${t.href}"><b>${t.n}</b><span>${t.label}${t.note && t.n ? html`<em>${t.note}</em>` : ''}</span><span class="aw">→</span></a>`)}</div>` : ''}
+    <div class="grid">${facts.map(([l, v, href]) => html`<a class="stat" href="${href}"><b>${v}</b><span>${l}</span></a>`)}</div>
+    <h2>最近の受付</h2>
+    <p class="mute">会員がポータルで入れたもの、ショップやクラブが代わりに入れたものが、新しい順に出ます。</p>
+    <div class="tbl"><table><tr><th>日時</th><th>種類</th><th>会員</th><th>内容</th><th>経路</th><th>状態</th></tr>
+      ${recent.map((r) => html`<tr><td>${fmtDateTime(r.at)}</td><td>${r.kind}</td><td>${r.member_id ? html`<a href="/admin/members/${r.member_id}">${r.member}</a>` : r.member}</td><td class="wrap-text">${r.href ? html`<a href="${r.href}">${r.detail}</a>` : r.detail}</td><td>${SOURCE_LABEL[r.source] ?? r.source}</td><td>${badge(r.status)}</td></tr>`)}
+      ${recent.length === 0 ? html`<tr><td colspan="6">まだ受付はありません</td></tr>` : ''}
+    </table></div>
+    <details class="card card--gray"><summary>このロールでできること</summary>${roleHelp(a)}</details>
     ${securityNote('admin')}`;
   return c.html(page(c, { title: 'ダッシュボード', body, admin: a }));
 });
+
+const SOURCE_LABEL: Record<string, string> = { web: 'ポータル', shop: 'ショップ', club: 'クラブ', import: '取込み' };
+
+/** 最近の受付を、管理者が見てよい範囲だけ集める */
+async function recentActivity(c: C, a: Admin) {
+  type Row = { at: string; kind: string; member: string; member_id: string | null; detail: string; href: string | null; source: string; status: string };
+  const out: Row[] = [];
+  const scope = a.association_id;
+  const tIds = a.role === 'tournament' ? (JSON.parse(a.tournament_ids_json) as string[]) : null;
+  // エントリー
+  const eWhere = a.role === 'sysadmin' ? '1=1' : tIds ? (tIds.length ? `t.id IN (${tIds.map(() => '?').join(',')})` : '1=0') : 't.association_id = ?';
+  const eParams = a.role === 'sysadmin' ? [] : tIds ?? [scope];
+  const entries = await all<{ created_at: string; member_id: string; p1: string; p2: string | null; t_id: string; t_name: string; event_code: string; class: string | null; source: string; status: string }>(c.env.DB,
+    `SELECT e.created_at, e.member_id, m1.name AS p1, m2.name AS p2, t.id AS t_id, t.name AS t_name, e.event_code, e.class, e.source, e.status
+       FROM entries e JOIN tournaments t ON t.id = e.tournament_id JOIN members m1 ON m1.id = e.member_id LEFT JOIN members m2 ON m2.id = e.partner_member_id
+      WHERE ${eWhere} ORDER BY e.created_at DESC LIMIT 15`, ...eParams);
+  for (const e of entries) out.push({ at: e.created_at, kind: 'エントリー', member: e.p2 ? `${e.p1} / ${e.p2}` : e.p1, member_id: a.role === 'tournament' ? null : e.member_id, detail: `${e.t_name} ${e.event_code}${e.class ? ' ' + e.class : ''}`, href: `/admin/tournaments/${e.t_id}`, source: e.source, status: e.status });
+  if (memberScope(a)) {
+    // 年度登録
+    const regs = await all<{ created_at: string; member_id: string; name: string; fiscal_year: number; source: string; status: string; pay_status: string | null }>(c.env.DB,
+      `SELECT r.created_at, r.member_id, m.name, r.fiscal_year, r.source, r.status, p.status AS pay_status FROM registrations r JOIN members m ON m.id = r.member_id LEFT JOIN payments p ON p.id = r.payment_id
+        WHERE r.association_id = ? AND r.source <> 'import' ORDER BY r.created_at DESC LIMIT 15`, scope);
+    for (const r of regs) out.push({ at: r.created_at, kind: '年度登録', member: r.name, member_id: r.member_id, detail: `${r.fiscal_year}年度${r.status === 'pending' ? (r.pay_status === 'paid' ? '（入金済み・承認待ち）' : '（入金待ち）') : ''}`, href: a.role === 'assoc_admin' ? '/admin/registrations' : null, source: r.source, status: r.status });
+    // 会員登録（ポータルで本人が登録した会員）
+    const mems = await all<{ created_at: string; id: string; name: string; member_no: string | null; status: string }>(c.env.DB,
+      `SELECT m.created_at, m.id, m.name, m.member_no, m.status FROM members m WHERE m.home_association_id = ? AND m.merged_into IS NULL AND m.consented_at IS NOT NULL ORDER BY m.created_at DESC LIMIT 15`, scope);
+    for (const m of mems) out.push({ at: m.created_at, kind: '会員登録', member: m.name, member_id: m.id, detail: m.member_no ? `会員番号 ${m.member_no}` : '会員番号なし', href: null, source: 'web', status: m.status });
+  }
+  return out.sort((x, y) => (x.at < y.at ? 1 : -1)).slice(0, 20);
+}
 
 function roleHelp(a: Admin) {
   const rows: Record<string, string> = {
@@ -117,12 +167,14 @@ admin.get('/members', async (c) => {
     c.env.DB,
     `SELECT m.*, c.name AS club_name, (SELECT r.status FROM registrations r WHERE r.member_id = m.id AND r.association_id = ? AND r.fiscal_year = ? LIMIT 1) AS reg_status
        FROM members m LEFT JOIN clubs c ON c.id = m.club_id
-      WHERE m.merged_into IS NULL AND (m.home_association_id = ? OR EXISTS (SELECT 1 FROM registrations r WHERE r.member_id = m.id AND r.association_id = ?))
+      WHERE m.merged_into IS NULL AND (m.home_association_id = ? OR EXISTS (SELECT 1 FROM registrations r WHERE r.member_id = m.id AND r.association_id = ?)
+             OR EXISTS (SELECT 1 FROM entries e JOIN tournaments t ON t.id = e.tournament_id WHERE (e.member_id = m.id OR e.partner_member_id = m.id) AND t.association_id = ?))
         AND (? = '' OR m.name LIKE ? OR m.kana LIKE ? OR m.member_no = ?)
-      ORDER BY m.kana LIMIT 300`,
-    scope, fy, scope, scope, q, `%${q}%`, `%${normalizeKana(q)}%`, q,
+      ORDER BY ${c.req.query('sort') === 'new' ? 'm.created_at DESC' : 'm.kana'} LIMIT 300`,
+    scope, fy, scope, scope, scope, q, `%${q}%`, `%${normalizeKana(q)}%`, q,
   );
-  const body = html`<form method="get" action="/admin/members"><input type="text" name="q" value="${q}" placeholder="氏名・ふりがな・会員番号"> <button class="small">検索</button></form>
+  const sortNew = c.req.query('sort') === 'new';
+  const body = html`<form method="get" action="/admin/members"><input type="text" name="q" value="${q}" placeholder="氏名・ふりがな・会員番号"> <select name="sort" style="max-width:160px;width:auto"><option value="kana" ${sortNew ? '' : 'selected'}>ふりがな順</option><option value="new" ${sortNew ? 'selected' : ''}>登録の新しい順</option></select> <button class="small">表示</button></form>
     <div class="tbl"><table><tr><th>会員番号</th><th>氏名</th><th>ふりがな</th><th>所属</th><th>状態</th><th>${fy}年度</th><th></th></tr>
     ${rows.map((m) => html`<tr><td>${m.member_no ?? '—'}</td><td>${m.name}</td><td>${m.kana}</td><td>${clubLabel(m.club_name)}</td><td>${badge(m.status)}</td><td>${m.reg_status ? badge(m.reg_status) : '—'}</td><td><a href="/admin/members/${m.id}">詳細</a></td></tr>`)}
     </table></div>
@@ -255,12 +307,12 @@ admin.get('/payments', async (c) => {
   }
   const body = html`<p class="mute">Stripe 分は Webhook で自動消込されるのでここには出ません。振込・PayPay・現金を通帳や受領と突き合わせて確認します。</p>
     <div class="tbl"><table><tr><th>作成日</th><th>内容</th><th>支払者</th><th>金額</th><th>方法</th><th>メモ</th><th></th></tr>
-    ${visible.map((p) => html`<tr><td>${fmtDate(p.created_at)}</td><td class="wrap-text">${p.note ?? p.kind}</td><td>${p.member_no ?? ''} ${p.payer_name ?? '—'}</td><td>${yen(p.amount)}</td><td>${METHOD_LABEL[p.method]?.split('（')[0]}</td>
+    ${visible.map((p) => html`<tr><td>${fmtDate(p.created_at)}</td><td class="wrap-text">${p.note ?? (p.kind === 'entry' ? '大会参加費' : '年度登録料')}</td><td>${p.member_no ?? ''} ${p.payer_name ?? '—'}</td><td>${yen(p.amount)}</td><td>${METHOD_LABEL[p.method]?.split('（')[0]}</td>
       <td><form method="post" action="/admin/payments/${p.id}/confirm" class="inline"><input type="text" name="note" placeholder="通帳の日付・名義など" style="max-width:220px"> <button class="small primary">入金確認</button></form></td>
       <td><form method="post" action="/admin/payments/${p.id}/cancel" class="inline"><button class="small btn--outline">取消</button></form></td></tr>`)}
     ${visible.length === 0 ? html`<tr><td colspan="7">消込待ちはありません</td></tr>` : ''}
     </table></div>`;
-  return c.html(page(c, { title: '入金の消込', body, admin: a, wide: true }));
+  return c.html(page(c, { title: '入金の確認（消込）', body, admin: a, wide: true }));
 });
 
 admin.post('/payments/:id/confirm', async (c) => {

@@ -75,6 +75,10 @@ try {
   check(pub.tournaments.some((t) => t.id === 'T-DEMO-OPEN'), '公開 API に受付中の大会が出る');
   check(!r.text.includes('@example.com'), '公開 API に個人情報が無い');
 
+  r = await anon.post('/dev/seed');
+  r = await anon.get('/dev');
+  check(r.status === 200, 'デモデータを補ってもエラーにならない（2 回目）');
+
   console.log('\n[0b] セキュリティの案内');
   r = await anon.get('/security');
   check(r.status === 200 && r.text.includes('誰が何を見られるか') && r.text.includes('漏えいが疑われるとき'), '専用ページ /security が開く');
@@ -144,6 +148,11 @@ try {
   check(r.text.includes('承認済み'), 'マイページで承認済みになる');
   r = await anon.get('/dev/mailbox.json');
   check(JSON.parse(r.text).some((m) => m.to_addr === 'smoke@example.com' && m.subject.includes('承認')), '承認メールが届く');
+  r = await admin.get('/admin');
+  check(r.text.includes('最近の受付') && r.text.includes('煙 試験'), '会員が入れた会員登録・年度登録が事務局のダッシュボードに出る');
+  check((r.text.match(/class="nav__link/g) ?? []).length <= 6, '事務局のメニューはまとまり単位（6 項目以内）');
+  r = await admin.get('/admin/registrations');
+  check(r.text.includes('admin-tabs') && r.text.includes('入金の確認（消込）'), 'まとまりの中はタブで切り替えられる');
 
   console.log('\n[4] 大会エントリー（ペア検索 → Stripe）');
   r = await member.get('/tournaments/T-DEMO-OPEN/entry?q=さとう');
@@ -257,6 +266,13 @@ try {
   check(r.status === 302 && r.location === '/login', '削除後はログインが切れる');
   r = await admin.get(`/admin/members/${memberId}`);
   check(r.text.includes('削除済み') && !r.text.includes('090-1234-5678') && r.text.includes('煙 試験'), '連絡先は消え、氏名は残る');
+
+  r = await anon.post('/dev/seed');
+  r = await admin.get('/admin/tournaments/T-DEMO-OPEN');
+  check(r.text.includes('煙 試験'), '「足りないデモデータを補う」を押しても、試しに入れたエントリーは消えない');
+  r = await anon.post('/dev/reset', { confirm: 'ちがう' });
+  r = await admin.get('/admin/tournaments/T-DEMO-OPEN');
+  check(r.text.includes('煙 試験'), '「リセット」と入れない限り、すべて消すことはできない');
 
   console.log('\n[7] 定期実行と監査ログ');
   r = await anon.get('/__scheduled?cron=0+0+*+*+*');

@@ -1,10 +1,10 @@
 // デモデータ（開発モードの /dev から投入）。暗号化が要るので SQL ではなく Worker 内で作る。
 import type { Env } from './env';
 import { audit } from './lib/audit';
-import { all, nowIso, run } from './lib/db';
+import { all, nowIso, one, run } from './lib/db';
 import { addDays, currentFiscalYear, todayJst } from './lib/fiscal';
 import { ulid } from './lib/ulid';
-import { createMember } from './services/members';
+import { createMember, findMemberByEmail } from './services/members';
 import { createPayment, markPaid } from './services/payments';
 
 const TABLES = ['deletion_requests', 'mail_outbox', 'reminders_sent', 'sequences', 'merge_candidates', 'rate_limits', 'api_tokens', 'sessions', 'magic_links', 'entries', 'registrations', 'payments', 'tournaments', 'admins', 'members', 'clubs', 'associations'];
@@ -14,7 +14,13 @@ export async function resetAll(env: Env): Promise<void> {
   // audit_log は削除不可のトリガーがあるので残る（サンプルでも「消せない」ことを確かめられる）
 }
 
-export async function seedDemo(env: Env): Promise<void> {
+/**
+ * デモデータを入れる。すでにデータがあるときは「足りないものだけ補う」（試しに入れた会員登録・年度登録・エントリーは消さない）。
+ * 何も無いときだけ、デモ用のエントリーや名寄せ候補も作る。すべて消して最初からにするのは resetAll のあと。
+ */
+export async function seedDemo(env: Env): Promise<{ fresh: boolean; added: number }> {
+  const fresh = !(await one(env.DB, 'SELECT 1 AS ok FROM associations LIMIT 1'));
+  let added = 0;
   const now = nowIso();
   const today = todayJst();
   const assocs = [
@@ -24,14 +30,14 @@ export async function seedDemo(env: Env): Promise<void> {
     { id: 'yonago-city', code: 'Y', name: '米子市テニス協会', fee: 2500 },
   ];
   for (const a of assocs) {
-    await run(env.DB, `INSERT INTO associations (id, code, name, annual_fee, fiscal_year_start_month, reg_note, bank_info, paypay_info, stripe_account, created_at) VALUES (?, ?, ?, ?, 4, ?, ?, ?, ?, ?)`,
+    await run(env.DB, `INSERT OR IGNORE INTO associations (id, code, name, annual_fee, fiscal_year_start_month, reg_note, bank_info, paypay_info, stripe_account, created_at) VALUES (?, ?, ?, ?, 4, ?, ?, ?, ?, ?)`,
       a.id, a.code, a.name, a.fee, '年度登録は 4 月 1 日〜翌年 3 月 31 日が有効期間です。', `○○銀行 ○○支店 普通 1234567 ${a.name}`, `PayPay ID: ${a.code.toLowerCase()}-tennis`, `acct_demo_${a.code}`, now);
   }
   const clubs = [
     ['club-tottori-lc', '鳥取ローンテニスクラブ', '鳥取市'], ['club-koyama', '湖山テニスクラブ', '鳥取市'], ['club-tottori-univ', '鳥取大学テニス部', '鳥取市'],
     ['club-kurayoshi', '倉吉テニスクラブ', '倉吉市'], ['club-yonago', '米子ローンテニスクラブ', '米子市'],
   ];
-  for (const [id, name, area] of clubs) await run(env.DB, `INSERT INTO clubs (id, name, area, created_at) VALUES (?, ?, ?, ?)`, id, name, area, now);
+  for (const [id, name, area] of clubs) await run(env.DB, `INSERT OR IGNORE INTO clubs (id, name, area, created_at) VALUES (?, ?, ?, ?)`, id, name, area, now);
 
   const fy = currentFiscalYear(4);
   const demo = [
@@ -46,6 +52,15 @@ export async function seedDemo(env: Env): Promise<void> {
   ];
   const ids: string[] = [];
   for (const d of demo) {
+    // すでにいる会員（同じメール、または同じ氏名の仮会員）は作り直さない
+    const existing = d.email
+      ? await findMemberByEmail(env, d.email)
+      : d.dupOf !== undefined
+        ? await one<{ id: string }>(env.DB, `SELECT id FROM members WHERE family_name = ? AND given_name = ? AND status = 'provisional' AND email_hash IS NULL ORDER BY created_at DESC LIMIT 1`, d.fn, d.gn)
+        : await one<{ id: string }>(env.DB, `SELECT id FROM members WHERE family_name = ? AND given_name = ? ORDER BY created_at LIMIT 1`, d.fn, d.gn);
+    if (existing && !(d.dupOf !== undefined && existing.id === ids[d.dupOf])) { ids.push(existing.id); continue; }
+    if (!fresh && d.dupOf !== undefined) { ids.push(''); continue; } // 名寄せ候補のデモは最初の 1 回だけ
+    added++;
     const m = await createMember(env, { familyName: d.fn, givenName: d.gn, familyKana: d.fk, givenKana: d.gk, sex: d.sex, birthYear: d.birth, email: d.email, phone: d.phone, postal: d.postal, address: d.address, clubId: d.club, homeAssociationId: d.home, status: d.status ?? 'active', consented: Boolean(d.email) });
     ids.push(m.id);
     if (d.manager) await run(env.DB, 'UPDATE members SET club_manager = 1 WHERE id = ?', m.id);
@@ -66,9 +81,12 @@ export async function seedDemo(env: Env): Promise<void> {
   }
 
   // 何年も年度登録のない会員（連絡先の自動削除の確認用）。最後の登録は 4 年度前
+  if (!(await findMemberByEmail(env, 'kobayashi@example.com'))) {
+  added++;
   const old = await createMember(env, { familyName: '小林', givenName: '昭', familyKana: 'こばやし', givenKana: 'あきら', sex: 'male', birthYear: 1950, email: 'kobayashi@example.com', phone: '090-0000-0009', postal: '680-0009', address: '鳥取市古町9-9', clubId: 'club-koyama', homeAssociationId: 'tottori-city', status: 'active', consented: true });
   await run(env.DB, `UPDATE members SET created_at = ? WHERE id = ?`, `${fy - 6}-05-01T00:00:00.000Z`, old.id);
   await run(env.DB, `INSERT INTO registrations (id, member_id, association_id, fiscal_year, category, fee, status, source, approved_by, approved_at, created_at) VALUES (?, ?, 'tottori-city', ?, 'senior', 3000, 'approved', 'import', 'seed', ?, ?)`, ulid(), old.id, fy - 4, now, now);
+  }
 
   const events = JSON.stringify([
     { code: 'MD', name: '男子ダブルス', classes: ['A', 'B'], fee: 3000, teamSize: 2 },
@@ -86,15 +104,18 @@ export async function seedDemo(env: Env): Promise<void> {
     { id: 'T-DEMO-CLOSED', assoc: 'tottori-city', name: `鳥取市春季シングルス大会（締切済み）`, held: addDays(today, -60), venue: '鳥取市営コート', start: addDays(today, -120), end: addDays(today, -80), status: 'closed', methods: ['bank', 'cash'], policy: 'hold', rule: [['tottori-city']], note: null },
   ];
   for (const t of tournaments) {
-    await run(env.DB, `INSERT INTO tournaments (id, association_id, name, held_on, venue, entry_start, entry_end, eligibility, requires_registration, eligibility_json, partner_rule, events_json, payment_methods_json, unpaid_policy, capacity, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 64, ?, ?)`,
+    await run(env.DB, `INSERT OR IGNORE INTO tournaments (id, association_id, name, held_on, venue, entry_start, entry_end, eligibility, requires_registration, eligibility_json, partner_rule, events_json, payment_methods_json, unpaid_policy, capacity, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 64, ?, ?)`,
       t.id, t.assoc, t.name, t.held, t.venue, t.start, t.end, t.note, t.rule.length ? 1 : 0, JSON.stringify(t.rule), t.partner ?? 'same', events, JSON.stringify(t.methods), t.policy, t.status, now);
   }
-  // 既存のエントリー（確定 1 件・支払待ち 1 件）
+  // デモのエントリー（確定 1 件・支払待ち 1 件）は、何も無いところから入れたときだけ
+  if (fresh) {
   const pe = await createPayment(env, { kind: 'entry', associationId: 'tottori-city', payerMemberId: ids[2], amount: 3000, method: 'stripe' });
   await run(env.DB, `INSERT INTO entries (id, tournament_id, event_code, class, member_id, partner_member_id, source, payment_id, status, created_at) VALUES (?, 'T-DEMO-OPEN', 'MD', 'B', ?, ?, 'web', ?, 'pending_payment', ?)`, ulid(), ids[2], ids[6], pe.id, now);
   await markPaid(env, pe.id, { actorType: 'system', actor: 'stripe:webhook', externalId: 'cs_demo_seed' });
   const pe2 = await createPayment(env, { kind: 'entry', associationId: 'tottori-city', payerMemberId: ids[1], amount: 3000, method: 'bank' });
   await run(env.DB, `INSERT INTO entries (id, tournament_id, event_code, class, member_id, partner_member_id, source, payment_id, status, created_at) VALUES (?, 'T-DEMO-OPEN', 'WD', 'A', ?, ?, 'web', ?, 'pending_payment', ?)`, ulid(), ids[1], ids[3], pe2.id, now);
+
+  }
 
   const admins = [
     ['sysadmin@example.com', '広報局長（システム管理者）', null, 'sysadmin', '[]'],
@@ -104,9 +125,10 @@ export async function seedDemo(env: Env): Promise<void> {
     ['viewer@example.com', '鳥取市 閲覧のみ', 'tottori-city', 'viewer', '[]'],
     ['shop@example.com', 'テニスショップ', 'tottori-city', 'shop', '[]'],
   ];
-  for (const [email, name, assoc, role, tids] of admins) await run(env.DB, `INSERT INTO admins (id, email, name, association_id, role, tournament_ids_json, active, created_at) VALUES (?, ?, ?, ?, ?, ?, 1, ?)`, ulid(), email, name, assoc, role, tids, now);
+  for (const [email, name, assoc, role, tids] of admins) await run(env.DB, `INSERT OR IGNORE INTO admins (id, email, name, association_id, role, tournament_ids_json, active, created_at) VALUES (?, ?, ?, ?, ?, ?, 1, ?)`, ulid(), email, name, assoc, role, tids, now);
 
-  await audit(env, { actorType: 'system', actor: 'seed', action: 'seed.demo', after: { members: ids.length, tournaments: tournaments.length } });
+  await audit(env, { actorType: 'system', actor: 'seed', action: fresh ? 'seed.demo' : 'seed.top_up', after: { added_members: added, tournaments: tournaments.length } });
+  return { fresh, added };
 }
 
 export async function counts(env: Env): Promise<Record<string, number>> {
