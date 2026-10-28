@@ -33,7 +33,7 @@ shop.get('/', async (c) => {
   const results = q ? await searchMembers(c.env, q) : [];
   const partners = pq ? await searchMembers(c.env, pq) : [];
   const ts = await all<Tournament>(c.env.DB, `SELECT * FROM tournaments WHERE status = 'open' ORDER BY held_on`);
-  const assocs = await all<Association>(c.env.DB, 'SELECT * FROM associations ORDER BY id');
+  const assocs = await all<Association>(c.env.DB, 'SELECT * FROM associations ORDER BY sort_order, code');
   const clubs = await all<Club>(c.env.DB, 'SELECT * FROM clubs ORDER BY name');
   const body = html`
     ${clubDatalist(clubs)}

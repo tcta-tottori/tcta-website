@@ -1,11 +1,11 @@
 // D1 の行の型（主要テーブル）。
 export interface Association {
-  id: string; code: string; name: string; annual_fee: number; fiscal_year_start_month: number;
+  id: string; code: string; name: string; annual_fee: number; fiscal_year_start_month: number; sort_order: number;
   reg_note: string | null; bank_info: string | null; paypay_info: string | null; stripe_account: string | null;
 }
 export interface Club { id: string; name: string; area: string | null }
 export interface Member {
-  id: string; member_no: string | null; name: string; kana: string; family_name: string; given_name: string; family_kana: string; given_kana: string; sex: string | null; birth_year: number | null;
+  id: string; member_no: string | null; name: string; kana: string; family_name: string; given_name: string; family_kana: string; given_kana: string; sex: string | null; birth_year: number | null; birth_month: number | null;
   email_hash: string | null; email_enc: string | null; phone_enc: string | null; postal_enc: string | null; address_enc: string | null;
   club_id: string | null; home_association_id: string | null; club_manager: number; status: string;
   withdrawn_at: string | null; contacts_purged_at: string | null; merged_into: string | null; consented_at: string | null;

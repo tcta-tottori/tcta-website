@@ -24,14 +24,14 @@ export async function seedDemo(env: Env): Promise<{ fresh: boolean; added: numbe
   const now = nowIso();
   const today = todayJst();
   const assocs = [
-    { id: 'tottori-pref', code: 'P', name: '鳥取県テニス協会', fee: 2000 },
-    { id: 'tottori-city', code: 'T', name: '鳥取市テニス協会', fee: 3000 },
-    { id: 'kurayoshi-city', code: 'K', name: '倉吉市テニス協会', fee: 2000 },
-    { id: 'yonago-city', code: 'Y', name: '米子市テニス協会', fee: 2500 },
+    { id: 'tottori-pref', code: 'P', name: '鳥取県テニス協会', fee: 2000, order: 1 },
+    { id: 'tottori-city', code: 'T', name: '鳥取市テニス協会', fee: 3000, order: 2 },
+    { id: 'kurayoshi-city', code: 'K', name: '倉吉市テニス協会', fee: 2000, order: 3 },
+    { id: 'yonago-city', code: 'Y', name: '米子市テニス協会', fee: 2500, order: 4 },
   ];
   for (const a of assocs) {
-    await run(env.DB, `INSERT OR IGNORE INTO associations (id, code, name, annual_fee, fiscal_year_start_month, reg_note, bank_info, paypay_info, stripe_account, created_at) VALUES (?, ?, ?, ?, 4, ?, ?, ?, ?, ?)`,
-      a.id, a.code, a.name, a.fee, '年度登録は 4 月 1 日〜翌年 3 月 31 日が有効期間です。', `○○銀行 ○○支店 普通 1234567 ${a.name}`, `PayPay ID: ${a.code.toLowerCase()}-tennis`, `acct_demo_${a.code}`, now);
+    await run(env.DB, `INSERT OR IGNORE INTO associations (id, code, name, annual_fee, fiscal_year_start_month, reg_note, bank_info, paypay_info, stripe_account, created_at, sort_order) VALUES (?, ?, ?, ?, 4, ?, ?, ?, ?, ?, ?)`,
+      a.id, a.code, a.name, a.fee, '年度登録は 4 月 1 日〜翌年 3 月 31 日が有効期間です。', `○○銀行 ○○支店 普通 1234567 ${a.name}`, `PayPay ID: ${a.code.toLowerCase()}-tennis`, `acct_demo_${a.code}`, now, a.order);
   }
   const clubs = [
     ['club-tottori-lc', '鳥取ローンテニスクラブ', '鳥取市'], ['club-koyama', '湖山テニスクラブ', '鳥取市'], ['club-tottori-univ', '鳥取大学テニス部', '鳥取市'],
@@ -61,7 +61,7 @@ export async function seedDemo(env: Env): Promise<{ fresh: boolean; added: numbe
     if (existing && !(d.dupOf !== undefined && existing.id === ids[d.dupOf])) { ids.push(existing.id); continue; }
     if (!fresh && d.dupOf !== undefined) { ids.push(''); continue; } // 名寄せ候補のデモは最初の 1 回だけ
     added++;
-    const m = await createMember(env, { familyName: d.fn, givenName: d.gn, familyKana: d.fk, givenKana: d.gk, sex: d.sex, birthYear: d.birth, email: d.email, phone: d.phone, postal: d.postal, address: d.address, clubId: d.club, homeAssociationId: d.home, status: d.status ?? 'active', consented: Boolean(d.email) });
+    const m = await createMember(env, { familyName: d.fn, givenName: d.gn, familyKana: d.fk, givenKana: d.gk, sex: d.sex, birthYear: d.birth, birthMonth: d.birth ? 4 : null, email: d.email, phone: d.phone, postal: d.postal, address: d.address, clubId: d.club, homeAssociationId: d.home, status: d.status ?? 'active', consented: Boolean(d.email) });
     ids.push(m.id);
     if (d.manager) await run(env.DB, 'UPDATE members SET club_manager = 1 WHERE id = ?', m.id);
     for (const aid of d.reg) {
@@ -83,7 +83,7 @@ export async function seedDemo(env: Env): Promise<{ fresh: boolean; added: numbe
   // 何年も年度登録のない会員（連絡先の自動削除の確認用）。最後の登録は 4 年度前
   if (!(await findMemberByEmail(env, 'kobayashi@example.com'))) {
   added++;
-  const old = await createMember(env, { familyName: '小林', givenName: '昭', familyKana: 'こばやし', givenKana: 'あきら', sex: 'male', birthYear: 1950, email: 'kobayashi@example.com', phone: '090-0000-0009', postal: '680-0009', address: '鳥取市古町9-9', clubId: 'club-koyama', homeAssociationId: 'tottori-city', status: 'active', consented: true });
+  const old = await createMember(env, { familyName: '小林', givenName: '昭', familyKana: 'こばやし', givenKana: 'あきら', sex: 'male', birthYear: 1950, birthMonth: 8, email: 'kobayashi@example.com', phone: '090-0000-0009', postal: '680-0009', address: '鳥取市古町9-9', clubId: 'club-koyama', homeAssociationId: 'tottori-city', status: 'active', consented: true });
   await run(env.DB, `UPDATE members SET created_at = ? WHERE id = ?`, `${fy - 6}-05-01T00:00:00.000Z`, old.id);
   await run(env.DB, `INSERT INTO registrations (id, member_id, association_id, fiscal_year, category, fee, status, source, approved_by, approved_at, created_at) VALUES (?, ?, 'tottori-city', ?, 'senior', 3000, 'approved', 'import', 'seed', ?, ?)`, ulid(), old.id, fy - 4, now, now);
   }

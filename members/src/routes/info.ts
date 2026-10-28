@@ -34,7 +34,7 @@ const THREATS: [string, string][] = [
 
 info.get('/security', async (c) => {
   const env = c.env;
-  const assocs = await all<Association>(env.DB, "SELECT * FROM associations ORDER BY (id LIKE '%pref%') DESC, name");
+  const assocs = await all<Association>(env.DB, "SELECT * FROM associations ORDER BY sort_order, code");
   const prod = isProd(env);
   const body = html`
     <div class="card">
@@ -50,7 +50,7 @@ info.get('/security', async (c) => {
     <h2 id="data">お預かりする情報</h2>
     <div class="tbl"><table>
       <tr><th>区分</th><th>項目</th><th>目的</th><th>保存のしかた</th></tr>
-      <tr><td>本人の情報</td><td class="wrap-text">姓・名、せい・めい、性別、生年（年のみ）、所属</td><td class="wrap-text">会員の識別、年齢区分の判定、ドロー作成</td><td class="wrap-text">通常の列。生年月日ではなく生年だけを持ちます</td></tr>
+      <tr><td>本人の情報</td><td class="wrap-text">姓・名、せい・めい、性別、生年月（日は持たない）、所属</td><td class="wrap-text">会員の識別、年齢区分の判定、ドロー作成</td><td class="wrap-text">通常の列。生まれた日は持たず、年と月だけを持ちます</td></tr>
       <tr><td>連絡先</td><td class="wrap-text">メール、電話、郵便番号、住所</td><td class="wrap-text">ログインリンクと通知、事務局からの連絡</td><td class="wrap-text">AES-256-GCM で列ごとに暗号化。鍵はプログラムの外（Workers Secrets）に置き、データベースの複製が漏れても読めません</td></tr>
       <tr><td>登録・エントリー</td><td class="wrap-text">年度登録、大会エントリー、ペア、支払の記録（金額・方法・確認者・領収書番号）</td><td class="wrap-text">参加資格の判定、入金確認、会計</td><td class="wrap-text">カード番号は預かりません（決済は Stripe の画面で完結し、こちらには結果だけが届きます）</td></tr>
       <tr><td>記録</td><td class="wrap-text">誰が・いつ・何を閲覧／出力／更新したか</td><td class="wrap-text">安全管理の確認、問い合わせへの回答</td><td class="wrap-text">追記のみ。変更・削除はデータベースの仕組みで禁止</td></tr>
@@ -152,14 +152,14 @@ info.get('/security', async (c) => {
 
 info.get('/privacy', async (c) => {
   const env = c.env;
-  const assocs = await all<Association>(env.DB, "SELECT * FROM associations ORDER BY (id LIKE '%pref%') DESC, name");
+  const assocs = await all<Association>(env.DB, "SELECT * FROM associations ORDER BY sort_order, code");
   const names = assocs.length ? assocs.map((a) => a.name).join('、') : '参加する各テニス協会';
   const body = html`
     <div class="flash">この規程は役員会での承認前の<b>案</b>です。確定したものは各協会のサイトにも掲載し、会員登録時に同意をいただきます。</div>
     <h2>1. 共同利用の主体と目的</h2>
     <div class="card"><p>${names}（以下「参加協会」）は、会員の情報を 1 つの会員マスターで共同利用します。目的は、年度登録の受付と承認、大会エントリーの受付と参加資格の判定、入金の確認、大会運営（ドロー作成・結果の公表）、会員への連絡です。</p></div>
     <h2>2. 共同利用する情報</h2>
-    <div class="card"><ul class="bullet-list"><li>姓・名、せい・めい、性別、生年、所属</li><li>メールアドレス、電話番号、郵便番号、住所</li><li>年度登録、大会エントリー、ペア、支払の記録</li></ul><p class="mute">生年月日は持たず、年齢区分の判定に必要な生年だけを預かります。</p></div>
+    <div class="card"><ul class="bullet-list"><li>姓・名、せい・めい、性別、生年月、所属</li><li>メールアドレス、電話番号、郵便番号、住所</li><li>年度登録、大会エントリー、ペア、支払の記録</li></ul><p class="mute">生まれた日は持たず、年齢区分の判定に必要な生年月だけを預かります。</p></div>
     <h2>3. 閲覧できる範囲</h2>
     <div class="card"><ul class="bullet-list"><li>県協会: 県登録のある会員全員</li><li>各市協会: 自市に登録のある会員のみ</li><li>県と市の両方に登録がある会員は双方から見えます</li><li>連絡先（メール・電話・住所）を見られるのは、登録先の協会の事務局（協会管理ロール）だけです</li></ul></div>
     <h2>4. 大会主催者の権限</h2>

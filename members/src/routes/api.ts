@@ -15,7 +15,7 @@ export const api = new Hono<{ Bindings: Env }>();
 api.get('/v1/health', (c) => c.json({ ok: true, env: c.env.APP_ENV, at: nowIso() }));
 
 api.get('/v1/tournaments', async (c) => {
-  const assocs = await all<Association>(c.env.DB, 'SELECT * FROM associations ORDER BY id');
+  const assocs = await all<Association>(c.env.DB, 'SELECT * FROM associations ORDER BY sort_order, code');
   const rows = await all<Tournament & { association_name: string }>(
     c.env.DB,
     `SELECT t.*, a.name AS association_name FROM tournaments t JOIN associations a ON a.id = t.association_id WHERE t.status IN ('open','closed') ORDER BY t.held_on`,
@@ -43,6 +43,40 @@ api.get('/v1/postal/:code', async (c) => {
     return c.json({ ok: true, zipcode: code, prefecture: r.address1, city: r.address2, town: r.address3, address: `${r.address1}${r.address2}${r.address3}` }, 200, { 'Cache-Control': 'public, max-age=86400' });
   } catch {
     return c.json({ ok: false, error: '住所の検索に失敗しました' }, 502);
+  }
+});
+
+/** 住所 → 郵便番号（都道府県 → 市区町村 → 町域と順に選ぶ）。HeartRails Geo API を Worker 経由で引く。 */
+const PREFS = ['北海道','青森県','岩手県','宮城県','秋田県','山形県','福島県','茨城県','栃木県','群馬県','埼玉県','千葉県','東京都','神奈川県','新潟県','富山県','石川県','福井県','山梨県','長野県','岐阜県','静岡県','愛知県','三重県','滋賀県','京都府','大阪府','兵庫県','奈良県','和歌山県','鳥取県','島根県','岡山県','広島県','山口県','徳島県','香川県','愛媛県','高知県','福岡県','佐賀県','長崎県','熊本県','大分県','宮崎県','鹿児島県','沖縄県'];
+async function geo(params: Record<string, string>) {
+  const q = new URLSearchParams({ ...params }).toString();
+  const res = await fetch(`https://geoapi.heartrails.com/api/json?${q}`, { cf: { cacheTtl: 604800, cacheEverything: true } } as RequestInit);
+  return (await res.json()) as { response: { location?: { city: string; town: string; postal: string }[]; error?: string } };
+}
+api.get('/v1/address/cities', async (c) => {
+  const pref = c.req.query('pref') ?? '';
+  if (!PREFS.includes(pref)) return c.json({ ok: false, error: '都道府県を選んでください' }, 400);
+  try {
+    const j = await geo({ method: 'getCities', prefecture: pref });
+    const cities = [...new Set((j.response.location ?? []).map((l) => l.city))];
+    return c.json({ ok: true, prefecture: pref, cities }, 200, { 'Cache-Control': 'public, max-age=604800' });
+  } catch {
+    return c.json({ ok: false, error: '市区町村の取得に失敗しました' }, 502);
+  }
+});
+api.get('/v1/address/towns', async (c) => {
+  const pref = c.req.query('pref') ?? '';
+  const city = (c.req.query('city') ?? '').slice(0, 40);
+  if (!PREFS.includes(pref) || !city) return c.json({ ok: false, error: '市区町村を選んでください' }, 400);
+  try {
+    const j = await geo({ method: 'getTowns', prefecture: pref, city });
+    const seen = new Set<string>();
+    const towns = (j.response.location ?? [])
+      .filter((l) => l.city === city && l.postal && !seen.has(l.town + l.postal) && seen.add(l.town + l.postal))
+      .map((l) => ({ town: l.town === 'NULL' ? '' : l.town, postal: l.postal }));
+    return c.json({ ok: true, prefecture: pref, city, towns }, 200, { 'Cache-Control': 'public, max-age=604800' });
+  } catch {
+    return c.json({ ok: false, error: '町域の取得に失敗しました' }, 502);
   }
 });
 
