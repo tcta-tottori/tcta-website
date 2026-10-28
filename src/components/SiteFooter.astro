@@ -1,67 +1,16 @@
 ---
 // 全ページ共通のフッター。移行前は10ファイルに同じマークアップが重複していた。
-// ロゴの下の SNS は、管理画面 → Settings → Social に入れたアカウント（src/data/social.js）に、
-// LINE 公式アカウント（src/data/links.js の LINE_OFFICIAL。URL は固定）を Instagram の横に足したもの。
-import Icon from './Icon.astro';
-import { siteData } from '../lib/cms.js';
-import { LINE_OFFICIAL } from '../data/links.js';
-
-const { SOCIAL } = await siteData(Astro);
-
-// LINE は Instagram の直後に入れる（Instagram が無いときは末尾）
-const line = { key: 'line', label: 'LINE', url: LINE_OFFICIAL.url };
-const igAt = SOCIAL.findIndex((s) => s.key === 'instagram');
-const SNS = igAt >= 0
-  ? [...SOCIAL.slice(0, igAt + 1), line, ...SOCIAL.slice(igAt + 1)]
-  : [...SOCIAL, line];
+// ロゴの下の SNS は SnsLinks.astro（スマホのメニューと共用）。
+import DecoSquares from './DecoSquares.astro';
+import SnsLinks from './SnsLinks.astro';
 ---
 
 <footer class="site-footer">
-  {/* 地の黒とわずかに色の違う四角を、大きさも位置もばらばらに散らした背景。
-      止まっているときも常に少しだけ漂い、スクロール中は --depth の分だけ大きく動く。
-      --depth は四角の大きさから決めてあるので、大きい（＝手前の）四角ほど大きく動く。
-      値は決め打ち（毎回同じ見た目になるよう、生成時に固定してある）。 */}
-  <div class="footer-deco" aria-hidden="true">
-    <span class="footer-dot" style="--x:63.0%;--y:23.6%;--s:185px;--c:#202020;--d:9.2s;--delay:-4.8s;--dx:6px;--dy:10px;--depth:1.68;--r:-1.3deg"></span>
-    <span class="footer-dot" style="--x:66.9%;--y:77.9%;--s:53px;--c:#171717;--d:9.9s;--delay:-1.9s;--dx:8px;--dy:10px;--depth:0.31;--r:-0.4deg"></span>
-    <span class="footer-dot" style="--x:11.2%;--y:82.4%;--s:166px;--c:#202020;--d:8.2s;--delay:-0.6s;--dx:2px;--dy:-6px;--depth:1.48;--r:0.7deg"></span>
-    <span class="footer-dot" style="--x:73.1%;--y:49.5%;--s:150px;--c:#171717;--d:10.0s;--delay:-5.5s;--dx:-4px;--dy:0px;--depth:1.32;--r:-1.4deg"></span>
-    <span class="footer-dot" style="--x:78.7%;--y:16.5%;--s:126px;--c:#232323;--d:9.8s;--delay:-5.6s;--dx:-1px;--dy:14px;--depth:1.07;--r:-2.3deg"></span>
-    <span class="footer-dot" style="--x:28.7%;--y:0.6%;--s:122px;--c:#121212;--d:10.9s;--delay:-0.7s;--dx:14px;--dy:8px;--depth:1.03;--r:-0.4deg"></span>
-    <span class="footer-dot" style="--x:74.9%;--y:91.8%;--s:42px;--c:#232323;--d:10.6s;--delay:-6.2s;--dx:-5px;--dy:-5px;--depth:0.20;--r:0.7deg"></span>
-    <span class="footer-dot" style="--x:56.1%;--y:25.7%;--s:40px;--c:#202020;--d:7.0s;--delay:-11.6s;--dx:1px;--dy:2px;--depth:0.18;--r:-0.8deg"></span>
-    <span class="footer-dot" style="--x:34.2%;--y:29.2%;--s:187px;--c:#171717;--d:10.3s;--delay:-7.1s;--dx:-18px;--dy:-19px;--depth:1.70;--r:-2.5deg"></span>
-    <span class="footer-dot" style="--x:12.6%;--y:61.5%;--s:136px;--c:#232323;--d:9.3s;--delay:-5.7s;--dx:-11px;--dy:8px;--depth:1.17;--r:-0.2deg"></span>
-    <span class="footer-dot" style="--x:45.6%;--y:97.7%;--s:49px;--c:#0E0E0E;--d:8.0s;--delay:-5.8s;--dx:0px;--dy:7px;--depth:0.27;--r:2.4deg"></span>
-    <span class="footer-dot" style="--x:66.4%;--y:3.2%;--s:79px;--c:#1E1414;--d:7.4s;--delay:-8.5s;--dx:10px;--dy:-7px;--depth:0.58;--r:1.4deg"></span>
-    <span class="footer-dot" style="--x:74.8%;--y:47.0%;--s:137px;--c:#232323;--d:7.1s;--delay:-7.8s;--dx:-10px;--dy:14px;--depth:1.18;--r:1.1deg"></span>
-    <span class="footer-dot" style="--x:69.5%;--y:39.3%;--s:177px;--c:#1E1414;--d:8.2s;--delay:-5.2s;--dx:3px;--dy:9px;--depth:1.60;--r:0.4deg"></span>
-    <span class="footer-dot" style="--x:85.4%;--y:30.4%;--s:181px;--c:#232323;--d:8.8s;--delay:-3.1s;--dx:-1px;--dy:19px;--depth:1.64;--r:-2.9deg"></span>
-    <span class="footer-dot" style="--x:92.1%;--y:34.4%;--s:146px;--c:#101010;--d:9.8s;--delay:-3.3s;--dx:8px;--dy:-0px;--depth:1.28;--r:1.6deg"></span>
-    <span class="footer-dot" style="--x:40.3%;--y:26.0%;--s:160px;--c:#171717;--d:9.6s;--delay:-7.0s;--dx:16px;--dy:-5px;--depth:1.42;--r:-2.3deg"></span>
-    <span class="footer-dot" style="--x:4.6%;--y:35.1%;--s:43px;--c:#121212;--d:9.4s;--delay:-10.8s;--dx:-6px;--dy:9px;--depth:0.21;--r:-2.3deg"></span>
-    <span class="footer-dot" style="--x:5.4%;--y:35.8%;--s:149px;--c:#101010;--d:6.9s;--delay:-1.5s;--dx:11px;--dy:2px;--depth:1.31;--r:-3.8deg"></span>
-    <span class="footer-dot" style="--x:87.6%;--y:31.2%;--s:92px;--c:#232323;--d:8.4s;--delay:-3.3s;--dx:3px;--dy:-0px;--depth:0.72;--r:1.9deg"></span>
-    <span class="footer-dot" style="--x:77.3%;--y:85.7%;--s:119px;--c:#121212;--d:7.7s;--delay:-1.8s;--dx:-2px;--dy:-2px;--depth:1.00;--r:-3.2deg"></span>
-    <span class="footer-dot" style="--x:59.8%;--y:45.7%;--s:86px;--c:#202020;--d:11.0s;--delay:-5.4s;--dx:10px;--dy:9px;--depth:0.66;--r:1.6deg"></span>
-    <span class="footer-dot" style="--x:91.7%;--y:82.7%;--s:77px;--c:#0E0E0E;--d:6.7s;--delay:-5.9s;--dx:-8px;--dy:-4px;--depth:0.56;--r:-2.3deg"></span>
-    <span class="footer-dot" style="--x:67.6%;--y:54.5%;--s:80px;--c:#101010;--d:7.8s;--delay:-4.7s;--dx:11px;--dy:-11px;--depth:0.59;--r:-1.2deg"></span>
-    <span class="footer-dot" style="--x:41.2%;--y:58.6%;--s:155px;--c:#171717;--d:8.8s;--delay:-6.2s;--dx:-13px;--dy:5px;--depth:1.37;--r:-1.5deg"></span>
-    <span class="footer-dot" style="--x:20.5%;--y:26.3%;--s:85px;--c:#232323;--d:10.1s;--delay:-7.8s;--dx:1px;--dy:7px;--depth:0.65;--r:-0.0deg"></span>
-  </div>
+  <DecoSquares />
   <div class="container site-footer__grid">
     <div class="site-footer__brand">
       <img src="assets/img/logo-white.png" alt="鳥取市テニス協会 TOTTORI-CITY TENNIS ASSOCIATION" width="648" height="240">
-      {SNS.length > 0 && (
-        <ul class="site-footer__sns" aria-label="協会の SNS">
-          {SNS.map((s) => (
-            <li><a class="sns-link" href={s.url} target="_blank" rel="me noopener noreferrer">
-              <Icon name={s.key} class="sns-link__ico" />
-              <span class="sns-link__label">{s.label}</span>
-            </a></li>
-          ))}
-        </ul>
-      )}
+      <SnsLinks class="site-footer__sns" />
     </div>
     <div><a class="fw fw--head" href="index.html">ホーム</a></div>
     <div>

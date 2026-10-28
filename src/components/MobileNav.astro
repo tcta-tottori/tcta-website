@@ -1,5 +1,7 @@
 ---
 import { MOBILE_NAV } from '../config/nav.js';
+import DecoSquares from './DecoSquares.astro';
+import SnsLinks from './SnsLinks.astro';
 
 interface Props {
   /** 現在地として強調するナビの key */
@@ -7,22 +9,24 @@ interface Props {
 }
 
 const { active } = Astro.props;
+
+/** お問い合わせも同じ行として並べる（フッターと同じく、矢印やボタンは付けない） */
+const ITEMS = [...MOBILE_NAV, { key: 'contact', label: 'お問い合わせ', href: 'contact.html' }];
 ---
 
 <div class="mobile-nav" id="mobile-nav" aria-hidden="true">
-  {/* 開くときは上の項目から順に、閉じるときは下の項目から順に出入りさせる（style.css の .mobile-nav__item）。
-      --i が上から何番目か、--n が項目の総数（お問い合わせボタンを含む）。遅れ時間はこの2つから CSS が計算する。 */}
-  <nav aria-label="モバイルナビゲーション" style={`--n:${MOBILE_NAV.length + 1}`}>
-    {/* ヘッダーと最初の行のあいだの余白を覆う白い帯（style.css の .mobile-nav__band）。
-        ページを移るときの切り替え（ビュートランジション）でも帯として写すので、擬似要素ではなく実要素にしてある */}
-    <span class="mobile-nav__band" aria-hidden="true"></span>
-    {MOBILE_NAV.map((item, i) => (
+  {/* フッターと同じ黒地＋漂う四角。開くときは黒地が画面の下からせり上がり、覆い終わってから
+      各行の文字がそれぞれの下線（見えない線）の下から出てくる（style.css の .mobile-nav）。
+      --i が上から何番目か（2列なので左→右、上→下の順）。文字の出る遅れはこの値から CSS が計算する。 */}
+  <DecoSquares class="mobile-nav__deco" />
+  <nav class="mobile-nav__grid" aria-label="モバイルナビゲーション">
+    {ITEMS.map((item, i) => (
       <a
-        class:list={['mobile-nav__link', 'mobile-nav__item', active === item.key && 'is-active']}
+        class:list={['mobile-nav__link', active === item.key && 'is-active']}
         href={item.href}
         style={`--i:${i}`}
-      >{item.label} <span class="ar">→</span></a>
+      ><span class="mobile-nav__tx"><span>{item.label}</span></span></a>
     ))}
-    <a class="btn btn--primary mobile-nav__item" href="contact.html" style={`--i:${MOBILE_NAV.length}`}>お問い合わせ <span class="aw">→</span></a>
   </nav>
+  <div class="mobile-nav__sns" style={`--i:${ITEMS.length}`}><SnsLinks /></div>
 </div>

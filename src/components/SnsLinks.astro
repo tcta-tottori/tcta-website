@@ -1,0 +1,33 @@
+---
+// 協会の SNS（フッターのロゴの下と、スマホのメニューの下に出す）。
+// 管理画面 → Settings → Social に入れたアカウント（src/data/social.js）に、
+// LINE 公式アカウント（src/data/links.js の LINE_OFFICIAL。URL は固定）を Instagram の横に足したもの。
+import Icon from './Icon.astro';
+import { siteData } from '../lib/cms.js';
+import { LINE_OFFICIAL } from '../data/links.js';
+
+interface Props {
+  class?: string;
+}
+const { class: extra } = Astro.props;
+
+const { SOCIAL } = await siteData(Astro);
+
+// LINE は Instagram の直後に入れる（Instagram が無いときは末尾）
+const line = { key: 'line', label: 'LINE', url: LINE_OFFICIAL.url };
+const igAt = SOCIAL.findIndex((s) => s.key === 'instagram');
+const SNS = igAt >= 0
+  ? [...SOCIAL.slice(0, igAt + 1), line, ...SOCIAL.slice(igAt + 1)]
+  : [...SOCIAL, line];
+---
+
+{SNS.length > 0 && (
+  <ul class:list={['sns-list', extra]} aria-label="協会の SNS">
+    {SNS.map((s) => (
+      <li><a class="sns-link" href={s.url} target="_blank" rel="me noopener noreferrer">
+        <Icon name={s.key} class="sns-link__ico" />
+        <span class="sns-link__label">{s.label}</span>
+      </a></li>
+    ))}
+  </ul>
+)}
