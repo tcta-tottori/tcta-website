@@ -762,133 +762,156 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 .hamburger[aria-expanded="true"] span:nth-child(2) { opacity: 0; }
 .hamburger[aria-expanded="true"] span:nth-child(3) { transform: translateY(-8px) rotate(-45deg); }
 
-/* 開閉のアニメーション（見た目は下線つきの行のまま。動きだけ、1枚ずつの札を配るように出す）。
-   閉じているあいだは全項目をヘッダーの下（1枚下の層）に重ねて隠してあり、
-   開くと上の項目から順に滑り出して自分の位置につく。上の項目ほど手前に重ねてあるので、
-   遅れて出る下の項目は上の項目の裏（下の層）から出てくるように見える（行の背景を白にして裏にいるあいだは隠す）。
-   出だしは速く、位置につく手前でぐっと減速する（強めのイーズアウト）。
-   順番の間隔には緩急を付ける：開くときは上の行ほど間隔が広く・1行の動きもゆっくり（.45s）、
-   下へ行くほど間隔が詰まり・速く（.25s）。遅れは t = 順番/(総数-1) として (2t - t²) × .3s（イーズアウトの曲線）。
-   閉じる：その逆。下の行から順に、下の行ほど間隔が広く・ゆっくり（.35s）、上へ行くほど詰まって速く（.2s）。
-   どちらも全体で .5s ほど。戻り終わるころに白い下地をしまう。
-   白い下地は開いた瞬間に出す（フェードさせると、下地が透けているあいだヘッダーの下に暗いヒーロー写真が見えて
-   一瞬黒く見える）。
-   nav の上端（＝ヘッダーの下端）で clip-path により切り取るので、ヘッダーより上にはみ出た項目は見えない。
-   項目の順番は --i（上から何番目か）と --n（項目の総数）で渡される（MobileNav.astro が付ける）。 */
+/* ============ スマホのメニュー（フッターと同じ黒地のデザイン） ============
+   開く：黒地（フッターと同じ地の黒＋漂う四角）が画面の下からせり上がって画面を覆う。
+         黒地が上端に届くころ、ヘッダーのロゴとメニューのボタンを白に切り替える（.site-header.is-menu）。
+         覆い終わってから、各行の文字がそれぞれの下線（見えない線＝文字の下端）の下から順に出てくる。
+         行の区切り線（フッターと同じ細い線）は、文字より少し先に左から引く。
+   閉じる：文字が下線の下へ一斉に沈み、続けて黒地が下へ下がって元のページが上から見えてくる（出だしは速く、最後はゆっくり）。
+   四角は止まっているときも漂い（フッターと同じ）、開くときは手前の大きな四角ほど下から遅れて追いつく。
+   行の順番は --i（2列なので左→右、上→下の順。MobileNav.astro が付ける）。 */
 .mobile-nav {
-  --mn-stagger: .3s;    /* 最初の項目と最後の項目の遅れの差 */
-  --mn-in: .45s;        /* 出てくる時間：最初の行（いちばんゆっくり） */
-  --mn-in-short: .25s;  /* 出てくる時間：最後の行（いちばん速い） */
-  --mn-out: .35s;       /* 戻る時間：最初に戻る下の行（いちばんゆっくり）。main.js も閉じ終わりの時間の計算に使う */
-  --mn-out-short: .2s;  /* 戻る時間：最後に戻る上の行（いちばん速い） */
-  --mn-gap: 0px;        /* 項目の間隔（行は隙間なく並べる） */
-  --mn-ease-in: cubic-bezier(.16, 1, .3, 1);   /* 速く出て、ゆっくり止まる */
-  --mn-ease-out: cubic-bezier(.16, 1, .3, 1);  /* 閉じるときも、速く動き出してヘッダーの裏に入る手前で減速 */
+  --mn-up: .6s;                                 /* 黒地がせり上がる時間 */
+  --mn-up-ease: cubic-bezier(.65, 0, .25, 1);   /* 滑らかに動き出して、滑らかに止まる */
+  --mn-down: .5s;                               /* 黒地が下がる時間（閉じる）。main.js も閉じ終わりの時間の計算に使う */
+  --mn-down-delay: .12s;                        /* 文字が沈むのを待ってから黒地を下げる */
+  --mn-down-ease: cubic-bezier(.25, .8, .3, 1); /* 速く動き出して、最後はゆっくり */
+  --mn-step: .045s;                             /* 文字が出る順番の間隔 */
   position: fixed;
   inset: 0;
   z-index: 90;
-  background: var(--white);
-  /* 上の余白はヘッダーの下端まで。その下の 24px は nav 側に持たせる（切り取りの線をヘッダーの下端に合わせるため） */
-  padding: var(--header-h) var(--gutter) 40px;
+  background: var(--ink);
+  color: #fff;
+  /* 上の余白はヘッダーの下端まで（main.js が通知バーの有無に合わせて上書きする） */
+  padding: var(--header-h) var(--gutter) 48px;
   overflow-y: auto;
-  opacity: 0;
+  overscroll-behavior: contain;
   visibility: hidden;
-  /* 閉じるとき：項目が戻り終わるのを待ってから下地を消す */
-  transition: opacity .2s ease calc(var(--mn-stagger) + var(--mn-out) - .1s), visibility 0s linear calc(var(--mn-stagger) + var(--mn-out) + .1s);
+  /* 閉じているあいだは、上端を画面の下端まで下げて隠しておく */
+  clip-path: inset(100% 0 0 0);
+  transition: clip-path var(--mn-down) var(--mn-down-ease) var(--mn-down-delay),
+    visibility 0s linear calc(var(--mn-down-delay) + var(--mn-down));
 }
 .mobile-nav.is-open {
-  opacity: 1; visibility: visible;
-  /* 開くとき：下地はフェードさせず、その場で出す */
-  transition: none;
-}
-.mobile-nav nav {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: var(--mn-gap);
-  padding-top: 24px;
-  /* 上だけ切り取る（左右と下は余白ぶん広げて、フォーカスの枠が切れないように） */
-  clip-path: inset(0 -24px -24px -24px);
-}
-/* ヘッダーと最初の行のあいだの余白（24px）を白い帯で覆う（MobileNav.astro の .mobile-nav__band）。
-   下の行はここを通って最初の行の裏へ潜るので、覆わないと通り過ぎる一瞬だけ文字が見えてしまう。
-   帯は全行より手前に置く（行の z-index は項目数まで）。 */
-.mobile-nav__band {
-  position: absolute;
-  top: 0; left: -24px; right: -24px;
-  height: 24px;
-  background: var(--white);
-  z-index: 1000;
-  pointer-events: none;
-}
-.mobile-nav__item {
-  /* 上の項目ほど手前に重ねる */
-  position: relative;
-  z-index: calc(var(--n, 1) - var(--i, 0));
-  /* 閉じているあいだは、全項目をヘッダーの下の同じ場所に重ねておく
-     （自分の高さ＋間隔 × (順番+1) ぶん上へ。さらに 100px 上げて確実に隠す）。
-     透明度は変えない（ヘッダーの下端で切り取られるので隠れる）。半透明にすると、ヘッダーと最初の行のあいだで
-     裏の行の文字が透けて重なり、ぼやけて見えてしまう。 */
-  transform: translateY(calc((100% + var(--mn-gap)) * -1 * (var(--i, 0) + 1) - 100px));
-  /* 順番を 0〜1 に直したもの。--t は上から、--tc は下から数えたときの位置 */
-  --t: calc(var(--i, 0) / max(var(--n, 1) - 1, 1));
-  --tc: calc(1 - var(--t));
-  /* 閉じるとき：下の行から順に。下の行ほど間隔が広くゆっくり、上へ行くほど詰まって速く。
-     文字の色（今のページの赤 → 黒）は遅れなしで変える（行を押したときに同じタイミングで戻す） */
-  transition: transform calc(var(--mn-out) - (var(--mn-out) - var(--mn-out-short)) * var(--tc)) var(--mn-ease-out), color .35s ease-out;
-  transition-delay: calc((2 * var(--tc) - var(--tc) * var(--tc)) * var(--mn-stagger)), 0s;
-}
-.mobile-nav.is-open .mobile-nav__item {
-  transform: none;
-  /* 開くとき：上の行から順に。上の行ほど間隔が広くゆっくり、下へ行くほど詰まって速く */
-  transition: transform calc(var(--mn-in) - (var(--mn-in) - var(--mn-in-short)) * var(--t)) var(--mn-ease-in), color .35s ease-out;
-  transition-delay: calc((2 * var(--t) - var(--t) * var(--t)) * var(--mn-stagger)), 0s;
-}
-@media (prefers-reduced-motion: reduce) {
-  .mobile-nav, .mobile-nav.is-open, .mobile-nav__item, .mobile-nav.is-open .mobile-nav__item {
-    transition: none;
-    transition-delay: 0s;
-  }
+  visibility: visible;
+  clip-path: inset(0);
+  transition: clip-path var(--mn-up) var(--mn-up-ease), visibility 0s;
 }
 @media (min-width: 1024px) { .mobile-nav { display: none; } }
-/* 行の見た目は以前のまま（下線つき）。背景の白は、開く途中で上の行の裏に隠れているあいだ見えないようにするため。 */
-.mobile-nav__link {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  min-height: 56px;
-  padding: 8px 4px;
-  background: var(--white);
-  border-bottom: 1px solid var(--gray-200);
-  font: 700 16px/1.5 var(--fjp);
-  letter-spacing: .02em;
-  color: var(--ink);
+/* 漂う四角（DecoSquares.astro。フッターと共用）。開くとき、大きい（手前の）四角ほど下から遅れて追いつく */
+.mobile-nav__deco .footer-dot {
+  translate: 0 calc(var(--depth, .5) * 140px);
+  transition: translate .3s ease var(--mn-down-delay);
 }
-.mobile-nav__link .ar { color: var(--red); }
-/* 今のページの行は赤。別の行を押したときは、押した行が赤く光るのと同じタイミングで黒に戻る
-   （main.js が .is-active を外す。色の transition は上の .mobile-nav__item の transition に入れてある） */
-.mobile-nav__link.is-active { color: var(--red); }
-/* 押した行：文字を赤にするだけ（光らせない・行の地は塗らない）。
-   main.js が押したときに .is-tapped を付ける（端末の波紋はこの行には出さない） */
-.mobile-nav__link.is-tapped { color: var(--red); }  /* 光らせない。文字が赤に変わるだけ（色の transition は .mobile-nav__item に） */
-@media (prefers-reduced-motion: reduce) { .mobile-nav__link.is-tapped { animation: none; } }
-.mobile-nav .btn { margin-top: 28px; }
+.mobile-nav.is-open .mobile-nav__deco .footer-dot {
+  translate: none;
+  transition: translate 1s cubic-bezier(.16, 1, .3, 1);
+}
+.mobile-nav__grid {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 32px;
+  padding-top: 16px;
+}
+/* 行（フッターの .fw--head と同じ見た目：上に細い線、白い太字） */
+.mobile-nav__link {
+  position: relative;
+  display: block;
+  padding: 18px 0 22px;
+  font: 700 15px/1.4 var(--fjp);
+  letter-spacing: .02em;
+  color: #fff;
+  -webkit-tap-highlight-color: transparent;
+}
+.mobile-nav__link::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: rgba(255, 255, 255, .28);
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform .2s ease;
+}
+/* 文字の下端（見えない下線）で切り取り、その下から文字を出す */
+.mobile-nav__tx { display: block; overflow: hidden; }
+.mobile-nav__tx > span {
+  display: block;
+  transform: translateY(105%);
+  /* 閉じるとき：一斉に沈む。色（今のページの赤 → 白）は遅れなしで変える（行を押したときに同じタイミングで戻す） */
+  transition: transform .22s cubic-bezier(.5, 0, .75, 0), color .35s ease-out;
+}
+.mobile-nav.is-open .mobile-nav__link::before {
+  transform: none;
+  transition: transform .6s cubic-bezier(.16, 1, .3, 1) calc(var(--mn-up) - .1s + var(--i, 0) * var(--mn-step));
+}
+.mobile-nav.is-open .mobile-nav__tx > span {
+  transform: none;
+  transition: transform .55s cubic-bezier(.16, 1, .3, 1) calc(var(--mn-up) + var(--i, 0) * var(--mn-step)), color .35s ease-out;
+}
+/* 今のページの行は赤。別の行を押したときは、押した行が赤くなるのと同じタイミングで白に戻る
+   （main.js が .is-active を外す。色の transition は上の .mobile-nav__tx > span に入れてある） */
+.mobile-nav__link.is-active .mobile-nav__tx > span,
+.mobile-nav__link.is-tapped .mobile-nav__tx > span { color: var(--red); }
+@media (hover: hover) {
+  .mobile-nav__link:hover .mobile-nav__tx > span { color: var(--gray-300); }
+}
+/* SNS（フッターと同じ）。行の文字と同じく、下端で切り取ってその下から出す */
+.mobile-nav__sns { position: relative; margin-top: 36px; }
+.mobile-nav__sns .sns-list { display: flex; flex-wrap: wrap; gap: 12px 24px; }
+.mobile-nav__sns li { overflow: hidden; }
+.mobile-nav__sns .sns-link {
+  padding: 4px 0;
+  transform: translateY(105%);
+  transition: transform .22s cubic-bezier(.5, 0, .75, 0);
+}
+.mobile-nav.is-open .mobile-nav__sns .sns-link {
+  transform: none;
+  transition: transform .55s cubic-bezier(.16, 1, .3, 1) calc(var(--mn-up) + var(--i, 0) * var(--mn-step));
+}
+@media (prefers-reduced-motion: reduce) {
+  .mobile-nav, .mobile-nav.is-open,
+  .mobile-nav .footer-dot, .mobile-nav__link::before, .mobile-nav__tx > span, .mobile-nav__sns .sns-link,
+  .mobile-nav.is-open .footer-dot, .mobile-nav.is-open .mobile-nav__link::before,
+  .mobile-nav.is-open .mobile-nav__tx > span, .mobile-nav.is-open .mobile-nav__sns .sns-link {
+    transition: none;
+  }
+}
+
+/* メニューを開いているあいだのヘッダー：ロゴ（白抜きを重ねる）とメニューのボタンを白にする。
+   黒地が上端に届くころに切り替え、閉じるときは黒地が下がり始めたらすぐ元に戻す */
+.site-header__logo { position: relative; }
+.site-header__logo-w {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity .2s ease var(--mn-down-delay, .12s);
+}
+@media (min-width: 1024px) { .site-header__logo-w { display: none; } }
+.site-header.is-menu .site-header__logo-w { opacity: 1; transition: opacity .2s ease .4s; }
+.site-header .hamburger span { transition: transform .3s var(--ease), opacity .2s ease, background-color .2s ease .12s; }
+.site-header.is-menu .hamburger span { background: #fff; transition: transform .3s var(--ease), opacity .2s ease, background-color .2s ease .4s; }
+@media (max-width: 1023px) {
+  /* 黒地の上では白いにじみを消す（白抜きのロゴの重ね出し＝opacity も、同じ指定の中で切り替える） */
+  .site-header__logo img, .site-header .hamburger { transition: filter .2s ease .12s, opacity .2s ease .12s; }
+  .site-header.is-menu .site-header__logo img, .site-header.is-menu .hamburger { filter: none; transition: filter .2s ease .4s, opacity .2s ease .4s; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .site-header__logo-w, .site-header.is-menu .site-header__logo-w,
+  .site-header .hamburger span, .site-header.is-menu .hamburger span { transition: none; }
+}
 
 
 /* ============ メニューからページを移るときの切り替え（ページ間ビュートランジション） ============
    対応ブラウザでは、メニューのリンクを押したあと次のページが描ける状態になるまでメニューを開いたまま待ち、
-   描ける状態になったら次のページの上に前のページの「行・白い下地・帯・ヘッダー」の写しを重ねて、
-   閉じる動き（行が下から順にヘッダーの下へ戻り、戻り終わってから下地が消える）を流す。
+   描ける状態になったら次のページの上に前のページの「メニュー（黒地）・ヘッダー」の写しを重ねて、
+   閉じる動き（黒地が下へ下がり、次のページが上から見えてくる）を流す。
    流すかどうかは Base.astro の pageswap / pagereveal が決める（メニューから移るときだけ。それ以外は省く）。
    写しの名前（view-transition-name）は main.js がメニューを開くときに付ける：
-     mn-sheet … 白い下地（.mobile-nav）／ mn-band … ヘッダー下の帯／ mn-item-<n> … 行／ site-header … ヘッダー
-   重なり順：ヘッダー > 帯 > 行（上の行ほど手前） > 下地 > 次のページ（root）。
-   行は画面の上へ大きく動かして確実に外へ出し（上から n 番目の行で 300px + 57px × n）、動き終えた瞬間に消す
-   （途中で止めるとヘッダーの写しが消えたあとに行の写しが残って見える）。
-   行の順番の間隔はメニューの閉じる動きと同じ緩急（下の行ほど広くゆっくり .35s、上へ行くほど詰まって速く .2s。
-   遅れは下から t として (2t - t²) × .3s）。行は 0〜.5s で戻り終わる → 下地 .45〜.65s で消える → 帯 .5〜.7s → ヘッダー .55〜.75s。 */
+     mn-sheet … メニュー（.mobile-nav）／ site-header … ヘッダー（白いロゴの写しはすぐ消し、次のページのヘッダーを見せる） */
 @view-transition { navigation: auto; }
-/* 前のページ本体はすぐ消し、次のページをそのまま出す（下地と行の裏に次のページが見えている状態） */
+/* 前のページ本体はすぐ消し、次のページをそのまま出す（黒地の裏に次のページが見えている状態） */
 ::view-transition-old(root) { animation: none; opacity: 0; }
 ::view-transition-new(root) { animation: none; }
 /* コート案内の行 → コート案内のページ（types: court）。押した行の写真と施設名が、そのページのその施設の写真・名前へ滑らかに移る */
@@ -898,49 +921,12 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 ::view-transition-group(court-photo) { z-index: 40; }
 ::view-transition-group(court-name) { z-index: 41; }
 ::view-transition-group(site-header) { z-index: 30; }
-::view-transition-old(site-header) { animation: vt-fade .2s ease .55s both; }
+::view-transition-old(site-header) { animation: vt-fade .15s ease both; }
 ::view-transition-new(site-header) { animation: none; }
-::view-transition-group(mn-band) { z-index: 25; }
-::view-transition-old(mn-band) { animation: vt-fade .2s ease .5s both; }
-::view-transition-group(mn-sheet) { z-index: 1; }
-::view-transition-old(mn-sheet) { animation: vt-fade .2s ease .45s both; }
+::view-transition-group(mn-sheet) { z-index: 1; animation: none; }
+::view-transition-old(mn-sheet) { animation: vt-sheet-down .5s cubic-bezier(.25, .8, .3, 1) .05s both; }
 @keyframes vt-fade { to { opacity: 0; } }
-::view-transition-group(mn-item-0) { z-index: 20; }
-::view-transition-old(mn-item-0) { animation: vt-row-out-0 0.200s cubic-bezier(.16, 1, .3, 1) both; animation-delay: 0.300s; }
-@keyframes vt-row-out-0 { 0% { opacity: 1; } 99% { opacity: 1; } 100% { opacity: 0; transform: translateY(-300px); } }
-::view-transition-group(mn-item-1) { z-index: 19; }
-::view-transition-old(mn-item-1) { animation: vt-row-out-1 0.215s cubic-bezier(.16, 1, .3, 1) both; animation-delay: 0.297s; }
-@keyframes vt-row-out-1 { 0% { opacity: 1; } 99% { opacity: 1; } 100% { opacity: 0; transform: translateY(-357px); } }
-::view-transition-group(mn-item-2) { z-index: 18; }
-::view-transition-old(mn-item-2) { animation: vt-row-out-2 0.230s cubic-bezier(.16, 1, .3, 1) both; animation-delay: 0.288s; }
-@keyframes vt-row-out-2 { 0% { opacity: 1; } 99% { opacity: 1; } 100% { opacity: 0; transform: translateY(-414px); } }
-::view-transition-group(mn-item-3) { z-index: 17; }
-::view-transition-old(mn-item-3) { animation: vt-row-out-3 0.245s cubic-bezier(.16, 1, .3, 1) both; animation-delay: 0.273s; }
-@keyframes vt-row-out-3 { 0% { opacity: 1; } 99% { opacity: 1; } 100% { opacity: 0; transform: translateY(-471px); } }
-::view-transition-group(mn-item-4) { z-index: 16; }
-::view-transition-old(mn-item-4) { animation: vt-row-out-4 0.260s cubic-bezier(.16, 1, .3, 1) both; animation-delay: 0.252s; }
-@keyframes vt-row-out-4 { 0% { opacity: 1; } 99% { opacity: 1; } 100% { opacity: 0; transform: translateY(-528px); } }
-::view-transition-group(mn-item-5) { z-index: 15; }
-::view-transition-old(mn-item-5) { animation: vt-row-out-5 0.275s cubic-bezier(.16, 1, .3, 1) both; animation-delay: 0.225s; }
-@keyframes vt-row-out-5 { 0% { opacity: 1; } 99% { opacity: 1; } 100% { opacity: 0; transform: translateY(-585px); } }
-::view-transition-group(mn-item-6) { z-index: 14; }
-::view-transition-old(mn-item-6) { animation: vt-row-out-6 0.290s cubic-bezier(.16, 1, .3, 1) both; animation-delay: 0.192s; }
-@keyframes vt-row-out-6 { 0% { opacity: 1; } 99% { opacity: 1; } 100% { opacity: 0; transform: translateY(-642px); } }
-::view-transition-group(mn-item-7) { z-index: 13; }
-::view-transition-old(mn-item-7) { animation: vt-row-out-7 0.305s cubic-bezier(.16, 1, .3, 1) both; animation-delay: 0.153s; }
-@keyframes vt-row-out-7 { 0% { opacity: 1; } 99% { opacity: 1; } 100% { opacity: 0; transform: translateY(-699px); } }
-::view-transition-group(mn-item-8) { z-index: 12; }
-::view-transition-old(mn-item-8) { animation: vt-row-out-8 0.320s cubic-bezier(.16, 1, .3, 1) both; animation-delay: 0.108s; }
-@keyframes vt-row-out-8 { 0% { opacity: 1; } 99% { opacity: 1; } 100% { opacity: 0; transform: translateY(-756px); } }
-::view-transition-group(mn-item-9) { z-index: 11; }
-::view-transition-old(mn-item-9) { animation: vt-row-out-9 0.335s cubic-bezier(.16, 1, .3, 1) both; animation-delay: 0.057s; }
-@keyframes vt-row-out-9 { 0% { opacity: 1; } 99% { opacity: 1; } 100% { opacity: 0; transform: translateY(-813px); } }
-::view-transition-group(mn-item-10) { z-index: 10; }
-::view-transition-old(mn-item-10) { animation: vt-row-out-10 0.350s cubic-bezier(.16, 1, .3, 1) both; animation-delay: 0.000s; }
-@keyframes vt-row-out-10 { 0% { opacity: 1; } 99% { opacity: 1; } 100% { opacity: 0; transform: translateY(-870px); } }
-::view-transition-group(mn-item-11) { z-index: 9; }
-::view-transition-old(mn-item-11) { animation: vt-row-out-11 0.350s cubic-bezier(.16, 1, .3, 1) both; animation-delay: 0.000s; }
-@keyframes vt-row-out-11 { 0% { opacity: 1; } 99% { opacity: 1; } 100% { opacity: 0; transform: translateY(-927px); } }
+@keyframes vt-sheet-down { from { clip-path: inset(0); } to { clip-path: inset(100% 0 0 0); } }
 @media (prefers-reduced-motion: reduce) {
   ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
 }

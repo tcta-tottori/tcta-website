@@ -18,8 +18,10 @@ const resolve = (href: string) =>
 <header class="site-header">
   <div class="container site-header__inner">
     <a class="site-header__logo" href="index.html" aria-label="鳥取市テニス協会 ホーム">
-      {/* 白地を抜いた透過のロゴ（logo-cut.png。元は logo.png）。スマホではヘッダーの帯を出さず、ロゴとメニューのボタンだけを浮かせて固定する */}
+      {/* 白地を抜いた透過のロゴ（logo-cut.png。元は logo.png）。スマホではヘッダーの帯を出さず、ロゴとメニューのボタンだけを浮かせて固定する。
+          logo-cut-white.png は同じロゴの白抜き（赤い四角はそのまま）。スマホのメニュー（黒地）を開いているあいだだけ重ねて出す */}
       <img src="assets/img/logo-cut.png" alt="鳥取市テニス協会 TOTTORI-CITY TENNIS ASSOCIATION" width="679" height="217">
+      <img class="site-header__logo-w" src="assets/img/logo-cut-white.png" alt="" width="679" height="217">
     </a>
     <nav class="nav" aria-label="グローバルナビゲーション">
       {NAV.map((item) => (

@@ -223,7 +223,7 @@
     document.addEventListener('pointerdown', function (e) {
       var host = e.target.closest(RIPPLE_SEL);
       if (!host || host.closest('[aria-hidden="true"]')) return;
-      if (host.classList.contains('mobile-nav__link')) return; // メニューの行は波紋ではなく、文字が赤くなって光る（.is-tapped）
+      if (host.classList.contains('mobile-nav__link')) return; // メニューの行は波紋ではなく、文字が赤くなる（.is-tapped）
       clear();
 
       // マウスはなぞって画面を送らないので、そのまま出す
@@ -956,7 +956,7 @@
      漂う動きは CSS の transform、こちらは translate に書き込むので打ち消し合わない。
      フッターが画面を通り過ぎるあいだの進み具合を、そのまま上下の量にしている。 */
   function initFooterDeco() {
-    var deco = document.querySelector('.footer-deco');
+    var deco = document.querySelector('.site-footer .footer-deco'); // メニューの四角（.mobile-nav__deco）は動かさない
     if (!deco || reduceMotion) return;
 
     // 端から端までで動かす量（px）。四角ごとの --depth（0.2〜1.7）を掛けるので、
@@ -1031,28 +1031,26 @@
        使えるときは、メニューを開いているあいだだけ写しの名前（view-transition-name）を付けておく（style.css 参照） */
     var VT_KEY = 'tcta-mn-vt';
     var canVT = !reduceMotion && ('onpageswap' in window) && window.CSS && CSS.supports && CSS.supports('view-transition-name', 'x');
-    var band = menu.querySelector('.mobile-nav__band');
-    var items = menu.querySelectorAll('.mobile-nav__item');
     var nameFor = function (open) {
       if (!canVT) return;
       header.style.viewTransitionName = open ? 'site-header' : '';
       menu.style.viewTransitionName = open ? 'mn-sheet' : '';
-      if (band) band.style.viewTransitionName = open ? 'mn-band' : '';
-      Array.prototype.forEach.call(items, function (el, i) { el.style.viewTransitionName = open ? 'mn-item-' + i : ''; });
     };
     var setOpen = function (open) {
       if (open) {
-        // 前回押した行の印（赤く光った状態）を消し、黒に戻していた「今のページ」の行を赤に戻す
+        // 前回押した行の印（赤くした状態）を消し、黒に戻していた「今のページ」の行を赤に戻す
         menu.querySelectorAll('.mobile-nav__link.is-tapped').forEach(function (l) { l.classList.remove('is-tapped'); });
         menu.querySelectorAll('.mobile-nav__link[data-was-active]').forEach(function (l) { l.classList.add('is-active'); l.removeAttribute('data-was-active'); });
         // 開くときは必ずヘッダーを出しておく（閉じるボタンが画面から消えないように）
         header.classList.remove('site-header--hidden');
-        // ヘッダー（通知バーの有無で高さが変わる）の下端に合わせる。項目はここから下へ滑り出す（style.css の .mobile-nav__item）
+        // ヘッダー（通知バーの有無で高さが変わる）の下端から行を並べる
+        menu.scrollTop = 0;
         menu.style.paddingTop = header.getBoundingClientRect().bottom + 'px';
       }
       nameFor(open);
       toggle.setAttribute('aria-expanded', String(open));
       menu.classList.toggle('is-open', open);
+      header.classList.toggle('is-menu', open); // ロゴとボタンを白に（style.css の .site-header.is-menu）
       document.body.classList.toggle('is-locked', open);
       menu.setAttribute('aria-hidden', String(!open));
     };
@@ -1069,15 +1067,14 @@
     var closeMs = function () {
       var cs = getComputedStyle(menu);
       var sec = function (v) { var n = parseFloat(v); return isNaN(n) ? 0 : (/ms$/.test(v) ? n / 1000 : n); };
-      // 閉じ終わるのは、最後（いちばん上）の行：遅れの最大（--mn-stagger）＋その行の戻る時間（--mn-out-short）
-      var last = sec(cs.getPropertyValue('--mn-out-short')) || sec(cs.getPropertyValue('--mn-out'));
-      return Math.round((sec(cs.getPropertyValue('--mn-stagger')) + last) * 1000) || 500;
+      // 閉じ終わるのは、文字が沈むのを待つ時間（--mn-down-delay）＋黒地が下がる時間（--mn-down）
+      return Math.round((sec(cs.getPropertyValue('--mn-down-delay')) + sec(cs.getPropertyValue('--mn-down'))) * 1000) || 620;
     };
     menu.addEventListener('click', function (e) {
       var a = e.target.closest('a');
       if (!a) return;
-      // 押した行の文字を赤にして、その瞬間に一瞬光らせる（style.css の .mobile-nav__link.is-tapped）。
-      // 同時に、赤くしてあった「今のページ」の行は黒に戻す（色の transition で同じタイミングで変わる）
+      // 押した行の文字を赤にする（style.css の .mobile-nav__link.is-tapped）。
+      // 同時に、赤くしてあった「今のページ」の行は白に戻す（色の transition で同じタイミングで変わる）
       if (a.classList.contains('mobile-nav__link')) {
         menu.querySelectorAll('.mobile-nav__link.is-tapped').forEach(function (l) { if (l !== a) l.classList.remove('is-tapped'); });
         menu.querySelectorAll('.mobile-nav__link.is-active').forEach(function (l) { if (l !== a) { l.classList.remove('is-active'); l.setAttribute('data-was-active', '1'); } });
