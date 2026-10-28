@@ -8,11 +8,7 @@ import { fileURLToPath } from 'node:url';
 const here = dirname(fileURLToPath(import.meta.url));
 const src = join(here, '..', '..', 'public', 'assets');
 const dst = join(here, '..', 'public', 'assets');
-const FILES = [
-  'css/style.css',
-  'js/main.js',
-  'img/cta.webp',
-];
+const FILES = ['css/style.css', 'js/main.js'];
 if (!existsSync(join(src, 'css/style.css'))) {
   console.error(`本体サイトの assets が見つかりません: ${src}`);
   process.exit(1);
