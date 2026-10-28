@@ -15,6 +15,7 @@ import { ulid } from '../lib/ulid';
 import { checkNames, composeKana, composeName, createMember, decryptContact, findMemberByEmail, findOrCreateClub, findSameNameMembers, getMember, namesFromForm, resolveClub, searchMembers, updateMember } from '../services/members';
 import { birthYearFields, birthYearFromForm, clubDatalist, clubLabel, clubSelect, nameFields, nameInputs } from '../views/forms';
 import { securityNote } from '../views/security';
+import { retentionYears } from '../services/retention';
 import { checkEligibility, describeRule, parseRule, shortRule } from '../services/eligibility';
 import { createPayment, getPayment } from '../services/payments';
 import { type Association, type Club, type Entry, type Member, METHOD_LABEL, type Payment, type PaymentMethod, type Registration, SEX_LABEL, type Tournament, type TournamentEvent, CATEGORY_LABEL } from '../types';
@@ -223,6 +224,7 @@ portal.get('/me', requireMember, async (c) => {
   const regs = await all<Registration & { association_name: string; pay_status: string | null; method: string | null }>(c.env.DB, `SELECT r.*, a.name AS association_name, p.status AS pay_status, p.method FROM registrations r JOIN associations a ON a.id = r.association_id LEFT JOIN payments p ON p.id = r.payment_id WHERE r.member_id = ? ORDER BY r.fiscal_year DESC, a.id`, m.id);
   const entries = await all<Entry & { t_name: string; held_on: string; partner_name: string | null; pay_status: string | null }>(c.env.DB, `SELECT e.*, t.name AS t_name, t.held_on, m2.name AS partner_name, p.status AS pay_status FROM entries e JOIN tournaments t ON t.id = e.tournament_id LEFT JOIN members m2 ON m2.id = e.partner_member_id LEFT JOIN payments p ON p.id = e.payment_id WHERE e.member_id = ? OR e.partner_member_id = ? ORDER BY t.held_on DESC`, m.id, m.id);
   const pending = await all<Payment>(c.env.DB, `SELECT * FROM payments WHERE payer_member_id = ? AND status = 'pending' ORDER BY created_at DESC`, m.id);
+  const openReq = await one<{ created_at: string }>(c.env.DB, `SELECT created_at FROM deletion_requests WHERE member_id = ? AND status = 'open' ORDER BY created_at DESC LIMIT 1`, m.id);
   const fy = currentFiscalYear(4);
   const renew = inRenewalWindow(4);
   const body = html`
@@ -253,8 +255,7 @@ portal.get('/me', requireMember, async (c) => {
       ${entries.length === 0 ? html`<tr><td colspan="6">まだエントリーがありません。<a href="/tournaments">大会を見る</a></td></tr>` : entries.map((e) => html`<tr><td>${e.t_name}</td><td>${fmtDate(e.held_on)}</td><td>${e.event_code}${e.class ? ' ' + e.class : ''}</td><td>${e.member_id === m.id ? e.partner_name ?? '—' : '（代表: 別の会員）'}</td><td>${e.pay_status ? badge(e.pay_status) : '—'}</td><td>${badge(e.status)}${e.status === 'pending_payment' && e.payment_id && e.member_id === m.id ? html` <a class="btn small" href="/pay/${e.payment_id}">支払う</a>` : ''}</td></tr>`)}
     </table></div>
     <div class="actions"><a class="btn" href="/tournaments">受付中の大会</a></div>
-    <h2>退会</h2>
-    <form method="post" action="/me/withdraw" class="card"><p class="mute">退会すると年度登録・エントリーは無効になります。住所・電話・メールは 2 年後に削除され、氏名と大会成績の履歴だけが残ります。</p><label class="check"><input type="checkbox" name="sure" required> 退会する</label><div><button class="btn--outline">退会を申請</button></div></form>`;
+    <p class="mute">登録は年度ごとの更新です。続けない場合は、翌年度の登録をしなければそのまま終わります（退会の手続きは要りません）。${openReq ? html`登録情報の削除依頼を受け付けています（${fmtDate(openReq.created_at)}）。` : html`登録情報をすぐに消したいときは <a href="/me/deletion">削除を依頼する</a>。`}</p>`;
   return c.html(page(c, { title: 'マイページ', body, member: m }));
 });
 
@@ -285,13 +286,45 @@ portal.post('/me/profile', requireMember, async (c) => {
   return c.redirect('/me');
 });
 
-portal.post('/me/withdraw', requireMember, async (c) => {
+portal.get('/me/deletion', requireMember, async (c) => {
   const m = c.get('member')!;
-  await run(c.env.DB, `UPDATE members SET status = 'withdrawn', withdrawn_at = ?, updated_at = ? WHERE id = ?`, nowIso(), nowIso(), m.id);
-  await audit(c.env, { actorType: 'member', actor: m.id, action: 'member.withdraw', target: `member:${m.id}`, ip: clientIp(c) });
-  await destroySession(c, 'member');
-  flash(c, '退会を受け付けました');
-  return c.redirect('/');
+  const n = retentionYears(c.env);
+  const body = html`
+    <div class="card">
+      <p>年度登録は毎年の更新制です。<b>続けない場合は、翌年度の登録をしなければそのまま終わります。</b>手続きは要りません。最後に登録した年度から ${n} 年度登録がなければ、住所・電話・メールは自動で削除されます。</p>
+      <p>それより前に登録情報を消したいときは、ここから依頼してください。協会の個人情報管理責任者が確認し、30 日以内に削除します。</p>
+      <h3>削除されるもの・残るもの</h3>
+      <ul class="bullet-list">
+        <li>削除: メールアドレス、電話番号、郵便番号、住所（ログインもできなくなります）</li>
+        <li>残る: 姓・名・ふりがな・所属と、これまでの大会の成績の記録（大会結果の公表と記録のため）</li>
+        <li>受付中のエントリーや未払いの支払がある場合は、事務局から連絡することがあります</li>
+      </ul>
+      <form method="post" action="/me/deletion">
+        <label>理由（任意） <textarea name="reason" style="min-height:80px;font-family:inherit"></textarea></label>
+        <label class="check"><input type="checkbox" name="sure" required> 上の内容を確認し、登録情報の削除を依頼します</label>
+        <div class="actions"><button class="btn--outline">削除を依頼する</button><a class="btn btn--outline" href="/me">戻る</a></div>
+      </form>
+    </div>`;
+  return c.html(page(c, { title: '登録情報の削除依頼', body, member: m }));
+});
+
+portal.post('/me/deletion', requireMember, async (c) => {
+  const m = c.get('member')!;
+  const f = await form(c);
+  if (!f.sure) { flash(c, '確認のチェックを入れてください', 'err'); return c.redirect('/me/deletion'); }
+  const exists = await one(c.env.DB, `SELECT 1 AS ok FROM deletion_requests WHERE member_id = ? AND status = 'open'`, m.id);
+  if (!exists) {
+    const id = ulid();
+    await run(c.env.DB, `INSERT INTO deletion_requests (id, member_id, reason, status, created_at) VALUES (?, ?, ?, 'open', ?)`, id, m.id, (f.reason ?? '').slice(0, 500) || null, nowIso());
+    await audit(c.env, { actorType: 'member', actor: m.id, action: 'member.deletion_request', target: `member:${m.id}`, ip: clientIp(c) });
+    // 登録先の協会の事務局（協会管理）に知らせる
+    const admins = await all<{ email: string }>(c.env.DB, `SELECT DISTINCT a.email FROM admins a WHERE a.active = 1 AND a.role = 'assoc_admin' AND (a.association_id = ? OR a.association_id IN (SELECT association_id FROM registrations WHERE member_id = ?))`, m.home_association_id, m.id);
+    for (const a of admins) await sendMail(c.env, { to: a.email, subject: `【${c.env.APP_NAME}】登録情報の削除依頼（${m.member_no ?? m.name}）`, text: `${m.member_no ?? ''} ${m.name} さんから登録情報の削除依頼がありました。30 日以内に対応してください。\n${c.env.BASE_URL}/admin/deletions` });
+    const email = await decrypt(c.env, m.email_enc);
+    if (email) await sendMail(c.env, { to: email, subject: `【${c.env.APP_NAME}】削除のご依頼を受け付けました`, text: `${m.name} 様\n\n登録情報の削除のご依頼を受け付けました。協会の個人情報管理責任者が確認し、30 日以内に削除します。削除が済むとログインできなくなります。` });
+  }
+  flash(c, '削除のご依頼を受け付けました。30 日以内に対応します');
+  return c.redirect('/me');
 });
 
 // ---------- 年度登録 ----------

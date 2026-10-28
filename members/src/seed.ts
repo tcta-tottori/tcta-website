@@ -7,7 +7,7 @@ import { ulid } from './lib/ulid';
 import { createMember } from './services/members';
 import { createPayment, markPaid } from './services/payments';
 
-const TABLES = ['mail_outbox', 'reminders_sent', 'sequences', 'merge_candidates', 'rate_limits', 'api_tokens', 'sessions', 'magic_links', 'entries', 'registrations', 'payments', 'tournaments', 'admins', 'members', 'clubs', 'associations'];
+const TABLES = ['deletion_requests', 'mail_outbox', 'reminders_sent', 'sequences', 'merge_candidates', 'rate_limits', 'api_tokens', 'sessions', 'magic_links', 'entries', 'registrations', 'payments', 'tournaments', 'admins', 'members', 'clubs', 'associations'];
 
 export async function resetAll(env: Env): Promise<void> {
   for (const t of TABLES) await run(env.DB, `DELETE FROM ${t}`);
@@ -64,6 +64,11 @@ export async function seedDemo(env: Env): Promise<void> {
       await run(env.DB, `INSERT INTO merge_candidates (id, keep_member_id, dup_member_id, reason, status, created_at) VALUES (?, ?, ?, ?, 'open', ?)`, ulid(), ids[d.dupOf], m.id, '氏名・ふりがなが一致（Excel 取込み）', now);
     }
   }
+
+  // 何年も年度登録のない会員（連絡先の自動削除の確認用）。最後の登録は 4 年度前
+  const old = await createMember(env, { familyName: '小林', givenName: '昭', familyKana: 'こばやし', givenKana: 'あきら', sex: 'male', birthYear: 1950, email: 'kobayashi@example.com', phone: '090-0000-0009', postal: '680-0009', address: '鳥取市古町9-9', clubId: 'club-koyama', homeAssociationId: 'tottori-city', status: 'active', consented: true });
+  await run(env.DB, `UPDATE members SET created_at = ? WHERE id = ?`, `${fy - 6}-05-01T00:00:00.000Z`, old.id);
+  await run(env.DB, `INSERT INTO registrations (id, member_id, association_id, fiscal_year, category, fee, status, source, approved_by, approved_at, created_at) VALUES (?, ?, 'tottori-city', ?, 'senior', 3000, 'approved', 'import', 'seed', ?, ?)`, ulid(), old.id, fy - 4, now, now);
 
   const events = JSON.stringify([
     { code: 'MD', name: '男子ダブルス', classes: ['A', 'B'], fee: 3000, teamSize: 2 },

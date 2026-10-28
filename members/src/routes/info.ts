@@ -8,6 +8,7 @@ import { accessEnabled } from '../lib/access';
 import { all } from '../lib/db';
 import type { Association } from '../types';
 import { page } from '../views/layout';
+import { retentionYears } from '../services/retention';
 
 export const info = new Hono<{ Bindings: Env; Variables: Vars }>();
 
@@ -40,7 +41,7 @@ info.get('/security', async (c) => {
       <p><b>方針: 閲覧できる人を最小にし、誰がいつ見たかを残す。</b></p>
       <p>このシステムは${assocs.length ? assocs.map((a) => a.name).join('・') : 'テニス協会'}が共同で利用し、会員約 1,000 名分の氏名・連絡先と支払記録をお預かりします。協会は個人情報保護法上の個人情報取扱事業者にあたるため、組織的・人的・物理的・技術的な安全管理措置を「人の注意」ではなく「仕組み」で満たすように作っています。</p>
       <div class="steps">
-        <div class="step"><p class="step__title">最小保有</p><p class="step__text">必要な項目だけを預かり、退会後 2 年で連絡先を削除します。</p></div>
+        <div class="step"><p class="step__title">最小保有</p><p class="step__text">必要な項目だけを預かり、登録が 2 年度続けてなければ連絡先を削除します。</p></div>
         <div class="step"><p class="step__title">最小権限</p><p class="step__text">住所・電話・メールを見られるのは登録先の協会の事務局だけです。</p></div>
         <div class="step"><p class="step__title">記録</p><p class="step__text">閲覧・出力・更新をすべて記録し、管理者本人も消せません。</p></div>
       </div>
@@ -90,7 +91,7 @@ info.get('/security', async (c) => {
       <tr><td>通信</td><td class="wrap-text">全経路 HTTPS。HSTS を有効にし、平文の接続は受け付けません。</td></tr>
       <tr><td>保存</td><td class="wrap-text">データベース（Cloudflare D1）は保存時に暗号化されます。加えて連絡先は列ごとに暗号化し、鍵を別に管理します。</td></tr>
       <tr><td>バックアップ</td><td class="wrap-text">7 日分の時点復元に加え、日次で暗号化した複製を 90 日保持。四半期に 1 回、復元できることを確認します。</td></tr>
-      <tr><td>保存期間</td><td class="wrap-text">退会後 2 年で住所・電話・メールを自動で削除し、氏名と大会成績の履歴だけを残します。</td></tr>
+      <tr><td>保存期間</td><td class="wrap-text">年度登録は毎年の更新制で、退会の手続きはありません。最後に登録（またはエントリー）した年度の翌年度から ${retentionYears(env)} 年度登録がなければ、住所・電話・メールを自動で削除し、氏名・所属と大会成績の履歴だけを残します。本人の依頼があればそれより前に削除します。</td></tr>
       <tr><td>委託先</td><td class="wrap-text">Cloudflare（基盤・データベース・メール送信）、Stripe（決済）、Google（事務局の認証）、LINE（任意の通知）。いずれも「取扱いの委託」として規程に明記します。</td></tr>
     </table></div>
 
@@ -115,7 +116,7 @@ info.get('/security', async (c) => {
       <ul class="bullet-list">
         <li>登録内容はマイページでいつでも確認・訂正できます。</li>
         <li>開示・訂正・削除の依頼は、どの協会で受けても共通の窓口に回し、30 日以内に対応します。</li>
-        <li>退会はマイページから申請できます。年度登録・エントリーは無効になり、連絡先は 2 年後に削除されます。</li>
+        <li>続けない場合は翌年度の登録をしなければそのまま終わり、退会の手続きは要りません。すぐに消したいときはマイページの「削除を依頼する」から依頼できます。</li>
         <li>窓口: 各協会の個人情報管理責任者（協会サイトのお問い合わせ、または事務局まで）。</li>
       </ul>
     </div>
@@ -166,15 +167,15 @@ info.get('/privacy', async (c) => {
     <h2>5. 管理責任者と窓口</h2>
     <div class="card"><p>各協会に 1 名の<b>個人情報管理責任者</b>を置き、管理者アカウントの発行と年 1 回の棚卸し、開示・訂正・削除の請求への対応を担います。本人からの請求はどの協会で受けても共通の窓口に回し、30 日以内に対応します。</p></div>
     <h2>6. 安全管理措置</h2>
-    <div class="card"><p>連絡先の列暗号化、協会ごとの閲覧範囲の分離、閲覧・出力・更新の監査ログ、日次バックアップ、退会後 2 年での連絡先削除、管理者の 2 段階認証と年 1 回の権限棚卸しを行います。詳しくは<a href="/security">セキュリティと個人情報の取扱い</a>をご覧ください。</p></div>
+    <div class="card"><p>連絡先の列暗号化、協会ごとの閲覧範囲の分離、閲覧・出力・更新の監査ログ、日次バックアップ、登録がなくなった会員の連絡先の自動削除、管理者の 2 段階認証と年 1 回の権限棚卸しを行います。詳しくは<a href="/security">セキュリティと個人情報の取扱い</a>をご覧ください。</p></div>
     <h2>7. 委託先</h2>
     <div class="card"><p>Cloudflare（基盤・データベース・メール送信）、Stripe（決済）、Google（事務局の認証）、LINE（任意の通知）に取扱いを委託します。カード情報は Stripe が取り扱い、参加協会は保持しません。</p></div>
     <h2>8. システムの名義と費用</h2>
     <div class="card"><p>Cloudflare と GitHub の契約は幹事協会（鳥取市テニス協会）が持ち、他の参加協会は利用協定を結んで参加します。有料化した場合の費用は会員数比で按分します。Stripe と LINE のアカウントは協会ごとに持ちます。</p></div>
-    <h2>9. 退会・削除</h2>
-    <div class="card"><p>退会後 2 年で住所・電話・メールを削除し、氏名と大会成績の履歴だけを残します。本人からの削除請求にはこれにかかわらず 30 日以内に対応します。</p></div>
+    <h2>9. 保存期間と削除</h2>
+    <div class="card"><p>年度登録は毎年の更新制とし、退会の手続きは設けません。最後に登録（またはエントリー）した年度の翌年度から ${retentionYears(env)} 年度登録がない会員は、住所・電話・メールを削除し、氏名・所属と大会成績の履歴だけを残します。本人からの削除請求には、これにかかわらず 30 日以内に対応します。</p></div>
     <h2>10. 同意</h2>
     <div class="card"><p>会員登録時にこの規程への同意をいただきます。規程を変えるときは参加協会の合意を経て、各協会のサイトとこのページで公表します。</p></div>
-    <p class="mute">未決事項（参加協会で協議中）: 年度の切替日の統一、Stripe 手数料の負担、LINE 通知の範囲、退会後の保持期間（案: 2 年）。</p>`;
+    <p class="mute">未決事項（参加協会で協議中）: 年度の切替日の統一、Stripe 手数料の負担、LINE 通知の範囲、連絡先の保存期間（案: 登録がなくなってから 2 年度）。</p>`;
   return c.html(page(c, { title: '会員情報共同利用規程・プライバシーポリシー（案）', en: 'PRIVACY', body, member: c.get('member'), admin: c.get('admin'), lead: '参加協会が会員情報をどのような目的で、どの範囲で共同利用するかを定めるものです。' }));
 });

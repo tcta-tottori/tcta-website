@@ -224,3 +224,9 @@ form .secnote { margin-top: 24px; }
 .kana-note:empty { display: none; }
 .portal-body input.is-kana-error { border-color: var(--red); }
 .indent .kana-note { flex-basis: 100%; }
+
+/* ---- 表の中の小さな入力欄（消込のメモ・削除依頼の取り下げ理由など）---- */
+.portal-body .tbl input[type=text], .portal-body .tbl form > input[type=text] { width: 180px; min-width: 0; max-width: 180px; min-height: 36px; padding: 6px 10px; font-size: 14px; vertical-align: middle; }
+.tbl form.inline { white-space: nowrap; }
+.portal-body .bullet-list + form { margin-top: 24px; }
+.cell-actions { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }

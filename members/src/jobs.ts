@@ -1,4 +1,4 @@
-// 定期実行（Cron Triggers）。締切リマインド・締切処理・継続登録リマインド・退会者の連絡先削除・日次バックアップ。
+// 定期実行（Cron Triggers）。締切リマインド・締切処理・継続登録リマインド・登録のない会員の連絡先削除・日次バックアップ。
 // 手元では `wrangler dev --test-scheduled` のうえで GET /__scheduled を叩くと動く。
 import type { Env } from './env';
 import { audit } from './lib/audit';
@@ -7,6 +7,7 @@ import { all, nowIso, one, run } from './lib/db';
 import { addDays, currentFiscalYear, fmtDate, inRenewalWindow, todayJst } from './lib/fiscal';
 import { sendMail } from './lib/mail';
 import { cancelEntry } from './services/payments';
+import { purgeInactiveContacts } from './services/retention';
 import type { Association, Entry, Member, Tournament } from './types';
 
 export async function runJobs(env: Env): Promise<Record<string, number>> {
@@ -14,7 +15,7 @@ export async function runJobs(env: Env): Promise<Record<string, number>> {
   r.reminders = await remindUnpaidEntries(env);
   r.closed = await closeTournaments(env);
   r.renewal = await remindRenewal(env);
-  r.purged = await purgeWithdrawnContacts(env);
+  r.purged = await purgeInactiveContacts(env);
   r.backup = await backup(env);
   await audit(env, { actorType: 'system', actor: 'cron', action: 'jobs.run', after: r });
   return r;
@@ -86,17 +87,6 @@ async function remindRenewal(env: Env): Promise<number> {
     }
   }
   return n;
-}
-
-/** 退会後 2 年で住所・電話・メールを削除（最小保有）。氏名と大会成績の履歴は残す。 */
-async function purgeWithdrawnContacts(env: Env): Promise<number> {
-  const cutoff = new Date(Date.now() - 2 * 365 * 24 * 3600 * 1000).toISOString();
-  const rows = await all<Member>(env.DB, `SELECT * FROM members WHERE status = 'withdrawn' AND withdrawn_at < ? AND contacts_purged_at IS NULL`, cutoff);
-  for (const m of rows) {
-    await run(env.DB, `UPDATE members SET email_hash = NULL, email_enc = NULL, phone_enc = NULL, postal_enc = NULL, address_enc = NULL, contacts_purged_at = ?, updated_at = ? WHERE id = ?`, nowIso(), nowIso(), m.id);
-    await audit(env, { actorType: 'system', actor: 'cron', action: 'member.purge_contacts', target: `member:${m.id}`, after: { reason: '退会後 2 年' } });
-  }
-  return rows.length;
 }
 
 /** 日次バックアップ（R2 が結ばれているときだけ）。暗号化列は暗号文のまま出るので、ダンプが漏れても連絡先は読めない。 */
