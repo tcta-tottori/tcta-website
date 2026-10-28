@@ -84,6 +84,14 @@ export const LINKS = [
   },
   {
     group: 'nearby',
+    name: '境港市テニス協会',
+    row: 'assoc',
+    desc: '境港市の大会情報',
+    url: 'https://sakaiminato-tennis.jimdofree.com/',
+    banner: 'assets/img/banners/sakaiminato-tennis.png',
+  },
+  {
+    group: 'nearby',
     name: '京丹後市テニス協会',
     row: 'assoc',
     desc: '京都府北部の大会情報',
