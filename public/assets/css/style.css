@@ -650,8 +650,29 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   height: var(--header-h);
 }
 .site-header__logo { display: inline-flex; }
-.site-header__logo img { height: 34px; width: auto; }  /* 帯（64px）の中に収まる範囲で少し大きめに */
-@media (min-width: 1024px) { .site-header__logo img { height: 44px; } }
+.site-header__logo img { height: 31px; width: auto; }  /* 透過ロゴ（余白なし）。以前の 34px（余白込み）と同じ見た目の大きさ */
+@media (min-width: 1024px) { .site-header__logo img { height: 40px; } }
+
+/* スマホ・タブレット（〜1023px）：ヘッダーの帯（白地・下線・影）を出さず、透過のロゴとメニューのボタンだけを
+   画面上部に浮かせて固定する（スクロールしても引っ込めない）。ページの先頭（灰色の帯 .page-head ／トップの写真 .hero ／
+   重要なお知らせ .notice-bar）はヘッダーの高さぶん上へ伸ばし、ロゴの裏まで同じ下地にする。
+   ロゴとボタンには白いにじみをごく薄く付け、写真の上でも読めるようにする。帯の空いたところは押しても下に通す */
+@media (max-width: 1023px) {
+  .site-header {
+    margin-bottom: calc(-1 * var(--header-h));
+    background: transparent;
+    border-bottom: 0;
+    box-shadow: none;
+    pointer-events: none;
+  }
+  .site-header.hsh { box-shadow: none; }
+  .site-header--hidden { transform: none; }
+  .site-header__logo, .site-header .hamburger { pointer-events: auto; }
+  .site-header__logo img, .site-header .hamburger {
+    filter: drop-shadow(0 0 1px rgba(255, 255, 255, .9)) drop-shadow(0 0 5px rgba(255, 255, 255, .55));
+  }
+  /* ページの先頭をヘッダーの高さぶん伸ばす指定は、.page-head / .hero の定義より後ろ（ファイルの最後）に置く */
+}
 
 .nav { display: none; }
 @media (min-width: 1024px) {
@@ -3993,3 +4014,13 @@ button.dl-item { width: 100%; text-align: left; }
 .mt-48 { margin-top: 48px; }
 .text-red { color: var(--red); }
 .nowrap { white-space: nowrap; }
+
+/* ============ スマホ・タブレットのヘッダー（帯なし）に合わせて、ページの先頭をロゴの裏まで伸ばす ============
+   ヘッダーの帯をなくした分（.site-header の margin-bottom で本文を上へ寄せた分）だけ、先頭の下地の上の余白を足す。
+   .page-head / .hero の定義より後ろに置くこと */
+@media (max-width: 1023px) {
+  .page-head { padding-top: calc(32px + var(--header-h)); --sec-pt: calc(32px + var(--header-h) + 12px * 1.6 + 20px); }
+  .notice-bar { padding-top: var(--header-h); }
+  .notice-bar ~ #main > .page-head:first-child { padding-top: 32px; --sec-pt: calc(32px + 12px * 1.6 + 20px); }
+  .hero { padding-top: var(--header-h); min-height: 100svh; }
+}
