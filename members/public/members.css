@@ -216,63 +216,88 @@ form .secnote { margin-top: 24px; }
 .portal-body .bullet-list { margin: 0; padding: 0; }
 .portal-body .bullet-list li { list-style: none; }
 
-/* ---- 生年月ピッカー（JS が動くときは元のプルダウンを隠してボタン＋パネルに）---- */
+/* ---- 生年月ピッカー（JS が動くときは元のプルダウンを隠し、ボタン＋画面中央のダイアログに）---- */
 .birth { position: relative; max-width: 520px; margin-top: 20px; }
 .birth__label { display: block; font: 700 14px/1.6 var(--fjp); color: var(--ink); }
 .birth .name-row { margin-top: 6px; }
 .birth.is-enhanced .birth__native { display: none; }
-.portal-body .birth__btn { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; width: 100%; margin-top: 6px; min-height: 0; padding: 12px 44px 12px 14px; position: relative; justify-content: center; border-radius: 4px; letter-spacing: 0;
-  background: var(--white); border: 1px solid var(--gray-300); text-align: left; cursor: pointer; transition: border-color .2s, box-shadow .2s; }
-.portal-body .birth__btn::after { content: ""; position: absolute; right: 16px; top: 50%; width: 9px; height: 9px; border-right: 2px solid var(--ink); border-bottom: 2px solid var(--ink);
-  transform: translateY(-70%) rotate(45deg); transition: transform .25s; }
-.portal-body .birth.is-open .birth__btn::after { transform: translateY(-30%) rotate(-135deg); }
-.portal-body .birth__btn:hover, .portal-body .birth.is-open .birth__btn { border-color: var(--ink); }
+.portal-body .birth__btn { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; min-height: 54px; margin-top: 6px; padding: 10px 12px 10px 16px;
+  border-radius: 4px; background: var(--white); border: 1px solid var(--gray-300); text-align: left; letter-spacing: 0; cursor: pointer; transition: border-color .2s, box-shadow .2s; }
+.portal-body .birth__btn:hover { border-color: var(--ink); background: var(--white); color: inherit; }
 .portal-body .birth__btn:focus-visible { outline: 2px solid var(--red); outline-offset: 2px; }
 .portal-body .birth.is-invalid .birth__btn { border-color: var(--red); box-shadow: 0 0 0 3px var(--red-tint); }
-.birth__val { font: 700 17px/1.4 var(--flt), var(--fjp); color: var(--ink); letter-spacing: .02em; }
-.birth__ph { font: 700 15px/1.4 var(--fjp); color: var(--gray-500); }
-.birth__sub { font: 400 12px/1.5 var(--fjp); color: var(--gray-600); }
-.birth__panel { position: absolute; z-index: 40; left: 0; right: 0; top: calc(100% - 28px); margin-top: 6px; background: var(--white); border: 1px solid var(--ink);
-  border-radius: 6px; overflow: hidden; box-shadow: 0 18px 40px rgba(10, 18, 30, .18); animation: birthIn .22s ease-out; }
-.birth__panel[hidden] { display: none; }
-@keyframes birthIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
-.birth__head { display: flex; align-items: stretch; border-bottom: 1px solid var(--gray-200); }
-.portal-body .birth__tab { flex: 1; min-height: 0; border-radius: 0; padding: 14px 8px 11px; background: none; border: 0; border-bottom: 3px solid transparent; font: 700 15px/1 var(--fjp); color: var(--gray-500); cursor: pointer; }
-.portal-body .birth__tab.is-on { color: var(--ink); border-bottom-color: var(--red); }
-.portal-body .birth__tab:disabled { opacity: .4; cursor: default; }
-.portal-body .birth__close { flex: 0 0 52px; min-height: 0; padding: 0; border-radius: 0; background: none; border: 0; border-left: 1px solid var(--gray-200); font: 400 22px/1 var(--fjp); color: var(--gray-600); cursor: pointer; }
-.birth__jump { display: flex; gap: 6px; padding: 10px 12px; border-bottom: 1px solid var(--gray-200); background: var(--gray-050); }
-.portal-body .birth__jump button { min-height: 0; padding: 7px 14px; border-radius: 999px; background: var(--white); border: 1px solid var(--gray-300); font: 700 12px/1 var(--fjp); color: var(--ink); cursor: pointer; }
-.portal-body .birth__jump button:hover { border-color: var(--ink); }
-.birth__years { max-height: 300px; overflow-y: auto; overscroll-behavior: contain; padding: 0 12px 12px; position: relative; }
-.birth__era { position: sticky; top: 0; z-index: 1; margin: 0 -12px !important; padding: 8px 12px !important; background: rgba(255, 255, 255, .96);
-  font: 700 12px/1 var(--fjp) !important; letter-spacing: .1em; color: var(--red) !important; border-bottom: 1px solid var(--gray-100); }
-.birth__grid, .birth__months { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 8px; }
-.birth__months { padding: 14px 12px; }
-.portal-body .birth__cell { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding: 9px 2px; min-height: 0; border-radius: 4px; background: var(--white); border: 1px solid var(--gray-200);
-  cursor: pointer; transition: background .15s, border-color .15s, color .15s; }
-.portal-body .birth__cell b { font: 700 15px/1.2 var(--flt), var(--fjp); color: var(--ink); }
-.portal-body .birth__cell small { font: 400 10px/1.3 var(--fjp); color: var(--gray-600); }
-.portal-body .birth__m { padding: 14px 2px; }
-.portal-body .birth__m b { font-size: 20px; }
-.birth__m b span { margin-left: 2px; font: 700 11px/1 var(--fjp); color: var(--gray-600); }
-.birth__cell.is-on b span { color: var(--white); }
-.portal-body .birth__cell:hover { border-color: var(--ink); background: var(--white); color: inherit; }
-.portal-body .birth__cell.is-on:hover { background: var(--ink); }
-.portal-body .birth__btn:hover { background: var(--white); color: inherit; }
-.portal-body .birth__tab:hover, .portal-body .birth__close:hover { background: none; color: var(--ink); }
-.portal-body .zip-toggle:hover { background: none; color: var(--red); }
-.portal-body .birth__cell.is-hint { border-color: var(--gray-600); background: var(--gray-050); }
-.portal-body .birth__cell.is-on { background: var(--ink); border-color: var(--ink); }
-.portal-body .birth__cell.is-on b, .portal-body .birth__cell.is-on small { color: var(--white); }
+.birth__val { font: 700 18px/1.3 var(--flt), var(--fjp); color: var(--ink); }
+.birth__val small { font: 400 13px/1 var(--fjp); color: var(--gray-600); }
+.birth__ph { font: 400 15px/1.4 var(--fjp); color: var(--gray-500); }
+.birth__chg { flex: none; padding: 7px 14px; border-radius: 999px; background: var(--ink); font: 700 12px/1 var(--fjp); color: var(--white); }
+.birth__btn.is-empty .birth__chg { background: var(--red); }
+.birth.is-invalid .birth__ph::after { content: "（未選択）"; color: var(--red); }
+.birth__age { margin: 8px 0 0 !important; font: 400 14px/1.6 var(--fjp) !important; color: var(--gray-800) !important; }
+.birth__age:empty { display: none; }
+.birth__age b { font: 700 18px/1 var(--flt), var(--fjp); color: var(--red); margin-left: 4px; }
+
+html.bp-lock, html.bp-lock body { overflow: hidden; }
+.bp { position: fixed; inset: 0; z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 16px; }
+.bp[hidden] { display: none; }
+.bp__backdrop { position: absolute; inset: 0; background: rgba(10, 18, 30, .55); animation: bpFade .2s ease-out; }
+.bp__dialog { position: relative; display: flex; flex-direction: column; width: 100%; max-width: 440px; max-height: min(640px, calc(100vh - 32px)); max-height: min(640px, calc(100dvh - 32px));
+  background: var(--white); border-radius: 12px; overflow: hidden; box-shadow: 0 24px 60px rgba(10, 18, 30, .35); animation: bpPop .24s cubic-bezier(.2, .8, .3, 1); outline: none; }
+@keyframes bpFade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes bpPop { from { opacity: 0; transform: translateY(12px) scale(.97); } to { opacity: 1; transform: none; } }
+.bp button { font-family: var(--fjp); letter-spacing: 0; cursor: pointer; }
+.bp__head { display: flex; align-items: center; justify-content: space-between; padding: 16px 12px 12px 20px; border-top: 4px solid var(--red); }
+.bp__title { margin: 0; font: 700 17px/1.3 var(--fjp); color: var(--ink); }
+.bp__x { position: relative; width: 40px; height: 40px; padding: 0; border: 0; border-radius: 50%; background: var(--gray-050); }
+.bp__x::before, .bp__x::after { content: ""; position: absolute; left: 50%; top: 50%; width: 16px; height: 2px; background: var(--ink); }
+.bp__x::before { transform: translate(-50%, -50%) rotate(45deg); }
+.bp__x::after { transform: translate(-50%, -50%) rotate(-45deg); }
+.bp__x:hover { background: var(--gray-200); }
+.bp__steps { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 0; padding: 0 16px 12px; list-style: none; }
+.bp__steps button { display: grid; grid-template-columns: auto 1fr; grid-template-rows: auto auto; column-gap: 8px; align-items: center; width: 100%; padding: 10px 12px; text-align: left;
+  background: var(--gray-050); border: 2px solid transparent; border-radius: 8px; font: 700 12px/1.3 var(--fjp); color: var(--gray-600); }
+.bp__steps button span { grid-row: 1 / 3; display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: var(--gray-300); color: var(--white); font: 700 13px/1 var(--flt), var(--fjp); }
+.bp__steps button b { font: 700 16px/1.3 var(--flt), var(--fjp); color: var(--ink); }
+.bp__steps .is-on button { background: var(--white); border-color: var(--red); color: var(--red); }
+.bp__steps .is-on button span { background: var(--red); }
+.bp__steps .is-done button span { background: var(--ink); }
+.bp__steps button:disabled { opacity: .5; cursor: default; }
+.bp__jump { display: flex; gap: 6px; padding: 10px 16px; border-top: 1px solid var(--gray-200); background: var(--gray-050); }
+.bp__jump::before { content: "元号で移動"; align-self: center; margin-right: 4px; font: 400 11px/1 var(--fjp); color: var(--gray-600); }
+.bp__jump button { padding: 7px 13px; border: 1px solid var(--gray-300); border-radius: 999px; background: var(--white); font-size: 13px; font-weight: 700; color: var(--ink); }
+.bp__jump button:hover { border-color: var(--ink); }
+.bp__cols, .bp__row { display: grid; grid-template-columns: 1fr 1fr 1fr; align-items: center; }
+.bp__cols { padding: 6px 28px 6px 20px; border-top: 1px solid var(--gray-200); border-bottom: 1px solid var(--gray-200); font: 400 11px/1.4 var(--fjp); color: var(--gray-600); }
+.bp__cols span:last-child, .bp__row span:last-child { text-align: right; }
+.bp__body { position: relative; flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
+.bp__era { position: sticky; top: 0; z-index: 1; margin: 0; padding: 6px 20px; background: var(--ink); font: 700 12px/1.4 var(--fjp); letter-spacing: .2em; color: var(--white); }
+.bp__row { width: 100%; min-height: 48px; padding: 0 20px; text-align: left; background: var(--white); border: 0; border-bottom: 1px solid var(--gray-100); color: var(--ink); transition: background .12s; }
+.bp__row b { font: 700 17px/1 var(--flt), var(--fjp); }
+.bp__row span { font: 400 14px/1 var(--fjp); color: var(--gray-800); }
+.bp__row em { margin-left: 6px; padding: 2px 6px; border-radius: 3px; background: var(--red-tint); font: 700 10px/1.4 var(--fjp); font-style: normal; color: var(--red-dark); }
+.bp__row:hover { background: var(--gray-050); }
+.bp__row.is-hint { background: #fffaf0; }
+.bp__row.is-on { background: var(--ink); }
+.bp__row.is-on b, .bp__row.is-on span { color: var(--white); }
+.bp__body--month { padding: 16px; border-top: 1px solid var(--gray-200); }
+.bp__lead { margin: 0 0 12px; font: 400 14px/1.6 var(--fjp); color: var(--gray-800); }
+.bp__lead b { color: var(--ink); }
+.bp__months { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.bp__m { height: 60px; padding: 0; border: 1px solid var(--gray-300); border-radius: 8px; background: var(--white); font: 700 22px/1 var(--flt), var(--fjp); color: var(--ink); transition: background .12s, border-color .12s; }
+.bp__m small { margin-left: 2px; font: 700 12px/1 var(--fjp); color: var(--gray-600); }
+.bp__m:hover { border-color: var(--ink); }
+.bp__m.is-on { background: var(--ink); border-color: var(--ink); color: var(--white); }
+.bp__m.is-on small { color: var(--white); }
+.bp__foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; border-top: 1px solid var(--gray-200); background: var(--gray-050); }
+.bp__sum { margin: 0; font: 700 16px/1.4 var(--flt), var(--fjp); color: var(--ink); }
+.bp__sum span { display: block; font: 400 12px/1.4 var(--fjp); color: var(--gray-600); }
+.bp__ok { flex: none; min-width: 110px; height: 46px; padding: 0 20px; border: 0; border-radius: 4px; background: var(--red); color: var(--white); font-size: 15px; font-weight: 700; }
+.bp__ok:hover { background: var(--red-dark); }
+.bp__ok:disabled { background: var(--gray-300); cursor: default; }
 @media (max-width: 640px) {
-  .birth.is-open::before { content: ""; position: fixed; inset: 0; z-index: 90; background: rgba(10, 18, 30, .45); }
-  .birth__panel { position: fixed; z-index: 91; left: 0; right: 0; top: auto; bottom: 0; margin: 0; border: 0; border-top: 3px solid var(--red);
-    max-height: 78vh; border-radius: 14px 14px 0 0; display: flex; flex-direction: column; animation: birthUp .25s ease-out; padding-bottom: env(safe-area-inset-bottom); }
-  .birth__panel[hidden] { display: none; }
-  .birth__years { max-height: none; flex: 1; min-height: 0; }
-  @keyframes birthUp { from { transform: translateY(100%); } to { transform: none; } }
+  .bp { padding: 12px; }
+  .bp__dialog { max-height: calc(100vh - 24px); max-height: calc(100dvh - 24px); }
 }
+.portal-body .zip-toggle:hover { background: none; color: var(--red); }
 
 /* ---- 住所から郵便番号を探す ---- */
 .portal-body .zip-toggle { display: inline-flex; align-items: center; gap: 8px; min-height: 0; margin-top: 8px; padding: 0; background: none; border: 0; font: 700 13px/1.6 var(--fjp);
@@ -288,9 +313,6 @@ form .secnote { margin-top: 24px; }
 .portal-body .zip-search input[type=search]:focus { outline: none; border-color: var(--ink); }
 .zip-search__msg { margin: 8px 0 0 !important; font-size: 12px !important; }
 
-.birth__age { margin: 8px 0 0 !important; font: 400 14px/1.6 var(--fjp) !important; color: var(--gray-800) !important; }
-.birth__age:empty { display: none; }
-.birth__age b { font: 700 18px/1 var(--flt), var(--fjp); color: var(--red); margin-left: 4px; }
 .portal-body .age { display: inline-block; margin-left: 4px; padding: 1px 6px; border: 1px solid var(--gray-300); border-radius: 3px; font: 700 11px/1.5 var(--fjp); color: var(--gray-800); white-space: nowrap; }
 .portal-body td.num { white-space: nowrap; }
 
