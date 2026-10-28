@@ -11,11 +11,6 @@ const dst = join(here, '..', 'public', 'assets');
 const FILES = [
   'css/style.css',
   'js/main.js',
-  'img/logo.png',
-  'img/logo-white.png',
-  'img/favicon-32.png',
-  'img/favicon-192.png',
-  'img/apple-touch-icon.png',
   'img/cta.webp',
 ];
 if (!existsSync(join(src, 'css/style.css'))) {

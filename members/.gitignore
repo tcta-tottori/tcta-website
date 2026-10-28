@@ -3,5 +3,5 @@ node_modules/
 .dev.vars
 worker-configuration.d.ts
 dist/
-# 本体サイトから複製する（scripts/sync-assets.mjs）
+# 本体サイトから複製する（scripts/sync-assets.mjs）。public/img（ポータルのロゴ）は Git 管理
 public/assets/
