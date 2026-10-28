@@ -66,9 +66,9 @@ export function page(c: Ctx, o: LayoutOpts): H {
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${o.title}｜${env.APP_NAME}</title>
-<link rel="icon" href="/assets/img/favicon-32.png" sizes="32x32" type="image/png">
-<link rel="icon" href="/assets/img/favicon-192.png" sizes="192x192" type="image/png">
-<link rel="apple-touch-icon" href="/assets/img/apple-touch-icon.png">
+<link rel="icon" href="/img/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="icon" href="/img/favicon-192.png" sizes="192x192" type="image/png">
+<link rel="apple-touch-icon" href="/img/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&family=Jost:wght@500;600;700&display=swap" rel="stylesheet">
@@ -95,7 +95,7 @@ export function page(c: Ctx, o: LayoutOpts): H {
   <div class="container site-header__inner">
     <a class="site-header__logo" href="${homeHref}" aria-label="${env.APP_NAME} ホーム">
       ${brand(env, false)}
-      <span class="site-header__tag">${o.admin ? '事務局' : '会員ポータル'}${isDemo(env) ? html` <em>DEMO</em>` : ''}</span>
+      ${o.admin || isDemo(env) ? html`<span class="site-header__tag">${o.admin ? '事務局' : ''}${isDemo(env) ? html`<em>DEMO</em>` : ''}</span>` : ''}
     </a>
     <nav class="nav ${o.admin ? 'nav--admin' : ''}" aria-label="グローバルナビゲーション">
       ${items.map((it) => html`<a class="nav__link ${it.en ? 'nav__link--en' : ''} ${isActive(it) ? 'is-active' : ''}" href="${it.href}" ${it.external ? raw('target="_blank" rel="noopener"') : ''}>${it.label}</a>`)}
@@ -247,8 +247,9 @@ const FOOTER_DOTS = [
 
 /* 文字のロゴ。協会のロゴ画像は使わず、参加するどの協会にも通用する共通ブランドにする（赤い四角＋英字＋日本語） */
 function brand(env: Env, white: boolean) {
+  // ポータルのロゴ画像（public/img/）。黒いフッターでは文字を白にした版を使う
   const en = env.APP_BRAND_EN || 'TENNIS MEMBERS';
-  return html`<span class="brand ${white ? 'brand--white' : ''}"><span class="brand__mark" aria-hidden="true"></span><span class="brand__text"><span class="brand__en">${en}</span><span class="brand__ja">${env.APP_NAME.replace(/（デモ）$/, '')}</span></span></span>`;
+  return html`<img class="brand-logo ${white ? 'brand-logo--white' : ''}" src="${white ? '/img/logo-white.png' : '/img/logo.png'}" alt="${en} ${env.APP_NAME.replace(/（デモ）$/, '')}" width="900" height="215">`;
 }
 
 async function footer(c: Ctx, siteUrl: string, admin: Admin | null) {

@@ -4,20 +4,11 @@
    ポータル固有の部品（表・フォーム・バッジ・カード・状態の帯）を同じ規則で整える。
    ========================================================================== */
 
-/* ---- 文字のロゴ（協会ロゴの代わり。赤い四角＋英字＋日本語）---- */
-.brand { display: inline-flex; align-items: center; gap: 10px; color: var(--ink); }
-.brand__mark { flex: none; width: 24px; height: 24px; background: var(--red); }
-.brand__text { display: flex; flex-direction: column; gap: 2px; line-height: 1; }
-.brand__en { font: 700 15px/1 var(--fdisp); letter-spacing: .14em; white-space: nowrap; }
-.brand__ja { font: 500 10px/1 var(--fjp); letter-spacing: .12em; color: var(--gray-600); white-space: nowrap; }
-@media (min-width: 1024px) { .brand__mark { width: 28px; height: 28px; } .brand__en { font-size: 17px; } .brand__ja { font-size: 11px; } }
-.brand--white { color: #fff; }
-.brand--white .brand__ja { color: rgba(255, 255, 255, .7); }
-.site-footer .brand { align-items: flex-start; }
-.site-footer .brand__mark { width: 28px; height: 28px; }
-.site-footer .brand__en { font-size: 16px; white-space: normal; line-height: 1.25; }
-.site-footer .brand__ja { font-size: 11px; }
-.site-footer__brand { padding-right: 16px; }
+/* ---- ポータルのロゴ画像（public/img/logo.png。黒地では logo-white.png）---- */
+.brand-logo { display: block; height: 40px; width: auto; }
+@media (min-width: 1024px) { .brand-logo { height: 52px; } }
+.site-footer .brand-logo { height: auto; width: 220px; max-width: 100%; }
+@media (min-width: 1024px) { .site-footer .brand-logo { width: 240px; } }
 
 /* ---- ヘッダー：ロゴの横の小さな札（会員ポータル／事務局）---- */
 .site-header__logo { align-items: center; gap: 12px; }
@@ -30,7 +21,8 @@
   color: var(--ink);
   white-space: nowrap;
 }
-.site-header__tag em { font: 700 10px/1 var(--flt); font-style: normal; color: var(--red); margin-left: 4px; }
+.site-header__tag em { font: 700 10px/1 var(--flt); font-style: normal; color: var(--red); }
+.site-header__tag em:not(:first-child) { margin-left: 4px; }
 @media (min-width: 640px) { .site-header__tag { display: inline-block; } }
 .header-contact-form { display: contents; }
 button.header-contact { cursor: pointer; }
