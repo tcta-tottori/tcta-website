@@ -100,9 +100,19 @@ try {
   check(r.text.includes('お預かりする情報と守り方') && r.text.includes('href="/privacy"'), '会員登録画面に取扱いの要点と規程へのリンクが出る');
   r = await member.get(new URL(link).pathname);
   check(r.status === 302 && r.location === '/login', 'リンクは 1 回限り');
-  r = await member.post('/signup', { family_name: '煙', given_name: '試験', family_kana: 'kemuri', given_kana: '試験', sex: 'male', birth_era: 'heisei', birth_y: '2', club_sel: '__free__', home: 'tottori-city', consent: 'on' });
+  r = await member.post('/signup', { family_name: '煙', given_name: '試験', family_kana: 'kemuri', given_kana: '試験', sex: 'male', birth_y: '1990', birth_m: '4', club_sel: '__free__', home: 'tottori-city', consent: 'on' });
   check(r.status === 302 && r.location === '/signup' && decodeURIComponent(r.headers.get('set-cookie') ?? '').includes('ひらがなで入力'), 'ふりがなにひらがな以外（英字・漢字）が入ると登録できない');
-  r = await member.post('/signup', { family_name: '煙', given_name: '試験', family_kana: 'ケムリ', given_kana: 'ｼｹﾝ', sex: 'male', birth_era: 'heisei', birth_y: '2', club_sel: '__other__', club_other: '煙テニスクラブ', home: 'tottori-city', phone: '090-1234-5678', postal: '680-0001', address: '鳥取市テスト1-1', consent: 'on' });
+  const sig = { family_name: '煙', given_name: '試験', family_kana: 'けむり', given_kana: 'しけん', sex: 'male', club_sel: '__free__', home: 'tottori-city', consent: 'on' };
+  r = await member.post('/signup', { ...sig, birth_y: '1990' });
+  check(r.status === 302 && r.location === '/signup' && decodeURIComponent(r.headers.get('set-cookie') ?? '').includes('年と月の両方'), '生年月は月まで選ばないと登録できない');
+  r = await member.post('/signup', { ...sig, birth_y: String(new Date().getFullYear() - 1), birth_m: '4' });
+  check(r.status === 302 && r.location === '/signup' && decodeURIComponent(r.headers.get('set-cookie') ?? '').includes('歳'), '現実的でない年齢（1 歳）では登録できない');
+  r = await member.post('/signup', { ...sig, birth_y: '1990', birth_m: '4', postal: '680-00011' });
+  check(r.status === 302 && r.location === '/signup' && decodeURIComponent(r.headers.get('set-cookie') ?? '').includes('ハイフンなし'), '郵便番号が 7 桁でなければ登録できない');
+  r = await member.get('/signup');
+  check(r.text.indexOf('鳥取県テニス協会') < r.text.indexOf('鳥取市テニス協会') && r.text.indexOf('鳥取市テニス協会') < r.text.indexOf('倉吉市テニス協会') && r.text.indexOf('倉吉市テニス協会') < r.text.indexOf('米子市テニス協会'), '主な登録先は 県 → 鳥取市 → 倉吉市 → 米子市 の順');
+  check(r.text.includes('ハイフンなし') && !r.text.includes('list="clubs-list" data-club-other'), '郵便番号にハイフンなしの注意書き、クラブ名の手入力欄に候補の▼が無い');
+  r = await member.post('/signup', { family_name: '煙', given_name: '試験', family_kana: 'ケムリ', given_kana: 'ｼｹﾝ', sex: 'male', birth_era: 'heisei', birth_y: '2', birth_m: '4', club_sel: '__other__', club_other: '煙テニスクラブ', home: 'tottori-city', phone: '090-1234-5678', postal: '680-0001', address: '鳥取市テスト1-1', consent: 'on' });
   check(r.status === 302 && r.location === '/me', '会員登録 → マイページへ');
   r = await member.get('/me');
   check(r.text.includes('煙 試験') && /T-\d\d-\d{4}/.test(r.text), '会員番号（T-yy-nnnn）が発番される');
@@ -110,13 +120,21 @@ try {
   check(r.text.includes('煙テニスクラブ'), '所属を手入力すると新しいクラブとして登録される');
   check(r.text.includes('（けむりしけん）'), 'カタカナ・半角カナのふりがなはひらがなに直して保存される');
   r = await member.get('/me/profile');
-  check(r.text.includes('value="1990" selected'), '生年を「平成 2 年」で入れると西暦 1990 年として保存される');
-  r = await member.post('/me/profile', { family_name: '煙', given_name: '試験', family_kana: 'けむり', given_kana: 'しけん', sex: 'male', birth_era: 'seireki', birth_y: '1990', club_sel: '__free__', club_other: '', email: 'smoke@example.com', phone: '090-1234-5678', postal: '680-0001', address: '鳥取市テスト1-1' });
+  check(r.text.includes('value="1990" selected') && r.text.includes('value="4" selected'), '生年月（平成 2 年 4 月）が西暦 1990 年 4 月として保存される');
+  check(r.text.includes('value="6800001"'), '郵便番号はハイフンを除いた 7 桁で保存される');
+  r = await member.post('/me/profile', { family_name: '煙', given_name: '試験', family_kana: 'けむり', given_kana: 'しけん', sex: 'male', birth_y: '1990', birth_m: '4', club_sel: '__free__', club_other: '', email: 'smoke@example.com', phone: '090-1234-5678', postal: '680-0001', address: '鳥取市テスト1-1' });
   r = await member.get('/me');
   check(r.text.includes('<dd>フリー</dd>'), '所属を「フリー（無所属）」にできる');
   r = await anon.get('/api/v1/postal/6800001');
   check(r.status === 200 || r.status === 502, '郵便番号 → 住所の API が応答する（外部に出られない環境では 502）');
   if (r.status === 200) check(JSON.parse(r.text).address.includes('鳥取'), '郵便番号 680-0001 は鳥取県の住所');
+  r = await anon.get('/api/v1/address/cities?pref=' + encodeURIComponent('鳥取県'));
+  check(r.status === 200 || r.status === 502, '住所 → 郵便番号の検索 API（市区町村）が応答する');
+  if (r.status === 200) {
+    check(JSON.parse(r.text).cities.includes('倉吉市'), '鳥取県の市区町村に倉吉市がある');
+    r = await anon.get('/api/v1/address/towns?pref=' + encodeURIComponent('鳥取県') + '&city=' + encodeURIComponent('鳥取市'));
+    check(r.status === 200 && JSON.parse(r.text).towns.some((t) => /^68\d{5}$/.test(t.postal)), '町域を選ぶと郵便番号がわかる');
+  }
 
   console.log('\n[2] 年度登録（振込）');
   const now = new Date(Date.now() + 9 * 3600 * 1000); // JST

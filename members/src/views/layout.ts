@@ -291,7 +291,7 @@ function brand(env: Env, white: boolean) {
 async function footer(c: Ctx, siteUrl: string, admin: Admin | null) {
   const env = c.env;
   // 参加している協会を並べる（共同利用の主体が分かるように）
-  const assocs = await all<{ name: string }>(env.DB, "SELECT name FROM associations ORDER BY (id LIKE '%pref%') DESC, name").catch(() => [] as { name: string }[]);
+  const assocs = await all<{ name: string }>(env.DB, "SELECT name FROM associations ORDER BY sort_order, code").catch(() => [] as { name: string }[]);
   return html`
 <footer class="site-footer">
   <div class="footer-deco" aria-hidden="true">${FOOTER_DOTS.map((s) => html`<span class="footer-dot" style="${s}"></span>`)}</div>

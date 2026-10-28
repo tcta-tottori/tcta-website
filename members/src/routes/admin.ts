@@ -11,7 +11,7 @@ import { currentFiscalYear, fmtDate, fmtDateTime, jstDayRange, todayJst, yen } f
 import { sendMail } from '../lib/mail';
 import { createSession, destroySession, flash, readSession } from '../lib/session';
 import { ulid } from '../lib/ulid';
-import { checkNames, composeKana, composeName, createMember, decryptContact, findOrCreateClub, findSameNameMembers, namesFromForm, normalizeKana, resolveClub, updateMember } from '../services/members';
+import { normalizePostal, checkNames, composeKana, composeName, createMember, decryptContact, findOrCreateClub, findSameNameMembers, namesFromForm, normalizeKana, resolveClub, updateMember } from '../services/members';
 import { clubLabel, clubSelect, nameFields } from '../views/forms';
 import { securityNote } from '../views/security';
 import { purgeContacts } from '../services/retention';
@@ -188,10 +188,10 @@ admin.post('/members/export.csv', async (c) => {
   const f = await form(c);
   const fy = currentFiscalYear(4);
   const rows = await all<Member & { club_name: string | null; category: string }>(c.env.DB, `SELECT m.*, c.name AS club_name, r.category FROM registrations r JOIN members m ON m.id = r.member_id LEFT JOIN clubs c ON c.id = m.club_id WHERE r.association_id = ? AND r.fiscal_year = ? AND r.status = 'approved' ORDER BY m.kana`, a.association_id, fy);
-  const lines = ['会員番号,姓,名,せい,めい,性別,生年,所属,区分,メール,電話,郵便番号,住所'];
+  const lines = ['会員番号,姓,名,せい,めい,性別,生年,生月,所属,区分,メール,電話,郵便番号,住所'];
   for (const m of rows) {
     const ct = await decryptContact(c.env, m);
-    lines.push([m.member_no, m.family_name, m.given_name, m.family_kana, m.given_kana, m.sex, m.birth_year, clubLabel(m.club_name), CATEGORY_LABEL[m.category], ct.email, ct.phone, ct.postal, ct.address].map(csv).join(','));
+    lines.push([m.member_no, m.family_name, m.given_name, m.family_kana, m.given_kana, m.sex, m.birth_year, m.birth_month, clubLabel(m.club_name), CATEGORY_LABEL[m.category], ct.email, ct.phone, ct.postal, ct.address].map(csv).join(','));
   }
   await audit(c.env, { ...actor(c), action: 'members.export_csv', target: `association:${a.association_id}`, after: { purpose: f.purpose, count: rows.length, fiscal_year: fy } });
   return c.body('﻿' + lines.join('\r\n'), 200, { 'Content-Type': 'text/csv; charset=utf-8', 'Content-Disposition': `attachment; filename="members-${fy}.csv"` });
@@ -215,11 +215,11 @@ admin.get('/members/:id', async (c) => {
       ${canEditMembers(a) ? html`<details><summary>連絡先・所属を編集</summary><form method="post" action="/admin/members/${m.id}">
         ${nameFields(m)}
         ${clubSelect(await all<Club>(c.env.DB, 'SELECT * FROM clubs ORDER BY name'), m.club_id)}
-        <label>メール <input type="email" name="email" value="${ct.email ?? ''}"></label><label>電話 <input type="tel" name="phone" value="${ct.phone ?? ''}"></label><label>郵便番号 <input type="text" name="postal" value="${ct.postal ?? ''}" inputmode="numeric"></label><label>住所 <input type="text" name="address" value="${ct.address ?? ''}"></label>
+        <label>メール <input type="email" name="email" value="${ct.email ?? ''}"></label><label>電話 <input type="tel" name="phone" value="${ct.phone ?? ''}"></label><label>郵便番号（ハイフンなしの 7 桁） <input type="text" name="postal" value="${ct.postal ?? ''}" inputmode="numeric" maxlength="8" placeholder="例 6800001"></label><label>住所 <input type="text" name="address" value="${ct.address ?? ''}"></label>
         <label>状態 <select name="status">${['active', 'provisional', 'withdrawn'].map((s) => html`<option value="${s}" ${s === m.status ? 'selected' : ''}>${s === 'withdrawn' ? '退会（削除依頼に対応した会員など）' : STATUS_LABEL[s]}</option>`)}</select></label>
         <div class="actions"><button class="primary">保存</button></div></form></details>` : ''}`;
   }
-  const body = html`<div class="card"><dl class="kv"><dt>会員番号</dt><dd><b>${m.member_no ?? '—'}</b></dd><dt>氏名</dt><dd>${m.name}（${m.kana}）</dd><dt>所属</dt><dd>${clubLabel(club?.name)}</dd><dt>状態</dt><dd>${badge(m.status)}</dd><dt>生年</dt><dd>${m.birth_year ?? '—'}</dd><dt>登録日</dt><dd>${fmtDateTime(m.created_at)}</dd></dl></div>
+  const body = html`<div class="card"><dl class="kv"><dt>会員番号</dt><dd><b>${m.member_no ?? '—'}</b></dd><dt>氏名</dt><dd>${m.name}（${m.kana}）</dd><dt>所属</dt><dd>${clubLabel(club?.name)}</dd><dt>状態</dt><dd>${badge(m.status)}</dd><dt>生年月</dt><dd>${m.birth_year ? `${m.birth_year}年${m.birth_month ? `${m.birth_month}月` : ''}` : '—'}</dd><dt>登録日</dt><dd>${fmtDateTime(m.created_at)}</dd></dl></div>
     <div class="card"><h2>連絡先</h2>${pii}</div>
     <h2>年度登録</h2><div class="tbl"><table><tr><th>年度</th><th>協会</th><th>区分</th><th>状態</th><th>承認</th></tr>${regs.map((r) => html`<tr><td>${r.fiscal_year}</td><td>${r.association_name}</td><td>${CATEGORY_LABEL[r.category]}</td><td>${badge(r.status)}</td><td>${r.approved_by ?? ''} ${fmtDateTime(r.approved_at)}</td></tr>`)}</table></div>
     <h2>エントリー</h2><div class="tbl"><table><tr><th>大会</th><th>種目</th><th>状態</th><th>受付</th></tr>${entries.map((e) => html`<tr><td>${e.t_name}</td><td>${e.event_code}${e.class ? ' ' + e.class : ''}</td><td>${badge(e.status)}</td><td>${e.source} ${fmtDateTime(e.created_at)}</td></tr>`)}</table></div>`;
@@ -234,8 +234,10 @@ admin.post('/members/:id', async (c) => {
   const f = await form(c);
   const names = namesFromForm(f);
   if (typeof names === 'string') { flash(c, names, 'err'); return c.redirect(`/admin/members/${m.id}`); }
+  const postal = normalizePostal(f.postal);
+  if (postal === false) { flash(c, '郵便番号はハイフンなしの 7 桁で入力してください', 'err'); return c.redirect(`/admin/members/${m.id}`); }
   const clubId = await resolveClub(c.env, f.club_sel, f.club_other);
-  await updateMember(c.env, m.id, { names, clubId, email: f.email || null, phone: f.phone || null, postal: f.postal || null, address: f.address || null, status: f.status });
+  await updateMember(c.env, m.id, { names, clubId, email: f.email || null, phone: f.phone || null, postal, address: f.address || null, status: f.status });
   if (f.status === 'withdrawn' && m.status !== 'withdrawn') await run(c.env.DB, 'UPDATE members SET withdrawn_at = ? WHERE id = ?', nowIso(), m.id);
   await audit(c.env, { ...actor(c), action: 'member.update', target: `member:${m.id}`, before: { name: m.name, kana: m.kana, club_id: m.club_id, status: m.status }, after: { name: composeName(names.familyName, names.givenName), kana: composeKana(names.familyKana, names.givenKana), club_id: clubId, status: f.status, contact_changed: true } });
   flash(c, '会員情報を更新しました');
@@ -360,7 +362,7 @@ admin.get('/tournaments', async (c) => {
       (SELECT COUNT(*) FROM entries e WHERE e.tournament_id = t.id AND e.status = 'confirmed') AS n_confirmed,
       (SELECT COUNT(*) FROM entries e WHERE e.tournament_id = t.id AND e.status = 'pending_payment') AS n_pending
       FROM tournaments t JOIN associations a ON a.id = t.association_id ORDER BY t.held_on DESC`)).filter((t) => canViewTournament(a, t));
-  const assocs = await all<Association>(c.env.DB, 'SELECT * FROM associations ORDER BY id');
+  const assocs = await all<Association>(c.env.DB, 'SELECT * FROM associations ORDER BY sort_order, code');
   const body = html`${canCreateTournament(a) ? html`<p><a class="btn primary" href="/admin/tournaments/new">大会を作る</a></p>` : ''}
     <div class="tbl"><table><tr><th>大会</th><th>主催</th><th>開催日</th><th>受付</th><th>必要な登録</th><th>確定</th><th>支払待ち</th><th>状態</th></tr>
     ${rows.map((t) => html`<tr><td><a href="/admin/tournaments/${t.id}">${t.name}</a></td><td>${t.association_name}</td><td>${fmtDate(t.held_on)}</td><td>${fmtDate(t.entry_start)}〜${fmtDate(t.entry_end)}</td><td>${shortRule(parseRule(t), assocs)}</td><td>${t.n_confirmed}</td><td>${t.n_pending}</td><td>${badge(t.status)}</td></tr>`)}</table></div>`;
@@ -397,7 +399,7 @@ function tournamentForm(t: Tournament | null, assocs: Association[], a: Admin) {
 admin.get('/tournaments/new', async (c) => {
   const a = A(c);
   if (!canCreateTournament(a)) return c.text('forbidden', 403);
-  const assocs = await all<Association>(c.env.DB, 'SELECT * FROM associations ORDER BY id');
+  const assocs = await all<Association>(c.env.DB, 'SELECT * FROM associations ORDER BY sort_order, code');
   return c.html(page(c, { title: '大会を作る', body: tournamentForm(null, assocs, a), admin: a }));
 });
 
@@ -408,7 +410,7 @@ async function saveTournament(c: C, existing: Tournament | null) {
   const events = parseEvents(f.events ?? '');
   if (!events.length || events.some((e) => !e.code || !e.name)) { flash(c, '種目の書式が正しくありません', 'err'); return c.redirect(existing ? `/admin/tournaments/${existing.id}/edit` : '/admin/tournaments/new'); }
   const methods = f.all('methods').filter((m) => m in METHOD_LABEL);
-  const assocs = await all<Association>(c.env.DB, 'SELECT * FROM associations ORDER BY id');
+  const assocs = await all<Association>(c.env.DB, 'SELECT * FROM associations ORDER BY sort_order, code');
   const back = existing ? `/admin/tournaments/${existing.id}/edit` : '/admin/tournaments/new';
   const preset = RULE_PRESETS.find((p) => p.key === f.rule_preset) ?? RULE_PRESETS[0];
   let rule = preset.key === 'custom' ? null : preset.build(assocId, assocs.some((s) => s.id === PREF_ID) ? PREF_ID : null);
@@ -442,7 +444,7 @@ async function loadOwned(c: C): Promise<Tournament | null> {
 admin.get('/tournaments/:id/edit', async (c) => {
   const t = await loadOwned(c);
   if (!t || !canCreateTournament(A(c))) return c.notFound();
-  const assocs = await all<Association>(c.env.DB, 'SELECT * FROM associations ORDER BY id');
+  const assocs = await all<Association>(c.env.DB, 'SELECT * FROM associations ORDER BY sort_order, code');
   return c.html(page(c, { title: `大会を編集: ${t.name}`, body: tournamentForm(t, assocs, A(c)), admin: A(c) }));
 });
 admin.post('/tournaments/:id', async (c) => {
@@ -471,7 +473,7 @@ admin.get('/tournaments/:id', async (c) => {
   const events = JSON.parse(t.events_json) as TournamentEvent[];
   const evName = (code: string) => events.find((e) => e.code === code)?.name ?? code;
   const tokens = await all<{ label: string | null; expires_at: string; created_at: string; last_used_at: string | null }>(c.env.DB, 'SELECT label, expires_at, created_at, last_used_at FROM api_tokens WHERE tournament_id = ? ORDER BY created_at DESC', t.id);
-  const assocsAll = await all<Association>(c.env.DB, 'SELECT * FROM associations ORDER BY id');
+  const assocsAll = await all<Association>(c.env.DB, 'SELECT * FROM associations ORDER BY sort_order, code');
   // ペア・代表の参加資格（取込みや承認の取消で後から足りなくなることがあるので、一覧でも確かめる）
   const eligOf = new Map<string, boolean>();
   for (const r of rows) {
@@ -706,7 +708,7 @@ admin.get('/admins', async (c) => {
   const a = A(c);
   if (!canManageAdmins(a)) return c.text('forbidden', 403);
   const rows = await all<Admin & { association_name: string | null }>(c.env.DB, 'SELECT a.*, s.name AS association_name FROM admins a LEFT JOIN associations s ON s.id = a.association_id ORDER BY a.association_id, a.role');
-  const assocs = await all<Association>(c.env.DB, 'SELECT * FROM associations ORDER BY id');
+  const assocs = await all<Association>(c.env.DB, 'SELECT * FROM associations ORDER BY sort_order, code');
   const tournaments = await all<Tournament>(c.env.DB, 'SELECT * FROM tournaments ORDER BY held_on DESC');
   const body = html`<p class="mute">本番では Cloudflare Access のグループにも同じメールを入れます（Access を通った人のメールがこの表に無ければ入れません）。年 1 回の権限棚卸しはこの表で行います。</p>
     <div class="tbl"><table><tr><th>氏名</th><th>メール</th><th>協会</th><th>ロール</th><th>担当大会</th><th>有効</th><th></th></tr>
@@ -743,9 +745,9 @@ admin.post('/admins/:id/toggle', async (c) => {
 admin.get('/associations', async (c) => {
   const a = A(c);
   if (a.role !== 'sysadmin' && a.role !== 'assoc_admin') return c.text('forbidden', 403);
-  const rows = (await all<Association>(c.env.DB, 'SELECT * FROM associations ORDER BY id')).filter((s) => a.role === 'sysadmin' || s.id === a.association_id);
+  const rows = (await all<Association>(c.env.DB, 'SELECT * FROM associations ORDER BY sort_order, code')).filter((s) => a.role === 'sysadmin' || s.id === a.association_id);
   const body = html`${rows.map((s) => html`<form method="post" action="/admin/associations/${s.id}" class="card"><h3>${s.name}（コード ${s.code}）</h3>
-    <label>年会費 <input type="number" name="annual_fee" value="${s.annual_fee}"></label><label>年度の切替月 <input type="number" name="fiscal_year_start_month" min="1" max="12" value="${s.fiscal_year_start_month}"></label>
+    <label>年会費 <input type="number" name="annual_fee" value="${s.annual_fee}"></label><label>表示順（小さいほど先） <input type="number" name="sort_order" min="1" max="999" value="${s.sort_order}"></label><label>年度の切替月 <input type="number" name="fiscal_year_start_month" min="1" max="12" value="${s.fiscal_year_start_month}"></label>
     <label>振込先 <input type="text" name="bank_info" value="${s.bank_info ?? ''}"></label><label>PayPay <input type="text" name="paypay_info" value="${s.paypay_info ?? ''}"></label><label>案内 <input type="text" name="reg_note" value="${s.reg_note ?? ''}"></label>
     <div class="actions"><button class="small">保存</button></div></form>`)}`;
   return c.html(page(c, { title: '協会の設定', body, admin: a }));
@@ -754,6 +756,7 @@ admin.post('/associations/:id', async (c) => {
   const a = A(c);
   if (a.role !== 'sysadmin' && !(a.role === 'assoc_admin' && a.association_id === c.req.param('id'))) return c.text('forbidden', 403);
   const f = await form(c);
+  if (f.sort_order) await run(c.env.DB, 'UPDATE associations SET sort_order = ? WHERE id = ?', Math.min(999, Math.max(1, Number(f.sort_order) || 100)), c.req.param('id'));
   await run(c.env.DB, 'UPDATE associations SET annual_fee = ?, fiscal_year_start_month = ?, bank_info = ?, paypay_info = ?, reg_note = ? WHERE id = ?', Number(f.annual_fee) || 0, Math.min(12, Math.max(1, Number(f.fiscal_year_start_month) || 4)), f.bank_info || null, f.paypay_info || null, f.reg_note || null, c.req.param('id'));
   await audit(c.env, { ...actor(c), action: 'association.update', target: `association:${c.req.param('id')}`, after: { annual_fee: f.annual_fee } });
   flash(c, '保存しました');

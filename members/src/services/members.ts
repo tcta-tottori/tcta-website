@@ -44,7 +44,7 @@ export const composeName = (family: string, given: string) => `${family.trim()} 
 export const composeKana = (family: string, given: string) => normalizeKana(family + given);
 
 export interface NewMember extends Names {
-  sex?: string | null; birthYear?: number | null;
+  sex?: string | null; birthYear?: number | null; birthMonth?: number | null;
   email?: string | null; phone?: string | null; postal?: string | null; address?: string | null;
   clubId?: string | null; homeAssociationId?: string | null; status?: 'active' | 'provisional';
   consented?: boolean;
@@ -63,12 +63,12 @@ export async function createMember(env: Env, n: NewMember): Promise<Member> {
   const email = n.email ? normalizeEmail(n.email) : null;
   await run(
     env.DB,
-    `INSERT INTO members (id, member_no, name, kana, family_name, given_name, family_kana, given_kana, sex, birth_year, email_hash, email_enc, phone_enc, postal_enc, address_enc,
+    `INSERT INTO members (id, member_no, name, kana, family_name, given_name, family_kana, given_kana, sex, birth_year, birth_month, email_hash, email_enc, phone_enc, postal_enc, address_enc,
        club_id, home_association_id, status, consented_at, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     id, memberNo, composeName(n.familyName, n.givenName), composeKana(n.familyKana, n.givenKana),
     n.familyName.trim(), n.givenName.trim(), normalizeKana(n.familyKana), normalizeKana(n.givenKana),
-    n.sex ?? null, n.birthYear ?? null,
+    n.sex ?? null, n.birthYear ?? null, n.birthMonth ?? null,
     email ? await blindIndex(env, email) : null, await encrypt(env, email), await encrypt(env, n.phone),
     await encrypt(env, n.postal), await encrypt(env, n.address), n.clubId ?? null, n.homeAssociationId ?? null,
     n.status ?? 'active', n.consented ? now : null, now, now,
@@ -77,7 +77,7 @@ export async function createMember(env: Env, n: NewMember): Promise<Member> {
 }
 
 export interface MemberUpdate {
-  names?: Names; sex?: string | null; birthYear?: number | null; email?: string | null;
+  names?: Names; sex?: string | null; birthYear?: number | null; birthMonth?: number | null; email?: string | null;
   phone?: string | null; postal?: string | null; address?: string | null; clubId?: string | null; status?: string;
 }
 
@@ -94,6 +94,7 @@ export async function updateMember(env: Env, id: string, u: MemberUpdate): Promi
   }
   if (u.sex !== undefined) push('sex', u.sex);
   if (u.birthYear !== undefined) push('birth_year', u.birthYear);
+  if (u.birthMonth !== undefined) push('birth_month', u.birthMonth);
   if (u.email !== undefined) {
     const e = u.email ? normalizeEmail(u.email) : null;
     push('email_hash', e ? await blindIndex(env, e) : null);
@@ -193,4 +194,11 @@ export async function findSameNameMembers(env: Env, name: string, kana: string, 
 export async function hasApprovedRegistration(env: Env, memberId: string, associationId: string, fiscalYear: number): Promise<boolean> {
   const r = await one(env.DB, `SELECT 1 AS ok FROM registrations WHERE member_id = ? AND association_id = ? AND fiscal_year = ? AND status = 'approved'`, memberId, associationId, fiscalYear);
   return Boolean(r);
+}
+
+/** 郵便番号を 7 桁の数字に（全角・ハイフンは取り除く）。空なら null、7 桁にならなければ false */
+export function normalizePostal(v: string | undefined | null): string | null | false {
+  const d = (v ?? '').normalize('NFKC').replace(/[^0-9]/g, '');
+  if (!d) return null;
+  return d.length === 7 ? d : false;
 }

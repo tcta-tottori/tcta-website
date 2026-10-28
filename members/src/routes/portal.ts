@@ -12,8 +12,8 @@ import { rateLimit } from '../lib/ratelimit';
 import { createCheckoutUrl } from '../lib/stripe';
 import { createSession, destroySession, flash, readSession } from '../lib/session';
 import { ulid } from '../lib/ulid';
-import { checkNames, composeKana, composeName, createMember, decryptContact, findMemberByEmail, findOrCreateClub, findSameNameMembers, getMember, namesFromForm, resolveClub, searchMembers, updateMember } from '../services/members';
-import { birthYearFields, birthYearFromForm, clubDatalist, clubLabel, clubSelect, nameFields, nameInputs } from '../views/forms';
+import { normalizePostal, checkNames, composeKana, composeName, createMember, decryptContact, findMemberByEmail, findOrCreateClub, findSameNameMembers, getMember, namesFromForm, resolveClub, searchMembers, updateMember } from '../services/members';
+import { birthFields, birthFromForm, clubDatalist, clubLabel, clubSelect, nameFields, nameInputs } from '../views/forms';
 import { securityNote } from '../views/security';
 import { retentionYears } from '../services/retention';
 import { checkEligibility, describeRule, parseRule, shortRule } from '../services/eligibility';
@@ -140,19 +140,19 @@ portal.post('/logout', async (c) => {
 
 // ---------- 会員登録（初回） ----------
 async function lookups(env: Env) {
-  return { clubs: await all<Club>(env.DB, 'SELECT * FROM clubs ORDER BY name'), assocs: await all<Association>(env.DB, "SELECT * FROM associations ORDER BY (id LIKE '%pref%') DESC, code") };
+  return { clubs: await all<Club>(env.DB, 'SELECT * FROM clubs ORDER BY name'), assocs: await all<Association>(env.DB, "SELECT * FROM associations ORDER BY sort_order, code") };
 }
 
-function profileFields(clubs: Club[], assocs: Association[], v: Partial<{ family_name: string; given_name: string; family_kana: string; given_kana: string; sex: string | null; birth_year: number | null; phone: string | null; postal: string | null; address: string | null; club_id: string | null; home: string | null }>, withHome: boolean) {
+function profileFields(clubs: Club[], assocs: Association[], v: Partial<{ family_name: string; given_name: string; family_kana: string; given_kana: string; sex: string | null; birth_year: number | null; birth_month: number | null; phone: string | null; postal: string | null; address: string | null; club_id: string | null; home: string | null }>, withHome: boolean) {
   return html`
     ${nameFields(v)}
     <label>性別 <select name="sex"><option value="">—</option>${Object.entries(SEX_LABEL).map(([k, l]) => html`<option value="${k}" ${v.sex === k ? 'selected' : ''}>${l}</option>`)}</select></label>
-    ${birthYearFields(v.birth_year)}
+    ${birthFields(v.birth_year, v.birth_month)}
     ${clubSelect(clubs, v.club_id)}
     ${withHome ? html`<label>主に登録する協会（会員番号の頭文字になります） <select name="home" required><option value="">選んでください</option>${assocs.map((a) => html`<option value="${a.id}" ${v.home === a.id ? 'selected' : ''}>${a.name}</option>`)}</select></label>` : ''}
     <label>電話番号 <input type="tel" name="phone" value="${v.phone ?? ''}" autocomplete="tel"></label>
-    <label>郵便番号 <input type="text" name="postal" value="${v.postal ?? ''}" inputmode="numeric" placeholder="6800001" autocomplete="postal-code"></label>
-    <p class="mute">郵便番号を入れると住所を自動で入れます。番地・建物名は続けて入力してください。</p>
+    <label>郵便番号（ハイフンなしの 7 桁） <input type="text" name="postal" value="${v.postal ?? ''}" inputmode="numeric" maxlength="8" pattern="[0-9０-９]{3}-?[0-9０-９]{4}" title="ハイフンなしの 7 桁で入力してください（例 6800001）" placeholder="例 6800001" autocomplete="postal-code"></label>
+    <p class="mute">「-」（ハイフン）は入れずに 7 桁の数字だけを入力してください。入れると住所を自動で入れます。番地・建物名は続けて入力してください。</p>
     <label>住所 <input type="text" name="address" value="${v.address ?? ''}" autocomplete="street-address"></label>`;
 }
 
@@ -182,6 +182,10 @@ portal.post('/signup', async (c) => {
   const names = namesFromForm(f);
   if (typeof names === 'string') { flash(c, names, 'err'); return c.redirect('/signup'); }
   if (!f.home || !(await one(c.env.DB, 'SELECT 1 AS ok FROM associations WHERE id = ?', f.home))) { flash(c, '主に登録する協会を選んでください', 'err'); return c.redirect('/signup'); }
+  const birth = birthFromForm(f);
+  if (typeof birth === 'string' || !birth) { flash(c, birth || '生年月を選んでください', 'err'); return c.redirect('/signup'); }
+  const postal = normalizePostal(f.postal);
+  if (postal === false) { flash(c, '郵便番号はハイフンなしの 7 桁で入力してください', 'err'); return c.redirect('/signup'); }
   const ip = clientIp(c);
   if (await findMemberByEmail(c.env, email)) { flash(c, 'このメールは登録済みです', 'err'); return c.redirect('/login'); }
   const clubId = await resolveClub(c.env, f.club_sel, f.club_other);
@@ -192,7 +196,7 @@ portal.post('/signup', async (c) => {
   let member: Member;
   if (provisional.length === 1) {
     member = provisional[0];
-    await updateMember(c.env, member.id, { names, email, phone: f.phone || null, postal: f.postal || null, address: f.address || null, sex: f.sex || null, birthYear: birthYearFromForm(f), clubId, status: 'active' });
+    await updateMember(c.env, member.id, { names, email, phone: f.phone || null, postal, address: f.address || null, sex: f.sex || null, birthYear: birth.year, birthMonth: birth.month, clubId, status: 'active' });
     await run(c.env.DB, 'UPDATE members SET consented_at = ?, home_association_id = COALESCE(home_association_id, ?) WHERE id = ?', nowIso(), f.home || null, member.id);
     if (!member.member_no && f.home) {
       const assoc = await one<Association>(c.env.DB, 'SELECT * FROM associations WHERE id = ?', f.home);
@@ -204,7 +208,7 @@ portal.post('/signup', async (c) => {
     await audit(c.env, { actorType: 'member', actor: member.id, action: 'member.claim_provisional', target: `member:${member.id}`, ip });
     member = (await getMember(c.env, member.id))!;
   } else {
-    member = await createMember(c.env, { ...names, sex: f.sex || null, birthYear: birthYearFromForm(f), email, phone: f.phone || null, postal: f.postal || null, address: f.address || null, clubId, homeAssociationId: f.home || null, status: 'active', consented: true });
+    member = await createMember(c.env, { ...names, sex: f.sex || null, birthYear: birth.year, birthMonth: birth.month, email, phone: f.phone || null, postal, address: f.address || null, clubId, homeAssociationId: f.home || null, status: 'active', consented: true });
     await audit(c.env, { actorType: 'member', actor: member.id, action: 'member.create', target: `member:${member.id}`, after: { source: 'web' }, ip });
     // 同姓同名の既存会員がいるときは自動結合せず、事務局が確認する候補にする
     for (const s of same) {
@@ -266,7 +270,7 @@ portal.get('/me/profile', requireMember, async (c) => {
   const contact = await decryptContact(c.env, m);
   const { clubs, assocs } = await lookups(c.env);
   const body = html`<div class="card"><form method="post" action="/me/profile">
-    ${profileFields(clubs, assocs, { family_name: m.family_name, given_name: m.given_name, family_kana: m.family_kana, given_kana: m.given_kana, sex: m.sex, birth_year: m.birth_year, phone: contact.phone, postal: contact.postal, address: contact.address, club_id: m.club_id }, false)}
+    ${profileFields(clubs, assocs, { family_name: m.family_name, given_name: m.given_name, family_kana: m.family_kana, given_kana: m.given_kana, sex: m.sex, birth_year: m.birth_year, birth_month: m.birth_month, phone: contact.phone, postal: contact.postal, address: contact.address, club_id: m.club_id }, false)}
     <label>メールアドレス <input type="email" name="email" required value="${contact.email ?? ''}"></label>
     <div class="actions"><button class="primary">保存</button><a class="btn btn--outline" href="/me">戻る</a></div></form></div>`;
   return c.html(page(c, { title: '会員情報の変更', body, member: m }));
@@ -280,9 +284,13 @@ portal.post('/me/profile', requireMember, async (c) => {
   if (other && other.id !== m.id) { flash(c, 'そのメールアドレスは別の会員が使っています', 'err'); return c.redirect('/me/profile'); }
   const names = namesFromForm(f);
   if (typeof names === 'string') { flash(c, names, 'err'); return c.redirect('/me/profile'); }
+  const birth = birthFromForm(f);
+  if (typeof birth === 'string' || !birth) { flash(c, birth || '生年月を選んでください', 'err'); return c.redirect('/me/profile'); }
+  const postal = normalizePostal(f.postal);
+  if (postal === false) { flash(c, '郵便番号はハイフンなしの 7 桁で入力してください', 'err'); return c.redirect('/me/profile'); }
   const clubId = await resolveClub(c.env, f.club_sel, f.club_other);
   const before = { name: m.name, kana: m.kana, club_id: m.club_id };
-  await updateMember(c.env, m.id, { names, sex: f.sex || null, birthYear: birthYearFromForm(f), email, phone: f.phone || null, postal: f.postal || null, address: f.address || null, clubId });
+  await updateMember(c.env, m.id, { names, sex: f.sex || null, birthYear: birth.year, birthMonth: birth.month, email, phone: f.phone || null, postal, address: f.address || null, clubId });
   await audit(c.env, { actorType: 'member', actor: m.id, action: 'member.update', target: `member:${m.id}`, before, after: { name: composeName(names.familyName, names.givenName), kana: composeKana(names.familyKana, names.givenKana), club_id: clubId, contact_changed: true }, ip: clientIp(c) });
   flash(c, '会員情報を更新しました。全協会に反映されます');
   return c.redirect('/me');
@@ -369,7 +377,7 @@ portal.post('/registrations/new', requireMember, async (c) => {
   const ids = f.all('assoc');
   if (!ids.length) { flash(c, '協会を 1 つ以上選んでください', 'err'); return c.redirect(`/registrations/new?fy=${fy}`); }
   const method = (['stripe', 'bank', 'paypay'].includes(f.method) ? f.method : 'bank') as PaymentMethod;
-  const assocs = await all<Association>(c.env.DB, `SELECT * FROM associations WHERE id IN (${ids.map(() => '?').join(',')})`, ...ids);
+  const assocs = await all<Association>(c.env.DB, `SELECT * FROM associations WHERE id IN (${ids.map(() => '?').join(',')}) ORDER BY sort_order, code`, ...ids);
   // 支払先は協会ごと（他協会の資金を預からない）。協会ごとに支払を分ける。
   let firstPayment: string | null = null;
   for (const a of assocs) {
@@ -389,7 +397,7 @@ portal.post('/registrations/new', requireMember, async (c) => {
 // ---------- 大会 ----------
 portal.get('/tournaments', async (c) => {
   const m = c.get('member');
-  const assocs = await all<Association>(c.env.DB, "SELECT * FROM associations ORDER BY (id LIKE '%pref%') DESC, name");
+  const assocs = await all<Association>(c.env.DB, "SELECT * FROM associations ORDER BY sort_order, code");
   const rows = await all<Tournament & { association_name: string }>(c.env.DB, `SELECT t.*, a.name AS association_name FROM tournaments t JOIN associations a ON a.id = t.association_id WHERE t.status IN ('open','closed') ORDER BY t.held_on`);
   const elig = new Map<string, Awaited<ReturnType<typeof checkEligibility>>>();
   if (m) for (const t of rows) elig.set(t.id, await checkEligibility(c.env, m.id, t, assocs));
@@ -407,7 +415,7 @@ portal.get('/tournaments', async (c) => {
 async function loadTournament(env: Env, id: string) {
   const t = await one<Tournament & { association_name: string; fy_start: number }>(env.DB, `SELECT t.*, a.name AS association_name, a.fiscal_year_start_month AS fy_start FROM tournaments t JOIN associations a ON a.id = t.association_id WHERE t.id = ?`, id);
   if (!t) return null;
-  const assocs = await all<Association>(env.DB, 'SELECT * FROM associations ORDER BY id');
+  const assocs = await all<Association>(env.DB, 'SELECT * FROM associations ORDER BY sort_order, code');
   return { t, assocs, events: JSON.parse(t.events_json) as TournamentEvent[], methods: JSON.parse(t.payment_methods_json) as PaymentMethod[] };
 }
 
@@ -582,7 +590,7 @@ portal.get('/club', requireMember, async (c) => {
   const m = c.get('member')!;
   if (!m.club_manager || !m.club_id) return c.notFound();
   const club = (await one<Club>(c.env.DB, 'SELECT * FROM clubs WHERE id = ?', m.club_id))!;
-  const assocs = await all<Association>(c.env.DB, 'SELECT * FROM associations ORDER BY id');
+  const assocs = await all<Association>(c.env.DB, 'SELECT * FROM associations ORDER BY sort_order, code');
   const fy = currentFiscalYear(4);
   const rows = await all<Member & { regs: string | null }>(c.env.DB, `SELECT m.*, (SELECT GROUP_CONCAT(a.code || ':' || r.status) FROM registrations r JOIN associations a ON a.id = r.association_id WHERE r.member_id = m.id AND r.fiscal_year = ?) AS regs FROM members m WHERE m.club_id = ? AND m.merged_into IS NULL AND m.status <> 'withdrawn' ORDER BY m.kana`, fy, m.club_id);
   const body = html`
