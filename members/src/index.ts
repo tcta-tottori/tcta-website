@@ -12,6 +12,7 @@ import { getMember } from './services/members';
 import { admin, resolveAdmin } from './routes/admin';
 import { api } from './routes/api';
 import { dev } from './routes/dev';
+import { info } from './routes/info';
 import { portal } from './routes/portal';
 import { shop } from './routes/shop';
 
@@ -80,6 +81,7 @@ app.route('/admin', admin);
 app.route('/shop', shop);
 app.use('/dev/*', async (c, next) => (isProd(c.env) ? c.notFound() : next()));
 app.route('/dev', dev);
+app.route('/', info);
 app.route('/', portal);
 
 app.notFound((c) => c.text('ページが見つかりません', 404));

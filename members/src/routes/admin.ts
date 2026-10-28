@@ -13,6 +13,7 @@ import { createSession, destroySession, flash, readSession } from '../lib/sessio
 import { ulid } from '../lib/ulid';
 import { composeKana, composeName, createMember, decryptContact, findOrCreateClub, findSameNameMembers, namesFromForm, normalizeKana, resolveClub, updateMember } from '../services/members';
 import { clubLabel, clubSelect, nameFields } from '../views/forms';
+import { securityNote } from '../views/security';
 import { cancelEntry, getPayment, markPaid } from '../services/payments';
 import { checkEligibility, parseCustomRule, parseRule, presetFor, RULE_PRESETS, ruleToCustomText, shortRule } from '../services/eligibility';
 import { canApproveRegistration, canConfirmPayment, canCreateTournament, canEditMembers, canExportMembers, canImport, canManageAdmins, canViewPii, canViewTournament, memberScope, ownsTournament } from '../services/permissions';
@@ -87,7 +88,8 @@ admin.get('/', async (c) => {
   stats.push(['受付中の大会', await n(`SELECT COUNT(*) AS n FROM tournaments WHERE status = 'open'${scope ? ' AND association_id = ?' : ''}`, ...(scope ? [scope] : []))]);
   stats.push(['本日のエントリー', await n(`SELECT COUNT(*) AS n FROM entries WHERE created_at >= ? AND created_at < ?`, ...jstDayRange(todayJst()))]);
   const body = html`<div class="grid">${stats.map(([l, v]) => html`<div class="stat"><b>${v}</b><span>${l}</span></div>`)}</div>
-    <div class="card"><h2>このロールでできること</h2>${roleHelp(a)}</div>`;
+    <div class="card"><h2>このロールでできること</h2>${roleHelp(a)}</div>
+    ${securityNote('admin')}`;
   return c.html(page(c, { title: 'ダッシュボード', body, admin: a }));
 });
 

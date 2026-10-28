@@ -11,6 +11,7 @@ import { flash } from '../lib/session';
 import { ulid } from '../lib/ulid';
 import { createMember, namesFromForm, resolveClub, searchMembers } from '../services/members';
 import { clubDatalist, clubLabel, nameInputs } from '../views/forms';
+import { securityNote } from '../views/security';
 import { createPayment, cancelEntry, markPaid } from '../services/payments';
 import { type Association, type Club, type Entry, type PaymentMethod, type Tournament } from '../types';
 import { badge, page } from '../views/layout';
@@ -57,7 +58,8 @@ shop.get('/', async (c) => {
       <p class="mute">上の検索結果から申込者を選び、協会を選びます。登録料は現金受領で入金済みになり、事務局の承認で有効になります。</p>
       <label>申込者</label><div class="radio-list">${results.map((r) => html`<label><input type="radio" name="member" value="${r.id}" required> ${r.member_no ?? ''} ${r.name}（${r.kana}）</label>`)}</div>
       <label>協会 <select name="assoc">${assocs.map((s) => html`<option value="${s.id}">${s.name}（${yen(s.annual_fee)}）</option>`)}</select></label>
-      <div class="actions"><button class="primary">年度登録を受け付ける</button></div></form>`;
+      <div class="actions"><button class="primary">年度登録を受け付ける</button></div></form>
+    ${securityNote('shop')}`;
   return c.html(page(c, { title: `代行入力（${a.name}）`, body, admin: a, wide: true }));
 });
 
