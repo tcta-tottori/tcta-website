@@ -77,7 +77,7 @@ try {
 
   console.log('\n[1] 会員登録（マジックリンク）');
   r = await member.post('/login', { email: 'smoke@example.com' });
-  check(r.status === 200 && r.text.includes('リンクを送りました'), 'ログインリンクの送信');
+  check(r.status === 200 && r.text.includes('ログインリンクを作りました') && r.text.includes('/auth/'), 'ログインリンクの発行（デモはその場に表示）');
   r = await anon.get('/dev/mailbox.json');
   const mail = JSON.parse(r.text).find((m) => m.to_addr === 'smoke@example.com');
   const link = pick(mail?.body ?? '', /(http:\/\/[^\s]+\/auth\/[^\s]+)/);

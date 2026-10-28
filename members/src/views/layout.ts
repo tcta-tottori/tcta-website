@@ -108,7 +108,7 @@ export function page(c: Ctx, o: LayoutOpts): H {
   </div>
 </header>
 
-${dev ? html`<div class="demo-bar" role="region" aria-label="デモ環境の案内"><div class="container demo-bar__inner"><span class="demo-bar__label">${isDemo(env) ? 'DEMO' : 'DEV'}</span><span>架空のデータで動く確認用のサンプルです。<a href="/dev">はじめに読む</a>／メールは <a href="/dev/mailbox">送信箱</a> に届きます／事務局は <a href="/admin/login">管理者を選んでログイン</a>${o.admin ? html`（${o.admin.name}・${ROLE_LABEL[o.admin.role]}）` : ''}</span></div></div>` : ''}
+${dev ? html`<div class="demo-bar" role="region" aria-label="デモ環境の案内"><div class="container demo-bar__inner"><span class="demo-bar__label">${isDemo(env) ? 'DEMO' : 'DEV'}</span><span>架空のデータで動く確認用のサンプルです。実際のメールは送らず、ログインリンクは画面と <a href="/dev/mailbox">送信箱</a> に出ます。<a href="/dev">はじめに読む</a>／事務局は <a href="/admin/login">管理者を選んでログイン</a>${o.admin ? html`（${o.admin.name}・${ROLE_LABEL[o.admin.role]}）` : ''}</span></div></div>` : ''}
 
 <div class="mobile-nav" id="mobile-nav" aria-hidden="true">
   <nav aria-label="モバイルナビゲーション" style="--n:${items.length + 1}">

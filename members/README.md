@@ -12,7 +12,7 @@
 
 - **https://tcta-members-demo.tcta-admin-worker.workers.dev/**
 - 最初に **/dev**（画面上部の黄色い帯「はじめに読む」）を開くと、手順とデモ用のメールアドレス・管理者の一覧があります。
-- メールは実際には送らず **/dev/mailbox**（送信箱）に届きます。Stripe は決済ページの代わりにシミュレータが出ます。
+- メールは実際には送りません。ログインリンクは送信後の画面にそのまま出ます（**/dev/mailbox** の送信箱でも見られます）。Stripe は決済ページの代わりにシミュレータが出ます。
 - 事務局画面は **/admin/login** で管理者を選ぶだけで入れます（本番では Cloudflare Access に置き換わります）。
 
 `members/` を変更して push すると `.github/workflows/deploy-members.yml` がデモを配備し直します。

@@ -2,7 +2,7 @@
 import { Hono } from 'hono';
 import { html } from 'hono/html';
 import { clientIp, type Ctx, form, type Vars } from '../app';
-import type { Env } from '../env';
+import { type Env, isProd } from '../env';
 import { audit } from '../lib/audit';
 import { blindIndex, decrypt, encrypt, normalizeEmail, randomToken, sha256Hex } from '../lib/crypto';
 import { all, nowIso, one, run } from '../lib/db';
@@ -95,6 +95,16 @@ portal.post('/login', async (c) => {
     text: `${known ? `${known.name} 様\n\n` : ''}次のリンクを開いてください（15 分有効・1 回限り）。\n${c.env.BASE_URL}/auth/${token}\n\n心当たりがない場合はこのメールを破棄してください。`,
   });
   await audit(c.env, { actorType: 'member', actor: `email:${(await blindIndex(c.env, email)).slice(0, 12)}`, action: 'auth.magic_link_sent', ip });
+  if (!isProd(c.env)) {
+    // デモ・開発モードは本当のメールを送らない（送信箱に貯めるだけ）。待たせずに、その場でリンクを出す
+    const body = html`<div class="card">
+      <p><b>${email}</b> 宛のログインリンクを作りました。</p>
+      <p class="warn">この環境はデモのため、実際のメールは送りません。本番では次のリンクがメールで届きます。</p>
+      <div class="actions"><a class="btn btn--primary" href="/auth/${token}">${known ? 'ログインする' : '会員登録に進む'} <span class="aw">→</span></a><a class="btn btn--outline" href="/dev/mailbox">送信箱で見る</a></div>
+      <p class="mute">リンクは 15 分有効・1 回限りです。</p>
+    </div>`;
+    return c.html(page(c, { title: 'ログインリンクを作りました', body }));
+  }
   const body = html`<div class="card"><p><b>${email}</b> にリンクを送りました。メールを開いてリンクを押してください。</p><p class="mute">届かない場合は迷惑メールフォルダを確認してください。</p></div>`;
   return c.html(page(c, { title: 'メールを送りました', body }));
 });
