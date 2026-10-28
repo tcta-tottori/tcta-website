@@ -69,7 +69,7 @@ shop.post('/entry', async (c) => {
   let memberId = f.member;
   if (memberId === 'new') {
     const names = namesFromForm(f, 'new');
-    if (!names) { flash(c, '新しい会員の姓・名・せい・めいを入れてください', 'err'); return c.redirect('/shop'); }
+    if (typeof names === 'string') { flash(c, `新しい会員の${names}`, 'err'); return c.redirect('/shop'); }
     const m = await createMember(c.env, { ...names, clubId: await resolveClub(c.env, '__other__', f.new_club), homeAssociationId: a.association_id, status: 'provisional' });
     await audit(c.env, { actorType: 'shop', actor: a.email, action: 'member.create_provisional', target: `member:${m.id}`, after: { reason: 'ショップ代行入力' }, ip: clientIp(c) });
     memberId = m.id;

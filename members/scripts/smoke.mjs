@@ -96,12 +96,15 @@ try {
   check(r.text.includes('お預かりする情報と守り方') && r.text.includes('href="/privacy"'), '会員登録画面に取扱いの要点と規程へのリンクが出る');
   r = await member.get(new URL(link).pathname);
   check(r.status === 302 && r.location === '/login', 'リンクは 1 回限り');
-  r = await member.post('/signup', { family_name: '煙', given_name: '試験', family_kana: 'けむり', given_kana: 'しけん', sex: 'male', birth_era: 'heisei', birth_y: '2', club_sel: '__other__', club_other: '煙テニスクラブ', home: 'tottori-city', phone: '090-1234-5678', postal: '680-0001', address: '鳥取市テスト1-1', consent: 'on' });
+  r = await member.post('/signup', { family_name: '煙', given_name: '試験', family_kana: 'kemuri', given_kana: '試験', sex: 'male', birth_era: 'heisei', birth_y: '2', club_sel: '__free__', home: 'tottori-city', consent: 'on' });
+  check(r.status === 302 && r.location === '/signup' && decodeURIComponent(r.headers.get('set-cookie') ?? '').includes('ひらがなで入力'), 'ふりがなにひらがな以外（英字・漢字）が入ると登録できない');
+  r = await member.post('/signup', { family_name: '煙', given_name: '試験', family_kana: 'ケムリ', given_kana: 'ｼｹﾝ', sex: 'male', birth_era: 'heisei', birth_y: '2', club_sel: '__other__', club_other: '煙テニスクラブ', home: 'tottori-city', phone: '090-1234-5678', postal: '680-0001', address: '鳥取市テスト1-1', consent: 'on' });
   check(r.status === 302 && r.location === '/me', '会員登録 → マイページへ');
   r = await member.get('/me');
   check(r.text.includes('煙 試験') && /T-\d\d-\d{4}/.test(r.text), '会員番号（T-yy-nnnn）が発番される');
   check(r.text.includes('090-1234-5678'), '本人は自分の電話番号を見られる');
   check(r.text.includes('煙テニスクラブ'), '所属を手入力すると新しいクラブとして登録される');
+  check(r.text.includes('（けむりしけん）'), 'カタカナ・半角カナのふりがなはひらがなに直して保存される');
   r = await member.get('/me/profile');
   check(r.text.includes('value="1990" selected'), '生年を「平成 2 年」で入れると西暦 1990 年として保存される');
   r = await member.post('/me/profile', { family_name: '煙', given_name: '試験', family_kana: 'けむり', given_kana: 'しけん', sex: 'male', birth_era: 'seireki', birth_y: '1990', club_sel: '__free__', club_other: '', email: 'smoke@example.com', phone: '090-1234-5678', postal: '680-0001', address: '鳥取市テスト1-1' });

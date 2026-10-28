@@ -51,6 +51,8 @@ export interface NewMember extends Names {
 }
 
 export async function createMember(env: Env, n: NewMember): Promise<Member> {
+  const checked = checkNames(n);
+  if (typeof checked === 'string') throw new Error(checked);
   const id = ulid();
   const now = nowIso();
   let memberNo: string | null = null;
@@ -84,6 +86,8 @@ export async function updateMember(env: Env, id: string, u: MemberUpdate): Promi
   const params: unknown[] = [];
   const push = (col: string, v: unknown) => { sets.push(`${col} = ?`); params.push(v); };
   if (u.names) {
+    const checked = checkNames(u.names);
+    if (typeof checked === 'string') throw new Error(checked);
     push('family_name', u.names.familyName.trim()); push('given_name', u.names.givenName.trim());
     push('family_kana', normalizeKana(u.names.familyKana)); push('given_kana', normalizeKana(u.names.givenKana));
     push('name', composeName(u.names.familyName, u.names.givenName)); push('kana', composeKana(u.names.familyKana, u.names.givenKana));
@@ -125,20 +129,40 @@ export async function resolveClub(env: Env, sel: string | undefined, other: stri
 }
 
 /** フォームの 4 欄から Names を組む（足りなければ null） */
-export function namesFromForm(f: Record<string, string>, prefix = ''): Names | null {
+/** フォームの 4 欄から Names を組む。足りない・ふりがながひらがなでないときはエラー文を返す */
+export function namesFromForm(f: Record<string, string>, prefix = ''): Names | string {
   const k = (x: string) => (prefix ? `${prefix}_${x}` : x);
-  const n = { familyName: f[k('family_name')] ?? f[k('family')] ?? '', givenName: f[k('given_name')] ?? f[k('given')] ?? '', familyKana: f[k('family_kana')] ?? '', givenKana: f[k('given_kana')] ?? '' };
-  if (!n.familyName.trim() || !n.givenName.trim() || !n.familyKana.trim() || !n.givenKana.trim()) return null;
-  return n;
+  return checkNames({ familyName: f[k('family_name')] ?? f[k('family')] ?? '', givenName: f[k('given_name')] ?? f[k('given')] ?? '', familyKana: f[k('family_kana')] ?? '', givenKana: f[k('given_kana')] ?? '' });
 }
 
-/** ふりがなの表記ゆれを吸収（カタカナ→ひらがな、全角空白→除去）。 */
+/** 姓・名・せい・めい がそろっていて、ふりがながひらがなだけか。正しければ（ふりがなを正規化した）Names、だめならエラー文 */
+export function checkNames(n: Names): Names | string {
+  if (!n.familyName.trim() || !n.givenName.trim() || !n.familyKana.trim() || !n.givenKana.trim()) return '姓・名・せい・めいはすべて入力してください';
+  const fk = normalizeKana(n.familyKana);
+  const gk = normalizeKana(n.givenKana);
+  const bad = [kanaProblem('せい', n.familyKana, fk), kanaProblem('めい', n.givenKana, gk)].filter(Boolean);
+  if (bad.length) return `ふりがなはひらがなで入力してください（${bad.join('、')}）`;
+  return { ...n, familyKana: fk, givenKana: gk };
+}
+
+function kanaProblem(label: string, raw: string, normalized: string): string | null {
+  if (isHiraganaKana(normalized)) return null;
+  const chars = [...new Set([...normalized].filter((ch) => !KANA_CHAR.test(ch)))].slice(0, 5).join('');
+  return `${label}に「${chars || raw}」`;
+}
+
+/** ふりがなの表記ゆれを吸収（半角カナ→全角、カタカナ→ひらがな、空白→除去）。 */
 export function normalizeKana(s: string): string {
   return s
+    .normalize('NFKC')
     .trim()
     .replace(/[ァ-ヶ]/g, (ch) => String.fromCharCode(ch.charCodeAt(0) - 0x60))
     .replace(/[\s　]+/g, '');
 }
+
+/** ふりがなに使える文字: ひらがな（小書き・ゔ を含む）と長音符 */
+const KANA_CHAR = /^[ぁ-ゖー]$/;
+export const isHiraganaKana = (s: string) => /^[ぁ-ゖー]+$/.test(s);
 
 export interface MemberBrief { id: string; member_no: string | null; name: string; kana: string; club_name: string | null; status: string }
 
