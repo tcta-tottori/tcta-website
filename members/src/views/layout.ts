@@ -32,7 +32,7 @@ const EN_BY_PATH: [RegExp, string][] = [
   [/^\/admin\/payments/, 'PAYMENTS'], [/^\/admin\/audit/, 'AUDIT LOG'], [/^\/admin\/merges|^\/admin\/import/, 'IMPORT'],
   [/^\/admin/, 'ADMIN'], [/^\/shop/, 'SHOP'], [/^\/tournaments/, 'TOURNAMENTS'], [/^\/me/, 'MY PAGE'],
   [/^\/login|^\/signup|^\/auth/, 'LOGIN'], [/^\/registrations/, 'REGISTRATION'], [/^\/pay/, 'PAYMENT'],
-  [/^\/club/, 'CLUB'], [/^\/dev/, 'DEMO'], [/^\/$/, 'MEMBERS'],
+  [/^\/club/, 'CLUB'], [/^\/dev/, 'DEMO'], [/^\/security/, 'SECURITY'], [/^\/privacy/, 'PRIVACY'], [/^\/$/, 'MEMBERS'],
 ];
 
 export function page(c: Ctx, o: LayoutOpts): H {
@@ -164,6 +164,7 @@ function memberItems(m: Member | null, siteUrl: string): NavItem[] {
   } else {
     items.push({ href: '/login', label: '会員登録' });
   }
+  items.push({ href: '/security', label: 'セキュリティ' });
   items.push({ href: '/admin', label: '事務局' });
   items.push({ href: siteUrl, label: '協会サイト', external: true });
   return items;
@@ -269,6 +270,7 @@ async function footer(c: Ctx, siteUrl: string, admin: Admin | null) {
       <a class="fw fw--head" href="/tournaments">大会情報</a>
       <a class="fw fw--head" href="/me">マイページ</a>
       <a class="fw fw--head" href="/registrations/new">年度登録</a>
+      <a class="fw fw--head" href="/security">セキュリティ</a>
     </div>
     <div>
       <a class="fw fw--head fw--head-tight" href="${admin ? '/admin' : '/admin/login'}">事務局</a>
@@ -283,8 +285,8 @@ async function footer(c: Ctx, siteUrl: string, admin: Admin | null) {
   </div>
   <div class="container site-footer__bottom">
     <div class="site-footer__utils">
-      <a class="fw" href="#">プライバシーポリシー</a>
-      <a class="fw" href="#">会員情報共同利用規程</a>
+      <a class="fw" href="/security">セキュリティと個人情報の取扱い</a>
+      <a class="fw" href="/privacy">共同利用規程・プライバシーポリシー（案）</a>
     </div>
     <span class="site-footer__copy">© ${env.APP_BRAND_EN || "Tennis Members"} — ${assocs.length ? "参加協会の共同利用システム" : "テニス協会 共同利用システム"}</span>
   </div>

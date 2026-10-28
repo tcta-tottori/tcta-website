@@ -14,6 +14,7 @@ import { createSession, destroySession, flash, readSession } from '../lib/sessio
 import { ulid } from '../lib/ulid';
 import { composeKana, composeName, createMember, decryptContact, findMemberByEmail, findOrCreateClub, findSameNameMembers, getMember, namesFromForm, resolveClub, searchMembers, updateMember } from '../services/members';
 import { clubDatalist, clubLabel, clubSelect, nameFields, nameInputs } from '../views/forms';
+import { securityNote } from '../views/security';
 import { checkEligibility, describeRule, parseRule, shortRule } from '../services/eligibility';
 import { createPayment, getPayment } from '../services/payments';
 import { type Association, type Club, type Entry, type Member, METHOD_LABEL, type Payment, type PaymentMethod, type Registration, SEX_LABEL, type Tournament, type TournamentEvent, CATEGORY_LABEL } from '../types';
@@ -65,7 +66,8 @@ portal.get('/login', (c) => {
         ${turnstile}
         <div class="actions"><button class="primary">リンクを送る</button></div>
       </form>
-    </div>`;
+    </div>
+    ${securityNote('login')}`;
   return c.html(page(c, { title: 'ログイン / 会員登録', body }));
 });
 
@@ -163,7 +165,8 @@ portal.get('/signup', async (c) => {
       <p>メール <b>${email}</b> の本人確認ができました。以下を 1 回だけ入力してください。入力した内容はどの協会の年度登録・大会エントリーでも共通で使われます。</p>
       <form method="post" action="/signup">
         ${profileFields(clubs, assocs, {}, true)}
-        <label class="check"><input type="checkbox" name="consent" required> 会員情報共同利用規程に同意する（県・市協会が共同利用し、閲覧できる人を最小にします）</label>
+        ${securityNote('signup')}
+        <label class="check"><input type="checkbox" name="consent" required> <span><a href="/privacy" target="_blank" rel="noopener">会員情報共同利用規程（案）</a>に同意する（参加協会が共同利用し、閲覧できる人を最小にします）</span></label>
         <div class="actions"><button class="primary">登録する</button></div>
       </form>
     </div>`;
@@ -236,6 +239,7 @@ portal.get('/me', requireMember, async (c) => {
       </dl>
       <div class="actions"><a class="btn btn--outline" href="/me/profile">会員情報を変更</a></div>
     </div>
+    ${securityNote('me')}
     <h2>年度登録</h2>
     <div class="tbl"><table><tr><th>年度</th><th>協会</th><th>区分</th><th>登録料</th><th>支払</th><th>状態</th></tr>
       ${regs.length === 0 ? html`<tr><td colspan="6">まだ年度登録がありません。</td></tr>` : regs.map((r) => html`<tr><td>${r.fiscal_year}年度</td><td>${r.association_name}</td><td>${CATEGORY_LABEL[r.category] ?? r.category}</td><td>${yen(r.fee)}</td><td>${r.pay_status ? badge(r.pay_status) : '—'}</td><td>${badge(r.status)}</td></tr>`)}
@@ -432,7 +436,8 @@ portal.get('/tournaments/:id/entry', requireMember, async (c) => {
       <label>支払方法</label>
       <div class="radio-list">${methods.map((k, i) => html`<label><input type="radio" name="method" value="${k}" ${i === 0 ? 'checked' : ''}> ${METHOD_LABEL[k]}${k === 'stripe' ? '（自動で確定）' : k === 'cash' ? '（ショップで現金を渡すと確定）' : '（事務局が確認して確定）'}</label>`)}</div>
       <div class="actions"><button class="primary">エントリーして支払いへ</button><a class="btn btn--outline" href="/tournaments/${t.id}">戻る</a></div>
-    </form>`;
+    </form>
+    ${securityNote('entry')}`;
   return c.html(page(c, { title: `エントリー: ${t.name}`, body, member: m }));
 });
 

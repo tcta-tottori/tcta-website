@@ -75,6 +75,14 @@ try {
   check(pub.tournaments.some((t) => t.id === 'T-DEMO-OPEN'), '公開 API に受付中の大会が出る');
   check(!r.text.includes('@example.com'), '公開 API に個人情報が無い');
 
+  console.log('\n[0b] セキュリティの案内');
+  r = await anon.get('/security');
+  check(r.status === 200 && r.text.includes('誰が何を見られるか') && r.text.includes('漏えいが疑われるとき'), '専用ページ /security が開く');
+  r = await anon.get('/privacy');
+  check(r.status === 200 && r.text.includes('共同利用の主体と目的'), '共同利用規程（案）/privacy が開く');
+  r = await anon.get('/login');
+  check(r.text.includes('ログインの安全について') && r.text.includes('/security#login'), 'ログイン画面にセキュリティの要点が出る');
+
   console.log('\n[1] 会員登録（マジックリンク）');
   r = await member.post('/login', { email: 'smoke@example.com' });
   check(r.status === 200 && r.text.includes('ログインリンクを作りました') && r.text.includes('/auth/'), 'ログインリンクの発行（デモはその場に表示）');
@@ -84,6 +92,8 @@ try {
   check(link, '送信箱にマジックリンクが届く');
   r = await member.get(new URL(link).pathname);
   check(r.status === 302 && r.location === '/signup', '未登録メール → 会員登録フォームへ');
+  r = await member.get('/signup');
+  check(r.text.includes('お預かりする情報と守り方') && r.text.includes('href="/privacy"'), '会員登録画面に取扱いの要点と規程へのリンクが出る');
   r = await member.get(new URL(link).pathname);
   check(r.status === 302 && r.location === '/login', 'リンクは 1 回限り');
   r = await member.post('/signup', { family_name: '煙', given_name: '試験', family_kana: 'けむり', given_kana: 'しけん', sex: 'male', birth_year: '1990', club_sel: '__other__', club_other: '煙テニスクラブ', home: 'tottori-city', phone: '090-1234-5678', postal: '680-0001', address: '鳥取市テスト1-1', consent: 'on' });
