@@ -165,9 +165,12 @@
     panel.hidden = true;
     btn.insertAdjacentElement('afterend', panel);
 
+    var ageOut = box.querySelector('[data-birth-age]');
+    var ageOf = function (y, m) { var d = new Date(); return d.getFullYear() - y - (m > d.getMonth() + 1 ? 1 : 0); }; // 誕生月に入ったら 1 つ上がる
     var paint = function () {
       var y = Number(ySel.value), m = Number(mSel.value);
-      if (y && m) btn.innerHTML = '<span class="birth__val">' + y + '年 ' + m + '月</span><span class="birth__sub">' + wareki(y) + '・' + (thisYear - y - (m > new Date().getMonth() + 1 ? 1 : 0)) + '歳</span>';
+      if (ageOut) ageOut.innerHTML = y && m ? '現在の年齢 <b>満' + ageOf(y, m) + '歳</b>' : '';
+      if (y && m) btn.innerHTML = '<span class="birth__val">' + y + '年 ' + m + '月</span><span class="birth__sub">' + wareki(y) + '・満' + ageOf(y, m) + '歳</span>';
       else if (y) btn.innerHTML = '<span class="birth__val">' + y + '年 —月</span><span class="birth__sub">' + wareki(y) + '・月を選んでください</span>';
       else btn.innerHTML = '<span class="birth__ph">生年月を選ぶ</span><span class="birth__sub">タップして年と月を選びます</span>';
       btn.classList.toggle('is-empty', !(y && m));

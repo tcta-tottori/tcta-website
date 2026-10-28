@@ -1,6 +1,7 @@
 // 会員の入力部品。氏名（姓・名／せい・めい）と所属（フリー／登録済みクラブ／その他を手入力）を各画面で共通に使う。
 import { html } from 'hono/html';
 import type { Club } from '../types';
+import { ageLabel } from '../lib/fiscal';
 
 export interface NameValues { family_name?: string | null; given_name?: string | null; family_kana?: string | null; given_kana?: string | null }
 
@@ -77,6 +78,7 @@ export function birthFields(year: number | null | undefined, month: number | nul
         <label>年 <select name="birth_y" ${req} data-birth-year><option value="">年を選ぶ</option>${years.map((y) => html`<option value="${y}" ${y === year ? 'selected' : ''}>${y}年（${warekiOf(y)}）</option>`)}</select></label>
         <label>月 <select name="birth_m" ${req} data-birth-month><option value="">月を選ぶ</option>${Array.from({ length: 12 }, (_, i) => i + 1).map((m) => html`<option value="${m}" ${m === month ? 'selected' : ''}>${m}月</option>`)}</select></label>
       </div>
+      <p class="birth__age" data-birth-age aria-live="polite">${year && month ? html`現在の年齢 <b>満${ageLabel(year, month, null, now)}</b>` : ''}</p>
       <p class="mute">年齢区分の判定にだけ使います。日は預かりません。${MIN_AGE}〜${MAX_AGE} 歳の方が登録できます。</p>
     </div>`;
 }

@@ -7,7 +7,7 @@ import { accessEnabled, verifyAccessJwt } from '../lib/access';
 import { audit } from '../lib/audit';
 import { decrypt, randomToken, sha256Hex } from '../lib/crypto';
 import { all, nowIso, one, run } from '../lib/db';
-import { currentFiscalYear, fmtDate, fmtDateTime, jstDayRange, todayJst, yen } from '../lib/fiscal';
+import { currentFiscalYear, fmtDate, fmtDateTime, jstDayRange, todayJst, yen, ageLabel, jstNow } from '../lib/fiscal';
 import { sendMail } from '../lib/mail';
 import { createSession, destroySession, flash, readSession } from '../lib/session';
 import { ulid } from '../lib/ulid';
@@ -175,8 +175,8 @@ admin.get('/members', async (c) => {
   );
   const sortNew = c.req.query('sort') === 'new';
   const body = html`<form method="get" action="/admin/members"><input type="text" name="q" value="${q}" placeholder="氏名・ふりがな・会員番号"> <select name="sort" style="max-width:160px;width:auto"><option value="kana" ${sortNew ? '' : 'selected'}>ふりがな順</option><option value="new" ${sortNew ? 'selected' : ''}>登録の新しい順</option></select> <button class="small">表示</button></form>
-    <div class="tbl"><table><tr><th>会員番号</th><th>氏名</th><th>ふりがな</th><th>所属</th><th>状態</th><th>${fy}年度</th><th></th></tr>
-    ${rows.map((m) => html`<tr><td>${m.member_no ?? '—'}</td><td>${m.name}</td><td>${m.kana}</td><td>${clubLabel(m.club_name)}</td><td>${badge(m.status)}</td><td>${m.reg_status ? badge(m.reg_status) : '—'}</td><td><a href="/admin/members/${m.id}">詳細</a></td></tr>`)}
+    <div class="tbl"><table><tr><th>会員番号</th><th>氏名</th><th>ふりがな</th><th>年齢</th><th>所属</th><th>状態</th><th>${fy}年度</th><th></th></tr>
+    ${rows.map((m) => html`<tr><td>${m.member_no ?? '—'}</td><td>${m.name}</td><td>${m.kana}</td><td class="num">${ageLabel(m.birth_year, m.birth_month)}</td><td>${clubLabel(m.club_name)}</td><td>${badge(m.status)}</td><td>${m.reg_status ? badge(m.reg_status) : '—'}</td><td><a href="/admin/members/${m.id}">詳細</a></td></tr>`)}
     </table></div>
     ${canExportMembers(a) ? html`<form method="post" action="/admin/members/export.csv" class="card"><h3>名簿 CSV 出力</h3><p class="mute">出力は監査ログに「誰が・いつ・何の目的で」記録されます。Excel・USB・メール添付での名簿授受は禁止です。</p><label>目的 <input type="text" name="purpose" required placeholder="例: 県協会への登録者数報告"></label><button>CSV をダウンロード</button></form>` : ''}`;
   return c.html(page(c, { title: '会員一覧', body, admin: a, wide: true }));
@@ -188,10 +188,10 @@ admin.post('/members/export.csv', async (c) => {
   const f = await form(c);
   const fy = currentFiscalYear(4);
   const rows = await all<Member & { club_name: string | null; category: string }>(c.env.DB, `SELECT m.*, c.name AS club_name, r.category FROM registrations r JOIN members m ON m.id = r.member_id LEFT JOIN clubs c ON c.id = m.club_id WHERE r.association_id = ? AND r.fiscal_year = ? AND r.status = 'approved' ORDER BY m.kana`, a.association_id, fy);
-  const lines = ['会員番号,姓,名,せい,めい,性別,生年,生月,所属,区分,メール,電話,郵便番号,住所'];
+  const lines = ['会員番号,姓,名,せい,めい,性別,生年,生月,年齢,所属,区分,メール,電話,郵便番号,住所'];
   for (const m of rows) {
     const ct = await decryptContact(c.env, m);
-    lines.push([m.member_no, m.family_name, m.given_name, m.family_kana, m.given_kana, m.sex, m.birth_year, m.birth_month, clubLabel(m.club_name), CATEGORY_LABEL[m.category], ct.email, ct.phone, ct.postal, ct.address].map(csv).join(','));
+    lines.push([m.member_no, m.family_name, m.given_name, m.family_kana, m.given_kana, m.sex, m.birth_year, m.birth_month, ageLabel(m.birth_year, m.birth_month).replace('—', ''), clubLabel(m.club_name), CATEGORY_LABEL[m.category], ct.email, ct.phone, ct.postal, ct.address].map(csv).join(','));
   }
   await audit(c.env, { ...actor(c), action: 'members.export_csv', target: `association:${a.association_id}`, after: { purpose: f.purpose, count: rows.length, fiscal_year: fy } });
   return c.body('﻿' + lines.join('\r\n'), 200, { 'Content-Type': 'text/csv; charset=utf-8', 'Content-Disposition': `attachment; filename="members-${fy}.csv"` });
@@ -219,7 +219,7 @@ admin.get('/members/:id', async (c) => {
         <label>状態 <select name="status">${['active', 'provisional', 'withdrawn'].map((s) => html`<option value="${s}" ${s === m.status ? 'selected' : ''}>${s === 'withdrawn' ? '退会（削除依頼に対応した会員など）' : STATUS_LABEL[s]}</option>`)}</select></label>
         <div class="actions"><button class="primary">保存</button></div></form></details>` : ''}`;
   }
-  const body = html`<div class="card"><dl class="kv"><dt>会員番号</dt><dd><b>${m.member_no ?? '—'}</b></dd><dt>氏名</dt><dd>${m.name}（${m.kana}）</dd><dt>所属</dt><dd>${clubLabel(club?.name)}</dd><dt>状態</dt><dd>${badge(m.status)}</dd><dt>生年月</dt><dd>${m.birth_year ? `${m.birth_year}年${m.birth_month ? `${m.birth_month}月` : ''}` : '—'}</dd><dt>登録日</dt><dd>${fmtDateTime(m.created_at)}</dd></dl></div>
+  const body = html`<div class="card"><dl class="kv"><dt>会員番号</dt><dd><b>${m.member_no ?? '—'}</b></dd><dt>氏名</dt><dd>${m.name}（${m.kana}）</dd><dt>所属</dt><dd>${clubLabel(club?.name)}</dd><dt>状態</dt><dd>${badge(m.status)}</dd><dt>生年月</dt><dd>${m.birth_year ? `${m.birth_year}年${m.birth_month ? `${m.birth_month}月` : '（月は未入力）'}` : '—'}</dd><dt>年齢</dt><dd>${m.birth_year ? html`<b>満${ageLabel(m.birth_year, m.birth_month)}</b> <span class="mute">（${jstNow().getUTCFullYear()}年中に${jstNow().getUTCFullYear() - m.birth_year}歳）</span>` : '—'}</dd><dt>登録日</dt><dd>${fmtDateTime(m.created_at)}</dd></dl></div>
     <div class="card"><h2>連絡先</h2>${pii}</div>
     <h2>年度登録</h2><div class="tbl"><table><tr><th>年度</th><th>協会</th><th>区分</th><th>状態</th><th>承認</th></tr>${regs.map((r) => html`<tr><td>${r.fiscal_year}</td><td>${r.association_name}</td><td>${CATEGORY_LABEL[r.category]}</td><td>${badge(r.status)}</td><td>${r.approved_by ?? ''} ${fmtDateTime(r.approved_at)}</td></tr>`)}</table></div>
     <h2>エントリー</h2><div class="tbl"><table><tr><th>大会</th><th>種目</th><th>状態</th><th>受付</th></tr>${entries.map((e) => html`<tr><td>${e.t_name}</td><td>${e.event_code}${e.class ? ' ' + e.class : ''}</td><td>${badge(e.status)}</td><td>${e.source} ${fmtDateTime(e.created_at)}</td></tr>`)}</table></div>`;
@@ -454,9 +454,9 @@ admin.post('/tournaments/:id', async (c) => {
 });
 
 async function entryRows(env: Env, tId: string) {
-  return all<Entry & { p1: string; p1_no: string | null; p1_club: string | null; p2: string | null; p2_club: string | null; p2_status: string | null; pay_status: string | null; method: string | null; amount: number | null; receipt_no: string | null }>(
+  return all<Entry & { p1: string; p1_no: string | null; p1_club: string | null; p2: string | null; p2_club: string | null; p2_status: string | null; p1_by: number | null; p1_bm: number | null; p2_by: number | null; p2_bm: number | null; pay_status: string | null; method: string | null; amount: number | null; receipt_no: string | null }>(
     env.DB,
-    `SELECT e.*, m1.name AS p1, m1.member_no AS p1_no, c1.name AS p1_club, m2.name AS p2, c2.name AS p2_club, m2.status AS p2_status, p.status AS pay_status, p.method, p.amount, p.receipt_no
+    `SELECT e.*, m1.name AS p1, m1.member_no AS p1_no, c1.name AS p1_club, m1.birth_year AS p1_by, m1.birth_month AS p1_bm, m2.name AS p2, c2.name AS p2_club, m2.birth_year AS p2_by, m2.birth_month AS p2_bm, m2.status AS p2_status, p.status AS pay_status, p.method, p.amount, p.receipt_no
        FROM entries e JOIN members m1 ON m1.id = e.member_id LEFT JOIN clubs c1 ON c1.id = m1.club_id
        LEFT JOIN members m2 ON m2.id = e.partner_member_id LEFT JOIN clubs c2 ON c2.id = m2.club_id
        LEFT JOIN payments p ON p.id = e.payment_id
@@ -484,8 +484,8 @@ admin.get('/tournaments/:id', async (c) => {
   const body = html`<div class="card"><dl class="kv"><dt>開催日</dt><dd>${fmtDate(t.held_on)} ${t.venue ?? ''}</dd><dt>受付</dt><dd>${fmtDate(t.entry_start)}〜${fmtDate(t.entry_end)}</dd><dt>状態</dt><dd>${badge(t.status)}</dd><dt>支払方法</dt><dd>${(JSON.parse(t.payment_methods_json) as string[]).map((k) => METHOD_LABEL[k]?.split('（')[0]).join(' / ')}</dd><dt>締切時の支払待ち</dt><dd>${t.unpaid_policy === 'cancel' ? '自動キャンセル' : '保留（事務局判断）'}</dd><dt>参加資格</dt><dd>${describeRuleForAdmin(t, assocsAll)}${t.partner_rule === 'same' && parseRule(t).length ? '（ペアも同じ条件）' : ''}</dd></dl>
     <div class="actions">${canCreateTournament(a) ? html`<a class="btn btn--outline" href="/admin/tournaments/${t.id}/edit">編集</a>` : ''}${owns ? html`<a class="btn btn--outline" href="/admin/tournaments/${t.id}/entries.csv">ドロー会議用 CSV</a>${t.status === 'open' ? html`<form method="post" action="/admin/tournaments/${t.id}/close" class="inline"><button class="btn--outline">受付を締め切る</button></form>` : ''}` : ''}</div></div>
     <h2>エントリー（${rows.filter((r) => r.status === 'confirmed').length} 組確定 / ${rows.filter((r) => r.status === 'pending_payment').length} 組支払待ち）</h2>
-    <div class="tbl"><table><tr><th>種目</th><th>クラス</th><th>代表</th><th>ペア</th><th>経路</th><th>支払</th><th>状態</th><th></th></tr>
-    ${rows.map((r) => html`<tr><td>${evName(r.event_code)}</td><td>${r.class ?? '—'}</td><td>${r.p1_no ?? ''} ${r.p1}${eligMark(r.member_id)}<br><span class="mute">${r.p1_club ?? ''}</span></td><td>${r.p2 ? html`${r.p2}${r.p2_status === 'provisional' ? html` ${badge('provisional')}` : ''}${t.partner_rule === 'same' ? eligMark(r.partner_member_id) : ''}<br><span class="mute">${r.p2_club ?? ''}</span>` : '—'}</td><td>${r.source}</td><td>${r.pay_status ? badge(r.pay_status) : '—'} <span class="mute">${METHOD_LABEL[r.method ?? '']?.split('（')[0] ?? ''}</span></td><td>${badge(r.status)}</td>
+    <div class="tbl"><table><tr><th>種目</th><th>クラス</th><th>代表 <span class="mute">（大会当日の年齢）</span></th><th>ペア</th><th>経路</th><th>支払</th><th>状態</th><th></th></tr>
+    ${rows.map((r) => html`<tr><td>${evName(r.event_code)}</td><td>${r.class ?? '—'}</td><td>${r.p1_no ?? ''} ${r.p1} <span class="age">${ageLabel(r.p1_by, r.p1_bm, t.held_on)}</span>${eligMark(r.member_id)}<br><span class="mute">${r.p1_club ?? ''}</span></td><td>${r.p2 ? html`${r.p2} <span class="age">${ageLabel(r.p2_by, r.p2_bm, t.held_on)}</span>${r.p2_status === 'provisional' ? html` ${badge('provisional')}` : ''}${t.partner_rule === 'same' ? eligMark(r.partner_member_id) : ''}<br><span class="mute">${r.p2_club ?? ''}</span>` : '—'}</td><td>${r.source}</td><td>${r.pay_status ? badge(r.pay_status) : '—'} <span class="mute">${METHOD_LABEL[r.method ?? '']?.split('（')[0] ?? ''}</span></td><td>${badge(r.status)}</td>
       <td>${owns && r.status !== 'cancelled' ? html`${r.pay_status === 'pending' && r.method !== 'stripe' ? html`<form method="post" action="/admin/payments/${r.payment_id}/confirm" class="inline"><input type="hidden" name="back" value="/admin/tournaments/${t.id}"><button class="small">入金確認</button></form> ` : ''}<form method="post" action="/admin/entries/${r.id}/cancel" class="inline"><input type="hidden" name="back" value="/admin/tournaments/${t.id}"><button class="small btn--outline">キャンセル</button></form>` : ''}</td></tr>`)}
     ${rows.length === 0 ? html`<tr><td colspan="8">エントリーはまだありません</td></tr>` : ''}
     </table></div>
@@ -527,8 +527,8 @@ admin.get('/tournaments/:id/entries.csv', async (c) => {
   if (!t || !ownsTournament(A(c), t)) return c.notFound();
   const rows = await entryRows(c.env, t.id);
   const events = JSON.parse(t.events_json) as TournamentEvent[];
-  const lines = ['種目,クラス,代表 会員番号,代表 氏名,代表 クラブ,ペア 氏名,ペア クラブ,状態,支払,領収書番号,受付経路'];
-  for (const r of rows) lines.push([events.find((e) => e.code === r.event_code)?.name ?? r.event_code, r.class, r.p1_no, r.p1, r.p1_club, r.p2, r.p2_club, STATUS_LABEL[r.status], r.pay_status ? STATUS_LABEL[r.pay_status] : '', r.receipt_no, r.source].map(csv).join(','));
+  const lines = ['種目,クラス,代表 会員番号,代表 氏名,代表 年齢,代表 クラブ,ペア 氏名,ペア 年齢,ペア クラブ,状態,支払,領収書番号,受付経路'];
+  for (const r of rows) lines.push([events.find((e) => e.code === r.event_code)?.name ?? r.event_code, r.class, r.p1_no, r.p1, ageLabel(r.p1_by, r.p1_bm, t.held_on).replace('—', ''), r.p1_club, r.p2, r.p2 ? ageLabel(r.p2_by, r.p2_bm, t.held_on).replace('—', '') : '', r.p2_club, STATUS_LABEL[r.status], r.pay_status ? STATUS_LABEL[r.pay_status] : '', r.receipt_no, r.source].map(csv).join(','));
   await audit(c.env, { ...actor(c), action: 'entries.export_csv', target: `tournament:${t.id}`, after: { count: rows.length } });
   return c.body('﻿' + lines.join('\r\n'), 200, { 'Content-Type': 'text/csv; charset=utf-8', 'Content-Disposition': `attachment; filename="entries-${t.id}.csv"` });
 });

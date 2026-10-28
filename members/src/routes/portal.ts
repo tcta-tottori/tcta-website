@@ -6,14 +6,14 @@ import { type Env, isProd } from '../env';
 import { audit } from '../lib/audit';
 import { blindIndex, decrypt, encrypt, normalizeEmail, randomToken, sha256Hex } from '../lib/crypto';
 import { all, nowIso, one, run } from '../lib/db';
-import { currentFiscalYear, fmtDate, fmtDateTime, inRenewalWindow, todayJst, yen } from '../lib/fiscal';
+import { currentFiscalYear, fmtDate, fmtDateTime, inRenewalWindow, todayJst, yen, ageLabel } from '../lib/fiscal';
 import { sendMail } from '../lib/mail';
 import { rateLimit } from '../lib/ratelimit';
 import { createCheckoutUrl } from '../lib/stripe';
 import { createSession, destroySession, flash, readSession } from '../lib/session';
 import { ulid } from '../lib/ulid';
 import { normalizePostal, checkNames, composeKana, composeName, createMember, decryptContact, findMemberByEmail, findOrCreateClub, findSameNameMembers, getMember, namesFromForm, resolveClub, searchMembers, updateMember } from '../services/members';
-import { birthFields, birthFromForm, clubDatalist, clubLabel, clubSelect, nameFields, nameInputs } from '../views/forms';
+import { birthFields, birthFromForm, warekiOf, clubDatalist, clubLabel, clubSelect, nameFields, nameInputs } from '../views/forms';
 import { securityNote } from '../views/security';
 import { retentionYears } from '../services/retention';
 import { checkEligibility, describeRule, parseRule, shortRule } from '../services/eligibility';
@@ -240,6 +240,7 @@ portal.get('/me', requireMember, async (c) => {
         <dt>会員番号</dt><dd><b>${m.member_no ?? '—'}</b></dd>
         <dt>氏名</dt><dd>${m.name}（${m.kana}）</dd>
         <dt>所属</dt><dd>${clubLabel(club?.name)}</dd>
+        <dt>生年月</dt><dd>${m.birth_year ? `${m.birth_year}年${m.birth_month ? `${m.birth_month}月` : ''}（${warekiOf(m.birth_year)}）・${ageLabel(m.birth_year, m.birth_month)}` : '—'}${m.birth_year && !m.birth_month ? html` <a href="/me/profile">生まれ月を入れる</a>` : ''}</dd>
         <dt>メール</dt><dd>${contact.email ?? '—'}</dd>
         <dt>電話</dt><dd>${contact.phone ?? '—'}</dd>
         <dt>住所</dt><dd>${contact.postal ? `〒${contact.postal} ` : ''}${contact.address ?? '—'}</dd>
