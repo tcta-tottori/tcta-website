@@ -91,6 +91,37 @@
     });
   });
 
+  /* ---------- ふりがな欄はひらがなだけ ----------
+     IME で変換している途中（isComposing）は触らない。確定したら、カタカナ・半角カナはひらがなに直し、
+     それ以外の文字（漢字・英数字・記号）は取り除いて、何を取り除いたかを欄の下に出す。 */
+  var toHira = function (s) {
+    s = s.normalize ? s.normalize('NFKC') : s;
+    return s.replace(/[\u30a1-\u30f6]/g, function (ch) { return String.fromCharCode(ch.charCodeAt(0) - 0x60); });
+  };
+  document.querySelectorAll('input[data-kana]').forEach(function (inp) {
+    var note = document.createElement('span');
+    note.className = 'kana-note';
+    note.setAttribute('role', 'status');
+    inp.insertAdjacentElement('afterend', note);
+    var composing = false;
+    var clean = function () {
+      var before = inp.value;
+      var hira = toHira(before).replace(/[\s\u3000]+/g, '');
+      var removed = hira.replace(/[\u3041-\u3096\u30fc]/g, '');
+      var after = hira.replace(/[^\u3041-\u3096\u30fc]/g, '');
+      if (after !== before) {
+        inp.value = after;
+        try { inp.setSelectionRange(after.length, after.length); } catch (e) {}
+      }
+      note.textContent = removed ? 'ひらがな以外（' + removed.slice(0, 8) + '）は入力できません' : '';
+      inp.classList.toggle('is-kana-error', !!removed);
+    };
+    inp.addEventListener('compositionstart', function () { composing = true; });
+    inp.addEventListener('compositionend', function () { composing = false; clean(); });
+    inp.addEventListener('input', function (e) { if (!composing && !e.isComposing) clean(); });
+    inp.addEventListener('blur', clean);
+  });
+
   /* ---------- 所属の「その他」を選んだときだけクラブ名の欄を出す ---------- */
   document.querySelectorAll('select[data-club-select]').forEach(function (sel) {
     var form = sel.form;

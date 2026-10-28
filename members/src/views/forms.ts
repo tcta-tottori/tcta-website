@@ -13,14 +13,14 @@ export function nameFields(v: NameValues, required = true) {
       <label>名 <input type="text" name="given_name" ${req} value="${v.given_name ?? ''}" placeholder="太郎" autocomplete="given-name"></label>
     </div>
     <div class="name-row">
-      <label>せい（ひらがな） <input type="text" name="family_kana" ${req} value="${v.family_kana ?? ''}" placeholder="やまだ"></label>
-      <label>めい（ひらがな） <input type="text" name="given_kana" ${req} value="${v.given_kana ?? ''}" placeholder="たろう"></label>
+      <label>せい（ひらがな） <input type="text" name="family_kana" ${req} value="${v.family_kana ?? ''}" placeholder="やまだ" pattern="[ぁ-ゖァ-ヶー 　]+" title="ひらがなで入力してください" data-kana autocapitalize="off" autocorrect="off" spellcheck="false"></label>
+      <label>めい（ひらがな） <input type="text" name="given_kana" ${req} value="${v.given_kana ?? ''}" placeholder="たろう" pattern="[ぁ-ゖァ-ヶー 　]+" title="ひらがなで入力してください" data-kana autocapitalize="off" autocorrect="off" spellcheck="false"></label>
     </div>`;
 }
 
 /** 氏名だけを手早く入れる 4 欄（ペアの仮登録・ショップ・クラブ代理登録用。name は prefix_family など） */
 export function nameInputs(prefix: string) {
-  return html`<input type="text" name="${prefix}_family" placeholder="姓"> <input type="text" name="${prefix}_given" placeholder="名"> <input type="text" name="${prefix}_family_kana" placeholder="せい"> <input type="text" name="${prefix}_given_kana" placeholder="めい">`;
+  return html`<input type="text" name="${prefix}_family" placeholder="姓"> <input type="text" name="${prefix}_given" placeholder="名"> <input type="text" name="${prefix}_family_kana" placeholder="せい（ひらがな）" pattern="[ぁ-ゖァ-ヶー 　]+" title="ひらがなで入力してください" data-kana autocapitalize="off" autocorrect="off" spellcheck="false"> <input type="text" name="${prefix}_given_kana" placeholder="めい（ひらがな）" pattern="[ぁ-ゖァ-ヶー 　]+" title="ひらがなで入力してください" data-kana autocapitalize="off" autocorrect="off" spellcheck="false">`;
 }
 
 /** 所属の選択。フリー（無所属）／登録済みクラブ／その他（手入力）。JS が「その他」のときだけ手入力欄を出す */

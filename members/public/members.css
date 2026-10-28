@@ -218,3 +218,9 @@ form .secnote { margin-top: 24px; }
 
 /* ---- 生年（元号＋年）---- */
 .birth-row label:first-child { flex: 0 0 120px; }
+
+/* ---- ふりがな欄（ひらがな以外を取り除いたときの案内）---- */
+.kana-note { display: block; min-height: 0; margin-top: 4px; font: 700 12px/1.5 var(--fjp); color: var(--red-dark); }
+.kana-note:empty { display: none; }
+.portal-body input.is-kana-error { border-color: var(--red); }
+.indent .kana-note { flex-basis: 100%; }

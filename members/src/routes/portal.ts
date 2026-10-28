@@ -12,7 +12,7 @@ import { rateLimit } from '../lib/ratelimit';
 import { createCheckoutUrl } from '../lib/stripe';
 import { createSession, destroySession, flash, readSession } from '../lib/session';
 import { ulid } from '../lib/ulid';
-import { composeKana, composeName, createMember, decryptContact, findMemberByEmail, findOrCreateClub, findSameNameMembers, getMember, namesFromForm, resolveClub, searchMembers, updateMember } from '../services/members';
+import { checkNames, composeKana, composeName, createMember, decryptContact, findMemberByEmail, findOrCreateClub, findSameNameMembers, getMember, namesFromForm, resolveClub, searchMembers, updateMember } from '../services/members';
 import { birthYearFields, birthYearFromForm, clubDatalist, clubLabel, clubSelect, nameFields, nameInputs } from '../views/forms';
 import { securityNote } from '../views/security';
 import { checkEligibility, describeRule, parseRule, shortRule } from '../services/eligibility';
@@ -179,7 +179,7 @@ portal.post('/signup', async (c) => {
   const email = (await decrypt(c.env, emailEnc))!;
   const f = await form(c);
   const names = namesFromForm(f);
-  if (!names) { flash(c, '姓・名・せい・めいはすべて必須です', 'err'); return c.redirect('/signup'); }
+  if (typeof names === 'string') { flash(c, names, 'err'); return c.redirect('/signup'); }
   const ip = clientIp(c);
   if (await findMemberByEmail(c.env, email)) { flash(c, 'このメールは登録済みです', 'err'); return c.redirect('/login'); }
   const clubId = await resolveClub(c.env, f.club_sel, f.club_other);
@@ -276,7 +276,7 @@ portal.post('/me/profile', requireMember, async (c) => {
   const other = email ? await findMemberByEmail(c.env, email) : null;
   if (other && other.id !== m.id) { flash(c, 'そのメールアドレスは別の会員が使っています', 'err'); return c.redirect('/me/profile'); }
   const names = namesFromForm(f);
-  if (!names) { flash(c, '姓・名・せい・めいはすべて必須です', 'err'); return c.redirect('/me/profile'); }
+  if (typeof names === 'string') { flash(c, names, 'err'); return c.redirect('/me/profile'); }
   const clubId = await resolveClub(c.env, f.club_sel, f.club_other);
   const before = { name: m.name, kana: m.kana, club_id: m.club_id };
   await updateMember(c.env, m.id, { names, sex: f.sex || null, birthYear: birthYearFromForm(f), email, phone: f.phone || null, postal: f.postal || null, address: f.address || null, clubId });
@@ -462,10 +462,11 @@ export async function createEntry(env: Env, i: EntryInput, ip: string | null): P
   let partnerId: string | null = null;
   if (ev.teamSize === 2) {
     if (i.newPartner) {
-      if (!i.newPartner.familyName.trim() || !i.newPartner.givenName.trim() || !i.newPartner.familyKana.trim() || !i.newPartner.givenKana.trim()) return { ok: false, error: 'ペアの姓・名・せい・めいを入れてください' };
+      const pn = checkNames(i.newPartner);
+      if (typeof pn === 'string') return { ok: false, error: `ペアの${pn}` };
       if (t.partner_rule === 'same' && parseRule(t).length) return { ok: false, error: 'この大会はペアにも年度登録が必要です。ペアの方の年度登録（または代理登録）を先に済ませてください' };
       const clubId = await findOrCreateClub(env, i.newPartner.club);
-      const p = await createMember(env, { ...i.newPartner, clubId, homeAssociationId: null, status: 'provisional' });
+      const p = await createMember(env, { ...pn, clubId, homeAssociationId: null, status: 'provisional' });
       await audit(env, { actorType: i.source === 'web' ? 'member' : i.source === 'shop' ? 'shop' : 'member', actor: i.createdBy, action: 'member.create_provisional', target: `member:${p.id}`, after: { reason: 'ペア指定' }, ip });
       partnerId = p.id;
     } else if (i.partnerId) {
@@ -569,7 +570,7 @@ portal.post('/club/members', requireMember, async (c) => {
   if (!m.club_manager || !m.club_id) return c.notFound();
   const f = await form(c);
   const names = namesFromForm(f, 'new');
-  if (!names) { flash(c, '姓・名・せい・めいをすべて入れてください', 'err'); return c.redirect('/club'); }
+  if (typeof names === 'string') { flash(c, names, 'err'); return c.redirect('/club'); }
   const p = await createMember(c.env, { ...names, clubId: m.club_id, homeAssociationId: m.home_association_id, status: 'provisional' });
   await audit(c.env, { actorType: 'member', actor: m.id, action: 'member.create_provisional', target: `member:${p.id}`, after: { reason: 'クラブ代理登録' }, ip: clientIp(c) });
   flash(c, `${p.name} さんを仮会員として追加しました`);

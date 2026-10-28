@@ -11,7 +11,7 @@ import { currentFiscalYear, fmtDate, fmtDateTime, jstDayRange, todayJst, yen } f
 import { sendMail } from '../lib/mail';
 import { createSession, destroySession, flash, readSession } from '../lib/session';
 import { ulid } from '../lib/ulid';
-import { composeKana, composeName, createMember, decryptContact, findOrCreateClub, findSameNameMembers, namesFromForm, normalizeKana, resolveClub, updateMember } from '../services/members';
+import { checkNames, composeKana, composeName, createMember, decryptContact, findOrCreateClub, findSameNameMembers, namesFromForm, normalizeKana, resolveClub, updateMember } from '../services/members';
 import { clubLabel, clubSelect, nameFields } from '../views/forms';
 import { securityNote } from '../views/security';
 import { cancelEntry, getPayment, markPaid } from '../services/payments';
@@ -178,7 +178,7 @@ admin.post('/members/:id', async (c) => {
   if (!m) return c.notFound();
   const f = await form(c);
   const names = namesFromForm(f);
-  if (!names) { flash(c, '姓・名・せい・めいはすべて必須です', 'err'); return c.redirect(`/admin/members/${m.id}`); }
+  if (typeof names === 'string') { flash(c, names, 'err'); return c.redirect(`/admin/members/${m.id}`); }
   const clubId = await resolveClub(c.env, f.club_sel, f.club_other);
   await updateMember(c.env, m.id, { names, clubId, email: f.email || null, phone: f.phone || null, postal: f.postal || null, address: f.address || null, status: f.status });
   if (f.status === 'withdrawn' && m.status !== 'withdrawn') await run(c.env.DB, 'UPDATE members SET withdrawn_at = ? WHERE id = ?', nowIso(), m.id);
@@ -490,7 +490,7 @@ admin.post('/entries/:id/cancel', async (c) => {
 admin.get('/import', async (c) => {
   const a = A(c);
   if (!canImport(a)) return c.text('forbidden', 403);
-  const body = html`<div class="card"><p>既存のふりがな名簿・Excel を CSV（UTF-8）で貼り付けます。1 行 1 名、列は <code>姓,名,せい,めい,性別(男/女),生年,所属,メール,電話,郵便番号,住所</code>。所属が空か「フリー」なら無所属、登録の無いクラブ名は自動で作ります。氏名・ふりがなが既存と一致する行は自動で結合せず「名寄せ候補」に入ります。</p>
+  const body = html`<div class="card"><p>既存のふりがな名簿・Excel を CSV（UTF-8）で貼り付けます。1 行 1 名、列は <code>姓,名,せい,めい,性別(男/女),生年,所属,メール,電話,郵便番号,住所</code>。所属が空か「フリー」なら無所属、登録の無いクラブ名は自動で作ります。せい・めいはひらがな（カタカナは自動でひらがなに直します）で、それ以外の文字を含む行は取り込みません。氏名・ふりがなが既存と一致する行は自動で結合せず「名寄せ候補」に入ります。</p>
     <form method="post" action="/admin/import"><textarea name="csv" placeholder="山田,太郎,やまだ,たろう,男,1985,鳥取ローンテニスクラブ,yamada@example.com,090-0000-0001,680-0001,鳥取市栄町1-1"></textarea>
     <label class="check"><input type="checkbox" name="register" checked> 取り込んだ会員を当年度の登録済み（承認）にする</label>
     <div class="actions"><button class="primary">取り込む</button></div></form></div>`;
@@ -504,10 +504,14 @@ admin.post('/import', async (c) => {
   const assoc = (await one<Association>(c.env.DB, 'SELECT * FROM associations WHERE id = ?', a.association_id))!;
   const fy = currentFiscalYear(assoc.fiscal_year_start_month);
   let created = 0, candidates = 0, skipped = 0;
+  const badKana: string[] = [];
   for (const line of (f.csv ?? '').split(/\r?\n/)) {
     const cols = line.split(',').map((s) => s.trim().replace(/^"|"$/g, ''));
     if (cols.length < 4 || !cols[0] || !cols[1] || !cols[2] || !cols[3]) { if (line.trim()) skipped++; continue; }
-    const [familyName, givenName, familyKana, givenKana, sex, birth, clubName, email, phone, postal, address] = cols;
+    const [familyName, givenName, rawFamilyKana, rawGivenKana, sex, birth, clubName, email, phone, postal, address] = cols;
+    const checked = checkNames({ familyName, givenName, familyKana: rawFamilyKana, givenKana: rawGivenKana });
+    if (typeof checked === 'string') { skipped++; badKana.push(`${familyName} ${givenName}`); continue; }
+    const { familyKana, givenKana } = checked;
     const name = composeName(familyName, givenName);
     const kana = composeKana(familyKana, givenKana);
     const clubId = await findOrCreateClub(c.env, clubName);
@@ -521,8 +525,8 @@ admin.post('/import', async (c) => {
       candidates++;
     }
   }
-  await audit(c.env, { ...actor(c), action: 'members.import', target: `association:${assoc.id}`, after: { created, candidates, skipped } });
-  flash(c, `${created} 名を取り込みました（名寄せ候補 ${candidates} 件、読めない行 ${skipped}）`);
+  await audit(c.env, { ...actor(c), action: 'members.import', target: `association:${assoc.id}`, after: { created, candidates, skipped, bad_kana: badKana.length } });
+  flash(c, `${created} 名を取り込みました（名寄せ候補 ${candidates} 件、読めない行 ${skipped}${badKana.length ? `。うち、ふりがながひらがなでない行: ${badKana.slice(0, 5).join('、')}${badKana.length > 5 ? ' ほか' : ''}` : ''}）`, badKana.length ? 'err' : 'ok');
   return c.redirect(candidates ? '/admin/merges' : '/admin/members');
 });
 
