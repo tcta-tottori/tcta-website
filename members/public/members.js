@@ -3,11 +3,56 @@
 (function () {
   'use strict';
   var body = document.querySelector('.portal-body');
-  if (!body) return;
-  var kids = body.children;
-  for (var i = 0; i < kids.length; i++) {
-    var el = kids[i];
-    if (el.classList.contains('rv')) continue;
-    el.classList.add('rv');
+  if (body) {
+    var kids = body.children;
+    for (var i = 0; i < kids.length; i++) {
+      var el = kids[i];
+      if (el.classList.contains('rv')) continue;
+      el.classList.add('rv');
+    }
   }
+
+  /* ---------- 郵便番号 → 住所の自動入力 ----------
+     7 桁そろったら同一オリジンの /api/v1/postal/<郵便番号> を引き、住所欄が空（または前回自動で入れたまま）なら
+     都道府県・市区町村・町域を入れてカーソルを末尾に置く。番地・建物名は続けて打ってもらう。 */
+  document.querySelectorAll('input[name="postal"]').forEach(function (postal) {
+    var form = postal.form;
+    var address = form && form.querySelector('input[name="address"]');
+    if (!address) return;
+    var hint = document.createElement('span');
+    hint.className = 'postal-hint';
+    postal.insertAdjacentElement('afterend', hint);
+    var last = '';
+    address.addEventListener('input', function () { address.dataset.auto = '0'; });
+    postal.addEventListener('input', function () {
+      var code = postal.value.replace(/\D/g, '');
+      if (code.length !== 7 || code === last) return;
+      last = code;
+      hint.textContent = '住所を検索しています…';
+      fetch('/api/v1/postal/' + code).then(function (r) { return r.json(); }).then(function (j) {
+        if (!j.ok) { hint.textContent = '該当する住所が見つかりません。手で入力してください。'; return; }
+        if (!address.value || address.dataset.auto === '1') {
+          address.value = j.address;
+          address.dataset.auto = '1';
+          address.focus();
+          try { address.setSelectionRange(address.value.length, address.value.length); } catch (e) {}
+        }
+        hint.textContent = j.address + ' を入れました。番地・建物名を続けて入力してください。';
+      }).catch(function () { hint.textContent = ''; });
+    });
+  });
+
+  /* ---------- 所属の「その他」を選んだときだけクラブ名の欄を出す ---------- */
+  document.querySelectorAll('select[data-club-select]').forEach(function (sel) {
+    var form = sel.form;
+    var wrap = form && form.querySelector('[data-club-other-wrap]');
+    if (!wrap) return;
+    var sync = function (focus) {
+      var on = sel.value === '__other__';
+      wrap.style.display = on ? '' : 'none';
+      if (on && focus) { var inp = wrap.querySelector('input'); if (inp) inp.focus(); }
+    };
+    sel.addEventListener('change', function () { sync(true); });
+    sync(false);
+  });
 })();

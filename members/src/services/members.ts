@@ -4,7 +4,7 @@ import { all, nextSeq, nowIso, one, run } from '../lib/db';
 import { blindIndex, decrypt, encrypt, normalizeEmail } from '../lib/crypto';
 import { currentFiscalYear } from '../lib/fiscal';
 import { ulid } from '../lib/ulid';
-import type { Association, Member } from '../types';
+import type { Association, Club, Member } from '../types';
 
 export interface Contact { email: string | null; phone: string | null; postal: string | null; address: string | null }
 
@@ -36,8 +36,15 @@ export async function issueMemberNo(env: Env, assoc: Association): Promise<strin
   return `${assoc.code}-${String(fy).slice(-2)}-${String(seq).padStart(4, '0')}`;
 }
 
-export interface NewMember {
-  name: string; kana: string; sex?: string | null; birthYear?: number | null;
+export interface Names { familyName: string; givenName: string; familyKana: string; givenKana: string }
+
+/** 表示・検索用の氏名「姓 名」 */
+export const composeName = (family: string, given: string) => `${family.trim()} ${given.trim()}`.trim();
+/** 名寄せ用のふりがな（せい＋めい、ひらがなに正規化） */
+export const composeKana = (family: string, given: string) => normalizeKana(family + given);
+
+export interface NewMember extends Names {
+  sex?: string | null; birthYear?: number | null;
   email?: string | null; phone?: string | null; postal?: string | null; address?: string | null;
   clubId?: string | null; homeAssociationId?: string | null; status?: 'active' | 'provisional';
   consented?: boolean;
@@ -54,10 +61,12 @@ export async function createMember(env: Env, n: NewMember): Promise<Member> {
   const email = n.email ? normalizeEmail(n.email) : null;
   await run(
     env.DB,
-    `INSERT INTO members (id, member_no, name, kana, sex, birth_year, email_hash, email_enc, phone_enc, postal_enc, address_enc,
+    `INSERT INTO members (id, member_no, name, kana, family_name, given_name, family_kana, given_kana, sex, birth_year, email_hash, email_enc, phone_enc, postal_enc, address_enc,
        club_id, home_association_id, status, consented_at, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    id, memberNo, n.name.trim(), normalizeKana(n.kana), n.sex ?? null, n.birthYear ?? null,
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    id, memberNo, composeName(n.familyName, n.givenName), composeKana(n.familyKana, n.givenKana),
+    n.familyName.trim(), n.givenName.trim(), normalizeKana(n.familyKana), normalizeKana(n.givenKana),
+    n.sex ?? null, n.birthYear ?? null,
     email ? await blindIndex(env, email) : null, await encrypt(env, email), await encrypt(env, n.phone),
     await encrypt(env, n.postal), await encrypt(env, n.address), n.clubId ?? null, n.homeAssociationId ?? null,
     n.status ?? 'active', n.consented ? now : null, now, now,
@@ -66,7 +75,7 @@ export async function createMember(env: Env, n: NewMember): Promise<Member> {
 }
 
 export interface MemberUpdate {
-  name?: string; kana?: string; sex?: string | null; birthYear?: number | null; email?: string | null;
+  names?: Names; sex?: string | null; birthYear?: number | null; email?: string | null;
   phone?: string | null; postal?: string | null; address?: string | null; clubId?: string | null; status?: string;
 }
 
@@ -74,8 +83,11 @@ export async function updateMember(env: Env, id: string, u: MemberUpdate): Promi
   const sets: string[] = [];
   const params: unknown[] = [];
   const push = (col: string, v: unknown) => { sets.push(`${col} = ?`); params.push(v); };
-  if (u.name !== undefined) push('name', u.name.trim());
-  if (u.kana !== undefined) push('kana', normalizeKana(u.kana));
+  if (u.names) {
+    push('family_name', u.names.familyName.trim()); push('given_name', u.names.givenName.trim());
+    push('family_kana', normalizeKana(u.names.familyKana)); push('given_kana', normalizeKana(u.names.givenKana));
+    push('name', composeName(u.names.familyName, u.names.givenName)); push('kana', composeKana(u.names.familyKana, u.names.givenKana));
+  }
   if (u.sex !== undefined) push('sex', u.sex);
   if (u.birthYear !== undefined) push('birth_year', u.birthYear);
   if (u.email !== undefined) {
@@ -91,6 +103,33 @@ export async function updateMember(env: Env, id: string, u: MemberUpdate): Promi
   push('updated_at', nowIso());
   params.push(id);
   await run(env.DB, `UPDATE members SET ${sets.join(', ')} WHERE id = ?`, ...params);
+}
+
+/** クラブ名からクラブを探し、無ければ作る。空なら null（フリー） */
+export async function findOrCreateClub(env: Env, name: string | null | undefined): Promise<string | null> {
+  const n = (name ?? '').trim();
+  if (!n || n === 'フリー' || n === '無所属') return null;
+  const cl = await one<Club>(env.DB, 'SELECT * FROM clubs WHERE name = ?', n);
+  if (cl) return cl.id;
+  const id = `club-${ulid().toLowerCase()}`;
+  await run(env.DB, 'INSERT INTO clubs (id, name, created_at) VALUES (?, ?, ?)', id, n, nowIso());
+  return id;
+}
+
+/** 所属の選択（フリー／登録済み／その他を手入力）を club_id に直す */
+export async function resolveClub(env: Env, sel: string | undefined, other: string | undefined): Promise<string | null> {
+  if (!sel || sel === '__free__') return null;
+  if (sel === '__other__') return findOrCreateClub(env, other);
+  const cl = await one<Club>(env.DB, 'SELECT id FROM clubs WHERE id = ?', sel);
+  return cl ? sel : null;
+}
+
+/** フォームの 4 欄から Names を組む（足りなければ null） */
+export function namesFromForm(f: Record<string, string>, prefix = ''): Names | null {
+  const k = (x: string) => (prefix ? `${prefix}_${x}` : x);
+  const n = { familyName: f[k('family_name')] ?? f[k('family')] ?? '', givenName: f[k('given_name')] ?? f[k('given')] ?? '', familyKana: f[k('family_kana')] ?? '', givenKana: f[k('given_kana')] ?? '' };
+  if (!n.familyName.trim() || !n.givenName.trim() || !n.familyKana.trim() || !n.givenKana.trim()) return null;
+  return n;
 }
 
 /** ふりがなの表記ゆれを吸収（カタカナ→ひらがな、全角空白→除去）。 */

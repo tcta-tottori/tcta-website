@@ -5,7 +5,7 @@ export interface Association {
 }
 export interface Club { id: string; name: string; area: string | null }
 export interface Member {
-  id: string; member_no: string | null; name: string; kana: string; sex: string | null; birth_year: number | null;
+  id: string; member_no: string | null; name: string; kana: string; family_name: string; given_name: string; family_kana: string; given_kana: string; sex: string | null; birth_year: number | null;
   email_hash: string | null; email_enc: string | null; phone_enc: string | null; postal_enc: string | null; address_enc: string | null;
   club_id: string | null; home_association_id: string | null; club_manager: number; status: string;
   withdrawn_at: string | null; contacts_purged_at: string | null; merged_into: string | null; consented_at: string | null;
