@@ -650,7 +650,7 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   height: var(--header-h);
 }
 .site-header__logo { display: inline-flex; }
-.site-header__logo img { height: 31px; width: auto; }  /* 透過ロゴ（余白なし）。以前の 34px（余白込み）と同じ見た目の大きさ */
+.site-header__logo img { height: 46px; width: auto; }  /* 透過ロゴ（余白なし）。スマホ・タブレットは 46px（以前の 31px の 1.5 倍） */
 @media (min-width: 1024px) { .site-header__logo img { height: 40px; } }
 
 /* スマホ・タブレット（〜1023px）：ヘッダーの帯（白地・下線・影）を出さず、透過のロゴとメニューのボタンだけを
@@ -783,7 +783,10 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   background: var(--ink);
   color: #fff;
   /* 上の余白はヘッダーの下端まで（main.js が通知バーの有無に合わせて上書きする） */
-  padding: var(--header-h) var(--gutter) 48px;
+  padding: var(--header-h) var(--gutter) calc(32px + env(safe-area-inset-bottom, 0px));
+  /* 行は上から並べ、SNS と著作権の表記（.mobile-nav__foot）は下端に寄せる */
+  display: flex;
+  flex-direction: column;
   overflow-y: auto;
   overscroll-behavior: contain;
   visibility: hidden;
@@ -812,7 +815,7 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 0 32px;
-  padding-top: 16px;
+  padding-top: 40px;  /* ヘッダーと最初の行のあいだ */
 }
 /* 行（フッターの .fw--head と同じ見た目：上に細い線、白い太字） */
 .mobile-nav__link {
@@ -857,8 +860,24 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 @media (hover: hover) {
   .mobile-nav__link:hover .mobile-nav__tx > span { color: var(--gray-300); }
 }
-/* SNS（フッターと同じ）。行の文字と同じく、下端で切り取ってその下から出す */
-.mobile-nav__sns { position: relative; margin-top: 36px; }
+/* 下端：SNS と著作権の表記（フッターと同じ）。行の文字と同じく、下端で切り取ってその下から出す */
+.mobile-nav__foot { position: relative; margin-top: auto; padding-top: 40px; }
+.mobile-nav__copy {
+  margin-top: 20px;
+  overflow: hidden;
+  font: 400 12px/1.6 var(--flt);
+  letter-spacing: .04em;
+  color: rgba(255, 255, 255, .6);
+}
+.mobile-nav__copy > span {
+  display: block;
+  transform: translateY(105%);
+  transition: transform .22s cubic-bezier(.5, 0, .75, 0);
+}
+.mobile-nav.is-open .mobile-nav__copy > span {
+  transform: none;
+  transition: transform .55s cubic-bezier(.16, 1, .3, 1) calc(var(--mn-up) + var(--i, 0) * var(--mn-step));
+}
 .mobile-nav__sns .sns-list { display: flex; flex-wrap: wrap; gap: 12px 24px; }
 .mobile-nav__sns li { overflow: hidden; }
 .mobile-nav__sns .sns-link {
@@ -872,7 +891,8 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 }
 @media (prefers-reduced-motion: reduce) {
   .mobile-nav, .mobile-nav.is-open,
-  .mobile-nav .footer-dot, .mobile-nav__link::before, .mobile-nav__tx > span, .mobile-nav__sns .sns-link,
+  .mobile-nav .footer-dot, .mobile-nav__link::before, .mobile-nav__tx > span, .mobile-nav__sns .sns-link, .mobile-nav__copy > span,
+  .mobile-nav.is-open .mobile-nav__copy > span,
   .mobile-nav.is-open .footer-dot, .mobile-nav.is-open .mobile-nav__link::before,
   .mobile-nav.is-open .mobile-nav__tx > span, .mobile-nav.is-open .mobile-nav__sns .sns-link {
     transition: none;
