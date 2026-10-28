@@ -653,11 +653,38 @@
     function start() {
       if (!window.L) return;
       var L = window.L;
+      /* 誤操作防止：指で操作する端末では、1本指はページのスクロールに使い、地図は2本指で動かす・拡大縮小する
+         （dragging を切ると Leaflet が touch-action: pan-x pan-y にするので、1本指のスクロールはページへ通る。
+         2本指は touchZoom が拡大縮小と移動を受け持つ）。1本指でなぞったときは「2本の指で地図を動かせます」を一瞬出す。
+         マウスの端末は、ドラッグで動かし、ホイールではページをスクロールする（scrollWheelZoom: false）。 */
+      var touchFirst = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
       var map = L.map(el, {
         zoomControl: false,
         scrollWheelZoom: false,      // ページのスクロールを奪わない
+        dragging: !touchFirst,
         attributionControl: true,
       });
+      if (touchFirst && frame) {
+        var hint = document.createElement('div');
+        hint.className = 'cmap__hint';
+        hint.setAttribute('aria-hidden', 'true');
+        hint.textContent = '2本の指で地図を動かせます';
+        frame.appendChild(hint);
+        var hx = 0, hy = 0, hintTimer = null;
+        var showHint = function () {
+          hint.classList.add('is-on');
+          clearTimeout(hintTimer);
+          hintTimer = setTimeout(function () { hint.classList.remove('is-on'); }, 1400);
+        };
+        el.addEventListener('touchstart', function (e) {
+          if (e.touches.length === 1) { hx = e.touches[0].clientX; hy = e.touches[0].clientY; }
+          else { clearTimeout(hintTimer); hint.classList.remove('is-on'); }  // 2本指になったら案内を消す
+        }, { passive: true });
+        el.addEventListener('touchmove', function (e) {
+          if (e.touches.length !== 1) return;
+          if (Math.abs(e.touches[0].clientX - hx) + Math.abs(e.touches[0].clientY - hy) > 12) showHint();
+        }, { passive: true });
+      }
       L.control.zoom({ position: 'bottomright' }).addTo(map);
       /* 下地は2種類。標準は航空写真（国土地理院の全国最新写真。鍵なしで使え、コートの区画まで見える）。
          「地図」に切り替えると OpenStreetMap の標準版（色は CSS でグレーに落とす）。
