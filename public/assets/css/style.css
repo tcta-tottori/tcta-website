@@ -4076,5 +4076,6 @@ button.dl-item { width: 100%; text-align: left; }
   .page-head { padding-top: calc(32px + var(--header-h)); --sec-pt: calc(32px + var(--header-h) + 12px * 1.6 + 20px); }
   .notice-bar { padding-top: var(--header-h); }
   .notice-bar ~ #main > .page-head:first-child { padding-top: 32px; --sec-pt: calc(32px + 12px * 1.6 + 20px); }
-  .hero { padding-top: var(--header-h); min-height: 100svh; }
+  /* トップの写真はヘッダーの裏（画面の上端）から敷く。文字とボタンは下端に揃えてあるので、位置は変わらない */
+  .hero { min-height: 100svh; }
 }
