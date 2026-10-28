@@ -215,3 +215,6 @@ p.elig { display: inline-block; margin: 0 0 8px; padding: 6px 12px; font-size: 1
 form .secnote { margin-top: 24px; }
 .portal-body .bullet-list { margin: 0; padding: 0; }
 .portal-body .bullet-list li { list-style: none; }
+
+/* ---- 生年（元号＋年）---- */
+.birth-row label:first-child { flex: 0 0 120px; }

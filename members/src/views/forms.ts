@@ -42,3 +42,39 @@ export function clubDatalist(clubs: Club[]) {
 }
 
 export const clubLabel = (name: string | null | undefined) => name ?? 'フリー';
+
+/* ---- 生年（元号＋年のプルダウン）----
+   保存するのは西暦の年だけ（最小保有）。表示と入力は 西暦／令和／平成／昭和／大正 を選べる。
+   元号を変えたときの年の選択肢の切り替えは public/members.js。JS が無くても西暦のままで入力できる。 */
+export const ERAS: { key: string; label: string; base: number; max: number }[] = [
+  { key: 'seireki', label: '西暦', base: 0, max: 0 },
+  { key: 'reiwa', label: '令和', base: 2018, max: 0 },
+  { key: 'heisei', label: '平成', base: 1988, max: 31 },
+  { key: 'showa', label: '昭和', base: 1925, max: 64 },
+  { key: 'taisho', label: '大正', base: 1911, max: 15 },
+];
+
+export function birthYearFields(value: number | null | undefined, now = new Date()) {
+  const thisYear = now.getFullYear();
+  const years: number[] = [];
+  for (let y = thisYear; y >= 1900; y--) years.push(y);
+  return html`
+    <div class="name-row birth-row" data-birth-row data-this-year="${thisYear}">
+      <label>生年の元号 <select name="birth_era" data-birth-era>${ERAS.map((e) => html`<option value="${e.key}">${e.label}</option>`)}</select></label>
+      <label>生年 <select name="birth_y" data-birth-year><option value="">—</option>${years.map((y) => html`<option value="${y}" ${y === value ? 'selected' : ''}>${y}年</option>`)}</select></label>
+    </div>
+    <p class="mute">年齢区分の判定にだけ使います。月日は預かりません。</p>`;
+}
+
+/** フォームの 元号＋年（または西暦の birth_year）から西暦の年を作る。無効なら null */
+export function birthYearFromForm(f: Record<string, string>, now = new Date()): number | null {
+  if (f.birth_year) {
+    const y = Number(f.birth_year);
+    return y >= 1900 && y <= now.getFullYear() ? y : null;
+  }
+  const n = Number(f.birth_y);
+  if (!f.birth_y || !Number.isFinite(n)) return null;
+  const era = ERAS.find((e) => e.key === (f.birth_era || 'seireki')) ?? ERAS[0];
+  const y = era.base + n;
+  return y >= 1900 && y <= now.getFullYear() ? y : null;
+}
