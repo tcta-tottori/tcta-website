@@ -13,7 +13,7 @@ import { createCheckoutUrl } from '../lib/stripe';
 import { createSession, destroySession, flash, readSession } from '../lib/session';
 import { ulid } from '../lib/ulid';
 import { composeKana, composeName, createMember, decryptContact, findMemberByEmail, findOrCreateClub, findSameNameMembers, getMember, namesFromForm, resolveClub, searchMembers, updateMember } from '../services/members';
-import { clubDatalist, clubLabel, clubSelect, nameFields, nameInputs } from '../views/forms';
+import { birthYearFields, birthYearFromForm, clubDatalist, clubLabel, clubSelect, nameFields, nameInputs } from '../views/forms';
 import { securityNote } from '../views/security';
 import { checkEligibility, describeRule, parseRule, shortRule } from '../services/eligibility';
 import { createPayment, getPayment } from '../services/payments';
@@ -146,7 +146,7 @@ function profileFields(clubs: Club[], assocs: Association[], v: Partial<{ family
   return html`
     ${nameFields(v)}
     <label>性別 <select name="sex"><option value="">—</option>${Object.entries(SEX_LABEL).map(([k, l]) => html`<option value="${k}" ${v.sex === k ? 'selected' : ''}>${l}</option>`)}</select></label>
-    <label>生年（年齢区分の判定にだけ使います） <input type="number" name="birth_year" min="1900" max="2030" value="${v.birth_year ?? ''}"></label>
+    ${birthYearFields(v.birth_year)}
     ${clubSelect(clubs, v.club_id)}
     ${withHome ? html`<label>主な登録先の協会（会員番号の接頭辞になります） <select name="home">${assocs.map((a) => html`<option value="${a.id}" ${v.home === a.id ? 'selected' : ''}>${a.name}</option>`)}</select></label>` : ''}
     <label>電話番号 <input type="tel" name="phone" value="${v.phone ?? ''}" autocomplete="tel"></label>
@@ -190,7 +190,7 @@ portal.post('/signup', async (c) => {
   let member: Member;
   if (provisional.length === 1) {
     member = provisional[0];
-    await updateMember(c.env, member.id, { names, email, phone: f.phone || null, postal: f.postal || null, address: f.address || null, sex: f.sex || null, birthYear: f.birth_year ? Number(f.birth_year) : null, clubId, status: 'active' });
+    await updateMember(c.env, member.id, { names, email, phone: f.phone || null, postal: f.postal || null, address: f.address || null, sex: f.sex || null, birthYear: birthYearFromForm(f), clubId, status: 'active' });
     await run(c.env.DB, 'UPDATE members SET consented_at = ?, home_association_id = COALESCE(home_association_id, ?) WHERE id = ?', nowIso(), f.home || null, member.id);
     if (!member.member_no && f.home) {
       const assoc = await one<Association>(c.env.DB, 'SELECT * FROM associations WHERE id = ?', f.home);
@@ -202,7 +202,7 @@ portal.post('/signup', async (c) => {
     await audit(c.env, { actorType: 'member', actor: member.id, action: 'member.claim_provisional', target: `member:${member.id}`, ip });
     member = (await getMember(c.env, member.id))!;
   } else {
-    member = await createMember(c.env, { ...names, sex: f.sex || null, birthYear: f.birth_year ? Number(f.birth_year) : null, email, phone: f.phone || null, postal: f.postal || null, address: f.address || null, clubId, homeAssociationId: f.home || null, status: 'active', consented: true });
+    member = await createMember(c.env, { ...names, sex: f.sex || null, birthYear: birthYearFromForm(f), email, phone: f.phone || null, postal: f.postal || null, address: f.address || null, clubId, homeAssociationId: f.home || null, status: 'active', consented: true });
     await audit(c.env, { actorType: 'member', actor: member.id, action: 'member.create', target: `member:${member.id}`, after: { source: 'web' }, ip });
     // 同姓同名の既存会員がいるときは自動結合せず、事務局が確認する候補にする
     for (const s of same) {
@@ -279,7 +279,7 @@ portal.post('/me/profile', requireMember, async (c) => {
   if (!names) { flash(c, '姓・名・せい・めいはすべて必須です', 'err'); return c.redirect('/me/profile'); }
   const clubId = await resolveClub(c.env, f.club_sel, f.club_other);
   const before = { name: m.name, kana: m.kana, club_id: m.club_id };
-  await updateMember(c.env, m.id, { names, sex: f.sex || null, birthYear: f.birth_year ? Number(f.birth_year) : null, email, phone: f.phone || null, postal: f.postal || null, address: f.address || null, clubId });
+  await updateMember(c.env, m.id, { names, sex: f.sex || null, birthYear: birthYearFromForm(f), email, phone: f.phone || null, postal: f.postal || null, address: f.address || null, clubId });
   await audit(c.env, { actorType: 'member', actor: m.id, action: 'member.update', target: `member:${m.id}`, before, after: { name: composeName(names.familyName, names.givenName), kana: composeKana(names.familyKana, names.givenKana), club_id: clubId, contact_changed: true }, ip: clientIp(c) });
   flash(c, '会員情報を更新しました。全協会に反映されます');
   return c.redirect('/me');
