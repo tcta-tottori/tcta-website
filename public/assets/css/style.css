@@ -402,7 +402,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 .ghost-link:hover .sqbtn { background: var(--red); border-color: var(--red); color: #fff; }
 .ghost-link .aw { color: var(--red); }
 
-/* VIEW ALL：枠の中に「VIEW ALL ——\」を収めたバッジ。矢印（.ln-arrow）は文字の下端にそろえる。ホバーで黒く塗る */
+/* VIEW ALL：枠の中に「VIEW ALL ——\」を収めたバッジ。文字と矢印は赤、矢印（.ln-arrow）は文字の下端にそろえる。ホバーで赤く塗る */
 .view-all {
   display: inline-flex;
   align-items: baseline;
@@ -411,16 +411,16 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   border: 1px solid var(--ink);
   border-radius: var(--radius);
   background: var(--white);
-  color: var(--ink);
+  color: var(--red);
   white-space: nowrap;
-  transition: background-color .3s ease, color .3s ease;
+  transition: background-color .3s ease, border-color .3s ease, color .3s ease;
 }
 .view-all__label {
   font: 700 12px/1 var(--flt);
   letter-spacing: .12em;
 }
 .view-all .ln-arrow { width: 22px; transition: transform .3s ease; }
-.view-all:hover { background: var(--ink); color: #fff; }
+.view-all:hover { background: var(--red); border-color: var(--red); color: #fff; }
 .view-all:hover .ln-arrow { transform: translateX(3px); }
 
 .sqbtn {
