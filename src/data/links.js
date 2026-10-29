@@ -23,6 +23,7 @@
 
 export const GROUPS = [
   { id: 'official', title: '協会の公式アカウント' },
+  { id: 'shop', title: 'テニスショップ' },
   { id: 'org', title: '関係団体' },
   { id: 'facility', title: '施設の予約・会場' },
   { id: 'nearby', title: '近隣のテニス協会・加盟クラブ' },
@@ -42,6 +43,14 @@ export const LINE_OFFICIAL = {
 
 export const LINKS = [
   LINE_OFFICIAL,
+  {
+    group: 'shop',
+    name: 'テニスショップ フラシーノ',
+    row: 'other',
+    desc: '鳥取市南吉方のテニス専門店',
+    url: 'https://frassino.jp/',
+    banner: 'assets/img/banners/frassino.png',
+  },
   {
     group: 'org',
     name: '日本テニス協会',
@@ -116,27 +125,11 @@ export const LINKS = [
   },
   {
     group: 'nearby',
-    name: '琴浦テニスクラブ',
-    row: 'other',
-    desc: '東伯郡琴浦町のテニスクラブ',
-    url: 'https://kotouratennisclub.1web.jp/',
-    banner: 'assets/img/banners/kotoura-tc.png',
-  },
-  {
-    group: 'nearby',
     name: '遊ポートT.C.',
     row: 'other',
     desc: '鳥取市のジュニアテニススクール',
     url: 'https://u-port.xyz/u-port',
     banner: 'assets/img/banners/u-port-tc.png',
-  },
-  {
-    group: 'sponsor',
-    name: 'テニスショップ フラシーノ',
-    row: 'other',
-    desc: '鳥取市南吉方のテニス専門店',
-    url: 'https://frassino.jp/',
-    banner: 'assets/img/banners/frassino.png',
   },
   {
     group: 'sponsor',
