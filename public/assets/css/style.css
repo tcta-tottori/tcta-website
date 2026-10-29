@@ -402,12 +402,26 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 .ghost-link:hover .sqbtn { background: var(--red); border-color: var(--red); color: #fff; }
 .ghost-link .aw { color: var(--red); }
 
-.view-all { display: inline-flex; align-items: center; gap: 12px; }
+/* VIEW ALL：枠の中に「VIEW ALL ——\」を収めたバッジ。矢印（.ln-arrow）は文字の下端にそろえる。ホバーで黒く塗る */
+.view-all {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 11px 14px;
+  border: 1px solid var(--ink);
+  border-radius: var(--radius);
+  background: var(--white);
+  color: var(--ink);
+  white-space: nowrap;
+  transition: background-color .3s ease, color .3s ease;
+}
 .view-all__label {
   font: 700 12px/1 var(--flt);
   letter-spacing: .12em;
-  color: var(--ink);
 }
+.view-all .ln-arrow { width: 22px; transition: transform .3s ease; }
+.view-all:hover { background: var(--ink); color: #fff; }
+.view-all:hover .ln-arrow { transform: translateX(3px); }
 
 .sqbtn {
   flex: none;
@@ -785,7 +799,7 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   position: fixed;
   inset: 0;
   z-index: 90;
-  background: var(--ink);
+  background: #353535;  /* フッター（--ink）より少しグレーに寄せた地 */
   color: #fff;
   /* 上の余白はヘッダーの下端まで（main.js が通知バーの有無に合わせて上書きする） */
   padding: var(--header-h) var(--gutter) calc(32px + env(safe-area-inset-bottom, 0px));
@@ -806,6 +820,8 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   transition: clip-path var(--mn-up) var(--mn-up-ease), visibility 0s;
 }
 @media (min-width: 1024px) { .mobile-nav { display: none; } }
+/* 地をグレーに寄せた分、四角（フッターと同じ黒に近い色）は薄めて、地との差を控えめにする */
+.mobile-nav__deco { opacity: .45; }
 /* 漂う四角（DecoSquares.astro。フッターと共用）。開くとき、大きい（手前の）四角ほど下から遅れて追いつく */
 .mobile-nav__deco .footer-dot {
   translate: 0 calc(var(--depth, .5) * 140px);
