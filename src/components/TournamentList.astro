@@ -170,7 +170,7 @@ const parts = (text) => String(text ?? '').split(/(?<=[／/・])|(?=（)/);
       <div class="tl-item__btns">
         {buttons.map((b) =>
           b.href
-            ? <a class="btn btn--outline tl-btn" href={b.href} {...(b.external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}>{b.label}<span class="aw" aria-hidden="true">{b.external ? '↗' : '→'}</span></a>
+            ? <a class="btn btn--outline tl-btn" href={b.href} {...(b.external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}>{b.label}{b.external ? <span class="aw" aria-hidden="true">↗</span> : <span class="ln-arrow" aria-hidden="true"></span>}</a>
             : <span class="btn tl-btn tl-btn--off" aria-disabled="true" title="準備中">{b.label}</span>
         )}
       </div>

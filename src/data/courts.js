@@ -38,7 +38,7 @@
 // ※ 住所が '' のものは、協会に確認して埋めること。
 
 /** 鳥取市公共施設予約システム。鳥取市の施設（ヤマタ・千代・井原公園・東冨安公園・若葉台・金沢・用瀬）はここから */
-const CITY_RESERVE = { label: '鳥取市公共施設予約システム', url: 'https://p-kashikan.jp/tottori/' };
+export const CITY_RESERVE = { label: '鳥取市公共施設予約システム', url: 'https://p-kashikan.jp/tottori/' };
 
 export const COURTS = [
   {

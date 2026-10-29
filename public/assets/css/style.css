@@ -377,6 +377,9 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 .btn--primary { background: var(--red); color: #fff; border: 1px solid var(--red); }
 .btn--primary:hover { background: var(--red-dark); border-color: var(--red-dark); color: #fff; }
 .btn--primary:hover .aw { transform: translateX(4px); }
+/* ボタンの矢印は SCROLL と同じ線の矢印（.ln-arrow）。文字の下端（ベースライン）の高さにそろえ、ホバーで少し右へ */
+.btn .ln-arrow { position: relative; top: .32em; transition: transform .3s ease; }
+.btn:hover .ln-arrow { transform: translateX(4px); }
 
 .btn--outline { background: var(--white); color: var(--ink); border: 1px solid var(--gray-300); }
 .btn--outline:hover { border-color: var(--red); color: var(--red); }
