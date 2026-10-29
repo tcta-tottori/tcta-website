@@ -1291,7 +1291,6 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   }
 }
 
-.carousel__nav { display: inline-flex; gap: 10px; }
 
 /* 大会カード。上に種目のピクトグラム、下に 日程チップ＋大会名／種目・会場／進み具合に応じた案内。 */
 .tcard {
@@ -3244,16 +3243,30 @@ body.jsrv .rv.on .ink-sweep {
   transition: opacity .3s ease;
 }
 .hscroll.is-overflow:not(.is-end) .hscroll__hint { opacity: 1; }
-.hscroll__arrow { position: relative; width: 14px; height: 1px; background: currentColor; animation: hs-nudge 1.8s ease-in-out infinite; }
-.hscroll__arrow::after {
+.hscroll__arrow { animation: hs-nudge 1.8s ease-in-out infinite; }
+/* 線の矢印：細い横線の右端から、短い線を左上へ跳ね上げただけの矢印（——\ の形）。
+   SCROLL の矢印（.hscroll__arrow）と、トップの大会情報の「終了した大会／今後の大会」に使う。
+   --left は左向き（左右を反転） */
+.ln-arrow, .hscroll__arrow {
+  position: relative;
+  flex: none;
+  display: inline-block;
+  width: 26px;
+  height: 1px;
+  background: currentColor;
+}
+.ln-arrow::after, .hscroll__arrow::after {
   content: '';
   position: absolute;
-  top: -2.5px; right: 0;
-  width: 6px; height: 6px;
-  border-top: 1px solid currentColor;
-  border-right: 1px solid currentColor;
-  transform: rotate(45deg);
+  right: 0; bottom: 0;
+  width: 8px;
+  height: 1px;
+  background: currentColor;
+  transform-origin: right center;
+  transform: rotate(35deg);
 }
+.ln-arrow--left { transform: scaleX(-1); }
+.hint--lr { display: inline-flex; align-items: center; gap: 10px; }
 @keyframes hs-nudge { 50% { transform: translateX(4px); } }
 @media (prefers-reduced-motion: reduce) { .hscroll__arrow { animation: none; } }
 

@@ -1121,24 +1121,6 @@
              (parseFloat(cs.getPropertyValue('--carousel-peek')) || 0);
     };
 
-    var step = function () {
-      var card = track.querySelector('.tcard');
-      if (!card) return 320;
-      var gap = parseFloat(getComputedStyle(track).columnGap || '24') || 24;
-      return card.getBoundingClientRect().width + gap;
-    };
-
-    document.querySelectorAll('[data-carousel-prev]').forEach(function (btn) {
-      btn.addEventListener('click', function () {
-        track.scrollBy({ left: -step(), behavior: reduceMotion ? 'auto' : 'smooth' });
-      });
-    });
-    document.querySelectorAll('[data-carousel-next]').forEach(function (btn) {
-      btn.addEventListener('click', function () {
-        track.scrollBy({ left: step(), behavior: reduceMotion ? 'auto' : 'smooth' });
-      });
-    });
-
     /* いま何枚目を見ているかを点で示す。押すとその大会まで送る。 */
     var dots = document.querySelectorAll('[data-cdot]');
     if (dots.length) {
