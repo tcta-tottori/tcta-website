@@ -23,7 +23,6 @@
 //   下段は左から右へ流れる。段を移したいときはこの値だけ書き換えればよい。
 
 export const GROUPS = [
-  { id: 'official', title: '協会の公式アカウント' },
   { id: 'shop', title: 'テニスショップ' },
   { id: 'facility', title: '施設の予約' },
   { id: 'assoc', title: 'テニス協会・連盟' },
@@ -31,8 +30,7 @@ export const GROUPS = [
   { id: 'sponsor', title: '協賛・関連' },
 ];
 
-/** LINE 公式アカウント。リンク集の「協会の公式アカウント」では画像のボタン（links.html.astro の SNS_BUTTONS）として出し、
- *  フッターの SNS（Instagram の横）にも出す。バナーは使わなくなったが、他のページ（トップのマーキー）では引き続き LINKS として出る。 */
+/** LINE 公式アカウント。フッターの SNS（Instagram の横）にだけ出す（リンク集・トップのマーキーには入れない）。 */
 export const LINE_OFFICIAL = {
   group: 'official',
   name: '鳥取市テニス協会 LINE公式アカウント',
@@ -42,8 +40,8 @@ export const LINE_OFFICIAL = {
   banner: 'assets/img/banners/line-official.png',
 };
 
+// LINE 公式アカウント（LINE_OFFICIAL）はフッターの SNS にだけ出し、リンク集・トップのマーキーには入れない。
 export const LINKS = [
-  LINE_OFFICIAL,
   {
     group: 'shop',
     name: 'テニスショップ フラシーノ',
@@ -145,7 +143,7 @@ export const LINKS = [
     name: '上海茶楼',
     row: 'other',
     desc: '鳥取市の中国上海料理店',
-    url: 'https://www.shanghai-charo.com/',
+    url: 'https://www.instagram.com/shanghai_charo?obrf=NmxjZmR1ODdoMTVm',  // Instagram
     banner: 'assets/img/banners/shanghai-charo.png',
   },
 ];

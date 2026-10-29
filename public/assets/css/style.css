@@ -963,8 +963,8 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
        せり上がる黒地の上端が通ったところから順に白へ変わる */
     .site-header .site-header__logo-w { display: none; }
     /* 写真の上では塗り分けず、黒いロゴのまま（main.js の initLogoInk が .is-over-image を付ける） */
-    .site-header.is-over-image .site-header__logo-img { visibility: visible; }
-    .site-header.is-over-image .site-header__logo-ink, .site-header.is-over-image .site-header__logo-red { display: none; }
+    .site-header.is-over-image:not(.is-menu) .site-header__logo-img { visibility: visible; }
+    .site-header.is-over-image:not(.is-menu) .site-header__logo-ink, .site-header.is-over-image:not(.is-menu) .site-header__logo-red { display: none; }
   }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -2793,12 +2793,6 @@ body.jsrv .rv.on .ink-sweep {
   color: rgba(255, 255, 255, .6);
 }
 
-/* リンク集の「協会の公式アカウント」に出す SNS のカード */
-/* リンク集「協会の公式アカウント」の画像ボタン（YouTube・Instagram・LINE）。
-   入会案内のボタン（.btn：高さ 54px（枠を含む）、角丸 4px）と同じ大きさ・置き方にする：
-   縦に積み、スマホは幅いっぱい、広い画面では 360px。画像は横幅に合わせて縮め、上下の余白ぶんだけ切り取って
-   高さ 54px に収める（object-fit: cover。文字と印は中央に収まっている）。角丸は画像のものを切り落とすので CSS で付け直す */
-.sns-buttons { display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px; }
 
 /* ============ リンク集ページ ============
    種類ごとの見出しの下に一覧（絞り込みのタブは置かない）。
@@ -2811,6 +2805,7 @@ body.jsrv .rv.on .ink-sweep {
 .litem { display: flex; flex-direction: column; gap: 10px; color: inherit; }
 .litem:hover { color: inherit; }
 .litem__media {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2821,7 +2816,15 @@ body.jsrv .rv.on .ink-sweep {
   border: 1px solid var(--gray-200);
   transition: border-color .3s ease;
 }
-.litem__media img { display: block; width: 100%; height: auto; max-height: 100%; object-fit: contain; border-radius: var(--radius); transition: transform .5s var(--ease); }
+.litem__media img { position: relative; display: block; width: 100%; height: auto; max-height: 100%; object-fit: contain; border-radius: var(--radius); transition: transform .5s var(--ease); }
+/* 枠の余白：同じバナーを枠いっぱいに拡大してぼかしたもの（ガウスぼかし）。少し白を重ねて、手前のバナーを引き立てる */
+.litem__bg {
+  position: absolute;
+  inset: -12%;
+  background: center / cover no-repeat;
+  filter: blur(14px) saturate(1.1);
+  opacity: .55;
+}
 .litem:hover .litem__media { border-color: var(--gray-300); }
 .litem:hover .litem__media img { transform: scale(1.03); }
 .litem__noimg { font: 700 15px/1.5 var(--fjp); color: var(--gray-500); text-align: center; }
@@ -2831,17 +2834,6 @@ body.jsrv .rv.on .ink-sweep {
 .litem:hover .litem__name, .litem:hover .litem__ext { color: var(--red); }
 .litem:hover .litem__ext { transform: translate(2px, -2px); }
 .litem__desc { font: 400 14px/1.9 var(--fjp); letter-spacing: .04em; color: var(--gray-800); }
-.sns-button {
-  display: block;
-  width: 100%;
-  max-width: 360px;
-  height: 54px;
-  border-radius: var(--radius);
-  overflow: hidden;
-  transition: transform .3s var(--ease), opacity .3s ease;
-}
-.sns-button img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: center; }
-.sns-button:hover { transform: translateY(-2px); opacity: .92; }
 .sns-grid { display: grid; grid-template-columns: 1fr; gap: 12px; margin-bottom: 16px; }
 @media (min-width: 640px) { .sns-grid { grid-template-columns: repeat(2, 1fr); gap: 16px; } }
 .sns-card {
