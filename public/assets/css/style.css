@@ -402,13 +402,13 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 .ghost-link:hover .sqbtn { background: var(--red); border-color: var(--red); color: #fff; }
 .ghost-link .aw { color: var(--red); }
 
-/* VIEW ALL：枠の中に「VIEW ALL ——\」を収めたバッジ。文字と矢印は赤、矢印（.ln-arrow）は文字の下端にそろえる。ホバーで赤く塗る */
+/* VIEW ALL：枠の中に「VIEW ALL ——\」を収めたバッジ。枠・文字・矢印は赤、矢印（.ln-arrow）は文字の下端にそろえる。ホバーで赤く塗る */
 .view-all {
   display: inline-flex;
   align-items: baseline;
   gap: 10px;
   padding: 11px 14px;
-  border: 1px solid var(--ink);
+  border: 1px solid var(--red);
   border-radius: var(--radius);
   background: var(--white);
   color: var(--red);
