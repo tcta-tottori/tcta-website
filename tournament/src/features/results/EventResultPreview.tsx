@@ -1,0 +1,309 @@
+import { useState, useEffect, useMemo, useRef } from 'react';
+import { createPortal } from 'react-dom';
+import { Check, Download, ImageIcon, Loader2, Save, X } from 'lucide-react';
+import {
+  generateEventResultDataUrl,
+  buildEventResultFileName,
+} from '../draw/DrawResultExporter';
+import type { ResultExportOptions } from '../draw/DrawResultExporter';
+import {
+  getAssociationLogoEnabled,
+  setAssociationLogoEnabled,
+  getBracketWidthScale,
+  setBracketWidthScale,
+  BRACKET_WIDTH_MIN,
+  BRACKET_WIDTH_MAX,
+} from '../draw/resultCanvasKit';
+import { db } from '../../db/database';
+import { isThirdPlaceMatch } from '../draw/thirdPlace';
+import { ChampionNameField } from '../draw/ChampionNameField';
+import { useChampionName } from '../draw/useChampionName';
+
+interface Props {
+  /** 描画に必要な大会・種目・ドロー・試合データ */
+  opts: ResultExportOptions;
+  /** ボタンの大きさ（ドロー画面ヘッダーでは小さめに使う） */
+  size?: 'sm' | 'md';
+  /** ボタン文言（既定: 結果画像） */
+  label?: string;
+  /** アイコンだけの丸ボタンにする（ドロー画面の編集ボタンと並べる用） */
+  iconOnly?: boolean;
+}
+
+/**
+ * 種目（クラス）の結果画像プレビュー。
+ * 団体戦の TeamBracketResultPreview と同じく、
+ * プレビューを確認してから JPEG として保存できる。
+ */
+export default function EventResultPreview({ opts, size = 'md', label = '結果画像', iconOnly = false }: Props) {
+  const [dataUrl, setDataUrl] = useState<string | null>(null);
+  const [isOpen, setIsOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  // 協会ロゴを入れるかどうか（設定は次回以降も保持する）
+  const [showLogo, setShowLogo] = useState(getAssociationLogoEnabled);
+  // トーナメント表の表示幅（ゲージで調整。設定は次回以降も保持する）
+  const isRoundRobin = opts.draw.drawType === 'roundRobin';
+  const [widthScale, setWidthScale] = useState(getBracketWidthScale);
+  // 画像に印字する大会名（この場で修整できる）
+  const [nameDraft, setNameDraft] = useState(opts.tournament.name);
+  const [appliedName, setAppliedName] = useState(opts.tournament.name);
+  const [nameSaved, setNameSaved] = useState(false);
+  const [nameError, setNameError] = useState<string | null>(null);
+
+  const toggleLogo = (next: boolean) => {
+    setShowLogo(next);
+    setAssociationLogoEnabled(next);
+  };
+
+  // 優勝者の表示名（トーナメント表の中央に出る名前）。種目・優勝者ごとに保存する
+  const champId = useMemo(() => {
+    if (isRoundRobin) return null;
+    const main = opts.matches.filter(m => !isThirdPlaceMatch(m));
+    const last = Math.max(0, ...main.map(m => m.round));
+    return main.find(m => m.round === last)?.winnerEntryId ?? null;
+  }, [isRoundRobin, opts.matches]);
+  const champion = useChampionName(
+    champId ? `${opts.tournament.tournamentId}:${opts.event.eventId}:${champId}` : null,
+    isOpen,
+  );
+
+  const changeWidth = (next: number) => {
+    setWidthScale(next);
+    setBracketWidthScale(next);
+  };
+
+  // 開いた時点の大会名を初期値にする（保存後に入力欄が巻き戻らないよう1回だけ）
+  const nameInitRef = useRef(false);
+  useEffect(() => {
+    if (!isOpen) { nameInitRef.current = false; return; }
+    if (nameInitRef.current) return;
+    nameInitRef.current = true;
+    setNameDraft(opts.tournament.name);
+    setAppliedName(opts.tournament.name);
+    setNameSaved(false);
+    setNameError(null);
+  }, [isOpen, opts.tournament.name]);
+
+  // 入力が落ち着いたらプレビューへ反映する（1文字ごとの再描画を避ける）
+  useEffect(() => {
+    if (!isOpen) return;
+    const timer = setTimeout(() => setAppliedName(nameDraft), 400);
+    return () => clearTimeout(timer);
+  }, [nameDraft, isOpen]);
+
+  // 実際に描画へ渡すオプション（大会名は編集中の値で上書き）
+  const renderOpts = useMemo<ResultExportOptions>(() => ({
+    ...opts,
+    tournament: { ...opts.tournament, name: appliedName.trim() || opts.tournament.name },
+    showAssociationLogo: showLogo,
+    bracketWidthScale: widthScale,
+    championName: champion.championName,
+  }), [opts, appliedName, showLogo, widthScale, champion.championName]);
+
+  // 開くたびに最新データで再生成する
+  useEffect(() => {
+    if (!isOpen) {
+      setDataUrl(null);
+      setError(null);
+      return;
+    }
+    let isMounted = true;
+    setIsLoading(true);
+    // Canvas 描画は同期的に重くなることがあるので、モーダル描画後に実行する
+    // （ロゴ画像の読み込みを待つため非同期）
+    const timer = setTimeout(async () => {
+      try {
+        const url = await generateEventResultDataUrl(renderOpts);
+        if (!isMounted) return;
+        if (url) setDataUrl(url);
+        else setError('結果画像を生成できませんでした。');
+      } catch (err) {
+        console.error(err);
+        if (isMounted) setError('結果画像の生成に失敗しました。');
+      } finally {
+        if (isMounted) setIsLoading(false);
+      }
+    }, 30);
+    return () => { isMounted = false; clearTimeout(timer); };
+  }, [isOpen, renderOpts]);
+
+  /** 修整した大会名を大会データにも保存する（他の出力にも反映される） */
+  const handleSaveName = async () => {
+    const next = nameDraft.trim();
+    if (!next || next === opts.tournament.name) return;
+    setAppliedName(next);
+    setNameError(null);
+    if (opts.tournament.id == null) return;
+    try {
+      await db.tournaments.update(opts.tournament.id, { name: next });
+      setNameSaved(true);
+      setTimeout(() => setNameSaved(false), 2000);
+    } catch (err) {
+      console.error(err);
+      setNameError('大会名の保存に失敗しました。');
+    }
+  };
+
+  const handleDownload = () => {
+    if (!dataUrl) return;
+    const a = document.createElement('a');
+    a.href = dataUrl;
+    a.download = buildEventResultFileName(renderOpts);
+    a.click();
+  };
+
+  // アイコンのみ（ドロー画面）は、隣の編集ボタンと同じ丸ボタンの体裁にそろえる
+  const btnClass = iconOnly
+    ? 'flex items-center justify-center w-9 h-9 rounded-full border border-gray-300 bg-white text-gray-700 hover:bg-gray-100 transition-colors active:scale-95'
+    : size === 'sm'
+      ? 'flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold text-gray-700 bg-gray-50 border border-gray-200 shadow-sm hover:bg-gray-100 active:scale-95 transition-all whitespace-nowrap'
+      : 'flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold text-gray-700 bg-gray-50 border border-gray-200 shadow-sm hover:shadow hover:bg-gray-100 hover:border-gray-300 transition-all active:scale-95 whitespace-nowrap';
+
+  return (
+    <>
+      <button
+        onClick={(e) => { e.stopPropagation(); setIsOpen(true); }}
+        className={btnClass}
+        title={iconOnly ? label : undefined}
+        aria-label={iconOnly ? label : undefined}
+      >
+        <ImageIcon size={iconOnly ? 18 : size === 'sm' ? 12 : 14} className="text-gray-600" />
+        {!iconOnly && label}
+      </button>
+
+      {isOpen && createPortal(
+        <div
+          className="fixed inset-0 bg-gray-950/50 backdrop-blur-sm z-50 flex items-center justify-center p-2 sm:p-4"
+          onClick={() => setIsOpen(false)}
+        >
+          <div
+            className="bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col w-full max-w-6xl max-h-[92dvh] border border-gray-100"
+            onClick={e => e.stopPropagation()}
+          >
+            {/* 操作バー。スマホでは「見出し＋保存・閉じる」と「表示幅・ロゴ」の2段に折り返す */}
+            <div className="px-3 sm:px-4 py-2.5 sm:py-3 bg-gradient-to-r from-gray-50 to-white border-b border-gray-100 flex flex-wrap items-center gap-x-3 gap-y-2 shrink-0">
+              <h3 className="order-1 flex-1 min-w-0 font-bold text-gray-900 text-sm flex items-center gap-2">
+                <span className="inline-flex items-center justify-center w-6 h-6 rounded-md bg-gradient-to-br from-primary-500 to-primary-700 text-white shadow-sm shrink-0">
+                  <ImageIcon size={13} />
+                </span>
+                <span className="truncate">{opts.event.name} 結果プレビュー</span>
+              </h3>
+
+              {/* 保存・閉じる（スマホでは見出しと同じ行の右端） */}
+              <div className="order-2 sm:order-3 flex items-center gap-1.5 shrink-0">
+                {dataUrl && (
+                  <button
+                    onClick={handleDownload}
+                    className="flex items-center justify-center w-9 h-9 bg-gradient-to-r from-primary-500 to-primary-600 text-white rounded-lg shadow hover:from-primary-600 hover:to-primary-700 transition-colors active:scale-95"
+                    title="JPEGで保存"
+                    aria-label="JPEGで保存"
+                  >
+                    <Download size={15} />
+                  </button>
+                )}
+                <button
+                  onClick={() => setIsOpen(false)}
+                  className="flex items-center justify-center w-9 h-9 text-primary-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                  aria-label="閉じる"
+                  title="閉じる"
+                >
+                  <X size={15} />
+                </button>
+              </div>
+
+              {/* 表示幅・協会ロゴ（スマホでは2段目に丸ごと折り返す） */}
+              <div className="order-3 sm:order-2 basis-full sm:basis-auto flex flex-wrap items-center gap-x-3 gap-y-2">
+                {!isRoundRobin && (
+                  <label className="flex flex-1 sm:flex-none items-center gap-2 select-none text-[11px] font-medium text-gray-700 whitespace-nowrap">
+                    表示幅
+                    <input
+                      type="range"
+                      min={BRACKET_WIDTH_MIN}
+                      max={BRACKET_WIDTH_MAX}
+                      step={0.05}
+                      value={widthScale}
+                      onChange={e => changeWidth(Number(e.target.value))}
+                      className="flex-1 min-w-[90px] sm:flex-none sm:w-28 accent-primary-600 cursor-pointer"
+                      title="トーナメント表の横幅を調整します"
+                    />
+                    <span className="tabular-nums text-gray-500 w-9 text-right">
+                      {Math.round(widthScale * 100)}%
+                    </span>
+                  </label>
+                )}
+                <label className="flex items-center gap-1.5 cursor-pointer select-none text-[11px] font-medium text-gray-700 whitespace-nowrap">
+                  <input
+                    type="checkbox"
+                    checked={showLogo}
+                    onChange={e => toggleLogo(e.target.checked)}
+                    className="w-3.5 h-3.5 accent-primary-600 cursor-pointer"
+                  />
+                  協会ロゴを入れる
+                </label>
+              </div>
+            </div>
+
+            {/* 大会名の修整（画像右上に印字される文字列） */}
+            <div className="px-3 sm:px-4 py-2.5 border-b border-gray-100 bg-white shrink-0">
+              <label className="text-[10px] font-semibold text-gray-700/70 block mb-1">
+                大会名（画像に印字されます）
+              </label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={nameDraft}
+                  onChange={e => setNameDraft(e.target.value)}
+                  onBlur={() => setAppliedName(nameDraft)}
+                  onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); setAppliedName(nameDraft); } }}
+                  placeholder="大会名を入力"
+                  className="flex-1 min-w-0 border border-gray-200 rounded-lg px-3 py-1.5 text-[13px] font-medium bg-gray-50/40 focus:bg-white focus:border-gray-400 focus:ring-[3px] focus:ring-gray-500/10 outline-none transition-all"
+                />
+                <button
+                  onClick={handleSaveName}
+                  disabled={!nameDraft.trim() || nameDraft.trim() === opts.tournament.name}
+                  className="shrink-0 flex items-center gap-1 px-3 py-1.5 rounded-lg text-[11px] font-bold text-white bg-primary-600 hover:bg-primary-700 disabled:opacity-40 disabled:hover:bg-primary-600 transition-colors active:scale-95"
+                  title="大会データにも保存する"
+                >
+                  {nameSaved ? <Check size={13} /> : <Save size={13} />}
+                  {nameSaved ? '保存しました' : '保存'}
+                </button>
+              </div>
+              {nameError ? (
+                <p className="text-[10px] text-red-500 mt-1">{nameError}</p>
+              ) : (
+                <p className="text-[10px] text-gray-400 mt-1">
+                  入力するとプレビューに反映されます。「保存」で大会データにも反映され、他の出力でも同じ名称になります。
+                </p>
+              )}
+            </div>
+
+            {champId && <ChampionNameField draft={champion.draft} onChange={champion.setDraft} />}
+
+            <div className="flex-1 overflow-auto bg-white p-2 sm:p-4 flex items-center justify-center">
+              {isLoading && (
+                <div className="flex flex-col items-center gap-2 text-gray-400">
+                  <Loader2 size={32} className="animate-spin text-primary-500" />
+                  <span className="text-sm font-medium">画像を生成中...</span>
+                </div>
+              )}
+              {!isLoading && error && (
+                <div className="text-sm text-gray-500">{error}</div>
+              )}
+              {dataUrl && !isLoading && (
+                <img
+                  src={dataUrl}
+                  alt={`${opts.event.name}結果`}
+                  className="max-w-full h-auto object-contain shadow-sm border border-gray-100 bg-white rounded"
+                  style={{ maxHeight: '100%' }}
+                />
+              )}
+            </div>
+
+          </div>
+        </div>,
+        document.body
+      )}
+    </>
+  );
+}

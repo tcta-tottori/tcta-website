@@ -1,0 +1,654 @@
+import { useState, useMemo, useCallback } from 'react';
+import { createPortal } from 'react-dom';
+import { Check, Circle, Play, MapPin, Pencil, Maximize2, X, BookOpen, FlaskConical, ArrowRightLeft, Download } from 'lucide-react';
+import { useMixedStore } from './mixedStore';
+import { leagueBadgeStyle } from './leagueColors';
+import type { LeagueMatchScore } from './types';
+import { calculateLeagueStandings } from './mixedLogic';
+import MixedScoreInput from './MixedScoreInput';
+import { GameRatioCell } from './GameRatioCell';
+import { exportLeagueResultJpeg } from './exportLeagueResultJpeg';
+
+/** コートオーバーライド: matchId -> courtName を localStorage に保存 */
+const COURT_OVERRIDE_KEY = 'mixed-court-overrides';
+
+function loadCourtOverrides(): Record<string, string> {
+  try {
+    const raw = localStorage.getItem(COURT_OVERRIDE_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch { return {}; }
+}
+
+function saveCourtOverrides(overrides: Record<string, string>) {
+  localStorage.setItem(COURT_OVERRIDE_KEY, JSON.stringify(overrides));
+}
+
+/** リーグバッジカラー（サイトのトンマナに合わせ、全リーグ共通の無彩色） */
+const LEAGUE_COLORS = [
+  { from: 'from-gray-600', to: 'to-gray-700', light: 'from-gray-50 to-white', border: 'border-gray-200', badge: 'bg-gray-100 text-gray-700', header: 'from-gray-500 to-gray-600' },
+];
+
+export default function MixedLeagueView() {
+  const { leagues, leagueMatches, selectedLeagueId, setSelectedLeagueId, updateCourtName, tournamentInfo, fillAllScoresForTest } = useMixedStore();
+  const [editingMatch, setEditingMatch] = useState<LeagueMatchScore | null>(null);
+  const [editingCourt, setEditingCourt] = useState(false);
+  const [courtNameInput, setCourtNameInput] = useState('');
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [showRules, setShowRules] = useState(false);
+
+  // Court override state
+  const [courtOverrides, setCourtOverrides] = useState<Record<string, string>>(loadCourtOverrides);
+  const [courtPopupMatchId, setCourtPopupMatchId] = useState<string | null>(null);
+
+  const persistCourtOverride = useCallback((matchId: string, courtName: string | null) => {
+    setCourtOverrides(prev => {
+      const next = { ...prev };
+      if (courtName) { next[matchId] = courtName; } else { delete next[matchId]; }
+      saveCourtOverrides(next);
+      return next;
+    });
+  }, []);
+
+  // Compute free courts: courts of leagues where all matches are finished
+  const freeCourts = useMemo(() => {
+    const result: { leagueId: string; courtName: string }[] = [];
+    for (const league of leagues) {
+      if (!league.courtName) continue;
+      const lm = leagueMatches.filter(m => m.leagueId === league.leagueId);
+      if (lm.length > 0 && lm.every(m => m.status === 'finished')) {
+        result.push({ leagueId: league.leagueId, courtName: league.courtName });
+      }
+    }
+    return result;
+  }, [leagues, leagueMatches]);
+
+  const selectedLeague = leagues.find(l => l.leagueId === selectedLeagueId) || leagues[0];
+  const { rankOverrides } = useMixedStore();
+  const allStandings = calculateLeagueStandings(leagues, leagueMatches, rankOverrides);
+
+  if (!selectedLeague) return <div className="text-center text-gray-400 py-12">データがありません</div>;
+
+  const leagueMatchList = leagueMatches.filter(m => m.leagueId === selectedLeague.leagueId);
+  const finishedCount = leagueMatchList.filter(m => m.status === 'finished').length;
+
+  // エントリーが全員完了しているか（全員 'entry' または 'def'）
+  const allEntryDone = selectedLeague.teams.every(t => t.status === 'entry' || t.status === 'def');
+  const totalCount = leagueMatchList.length;
+  const leagueComplete = finishedCount === totalCount && totalCount > 0;
+  const standings = allStandings.get(selectedLeague.leagueId) || [];
+
+  // Determine current match: first unfinished match in matchOrder
+  const currentMatchNumber = useMemo(() => {
+    for (const mo of selectedLeague.matchOrder) {
+      const match = leagueMatchList.find(m => m.matchNumber === mo.matchNumber);
+      if (!match || match.status !== 'finished') return mo.matchNumber;
+    }
+    return null;
+  }, [selectedLeague.matchOrder, leagueMatchList]);
+
+  const currentMatch = currentMatchNumber ? leagueMatchList.find(m => m.matchNumber === currentMatchNumber) : null;
+  const currentMatchTeam1 = currentMatch ? selectedLeague.teams.find(t => t.teamId === currentMatch.team1Id) : null;
+  const currentMatchTeam2 = currentMatch ? selectedLeague.teams.find(t => t.teamId === currentMatch.team2Id) : null;
+
+  // Score matrix
+  const scoreMatrix = new Map<string, LeagueMatchScore>();
+  for (const m of leagueMatchList) {
+    scoreMatrix.set(`${m.team1Id}-${m.team2Id}`, m);
+    scoreMatrix.set(`${m.team2Id}-${m.team1Id}`, m);
+  }
+
+  const getMatchBetween = (team1Id: string, team2Id: string): LeagueMatchScore | undefined => {
+    return scoreMatrix.get(`${team1Id}-${team2Id}`);
+  };
+
+  const getCellDisplay = (rowTeamId: string, colTeamId: string): { text: string; color: string; bg: string; isCurrent: boolean } => {
+    if (rowTeamId === colTeamId) return { text: '__DIAG__', color: '', bg: 'bg-gray-100', isCurrent: false };
+    const match = getMatchBetween(rowTeamId, colTeamId);
+
+    // Check if this cell corresponds to the current match
+    const isCurrent = !!currentMatch && !!match && (
+      (match.team1Id === currentMatch.team1Id && match.team2Id === currentMatch.team2Id) ||
+      (match.team1Id === currentMatch.team2Id && match.team2Id === currentMatch.team1Id)
+    );
+
+    if (!match || match.status !== 'finished') {
+      return {
+        text: '',
+        color: 'text-gray-400',
+        bg: `bg-white hover:bg-primary-50 cursor-pointer ${isCurrent ? 'league-match-blink' : ''}`,
+        isCurrent
+      };
+    }
+
+    const isTeam1 = match.team1Id === rowTeamId;
+    const myScore = isTeam1 ? match.score1 : match.score2;
+    const oppScore = isTeam1 ? match.score2 : match.score1;
+    const won = match.winnerId === rowTeamId;
+
+    // 棄権判定
+    const s1 = match.score1 ?? 0;
+    const s2 = match.score2 ?? 0;
+    const isWO = match.winnerId && s1 === 0 && s2 === 0;
+    const isRet = match.winnerId && !isWO && ((match.winnerId === match.team1Id && s1 < s2) || (match.winnerId === match.team2Id && s2 < s1));
+    let text: string;
+    if (isWO) text = won ? 'W.O勝' : 'W.O';
+    else if (isRet) text = won ? `${myScore}-${oppScore}` : `${myScore}-${oppScore} Ret`;
+    else text = `${myScore}-${oppScore}`;
+
+    return {
+      text,
+      color: won ? 'text-gray-800 font-bold' : 'text-red-600',
+      bg: `${won ? 'bg-primary-50' : 'bg-red-50'} cursor-pointer`,
+      isCurrent: false,
+    };
+  };
+
+  const scoreMatrixTable = (
+    <div className={`bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden ${!allEntryDone ? 'opacity-50 pointer-events-none' : ''}`}>
+      <table className="w-full">
+        <thead>
+          <tr className="bg-gradient-to-r from-gray-50 to-gray-100">
+            <th className="px-3 py-2 text-left text-xs text-gray-500 w-8">#</th>
+            <th className="px-3 py-2 text-left text-xs text-gray-500">ペア名 / 所属</th>
+            {selectedLeague.teams.map((_, i) => (
+              <th key={i} className="px-2 py-2 text-center text-xs text-gray-500 w-20">
+                <span className="inline-flex items-center justify-center w-6 h-6 bg-primary-100 text-gray-800 rounded-full text-xs font-bold">
+                  {i + 1}
+                </span>
+              </th>
+            ))}
+            <th className="px-3 py-2 text-center text-xs text-gray-500 w-16">勝敗</th>
+            {leagueComplete && <th className="px-2 py-2 text-center text-xs text-gray-500 w-20">ゲーム率</th>}
+            {leagueComplete && <th className="px-3 py-2 text-center text-xs text-gray-500 w-12">順位</th>}
+            {leagueComplete && <th className="px-2 py-2 text-left text-xs text-gray-500">判定</th>}
+          </tr>
+        </thead>
+        <tbody>
+          {selectedLeague.teams.map((team, rowIdx) => {
+            const standing = standings.find(s => s.teamId === team.teamId);
+            return (
+              <tr key={team.teamId} className="border-t border-gray-100 hover:bg-gray-50/50">
+                <td className="px-3 py-2">
+                  <div className="flex flex-col items-center">
+                    <span className="inline-flex items-center justify-center w-7 h-7 bg-primary-100 text-gray-800 rounded-full text-sm font-bold">
+                      {rowIdx + 1}
+                    </span>
+                    <span className="text-[10px] font-bold text-gray-700 mt-0.5">No.{team.pairNumber}</span>
+                  </div>
+                </td>
+                <td className="px-3 py-2">
+                  <div className="flex items-center">
+                    <div className="shrink-0" style={{ width: 120 }}>
+                      <div className="text-sm font-bold text-gray-800"><span className="inline-block w-[5em] text-justify" style={{ textAlignLast: 'justify' }}>{team.male.name.replace(/[\s\u3000]+/g, '')}</span></div>
+                      <div className="text-sm font-bold text-gray-800"><span className="inline-block w-[5em] text-justify" style={{ textAlignLast: 'justify' }}>{team.female.name.replace(/[\s\u3000]+/g, '')}</span></div>
+                    </div>
+                    <div className="w-px h-8 bg-gray-200 mx-2 shrink-0" />
+                    <div className="min-w-0">
+                      <div className="text-[11px] text-gray-400 truncate">{team.male.affiliation}</div>
+                      <div className="text-[11px] text-gray-400 truncate">{team.female.affiliation}</div>
+                    </div>
+                  </div>
+                </td>
+                {selectedLeague.teams.map((colTeam, colIdx) => {
+                  const cell = getCellDisplay(team.teamId, colTeam.teamId);
+                  return (
+                    <td
+                      key={colIdx}
+                      className={`px-2 py-2 text-center text-sm ${cell.color} ${cell.bg} border-l border-gray-100 transition-colors ${cell.text === '__DIAG__' ? 'relative' : ''}`}
+                      onClick={() => {
+                        if (team.teamId === colTeam.teamId) return;
+                        if (!allEntryDone) return; // エントリー未完了は入力不可
+                        const forwardMatch = leagueMatchList.find(m =>
+                          (m.team1Id === team.teamId && m.team2Id === colTeam.teamId) ||
+                          (m.team1Id === colTeam.teamId && m.team2Id === team.teamId)
+                        );
+                        if (forwardMatch) { setEditingMatch(forwardMatch); }
+                      }}
+                    >
+                      {cell.text === '__DIAG__' ? (
+                        <svg className="w-full h-full absolute inset-0" preserveAspectRatio="none"><line x1="0" y1="0" x2="100%" y2="100%" stroke="#d6d6d6" strokeWidth="1" /></svg>
+                      ) : (cell.text || (team.teamId !== colTeam.teamId && (
+                        <span className="text-gray-300 text-xs">未入力</span>
+                      )))}
+                    </td>
+                  );
+                })}
+                <td className="px-3 py-2 text-center text-sm font-semibold text-gray-700 border-l border-gray-200">
+                  {standing ? `${standing.wins}-${standing.losses}` : '-'}
+                </td>
+                {leagueComplete && (
+                  <td className="px-2 py-2 text-center text-xs font-mono text-gray-600 border-l border-gray-200">
+                    {standing ? <GameRatioCell gamesWon={standing.gamesWon} gamesLost={standing.gamesLost} /> : '-'}
+                  </td>
+                )}
+                {leagueComplete && (
+                  <td className="px-3 py-2 text-center border-l border-gray-200">
+                    {standing && standing.rank > 0 && (
+                      <span className={`inline-flex items-center justify-center w-7 h-7 rounded-full text-sm font-bold
+                        ${standing.rank === 1 ? 'bg-primary-100 text-primary-700' :
+                          standing.rank === 2 ? 'bg-gray-200 text-gray-600' :
+                          standing.rank === 3 ? 'bg-gray-100 text-gray-600' : 'bg-gray-100 text-gray-500'}
+                      `}>
+                        {standing.rank}
+                      </span>
+                    )}
+                  </td>
+                )}
+                {leagueComplete && (
+                  <td className="px-2 py-2 text-left border-l border-gray-200">
+                    {standing?.tiebreakReason && (
+                      <span className="text-[10px] text-gray-400 whitespace-nowrap">{standing.tiebreakReason}</span>
+                    )}
+                  </td>
+                )}
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+
+  return (
+    <div className="flex gap-4 h-[calc(100vh-220px)]">
+      {/* Blink animation style */}
+      <style>{`
+        @keyframes league-match-highlight {
+          0%, 100% { background-color: rgba(212,106,102, 0.25); }
+          50% { background-color: rgba(212,106,102, 0.65); }
+        }
+        .league-match-blink {
+          animation: league-match-highlight 1.5s ease-in-out infinite;
+        }
+      `}</style>
+
+      {/* Left sidebar: league list */}
+      <div className="w-48 flex-shrink-0 bg-white rounded-xl shadow-sm border border-gray-200 overflow-y-auto">
+        <div className="p-3 border-b border-gray-100">
+          <h3 className="text-sm font-bold text-gray-700">リーグ一覧</h3>
+        </div>
+        <div className="p-2 space-y-1">
+          {leagues.map((league, leagueIdx) => {
+            const lMatches = leagueMatches.filter(m => m.leagueId === league.leagueId);
+            const lFinished = lMatches.filter(m => m.status === 'finished').length;
+            const lTotal = lMatches.length;
+            const isComplete = lFinished === lTotal && lTotal > 0;
+            const isActive = league.leagueId === selectedLeague.leagueId;
+            const colors = LEAGUE_COLORS[leagueIdx % LEAGUE_COLORS.length];
+
+            return (
+              <button
+                key={league.leagueId}
+                onClick={() => setSelectedLeagueId(league.leagueId)}
+                className={`
+                  w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm transition-all
+                  ${isActive
+                    ? `bg-gradient-to-r ${colors.from} ${colors.to} text-white shadow-md`
+                    : 'hover:bg-gray-100 text-gray-700'
+                  }
+                `}
+              >
+                <div className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0" style={leagueBadgeStyle(league.leagueId, leagues.length)}>
+                  {isComplete ? <Check size={12} /> : league.leagueId.trim()}
+                </div>
+                <span className="flex-1 text-left font-medium">{league.leagueId.trim()}リーグ</span>
+                <span className={`text-xs ${isActive ? 'text-white/70' : 'text-gray-400'}`}>
+                  {lFinished}/{lTotal}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Main area */}
+      <div className="flex-1 overflow-y-auto space-y-4">
+        {/* League header */}
+        {(() => {
+          const _lidx = Math.max(0, leagues.findIndex(l => l.leagueId === selectedLeague.leagueId));
+          const _lc = LEAGUE_COLORS[_lidx % LEAGUE_COLORS.length];
+          return (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+          <div className={`bg-gradient-to-r ${_lc.header} text-white px-4 py-3`}>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center text-lg font-bold shadow" style={leagueBadgeStyle(selectedLeague.leagueId, leagues.length)}>
+                  {selectedLeague.leagueId.trim()}
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold">{selectedLeague.leagueId.trim()}リーグ</h2>
+                  {editingCourt ? (
+                    <div className="flex items-center gap-1 mt-0.5">
+                      <input
+                        type="text"
+                        value={courtNameInput}
+                        onChange={e => setCourtNameInput(e.target.value)}
+                        onBlur={() => { updateCourtName(selectedLeague.leagueId, courtNameInput); setEditingCourt(false); }}
+                        onKeyDown={e => {
+                          if (e.key === 'Enter') { updateCourtName(selectedLeague.leagueId, courtNameInput); setEditingCourt(false); }
+                          if (e.key === 'Escape') setEditingCourt(false);
+                        }}
+                        className="px-2 py-0.5 text-sm border border-white/30 bg-white/20 rounded text-white placeholder-white/50 focus:outline-none focus:bg-white/30 w-32"
+                        autoFocus
+                      />
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => { setEditingCourt(true); setCourtNameInput(selectedLeague.courtName); }}
+                      className="flex items-center gap-1 text-xs text-white/70 hover:text-white transition-colors mt-0.5"
+                    >
+                      <MapPin size={11} />
+                      {selectedLeague.courtName || '(未設定)'}
+                      <Pencil size={9} />
+                    </button>
+                  )}
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                {leagueComplete && (
+                  <button
+                    onClick={() => {
+                      const allTeams = useMixedStore.getState().allTeams;
+                      const tName = tournamentInfo?.name || '';
+                      exportLeagueResultJpeg(selectedLeague, standings, leagueMatchList, allTeams, tName, tournamentInfo?.venue);
+                    }}
+                    className="flex items-center gap-1 px-2.5 py-1.5 text-[10px] bg-white/25 rounded-lg hover:bg-white/35 transition-colors font-bold"
+                  >
+                    <Download size={12} />
+                    結果DL
+                  </button>
+                )}
+                {tournamentInfo?.rules && tournamentInfo.rules.length > 0 && (
+                  <button onClick={() => setShowRules(true)} className="flex items-center gap-1 px-2.5 py-1.5 text-[10px] bg-white/15 rounded-lg hover:bg-white/25 transition-colors">
+                    <BookOpen size={12} />
+                    ルール
+                  </button>
+                )}
+                {leagueMatches.some(m => m.status !== 'finished') && (
+                  <button
+                    onClick={() => { if (confirm('テスト用：全ての予選リーグ未完了試合を6-4で入力しますか？')) fillAllScoresForTest(); }}
+                    className="flex items-center gap-1 px-2.5 py-1.5 text-[10px] bg-white/15 rounded-lg hover:bg-white/25 transition-colors"
+                  >
+                    <FlaskConical size={12} />
+                    テスト6-4
+                  </button>
+                )}
+                <button onClick={() => setIsFullscreen(true)} className="flex items-center gap-1 px-2.5 py-1.5 text-[10px] bg-white/15 rounded-lg hover:bg-white/25 transition-colors">
+                  <Maximize2 size={12} />
+                  全画面
+                </button>
+                <div className="text-right">
+                  <div className="text-sm font-bold">{finishedCount}/{totalCount}</div>
+                  <div className="w-20 h-1.5 bg-white/20 rounded-full overflow-hidden mt-0.5">
+                    <div
+                      className="h-full bg-white rounded-full transition-all"
+                      style={{ width: `${totalCount > 0 ? (finishedCount / totalCount) * 100 : 0}%` }}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+          );
+        })()}
+
+        {/* エントリー未完了警告 */}
+        {!allEntryDone && (
+          <div className="bg-primary-50 border border-primary-200 rounded-xl px-4 py-3 text-sm text-gray-800 flex items-center gap-2">
+            <span className="text-lg">⚠</span>
+            <div>
+              <div className="font-bold">エントリーが完了していません</div>
+              <div className="text-xs text-primary-500 mt-0.5">エントリーページで全選手の参加確認を完了してからスコア入力してください</div>
+            </div>
+          </div>
+        )}
+
+        {/* Score matrix table */}
+        {scoreMatrixTable}
+
+        {/* Match order */}
+        <div className={`bg-white rounded-xl shadow-sm border border-gray-200 p-4 ${!allEntryDone ? 'opacity-50 pointer-events-none' : ''}`}>
+          <h3 className="text-sm font-bold text-gray-700 mb-3">対戦順</h3>
+          <div className="flex flex-wrap gap-2">
+            {selectedLeague.matchOrder.map(mo => {
+              const match = leagueMatchList.find(m => m.matchNumber === mo.matchNumber);
+              const isFinished = match?.status === 'finished';
+              const isPlaying = match?.status === 'playing';
+              const isCurrent = mo.matchNumber === currentMatchNumber;
+              const overrideCourt = match ? courtOverrides[match.matchId] : undefined;
+              return (
+                <div key={mo.matchNumber} className="relative flex flex-col items-center">
+                  <button
+                    onClick={() => { if (match) { setEditingMatch(match); } }}
+                    className={`
+                      flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all border
+                      ${isFinished
+                        ? 'bg-primary-50 border-primary-200 text-gray-800'
+                        : isPlaying
+                          ? 'bg-primary-50 border-primary-200 text-gray-800 animate-pulse'
+                          : isCurrent
+                            ? 'bg-primary-200 text-gray-900 font-bold border-primary-300 league-match-blink'
+                            : 'bg-gray-50 border-gray-200 text-gray-500 hover:bg-gray-100'
+                      }
+                    `}
+                  >
+                    {isCurrent && !isFinished && <span className="text-gray-800">▶</span>}
+                    <span className="font-mono text-xs">第{mo.matchNumber}試合</span>
+                    <span className="font-bold">
+                      {String.fromCodePoint(0x2460 + mo.team1Index - 1)}-{String.fromCodePoint(0x2460 + mo.team2Index - 1)}
+                    </span>
+                    {isFinished && match && (() => {
+                      const ms1 = match.score1 ?? 0; const ms2 = match.score2 ?? 0;
+                      const mWO = match.winnerId && ms1 === 0 && ms2 === 0;
+                      const mRet = match.winnerId && !mWO && ((match.winnerId === match.team1Id && ms1 < ms2) || (match.winnerId === match.team2Id && ms2 < ms1));
+                      if (mWO) return <span className="text-xs ml-1 text-gray-400">(W.O)</span>;
+                      if (mRet) return <span className="text-xs ml-1">({match.score1}-{match.score2} <span className="text-red-500">Ret</span>)</span>;
+                      return <span className="text-xs ml-1">({match.score1}-{match.score2})</span>;
+                    })()}
+                    {isFinished ? <Check size={14} /> : isPlaying ? <Play size={14} /> : <Circle size={14} />}
+                  </button>
+                  {/* Court override badge */}
+                  {overrideCourt && (
+                    <span className="mt-0.5 text-[10px] text-gray-600 bg-gray-50 border border-gray-200 rounded px-1.5 py-0.5 flex items-center gap-0.5">
+                      <MapPin size={9} />{overrideCourt}
+                      {!isFinished && (
+                        <button
+                          onClick={(e) => { e.stopPropagation(); match && persistCourtOverride(match.matchId, null); }}
+                          className="ml-0.5 text-gray-400 hover:text-red-500"
+                        >
+                          <X size={9} />
+                        </button>
+                      )}
+                    </span>
+                  )}
+                  {/* Free court assign button: only for unfinished matches when free courts exist */}
+                  {match && !isFinished && !overrideCourt && freeCourts.length > 0 && (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setCourtPopupMatchId(match.matchId); }}
+                      className="mt-0.5 text-[10px] text-gray-500 hover:text-gray-700 flex items-center gap-0.5 hover:bg-gray-50 rounded px-1 py-0.5 transition-colors"
+                      title="空きコートで実施"
+                    >
+                      <ArrowRightLeft size={9} />空きコート
+                    </button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Current match indicator */}
+          {currentMatch && currentMatchNumber && (
+            <div className="mt-3 px-3 py-2 bg-primary-50 border border-primary-200 rounded-lg text-sm text-gray-900">
+              現在: 第{currentMatchNumber}試合（{currentMatchTeam1?.teamName || '?'} vs {currentMatchTeam2?.teamName || '?'}）{finishedCount}/{totalCount} 完了
+            </div>
+          )}
+        </div>
+
+        {/* Standings table */}
+        {standings.length > 0 && finishedCount > 0 && (
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+            <h3 className="text-sm font-bold text-gray-700 mb-3">{leagueComplete ? '確定順位' : '暫定順位'}</h3>
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-xs text-gray-500 border-b border-gray-200">
+                  <th className="py-2 px-2 text-center w-10">順位</th>
+                  <th className="py-2 px-2 text-left">ペア名</th>
+                  <th className="py-2 px-2 text-center w-16">勝敗</th>
+                  <th className="py-2 px-2 text-center w-16">取得G</th>
+                  <th className="py-2 px-2 text-center w-16">失G</th>
+                  {leagueComplete && <th className="py-2 px-2 text-center w-20">ゲーム率</th>}
+                  {leagueComplete && <th className="py-2 px-2 text-left w-28">判定理由</th>}
+                </tr>
+              </thead>
+              <tbody>
+                {standings.map((s, i) => (
+                  <tr key={s.teamId} className="border-b border-gray-100 last:border-0">
+                    <td className="py-2 px-2 text-center">
+                      <span className={`inline-flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold
+                        ${i === 0 ? 'bg-primary-400 text-white' : i === 1 ? 'bg-gray-400 text-white' : i === 2 ? 'bg-primary-400 text-white' : 'bg-gray-200 text-gray-600'}
+                      `}>
+                        {s.rank}
+                      </span>
+                    </td>
+                    <td className="py-2 px-2 font-medium text-gray-800">{s.teamName}</td>
+                    <td className="py-2 px-2 text-center font-mono text-gray-700">{s.wins}-{s.losses}</td>
+                    <td className="py-2 px-2 text-center font-mono text-gray-700">{s.gamesWon}</td>
+                    <td className="py-2 px-2 text-center font-mono text-red-500">{s.gamesLost}</td>
+                    {leagueComplete && (
+                      <td className="py-2 px-2 text-center font-mono text-gray-600">
+                        <GameRatioCell
+                          gamesWon={s.gamesWon}
+                          gamesLost={s.gamesLost}
+                          teamName={s.teamName}
+                          matchDetails={leagueMatchList.filter(m => m.status === 'finished' && (m.team1Id === s.teamId || m.team2Id === s.teamId)).map(m => {
+                            const isT1 = m.team1Id === s.teamId;
+                            const oppId = isT1 ? m.team2Id : m.team1Id;
+                            const oppTeam = selectedLeague.teams.find(t => t.teamId === oppId);
+                            return {
+                              opponentName: oppTeam?.teamName || '?',
+                              won: (isT1 ? m.score1 : m.score2) ?? 0,
+                              lost: (isT1 ? m.score2 : m.score1) ?? 0,
+                              isWin: m.winnerId === s.teamId,
+                            };
+                          })}
+                        />
+                      </td>
+                    )}
+                    {leagueComplete && (
+                      <td className="py-2 px-2 text-xs text-gray-400">
+                        {s.tiebreakReason || ''}
+                      </td>
+                    )}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {/* Court override popup */}
+      {courtPopupMatchId && createPortal(
+        <div className="fixed inset-0 bg-black/30 z-50 flex items-center justify-center" onClick={() => setCourtPopupMatchId(null)}>
+          <div className="bg-white rounded-xl shadow-2xl w-72 overflow-hidden" onClick={e => e.stopPropagation()}>
+            <div className="bg-gradient-to-r from-gray-500 to-gray-600 text-white px-4 py-2.5 flex items-center justify-between">
+              <h4 className="text-sm font-bold flex items-center gap-1.5"><ArrowRightLeft size={14} />空きコートで実施</h4>
+              <button onClick={() => setCourtPopupMatchId(null)} className="p-1 hover:bg-white/20 rounded-lg"><X size={16} /></button>
+            </div>
+            <div className="p-3 space-y-1.5">
+              <p className="text-xs text-gray-500 mb-2">全試合完了済みリーグのコートを選択:</p>
+              {freeCourts.filter(fc => {
+                // Exclude the current league's own court
+                return fc.leagueId !== selectedLeague.leagueId;
+              }).length === 0 ? (
+                <p className="text-xs text-gray-400 py-2 text-center">他リーグの空きコートがありません</p>
+              ) : (
+                freeCourts
+                  .filter(fc => fc.leagueId !== selectedLeague.leagueId)
+                  .map(fc => (
+                    <button
+                      key={fc.leagueId}
+                      onClick={() => {
+                        persistCourtOverride(courtPopupMatchId, fc.courtName);
+                        setCourtPopupMatchId(null);
+                      }}
+                      className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg border border-gray-200 hover:bg-gray-50 hover:border-gray-300 transition-all text-sm"
+                    >
+                      <MapPin size={14} className="text-gray-500 flex-shrink-0" />
+                      <span className="font-medium text-gray-800">{fc.courtName}</span>
+                      <span className="text-xs text-gray-400 ml-auto">{fc.leagueId.trim()}リーグ</span>
+                    </button>
+                  ))
+              )}
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* Score input dialog (内部で createPortal を使用しているためラップ不要) */}
+      {editingMatch && (
+        <MixedScoreInput
+          match={editingMatch}
+          teams={selectedLeague.teams}
+          onClose={() => setEditingMatch(null)}
+        />
+      )}
+
+      {/* Rules popup */}
+      {showRules && tournamentInfo?.rules && createPortal(
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center" onClick={() => setShowRules(false)}>
+          <div className="bg-white rounded-2xl shadow-2xl w-[500px] max-w-[95vw] max-h-[80vh] overflow-hidden" onClick={e => e.stopPropagation()}>
+            <div className="bg-gradient-to-r from-primary-600 to-primary-700 text-white px-5 py-3 flex items-center justify-between">
+              <h3 className="font-bold text-sm flex items-center gap-2">
+                <BookOpen size={16} />
+                大会ルール
+              </h3>
+              <button onClick={() => setShowRules(false)} className="p-1 hover:bg-white/20 rounded-lg">
+                <X size={18} />
+              </button>
+            </div>
+            <div className="p-5 overflow-y-auto max-h-[60vh]">
+              <ul className="space-y-2">
+                {tournamentInfo.rules.map((rule, i) => (
+                  <li key={i} className="text-sm text-gray-700 flex gap-2">
+                    <span className="text-primary-500 flex-shrink-0">&#x25CF;</span>
+                    {rule}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* Fullscreen portal (mobile) */}
+      {isFullscreen && createPortal(
+        <div className="fixed inset-0 bg-white z-[100] flex flex-col">
+          <div className="bg-gradient-to-r from-primary-700 to-primary-800 text-white px-4 py-3 flex items-center justify-between flex-shrink-0">
+            <h3 className="font-bold text-sm">
+              {selectedLeague.leagueId.trim()}リーグ {selectedLeague.courtName && `(${selectedLeague.courtName})`}
+            </h3>
+            <button onClick={() => setIsFullscreen(false)} className="p-1.5 hover:bg-white/20 rounded-lg">
+              <X size={20} />
+            </button>
+          </div>
+          <div className="flex-1 overflow-auto p-3" style={{ WebkitOverflowScrolling: 'touch' }}>
+            <div style={{ transform: 'rotate(0deg)', minWidth: '100%' }}>
+              {scoreMatrixTable}
+            </div>
+            {/* Current match info in fullscreen */}
+            {currentMatch && currentMatchNumber && (
+              <div className="mt-3 px-3 py-2 bg-primary-50 border border-primary-200 rounded-lg text-sm text-gray-900">
+                現在: 第{currentMatchNumber}試合（{currentMatchTeam1?.teamName || '?'} vs {currentMatchTeam2?.teamName || '?'}）{finishedCount}/{totalCount} 完了
+              </div>
+            )}
+          </div>
+        </div>,
+        document.body
+      )}
+    </div>
+  );
+}

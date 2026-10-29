@@ -1,0 +1,133 @@
+import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
+import type { ScheduleSlot, ScheduleMatch } from '../features/schedule/scheduleEngine';
+
+// インポート済み時間割アイテム
+export interface ImportedScheduleItem {
+  eventName: string;     // 種目名 (e.g., "男子シングルスA級")
+  roundLabel: string;    // "1R", "2R", "QF", "SF", "F"
+  matchOrder: number;    // order within schedule (1, 2, 3...)
+  courtName: string;     // "1", "2", etc.
+  startTime: string;     // "09:00"
+  player1Hint?: string;  // optional player name hint for matching
+  player2Hint?: string;
+}
+
+// スケジュール設定（ページ遷移しても保持）
+export interface ScheduleConfig {
+  startTime: string;
+  matchDuration: number;
+  courtBlocks: Record<string, boolean>;
+}
+
+// 会場ごとのブロック使用終了時刻
+// 外側キー: venueId (例: 'yamata', 'sendai')
+// 内側キー: ブロックのインデックス (文字列化)
+// 値: "HH:MM" 形式の終了時刻 (未設定は空文字)
+export type BlockEndTimesMap = Record<string, Record<string, string>>;
+
+// グローバルに保持するアプリの状態
+interface AppState {
+  currentTournamentId: string | null;  // 現在作業中の大会ID
+  setCurrentTournamentId: (id: string | null) => void;
+
+  // スケジュール設定（ページ遷移しても保持）
+  scheduleConfig: ScheduleConfig;
+  setScheduleConfig: (config: Partial<ScheduleConfig>) => void;
+
+  // スケジュールデータ（ページ遷移しても保持）
+  scheduleSlots: ScheduleSlot[];
+  setScheduleSlots: (slots: ScheduleSlot[]) => void;
+  allScheduleMatches: ScheduleMatch[];
+  setAllScheduleMatches: (matches: ScheduleMatch[]) => void;
+
+  // インポート済み時間割
+  importedSchedule: ImportedScheduleItem[];
+  setImportedSchedule: (items: ImportedScheduleItem[]) => void;
+
+  // 時間割ファイル名（表示用）
+  scheduleFileName: string;
+  setScheduleFileName: (name: string) => void;
+
+  // 会場ごと・ブロックごとの使用終了時刻（コートマップの点滅アラート用）
+  blockEndTimes: BlockEndTimesMap;
+  setBlockEndTime: (venueId: string, blockIdx: number, endTime: string) => void;
+
+  // コールで修正した苗字の読み（ひらがな）の上書き辞書。
+  // キー: 苗字（漢字）、値: 読み（ひらがな）。一度修正するとその後のコールにも反映する。
+  nameReadingOverrides: Record<string, string>;
+  setNameReadingOverride: (surname: string, reading: string) => void;
+
+  // 熱中症警戒アラート時の試合形式（一括読込・エントリー確定時に指定するための既定パターン）。
+  // ここで指定した内容は各種目の回戦ルールに heat* として付与される（後から個別修整可）。
+  heatRulePattern: HeatRulePattern;
+  setHeatRulePattern: (pattern: Partial<HeatRulePattern>) => void;
+}
+
+// 熱中症警戒時の試合形式パターン
+export interface HeatRulePattern {
+  enabled: boolean;                          // 適用するか
+  games: number;                             // ゲーム数
+  matchFormat: 'game' | 'twoSetsSuper10';    // 試合方式
+  ruleText: string;                          // ルール文（空なら「Nゲームマッチ」を自動生成）
+}
+
+const DEFAULT_SCHEDULE_CONFIG: ScheduleConfig = {
+  startTime: '09:00',
+  matchDuration: 40,
+  courtBlocks: { A: true, B: true, C: true, D: true },
+};
+
+export const useAppStore = create<AppState>()(
+  persist(
+    (set) => ({
+      currentTournamentId: null,
+      setCurrentTournamentId: (id) => set({ currentTournamentId: id }),
+      scheduleConfig: DEFAULT_SCHEDULE_CONFIG,
+      setScheduleConfig: (config) =>
+        set((state) => ({
+          scheduleConfig: { ...state.scheduleConfig, ...config },
+        })),
+      scheduleSlots: [],
+      setScheduleSlots: (slots) => set({ scheduleSlots: slots }),
+      allScheduleMatches: [],
+      setAllScheduleMatches: (matches) => set({ allScheduleMatches: matches }),
+      importedSchedule: [],
+      setImportedSchedule: (items) => set({ importedSchedule: items }),
+      scheduleFileName: '',
+      setScheduleFileName: (name) => set({ scheduleFileName: name }),
+      blockEndTimes: {},
+      setBlockEndTime: (venueId, blockIdx, endTime) =>
+        set((state) => {
+          const venueMap = { ...(state.blockEndTimes[venueId] || {}) };
+          if (endTime) {
+            venueMap[String(blockIdx)] = endTime;
+          } else {
+            delete venueMap[String(blockIdx)];
+          }
+          return {
+            blockEndTimes: {
+              ...state.blockEndTimes,
+              [venueId]: venueMap,
+            },
+          };
+        }),
+      nameReadingOverrides: {},
+      setNameReadingOverride: (surname, reading) =>
+        set((state) => {
+          const key = (surname || '').trim();
+          if (!key) return {};
+          const next = { ...state.nameReadingOverrides };
+          const val = (reading || '').trim();
+          if (val) next[key] = val; else delete next[key];
+          return { nameReadingOverrides: next };
+        }),
+      heatRulePattern: { enabled: false, games: 6, matchFormat: 'game', ruleText: '' },
+      setHeatRulePattern: (pattern) =>
+        set((state) => ({ heatRulePattern: { ...state.heatRulePattern, ...pattern } })),
+    }),
+    {
+      name: 'tennis-tournament-storage', // localStorage に保存
+    }
+  )
+);

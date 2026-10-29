@@ -1,0 +1,2433 @@
+import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
+import { createPortal } from 'react-dom';
+import * as XLSX from 'xlsx';
+import { db } from '../../db/database';
+import type { AffiliationFurigana } from '../../db/database';
+import { useLiveQuery } from 'dexie-react-hooks';
+import {
+  RefreshCw, CheckCircle2, AlertCircle, Clock,
+  Download, Upload, FolderOpen, FileSpreadsheet, LogIn, LogOut, Users, Building2, Layers,
+  X, Loader2, CalendarClock, ChevronRight, ChevronDown, Trophy, Dices, Calendar, MapPin, Sparkles,
+  ListChecks, Search,
+} from 'lucide-react';
+import { parseDrawExcel } from './drawExcelParser';
+import type { ParsedDrawFile } from './drawExcelParser';
+import { isTournamentListFileName, parseTournamentListExcel } from './tournamentListParser';
+import type { OfficialTournament } from './tournamentListParser';
+import CourtSelector, { STANDARD_COURTS } from './CourtSelector';
+import { generateScheduleFromDraws, AUTO_GENERATED_SCHEDULE_LABEL } from '../schedule/generateSchedule';
+import { parseMixedExcel, extractExcelSheets } from '../mixed/mixedExcelParser';
+import { parseTeamExcel } from '../team/teamExcelParser';
+import { parseClubExcel, type ClubVenueSection } from '../team/clubExcelParser';
+import { useTeamStore } from '../team/teamStore';
+import type { TeamTournamentInfo, TeamLeague as ITeamLeague, TeamLeagueMatch as ITeamLeagueMatch } from '../team/types';
+import type { TournamentInfo, MixedLeague, LeagueMatchScore } from '../mixed/types';
+import { useMixedStore } from '../mixed/mixedStore';
+import { useAppStore } from '../../stores/appStore';
+import { useNavigate } from 'react-router-dom';
+import DriveLoadingModal, { type LoadingStep } from '../../components/ui/DriveLoadingModal';
+import {
+  getSavedToken as gdriveGetSavedToken,
+  getSavedClientId,
+  isTokenValid as gdriveIsTokenValid,
+  connectWithDefaultClientId,
+  downloadFuriganaExcel,
+  downloadAffiliationExcel,
+  uploadFuriganaExcel,
+  uploadAffiliationExcel,
+  getSharedFolderLink,
+  getUserEmail,
+  revokeToken,
+  clearToken,
+  clearFolderCache,
+  loadGisScript,
+  listTournamentExcelFiles,
+  downloadTournamentExcel,
+  listScheduleExcelFiles,
+  downloadScheduleExcel,
+  type GoogleDriveFile,
+} from '../backup/googleDriveApi';
+
+const LS_KEY_LAST_SYNC = 'dataSyncLastTimestamp';
+
+/** Google Drive ブランドアイコン */
+function GoogleDriveIcon({ className = 'w-5 h-5' }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 87.3 78" xmlns="http://www.w3.org/2000/svg">
+      <path d="M6.6 66.85l3.85 6.65c.8 1.4 1.95 2.5 3.3 3.3l13.75-23.8H0c0 1.55.4 3.1 1.2 4.5l5.4 9.35z" fill="#0066DA"/>
+      <path d="M43.65 25L29.9 1.2C28.55 2 27.4 3.1 26.6 4.5L3.45 44.7c-.8 1.4-1.2 2.95-1.2 4.5h27.5L43.65 25z" fill="#00AC47"/>
+      <path d="M73.55 76.8c1.35-.8 2.5-1.9 3.3-3.3l1.6-2.75 7.65-13.25c.8-1.4 1.2-2.95 1.2-4.5H59.85L73.55 76.8z" fill="#EA4335"/>
+      <path d="M43.65 25L57.4 1.2C56.05.4 54.5 0 52.9 0H34.4c-1.6 0-3.15.45-4.5 1.2L43.65 25z" fill="#00832D"/>
+      <path d="M59.85 53H27.5l-13.75 23.8c1.35.8 2.9 1.2 4.5 1.2h50.8c1.6 0 3.15-.45 4.5-1.2L59.85 53z" fill="#2684FC"/>
+      <path d="M73.4 26.5l-12.7-22c-.8-1.4-1.95-2.5-3.3-3.3L43.65 25l16.2 28h27.45c0-1.55-.4-3.1-1.2-4.5L73.4 26.5z" fill="#FFBA00"/>
+    </svg>
+  );
+}
+
+/** スペースを全角半角問わず除去 */
+function removeSpaces(s: string): string {
+  return s.replace(/[\s\u3000]+/g, '');
+}
+
+/** 正規化キー生成: スペース除去 + 小文字化 */
+function normalizeKey(s: string): string {
+  return s.replace(/[\s\u3000]+/g, '').toLowerCase();
+}
+
+async function deduplicateFuriganaDict(): Promise<number> {
+  const all = await db.furiganaDict.toArray();
+  const seen = new Map<string, typeof all[0]>();
+  const toDelete: string[] = [];
+  for (const entry of all) {
+    const key = normalizeKey(entry.name);
+    const existing = seen.get(key);
+    if (existing) {
+      if ((entry.updatedAt ?? 0) > (existing.updatedAt ?? 0)) {
+        toDelete.push(existing.name);
+        seen.set(key, entry);
+      } else {
+        toDelete.push(entry.name);
+      }
+    } else {
+      seen.set(key, entry);
+    }
+  }
+  if (toDelete.length > 0) await db.furiganaDict.bulkDelete(toDelete);
+  return toDelete.length;
+}
+
+async function deduplicatePlayers(): Promise<number> {
+  const all = await db.players.toArray();
+  const groups = new Map<string, typeof all>();
+  for (const p of all) {
+    const key = p.playerId;
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key)!.push(p);
+  }
+  const toDelete: number[] = [];
+  for (const [, group] of groups) {
+    if (group.length <= 1) continue;
+    group.sort((a, b) => {
+      const aHas = a.furigana ? 1 : 0;
+      const bHas = b.furigana ? 1 : 0;
+      if (aHas !== bHas) return bHas - aHas;
+      return (b.id || 0) - (a.id || 0);
+    });
+    for (let i = 1; i < group.length; i++) {
+      if (group[i].id) toDelete.push(group[i].id!);
+    }
+  }
+  if (toDelete.length > 0) await db.players.bulkDelete(toDelete);
+  return toDelete.length;
+}
+
+async function deduplicateAffiliation(): Promise<number> {
+  const all = await db.affiliationFurigana.toArray();
+  const seen = new Map<string, typeof all[0]>();
+  const toDelete: number[] = [];
+  for (const entry of all) {
+    const key = normalizeKey(entry.name);
+    const existing = seen.get(key);
+    if (existing) {
+      if ((entry.updatedAt ?? 0) > (existing.updatedAt ?? 0)) {
+        toDelete.push(existing.id!);
+        seen.set(key, entry);
+      } else {
+        toDelete.push(entry.id!);
+      }
+    } else {
+      seen.set(key, entry);
+    }
+  }
+  if (toDelete.length > 0) await db.affiliationFurigana.bulkDelete(toDelete);
+  return toDelete.length;
+}
+
+// ============================================================
+// 共有ヘルパー hooks
+// ============================================================
+
+function useModalState() {
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalTitle, setModalTitle] = useState('');
+  const [modalSteps, setModalSteps] = useState<LoadingStep[]>([]);
+  const [modalResult, setModalResult] = useState<{ success: boolean; message: string; details?: string[] } | null>(null);
+  const [modalProgress, setModalProgress] = useState(0);
+
+  const handleModalClose = useCallback(() => {
+    setModalOpen(false);
+    setModalResult(null);
+  }, []);
+
+  const handleTimeout = useCallback(() => {
+    setModalResult({ success: false, message: '読み込みがタイムアウトしました（8秒以上応答なし）' });
+  }, []);
+
+  const updateStep = useCallback((steps: LoadingStep[], index: number, patch: Partial<LoadingStep>): LoadingStep[] => {
+    const next = [...steps];
+    next[index] = { ...next[index], ...patch };
+    return next;
+  }, []);
+
+  return {
+    modalOpen, setModalOpen, modalTitle, setModalTitle,
+    modalSteps, setModalSteps, modalResult, setModalResult,
+    modalProgress, setModalProgress,
+    handleModalClose, handleTimeout, updateStep,
+  };
+}
+
+// ============================================================
+// ふりがな・所属の内部読込処理
+// ============================================================
+
+async function doDownloadFurigana(token: string): Promise<{ success: boolean; details: string[] }> {
+  const file = await downloadFuriganaExcel(token);
+  if (!file) throw new Error('「ふりがな一覧」フォルダにExcelファイルがありません');
+  const wb = XLSX.read(file.data, { type: 'array' });
+  const ws = wb.Sheets[wb.SheetNames[0]];
+  const rows = XLSX.utils.sheet_to_json<any>(ws);
+  const now = Date.now();
+  let dictCount = 0;
+  for (const row of rows) {
+    const name = String(row['氏名'] || row['選手名'] || row['漢字'] || row['name'] || '').trim();
+    const furigana = String(row['ふりがな'] || row['furigana'] || '').trim();
+    if (!name || !furigana) continue;
+    const key = removeSpaces(name);
+    await db.furiganaDict.put({ name: key, furigana: removeSpaces(furigana), type: 'manual' as const, updatedAt: now });
+    dictCount++;
+  }
+  let playerCount = 0;
+  const allPlayers = await db.players.toArray();
+  for (const p of allPlayers) {
+    const dictEntry = await db.furiganaDict.get(p.playerId);
+    if (dictEntry && dictEntry.furigana && p.furigana !== dictEntry.furigana) {
+      await db.players.update(p.id!, { furigana: dictEntry.furigana });
+      playerCount++;
+    }
+  }
+  const dedupCount = await deduplicateFuriganaDict();
+  const playerDedupCount = await deduplicatePlayers();
+  const details = [`ファイル: ${file.fileName}`, `ふりがな辞書: ${dictCount}件`];
+  if (dedupCount > 0) details.push(`辞書重複削除: ${dedupCount}件`);
+  if (playerDedupCount > 0) details.push(`選手重複削除: ${playerDedupCount}件`);
+  if (playerCount > 0) details.push(`選手に適用: ${playerCount}名`);
+  return { success: true, details };
+}
+
+async function doDownloadAffiliation(token: string): Promise<{ success: boolean; details: string[] }> {
+  const file = await downloadAffiliationExcel(token);
+  if (!file) throw new Error('「所属一覧」フォルダにExcelファイルがありません');
+  const wb = XLSX.read(file.data, { type: 'array' });
+  const ws = wb.Sheets[wb.SheetNames[0]];
+  const rows = XLSX.utils.sheet_to_json<any>(ws);
+  const now = Date.now();
+  let count = 0;
+  for (const row of rows) {
+    const name = String(row['所属名'] || row['name'] || '').trim();
+    const furigana = String(row['ふりがな'] || row['furigana'] || '').trim();
+    if (!name || !furigana) continue;
+    const existing = await db.affiliationFurigana.where('name').equals(name).first();
+    if (existing) {
+      await db.affiliationFurigana.update(existing.id!, { furigana, updatedAt: now });
+    } else {
+      await db.affiliationFurigana.add({ name, furigana, updatedAt: now } as AffiliationFurigana);
+    }
+    count++;
+  }
+  const dedupCount = await deduplicateAffiliation();
+  const details = [`ファイル: ${file.fileName}`, `所属ふりがな: ${count}件`];
+  if (dedupCount > 0) details.push(`重複削除: ${dedupCount}件`);
+  return { success: true, details };
+}
+
+// ============================================================
+// DataSync メインコンポーネント（Google ドライブ連携）
+// ============================================================
+
+/** 大会名から不要な文字列を自動除去 */
+function cleanTournamentName(name: string): string {
+  return name
+    .replace(/[（(]\s*(確定|最終版?|暫定|ドロー|リドロー|re[-\s]?draw|final)\s*[）)]/gi, '')
+    .replace(/[_\-]\s*(ドロー|リドロー|最終版?|確定版?|final|v\d+)\s*/gi, '')
+    .replace(/\s*リドロー\s*/gi, '')
+    .replace(/\s*ドロー\s*/gi, '')
+    .replace(/\s*re[-\s]?draw\s*/gi, '')
+    .replace(/\s*draw\s*/gi, '')
+    .replace(/[（(]\s*[）)]/g, '')
+    .replace(/^[\s_\-]+|[\s_\-]+$/g, '')
+    .trim();
+}
+
+/** 開催日を「M/D（曜）」形式に正規化 */
+function formatJpDate(input: string): string {
+  if (!input) return '';
+  // 全角→半角数字
+  const half = input.replace(/[０-９]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xFEE0));
+  // 月日抽出: yyyy/m/d, m/d, m月d日, etc.
+  const m1 = half.match(/(?:(\d{4})[\/\.年])?\s*(\d{1,2})\s*[\/\.月]\s*(\d{1,2})/);
+  if (!m1) return input;
+  const year = m1[1] ? parseInt(m1[1]) : new Date().getFullYear();
+  const month = parseInt(m1[2]);
+  const day = parseInt(m1[3]);
+  if (!month || !day || month > 12 || day > 31) return input;
+  const d = new Date(year, month - 1, day);
+  if (isNaN(d.getTime())) return input;
+  const wd = '日月火水木金土'[d.getDay()];
+  return `${month}/${day}（${wd}）`;
+}
+
+interface DataSyncProps {
+  onConnectionChange?: () => void;
+  onDataLoaded?: () => void;
+  /** GDriveから大会Excelダウンロード完了時 */
+  onTournamentExcelLoaded?: (arrayBuffer: ArrayBuffer, fileName: string) => void;
+  /** GDriveから時間割Excelダウンロード完了時 */
+  onScheduleExcelLoaded?: (arrayBuffer: ArrayBuffer, fileName: string) => void;
+  /** ウィザードで大会確認後に自動インポート指示 */
+  onWizardTournamentConfirmed?: (arrayBuffer: ArrayBuffer, fileName: string, info: { name: string; date: string; venue: string; reserveDate: string; courtNames?: string }) => void;
+  /** ウィザード自動インポートがDBへの書込を完了した大会ID（時間割自動生成に使用） */
+  wizardImportedTournamentId?: string | null;
+}
+
+export default function DataSync({ onConnectionChange, onDataLoaded, onTournamentExcelLoaded, onScheduleExcelLoaded, onWizardTournamentConfirmed, wizardImportedTournamentId }: DataSyncProps) {
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [processingLabel, setProcessingLabel] = useState('');
+  const [result, setResult] = useState<{ success: boolean; message: string; details?: string[] } | null>(null);
+  const [lastSyncTime, setLastSyncTime] = useState<string | null>(null);
+  const [gdriveFolderLink, setGdriveFolderLink] = useState('');
+  const [isConnected, setIsConnected] = useState(false);
+  const [userEmail, setUserEmail] = useState('');
+
+  const modal = useModalState();
+
+  // 大会一覧ファイルリスト
+  const [gdriveFileList, setGdriveFileList] = useState<GoogleDriveFile[]>([]);
+  const [showFileList, setShowFileList] = useState(false);
+  const [loadingFileId, setLoadingFileId] = useState<string | null>(null);
+  // 時間割ファイルリスト
+  const [scheduleGDriveFiles, setScheduleGDriveFiles] = useState<GoogleDriveFile[]>([]);
+  const [showScheduleFileList, setShowScheduleFileList] = useState(false);
+  const [loadingScheduleFileId, setLoadingScheduleFileId] = useState<string | null>(null);
+
+  const navigate = useNavigate();
+
+  // 一括読込ウィザード
+  type WizardPhase = 'loading' | 'select-tournament' | 'confirm-tournament' | 'select-schedule' | 'done';
+  const [wizardOpen, setWizardOpen] = useState(false);
+  const [wizardPhase, setWizardPhase] = useState<WizardPhase>('loading');
+  const [wizardSteps, setWizardSteps] = useState<LoadingStep[]>([]);
+  const [wizardProgress, setWizardProgress] = useState(0);
+  const [wizardTournamentFiles, setWizardTournamentFiles] = useState<GoogleDriveFile[]>([]);
+  const [wizardScheduleFiles, setWizardScheduleFiles] = useState<GoogleDriveFile[]>([]);
+  const [wizardLoadingFileId, setWizardLoadingFileId] = useState<string | null>(null);
+  const [wizardResult, setWizardResult] = useState<{ success: boolean; message: string } | null>(null);
+  const [wizardDetails, setWizardDetails] = useState<string[]>([]);
+
+  // ウィザード: 大会確認用の状態
+  const [wizardParsedExcel, setWizardParsedExcel] = useState<ParsedDrawFile | null>(null);
+  const [wizardMixedPending, setWizardMixedPending] = useState<{
+    info: TournamentInfo;
+    leagues: MixedLeague[];
+    matches: LeagueMatchScore[];
+    fileName: string;
+    arrayBuffer: ArrayBuffer;
+  } | null>(null);
+  const [wizardTeamPending, setWizardTeamPending] = useState<{
+    info: TeamTournamentInfo;
+    leagues: ITeamLeague[];
+    matches: ITeamLeagueMatch[];
+    fileName: string;
+    arrayBuffer: ArrayBuffer;
+    /** 男女別会場など複数セクション構成の場合の選択肢 */
+    sections?: ClubVenueSection[];
+    selectedSectionKey?: string;
+  } | null>(null);
+  const [wizardTournamentArrayBuffer, setWizardTournamentArrayBuffer] = useState<ArrayBuffer | null>(null);
+  const [wizardTournamentFileName, setWizardTournamentFileName] = useState('');
+  const [wizardEditName, setWizardEditName] = useState('');
+  const [wizardEditDate, setWizardEditDate] = useState('');
+  const [wizardEditVenue, setWizardEditVenue] = useState('');
+  const [wizardEditReserveDate, setWizardEditReserveDate] = useState('');
+  // 使用コート（既定は全面=1〜16）
+  const [wizardEditCourtNames, setWizardEditCourtNames] = useState(STANDARD_COURTS);
+  // コートの開始時刻（既定は9:00。時間割自動生成の開始基準、手動変更可）
+  const [wizardEditStartTime, setWizardEditStartTime] = useState('09:00');
+  const [wizardSourceDate, setWizardSourceDate] = useState('');
+  const [wizardSourceReserveDate, setWizardSourceReserveDate] = useState('');
+  const [wizardSourceVenue, setWizardSourceVenue] = useState('');
+  const [wizardSourceReserveVenue, setWizardSourceReserveVenue] = useState('');
+  const [wizardDateMode, setWizardDateMode] = useState<'normal' | 'reserve' | 'custom'>('normal');
+  const [wizardVenueMode, setWizardVenueMode] = useState<'normal' | 'reserve' | 'custom'>('normal');
+  const [wizardIsMixedOrTeam, setWizardIsMixedOrTeam] = useState(false);
+  const [wizardIsImporting, setWizardIsImporting] = useState(false);
+  // 時間割自動生成の状態（select-scheduleフェーズ用）
+  const [wizardScheduleGenerating, setWizardScheduleGenerating] = useState(false);
+  // 大会インポート完了待ちで自動生成が保留中か
+  const [wizardAutoGenPending, setWizardAutoGenPending] = useState(false);
+  // 時間割ファイル一覧（Googleドライブから読み込む）の開閉・取得状態
+  const [wizardScheduleListOpen, setWizardScheduleListOpen] = useState(false);
+  const [wizardScheduleListLoading, setWizardScheduleListLoading] = useState(false);
+  const [wizardScheduleListError, setWizardScheduleListError] = useState('');
+
+  // 大会日程表（大会一覧フォルダに置かれた年間日程）から正式な大会名を選ぶ
+  const [officialList, setOfficialList] = useState<OfficialTournament[]>([]);
+  const [officialListLoaded, setOfficialListLoaded] = useState(false);
+  const [officialListLoading, setOfficialListLoading] = useState(false);
+  const [officialListError, setOfficialListError] = useState('');
+  const [officialPickerOpen, setOfficialPickerOpen] = useState(false);
+  const [officialFilter, setOfficialFilter] = useState('');
+
+  // DB counts
+  const furiganaDictCount = useLiveQuery(() => db.furiganaDict.count()) ?? 0;
+  const affiliationCount = useLiveQuery(() => db.affiliationFurigana.count()) ?? 0;
+
+  useEffect(() => {
+    const checkConnection = async () => {
+      const connected = !!getSavedClientId() && gdriveIsTokenValid();
+      setIsConnected(connected);
+      if (connected) {
+        const token = gdriveGetSavedToken();
+        if (token) {
+          try {
+            const email = await getUserEmail(token);
+            setUserEmail(email);
+            const link = await getSharedFolderLink(token);
+            setGdriveFolderLink(link);
+          } catch { /* ignore */ }
+        }
+      }
+      loadGisScript().catch(() => {});
+    };
+    checkConnection();
+    try {
+      const saved = localStorage.getItem(LS_KEY_LAST_SYNC);
+      if (saved) setLastSyncTime(saved);
+    } catch { /* ignore */ }
+  }, []);
+
+  const updateLastSync = useCallback(() => {
+    const now = new Date().toISOString();
+    setLastSyncTime(now);
+    try { localStorage.setItem(LS_KEY_LAST_SYNC, now); } catch { /* ignore */ }
+  }, []);
+
+  // --- Google Drive 接続 ---
+  const handleConnect = useCallback(async () => {
+    setIsProcessing(true);
+    setProcessingLabel('接続中...');
+    setResult(null);
+    try {
+      const token = await connectWithDefaultClientId();
+      const email = await getUserEmail(token);
+      setUserEmail(email);
+      setIsConnected(true);
+      try {
+        const link = await getSharedFolderLink(token);
+        setGdriveFolderLink(link);
+      } catch { /* ignore */ }
+      setResult({ success: true, message: `Google ドライブに接続しました（${email}）` });
+      onConnectionChange?.();
+    } catch (err) {
+      setResult({ success: false, message: `接続に失敗しました: ${(err as Error).message}` });
+    } finally {
+      setIsProcessing(false);
+      setProcessingLabel('');
+    }
+  }, [onConnectionChange]);
+
+  // --- Google Drive 切断 ---
+  const handleDisconnect = useCallback(() => {
+    const token = gdriveGetSavedToken();
+    if (token) revokeToken(token);
+    clearToken();
+    clearFolderCache();
+    setIsConnected(false);
+    setUserEmail('');
+    setGdriveFolderLink('');
+    setResult({ success: true, message: 'Google ドライブから切断しました' });
+    onConnectionChange?.();
+  }, [onConnectionChange]);
+
+  // --- 一括読込（ふりがな＋所属） ---
+  const handleBulkDownload = useCallback(async () => {
+    let steps: LoadingStep[] = [
+      { label: 'ふりがな一覧を読込中...', status: 'loading' },
+      { label: '所属一覧', status: 'waiting' },
+    ];
+    modal.setModalTitle('一括読込');
+    modal.setModalSteps(steps);
+    modal.setModalResult(null);
+    modal.setModalProgress(0);
+    modal.setModalOpen(true);
+    setIsProcessing(true);
+    setProcessingLabel('一括読込中...');
+    setResult(null);
+    const allDetails: string[] = [];
+    let hasError = false;
+    try {
+      const token = gdriveGetSavedToken();
+      if (!token) throw new Error('Google ドライブに接続してください');
+      modal.setModalProgress(10);
+      try {
+        const res = await doDownloadFurigana(token);
+        modal.setModalProgress(50);
+        steps = modal.updateStep(steps, 0, { status: 'done', label: 'ふりがな一覧を読込完了', detail: res.details[1] });
+        allDetails.push('【ふりがな】', ...res.details);
+      } catch (err) {
+        modal.setModalProgress(50);
+        steps = modal.updateStep(steps, 0, { status: 'error', label: `ふりがな読込失敗: ${(err as Error).message}` });
+        allDetails.push(`【ふりがな】読込失敗: ${(err as Error).message}`);
+        hasError = true;
+      }
+      steps = modal.updateStep(steps, 1, { status: 'loading', label: '所属一覧を読込中...' });
+      modal.setModalSteps([...steps]);
+      try {
+        const res = await doDownloadAffiliation(token);
+        modal.setModalProgress(100);
+        steps = modal.updateStep(steps, 1, { status: 'done', label: '所属一覧を読込完了', detail: res.details[1] });
+        allDetails.push('【所属】', ...res.details);
+      } catch (err) {
+        modal.setModalProgress(100);
+        steps = modal.updateStep(steps, 1, { status: 'error', label: `所属読込失敗: ${(err as Error).message}` });
+        allDetails.push(`【所属】読込失敗: ${(err as Error).message}`);
+        hasError = true;
+      }
+      modal.setModalSteps([...steps]);
+      updateLastSync();
+      const r = hasError
+        ? { success: false, message: '一部の読込に失敗しました', details: allDetails }
+        : { success: true, message: 'ふりがな・所属データを一括読込しました', details: allDetails };
+      setResult(r);
+      modal.setModalResult(r);
+      if (!hasError) onDataLoaded?.();
+    } catch (err) {
+      steps = modal.updateStep(steps, 0, { status: 'error', label: `読込失敗: ${(err as Error).message}` });
+      modal.setModalSteps([...steps]);
+      const r = { success: false, message: `読込失敗: ${(err as Error).message}` };
+      setResult(r);
+      modal.setModalResult(r);
+    } finally {
+      setIsProcessing(false);
+      setProcessingLabel('');
+    }
+  }, [updateLastSync, modal, onDataLoaded]);
+
+  // --- GDrive 大会ファイル選択→ダウンロード ---
+  const handleSelectTournamentFile = useCallback(async (file: GoogleDriveFile) => {
+    const token = gdriveGetSavedToken();
+    if (!token) return;
+    setShowFileList(false);
+    let steps: LoadingStep[] = [
+      { label: `「${file.name}」をダウンロード中...`, status: 'loading' },
+    ];
+    modal.setModalTitle('大会データ読込');
+    modal.setModalSteps(steps);
+    modal.setModalResult(null);
+    modal.setModalProgress(0);
+    modal.setModalOpen(true);
+    setLoadingFileId(file.id);
+    try {
+      modal.setModalProgress(30);
+      const arrayBuffer = await downloadTournamentExcel(token, file.id, file.mimeType);
+      modal.setModalProgress(100);
+      steps[0] = { ...steps[0], status: 'done', label: `「${file.name}」をダウンロード完了` };
+      modal.setModalSteps([...steps]);
+      onTournamentExcelLoaded?.(arrayBuffer, file.name);
+      // 時間割ファイルリストがあれば即座に表示
+      if (scheduleGDriveFiles.length > 0) {
+        modal.setModalOpen(false);
+        setShowScheduleFileList(true);
+      } else {
+        modal.setModalResult({ success: true, message: `ダウンロード完了` });
+      }
+    } catch (err) {
+      steps[0] = { ...steps[0], status: 'error', label: `読込失敗: ${(err as Error).message}` };
+      modal.setModalSteps([...steps]);
+      modal.setModalResult({ success: false, message: `ファイル読込失敗: ${(err as Error).message}` });
+    } finally {
+      setLoadingFileId(null);
+    }
+  }, [modal, onTournamentExcelLoaded, scheduleGDriveFiles]);
+
+  // --- GDrive 時間割ファイル選択→ダウンロード ---
+  const handleSelectScheduleFile = useCallback(async (file: GoogleDriveFile) => {
+    const token = gdriveGetSavedToken();
+    if (!token) return;
+    setShowScheduleFileList(false);
+    let steps: LoadingStep[] = [
+      { label: `「${file.name}」をダウンロード中...`, status: 'loading' },
+    ];
+    modal.setModalTitle('時間割読込');
+    modal.setModalSteps(steps);
+    modal.setModalResult(null);
+    modal.setModalProgress(0);
+    modal.setModalOpen(true);
+    setLoadingScheduleFileId(file.id);
+    try {
+      modal.setModalProgress(30);
+      const arrayBuffer = await downloadScheduleExcel(token, file.id, file.mimeType);
+      modal.setModalProgress(100);
+      steps[0] = { ...steps[0], status: 'done', label: `「${file.name}」をダウンロード完了` };
+      modal.setModalSteps([...steps]);
+      modal.setModalResult({ success: true, message: `ダウンロード完了` });
+      onScheduleExcelLoaded?.(arrayBuffer, file.name);
+    } catch (err) {
+      steps[0] = { ...steps[0], status: 'error', label: `読込失敗: ${(err as Error).message}` };
+      modal.setModalSteps([...steps]);
+      modal.setModalResult({ success: false, message: `ファイル読込失敗: ${(err as Error).message}` });
+    } finally {
+      setLoadingScheduleFileId(null);
+    }
+  }, [modal, onScheduleExcelLoaded]);
+
+  // --- GDrive 大会・時間割 一括読込（ファイル一覧取得→選択UI表示） ---
+  const handleLoadTournamentAndSchedule = useCallback(async () => {
+    const token = gdriveGetSavedToken();
+    if (!token) return;
+    let steps: LoadingStep[] = [
+      { label: '大会一覧フォルダを取得中...', status: 'loading' },
+      { label: '時間割フォルダ', status: 'waiting' },
+    ];
+    modal.setModalTitle('大会・時間割 読込');
+    modal.setModalSteps(steps);
+    modal.setModalResult(null);
+    modal.setModalProgress(0);
+    modal.setModalOpen(true);
+    const allDetails: string[] = [];
+    let hasError = false;
+    let tournamentFiles: GoogleDriveFile[] = [];
+    let scheduleFiles: GoogleDriveFile[] = [];
+    try {
+      // 大会一覧
+      modal.setModalProgress(10);
+      try {
+        tournamentFiles = await listTournamentExcelFiles(token);
+        steps = modal.updateStep(steps, 0, { status: 'done', label: `大会一覧: ${tournamentFiles.length}件のファイルを検出` });
+        allDetails.push(`大会一覧: ${tournamentFiles.length}件`);
+      } catch (err) {
+        steps = modal.updateStep(steps, 0, { status: 'error', label: `大会一覧取得失敗: ${(err as Error).message}` });
+        allDetails.push(`大会一覧取得失敗: ${(err as Error).message}`);
+        hasError = true;
+      }
+      modal.setModalSteps([...steps]);
+      modal.setModalProgress(50);
+      // 時間割
+      steps = modal.updateStep(steps, 1, { status: 'loading', label: '時間割フォルダを取得中...' });
+      modal.setModalSteps([...steps]);
+      try {
+        scheduleFiles = await listScheduleExcelFiles(token);
+        steps = modal.updateStep(steps, 1, { status: 'done', label: `時間割: ${scheduleFiles.length}件のファイルを検出` });
+        allDetails.push(`時間割: ${scheduleFiles.length}件`);
+      } catch (err) {
+        steps = modal.updateStep(steps, 1, { status: 'error', label: `時間割取得失敗: ${(err as Error).message}` });
+        allDetails.push(`時間割取得失敗: ${(err as Error).message}`);
+        hasError = true;
+      }
+      modal.setModalSteps([...steps]);
+      modal.setModalProgress(100);
+      setGdriveFileList(tournamentFiles);
+      setScheduleGDriveFiles(scheduleFiles);
+      if (hasError || (tournamentFiles.length === 0 && scheduleFiles.length === 0)) {
+        modal.setModalResult({ success: false, message: 'ファイルの取得に失敗、またはファイルがありません', details: allDetails });
+      } else {
+        modal.setModalResult({ success: true, message: `ファイル一覧を取得しました`, details: allDetails });
+        setTimeout(() => {
+          modal.setModalOpen(false);
+          if (tournamentFiles.length > 0) setShowFileList(true);
+          else if (scheduleFiles.length > 0) setShowScheduleFileList(true);
+        }, 500);
+      }
+    } catch (err) {
+      modal.setModalResult({ success: false, message: `読込失敗: ${(err as Error).message}` });
+    }
+  }, [modal]);
+
+  // --- GDrive 全データ一括読込ウィザード ---
+  const handleLoadAll = useCallback(async () => {
+    const token = gdriveGetSavedToken();
+    if (!token) return;
+
+    // ウィザード初期化
+    setWizardOpen(true);
+    setWizardPhase('loading');
+    setWizardProgress(0);
+    setWizardResult(null);
+    setWizardDetails([]);
+    setWizardTournamentFiles([]);
+    setWizardScheduleFiles([]);
+    setWizardScheduleListOpen(false);
+    setWizardScheduleListLoading(false);
+    setWizardScheduleListError('');
+    setWizardAutoGenPending(false);
+    // 大会日程表は読込のたびに取り直す（Drive側で更新されている可能性があるため）
+    setOfficialPickerOpen(false);
+    setOfficialFilter('');
+    setOfficialList([]);
+    setOfficialListLoaded(false);
+    setOfficialListError('');
+    setIsProcessing(true);
+    setProcessingLabel('一括読込中...');
+    setResult(null);
+
+    let steps: LoadingStep[] = [
+      { label: 'ふりがな一覧を読込中...', status: 'loading' },
+      { label: '所属一覧', status: 'waiting' },
+      { label: '大会・時間割ファイル一覧', status: 'waiting' },
+    ];
+    setWizardSteps([...steps]);
+
+    const allDetails: string[] = [];
+    let hasError = false;
+
+    try {
+      // 1. ふりがな
+      setWizardProgress(5);
+      try {
+        const res = await doDownloadFurigana(token);
+        steps[0] = { ...steps[0], status: 'done', label: 'ふりがな一覧を読込完了', detail: res.details[1] };
+        allDetails.push('【ふりがな】', ...res.details);
+      } catch (err) {
+        steps[0] = { ...steps[0], status: 'error', label: `ふりがな読込失敗: ${(err as Error).message}` };
+        allDetails.push(`【ふりがな】読込失敗: ${(err as Error).message}`);
+        hasError = true;
+      }
+      setWizardSteps([...steps]);
+      setWizardProgress(25);
+
+      // 2. 所属
+      steps[1] = { ...steps[1], status: 'loading', label: '所属一覧を読込中...' };
+      setWizardSteps([...steps]);
+      try {
+        const res = await doDownloadAffiliation(token);
+        steps[1] = { ...steps[1], status: 'done', label: '所属一覧を読込完了', detail: res.details[1] };
+        allDetails.push('【所属】', ...res.details);
+      } catch (err) {
+        steps[1] = { ...steps[1], status: 'error', label: `所属読込失敗: ${(err as Error).message}` };
+        allDetails.push(`【所属】読込失敗: ${(err as Error).message}`);
+        hasError = true;
+      }
+      setWizardSteps([...steps]);
+      setWizardProgress(50);
+
+      // 3. 大会一覧 + 時間割を並列取得
+      steps[2] = { ...steps[2], status: 'loading', label: '大会・時間割ファイル一覧を取得中...' };
+      setWizardSteps([...steps]);
+      let tournamentFiles: GoogleDriveFile[] = [];
+      let scheduleFiles: GoogleDriveFile[] = [];
+      try {
+        const [tFiles, sFiles] = await Promise.all([
+          listTournamentExcelFiles(token).catch((err) => { allDetails.push(`【大会一覧】取得失敗: ${(err as Error).message}`); hasError = true; return [] as GoogleDriveFile[]; }),
+          listScheduleExcelFiles(token).catch((err) => { allDetails.push(`【時間割】取得失敗: ${(err as Error).message}`); hasError = true; return [] as GoogleDriveFile[]; }),
+        ]);
+        tournamentFiles = tFiles;
+        scheduleFiles = sFiles;
+        if (tournamentFiles.length > 0) allDetails.push(`【大会一覧】${tournamentFiles.length}件`);
+        if (scheduleFiles.length > 0) allDetails.push(`【時間割】${scheduleFiles.length}件`);
+        steps[2] = { ...steps[2], status: hasError ? 'error' : 'done', label: hasError ? '一部のファイル取得に失敗' : `大会${tournamentFiles.length}件・時間割${scheduleFiles.length}件を検出` };
+      } catch (err) {
+        steps[2] = { ...steps[2], status: 'error', label: `ファイル取得失敗: ${(err as Error).message}` };
+        hasError = true;
+      }
+      setWizardSteps([...steps]);
+      setWizardProgress(100);
+      setWizardDetails(allDetails);
+      updateLastSync();
+      setGdriveFileList(tournamentFiles);
+      setScheduleGDriveFiles(scheduleFiles);
+      setWizardTournamentFiles(tournamentFiles);
+      setWizardScheduleFiles(scheduleFiles);
+      if (!hasError) onDataLoaded?.();
+
+      // 大会日程表（年間日程）はドローファイルではないので選択肢から外す
+      const drawFiles = tournamentFiles.filter(f => !isTournamentListFileName(f.name));
+
+      if (hasError || (drawFiles.length === 0 && scheduleFiles.length === 0)) {
+        const msg = hasError ? '一部の読込に失敗しました' : 'ふりがな・所属の読込が完了しました（大会・時間割ファイルなし）';
+        setWizardResult({ success: !hasError, message: msg });
+        setWizardPhase('done');
+      } else {
+        // 成功 → 大会ファイル選択ステップへ
+        if (drawFiles.length > 0) {
+          setWizardPhase('select-tournament');
+        } else if (scheduleFiles.length > 0) {
+          setWizardPhase('select-schedule');
+        } else {
+          setWizardPhase('done');
+          setWizardResult({ success: true, message: '読込完了' });
+        }
+      }
+    } catch (err) {
+      setWizardResult({ success: false, message: `読込失敗: ${(err as Error).message}` });
+      setWizardPhase('done');
+    } finally {
+      setIsProcessing(false);
+      setProcessingLabel('');
+    }
+  }, [updateLastSync, onDataLoaded]);
+
+  // 大会一覧フォルダのファイルを「ドロー等の大会ファイル」と「大会日程表」に振り分ける
+  const wizardListDocFiles = useMemo(
+    () => wizardTournamentFiles.filter(f => isTournamentListFileName(f.name)),
+    [wizardTournamentFiles],
+  );
+  const wizardDrawFiles = useMemo(
+    () => wizardTournamentFiles.filter(f => !isTournamentListFileName(f.name)),
+    [wizardTournamentFiles],
+  );
+  const gdriveDrawFiles = useMemo(
+    () => gdriveFileList.filter(f => !isTournamentListFileName(f.name)),
+    [gdriveFileList],
+  );
+
+  // 大会日程表を読み込んで正式な大会名の一覧を作る（初回だけダウンロードする）
+  const handleToggleOfficialPicker = useCallback(async () => {
+    if (officialPickerOpen) { setOfficialPickerOpen(false); return; }
+    setOfficialPickerOpen(true);
+    if (officialListLoaded || officialListLoading) return;
+    setOfficialListError('');
+    setOfficialListLoading(true);
+    try {
+      const token = gdriveGetSavedToken();
+      if (!token) throw new Error('Googleドライブに接続されていません。');
+      let files = [...wizardTournamentFiles, ...gdriveFileList].filter(f => isTournamentListFileName(f.name));
+      if (files.length === 0) {
+        files = (await listTournamentExcelFiles(token)).filter(f => isTournamentListFileName(f.name));
+      }
+      if (files.length === 0) {
+        throw new Error('大会一覧フォルダに大会日程表（例:「令和8年度…大会日程.xlsx」）が見つかりません。');
+      }
+      // 同じファイルが両方の一覧に入るので重複を除き、更新が新しい順に読む
+      const uniq = [...new Map(files.map(f => [f.id, f])).values()]
+        .sort((a, b) => new Date(b.modifiedTime).getTime() - new Date(a.modifiedTime).getTime());
+      const all: OfficialTournament[] = [];
+      for (const f of uniq) {
+        try {
+          const buffer = await downloadTournamentExcel(token, f.id, f.mimeType);
+          all.push(...parseTournamentListExcel(buffer));
+        } catch { /* 読めないファイルは飛ばす */ }
+      }
+      if (all.length === 0) throw new Error('大会日程表から大会名を読み取れませんでした。');
+      setOfficialList(all);
+      setOfficialListLoaded(true);
+    } catch (err) {
+      setOfficialListError((err as Error).message);
+    } finally {
+      setOfficialListLoading(false);
+    }
+  }, [officialPickerOpen, officialListLoaded, officialListLoading, wizardTournamentFiles, gdriveFileList]);
+
+  /** 一覧から選んだ正式名称を反映する（日程・会場はファイル側の値を優先） */
+  const applyOfficialTournament = useCallback((t: OfficialTournament) => {
+    setWizardEditName(t.name);
+    setWizardSourceDate(prev => prev || t.date);
+    setWizardSourceReserveDate(prev => prev || t.reserveDate);
+    setWizardSourceVenue(prev => prev || t.venue);
+    setWizardSourceReserveVenue(prev => prev || t.reserveVenue);
+    setWizardEditDate(prev => prev || t.date);
+    setWizardEditReserveDate(prev => prev || t.reserveDate);
+    setWizardEditVenue(prev => prev || t.venue);
+    setOfficialPickerOpen(false);
+    setOfficialFilter('');
+  }, []);
+
+  // 検索語での絞り込み（空白は無視して部分一致）
+  const filteredOfficialList = useMemo(() => {
+    const q = officialFilter.replace(/[\s\u3000]+/g, '');
+    if (!q) return officialList;
+    return officialList.filter(t => `${t.name}${t.category}${t.date}`.replace(/[\s\u3000]+/g, '').includes(q));
+  }, [officialList, officialFilter]);
+
+  // ウィザード内: 大会ファイル選択→ダウンロード→確認画面へ
+  const handleWizardSelectTournament = useCallback(async (file: GoogleDriveFile) => {
+    const token = gdriveGetSavedToken();
+    if (!token) return;
+    setWizardLoadingFileId(file.id);
+    try {
+      const arrayBuffer = await downloadTournamentExcel(token, file.id, file.mimeType);
+      setWizardTournamentArrayBuffer(arrayBuffer);
+      setWizardTournamentFileName(file.name);
+
+      // Excelを解析して確認画面用のデータを構築
+      let isMixedOrTeam = false;
+      try {
+        // クラブ対抗戦フォーマットを最初に試行（ファイル名に「クラブ対抗」が含まれる場合）
+        const isClubFile = /クラブ対抗/.test(file.name.normalize('NFC'));
+        if (isClubFile) {
+          try {
+            const clubResult = parseClubExcel(arrayBuffer, file.name);
+            if (clubResult.leagues.length > 0) {
+              setWizardTeamPending({
+                info: clubResult.info, leagues: clubResult.leagues, matches: clubResult.matches, fileName: file.name, arrayBuffer,
+                sections: clubResult.sections, selectedSectionKey: clubResult.sections?.[0]?.key,
+              });
+              setWizardMixedPending(null);
+              setWizardParsedExcel(null);
+              setWizardEditName(clubResult.info.name || cleanTournamentName(file.name.replace(/\.(xlsx?|xls)$/i, '')));
+              setWizardEditDate(formatJpDate(clubResult.info.date || ''));
+              setWizardEditVenue(clubResult.info.venue || 'ヤマタスポーツパーク');
+              if (clubResult.info.date) setWizardSourceDate(clubResult.info.date);
+              if (clubResult.info.venue) setWizardSourceVenue(clubResult.info.venue);
+              setWizardDateMode('normal');
+              setWizardVenueMode('normal');
+              isMixedOrTeam = true;
+              setWizardIsMixedOrTeam(true);
+              setWizardPhase('confirm-tournament');
+              setWizardLoadingFileId(null);
+              return;
+            }
+          } catch { /* fall through */ }
+        }
+
+        // 団体戦フォーマットを最初に試行（ファイル名に「団体」が含まれる場合）
+        const isTeamFile = /団体/.test(file.name);
+        if (isTeamFile) {
+          try {
+            const teamResult = parseTeamExcel(arrayBuffer);
+            if (teamResult.leagues.length > 0) {
+              setWizardTeamPending({ info: teamResult.info, leagues: teamResult.leagues, matches: teamResult.matches, fileName: file.name, arrayBuffer });
+              setWizardMixedPending(null);
+              setWizardParsedExcel(null);
+              setWizardEditName(teamResult.info.name || cleanTournamentName(file.name.replace(/\.(xlsx?|xls)$/i, '')));
+              setWizardEditDate(formatJpDate(teamResult.info.date || ''));
+              setWizardEditVenue(teamResult.info.venue || 'ヤマタスポーツパーク');
+              if (teamResult.info.date) setWizardSourceDate(teamResult.info.date);
+              if (teamResult.info.venue) setWizardSourceVenue(teamResult.info.venue);
+              setWizardDateMode('normal');
+              setWizardVenueMode('normal');
+              isMixedOrTeam = true;
+              setWizardPhase('confirm-tournament');
+              setWizardLoadingFileId(null);
+              return;
+            }
+          } catch { /* fall through */ }
+        }
+
+        const result = parseDrawExcel(arrayBuffer, file.name);
+        if (!result.events || result.events.length === 0) {
+          // 団体戦フォーマットを試行（ファイル名に「団体」がなくても）
+          try {
+            const teamResult = parseTeamExcel(arrayBuffer);
+            if (teamResult.leagues.length > 0) {
+              setWizardTeamPending({ info: teamResult.info, leagues: teamResult.leagues, matches: teamResult.matches, fileName: file.name, arrayBuffer });
+              setWizardMixedPending(null);
+              setWizardParsedExcel(null);
+              setWizardEditName(teamResult.info.name || cleanTournamentName(file.name.replace(/\.(xlsx?|xls)$/i, '')));
+              setWizardEditDate(formatJpDate(teamResult.info.date || ''));
+              setWizardEditVenue(teamResult.info.venue || 'ヤマタスポーツパーク');
+              if (teamResult.info.date) setWizardSourceDate(teamResult.info.date);
+              if (teamResult.info.venue) setWizardSourceVenue(teamResult.info.venue);
+              setWizardDateMode('normal');
+              setWizardVenueMode('normal');
+              isMixedOrTeam = true;
+              setWizardPhase('confirm-tournament');
+              setWizardLoadingFileId(null);
+              return;
+            }
+          } catch { /* fall through */ }
+
+          // ミックス大会フォーマットを試行
+          try {
+            const mixedResult = parseMixedExcel(arrayBuffer);
+            if (mixedResult.leagues.length > 0) {
+              try {
+                const sheets = extractExcelSheets(arrayBuffer);
+                useMixedStore.getState().setRawExcelSheets(sheets);
+              } catch { /* ignore */ }
+              setWizardMixedPending({ info: mixedResult.info, leagues: mixedResult.leagues, matches: mixedResult.matches, fileName: file.name, arrayBuffer });
+              setWizardTeamPending(null);
+              setWizardEditName(mixedResult.info.name);
+              setWizardEditDate(formatJpDate(mixedResult.info.date));
+              setWizardEditVenue(mixedResult.info.venue || 'ヤマタスポーツパーク');
+              isMixedOrTeam = true;
+              setWizardParsedExcel(null);
+            }
+          } catch { /* fall through */ }
+        } else {
+          setWizardParsedExcel(result);
+          setWizardMixedPending(null);
+          const rawName = result.tournamentName || file.name.replace(/\.(xlsx?|xls)$/i, '');
+          setWizardEditName(cleanTournamentName(rawName));
+          if (result.date) { setWizardEditDate(result.date); setWizardSourceDate(result.date); }
+          if (result.venue) { setWizardEditVenue(result.venue); setWizardSourceVenue(result.venue); }
+          if (result.reserveDate) { setWizardSourceReserveDate(result.reserveDate); setWizardEditReserveDate(result.reserveDate); }
+          if (result.reserveVenue) setWizardSourceReserveVenue(result.reserveVenue);
+          // 既定は全面（1〜16）・9:00。必要に応じてユーザーがボタン/入力で変更する。
+          setWizardEditCourtNames(STANDARD_COURTS);
+          setWizardEditStartTime('09:00');
+          setWizardDateMode('normal');
+          setWizardVenueMode('normal');
+          // 種目名にミックス/団体/クラブ対抗が含まれるかチェック（時間割不要）
+          const hasSpecialEvent = result.events.some(e =>
+            /ミックス|団体|mixed|team|クラブ対抗/i.test(e.eventName)
+          );
+          // クラブ対抗戦は種目名に出ない場合があるので大会名・ファイル名でも判定
+          const isClubTournament = /クラブ対抗/.test(result.tournamentName || '') || /クラブ対抗/.test(file.name.normalize('NFC'));
+          if (hasSpecialEvent || isClubTournament) isMixedOrTeam = true;
+        }
+      } catch {
+        // パースに失敗しても確認画面に進む（ファイル名から名前を設定）
+        setWizardParsedExcel(null);
+        setWizardMixedPending(null);
+        setWizardEditName(cleanTournamentName(file.name.replace(/\.(xlsx?|xls)$/i, '')));
+      }
+      setWizardIsMixedOrTeam(isMixedOrTeam);
+      setWizardPhase('confirm-tournament');
+    } catch (err) {
+      setWizardResult({ success: false, message: `ファイル読込失敗: ${(err as Error).message}` });
+      setWizardPhase('done');
+    } finally {
+      setWizardLoadingFileId(null);
+    }
+  }, []);
+
+  // ウィザード: 大会確認 → インポート実行
+  const handleWizardConfirmTournament = useCallback(async () => {
+    setWizardIsImporting(true);
+    try {
+      if (wizardTeamPending) {
+        // 団体戦: teamStoreにインポート
+        const info: TeamTournamentInfo = {
+          ...wizardTeamPending.info,
+          name: wizardEditName,
+          date: wizardEditDate,
+          venue: wizardEditVenue,
+        };
+        const teamStore = useTeamStore.getState();
+        teamStore.importData(info, wizardTeamPending.leagues, wizardTeamPending.matches);
+        teamStore.setImportFileName(wizardTeamPending.fileName);
+        setWizardResult({ success: true, message: '一括読込が完了しました' });
+        setWizardPhase('done');
+        setTimeout(() => {
+          setWizardOpen(false);
+          navigate('/entry');
+        }, 500);
+      } else if (wizardMixedPending) {
+        // ミックス大会: mixedStoreにインポート
+        const info: TournamentInfo = {
+          ...wizardMixedPending.info,
+          name: wizardEditName,
+          date: wizardEditDate,
+          venue: wizardEditVenue,
+        };
+        const mixedStore = useMixedStore.getState();
+        mixedStore.importData(info, wizardMixedPending.leagues, wizardMixedPending.matches);
+        mixedStore.setImportFileName(wizardMixedPending.fileName);
+        // ミックス/団体戦は時間割不要 → 完了
+        setWizardResult({ success: true, message: '一括読込が完了しました' });
+        setWizardPhase('done');
+        // ウィザードを閉じてエントリーへ遷移
+        setTimeout(() => {
+          setWizardOpen(false);
+          navigate('/entry');
+        }, 500);
+      } else if (wizardTournamentArrayBuffer) {
+        // 通常大会: DrawMeetingImportに自動インポートを指示
+        onWizardTournamentConfirmed?.(wizardTournamentArrayBuffer, wizardTournamentFileName, {
+          name: wizardEditName,
+          date: wizardEditDate,
+          venue: wizardEditVenue,
+          reserveDate: wizardEditReserveDate,
+          courtNames: wizardEditCourtNames,
+        });
+        // ミックス/団体戦の場合は時間割スキップ。通常大会は必ず時間割ステップへ
+        // （時間割ファイルが無くてもドローから自動生成できるため常に表示する）
+        if (wizardIsMixedOrTeam) {
+          setWizardResult({ success: true, message: '一括読込が完了しました' });
+          setWizardPhase('done');
+        } else {
+          setWizardPhase('select-schedule');
+        }
+      }
+    } catch (err) {
+      setWizardResult({ success: false, message: `インポート失敗: ${(err as Error).message}` });
+      setWizardPhase('done');
+    } finally {
+      setWizardIsImporting(false);
+    }
+  }, [wizardTeamPending, wizardMixedPending, wizardTournamentArrayBuffer, wizardTournamentFileName, wizardEditName, wizardEditDate, wizardEditVenue, wizardEditReserveDate, wizardEditCourtNames, wizardIsMixedOrTeam, wizardScheduleFiles, onWizardTournamentConfirmed, navigate]);
+
+  // ウィザード内: 時間割ファイル選択→ダウンロード→完了
+  const handleWizardSelectSchedule = useCallback(async (file: GoogleDriveFile) => {
+    const token = gdriveGetSavedToken();
+    if (!token) return;
+    setWizardLoadingFileId(file.id);
+    try {
+      const arrayBuffer = await downloadScheduleExcel(token, file.id, file.mimeType);
+      onScheduleExcelLoaded?.(arrayBuffer, file.name);
+      setWizardResult({ success: true, message: '一括読込が完了しました' });
+      setWizardPhase('done');
+    } catch (err) {
+      setWizardResult({ success: false, message: `時間割読込失敗: ${(err as Error).message}` });
+      setWizardPhase('done');
+    } finally {
+      setWizardLoadingFileId(null);
+    }
+  }, [onScheduleExcelLoaded]);
+
+  // ウィザード内: Googleドライブの時間割フォルダからファイル一覧を取得して表示
+  const handleWizardBrowseSchedule = useCallback(async () => {
+    // 開いていれば閉じる
+    if (wizardScheduleListOpen) { setWizardScheduleListOpen(false); return; }
+    setWizardScheduleListError('');
+    setWizardScheduleListOpen(true);
+    // 既に取得済みならそのまま表示
+    if (wizardScheduleFiles.length > 0) return;
+    // 未取得ならGoogleドライブから取得する
+    const token = gdriveGetSavedToken();
+    if (!token) { setWizardScheduleListError('Googleドライブに接続されていません。'); return; }
+    setWizardScheduleListLoading(true);
+    try {
+      const files = await listScheduleExcelFiles(token);
+      setWizardScheduleFiles(files);
+      setScheduleGDriveFiles(files);
+      if (files.length === 0) setWizardScheduleListError('時間割フォルダにExcelファイルが見つかりませんでした。');
+    } catch (err) {
+      setWizardScheduleListError(`時間割一覧の取得に失敗しました: ${(err as Error).message}`);
+    } finally {
+      setWizardScheduleListLoading(false);
+    }
+  }, [wizardScheduleListOpen, wizardScheduleFiles]);
+
+  // ウィザード内: ドローから時間割を自動生成
+  const runWizardScheduleGeneration = useCallback(async (tid: string) => {
+    setWizardScheduleGenerating(true);
+    try {
+      const courtNames = wizardEditCourtNames
+        .split(/[,、\s]+/)
+        .map(s => s.trim())
+        .filter(s => s.length > 0);
+      // 指定された開始時刻を使用（未指定時はドロー検出値→09:00）
+      const startTime = wizardEditStartTime || wizardParsedExcel?.earliestStartTime || '09:00';
+      const result = await generateScheduleFromDraws(tid, {
+        courtNames: courtNames.length > 0 ? courtNames : undefined,
+        startTime,
+      });
+      if (result.items.length === 0) {
+        setWizardResult({ success: false, message: '自動生成できる試合がありませんでした。ドローをご確認ください。' });
+        setWizardPhase('done');
+        return;
+      }
+      useAppStore.getState().setImportedSchedule(result.items);
+      useAppStore.getState().setScheduleFileName(AUTO_GENERATED_SCHEDULE_LABEL);
+      useAppStore.getState().setScheduleConfig({ startTime: result.startTime, matchDuration: result.matchDuration });
+      setWizardDetails([
+        `時間割を自動生成しました（${result.matchCount}試合 / ${result.usedCourtCount}コート / ${result.matchDuration}分間隔）`
+        + (result.drawTimeCount > 0 ? `（うち${result.drawTimeCount}試合はドロー表の記載時刻どおり）` : ''),
+      ]);
+      setWizardResult({ success: true, message: '一括読込が完了しました' });
+      setWizardPhase('done');
+    } catch (err) {
+      setWizardResult({ success: false, message: `時間割の自動生成に失敗しました: ${(err as Error).message}` });
+      setWizardPhase('done');
+    } finally {
+      setWizardScheduleGenerating(false);
+      setWizardAutoGenPending(false);
+    }
+  }, [wizardEditCourtNames, wizardParsedExcel, wizardEditStartTime]);
+
+  // 自動生成ボタン: 大会インポートのDB書込が完了していれば即実行、未完了なら完了待ち
+  const handleWizardAutoGenerateSchedule = useCallback(() => {
+    const tid = wizardImportedTournamentId || useAppStore.getState().currentTournamentId;
+    if (tid) {
+      runWizardScheduleGeneration(tid);
+    } else {
+      // 大会インポートのDB書込完了を待ってから生成する
+      setWizardAutoGenPending(true);
+    }
+  }, [wizardImportedTournamentId, runWizardScheduleGeneration]);
+
+  // 大会インポート完了待ちだった場合、IDが揃ったら自動生成を実行
+  useEffect(() => {
+    if (wizardAutoGenPending && wizardImportedTournamentId && !wizardScheduleGenerating) {
+      runWizardScheduleGeneration(wizardImportedTournamentId);
+    }
+  }, [wizardAutoGenPending, wizardImportedTournamentId, wizardScheduleGenerating, runWizardScheduleGeneration]);
+
+  // ウィザード閉じる
+  const handleWizardClose = useCallback(() => {
+    setWizardOpen(false);
+    setOfficialPickerOpen(false);
+    setOfficialFilter('');
+  }, []);
+
+  // 一括読込（大会取込）が完了したら、すぐにエントリーページへ移動する。
+  // ふりがな・所属のみの読込（メッセージが異なる）は対象外。
+  useEffect(() => {
+    if (wizardPhase === 'done' && wizardResult?.success && wizardResult.message === '一括読込が完了しました') {
+      setWizardOpen(false);
+      navigate('/entry');
+    }
+  }, [wizardPhase, wizardResult, navigate]);
+
+  const formattedLastSync = lastSyncTime
+    ? new Date(lastSyncTime).toLocaleString('ja-JP', {
+        year: 'numeric', month: '2-digit', day: '2-digit',
+        hour: '2-digit', minute: '2-digit',
+      })
+    : null;
+
+  return (
+    <section className="bg-white rounded-xl shadow-sm border border-border-main overflow-hidden">
+      {/* ローディングモーダル */}
+      <DriveLoadingModal
+        open={modal.modalOpen}
+        title={modal.modalTitle}
+        steps={modal.modalSteps}
+        progress={modal.modalProgress}
+        result={modal.modalResult}
+        onClose={modal.handleModalClose}
+        onTimeout={modal.handleTimeout}
+      />
+
+      {/* Header */}
+      <div className="bg-gradient-to-r from-[#e8f0fe] to-[#fce8e6] px-4 py-3 border-b border-border-main flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <GoogleDriveIcon className="w-5 h-5" />
+          <h2 className="font-semibold text-gray-800">Google ドライブ連携</h2>
+          {isConnected && (
+            <span className="text-[10px] font-bold bg-primary-100 text-gray-800 px-2 py-0.5 rounded-full">接続中</span>
+          )}
+        </div>
+        <div className="flex items-center gap-3">
+          {formattedLastSync && (
+            <div className="flex items-center gap-1 text-xs text-gray-500">
+              <Clock className="w-3.5 h-3.5" />
+              <span>最終同期: {formattedLastSync}</span>
+            </div>
+          )}
+          <div className="hidden sm:flex items-center gap-2 text-[10px]">
+            <span className="bg-gray-50 text-gray-700 px-1.5 py-0.5 rounded font-medium">
+              <Users className="w-3 h-3 inline mr-0.5" />ふりがな {furiganaDictCount}
+            </span>
+            <span className="bg-gray-50 text-gray-700 px-1.5 py-0.5 rounded font-medium">
+              <Building2 className="w-3 h-3 inline mr-0.5" />所属 {affiliationCount}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div className="p-4 space-y-3">
+        {!isConnected ? (
+          <div className="text-center py-4">
+            <p className="text-sm text-gray-500 mb-3">
+              Google ドライブに接続して、データの読込/書込を行います
+            </p>
+            <button
+              onClick={handleConnect}
+              disabled={isProcessing}
+              className="inline-flex items-center gap-2 px-6 py-3 text-sm font-bold text-white bg-[#1a73e8] rounded-lg hover:bg-[#1557b0] disabled:opacity-50 shadow-md transition-all hover:shadow-lg"
+            >
+              <LogIn className="w-4 h-4" />
+              <GoogleDriveIcon className="w-4 h-4" />
+              Google ドライブに接続
+              {isProcessing && <RefreshCw className="w-4 h-4 animate-spin" />}
+            </button>
+          </div>
+        ) : (
+          <>
+            {/* 接続情報 + フォルダ表示 */}
+            <div className="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2">
+              <div className="flex items-center gap-2 text-xs text-gray-600">
+                <span className="w-2 h-2 bg-primary-500 rounded-full" />
+                <span>{userEmail || 'Google ドライブ接続中'}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                {gdriveFolderLink && (
+                  <a
+                    href={gdriveFolderLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-[#1a73e8] bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors border border-gray-100"
+                  >
+                    <FolderOpen className="w-3.5 h-3.5" />
+                    フォルダ
+                  </a>
+                )}
+                <button onClick={handleDisconnect} className="flex items-center gap-1 text-xs text-gray-500 hover:text-red-600 transition-colors">
+                  <LogOut className="w-3.5 h-3.5" /> 切断
+                </button>
+              </div>
+            </div>
+
+            {/* ★ 一括読込ボタン（全Google Drive読込） — 最も目立つデザイン */}
+            <button
+              onClick={handleLoadAll}
+              disabled={isProcessing}
+              className="w-full relative flex items-center justify-center gap-2.5 px-5 py-4 text-base font-black text-white bg-gradient-to-r from-[#EA4335] via-[#FBBC04] via-[#34A853] to-[#4285F4] rounded-2xl hover:opacity-90 disabled:opacity-50 transition-all shadow-lg hover:shadow-xl ring-2 ring-white/30"
+            >
+              <GoogleDriveIcon className="w-5 h-5" />
+              <Layers className="w-5 h-5" />
+              一括読込
+              {isProcessing && processingLabel.includes('一括') && <RefreshCw className="w-5 h-5 animate-spin" />}
+            </button>
+
+            {/* ふりがな・所属 / 大会・時間割 読込ボタン */}
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                onClick={handleBulkDownload}
+                disabled={isProcessing}
+                className="flex items-center justify-center gap-1.5 px-3 py-3 text-xs font-bold text-white bg-gradient-to-r from-[#1a73e8] to-[#8e24aa] rounded-xl hover:from-[#1557b0] hover:to-[#6a1b9a] disabled:opacity-40 transition-all shadow-md hover:shadow-lg"
+              >
+                <GoogleDriveIcon className="w-4 h-4 shrink-0" />
+                <span>ふりがな・所属</span>
+              </button>
+              <button
+                onClick={handleLoadTournamentAndSchedule}
+                disabled={isProcessing}
+                className="flex items-center justify-center gap-1.5 px-3 py-3 text-xs font-bold text-white bg-gradient-to-r from-[#4285F4] to-[#34A853] rounded-xl hover:opacity-90 disabled:opacity-40 transition-all shadow-md hover:shadow-lg"
+              >
+                <GoogleDriveIcon className="w-4 h-4 shrink-0" />
+                <span>大会・時間割</span>
+              </button>
+            </div>
+          </>
+        )}
+
+        {/* 結果メッセージ */}
+        {result && (
+          <div className={`p-3 rounded-lg text-sm ${
+            result.success
+              ? 'bg-primary-50 text-gray-900 border border-primary-200'
+              : 'bg-red-50 text-red-800 border border-red-200'
+          }`}>
+            <div className="flex items-start gap-2">
+              {result.success
+                ? <CheckCircle2 className="w-4 h-4 mt-0.5 shrink-0" />
+                : <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
+              }
+              <div>
+                <p className="font-medium">{result.message}</p>
+                {result.details && result.details.length > 0 && (
+                  <ul className="mt-1 space-y-0.5 text-xs opacity-90">
+                    {result.details.map((d, i) => <li key={i}>{d}</li>)}
+                  </ul>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* ── 大会ファイル選択ポップアップ ── */}
+      {showFileList && createPortal(
+        <div className="fixed inset-0 bg-black/20 backdrop-blur-[2px] z-[9999] flex items-center justify-center p-4" onClick={() => setShowFileList(false)}>
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[80vh] flex flex-col overflow-hidden" onClick={e => e.stopPropagation()}>
+            {/* ヘッダー */}
+            <div className="bg-gradient-to-r from-[#e8f0fe] to-[#d2e3fc] px-5 py-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-white/80 shadow-sm flex items-center justify-center">
+                    <GoogleDriveIcon className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-gray-800">大会ファイルを選択</h3>
+                    <p className="text-[11px] text-gray-500 mt-0.5">{gdriveDrawFiles.length}件のファイル</p>
+                  </div>
+                </div>
+                <button onClick={() => setShowFileList(false)} className="w-8 h-8 rounded-full bg-white/60 hover:bg-white flex items-center justify-center transition-colors">
+                  <X className="w-4 h-4 text-gray-500" />
+                </button>
+              </div>
+            </div>
+            {/* ファイルリスト */}
+            <div className="flex-1 overflow-y-auto px-3 py-2">
+              {gdriveDrawFiles.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-12 text-gray-400">
+                  <FolderOpen className="w-10 h-10 mb-2 opacity-50" />
+                  <p className="text-sm">ファイルがありません</p>
+                </div>
+              ) : (
+                <div className="space-y-1">
+                  {gdriveDrawFiles.map(f => {
+                    const displayName = f.name.replace(/\.(xlsx?|xls)$/i, '');
+                    const modDate = new Date(f.modifiedTime);
+                    const isLoading = loadingFileId === f.id;
+                    return (
+                      <button
+                        key={f.id}
+                        onClick={() => handleSelectTournamentFile(f)}
+                        disabled={!!loadingFileId}
+                        className="w-full flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-gray-50 active:bg-gray-100 transition-all text-left disabled:opacity-50 disabled:cursor-not-allowed group"
+                      >
+                        <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center shadow-sm group-hover:shadow transition-shadow">
+                          {isLoading ? <Loader2 className="w-5 h-5 text-gray-500 animate-spin" /> : <FileSpreadsheet className="w-5 h-5 text-gray-500" />}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-[13px] font-semibold text-gray-800 truncate">{displayName}</div>
+                          <div className="text-[11px] text-gray-400 mt-0.5">
+                            {modDate.toLocaleDateString('ja-JP')} {modDate.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' })}
+                          </div>
+                        </div>
+                        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gray-50 group-hover:bg-gray-100 flex items-center justify-center transition-colors">
+                          <Download className="w-3.5 h-3.5 text-gray-300 group-hover:text-gray-500 transition-colors" />
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+            {/* フッター */}
+            <div className="px-5 py-2.5 border-t border-gray-100">
+              <p className="text-[10px] text-gray-400 text-center">大会一覧フォルダから読込</p>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* ── 時間割ファイル選択ポップアップ ── */}
+      {showScheduleFileList && createPortal(
+        <div className="fixed inset-0 bg-black/20 backdrop-blur-[2px] z-[9999] flex items-center justify-center p-4" onClick={() => setShowScheduleFileList(false)}>
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[80vh] flex flex-col overflow-hidden" onClick={e => e.stopPropagation()}>
+            {/* ヘッダー */}
+            <div className="bg-gradient-to-r from-[#e8f0fe] to-[#d2e3fc] px-5 py-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-white/80 shadow-sm flex items-center justify-center">
+                    <CalendarClock className="w-5 h-5 text-[#1a73e8]" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-gray-800">時間割ファイルを選択</h3>
+                    <p className="text-[11px] text-gray-500 mt-0.5">{scheduleGDriveFiles.length}件のファイル</p>
+                  </div>
+                </div>
+                <button onClick={() => setShowScheduleFileList(false)} className="w-8 h-8 rounded-full bg-white/60 hover:bg-white flex items-center justify-center transition-colors">
+                  <X className="w-4 h-4 text-gray-500" />
+                </button>
+              </div>
+            </div>
+            {/* ファイルリスト */}
+            <div className="flex-1 overflow-y-auto px-3 py-2">
+              {scheduleGDriveFiles.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-12 text-gray-400">
+                  <FolderOpen className="w-10 h-10 mb-2 opacity-50" />
+                  <p className="text-sm">ファイルがありません</p>
+                </div>
+              ) : (
+                <div className="space-y-1">
+                  {scheduleGDriveFiles.map(f => {
+                    const displayName = f.name.replace(/\.(xlsx?|xls)$/i, '');
+                    const modDate = new Date(f.modifiedTime);
+                    const isLoading = loadingScheduleFileId === f.id;
+                    return (
+                      <button
+                        key={f.id}
+                        onClick={() => handleSelectScheduleFile(f)}
+                        disabled={!!loadingScheduleFileId}
+                        className="w-full flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-gray-50 active:bg-gray-100 transition-all text-left disabled:opacity-50 disabled:cursor-not-allowed group"
+                      >
+                        <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center shadow-sm group-hover:shadow transition-shadow">
+                          {isLoading ? <Loader2 className="w-5 h-5 text-gray-500 animate-spin" /> : <FileSpreadsheet className="w-5 h-5 text-gray-500" />}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-[13px] font-semibold text-gray-800 truncate">{displayName}</div>
+                          <div className="text-[11px] text-gray-400 mt-0.5">
+                            {modDate.toLocaleDateString('ja-JP')} {modDate.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' })}
+                          </div>
+                        </div>
+                        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gray-50 group-hover:bg-gray-100 flex items-center justify-center transition-colors">
+                          <Download className="w-3.5 h-3.5 text-gray-300 group-hover:text-gray-500 transition-colors" />
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+            {/* フッター */}
+            <div className="px-5 py-2.5 border-t border-gray-100">
+              <p className="text-[10px] text-gray-400 text-center">時間割フォルダから読込</p>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* ── 一括読込ウィザード ── */}
+      {wizardOpen && createPortal(
+        <div className="fixed inset-0 bg-black/20 backdrop-blur-[2px] z-[200] flex items-center justify-center p-4">
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[85vh] flex flex-col overflow-hidden" onClick={e => e.stopPropagation()}>
+            {/* ヘッダー */}
+            <div className="bg-gradient-to-r from-[#e8f0fe] to-[#d2e3fc] px-5 py-4 flex items-center gap-3 shrink-0">
+              <div className="relative">
+                <GoogleDriveIcon className="w-7 h-7" />
+                {wizardPhase !== 'done' && (
+                  <span className="absolute -top-1 -right-1 w-3 h-3 bg-gray-500 rounded-full drive-modal-pulse" />
+                )}
+              </div>
+              <div className="flex-1">
+                <h3 className="font-bold text-gray-800 text-sm">一括読込</h3>
+                {/* ステップインジケーター */}
+                <div className="flex items-center gap-1 mt-1">
+                  {(wizardIsMixedOrTeam
+                    ? [{ label: '読込', phases: ['loading'] }, { label: '大会', phases: ['select-tournament', 'confirm-tournament'] }]
+                    : [{ label: '読込', phases: ['loading'] }, { label: '大会', phases: ['select-tournament', 'confirm-tournament'] }, { label: '時間割', phases: ['select-schedule'] }]
+                  ).map((step, i, arr) => {
+                    const allPhases: WizardPhase[] = arr.flatMap(s => s.phases as WizardPhase[]);
+                    const currentPhaseIdx = allPhases.indexOf(wizardPhase);
+                    const isDone = wizardPhase === 'done' || currentPhaseIdx > allPhases.indexOf(step.phases[step.phases.length - 1] as WizardPhase);
+                    const isCurrent = step.phases.includes(wizardPhase);
+                    const label = step.label;
+                    return (
+                      <div key={i} className="flex items-center gap-1">
+                        {i > 0 && <ChevronRight className="w-2.5 h-2.5 text-gray-300" />}
+                        <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${
+                          isDone ? 'bg-primary-100 text-gray-800' :
+                          isCurrent ? 'bg-gray-100 text-gray-700' :
+                          'bg-gray-100 text-gray-400'
+                        }`}>{label}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+              {wizardPhase === 'done' && (
+                <button onClick={handleWizardClose} className="w-8 h-8 rounded-full bg-white/60 hover:bg-white flex items-center justify-center transition-colors">
+                  <X className="w-4 h-4 text-gray-500" />
+                </button>
+              )}
+            </div>
+
+            {/* コンテンツ */}
+            <div className="flex-1 overflow-y-auto">
+              {/* Phase: loading */}
+              {wizardPhase === 'loading' && (
+                <div className="px-5 py-4">
+                  {/* スピナー */}
+                  <div className="flex justify-center py-3">
+                    <div className="relative w-16 h-16">
+                      <svg className="absolute inset-0 w-full h-full drive-ring-shape" viewBox="0 0 80 80">
+                        <circle cx="40" cy="40" r="32" fill="none" stroke="#e5e7eb" strokeWidth="6" opacity="0.3" />
+                      </svg>
+                      <svg className="absolute inset-0 w-full h-full drive-ring-colors" viewBox="0 0 80 80">
+                        <defs><linearGradient id="wizGrad" x1="0" y1="0" x2="80" y2="80" gradientUnits="userSpaceOnUse">
+                          <stop offset="0%" stopColor="#4285F4"/><stop offset="25%" stopColor="#34A853"/><stop offset="50%" stopColor="#FBBC04"/><stop offset="75%" stopColor="#EA4335"/><stop offset="100%" stopColor="#4285F4"/>
+                        </linearGradient></defs>
+                        <circle cx="40" cy="40" r="32" fill="none" stroke="url(#wizGrad)" strokeWidth="6" strokeLinecap="round" strokeDasharray="150 51" />
+                      </svg>
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <GoogleDriveIcon className="w-6 h-6 drive-icon-pulse" />
+                      </div>
+                    </div>
+                  </div>
+                  {/* プログレスバー */}
+                  <div className="mt-2 mb-3">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-xs text-gray-500">進捗</span>
+                      <span className="text-sm font-bold text-[#1a73e8]">{Math.round(wizardProgress)}%</span>
+                    </div>
+                    <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+                      <div className="h-full rounded-full transition-all duration-500" style={{
+                        width: `${wizardProgress}%`,
+                        background: 'linear-gradient(90deg, #1a73e8, #8e24aa)',
+                      }} />
+                    </div>
+                  </div>
+                  {/* ステップ */}
+                  <div className="space-y-2">
+                    {wizardSteps.map((step, i) => (
+                      <div key={i} className="flex items-center gap-3">
+                        <div className="shrink-0 w-5 h-5 flex items-center justify-center">
+                          {step.status === 'waiting' && <span className="w-2 h-2 rounded-full bg-gray-200" />}
+                          {step.status === 'loading' && <span className="w-4 h-4 rounded-full border-2 border-gray-200 border-t-[#1a73e8] drive-modal-spin" />}
+                          {step.status === 'done' && <CheckCircle2 className="w-4 h-4 text-primary-500" />}
+                          {step.status === 'error' && <AlertCircle className="w-4 h-4 text-red-500" />}
+                        </div>
+                        <span className={`text-sm ${step.status === 'loading' ? 'text-gray-800 font-medium' : step.status === 'done' ? 'text-gray-800' : step.status === 'error' ? 'text-red-600' : 'text-gray-400'}`}>
+                          {step.label}
+                        </span>
+                        {step.detail && <span className="text-[11px] text-gray-400 ml-auto">{step.detail}</span>}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Phase: select-tournament */}
+              {wizardPhase === 'select-tournament' && (
+                <div className="px-3 py-3">
+                  <div className="px-2 mb-2">
+                    <h4 className="text-sm font-bold text-gray-800 flex items-center gap-2">
+                      <Trophy className="w-4 h-4 text-[#1a73e8]" />
+                      大会ファイルを選択
+                    </h4>
+                    <p className="text-[11px] text-gray-500 mt-0.5">{wizardDrawFiles.length}件のファイル</p>
+                  </div>
+                  {wizardListDocFiles.length > 0 && (
+                    <div className="mx-2 mb-2 flex items-start gap-2 px-3 py-2 rounded-lg bg-primary-50 border border-primary-200 text-[11px] text-gray-800">
+                      <ListChecks className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+                      <span>
+                        大会日程表を検出しました（{wizardListDocFiles.map(f => f.name.replace(/\.(xlsx?|xls)$/i, '')).join('、')}）。
+                        次の確認画面で正式な大会名を選べます。
+                      </span>
+                    </div>
+                  )}
+                  <div className="space-y-1 max-h-64 overflow-y-auto">
+                    {wizardDrawFiles.length === 0 && (
+                      <p className="text-[12px] text-gray-500 text-center py-6">
+                        大会一覧フォルダに大会（ドロー）ファイルがありません。
+                      </p>
+                    )}
+                    {wizardDrawFiles.map(f => {
+                      const displayName = f.name.replace(/\.(xlsx?|xls)$/i, '');
+                      const modDate = new Date(f.modifiedTime);
+                      const isLoading = wizardLoadingFileId === f.id;
+                      return (
+                        <button
+                          key={f.id}
+                          onClick={() => handleWizardSelectTournament(f)}
+                          disabled={!!wizardLoadingFileId}
+                          className="w-full flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-gray-50 active:bg-gray-100 transition-all text-left disabled:opacity-50 group"
+                        >
+                          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center shadow-sm shrink-0">
+                            {isLoading ? <Loader2 className="w-5 h-5 text-gray-500 animate-spin" /> : <FileSpreadsheet className="w-5 h-5 text-gray-500" />}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="text-[13px] font-semibold text-gray-800 truncate">{displayName}</div>
+                            <div className="text-[11px] text-gray-400 mt-0.5">
+                              {modDate.toLocaleDateString('ja-JP')} {modDate.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' })}
+                            </div>
+                          </div>
+                          <Download className="w-3.5 h-3.5 text-gray-300 group-hover:text-gray-500 shrink-0" />
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {/* スキップ */}
+                  <div className="mt-3 px-2">
+                    <button
+                      onClick={() => {
+                        if (wizardScheduleFiles.length > 0) setWizardPhase('select-schedule');
+                        else { setWizardResult({ success: true, message: '一括読込が完了しました' }); setWizardPhase('done'); }
+                      }}
+                      className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
+                    >
+                      スキップ →
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Phase: confirm-tournament */}
+              {wizardPhase === 'confirm-tournament' && (
+                <div className="px-0 py-0">
+                  {/* ヘッダー */}
+                  <div className="relative overflow-hidden bg-gradient-to-r from-primary-600 to-primary-700 px-5 py-4">
+                    <div className="absolute -top-6 -right-6 w-24 h-24 rounded-full bg-white/[0.06]" />
+                    <div className="flex items-center gap-3 relative">
+                      <div className="w-9 h-9 rounded-xl bg-white/15 flex items-center justify-center backdrop-blur-sm">
+                        <FileSpreadsheet className="w-5 h-5 text-white" />
+                      </div>
+                      <div>
+                        <h3 className="text-sm font-bold text-white">
+                          {wizardTeamPending ? '団体戦大会情報の確認' : wizardMixedPending ? 'ミックス大会情報の確認' : '大会データ読込'}
+                        </h3>
+                        <p className="text-[11px] text-white/60 mt-0.5 truncate max-w-[200px]">{wizardTournamentFileName}</p>
+                      </div>
+                    </div>
+                    {/* 統計バッジ */}
+                    <div className="flex gap-2 mt-3 relative">
+                      {wizardTeamPending ? (
+                        <>
+                          {[
+                            { icon: Trophy, value: wizardTeamPending.leagues.length, label: 'リーグ' },
+                            { icon: Users, value: wizardTeamPending.leagues.reduce((s, l) => s + l.teams.length, 0), label: 'チーム' },
+                            { icon: Dices, value: wizardTeamPending.matches.length, label: '試合' },
+                          ].map(({ icon: Icon, value, label }) => (
+                            <div key={label} className="flex-1 bg-white/10 backdrop-blur-sm rounded-lg px-2 py-1.5 text-center text-white">
+                              <Icon className="w-3.5 h-3.5 mx-auto mb-0.5 text-white/70" />
+                              <p className="text-base font-bold leading-none">{value}</p>
+                              <p className="text-[9px] text-white/50 mt-0.5">{label}</p>
+                            </div>
+                          ))}
+                        </>
+                      ) : wizardMixedPending ? (
+                        <>
+                          {[
+                            { icon: Trophy, value: wizardMixedPending.leagues.length, label: 'リーグ' },
+                            { icon: Users, value: wizardMixedPending.leagues.reduce((s, l) => s + l.teams.length, 0), label: 'ペア' },
+                            { icon: Dices, value: wizardMixedPending.matches.length, label: '試合' },
+                          ].map(({ icon: Icon, value, label }) => (
+                            <div key={label} className="flex-1 bg-white/10 backdrop-blur-sm rounded-lg px-2 py-1.5 text-center text-white">
+                              <Icon className="w-3.5 h-3.5 mx-auto mb-0.5 text-white/70" />
+                              <p className="text-base font-bold leading-none">{value}</p>
+                              <p className="text-[9px] text-white/50 mt-0.5">{label}</p>
+                            </div>
+                          ))}
+                        </>
+                      ) : wizardParsedExcel ? (
+                        <>
+                          {(() => {
+                            const names = new Set<string>();
+                            for (const ev of wizardParsedExcel.events) {
+                              for (const p of ev.players) {
+                                if (!p.isBye && p.name) names.add(p.name.replace(/\s+/g, ''));
+                                if (p.partnerName) names.add(p.partnerName.replace(/\s+/g, ''));
+                              }
+                            }
+                            const playerCount = names.size;
+                            const drawCount = wizardParsedExcel.events.filter(ev => ev.drawSize > 0).length;
+                            return [
+                              { icon: Users, value: playerCount, label: '選手' },
+                              { icon: Trophy, value: wizardParsedExcel.events.length, label: '種目' },
+                              { icon: Dices, value: drawCount, label: 'ドロー' },
+                            ].map(({ icon: Icon, value, label }) => (
+                              <div key={label} className="flex-1 bg-white/10 backdrop-blur-sm rounded-lg px-2 py-1.5 text-center text-white">
+                                <Icon className="w-3.5 h-3.5 mx-auto mb-0.5 text-white/70" />
+                                <p className="text-base font-bold leading-none">{value}</p>
+                                <p className="text-[9px] text-white/50 mt-0.5">{label}</p>
+                              </div>
+                            ));
+                          })()}
+                        </>
+                      ) : null}
+                    </div>
+                  </div>
+
+                  {/* フォーム */}
+                  <div className="px-5 py-4 space-y-3">
+                    {/* 会場（セクション）選択：男女で会場が分かれる場合 */}
+                    {wizardTeamPending?.sections && wizardTeamPending.sections.length > 1 && (
+                      <div>
+                        <label className="text-[11px] font-medium text-gray-500 block mb-1">運営する会場を選択</label>
+                        <div className="grid grid-cols-1 gap-2">
+                          {wizardTeamPending.sections.map(sec => {
+                            const isActive = sec.key === wizardTeamPending.selectedSectionKey;
+                            return (
+                              <button
+                                key={sec.key}
+                                type="button"
+                                onClick={() => {
+                                  setWizardTeamPending(prev => prev ? {
+                                    ...prev,
+                                    info: sec.info,
+                                    leagues: sec.leagues,
+                                    matches: sec.matches,
+                                    selectedSectionKey: sec.key,
+                                  } : prev);
+                                  setWizardEditName(sec.info.name);
+                                  setWizardEditDate(formatJpDate(sec.info.date || ''));
+                                  setWizardEditVenue(sec.info.venue);
+                                  if (sec.info.date) setWizardSourceDate(sec.info.date);
+                                  if (sec.info.venue) setWizardSourceVenue(sec.info.venue);
+                                }}
+                                className={`text-left px-3 py-2.5 rounded-xl border transition-colors ${
+                                  isActive
+                                    ? 'border-primary-400 bg-primary-50 ring-1 ring-primary-300'
+                                    : 'border-gray-200 bg-white hover:bg-gray-50'
+                                }`}
+                              >
+                                <div className={`text-sm font-bold ${isActive ? 'text-gray-800' : 'text-gray-700'}`}>{sec.label}</div>
+                                <div className="text-[11px] text-gray-500 flex items-center gap-1 mt-0.5">
+                                  <MapPin className="w-3 h-3" />{sec.info.venue}
+                                  <span className="ml-1">{sec.leagues.length}リーグ・{sec.leagues.reduce((s, l) => s + l.teams.length, 0)}チーム</span>
+                                </div>
+                              </button>
+                            );
+                          })}
+                        </div>
+                        <p className="text-[10px] text-gray-400 mt-1">※ 会場ごとに端末を分けて運営できます。この端末で運営する会場を選んでください。</p>
+                      </div>
+                    )}
+                    <div>
+                      <label className="text-[11px] font-medium text-gray-500 block mb-1">大会名</label>
+                      <div className="flex gap-2">
+                        <input type="text" value={wizardEditName} onChange={e => setWizardEditName(e.target.value)}
+                          placeholder="大会名を入力"
+                          className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm font-medium bg-gray-50/50 focus:bg-white focus:border-primary-400 focus:ring-[3px] focus:ring-primary-500/10 outline-none transition-all" />
+                        <button type="button" onClick={handleToggleOfficialPicker}
+                          className={`shrink-0 px-2.5 py-2 text-[11px] font-semibold border rounded-lg transition-all ${
+                            officialPickerOpen
+                              ? 'text-white bg-primary-600 border-primary-600'
+                              : 'text-gray-700 bg-primary-50 border-primary-200 hover:bg-primary-100'
+                          }`}
+                          title="大会日程表から正式名称を選ぶ">
+                          {officialListLoading
+                            ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            : <ListChecks className="w-3.5 h-3.5" />}
+                        </button>
+                        <button type="button" onClick={() => {
+                          const raw = wizardTournamentFileName.replace(/\.(xlsx?|xls)$/i, '');
+                          setWizardEditName(cleanTournamentName(raw));
+                        }} className="shrink-0 px-2.5 py-2 text-[11px] font-semibold text-gray-700 bg-primary-50 border border-primary-200 rounded-lg hover:bg-primary-100 transition-all" title="不要な文字を自動除去">
+                          <Sparkles className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                      <p className="text-[10px] text-gray-400 mt-1">
+                        <ListChecks className="w-3 h-3 inline -mt-0.5 mr-0.5" />
+                        大会一覧フォルダの大会日程表から正式名称を選べます。
+                      </p>
+
+                      {/* 正式名称の選択パネル */}
+                      {officialPickerOpen && (
+                        <div className="mt-2 border border-primary-200 rounded-xl bg-primary-50/40 overflow-hidden">
+                          {officialListLoading ? (
+                            <div className="flex items-center gap-2 px-3 py-4 text-[12px] text-gray-500">
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                              大会日程表を読み込んでいます...
+                            </div>
+                          ) : officialListError ? (
+                            <div className="flex items-start gap-2 px-3 py-3 text-[11px] text-gray-800 bg-primary-50">
+                              <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
+                              <span>{officialListError}</span>
+                            </div>
+                          ) : (
+                            <>
+                              <div className="px-2 pt-2">
+                                <div className="relative">
+                                  <Search className="w-3.5 h-3.5 text-gray-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
+                                  <input type="text" value={officialFilter} onChange={e => setOfficialFilter(e.target.value)}
+                                    placeholder="大会名で絞り込み"
+                                    className="w-full border border-primary-200 rounded-lg pl-8 pr-3 py-1.5 text-[12px] bg-white focus:border-primary-400 outline-none" />
+                                </div>
+                              </div>
+                              <div className="max-h-56 overflow-y-auto p-2 space-y-1">
+                                {filteredOfficialList.length === 0 ? (
+                                  <p className="text-[11px] text-gray-400 text-center py-4">該当する大会がありません</p>
+                                ) : filteredOfficialList.map((t, i) => (
+                                  <button
+                                    key={`${t.season}-${t.no}-${t.name}-${i}`}
+                                    type="button"
+                                    onClick={() => applyOfficialTournament(t)}
+                                    className="w-full text-left px-3 py-2 rounded-lg bg-white border border-gray-200 hover:border-primary-400 hover:bg-primary-50 transition-colors"
+                                  >
+                                    <div className="text-[12px] font-bold text-gray-800">{t.name}</div>
+                                    <div className="text-[10px] text-gray-500 flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-0.5">
+                                      {t.category && <span>{t.category}</span>}
+                                      {t.date && <span><Calendar className="w-2.5 h-2.5 inline -mt-0.5 mr-0.5" />{t.date}</span>}
+                                      {t.venue && <span><MapPin className="w-2.5 h-2.5 inline -mt-0.5 mr-0.5" />{t.venue}</span>}
+                                      {t.season && <span className="text-gray-700">{t.season}</span>}
+                                    </div>
+                                  </button>
+                                ))}
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                    {(wizardMixedPending || wizardTeamPending) ? (
+                      /* ミックス・団体戦: シンプルな日程・会場入力 */
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="text-[11px] font-medium text-gray-500 block mb-1">
+                            <Calendar className="w-3 h-3 inline mr-0.5 -mt-0.5" />開催日
+                          </label>
+                          <input type="text" value={wizardEditDate}
+                            onChange={e => setWizardEditDate(e.target.value)}
+                            onBlur={e => setWizardEditDate(formatJpDate(e.target.value))}
+                            placeholder="例: 11/3（日）"
+                            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-gray-50/50 focus:bg-white focus:border-primary-400 outline-none transition-all" />
+                        </div>
+                        <div>
+                          <label className="text-[11px] font-medium text-gray-500 block mb-1">
+                            <MapPin className="w-3 h-3 inline mr-0.5 -mt-0.5" />会場
+                          </label>
+                          <select
+                            value={
+                              wizardEditVenue.includes('ヤマタ') ? 'ヤマタスポーツパーク'
+                              : wizardEditVenue.includes('千代') ? '千代テニス場'
+                              : wizardEditVenue || ''
+                            }
+                            onChange={e => setWizardEditVenue(e.target.value)}
+                            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-gray-50/50 focus:bg-white focus:border-primary-400 outline-none transition-all"
+                          >
+                            <option value="">会場を選択</option>
+                            <option value="ヤマタスポーツパーク">ヤマタスポーツパーク</option>
+                            <option value="千代テニス場">千代テニス場</option>
+                            {wizardEditVenue && !wizardEditVenue.includes('ヤマタ') && !wizardEditVenue.includes('千代') && (
+                              <option value={wizardEditVenue}>{wizardEditVenue}</option>
+                            )}
+                          </select>
+                        </div>
+                      </div>
+                    ) : (
+                      /* 通常大会: 日程・会場モード選択付き */
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="text-[11px] font-medium text-gray-500 block mb-1">
+                            <Calendar className="w-3 h-3 inline mr-0.5 -mt-0.5" />日程
+                          </label>
+                          <select value={wizardDateMode} onChange={e => {
+                            const mode = e.target.value as 'normal' | 'reserve' | 'custom';
+                            setWizardDateMode(mode);
+                            if (mode === 'normal') setWizardEditDate(wizardSourceDate);
+                            else if (mode === 'reserve') setWizardEditDate(wizardSourceReserveDate);
+                          }} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-gray-50/50 focus:bg-white focus:border-primary-400 outline-none transition-all mb-1">
+                            <option value="normal">通常日程{wizardSourceDate ? ` (${wizardSourceDate})` : ''}</option>
+                            <option value="reserve">予備日{wizardSourceReserveDate ? ` (${wizardSourceReserveDate})` : ''}</option>
+                            <option value="custom">その他</option>
+                          </select>
+                          {wizardDateMode === 'custom' && (
+                            <input type="text" value={wizardEditDate} onChange={e => setWizardEditDate(e.target.value)} placeholder="例: 3/15"
+                              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-gray-50/50 focus:bg-white focus:border-primary-400 outline-none transition-all" />
+                          )}
+                        </div>
+                        <div>
+                          <label className="text-[11px] font-medium text-gray-500 block mb-1">
+                            <MapPin className="w-3 h-3 inline mr-0.5 -mt-0.5" />会場
+                          </label>
+                          <select value={wizardVenueMode} onChange={e => {
+                            const mode = e.target.value as 'normal' | 'reserve' | 'custom';
+                            setWizardVenueMode(mode);
+                            if (mode === 'normal') setWizardEditVenue(wizardSourceVenue);
+                            else if (mode === 'reserve') setWizardEditVenue(wizardSourceReserveVenue);
+                          }} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-gray-50/50 focus:bg-white focus:border-primary-400 outline-none transition-all mb-1">
+                            <option value="normal">通常会場{wizardSourceVenue ? ` (${wizardSourceVenue})` : ''}</option>
+                            <option value="reserve">予備日会場{wizardSourceReserveVenue ? ` (${wizardSourceReserveVenue})` : ''}</option>
+                            <option value="custom">その他</option>
+                          </select>
+                          {wizardVenueMode === 'custom' && (
+                            <input type="text" value={wizardEditVenue} onChange={e => setWizardEditVenue(e.target.value)} placeholder="例: ヤマタスポーツパーク"
+                              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-gray-50/50 focus:bg-white focus:border-primary-400 outline-none transition-all" />
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* 使用コート・開始時刻（通常大会のみ） */}
+                    {!(wizardMixedPending || wizardTeamPending) && (
+                      <div className="space-y-3">
+                        <CourtSelector value={wizardEditCourtNames} onChange={setWizardEditCourtNames} />
+                        <div>
+                          <label className="text-[11px] font-medium text-gray-500 block mb-1">開始時刻</label>
+                          <input type="time" value={wizardEditStartTime} onChange={e => setWizardEditStartTime(e.target.value)}
+                            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-gray-50/50 focus:bg-white focus:border-primary-400 outline-none transition-all" />
+                        </div>
+                        <p className="text-[10px] text-gray-400">
+                          ドロー表から検出（{wizardParsedExcel?.suggestedCourtCount || '—'}面）。この使用コート・開始時刻をもとに時間割を生成します。
+                        </p>
+                      </div>
+                    )}
+
+                  </div>
+
+                  {/* アクション */}
+                  <div className="px-5 pb-4 flex items-center gap-2.5">
+                    <button onClick={() => { setWizardPhase('select-tournament'); setWizardParsedExcel(null); setWizardMixedPending(null); setWizardTeamPending(null); }}
+                      className="flex-shrink-0 px-4 py-2.5 text-sm font-semibold text-gray-500 bg-gray-50 border border-gray-200 rounded-xl hover:bg-gray-100 transition-all">
+                      戻る
+                    </button>
+                    <button onClick={handleWizardConfirmTournament}
+                      disabled={wizardIsImporting}
+                      className="flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-bold text-white bg-gradient-to-r from-primary-500 to-primary-600 rounded-xl hover:from-primary-600 hover:to-primary-700 disabled:opacity-50 shadow-sm transition-all">
+                      <Upload className="w-4 h-4" />
+                      {wizardIsImporting ? 'インポート中...' : (wizardMixedPending || wizardTeamPending) ? '確定してエントリーへ' : 'インポート'}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Phase: select-schedule */}
+              {wizardPhase === 'select-schedule' && (
+                <div className="px-3 py-3">
+                  {/* 自動生成の選択肢 */}
+                  <button
+                    onClick={handleWizardAutoGenerateSchedule}
+                    disabled={wizardScheduleGenerating || wizardAutoGenPending}
+                    className="w-full flex items-center gap-3 px-3 py-3 mb-3 rounded-xl border border-primary-200 bg-gradient-to-br from-primary-50 to-white hover:from-primary-100 transition-all text-left disabled:opacity-60"
+                  >
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-100 to-white flex items-center justify-center shadow-sm shrink-0">
+                      {(wizardScheduleGenerating || wizardAutoGenPending)
+                        ? <Loader2 className="w-5 h-5 text-primary-600 animate-spin" />
+                        : <Dices className="w-5 h-5 text-primary-600" />}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-[13px] font-bold text-gray-800">ドローから自動生成</div>
+                      <div className="text-[11px] text-gray-500 mt-0.5">
+                        {(wizardScheduleGenerating || wizardAutoGenPending)
+                          ? '時間割を生成しています…'
+                          : '記載の開始時刻・使用コートで時間割を自動作成します'}
+                      </div>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-primary-400 shrink-0" />
+                  </button>
+
+                  {/* Googleドライブから時間割ファイルを読み込む */}
+                  <button
+                    onClick={handleWizardBrowseSchedule}
+                    disabled={wizardScheduleListLoading}
+                    className="w-full flex items-center gap-3 px-3 py-3 rounded-xl border border-gray-200 bg-gradient-to-br from-gray-50 to-white hover:from-gray-100 transition-all text-left disabled:opacity-60"
+                  >
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-gray-100 to-white flex items-center justify-center shadow-sm shrink-0">
+                      {wizardScheduleListLoading
+                        ? <Loader2 className="w-5 h-5 text-gray-600 animate-spin" />
+                        : <CalendarClock className="w-5 h-5 text-gray-600" />}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-[13px] font-bold text-gray-800">Googleドライブから読み込む</div>
+                      <div className="text-[11px] text-gray-500 mt-0.5">
+                        「時間割」フォルダのExcelファイルを選択します
+                        {wizardScheduleFiles.length > 0 ? `（${wizardScheduleFiles.length}件）` : ''}
+                      </div>
+                    </div>
+                    {wizardScheduleListOpen
+                      ? <ChevronDown className="w-4 h-4 text-gray-400 shrink-0" />
+                      : <ChevronRight className="w-4 h-4 text-gray-400 shrink-0" />}
+                  </button>
+
+                  {/* 時間割ファイル一覧（展開時） */}
+                  {wizardScheduleListOpen && (
+                    <div className="mt-2">
+                      {wizardScheduleListLoading ? (
+                        <div className="flex items-center gap-2 px-3 py-4 text-sm text-gray-500">
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          時間割ファイルを検索中...
+                        </div>
+                      ) : wizardScheduleListError ? (
+                        <div className="flex items-start gap-2 px-3 py-3 rounded-lg bg-primary-50 border border-primary-200 text-[12px] text-gray-800">
+                          <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
+                          <span>{wizardScheduleListError}</span>
+                        </div>
+                      ) : wizardScheduleFiles.length === 0 ? (
+                        <div className="px-3 py-4 text-[12px] text-gray-500 text-center">
+                          時間割フォルダにファイルがありません。
+                        </div>
+                      ) : (
+                        <div className="space-y-1 max-h-64 overflow-y-auto">
+                          {wizardScheduleFiles.map(f => {
+                            const displayName = f.name.replace(/\.(xlsx?|xls)$/i, '');
+                            const modDate = new Date(f.modifiedTime);
+                            const isLoading = wizardLoadingFileId === f.id;
+                            return (
+                              <button
+                                key={f.id}
+                                onClick={() => handleWizardSelectSchedule(f)}
+                                disabled={!!wizardLoadingFileId}
+                                className="w-full flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-gray-50 active:bg-gray-100 transition-all text-left disabled:opacity-50 group"
+                              >
+                                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-50 to-primary-100 flex items-center justify-center shadow-sm shrink-0">
+                                  {isLoading ? <Loader2 className="w-5 h-5 text-primary-500 animate-spin" /> : <CalendarClock className="w-5 h-5 text-primary-600" />}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <div className="text-[13px] font-semibold text-gray-800 truncate">{displayName}</div>
+                                  <div className="text-[11px] text-gray-400 mt-0.5">
+                                    {modDate.toLocaleDateString('ja-JP')} {modDate.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' })}
+                                  </div>
+                                </div>
+                                <Download className="w-3.5 h-3.5 text-gray-300 group-hover:text-primary-500 shrink-0" />
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  {/* スキップ */}
+                  <div className="mt-3 px-2">
+                    <button
+                      onClick={() => { setWizardResult({ success: true, message: '一括読込が完了しました' }); setWizardPhase('done'); }}
+                      className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
+                    >
+                      スキップ →
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Phase: done */}
+              {wizardPhase === 'done' && wizardResult && (
+                <div className="px-5 py-4">
+                  <div className={`p-3 rounded-lg text-sm ${
+                    wizardResult.success ? 'bg-primary-50 text-gray-900 border border-primary-200' : 'bg-red-50 text-red-800 border border-red-200'
+                  }`}>
+                    <div className="flex items-start gap-2">
+                      {wizardResult.success ? <CheckCircle2 className="w-4 h-4 mt-0.5 shrink-0" /> : <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />}
+                      <div>
+                        <p className="font-medium">{wizardResult.message}</p>
+                        {wizardDetails.length > 0 && (
+                          <ul className="mt-1 space-y-0.5 text-xs opacity-90">
+                            {wizardDetails.map((d, i) => <li key={i}>{d}</li>)}
+                          </ul>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* フッター: 完了時のみ閉じるボタン */}
+            {wizardPhase === 'done' && (
+              <div className="px-5 pb-4 shrink-0">
+                <button
+                  onClick={handleWizardClose}
+                  className="w-full py-2.5 text-sm font-bold text-white bg-[#1a73e8] rounded-lg hover:bg-[#1557b0] transition-colors"
+                >
+                  閉じる
+                </button>
+              </div>
+            )}
+          </div>
+        </div>,
+        document.body
+      )}
+    </section>
+  );
+}
+
+// ============================================================
+// ふりがな・所属操作パネル（所属・ふりがな一覧セクション用）
+// ============================================================
+
+interface FuriganaAffOpsProps {
+  gdriveConnected: boolean;
+  onDataLoaded?: () => void;
+}
+
+export function FuriganaAffiliationOps({ gdriveConnected, onDataLoaded }: FuriganaAffOpsProps) {
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [, setProcessingLabel] = useState('');
+  const [result, setResult] = useState<{ success: boolean; message: string; details?: string[] } | null>(null);
+  const excelFuriganaRef = useRef<HTMLInputElement>(null);
+  const excelAffRef = useRef<HTMLInputElement>(null);
+
+  const modal = useModalState();
+  const furiganaDictCount = useLiveQuery(() => db.furiganaDict.count()) ?? 0;
+  const affiliationCount = useLiveQuery(() => db.affiliationFurigana.count()) ?? 0;
+
+  const updateLastSync = useCallback(() => {
+    const now = new Date().toISOString();
+    try { localStorage.setItem(LS_KEY_LAST_SYNC, now); } catch { /* ignore */ }
+  }, []);
+
+  // --- GDrive ふりがな読込 ---
+  const handleDownloadFurigana = useCallback(async () => {
+    const steps: LoadingStep[] = [{ label: 'ふりがな一覧を読込中...', status: 'loading' }];
+    modal.setModalTitle('ふりがな読込');
+    modal.setModalSteps(steps);
+    modal.setModalResult(null);
+    modal.setModalProgress(0);
+    modal.setModalOpen(true);
+    setIsProcessing(true);
+    setProcessingLabel('ふりがな読込中...');
+    setResult(null);
+    try {
+      const token = gdriveGetSavedToken();
+      if (!token) throw new Error('Google ドライブに接続してください');
+      modal.setModalProgress(30);
+      const res = await doDownloadFurigana(token);
+      modal.setModalProgress(100);
+      modal.setModalSteps(modal.updateStep(steps, 0, { status: 'done', label: 'ふりがな一覧を読込完了' }));
+      updateLastSync();
+      const r = { success: true, message: 'ふりがなデータを読み込みました', details: res.details };
+      setResult(r);
+      modal.setModalResult(r);
+      onDataLoaded?.();
+    } catch (err) {
+      modal.setModalSteps(modal.updateStep(steps, 0, { status: 'error', label: 'ふりがな読込に失敗' }));
+      const r = { success: false, message: `読込失敗: ${(err as Error).message}` };
+      setResult(r);
+      modal.setModalResult(r);
+    } finally {
+      setIsProcessing(false);
+      setProcessingLabel('');
+    }
+  }, [updateLastSync, modal, onDataLoaded]);
+
+  // --- GDrive ふりがな書込 ---
+  const handleUploadFurigana = useCallback(async () => {
+    const steps: LoadingStep[] = [{ label: 'ふりがなデータを書込中...', status: 'loading' }];
+    modal.setModalTitle('ふりがな書込');
+    modal.setModalSteps(steps);
+    modal.setModalResult(null);
+    modal.setModalProgress(0);
+    modal.setModalOpen(true);
+    setIsProcessing(true);
+    setResult(null);
+    try {
+      const token = gdriveGetSavedToken();
+      if (!token) throw new Error('Google ドライブに接続してください');
+      modal.setModalProgress(20);
+      const allDict = await db.furiganaDict.toArray();
+      const sorted = allDict.sort((a, b) => a.furigana.localeCompare(b.furigana, 'ja'));
+      const data = sorted.map(d => ({ '氏名': d.name, 'ふりがな': d.furigana, 'ソース': d.type }));
+      const ws = XLSX.utils.json_to_sheet(data);
+      ws['!cols'] = [{ wch: 20 }, { wch: 25 }, { wch: 10 }];
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'ふりがな');
+      const buf = XLSX.write(wb, { type: 'array', bookType: 'xlsx' }) as ArrayBuffer;
+      modal.setModalProgress(60);
+      await uploadFuriganaExcel(token, 'ふりがなデータ.xlsx', buf);
+      modal.setModalProgress(100);
+      modal.setModalSteps(modal.updateStep(steps, 0, { status: 'done', label: 'ふりがなデータを書込完了' }));
+      const r = { success: true, message: `ふりがなデータ（${data.length}件）を保存しました` };
+      setResult(r);
+      modal.setModalResult(r);
+    } catch (err) {
+      modal.setModalSteps(modal.updateStep(steps, 0, { status: 'error', label: 'ふりがな書込に失敗' }));
+      const r = { success: false, message: `書込失敗: ${(err as Error).message}` };
+      setResult(r);
+      modal.setModalResult(r);
+    } finally {
+      setIsProcessing(false);
+    }
+  }, [modal]);
+
+  // --- GDrive 所属読込 ---
+  const handleDownloadAffiliation = useCallback(async () => {
+    const steps: LoadingStep[] = [{ label: '所属一覧を読込中...', status: 'loading' }];
+    modal.setModalTitle('所属読込');
+    modal.setModalSteps(steps);
+    modal.setModalResult(null);
+    modal.setModalProgress(0);
+    modal.setModalOpen(true);
+    setIsProcessing(true);
+    setResult(null);
+    try {
+      const token = gdriveGetSavedToken();
+      if (!token) throw new Error('Google ドライブに接続してください');
+      modal.setModalProgress(30);
+      const res = await doDownloadAffiliation(token);
+      modal.setModalProgress(100);
+      modal.setModalSteps(modal.updateStep(steps, 0, { status: 'done', label: '所属一覧を読込完了' }));
+      updateLastSync();
+      const r = { success: true, message: '所属ふりがなを読み込みました', details: res.details };
+      setResult(r);
+      modal.setModalResult(r);
+      onDataLoaded?.();
+    } catch (err) {
+      modal.setModalSteps(modal.updateStep(steps, 0, { status: 'error', label: '所属読込に失敗' }));
+      const r = { success: false, message: `読込失敗: ${(err as Error).message}` };
+      setResult(r);
+      modal.setModalResult(r);
+    } finally {
+      setIsProcessing(false);
+    }
+  }, [updateLastSync, modal, onDataLoaded]);
+
+  // --- GDrive 所属書込 ---
+  const handleUploadAffiliation = useCallback(async () => {
+    const steps: LoadingStep[] = [{ label: '所属データを書込中...', status: 'loading' }];
+    modal.setModalTitle('所属書込');
+    modal.setModalSteps(steps);
+    modal.setModalResult(null);
+    modal.setModalProgress(0);
+    modal.setModalOpen(true);
+    setIsProcessing(true);
+    setResult(null);
+    try {
+      const token = gdriveGetSavedToken();
+      if (!token) throw new Error('Google ドライブに接続してください');
+      modal.setModalProgress(20);
+      const allAff = await db.affiliationFurigana.toArray();
+      const sorted = allAff.filter(a => a.furigana).sort((a, b) => a.furigana.localeCompare(b.furigana, 'ja'));
+      const data = sorted.map(a => ({ '所属名': a.name, 'ふりがな': a.furigana }));
+      const ws = XLSX.utils.json_to_sheet(data);
+      ws['!cols'] = [{ wch: 25 }, { wch: 30 }];
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, '所属一覧');
+      const buf = XLSX.write(wb, { type: 'array', bookType: 'xlsx' }) as ArrayBuffer;
+      modal.setModalProgress(60);
+      await uploadAffiliationExcel(token, '所属ふりがな.xlsx', buf);
+      modal.setModalProgress(100);
+      modal.setModalSteps(modal.updateStep(steps, 0, { status: 'done', label: '所属データを書込完了' }));
+      const r = { success: true, message: `所属ふりがな（${data.length}件）を保存しました` };
+      setResult(r);
+      modal.setModalResult(r);
+    } catch (err) {
+      modal.setModalSteps(modal.updateStep(steps, 0, { status: 'error', label: '所属書込に失敗' }));
+      const r = { success: false, message: `書込失敗: ${(err as Error).message}` };
+      setResult(r);
+      modal.setModalResult(r);
+    } finally {
+      setIsProcessing(false);
+    }
+  }, [modal]);
+
+  // --- Excelからふりがなインポート ---
+  const handleExcelFurigana = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIsProcessing(true);
+    setResult(null);
+    try {
+      const buffer = await file.arrayBuffer();
+      const wb = XLSX.read(buffer, { type: 'array' });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json<any>(ws);
+      const now = Date.now();
+      let count = 0;
+      for (const row of rows) {
+        const name = String(row['氏名'] || row['選手名'] || row['漢字'] || row['name'] || '').trim();
+        const furigana = String(row['ふりがな'] || row['furigana'] || '').trim();
+        if (!name || !furigana) continue;
+        await db.furiganaDict.put({ name: removeSpaces(name), furigana: removeSpaces(furigana), type: 'manual' as const, updatedAt: now });
+        count++;
+      }
+      let playerCount = 0;
+      const allPlayers = await db.players.toArray();
+      for (const p of allPlayers) {
+        const dictEntry = await db.furiganaDict.get(p.playerId);
+        if (dictEntry && dictEntry.furigana && p.furigana !== dictEntry.furigana) {
+          await db.players.update(p.id!, { furigana: dictEntry.furigana });
+          playerCount++;
+        }
+      }
+      const dedupCount = await deduplicateFuriganaDict();
+      updateLastSync();
+      const details = [`ふりがな辞書: ${count}件`];
+      if (dedupCount > 0) details.push(`重複削除: ${dedupCount}件`);
+      if (playerCount > 0) details.push(`選手に適用: ${playerCount}名`);
+      setResult({ success: true, message: `${count}件のふりがなをインポートしました`, details });
+      onDataLoaded?.();
+    } catch (err) {
+      setResult({ success: false, message: `インポート失敗: ${(err as Error).message}` });
+    } finally {
+      setIsProcessing(false);
+      if (excelFuriganaRef.current) excelFuriganaRef.current.value = '';
+    }
+  }, [updateLastSync, onDataLoaded]);
+
+  // --- Excelから所属インポート ---
+  const handleExcelAff = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIsProcessing(true);
+    setResult(null);
+    try {
+      const buffer = await file.arrayBuffer();
+      const wb = XLSX.read(buffer, { type: 'array' });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json<any>(ws);
+      const now = Date.now();
+      let count = 0;
+      for (const row of rows) {
+        const name = String(row['所属名'] || row['name'] || '').trim();
+        const furigana = String(row['ふりがな'] || row['furigana'] || '').trim();
+        if (!name || !furigana) continue;
+        const existing = await db.affiliationFurigana.where('name').equals(name).first();
+        if (existing) {
+          await db.affiliationFurigana.update(existing.id!, { furigana, updatedAt: now });
+        } else {
+          await db.affiliationFurigana.add({ name, furigana, updatedAt: now } as AffiliationFurigana);
+        }
+        count++;
+      }
+      const dedupCount = await deduplicateAffiliation();
+      updateLastSync();
+      const details = [`所属ふりがな: ${count}件`];
+      if (dedupCount > 0) details.push(`重複削除: ${dedupCount}件`);
+      setResult({ success: true, message: `${count}件の所属ふりがなをインポートしました`, details });
+      onDataLoaded?.();
+    } catch (err) {
+      setResult({ success: false, message: `インポート失敗: ${(err as Error).message}` });
+    } finally {
+      setIsProcessing(false);
+      if (excelAffRef.current) excelAffRef.current.value = '';
+    }
+  }, [updateLastSync, onDataLoaded]);
+
+  return (
+    <div className="space-y-4">
+      <DriveLoadingModal
+        open={modal.modalOpen}
+        title={modal.modalTitle}
+        steps={modal.modalSteps}
+        progress={modal.modalProgress}
+        result={modal.modalResult}
+        onClose={modal.handleModalClose}
+        onTimeout={modal.handleTimeout}
+      />
+
+      {/* ふりがな操作 */}
+      <div className="border border-gray-100 rounded-lg overflow-hidden">
+        <div className="bg-gray-50 px-3 py-2 flex items-center gap-2">
+          <Users className="w-4 h-4 text-gray-600" />
+          <h3 className="text-sm font-bold text-gray-800">ふりがな一覧</h3>
+          <span className="text-[10px] bg-gray-100 text-gray-700 px-1.5 py-0.5 rounded-full ml-auto">{furiganaDictCount}件</span>
+        </div>
+        <div className="p-3 flex flex-wrap gap-2">
+          <button
+            onClick={handleDownloadFurigana}
+            disabled={isProcessing || !gdriveConnected}
+            className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-[#1a73e8] rounded-lg hover:bg-[#1557b0] disabled:opacity-50 transition-colors shadow-sm"
+          >
+            <GoogleDriveIcon className="w-3.5 h-3.5" />
+            <Download className="w-3.5 h-3.5" />
+            ドライブから読込
+          </button>
+          <button
+            onClick={handleUploadFurigana}
+            disabled={isProcessing || !gdriveConnected || furiganaDictCount === 0}
+            className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-[#1a73e8] bg-[#e8f0fe] rounded-lg hover:bg-[#d2e3fc] disabled:opacity-50 transition-colors border border-[#1a73e8]/20"
+          >
+            <GoogleDriveIcon className="w-3.5 h-3.5" />
+            <Upload className="w-3.5 h-3.5" />
+            ドライブに書込
+          </button>
+          <div className="w-px h-8 bg-gray-200 mx-1 self-center hidden sm:block" />
+          <input ref={excelFuriganaRef} type="file" accept=".xlsx,.xls" className="hidden" onChange={handleExcelFurigana} />
+          <button
+            onClick={() => excelFuriganaRef.current?.click()}
+            disabled={isProcessing}
+            className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-800 bg-primary-50 rounded-lg hover:bg-primary-100 disabled:opacity-50 transition-colors border border-primary-200"
+          >
+            <FileSpreadsheet className="w-3.5 h-3.5" />
+            Excelから読込
+          </button>
+        </div>
+      </div>
+
+      {/* 所属操作 */}
+      <div className="border border-gray-100 rounded-lg overflow-hidden">
+        <div className="bg-gray-50 px-3 py-2 flex items-center gap-2">
+          <Building2 className="w-4 h-4 text-gray-600" />
+          <h3 className="text-sm font-bold text-gray-800">所属一覧</h3>
+          <span className="text-[10px] bg-gray-100 text-gray-700 px-1.5 py-0.5 rounded-full ml-auto">{affiliationCount}件</span>
+        </div>
+        <div className="p-3 flex flex-wrap gap-2">
+          <button
+            onClick={handleDownloadAffiliation}
+            disabled={isProcessing || !gdriveConnected}
+            className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-gray-600 rounded-lg hover:bg-gray-700 disabled:opacity-50 transition-colors shadow-sm"
+          >
+            <GoogleDriveIcon className="w-3.5 h-3.5" />
+            <Download className="w-3.5 h-3.5" />
+            ドライブから読込
+          </button>
+          <button
+            onClick={handleUploadAffiliation}
+            disabled={isProcessing || !gdriveConnected || affiliationCount === 0}
+            className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-gray-700 bg-gray-50 rounded-lg hover:bg-gray-100 disabled:opacity-50 transition-colors border border-gray-200"
+          >
+            <GoogleDriveIcon className="w-3.5 h-3.5" />
+            <Upload className="w-3.5 h-3.5" />
+            ドライブに書込
+          </button>
+          <div className="w-px h-8 bg-gray-200 mx-1 self-center hidden sm:block" />
+          <input ref={excelAffRef} type="file" accept=".xlsx,.xls" className="hidden" onChange={handleExcelAff} />
+          <button
+            onClick={() => excelAffRef.current?.click()}
+            disabled={isProcessing}
+            className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-800 bg-primary-50 rounded-lg hover:bg-primary-100 disabled:opacity-50 transition-colors border border-primary-200"
+          >
+            <FileSpreadsheet className="w-3.5 h-3.5" />
+            Excelから読込
+          </button>
+        </div>
+      </div>
+
+      {/* 結果メッセージ */}
+      {result && (
+        <div className={`p-3 rounded-lg text-sm ${
+          result.success ? 'bg-primary-50 text-gray-900 border border-primary-200' : 'bg-red-50 text-red-800 border border-red-200'
+        }`}>
+          <div className="flex items-start gap-2">
+            {result.success ? <CheckCircle2 className="w-4 h-4 mt-0.5 shrink-0" /> : <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />}
+            <div>
+              <p className="font-medium">{result.message}</p>
+              {result.details && result.details.length > 0 && (
+                <ul className="mt-1 space-y-0.5 text-xs opacity-90">
+                  {result.details.map((d, i) => <li key={i}>{d}</li>)}
+                </ul>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

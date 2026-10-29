@@ -1,0 +1,609 @@
+/**
+ * scheduleEngine.ts - 試合スケジュール自動生成エンジン
+ * 確定済みドローから試合一覧を抽出し、コート・時間枠に自動配置する
+ * 純粋ロジックモジュール（DOM/window/AppConfig 依存なし）
+ */
+
+// =========================================================================
+//  入力データ型（データベースから取得する構造）
+// =========================================================================
+
+export interface DrawSlot {
+  position: number;
+  entryId: string | null;
+  seed: number;
+  isBye: boolean;
+}
+
+export interface Draw {
+  eventId: string;
+  drawSize: number;
+  slots: DrawSlot[];
+}
+
+export interface Entry {
+  entryId: string;
+  playerId: string;
+  partnerId?: string;
+}
+
+export interface Player {
+  playerId: string;
+  name: string;
+}
+
+// =========================================================================
+//  出力・中間データ型
+// =========================================================================
+
+/** extractMatchesFromDraw が生成する試合オブジェクト */
+export interface ScheduleMatch {
+  matchId: string;
+  eventCode: string;
+  eventName: string;
+  eventOrder: number;
+  round: number;
+  roundLabel: string;
+  matchNumInRound: number;
+  halfLabel: string;
+  players: string[];
+  hasByeAdvance: boolean;
+  drawSize: number;
+  dependsOn: string[];
+}
+
+/** autoSchedule の設定 */
+export interface ScheduleConfig {
+  courtCount: number;
+  courtNames: string[];
+  /** 1試合の所要時間（分）。同じコートの次の試合はこの時間だけ後になる。 */
+  matchDuration: number;
+  startTime: string; // 'HH:MM'
+  /**
+   * 配置グリッドの刻み（分）。未指定なら matchDuration と同じ。
+   *
+   * ドロー表の記載時刻をそのままの位置に置くには、刻みが記載時刻の間隔の
+   * 公約数である必要がある（例: 9:00と9:20が混在 → 20分刻み）。
+   * ただし刻み＝1試合の所要時間ではないので、1試合は
+   * ceil(matchDuration / slotMinutes) 個の枠を占有する。
+   * （これを分けないと、20分刻みのときに同じコートへ20分おきに試合が入る）
+   */
+  slotMinutes?: number;
+  /**
+   * 試合ごとの目標タイムスロット（matchId → スロットindex）。
+   * ドロー表に記載された開始時刻から算出した値。指定された試合はその時刻以降に
+   * 配置し、並び順もこの時刻を優先する。コートが埋まっていれば後ろの枠にずれる。
+   */
+  targetSlotByMatchId?: Map<string, number>;
+}
+
+/** autoSchedule が生成するスロット */
+export interface ScheduleSlot {
+  matchId: string;
+  courtIndex: number;
+  courtName: string;
+  timeSlotIndex: number;
+  startTime: string;
+  eventCode: string;
+  roundLabel: string;
+}
+
+/** extractMatchesFromDraw に渡す種目情報 */
+export interface EventInfo {
+  eventCode: string;
+  eventName: string;
+  eventOrder: number;
+}
+
+// =========================================================================
+//  内部型
+// =========================================================================
+
+interface R1Result {
+  matchId: string | null;
+  isByeAdvance: boolean;
+  advancingPlayer: string | null;
+}
+
+// =========================================================================
+//  assignVenueCourtNames - コート数からコート番号を割り当てる
+// =========================================================================
+
+/**
+ * 使用コート数から、会場のコート番号（文字列配列）を割り当てる。
+ *
+ * 会場は最大 maxCourt 面（既定16面）で、照明が良く優先度の高い高番号側から使う。
+ * すなわち N 面使う場合は末尾側の N 面 = (maxCourt-N+1)〜maxCourt 番。
+ *   例) 12面 → 5〜16番, 8面 → 9〜16番, 16面 → 1〜16番。
+ * N が maxCourt を超える場合は 1〜N 番を返す。
+ *
+ * @param count 使用コート数
+ * @param maxCourt 会場の総コート数（既定16）
+ * @returns コート名（番号文字列）の配列（昇順）
+ */
+export function assignVenueCourtNames(count: number, maxCourt = 16): string[] {
+  if (count <= 0) return [];
+  if (count >= maxCourt) {
+    return Array.from({ length: count }, (_, i) => String(i + 1));
+  }
+  const start = maxCourt - count + 1;
+  return Array.from({ length: count }, (_, i) => String(start + i));
+}
+
+// =========================================================================
+//  getRoundLabel - ラウンド表記を返す
+// =========================================================================
+
+/**
+ * ラウンド番号からラベル文字列を生成する
+ * @param round ラウンド番号（1始まり）
+ * @param totalRounds 総ラウンド数 = log2(drawSize)
+ * @returns 'F', 'SF', 'QF', または '{round}R'
+ */
+export function getRoundLabel(round: number, totalRounds: number): string {
+  if (round === totalRounds) return 'F';
+  if (round === totalRounds - 1) return 'SF';
+  if (round === totalRounds - 2) return 'QF';
+  return round + 'R';
+}
+
+// =========================================================================
+//  calcTimeString - 時刻文字列を計算
+// =========================================================================
+
+/**
+ * 開始時刻とスロットインデックスから時刻文字列を計算する
+ * @param startTimeStr 開始時刻 'HH:MM'
+ * @param slotIndex スロットインデックス（0始まり）
+ * @param durationMinutes 1試合の所要時間（分）
+ * @returns 'HH:MM' 形式の時刻文字列
+ */
+export function calcTimeString(
+  startTimeStr: string,
+  slotIndex: number,
+  durationMinutes: number,
+): string {
+  const parts = startTimeStr.split(':');
+  const startHour = parseInt(parts[0], 10);
+  const startMin = parseInt(parts[1], 10);
+  const totalMinutes = startHour * 60 + startMin + slotIndex * durationMinutes;
+  const h = Math.floor(totalMinutes / 60);
+  const m = totalMinutes % 60;
+  return String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0');
+}
+
+// =========================================================================
+//  内部ヘルパー
+// =========================================================================
+
+function calcTotalMinutes(
+  startTime: string,
+  slotIndex: number,
+  durationMinutes: number,
+): number {
+  const parts = startTime.split(':');
+  const startHour = parseInt(parts[0], 10);
+  const startMin = parseInt(parts[1], 10);
+  return startHour * 60 + startMin + slotIndex * durationMinutes;
+}
+
+/**
+ * 試合が占有する枠（slot〜slot+span-1）のいずれかに、同じ選手の試合が入っているか。
+ * 1試合が複数枠にまたがるため、開始枠だけでなく占有範囲全体を見る。
+ */
+function hasPlayerConflict(
+  match: ScheduleMatch,
+  slot: number,
+  span: number,
+  slotPlayers: Map<number, Set<string>>,
+): boolean {
+  for (let s = slot; s < slot + span; s++) {
+    const playersInSlot = slotPlayers.get(s);
+    if (!playersInSlot) continue;
+    for (const player of match.players) {
+      if (player && playersInSlot.has(player)) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+/**
+ * ドローのスロット配列とエントリ・選手情報から、
+ * 指定ポジションの選手名を返す。
+ * BYEや該当なしの場合は null を返す。
+ */
+function resolvePlayerName(
+  drawSlot: DrawSlot,
+  entriesMap: Map<string, Entry>,
+  playersMap: Map<string, Player>,
+): string | null {
+  if (drawSlot.isBye || !drawSlot.entryId) return null;
+  const entry = entriesMap.get(drawSlot.entryId);
+  if (!entry) return null;
+
+  const player = playersMap.get(entry.playerId);
+  const playerName = player?.name ?? entry.playerId;
+
+  if (entry.partnerId) {
+    const partner = playersMap.get(entry.partnerId);
+    const partnerName = partner?.name ?? entry.partnerId;
+    return `${playerName}/${partnerName}`;
+  }
+  return playerName;
+}
+
+// =========================================================================
+//  extractMatchesFromDraw - ドロー結果から試合一覧を抽出
+// =========================================================================
+
+/**
+ * 確定済みドローから全ラウンドの試合（ScheduleMatch）を抽出する
+ *
+ * @param draw ドローデータ（DB構造）
+ * @param entries エントリ一覧（entryId でルックアップ）
+ * @param players 選手一覧（playerId でルックアップ）
+ * @param eventInfo 種目情報（コード・名前・表示順）
+ * @returns ScheduleMatch 配列
+ */
+export function extractMatchesFromDraw(
+  draw: Draw,
+  entries: Entry[],
+  players: Player[],
+  eventInfo: EventInfo,
+): ScheduleMatch[] {
+  const { drawSize, slots } = draw;
+  const { eventCode, eventName, eventOrder } = eventInfo;
+  const totalRounds = Math.log2(drawSize);
+  const halfSize = drawSize / 2;
+  const matches: ScheduleMatch[] = [];
+
+  // エントリ・選手をマップ化
+  const entriesMap = new Map<string, Entry>();
+  for (const e of entries) {
+    entriesMap.set(e.entryId, e);
+  }
+  const playersMap = new Map<string, Player>();
+  for (const p of players) {
+    playersMap.set(p.playerId, p);
+  }
+
+  // ドローのスロットをポジション順に並べる
+  const sortedSlots = [...slots].sort((a, b) => a.position - b.position);
+
+  // -----------------------------------------------------------------
+  //  1回戦（R1）: ドロー配列のペアを走査
+  // -----------------------------------------------------------------
+  const r1Results: R1Result[] = [];
+
+  for (let pairIdx = 0; pairIdx < drawSize / 2; pairIdx++) {
+    const idx1 = pairIdx * 2;
+    const idx2 = pairIdx * 2 + 1;
+    const s1 = sortedSlots[idx1];
+    const s2 = sortedSlots[idx2];
+
+    const halfLabel = pairIdx < halfSize / 2 ? 'L' : 'R';
+    const matchNumInHalf =
+      halfLabel === 'L'
+        ? pairIdx + 1
+        : pairIdx - Math.floor(halfSize / 2) + 1;
+
+    const p1Bye = s1.isBye || !s1.entryId;
+    const p2Bye = s2.isBye || !s2.entryId;
+    const bothBye = p1Bye && p2Bye;
+    const oneBye = p1Bye !== p2Bye;
+
+    if (bothBye) {
+      r1Results.push({ matchId: null, isByeAdvance: true, advancingPlayer: null });
+      continue;
+    }
+
+    if (oneBye) {
+      const advancerSlot = p1Bye ? s2 : s1;
+      const advancerName = resolvePlayerName(advancerSlot, entriesMap, playersMap);
+      const matchId = `${eventCode}-R1-${halfLabel}${matchNumInHalf}`;
+      r1Results.push({
+        matchId,
+        isByeAdvance: true,
+        advancingPlayer: advancerName,
+      });
+      continue;
+    }
+
+    // 実試合
+    const matchId = `${eventCode}-R1-${halfLabel}${matchNumInHalf}`;
+    const p1Name = resolvePlayerName(s1, entriesMap, playersMap);
+    const p2Name = resolvePlayerName(s2, entriesMap, playersMap);
+    const matchPlayers: string[] = [];
+    if (p1Name) matchPlayers.push(p1Name);
+    if (p2Name) matchPlayers.push(p2Name);
+
+    const match: ScheduleMatch = {
+      matchId,
+      eventCode,
+      eventName,
+      eventOrder,
+      round: 1,
+      roundLabel: getRoundLabel(1, totalRounds),
+      matchNumInRound: pairIdx + 1,
+      halfLabel,
+      players: matchPlayers,
+      hasByeAdvance: false,
+      drawSize,
+      dependsOn: [],
+    };
+    matches.push(match);
+
+    r1Results.push({
+      matchId,
+      isByeAdvance: false,
+      advancingPlayer: null,
+    });
+  }
+
+  // -----------------------------------------------------------------
+  //  2回戦以降: トーナメントツリーを辿る
+  // -----------------------------------------------------------------
+  let prevRoundSlots: R1Result[] = r1Results;
+
+  for (let round = 2; round <= totalRounds; round++) {
+    const matchesInRound = drawSize / Math.pow(2, round);
+    const currentRoundSlots: R1Result[] = [];
+
+    for (let slotIdx = 0; slotIdx < matchesInRound; slotIdx++) {
+      const feederA = prevRoundSlots[slotIdx * 2];
+      const feederB = prevRoundSlots[slotIdx * 2 + 1];
+
+      const totalSlotsInHalf = matchesInRound / 2;
+      let halfLabel: string | null;
+      let matchNumInHalf: number | null;
+
+      if (round === totalRounds) {
+        halfLabel = null;
+        matchNumInHalf = null;
+      } else {
+        halfLabel = slotIdx < totalSlotsInHalf ? 'L' : 'R';
+        matchNumInHalf =
+          halfLabel === 'L'
+            ? slotIdx + 1
+            : slotIdx - totalSlotsInHalf + 1;
+      }
+
+      const matchId =
+        round === totalRounds
+          ? `${eventCode}-F`
+          : `${eventCode}-R${round}-${halfLabel}${matchNumInHalf}`;
+
+      const dependsOn: string[] = [];
+      const hasByeAdvance = feederA.isByeAdvance || feederB.isByeAdvance;
+      const matchPlayers: string[] = [];
+
+      if (feederA.matchId && !feederA.isByeAdvance) {
+        dependsOn.push(feederA.matchId);
+      } else if (feederA.isByeAdvance && feederA.advancingPlayer) {
+        matchPlayers.push(feederA.advancingPlayer);
+      }
+
+      if (feederB.matchId && !feederB.isByeAdvance) {
+        dependsOn.push(feederB.matchId);
+      } else if (feederB.isByeAdvance && feederB.advancingPlayer) {
+        matchPlayers.push(feederB.advancingPlayer);
+      }
+
+      const match: ScheduleMatch = {
+        matchId,
+        eventCode,
+        eventName,
+        eventOrder,
+        round,
+        roundLabel: getRoundLabel(round, totalRounds),
+        matchNumInRound: slotIdx + 1,
+        halfLabel: halfLabel ?? 'F',
+        players: matchPlayers,
+        hasByeAdvance,
+        drawSize,
+        dependsOn,
+      };
+      matches.push(match);
+
+      currentRoundSlots.push({
+        matchId,
+        isByeAdvance: false,
+        advancingPlayer: null,
+      });
+    }
+
+    prevRoundSlots = currentRoundSlots;
+  }
+
+  return matches;
+}
+
+// =========================================================================
+//  autoSchedule - 試合を自動スケジューリング
+// =========================================================================
+
+/**
+ * 試合一覧をコート×時間枠のグリッドに自動配置する
+ * 照明制約・コート集約ロジック付き
+ *
+ * ソート: ラウンド昇順 → ドローサイズ降順 → 種目順（eventOrder）
+ * 照明制約: コート 1-8 は 18:00 以降使用不可、コート 9-16 は 21:00 まで
+ *
+ * @param matches ScheduleMatch 配列（複数種目を含む）
+ * @param config スケジュール設定
+ * @returns ScheduleSlot 配列
+ */
+export function autoSchedule(
+  matches: ScheduleMatch[],
+  config: ScheduleConfig,
+): ScheduleSlot[] {
+  const { courtCount, courtNames, matchDuration, startTime, targetSlotByMatchId } = config;
+  const targetOf = (m: ScheduleMatch): number | undefined => targetSlotByMatchId?.get(m.matchId);
+
+  // 配置グリッドの刻みと、1試合が占有する枠数。
+  // 刻みが所要時間より細かい場合（ドロー表に9:00と9:20が混在するなど）、
+  // 1試合は複数枠を占有する。これをしないと同じコートに刻み間隔で試合が入る。
+  const slotMinutes = config.slotMinutes && config.slotMinutes > 0 ? config.slotMinutes : matchDuration;
+  const span = Math.max(1, Math.ceil(matchDuration / slotMinutes));
+
+  // ソート: ラウンド昇順 → 記載時刻(目標スロット)昇順 → 種目順(eventOrder)
+  //        → ドローサイズ降順 → 左山(L)→右山(R) → 上から下(matchNumInRound)
+  // ドロー表に記載された開始時刻がある試合は、その時刻が早い順に先にコートを埋める。
+  // 記載時刻が無い試合（2回戦以降）は同ラウンド内で種目順に配置する。
+  const sorted = [...matches].sort((a, b) => {
+    if (a.round !== b.round) return a.round - b.round;
+    const ta = targetOf(a);
+    const tb = targetOf(b);
+    if (ta != null && tb != null) {
+      if (ta !== tb) return ta - tb;
+    } else if (ta != null || tb != null) {
+      // 記載時刻がある試合を先に
+      return ta != null ? -1 : 1;
+    }
+    if (a.eventOrder !== b.eventOrder) return a.eventOrder - b.eventOrder;
+    if (a.drawSize !== b.drawSize) return b.drawSize - a.drawSize;
+    // 左山(L) → 右山(R) → 決勝(F) の順
+    const halfOrder = (h: string) => h === 'L' ? 0 : h === 'R' ? 1 : 2;
+    if (a.halfLabel !== b.halfLabel) return halfOrder(a.halfLabel) - halfOrder(b.halfLabel);
+    // 同じ山の中で上から下へ
+    return a.matchNumInRound - b.matchNumInRound;
+  });
+
+  // 最大ラウンドを算出（後半判定に使用）
+  const maxRound = Math.max(...sorted.map((m) => m.round), 1);
+
+  // グリッドとスケジュール管理
+  // 刻みが細かいほど同じ時間幅に必要な枠数が増えるため、枠数も刻みに合わせて確保する
+  const maxSlots = Math.max(200, Math.ceil((16 * 60) / slotMinutes) + span);
+  const grid: (string | null)[][] = [];
+  for (let c = 0; c < courtCount; c++) {
+    grid.push(new Array<string | null>(maxSlots).fill(null));
+  }
+
+  const completionSlot = new Map<string, number>();
+  const slotPlayers = new Map<number, Set<string>>();
+  const result: ScheduleSlot[] = [];
+
+  // 照明制約チェック
+  const isCourtAvailable = (courtNum: number, slotIdx: number): boolean => {
+    const totalMinutes = calcTotalMinutes(startTime, slotIdx, slotMinutes);
+    const hour = totalMinutes / 60;
+    if (courtNum >= 1 && courtNum <= 8) {
+      return hour < 18;
+    }
+    if (courtNum >= 9 && courtNum <= 16) {
+      return hour < 21;
+    }
+    return true;
+  };
+
+  // コート優先順序を決定する
+  const getCourtOrder = (match: ScheduleMatch): number[] => {
+    const isLateRound =
+      match.round >= maxRound - 1 || match.round / maxRound > 0.6;
+    const indices: number[] = [];
+
+    if (isLateRound) {
+      const preferred: number[] = [];
+      const secondary: number[] = [];
+      const tertiary: number[] = [];
+
+      for (let i = 0; i < courtCount; i++) {
+        const num = parseInt(courtNames[i], 10);
+        if (num === 5 || num === 9) {
+          preferred.push(i);
+        } else if ((num >= 6 && num <= 8) || (num >= 10 && num <= 12)) {
+          secondary.push(i);
+        } else {
+          tertiary.push(i);
+        }
+      }
+      indices.push(...preferred, ...secondary, ...tertiary);
+    } else {
+      for (let i = 0; i < courtCount; i++) {
+        indices.push(i);
+      }
+    }
+    return indices;
+  };
+
+  // 試合配置ループ
+  for (const match of sorted) {
+    let minSlot = 0;
+    // 依存（前ラウンド）の完了後にしか始められない。
+    // completionSlot には「前ラウンドが終わる枠」を入れてあるので、その次の枠から。
+    for (const depId of match.dependsOn) {
+      const depSlot = completionSlot.get(depId);
+      if (depSlot !== undefined) {
+        minSlot = Math.max(minSlot, depSlot + 1);
+      }
+    }
+    // ドロー表に記載された開始時刻がある場合はその時刻以降に配置する
+    const target = targetOf(match);
+    if (target != null) {
+      minSlot = Math.max(minSlot, target);
+    }
+
+    let assigned = false;
+    const courtOrder = getCourtOrder(match);
+
+    for (let slot = minSlot; slot + span <= maxSlots; slot++) {
+      if (hasPlayerConflict(match, slot, span, slotPlayers)) {
+        continue;
+      }
+
+      for (const courtIdx of courtOrder) {
+        const courtNum = parseInt(courtNames[courtIdx], 10);
+
+        if (!isCourtAvailable(courtNum, slot)) {
+          continue;
+        }
+
+        // 所要時間ぶんの枠（span個）が全て空いているコートにだけ入れる
+        let free = true;
+        for (let s = slot; s < slot + span; s++) {
+          if (grid[courtIdx][s] !== null) { free = false; break; }
+        }
+        if (free) {
+          for (let s = slot; s < slot + span; s++) {
+            grid[courtIdx][s] = match.matchId;
+          }
+          // 「この試合が終わる枠」を記録（次ラウンドはこの次の枠から）
+          completionSlot.set(match.matchId, slot + span - 1);
+
+          for (let s = slot; s < slot + span; s++) {
+            let playersSet = slotPlayers.get(s);
+            if (!playersSet) {
+              playersSet = new Set<string>();
+              slotPlayers.set(s, playersSet);
+            }
+            for (const player of match.players) {
+              if (player) playersSet.add(player);
+            }
+          }
+
+          result.push({
+            matchId: match.matchId,
+            courtIndex: courtIdx,
+            courtName: courtNames[courtIdx] || String(courtIdx + 1),
+            timeSlotIndex: slot,
+            startTime: calcTimeString(startTime, slot, slotMinutes),
+            eventCode: match.eventCode,
+            roundLabel: match.roundLabel,
+          });
+          assigned = true;
+          break;
+        }
+      }
+      if (assigned) break;
+    }
+
+    if (!assigned) {
+      console.warn(`スケジュール配置失敗: ${match.matchId}`);
+    }
+  }
+
+  return result;
+}
