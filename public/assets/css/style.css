@@ -954,6 +954,12 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
       -webkit-backdrop-filter: grayscale(1) contrast(100) invert(1);
       backdrop-filter: grayscale(1) contrast(100) invert(1);
     }
+    /* メニューを開いたときも白抜きの画像（.site-header__logo-w）は重ねず、この塗り分けのまま。
+       せり上がる黒地の上端が通ったところから順に白へ変わる */
+    .site-header .site-header__logo-w { display: none; }
+    /* 写真の上では塗り分けず、黒いロゴのまま（main.js の initLogoInk が .is-over-image を付ける） */
+    .site-header.is-over-image .site-header__logo-img { visibility: visible; }
+    .site-header.is-over-image .site-header__logo-ink, .site-header.is-over-image .site-header__logo-red { display: none; }
   }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -964,11 +970,12 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 
 /* ============ メニューからページを移るときの切り替え（ページ間ビュートランジション） ============
    対応ブラウザでは、メニューのリンクを押したあと次のページが描ける状態になるまでメニューを開いたまま待ち、
-   描ける状態になったら次のページの上に前のページの「メニュー（黒地）・ヘッダー」の写しを重ねて、
+   描ける状態になったら次のページの上に前のページの「メニュー（黒地）」の写しを重ねて、
    閉じる動き（黒地が下へ下がり、次のページが上から見えてくる）を流す。
    流すかどうかは Base.astro の pageswap / pagereveal が決める（メニューから移るときだけ。それ以外は省く）。
    写しの名前（view-transition-name）は main.js がメニューを開くときに付ける：
-     mn-sheet … メニュー（.mobile-nav）／ site-header … ヘッダー（白いロゴの写しはすぐ消し、次のページのヘッダーを見せる） */
+     mn-sheet … メニュー（.mobile-nav）。ヘッダーには付けない（ロゴの塗り分けが効かなくなるため。main.js 参照）。
+     ヘッダーは次のページのものがそのまま下にあり、黒地が下がるにつれて見えてくる */
 @view-transition { navigation: auto; }
 /* 前のページ本体はすぐ消し、次のページをそのまま出す（黒地の裏に次のページが見えている状態） */
 ::view-transition-old(root) { animation: none; opacity: 0; }
@@ -979,9 +986,6 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 ::view-transition-old(court-name), ::view-transition-new(court-name) { animation-duration: .5s; }
 ::view-transition-group(court-photo) { z-index: 40; }
 ::view-transition-group(court-name) { z-index: 41; }
-::view-transition-group(site-header) { z-index: 30; }
-::view-transition-old(site-header) { animation: vt-fade .15s ease both; }
-::view-transition-new(site-header) { animation: none; }
 ::view-transition-group(mn-sheet) { z-index: 1; animation: none; }
 ::view-transition-old(mn-sheet) { animation: vt-sheet-down .5s cubic-bezier(.25, .8, .3, 1) .05s both; }
 @keyframes vt-fade { to { opacity: 0; } }
@@ -2657,7 +2661,8 @@ body.jsrv .rv.on .ink-sweep {
   }
 }
 
-.site-footer { position: relative; background: var(--ink); overflow: hidden; }
+.site-footer { position: relative; background: #353535; overflow: hidden; }  /* スマホのメニューと同じ、少しグレーに寄せた地 */
+.site-footer .footer-deco { opacity: .45; }  /* 四角は地との差を控えめに（メニューと同じ） */
 /* 地の黒とわずかに色の違う四角を散らした背景。
    位置・大きさ・色・速さは要素ごとの変数で持たせる。
    止まっているときも常に少しだけ漂い、スクロール中は奥行きの分だけ大きく動く。 */

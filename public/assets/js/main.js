@@ -987,6 +987,47 @@
     place();
   }
 
+  /* ---------- ヘッダーのロゴの塗り分けを、写真の上では止める ----------
+     スマホのロゴは裏の色に合わせて黒／白に塗り分ける（style.css の .site-header__logo-ink）が、写真の上では塗り分けない。
+     ロゴの左・中・右の3点で、ヘッダーの下に重なっている要素を上から順に見て、
+     先に写真（img / video）に当たれば .is-over-image（黒いロゴのまま）、先に地の色のある要素に当たればそのまま塗り分ける。 */
+  function initLogoInk() {
+    var header = document.querySelector('.site-header');
+    var logo = header && header.querySelector('.site-header__logo');
+    if (!logo || !document.elementsFromPoint || !window.matchMedia) return;
+    var mobile = window.matchMedia('(max-width: 1023px)');
+    var overImage = function (x, y) {
+      var stack = document.elementsFromPoint(x, y);
+      for (var i = 0; i < stack.length; i++) {
+        var el = stack[i];
+        if (header.contains(el)) continue;
+        var tag = el.tagName;
+        if (tag === 'IMG' || tag === 'VIDEO' || tag === 'PICTURE' || tag === 'CANVAS') return true;
+        var bg = getComputedStyle(el).backgroundColor;
+        if (bg && bg !== 'transparent' && !/rgba\(.*,\s*0\)$/.test(bg)) return false;
+      }
+      return false;
+    };
+    var ticking = false;
+    var check = function () {
+      ticking = false;
+      if (!mobile.matches || header.classList.contains('is-menu')) { header.classList.remove('is-over-image'); return; }
+      var r = logo.getBoundingClientRect();
+      var y = r.top + r.height / 2;
+      var hit = overImage(r.left + r.width * .15, y) || overImage(r.left + r.width / 2, y) || overImage(r.right - r.width * .15, y);
+      header.classList.toggle('is-over-image', hit);
+    };
+    var request = function () {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(check);
+    };
+    window.addEventListener('scroll', request, { passive: true });
+    window.addEventListener('resize', request);
+    window.addEventListener('load', request);
+    request();
+  }
+
   /* ---------- TODAY の日付（見ている時点の日本時間） ----------
      ビルド時の日付を書き出してあるので、JS が動く環境だけ今日の日付に差し替える。 */
   function initToday() {
@@ -1031,12 +1072,13 @@
     if (!toggle || !menu) return;
 
     /* ページを移るときの切り替え（ページ間ビュートランジション）が使えるか。
-       使えるときは、メニューを開いているあいだだけ写しの名前（view-transition-name）を付けておく（style.css 参照） */
+       使えるときは、メニューを開いているあいだだけメニューに写しの名前（view-transition-name）を付けておく（style.css 参照）。
+       ヘッダーには付けない（名前の付いた要素は backdrop-filter の基準になり、中のロゴの塗り分け（.site-header__logo-ink）が
+       ヘッダーの中しか見られなくなって、メニューを開いた瞬間にロゴが消えてしまうため） */
     var VT_KEY = 'tcta-mn-vt';
     var canVT = !reduceMotion && ('onpageswap' in window) && window.CSS && CSS.supports && CSS.supports('view-transition-name', 'x');
     var nameFor = function (open) {
       if (!canVT) return;
-      header.style.viewTransitionName = open ? 'site-header' : '';
       menu.style.viewTransitionName = open ? 'mn-sheet' : '';
     };
     var setOpen = function (open) {
@@ -1434,6 +1476,7 @@
     initCourtMap();
     initCalendar();
     initFooterDeco();
+    initLogoInk();
     initToday();
     initCarousel();
     initFilters();
