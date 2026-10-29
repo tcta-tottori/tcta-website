@@ -54,7 +54,7 @@
   --container-narrow: 760px;
   --gutter: 20px;
 
-  --header-h: 64px;
+  --header-h: 76px;  /* スマホ・タブレット：64px のヘッダーの上に 12px の余白を足した高さ（.site-header__inner の padding-top） */
   --ease: cubic-bezier(.22, 1, .36, 1);
 
   /* 見出しの塗り替え（グレー → 黒）の時間。
@@ -670,6 +670,8 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   }
   .site-header.hsh { box-shadow: none; }
   .site-header--hidden { transform: none; }
+  /* 画面の上端とロゴ・ボタンのあいだに少し余白を取る（その分 --header-h を 12px 高くしてある） */
+  .site-header__inner { padding-top: 12px; }
   .site-header__logo, .site-header .hamburger { pointer-events: auto; }
   .site-header__logo img, .site-header .hamburger {
     filter: drop-shadow(0 0 1px rgba(255, 255, 255, .9)) drop-shadow(0 0 5px rgba(255, 255, 255, .55));
