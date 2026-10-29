@@ -2276,9 +2276,17 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   display: flex;
   flex-direction: column;
   gap: 12px;
-  margin-top: 32px;
+  /* 流れるリンクの帯の裏だけグレーにする。上下の端は白からなだらかにグレーへ（--mq-fade の幅で）変える */
+  --mq-fade: 48px;
+  margin-top: 0;
+  padding-block: calc(var(--mq-fade) + 4px);
+  background: linear-gradient(180deg,
+    rgba(242, 242, 242, 0) 0,
+    var(--gray-100) var(--mq-fade),
+    var(--gray-100) calc(100% - var(--mq-fade)),
+    rgba(242, 242, 242, 0) 100%);
 }
-@media (min-width: 1024px) { .marquee-rows { gap: 16px; margin-top: 48px; } }
+@media (min-width: 1024px) { .marquee-rows { gap: 16px; --mq-fade: 64px; } }
 .marquee-rows .marquee { margin-top: 0; }
 
 .marquee {
