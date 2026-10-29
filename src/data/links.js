@@ -123,6 +123,14 @@ export const LINKS = [
     banner: 'assets/img/banners/kotoura-tc.png',
   },
   {
+    group: 'nearby',
+    name: '遊ポートT.C.',
+    row: 'other',
+    desc: '鳥取市のジュニアテニススクール',
+    url: 'https://u-port.xyz/u-port',
+    banner: 'assets/img/banners/u-port-tc.png',
+  },
+  {
     group: 'sponsor',
     name: 'テニスショップ フラシーノ',
     row: 'other',
