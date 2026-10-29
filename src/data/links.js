@@ -46,7 +46,7 @@ export const LINKS = [
     group: 'shop',
     name: 'テニスショップ フラシーノ',
     row: 'other',
-    desc: '鳥取市南吉方のテニス専門店',
+    desc: '鳥取市南吉方のテニス専門店。協会への登録や、大会のエントリーの申込先です',
     url: 'https://frassino.jp/',
     banner: 'assets/img/banners/frassino.png',
   },

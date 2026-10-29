@@ -2804,36 +2804,54 @@ body.jsrv .rv.on .ink-sweep {
 
 /* ============ リンク集ページ ============
    種類ごとの見出しの下に一覧（絞り込みのタブは置かない）。
-   1件は「白い枠の中央にバナー → 団体名と ↗ → 説明（全文）」。スマホは1列、640px から2列、1024px から3列 */
+   1件は1つの枠に「バナー → 団体名と ↗ → 説明（全文）」を収め、枠全体の下地に同じバナーを拡大してぼかしたものを敷く。
+   スマホは1列、640px から2列、1024px から3列（同じ段の枠は高さをそろえる） */
 .lgroup[hidden] { display: none; }
 .lgroup + .lgroup { margin-top: 64px; }
 .llist { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: 1fr; gap: 48px 32px; }
 @media (min-width: 640px) { .llist { grid-template-columns: repeat(2, 1fr); } }
 @media (min-width: 1024px) { .llist { grid-template-columns: repeat(3, 1fr); gap: 56px 36px; } }
-.litem { display: flex; flex-direction: column; gap: 10px; color: inherit; }
-.litem:hover { color: inherit; }
-.litem__media {
+.llist > li { display: flex; }
+.litem {
   position: relative;
+  flex: 1;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  aspect-ratio: 3.6 / 1;
-  padding: 4% 5%;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px 18px 20px;
   overflow: hidden;
-  background: var(--white);
   border: 1px solid var(--gray-200);
+  border-radius: var(--radius);
+  background: var(--white);
+  color: inherit;
   transition: border-color .3s ease;
 }
-.litem__media img { position: relative; display: block; width: 100%; height: auto; max-height: 100%; object-fit: contain; border-radius: var(--radius); transition: transform .5s var(--ease); }
-/* 枠の余白：同じバナーを枠いっぱいに拡大してぼかしたもの（ガウスぼかし）。少し白を重ねて、手前のバナーを引き立てる */
+.litem:hover { color: inherit; border-color: var(--gray-300); }
+/* 枠全体の下地：同じバナーを枠いっぱいに拡大してぼかしたもの（ガウスぼかし）。
+   薄めて、下へ行くほど白を重ね（::before）、団体名と説明を読みやすくする */
 .litem__bg {
   position: absolute;
   inset: -12%;
   background: center / cover no-repeat;
-  filter: blur(14px) saturate(1.1);
-  opacity: .55;
+  filter: blur(18px) saturate(1.1);
+  opacity: .5;
 }
-.litem:hover .litem__media { border-color: var(--gray-300); }
+.litem::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0) 25%, rgba(255, 255, 255, .6) 100%);
+  pointer-events: none;
+}
+.litem > :not(.litem__bg) { position: relative; }
+.litem__media {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 4.2 / 1;
+  padding: 2% 3%;
+}
+.litem__media img { display: block; width: 100%; height: auto; max-height: 100%; object-fit: contain; border-radius: var(--radius); box-shadow: 0 2px 10px rgba(26, 26, 26, .12); transition: transform .5s var(--ease); }
 .litem:hover .litem__media img { transform: scale(1.03); }
 .litem__noimg { font: 700 15px/1.5 var(--fjp); color: var(--gray-500); text-align: center; }
 .litem__head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 4px; }

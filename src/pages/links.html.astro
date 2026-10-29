@@ -41,9 +41,9 @@ const description = "鳥取市テニス協会に関係する団体・施設の�
                   <li class="rv">
                     {/* バナーを白い枠の中央に大きく → 団体名と ↗ → 説明（全文） */}
                     <a class="litem" href={l.url} target="_blank" rel="noopener noreferrer">
-                      {/* 枠の余白には、同じバナーを大きくしてぼかしたものを敷く（.litem__bg。style.css） */}
+                      {/* 枠全体（バナー・団体名・説明）の下地に、同じバナーを大きくしてぼかしたものを敷く（.litem__bg。style.css） */}
+                      {l.banner && <span class="litem__bg" style={`background-image:url('${l.banner}')`} aria-hidden="true"></span>}
                       <span class="litem__media">
-                        {l.banner && <span class="litem__bg" style={`background-image:url('${l.banner}')`} aria-hidden="true"></span>}
                         {l.banner
                           ? <img src={l.banner} alt="" width="1018" height="168" loading="lazy" decoding="async">
                           : <span class="litem__noimg">{l.name}</span>}
