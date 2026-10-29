@@ -1,43 +1,70 @@
 import { useMemo, useState, useEffect, useCallback } from 'react';
-import { Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { Link, Outlet, useLocation } from 'react-router-dom';
 import {
   Database, Users, Dices, Trophy, Swords,
   ClipboardList, CalendarClock, BarChart2,
-  HelpCircle, Settings, ExternalLink,
-  AlertTriangle, Network, Menu, X,
-  PanelLeftClose, PanelLeftOpen, Radio, Printer, ArrowRight
+  HelpCircle, Settings, Network, Radio, Printer, MapPin, Calendar,
 } from 'lucide-react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../../db/database';
 import { useAppStore } from '../../stores/appStore';
 import { useMixedStore } from '../../features/mixed/mixedStore';
 import { useTeamStore } from '../../features/team/teamStore';
+import { useSyncStore } from '../../features/sync/syncStore';
 import VersionInfoModal from '../ui/VersionInfoModal';
 import BulkCallOverlay from '../ui/BulkCallOverlay';
 import VoiceLoadingIndicator from '../ui/VoiceLoadingIndicator';
-import HeaderBackdrop from './HeaderBackdrop';
 import { callTts } from '../../features/broadcast/callTts';
+import {
+  SiteHeader, MobileNav, PageHead, AppTabs, StatusBar, SiteFooter, SITE_URL, type NavLinkItem,
+} from '../site/SiteChrome';
 
-const ALL_MAIN_TABS = [
-  { id: 'S-01', path: '/data', label: 'データ', icon: Database },
-  { id: 'S-02', path: '/entry', label: 'エントリー', icon: Users },
+interface MainTab {
+  id: string;
+  path: string;
+  label: string;
+  /** ページ見出しの赤い英字と、背景の大きな英字 */
+  en: string;
+  icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>;
+}
 
-  { id: 'S-04', path: '/draw-lot', label: '抽選', icon: Dices },
-  { id: 'S-05', path: '/draw-table', label: 'ドロー表', icon: Swords },
-  { id: 'S-06', path: '/referee', label: '対戦順', icon: ClipboardList },
-  { id: 'S-06b', path: '/schedule-sheet', label: 'タイムテーブル', icon: CalendarClock },
-  { id: 'S-07', path: '/score', label: 'スコア', icon: Trophy },
-  { id: 'S-07b', path: '/court-bracket', label: 'ドロー', icon: Network },
-  { id: 'S-09', path: '/dashboard', label: 'ダッシュボード', icon: BarChart2 },
-  { id: 'S-09b', path: '/broadcast', label: 'ライブ配信', icon: Radio },
-  { id: 'S-10', path: '/print', label: '印刷', icon: Printer },
-  { id: 'S-11', path: '/manual', label: 'マニュアル', icon: HelpCircle },
+const ALL_MAIN_TABS: MainTab[] = [
+  { id: 'S-01', path: '/data', label: 'データ', en: 'DATA', icon: Database },
+  { id: 'S-02', path: '/entry', label: 'エントリー', en: 'ENTRY', icon: Users },
+
+  { id: 'S-04', path: '/draw-lot', label: '抽選', en: 'DRAW LOT', icon: Dices },
+  { id: 'S-05', path: '/draw-table', label: 'ドロー表', en: 'DRAW', icon: Swords },
+  { id: 'S-06', path: '/referee', label: '対戦順', en: 'ORDER OF PLAY', icon: ClipboardList },
+  { id: 'S-06b', path: '/schedule-sheet', label: 'タイムテーブル', en: 'TIMETABLE', icon: CalendarClock },
+  { id: 'S-07', path: '/score', label: 'スコア', en: 'SCORE', icon: Trophy },
+  { id: 'S-07b', path: '/court-bracket', label: 'ドロー', en: 'DRAW', icon: Network },
+  { id: 'S-09', path: '/dashboard', label: 'ダッシュボード', en: 'DASHBOARD', icon: BarChart2 },
+  { id: 'S-09b', path: '/broadcast', label: 'ライブ配信', en: 'LIVE', icon: Radio },
+  { id: 'S-10', path: '/print', label: '印刷', en: 'PRINT', icon: Printer },
+  { id: 'S-11', path: '/manual', label: 'マニュアル', en: 'MANUAL', icon: HelpCircle },
   // 同期・観戦用ページ・音声・バックアップは設定ページに集約している
-  { id: 'S-12', path: '/settings', label: '設定', icon: Settings },
+  { id: 'S-12', path: '/settings', label: '設定', en: 'SETTINGS', icon: Settings },
 ];
 
-/** 協会HP（メニュー下部のロゴから開く） */
-const ASSOCIATION_URL = 'https://www.tottori-tenis.net/';
+/**
+ * ヘッダーのナビ（サイトと同じく横一列）に出すまとまり。
+ * 画面が13あってサイトのナビ（7項目）に収まらないため、作業の段階ごとに束ね、
+ * まとまりの中の画面はページ見出しの下のタブで切り替える（会員ポータルの事務局画面と同じ作り）。
+ */
+const NAV_GROUPS: { key: string; label: string; en: string; paths: string[] }[] = [
+  { key: 'prep', label: '大会準備', en: 'PREPARATION', paths: ['/data', '/entry', '/draw-lot', '/draw-table'] },
+  { key: 'run', label: '大会進行', en: 'OPERATION', paths: ['/referee', '/schedule-sheet', '/court-bracket', '/score'] },
+  { key: 'live', label: '配信', en: 'LIVE', paths: ['/dashboard', '/broadcast'] },
+  { key: 'print', label: '印刷', en: 'PRINT', paths: ['/print'] },
+  { key: 'manual', label: 'マニュアル', en: 'MANUAL', paths: ['/manual'] },
+  { key: 'settings', label: '設定', en: 'SETTINGS', paths: ['/settings'] },
+];
+
+/**
+ * 画面いっぱいを使うページ。フッターを出さず、ページの中身が残りの高さを埋める
+ * （印刷は左右 2 列を画面の高さで並べる作りのため）。
+ */
+const FILL_PATHS = ['/print'];
 
 /** 抽選・ドロー表タブを非表示にするパス */
 const DRAW_TAB_PATHS = ['/draw-lot', '/draw-table'];
@@ -60,15 +87,8 @@ export default function AppLayout() {
   const teamBrackets = useTeamStore((s) => s.brackets);
   const [versionModalOpen, setVersionModalOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-  // PC表示：左側の常設サイドバー。デフォルト展開、アイコンのみ表示に折りたたみ可能。
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(
-    typeof window !== 'undefined' && localStorage.getItem('sidebarCollapsed') === '1'
-  );
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    localStorage.setItem('sidebarCollapsed', sidebarCollapsed ? '1' : '0');
-  }, [sidebarCollapsed]);
+  const syncState = useSyncStore((s) => s.connectionState);
+  const syncRoom = useSyncStore((s) => s.roomCode);
 
   // モバイルの自動再生制約対策: 最初のユーザー操作でオーディオをアンロックする
   useEffect(() => {
@@ -229,7 +249,7 @@ export default function AppLayout() {
 
   // ミックス読込時は対戦順・タイムテーブル等を非表示
   const allTabs = useMemo(() => {
-    let tabs = ALL_MAIN_TABS;
+    let tabs: MainTab[] = ALL_MAIN_TABS;
 
     // 大会データ未読み込み時: データ・印刷・マニュアル・設定のみ表示
     if (!currentTournamentId && !isMixedImported && !isTeamImported) {
@@ -262,200 +282,161 @@ export default function AppLayout() {
   }, [events, isMixedImported, isTeamImported]);
 
 
-  // 現在のページラベルを取得
-  const currentPageLabel = useMemo(() => {
-    const currentTab = allTabs.find(t => location.pathname.startsWith(t.path));
-    return currentTab?.label || '';
-  }, [allTabs, location.pathname]);
+  // 現在のページ（タブ）と、それが入っているまとまり
+  // 大会を読み込む前など、メニューに出していない画面を直接開いたときも見出しは正しく出す
+  const currentTab = useMemo(
+    () => allTabs.find(t => location.pathname.startsWith(t.path))
+      ?? ALL_MAIN_TABS.find(t => location.pathname.startsWith(t.path)),
+    [allTabs, location.pathname]
+  );
+  const visibleGroups = useMemo(
+    () => NAV_GROUPS
+      .map(g => ({ ...g, tabs: allTabs.filter(t => g.paths.includes(t.path)) }))
+      .filter(g => g.tabs.length > 0),
+    [allTabs]
+  );
+  const currentGroup = visibleGroups.find(g => currentTab && g.paths.includes(currentTab.path));
 
-  // 現在のページアイコンを取得
-  const CurrentPageIcon = useMemo(() => {
-    const currentTab = allTabs.find(t => location.pathname.startsWith(t.path));
-    return currentTab?.icon || null;
-  }, [allTabs, location.pathname]);
+  const navItems: NavLinkItem[] = visibleGroups.map(g => ({
+    key: g.key,
+    label: g.label,
+    to: g.tabs[0].path,
+    active: g === currentGroup,
+  }));
+  const tabItems: NavLinkItem[] = (currentGroup?.tabs ?? []).map(t => ({
+    key: t.id, label: t.label, to: t.path, icon: t.icon, active: t === currentTab,
+  }));
+  const mobileGroups = visibleGroups.map(g => ({
+    label: g.en,
+    items: g.tabs.map(t => ({ key: t.id, label: t.label, to: t.path, active: t === currentTab })),
+  }));
 
-  // メニュー項目タップ時
-  const handleMenuItemClick = useCallback((path: string) => {
-    navigate(path);
-    setMenuOpen(false);
-  }, [navigate]);
+  // 表示中の大会（個人戦・ミックス・団体戦）
+  const displayName = isMixedImported && mixedTournamentInfo
+    ? mixedTournamentInfo.name.replace(/\(.*?\)|（.*?）/g, '')
+    : isTeamImported && teamTournamentInfo
+      ? teamTournamentInfo.name.replace(/\(.*?\)|（.*?）/g, '')
+      : tournament?.name.replace(/\(.*?\)|（.*?）/g, '') || '';
+  const meta = isMixedImported && mixedTournamentInfo
+    ? { date: mixedTournamentInfo.date, venue: mixedTournamentInfo.venue }
+    : isTeamImported && teamTournamentInfo
+      ? { date: teamTournamentInfo.date, venue: teamTournamentInfo.venue }
+      : tournament ? { date: tournament.date, venue: tournament.venue } : null;
+  const activeTickerItems = isMixedImported ? mixedTickerItems : isTeamImported ? teamTickerItems : tickerItems;
+  const hasTournament = !!(currentTournamentId || isMixedImported || isTeamImported);
+
+  const fill = FILL_PATHS.some(p => location.pathname.startsWith(p));
+  const pageLabel = currentTab?.label || '大会運営システム';
+  const pageEn = currentTab?.en || 'TOURNAMENT';
+
+  const closeMenu = useCallback(() => setMenuOpen(false), []);
 
   // パス変更時にメニューを閉じる
   useEffect(() => {
     setMenuOpen(false);
   }, [location.pathname]);
 
+  const syncChip = syncRoom && syncState !== 'disconnected' ? (
+    <Link
+      to="/settings"
+      className={`sync-chip ${syncState === 'connected' ? 'sync-chip--on' : 'sync-chip--wait'}`}
+      title={`同期ルーム ${syncRoom}`}
+    >
+      <i aria-hidden="true" /><span>{syncState === 'connected' ? `同期中 ${syncRoom}` : '再接続中'}</span>
+    </Link>
+  ) : null;
+
   return (
-    <div className="flex h-[100dvh] bg-bg-main overflow-hidden">
+    <div className="app-shell">
+      <a className="skip-link" href="#main">本文へスキップ</a>
 
-      {/* ===== PC: 画面の上端から立てる常設メニュー（ヘッダーの高さぶんも含む） ===== */}
-      <aside
-        className={`side-menu hidden lg:flex flex-col shrink-0 transition-[width] duration-200 ${
-          sidebarCollapsed ? 'w-[64px]' : 'w-56'
-        }`}
-        style={{ background: 'linear-gradient(180deg, #c63834 0%, #ad2c29 55%, #8c2220 100%)' }}
-      >
-        {/* 折りたたみトグル */}
-        <div className={`flex items-center h-[56px] shrink-0 border-b border-white/20 ${sidebarCollapsed ? 'justify-center' : 'justify-between px-3'}`}>
-          {!sidebarCollapsed && <span className="text-[11px] font-bold text-white/75 tracking-wide">メニュー</span>}
-          <button
-            onClick={() => setSidebarCollapsed(v => !v)}
-            className="p-1.5 text-white/75 hover:text-white hover:bg-white/20 rounded transition-colors"
-            title={sidebarCollapsed ? 'メニューを展開' : 'アイコンのみに縮小'}
-            aria-label={sidebarCollapsed ? 'メニューを展開' : 'メニューを縮小'}
-          >
-            {sidebarCollapsed ? <PanelLeftOpen className="w-4 h-4" /> : <PanelLeftClose className="w-4 h-4" />}
-          </button>
-        </div>
+      {/* ===== ヘッダー（協会サイトと同じ。右上の赤いブロックは観戦ページ） ===== */}
+      <SiteHeader
+        homeTo="/data"
+        tag="大会運営"
+        tagEm="SYSTEM"
+        items={navItems}
+        contact={{ label: '観戦ページ', href: '/view' }}
+        aux={syncChip}
+        menuOpen={menuOpen}
+        onToggleMenu={() => setMenuOpen(v => !v)}
+      />
 
-        {/* ナビゲーション */}
-        <nav className="flex-1 overflow-y-auto overflow-x-hidden px-2 py-2 space-y-0.5">
-          {allTabs.map((item) => {
-            const isActive = location.pathname.startsWith(item.path);
-            return (
-              <button
-                key={item.id}
-                onClick={() => navigate(item.path)}
-                title={item.label}
-                className={`side-menu-item ${isActive ? 'side-menu-item-active' : ''} ${sidebarCollapsed ? 'justify-center' : ''}`}
-                style={sidebarCollapsed ? { padding: '12px 0' } : undefined}
-              >
-                <item.icon
-                  className="shrink-0"
-                  style={{ width: 18, height: 18 }}
-                />
-                {!sidebarCollapsed && <span className="truncate">{item.label}</span>}
-              </button>
-            );
-          })}
-        </nav>
+      {/* ===== 大会の状況（大会名・進捗・コート・時間超過）。読み込み中だけ出す ===== */}
+      {hasTournament && (
+        <StatusBar
+          label={activeTickerItems.some(t => t.includes('進行中')) ? 'LIVE' : 'NOW'}
+          live={activeTickerItems.some(t => t.includes('進行中'))}
+          lead={displayName || '大会運営システム'}
+          items={activeTickerItems}
+        />
+      )}
 
-        {/* フッター：左下に協会ロゴ（押すと協会HP）・右下にバージョン */}
-        <div className="px-2.5 py-2.5 shrink-0">
-          {sidebarCollapsed ? (
-            <div className="flex flex-col items-center gap-2">
-              <AssociationLogoLink className="menu-logo-link menu-logo-link-sm" />
-              <button onClick={() => setVersionModalOpen(true)} className="text-[9px] font-black text-white/85 hover:text-white text-center" title="バージョン情報">
-                2.4
-              </button>
-            </div>
-          ) : (
-            <div className="menu-bottom-row">
-              <AssociationLogoLink className="menu-logo-link" />
-              <button onClick={() => setVersionModalOpen(true)} className="drawer-version-btn" title="バージョン情報・更新履歴">
-                <span className="header-version">Ver 2.4</span>
-                <span className="drawer-version-date">{__BUILD_TIMESTAMP__}</span>
-              </button>
-            </div>
-          )}
-        </div>
-      </aside>
-
-      {/* ===== 右側: ヘッダー + 流れる表示バー + 本体 ===== */}
-      <div className="flex-1 min-w-0 flex flex-col">
-        {/* ===== ヘッダー（左=メニュータイトル / 右=メニューボタン。大会名は下の表示バーへ） ===== */}
-        <header className="header-main flex items-center gap-3 px-4 lg:px-5 shrink-0 z-30">
-          <HeaderBackdrop />
-
-          {/* 左: 現在ページ名（メニュータイトル） */}
-          <div className="header-page-name min-w-0">
-            {CurrentPageIcon && (
-              <CurrentPageIcon style={{ width: 18, height: 18 }} className="shrink-0" />
-            )}
-            <span className="truncate">{currentPageLabel || '大会運営システム'}</span>
+      {/* ===== スマホ: 黒地のメニュー ===== */}
+      <MobileNav
+        open={menuOpen}
+        onClose={closeMenu}
+        groups={mobileGroups}
+        foot={
+          <div className="mobile-nav__foot-row">
+            <a className="mobile-nav__foot-link" href="/view" target="_blank" rel="noopener noreferrer" onClick={closeMenu}>観戦ページ ↗</a>
+            <a className="mobile-nav__foot-link" href={SITE_URL} target="_blank" rel="noopener noreferrer" onClick={closeMenu}>協会サイト ↗</a>
+            <button className="mobile-nav__foot-link" onClick={() => { closeMenu(); setVersionModalOpen(true); }}>Ver 2.4 · {__BUILD_TIMESTAMP__}</button>
           </div>
+        }
+      />
 
-          {/* 右: メニューボタン（スマホのみ・開くと × に変わる） */}
-          <button
-            className="header-menu-btn header-menu-btn-mobile-only"
-            onClick={() => setMenuOpen(v => !v)}
-            aria-label={menuOpen ? 'メニューを閉じる' : 'メニューを開く'}
-            aria-expanded={menuOpen}
-          >
-            {menuOpen
-              ? <X style={{ width: 26, height: 26 }} strokeWidth={2} />
-              : <Menu style={{ width: 26, height: 26 }} strokeWidth={2} />}
-          </button>
-        </header>
+      <main id="main" className={`app-main ${fill ? 'app-main--fill' : ''}`}>
+        <PageHead
+          key={`head-${currentTab?.path ?? location.pathname}`}
+          crumbs={[
+            { label: '大会運営', to: '/data' },
+            ...(currentGroup && currentGroup.tabs.length > 1 ? [{ label: currentGroup.label, to: currentGroup.tabs[0].path }] : []),
+            { label: pageLabel },
+          ]}
+          en={pageEn}
+          title={pageLabel}
+          lead={displayName ? (
+            <>
+              <span className="page-lead__item page-lead__name">{displayName}</span>
+              {meta?.date && <span className="page-lead__item"><Calendar className="w-3.5 h-3.5" />{meta.date}</span>}
+              {meta?.venue && <span className="page-lead__item"><MapPin className="w-3.5 h-3.5" />{meta.venue}</span>}
+            </>
+          ) : undefined}
+        />
+        <AppTabs items={tabItems} label={`${currentGroup?.label ?? ''}の画面`} />
 
-        {/* ===== 流れる表示バー（ティッカー） ===== */}
-        {(() => {
-          const displayName = isMixedImported && mixedTournamentInfo
-            ? mixedTournamentInfo.name.replace(/\(.*?\)|（.*?）/g, '')
-            : isTeamImported && teamTournamentInfo
-              ? teamTournamentInfo.name.replace(/\(.*?\)|（.*?）/g, '')
-              : tournament?.name.replace(/\(.*?\)|（.*?）/g, '') || '';
-          const activeTickerItems = isMixedImported ? mixedTickerItems : isTeamImported ? teamTickerItems : tickerItems;
-          return (
-            <div className="info-bar flex items-center shrink-0 h-9 overflow-hidden text-xs sticky top-0 z-20">
-              <div className="flex-1 overflow-hidden relative h-full info-ticker-area">
-                <div className="info-ticker flex items-center h-full whitespace-nowrap">
-                  {/* 大会名はヘッダーではなくここに流す */}
-                  <span className="info-ticker-item info-ticker-lead">
-                    <span>{displayName || '大会運営システム'}</span>
-                    <span className="info-ticker-dot" />
-                  </span>
-                  {activeTickerItems.length > 0 ? activeTickerItems.map((item, i) => (
-                    <span key={i} className={`info-ticker-item ${item.startsWith('⚠') ? 'info-ticker-alert' : ''}`}>
-                      {item.startsWith('⚠') && <AlertTriangle className="w-3 h-3" />}
-                      <span>{item.startsWith('⚠') ? item.slice(2) : item}</span>
-                      {i < activeTickerItems.length - 1 && <span className="info-ticker-dot" />}
-                    </span>
-                  )) : null}
+        {/* ページの中身（ページ遷移アニメーション） */}
+        <div key={location.pathname} className={`app-page app-page--gray page-enter ${fill ? '' : 'min-h-[60vh]'}`}>
+          <Outlet />
+        </div>
+
+        {!fill && (
+          <SiteFooter
+            note={<>大会運営システム<br />エントリー・ドロー・対戦順・スコア・観戦配信</>}
+            columns={<>
+              {visibleGroups.slice(0, 3).map(g => (
+                <div key={g.key}>
+                  <Link className={`fw fw--head ${g.tabs.length > 1 ? 'fw--head-tight' : ''}`} to={g.tabs[0].path}>{g.label}</Link>
+                  {g.tabs.length > 1 && g.tabs.map(t => <Link key={t.id} className="fw fw--sub" to={t.path}>{t.label}</Link>)}
                 </div>
+              ))}
+              <div>
+                {visibleGroups.slice(3).map(g => (
+                  <Link key={g.key} className="fw fw--head" to={g.tabs[0].path}>{g.label}</Link>
+                ))}
+                <a className="fw fw--head" href={SITE_URL} target="_blank" rel="noopener noreferrer">協会サイト ↗</a>
               </div>
-            </div>
-          );
-        })()}
-
-        {/* メインコンテンツ（ページ遷移アニメーション） */}
-        <main className="flex-1 min-w-0 overflow-y-auto relative bg-bg-main">
-          <div key={location.pathname} className="page-enter min-h-full">
-            <Outlet />
-          </div>
-        </main>
-      </div>
-
-      {/* ===== スマホ: 全画面メニュー（ヘッダーは出したまま、その下いっぱいに開く） ===== */}
-      <div className={`fullmenu fullmenu-mobile-only ${menuOpen ? 'fullmenu-open' : ''}`}>
-        <div className="fullmenu-list">
-          {allTabs.map((item, i) => {
-            const isActive = location.pathname.startsWith(item.path);
-            return (
-              <button
-                key={item.id}
-                className={`fullmenu-item ${isActive ? 'fullmenu-item-active' : ''}`}
-                style={{ '--i': i } as React.CSSProperties}
-                onClick={() => handleMenuItemClick(item.path)}
-              >
-                <item.icon className="shrink-0" />
-                <span>{item.label}</span>
-                <ArrowRight className="fullmenu-arrow" style={{ width: 18, height: 18 }} />
+            </>}
+            utils={<>
+              <a className="fw" href="/view" target="_blank" rel="noopener noreferrer">観戦ページを開く ↗</a>
+              <button className="fw site-footer__ver" onClick={() => setVersionModalOpen(true)}>
+                Ver 2.4<small>{__BUILD_TIMESTAMP__}</small>
               </button>
-            );
-          })}
-        </div>
-
-        {/* 下部: 左に協会ロゴ（押すと協会HP）・右にバージョン */}
-        <div
-          className="fullmenu-footer"
-          style={{ '--footer-delay': `${allTabs.length * 45}ms` } as React.CSSProperties}
-        >
-          <div className="menu-bottom-row">
-            <AssociationLogoLink className="menu-logo-link" />
-
-            {/* バージョン情報（ver.と更新日） */}
-            <button
-              onClick={() => setVersionModalOpen(true)}
-              className="drawer-version-btn"
-              title="バージョン情報・更新履歴"
-            >
-              <span className="header-version">Ver 2.4</span>
-              <span className="drawer-version-date">{__BUILD_TIMESTAMP__}</span>
-            </button>
-          </div>
-        </div>
-      </div>
+            </>}
+          />
+        )}
+      </main>
 
       {/* バージョン情報モーダル */}
       <VersionInfoModal open={versionModalOpen} onClose={() => setVersionModalOpen(false)} />
@@ -466,30 +447,5 @@ export default function AppLayout() {
       {/* コール音声の準備中を知らせるグローバルインジケータ */}
       <VoiceLoadingIndicator />
     </div>
-  );
-}
-
-/**
- * メニュー下部の協会ロゴ。押すと鳥取市テニス協会のHPを別タブで開く。
- * （以前あった「テニス協会HP」ボタンはこのロゴに置き換えて廃止した）
- */
-function AssociationLogoLink({ className = '' }: { className?: string }) {
-  return (
-    <a
-      href={ASSOCIATION_URL}
-      target="_blank"
-      rel="noopener noreferrer"
-      className={className}
-      title="鳥取市テニス協会HPを開く"
-      aria-label="鳥取市テニス協会HPを開く"
-    >
-      <img
-        src={`${import.meta.env.BASE_URL}logo-tcta-white.png`}
-        alt="鳥取市テニス協会"
-        onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-      />
-      {/* 外部リンクだと分かるよう、ロゴの右下に小さく重ねる */}
-      <ExternalLink className="menu-logo-link-icon" strokeWidth={2.5} />
-    </a>
   );
 }

@@ -46,7 +46,7 @@ function toState(live: LiveScore): ScoreState {
 /**
  * 協会サイトのトンマナ（白ベース＋赤の差し色）に合わせた配色。
  * 画面全体: 白 / ヘッダー: 白＋下端の赤ライン / 得点ボタン: 赤 /
- * アクセント（差し色）: #c63834
+ * アクセント（差し色）: #D8232A
  * ※ Tailwind の任意値クラスは静的な文字列でしか解決できないため、
  *   クラス側は各所に直接記述し、ここでは背景色だけを共有する。
  */
@@ -264,7 +264,7 @@ export default function LiveScorePage() {
                   key={p}
                   onClick={() => void handlePoint(p)}
                   disabled={busy}
-                  className="relative flex flex-col items-center justify-center gap-1 rounded-2xl bg-gradient-to-b from-[#d2504c] to-[#c63834] active:from-[#c63834] active:to-[#8c2220] border border-[#ad2c29] shadow-lg disabled:opacity-60 transition-colors p-3"
+                  className="relative flex flex-col items-center justify-center gap-1 rounded-2xl bg-gradient-to-b from-[#d2504c] to-[#D8232A] active:from-[#D8232A] active:to-[#8F161B] border border-[#B31C22] shadow-lg disabled:opacity-60 transition-colors p-3"
                 >
                   {live.server === p && (
                     <span className="absolute top-2 right-2 text-[10px] font-black text-white bg-black/25 rounded px-1.5 py-0.5">

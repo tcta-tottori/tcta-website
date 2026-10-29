@@ -583,7 +583,7 @@ class CallTtsService {
     const sampleRate = this.parseSampleRate(mime);
     const pcm = this.base64ToBytes(b64);
     const wav = this.pcmToWav(pcm, sampleRate);
-    return new Blob([wav], { type: 'audio/wav' });
+    return new Blob([wav as Uint8Array<ArrayBuffer>], { type: 'audio/wav' });
   }
 
   private parseSampleRate(mime: string): number {

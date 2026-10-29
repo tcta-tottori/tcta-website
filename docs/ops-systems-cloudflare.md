@@ -1,5 +1,10 @@
 # 大会運営システム・ドロー会議システムの Cloudflare 化の検討メモ
 
+> **2026-10-29 追記：大会運営システムは段階 0・1 を実施した。** GitHub Pages 版を残したまま、Cloudflare 版を
+> [`tournament/`](../tournament/)（https://tcta-tournament.tcta-admin-worker.workers.dev/ ）に作った。
+> 中継は Durable Object に移し（Render 不要）、音声コールの鍵は Worker の secret に、見た目は協会サイトと同じ枠にそろえた。
+> Workers Paid への切り替えはまだ行っていない（Free のまま）。ドロー会議システムは未着手。
+
 2026-10-29 時点の整理。公式サイト（Astro ＋ EmDash、Cloudflare Workers）と
 会員システムのサンプル（`members/`、Cloudflare Workers ＋ D1）が Cloudflare でそろったので、
 GitHub Pages で動いている **大会運営システム** と **ドロー会議システム** も Cloudflare に寄せるべきか、

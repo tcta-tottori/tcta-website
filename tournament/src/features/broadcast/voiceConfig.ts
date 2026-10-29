@@ -20,7 +20,7 @@ export interface VoiceConfig {
   mode: VoiceMode;
   /** direct モード時に使用する API キー（localStorage に保存） */
   apiKey: string;
-  /** proxy モード時に使用する sync-server の HTTP URL */
+  /** proxy モード時に使用する中継の HTTP URL（Cloudflare 版は既定で同じオリジン） */
   serverUrl: string;
   /** direct モード時のモデル名 */
   model: string;
@@ -54,7 +54,8 @@ function defaultServerUrl(): string {
   } catch {
     // 無視
   }
-  // ホスト名だけに 8787 を付けるのは通常誤設定のため、空にしてユーザーに入力させる
+  // Cloudflare 版は、アプリと同じ Worker の /api/gemini-tts が音声コールの中継を兼ねる
+  if (typeof location !== 'undefined' && /^https?:$/.test(location.protocol)) return location.origin;
   return '';
 }
 
@@ -167,7 +168,7 @@ export function getVoiceSettings(): VoiceConfig {
     localStorage.getItem(KEY_ENGINE) === 'gemini' ? 'gemini' : DEFAULT_ENGINE;
   const mode: VoiceMode = IS_KEY_LOCKED
     ? 'direct'
-    : ((localStorage.getItem(KEY_MODE) as VoiceMode) || 'direct');
+    : ((localStorage.getItem(KEY_MODE) as VoiceMode) || 'proxy'); // Cloudflare 版は API キーを Worker に置く（proxy）のが既定
   const stored = localStorage.getItem(KEY_MODEL) || '';
   // 旧バージョンの既定値がそのまま残っている場合は新しい既定（高速なFlash）へ載せ替える
   const model = IS_MODEL_LOCKED

@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Check, Circle, Play, MapPin, X, Trophy, Info, Settings2, ArrowUp, ArrowDown, HelpCircle, Sparkles, BarChart3, ListOrdered, Layers, Pencil } from 'lucide-react';
+import { Check, Circle, Play, MapPin, X, Trophy, Info, Settings2, ArrowUp, ArrowDown, HelpCircle, ListOrdered, Layers, Pencil } from 'lucide-react';
 import CourtChangeDialog from '../../components/ui/CourtChangeDialog';
 import { useTeamStore } from './teamStore';
 import { leagueTextColor } from '../mixed/leagueColors';

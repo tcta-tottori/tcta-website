@@ -12,9 +12,19 @@ import type { SyncConnectionState, SyncPeer } from './types';
 // インターネット越しに観戦データを閲覧・配信できる。
 // =============================================
 
-/** 既定の中継サーバーURL（未設定なら空文字） */
+/**
+ * 既定の中継サーバーURL。
+ * Cloudflare 版は、アプリと同じ Worker の /ws（Durable Object）が中継サーバーを兼ねる。
+ * そのため何も設定しなくても、開いている URL の wss://<同じホスト>/ws に接続する。
+ * VITE_SYNC_SERVER_URL を入れてビルドした場合だけ、そちら（Render など）を使う。
+ */
 export const DEFAULT_SERVER_URL: string =
-  ((import.meta.env.VITE_SYNC_SERVER_URL as string | undefined) || '').trim();
+  ((import.meta.env.VITE_SYNC_SERVER_URL as string | undefined) || '').trim() || sameOriginSyncUrl();
+
+function sameOriginSyncUrl(): string {
+  if (typeof location === 'undefined' || !/^https?:$/.test(location.protocol)) return '';
+  return `${location.protocol === 'https:' ? 'wss:' : 'ws:'}//${location.host}/ws`;
+}
 
 /**
  * VITE_PUBLIC_ROOM が未設定のときに使う内蔵の固定ルームコード。

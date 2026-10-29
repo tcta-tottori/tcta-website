@@ -1,7 +1,7 @@
 import * as XLSX from 'xlsx';
 import type {
   TeamEntry, TeamLeague, TeamLeagueMatch, TeamTournamentInfo,
-  MatchOrderEntry, TeamMember, SubMatchScore, MatchType
+  MatchOrderEntry
 } from './types';
 import { MATCH_TYPE_ORDER } from './teamLogic';
 
@@ -101,9 +101,11 @@ function buildCellFontColorMap(
     while ((match = cellRegex.exec(xml)) !== null) {
       const ref = match[1];
       const styleIdx = parseInt(match[2]);
-      const xf = wb.Styles?.CellXf?.[styleIdx];
+      // SheetJS の型定義には Styles が無い（cellStyles: true のときだけ入る）
+      const styles = (wb as XLSX.WorkBook & { Styles?: { CellXf?: { fontId: number }[]; Fonts?: { color?: { rgb?: string } }[] } }).Styles;
+      const xf = styles?.CellXf?.[styleIdx];
       if (!xf) continue;
-      const font = wb.Styles?.Fonts?.[xf.fontId];
+      const font = styles?.Fonts?.[xf.fontId];
       if (!font?.color?.rgb) continue;
       colorMap.set(ref, font.color.rgb);
     }

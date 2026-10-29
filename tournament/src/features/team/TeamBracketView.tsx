@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
-import { Trophy, ChevronRight, MapPin, Play, Check, Medal, Award, Sparkles, Shuffle, RotateCcw, ClipboardList, Volume2, VolumeX, X, Layers, ArrowLeftRight, Pencil } from 'lucide-react';
+import { Trophy, ChevronRight, MapPin, Check, Medal, Award, Sparkles, Shuffle, RotateCcw, ClipboardList, Volume2, VolumeX, X, Layers, ArrowLeftRight, Pencil } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import { useTeamStore } from './teamStore';
 import type { TeamBracketMatch, PlacementCategory, TeamPlacementBracket } from './types';
@@ -20,7 +20,7 @@ const CATEGORY_LABELS: Record<PlacementCategory, string> = {
 
 /** カテゴリタブのリッチカラー文字 */
 const CATEGORY_TAB_COLORS: Record<PlacementCategory, { active: string; inactive: string }> = {
-  '1st': { active: '#c63834', inactive: '#e49f9c' }, // ブランド赤
+  '1st': { active: '#D8232A', inactive: '#e49f9c' }, // ブランド赤
   '2nd': { active: '#404040', inactive: '#a6a6a6' }, // 墨
   '3rd': { active: '#5a5a5a', inactive: '#a6a6a6' }, // グレー
   '4th': { active: '#767676', inactive: '#d6d6d6' }, // 淡いグレー
@@ -385,7 +385,7 @@ export default function TeamBracketView() {
             const r1count = bRoundMatches[0]?.length || 0;
             const svgHeight = r1count * GRID_UNIT + 36;
             const catGradColors: Record<string, string> = {
-              '1st': '#c63834', '2nd': '#a6a6a6', '3rd': '#5a5a5a', '4th': '#767676',
+              '1st': '#D8232A', '2nd': '#a6a6a6', '3rd': '#5a5a5a', '4th': '#767676',
             };
             const lineColor = catGradColors[cat] || '#c9cdd3';
 
@@ -804,7 +804,7 @@ export default function TeamBracketView() {
         <style>{`
           @keyframes bracket-playing {
             0%, 100% { border-color: rgb(74, 222, 128); box-shadow: 0 0 0 0 rgba(212,106,102, 0); }
-            50% { border-color: rgb(34, 197, 94); box-shadow: 0 0 8px 2px rgba(198,56,52, 0.3); }
+            50% { border-color: rgb(34, 197, 94); box-shadow: 0 0 8px 2px rgba(216, 35, 42, 0.3); }
           }
           .bracket-playing-blink { animation: bracket-playing 2s ease-in-out infinite; }
         `}</style>

@@ -36,15 +36,15 @@ export const COL = {
   ghost: '#e6e6e6',
 
   // ---- 差し色（サイトのブランド赤） ----
-  red50: '#fdf3f2',
+  red50: '#FCEDEE',
   red100: '#fae3e2',
   red200: '#f2c7c5',
   red300: '#e49f9c',
   red400: '#d46a66',
   /** ブランド赤（サイトの見出し・アイコンと同じ） */
-  red500: '#c63834',
-  red600: '#ad2c29',
-  red700: '#8c2220',
+  red500: '#D8232A',
+  red600: '#B31C22',
+  red700: '#8F161B',
   red800: '#6b1a18',
 
   // ---- ベース（白と墨のニュートラル） ----
@@ -60,14 +60,14 @@ export const COL = {
   gray900: '#141414',
 
   /** 勝ち上がりライン・勝者スコアの赤 */
-  win: '#c63834',
+  win: '#D8232A',
   winSoft: '#fae3e2',
   /** 勝者行のごく淡い赤の敷き色 */
-  winRow: 'rgba(198, 56, 52, 0.07)',
+  winRow: 'rgba(216, 35, 42, 0.07)',
   /** 優勝・1位チップ（赤ベタ） */
   champ1: '#d2504c',
-  champ2: '#c63834',
-  champ3: '#8c2220',
+  champ2: '#D8232A',
+  champ3: '#8F161B',
   champText: '#ffffff',
 } as const;
 

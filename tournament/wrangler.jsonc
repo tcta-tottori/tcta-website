@@ -1,0 +1,27 @@
+{
+	// 大会運営システム（Cloudflare 版）の Worker。GitHub Pages 版（tcta-tottori/tournament-management-app）は残したまま、別の URL で動く。
+	//   アプリ本体 … dist/（vite build の出力）を Workers Static Assets で配る。Worker を通らないので無料・無制限
+	//   /ws        … 端末どうしの同期と観戦配信（Durable Object「SyncRoom」。Render の中継サーバーの置き換え）
+	//   /api/*     … 音声コール（Gemini TTS）の中継。API キーは wrangler secret put GEMINI_API_KEY で入れる
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "tcta-tournament",
+	"main": "worker/index.ts",
+	"compatibility_date": "2026-02-24",
+	"assets": {
+		"directory": "./dist",
+		"binding": "ASSETS",
+		// /view/league などアプリ内の URL を直接開いても index.html を返す
+		"not_found_handling": "single-page-application",
+		// Worker が動くのはこの 2 つだけ（ほかは静的ファイルとして直接返る）
+		"run_worker_first": ["/ws", "/api/*"]
+	},
+	"durable_objects": {
+		"bindings": [{ "name": "SYNC_ROOM", "class_name": "SyncRoom" }]
+	},
+	// Free プランで使えるのは SQLite を使う Durable Object だけ
+	"migrations": [{ "tag": "v1", "new_sqlite_classes": ["SyncRoom"] }],
+	"vars": {
+		"GEMINI_TTS_MODEL": "gemini-3.1-flash-preview-tts"
+	},
+	"observability": { "enabled": true }
+}

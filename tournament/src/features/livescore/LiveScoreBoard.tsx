@@ -56,7 +56,7 @@ const COLOR = {
   /** パネルの地色 */
   panel: 'bg-[#262626]',
   /** 進行中セットの帯（差し色の赤） */
-  current: 'bg-[#c63834]',
+  current: 'bg-[#D8232A]',
   /** 決着済みセットで負けている側の数字 */
   dim: 'text-[#8f8f8f]',
 };
@@ -149,7 +149,7 @@ export default function LiveScoreBoard({
         <span className="flex-1" />
         {courtLabel && (
           <span
-            className={`inline-block shrink-0 truncate rounded-t-md font-black text-white py-0.5 bg-[#c63834] ${sz.label}`}
+            className={`inline-block shrink-0 truncate rounded-t-md font-black text-white py-0.5 bg-[#D8232A] ${sz.label}`}
           >
             {courtLabel}
           </span>
@@ -167,7 +167,7 @@ export default function LiveScoreBoard({
             {/* サーブ表示（赤の▶） */}
             <div className={`${sz.serveCol} shrink-0 flex items-center justify-center pl-1`}>
               {row.serving && (
-                <Play className={`${sz.serveIcon} fill-[#e05a56] text-[#e05a56] drop-shadow-[0_0_4px_rgba(198,56,52,0.55)]`} />
+                <Play className={`${sz.serveIcon} fill-[#e05a56] text-[#e05a56] drop-shadow-[0_0_4px_rgba(216, 35, 42,0.55)]`} />
               )}
             </div>
 
@@ -179,7 +179,7 @@ export default function LiveScoreBoard({
                 </span>
               )}
               {row.seed != null && (
-                <span className={`${sz.seed} shrink-0 rounded-full bg-[#c63834] text-white font-black leading-tight`}>
+                <span className={`${sz.seed} shrink-0 rounded-full bg-[#D8232A] text-white font-black leading-tight`}>
                   {row.seed}
                 </span>
               )}

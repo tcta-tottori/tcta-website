@@ -1727,7 +1727,7 @@ function BracketDisplay({ bracket, onMatchClick, onCourtClick, getRoundLabel, al
       <style>{`
         @keyframes bracket-playing {
           0%, 100% { border-color: rgb(74, 222, 128); box-shadow: 0 0 0 0 rgba(212,106,102, 0); }
-          50% { border-color: rgb(34, 197, 94); box-shadow: 0 0 8px 2px rgba(198,56,52, 0.3); }
+          50% { border-color: rgb(34, 197, 94); box-shadow: 0 0 8px 2px rgba(216, 35, 42, 0.3); }
         }
         .bracket-playing-blink { animation: bracket-playing 2s ease-in-out infinite; }
       `}</style>

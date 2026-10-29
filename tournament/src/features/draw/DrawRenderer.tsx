@@ -212,7 +212,7 @@ export default function DrawRenderer({
       // --- Court number badge (playing / ready) ---
       if (match && (isPlaying || isReady)) {
         const courtNum = match.courtName?.replace(/[^\d]/g, '') || '';
-        const bgColor = isPlaying ? '#c63834' : '#5a5a5a';
+        const bgColor = isPlaying ? '#D8232A' : '#5a5a5a';
         const badgeX = lineX + roundW / 2 - 12;
         const badgeY = yMid - 10;
 

@@ -1,5 +1,4 @@
 import { useState, useCallback, useRef } from 'react';
-import { db } from '../../db/database';
 import { exportFullBackup, importFullBackup, validateBackupData } from './backupEngine';
 import { useMixedStore } from '../mixed/mixedStore';
 import {
@@ -216,7 +215,6 @@ export default function BackupPage({ embedded = false }: BackupPageProps = {}) {
         return;
       }
 
-      const name = parsed.tournamentName || parsed.db?.tables?.tournaments?.[0]?.name || file.name;
       const confirmed = confirm(
         `このバックアップを復元しますか？\n\n` +
         `ファイル: ${file.name}\n` +

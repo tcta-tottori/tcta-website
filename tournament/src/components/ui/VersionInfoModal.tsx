@@ -642,7 +642,7 @@ export default function VersionInfoModal({ open, onClose }: Props) {
         <div className="relative overflow-hidden shrink-0">
           <div className="absolute inset-0 bg-gradient-to-br from-primary-600 via-primary-700 to-primary-800" />
           <div className="absolute inset-0 opacity-20"
-            style={{ background: 'radial-gradient(circle at 30% 40%, rgba(198,56,52,0.4) 0%, transparent 50%), radial-gradient(circle at 80% 70%, rgba(118,118,118,0.3) 0%, transparent 50%)' }} />
+            style={{ background: 'radial-gradient(circle at 30% 40%, rgba(216, 35, 42,0.4) 0%, transparent 50%), radial-gradient(circle at 80% 70%, rgba(118,118,118,0.3) 0%, transparent 50%)' }} />
           <div className="absolute -top-6 -right-6 w-28 h-28 border border-white/[0.08] rounded-full" />
           <div className="absolute -bottom-4 -left-4 w-20 h-20 border border-white/[0.06] rounded-full" />
 

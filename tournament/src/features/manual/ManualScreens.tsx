@@ -15,7 +15,7 @@ import {
 export type Device = 'mobile' | 'pc';
 
 /** メニューの赤いグラデーション（実際のメニューと同じ） */
-const MENU_BG = 'linear-gradient(180deg, #c63834 0%, #ad2c29 55%, #8c2220 100%)';
+const MENU_BG = 'linear-gradient(180deg, #D8232A 0%, #B31C22 55%, #8F161B 100%)';
 
 /** 説明と対応させる番号の丸 */
 export function Marker({ n, className = '' }: { n: number; className?: string }) {
@@ -261,10 +261,10 @@ export function DrawCardMockup() {
       <div className="absolute left-0 top-[74px]"><DrawSlot no={2} a="佐藤 三郎" b="高橋 四郎" affA="□□ＴＣ" affB="フリー" /></div>
       {/* 勝ち上がり線 */}
       <svg className="absolute inset-0" width="300" height="132">
-        <path d="M 150 23 L 172 23 L 172 60" fill="none" stroke="#c63834" strokeWidth="2.6" />
+        <path d="M 150 23 L 172 23 L 172 60" fill="none" stroke="#D8232A" strokeWidth="2.6" />
         <path d="M 150 97 L 172 97 L 172 60" fill="none" stroke="#a6a6a6" strokeWidth="1.4" />
-        <path d="M 172 60 L 196 60" fill="none" stroke="#c63834" strokeWidth="2.6" />
-        <text x="177" y="55" fill="#c63834" fontSize="18" fontWeight={900}>8</text>
+        <path d="M 172 60 L 196 60" fill="none" stroke="#D8232A" strokeWidth="2.6" />
+        <text x="177" y="55" fill="#D8232A" fontSize="18" fontWeight={900}>8</text>
         <text x="177" y="79" fill="#767676" fontSize="18" fontWeight={800}>5</text>
       </svg>
       <div className="absolute left-[196px] top-[37px]">
