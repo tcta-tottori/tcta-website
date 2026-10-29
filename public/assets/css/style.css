@@ -341,7 +341,9 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   align-items: center;
   gap: 16px;
   flex-wrap: wrap;
+  align-self: stretch;  /* 横幅いっぱいに取り、VIEW ALL を右端に寄せる */
 }
+.sec-bar__aside .view-all { margin-left: auto; }
 @media (min-width: 1024px) { .sec-bar__aside { gap: 24px; } }
 
 .hint {
@@ -402,13 +404,13 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 .ghost-link:hover .sqbtn { background: var(--red); border-color: var(--red); color: #fff; }
 .ghost-link .aw { color: var(--red); }
 
-/* VIEW ALL：枠の中に「VIEW ALL ——\」を収めたバッジ。文字と矢印は赤、矢印（.ln-arrow）は文字の下端にそろえる。ホバーで赤く塗る */
+/* VIEW ALL：枠の中に「VIEW ALL ——\」を収めたバッジ。枠・文字・矢印は赤、矢印（.ln-arrow）は文字の下端にそろえる。ホバーで赤く塗る */
 .view-all {
   display: inline-flex;
   align-items: baseline;
   gap: 10px;
   padding: 11px 14px;
-  border: 1px solid var(--ink);
+  border: 1px solid var(--red);
   border-radius: var(--radius);
   background: var(--white);
   color: var(--red);
@@ -1684,7 +1686,7 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 
 /* 4件目（NEWS_VISIBLE の次）。まだ続きがあることだけ伝えたいので、薄くフェードさせて押せなくする。 */
 .news-peek { position: relative; }
-.news-peek__more { display: flex; justify-content: center; margin-top: 8px; }
+.news-peek__more { display: flex; justify-content: flex-end; margin-top: 8px; }  /* VIEW ALL は右寄せ（ほかの区画と同じ） */
 .news-list--peek {
   margin-top: 0;
   opacity: .34;
