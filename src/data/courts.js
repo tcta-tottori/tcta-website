@@ -207,13 +207,30 @@ export const COURTS = [
     href: 'courts.html#shimin-gym',
   },
   {
+    id: 'kenmin-gym',
+    name: '鳥取県民体育館',
+    short: '県民体育館',
+    pageOnly: true, // コート案内のページだけ（トップの地図には出さない）
+    note: '屋内・ヤマタスポーツパーク内（0857-31-6911）',
+    lat: 35.50020, lng: 134.17717, // OpenStreetMap の施設の位置
+    image: 'assets/img/courts/kenmin-gym.webp',
+    surface: '屋内（体育館）', courts: 4, // メインアリーナにテニス 4 面（公式サイトの競技別コート設置可能数）
+    desc: 'ヤマタスポーツパーク（布勢総合運動公園）内の県立体育館。メインアリーナにテニスコートを4面とれます。尾坂杯鳥取室内テニス選手権の会場の一つです。',
+    address: '鳥取県鳥取市布勢146-1',
+    features: [],
+    reserve: null, // 予約・利用は県民体育館事務所へ電話で問い合わせる
+    contact: { label: '鳥取県民体育館事務所', tel: '0857-31-6911' },
+    link: { label: '鳥取県民体育館（ヤマタスポーツパーク）', url: 'https://www.fuse-sportspark.com/facility-information/prefectural-gymnasium/' },
+    href: 'courts.html#kenmin-gym',
+  },
+  {
     id: 'sangyo-gym',
     name: '鳥取産業体育館',
     short: '産業体育館',
     pageOnly: true, // コート案内のページだけ（トップの地図には出さない）
     note: '屋内・鳥取市天神町50-2（0857-24-2815）',
     lat: 35.49177, lng: 134.22134, // OpenStreetMap の施設の位置
-    image: null, // 写真が届いたら public/assets/img/courts/sangyo-gym.webp に置いてここに書く
+    image: 'assets/img/courts/sangyo-gym.webp',
     surface: '屋内（体育館）', courts: 0,
     desc: '県立の屋内体育館。尾坂杯鳥取室内テニス選手権の会場の一つです。',
     address: '鳥取県鳥取市天神町50-2',
