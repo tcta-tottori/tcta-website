@@ -35,6 +35,9 @@
 // ■ href
 //   トップの一覧の行を押したときの遷移先。コート案内のページのその施設の節（courts.html#<id>）。
 //
+// ■ pageOnly
+//   true の施設はコート案内のページにだけ出し、トップの地図には出さない（体育館など。COURTS_HOME から外れる）。
+//
 // ※ 住所が '' のものは、協会に確認して埋めること。
 
 /** 鳥取市公共施設予約システム。鳥取市の施設（ヤマタ・千代・井原公園・東冨安公園・若葉台・金沢・用瀬）はここから */
@@ -186,7 +189,44 @@ export const COURTS = [
     link: { label: '八東総合運動公園（やず観光ナビ）', url: 'https://yazukanko.jp/seeing_play/onsen-park/hatto-sports-park/' },
     href: 'courts.html#hatto',
   },
+  {
+    id: 'shimin-gym',
+    name: '鳥取市民体育館',
+    short: '市民体育館',
+    pageOnly: true, // コート案内のページだけ（トップの地図には出さない）
+    note: '屋内・鳥取市吉成3-1-1（0857-24-5222）',
+    lat: 35.48386, lng: 134.22128, // OpenStreetMap の施設の位置
+    image: 'assets/img/courts/shimin-gym.webp',
+    surface: '屋内（体育館）', courts: 0,
+    desc: '屋内の体育館。尾坂杯鳥取室内テニス選手権の会場の一つです。',
+    address: '鳥取県鳥取市吉成3-1-1',
+    features: [],
+    reserve: null, // 予約・利用は体育館へ電話で問い合わせる
+    contact: { label: '鳥取市民体育館', tel: '0857-24-5222' },
+    link: { label: '鳥取市民体育館（ミズノ 施設サイト）', url: 'https://shisetsu.mizuno.jp/m-7133' },
+    href: 'courts.html#shimin-gym',
+  },
+  {
+    id: 'sangyo-gym',
+    name: '鳥取産業体育館',
+    short: '産業体育館',
+    pageOnly: true, // コート案内のページだけ（トップの地図には出さない）
+    note: '屋内・鳥取市天神町50-2（0857-24-2815）',
+    lat: 35.49177, lng: 134.22134, // OpenStreetMap の施設の位置
+    image: null, // 写真が届いたら public/assets/img/courts/sangyo-gym.webp に置いてここに書く
+    surface: '屋内（体育館）', courts: 0,
+    desc: '県立の屋内体育館。尾坂杯鳥取室内テニス選手権の会場の一つです。',
+    address: '鳥取県鳥取市天神町50-2',
+    features: [],
+    reserve: null, // 予約・利用は体育館へ電話で問い合わせる
+    contact: { label: '鳥取産業体育館', tel: '0857-24-2815' },
+    link: { label: '鳥取県立鳥取産業体育館', url: 'https://t-santai.tottori-sf.net/' },
+    href: 'courts.html#sangyo-gym',
+  },
 ];
+
+/** トップの地図に出す施設（pageOnly の施設を除く） */
+export const COURTS_HOME = COURTS.filter((c) => !c.pageOnly);
 
 import SHAPES from './court-shapes.json';
 

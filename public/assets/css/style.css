@@ -2476,6 +2476,8 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   .cfac__hero.is-stuck { box-shadow: 0 -30px 0 var(--white), 0 -60px 0 var(--white), 0 calc(-1 * var(--header-h)) 0 var(--white); }
 }
 .cfac__hero--noimg { height: auto; min-height: 200px; }
+/* .gallery（写真の升目）の grid を打ち消す（写真の無い施設で、名前の帯が升目の1列ぶんの幅に縮んでいた） */
+.cfac__hero.gallery { display: block; }
 .cfac__hero-link { position: absolute; inset: 0; border-radius: 0; background: var(--ink); }
 .cfac__hero-link img {
   width: 100%;
@@ -2503,6 +2505,7 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   align-items: center;
   gap: 10px;
   margin: 0;
+  word-break: keep-all;  /* 施設名は途中で折り返さない */
   font: 700 clamp(24px, 6vw, 40px)/1.25 var(--fjp);
   letter-spacing: .02em;
   color: var(--white);
