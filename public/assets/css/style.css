@@ -32,6 +32,9 @@
   --gray-200: #E5E5E5;
   --gray-100: #F2F2F2;
   --gray-050: #F8F8F8;
+  /* 灰色の区画の地。固定背景（.site-bg）の線が少し透けるよう、半透明のグレーにする */
+  --gray-veil: rgba(242, 242, 242, .7);
+  --gray-veil-deep: rgba(232, 232, 232, .72);
   --white: #FFFFFF;
 
   /* 背景の大きな英字（.ghost）専用の色。全体を同じ濃さで塗るため、
@@ -214,7 +217,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 @media (min-width: 640px) { .hero + .section { padding-top: 56px; --sec-pt: 56px; } }
 @media (min-width: 1024px) { .hero + .section { padding-top: 64px; --sec-pt: 64px; } }
 
-.section--gray { background: var(--gray-050); }
+.section--gray { background: var(--gray-veil); }
 /* お知らせは上を詰める。ただし見出しの中心に合わせた大きな英字が
    セクション上端からはみ出して切れない分だけは残しておく。 */
 .section--flush-top { padding-top: 8px; --sec-pt: 8px; }
@@ -1291,7 +1294,6 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   }
 }
 
-.carousel__nav { display: inline-flex; gap: 10px; }
 
 /* 大会カード。上に種目のピクトグラム、下に 日程チップ＋大会名／種目・会場／進み具合に応じた案内。 */
 .tcard {
@@ -1320,7 +1322,7 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 .tcard--nolink { cursor: default; }
 .tcard--nolink:hover { transform: none; box-shadow: none; border-color: var(--gray-200); }
 /* トップの大会情報：区画の地を少し濃いグレーにし、白いカードを影で浮かせて目立たせる（index.html の .section--cards） */
-.section--cards { background: var(--gray-100); }
+.section--cards { background: var(--gray-veil-deep); }
 .section--cards .tcard { border-color: transparent; box-shadow: 0 2px 12px rgba(26, 26, 26, .07); }
 .section--cards .tcard:hover { border-color: transparent; box-shadow: var(--shadow-hover); }
 .section--cards .tcard--nolink:hover { box-shadow: 0 2px 12px rgba(26, 26, 26, .07); }
@@ -2492,7 +2494,7 @@ body.jsrv .cfac.rv.on.cfac--vt .cfac__name, body.jsrv .cfac.rv.on.cfac--vt .cfac
   width: 100%; height: 100%;
   object-fit: cover;
 }
-.cta__body { background: var(--gray-050); display: flex; align-items: center; }
+.cta__body { background: var(--gray-veil); display: flex; align-items: center; }
 .cta__inner { padding: 48px var(--gutter); max-width: 680px; }
 @media (min-width: 1024px) { .cta__inner { padding: 64px 72px; } }
 .cta__head { display: flex; gap: 14px; align-items: flex-start; }
@@ -2647,27 +2649,18 @@ body.jsrv .rv.on .ink-sweep {
 @media (prefers-reduced-motion: reduce) {
   .footer-dot { animation: none; }
 }
-/* サイト全体の固定背景（Base.astro。白地に枠だけの四角）。画面に固定して本文の裏に敷く。
-   背景を塗っていない区画（白い区画）から透けて見える。灰色の帯や写真の区画では隠れる。
-   動かさない（漂う動きもなし）。枠は細い線をぼかして、文字の邪魔にならない柔らかい線にする。
-   高さは画面の「大きいほう」の高さ（100lvh）に固定する。inset: 0 のままだと、スマホでスクロールして
-   アドレスバーが出入りするたびに高さが変わり、％で置いた四角の位置がずれて動いて見える */
+/* サイト全体の固定背景（Base.astro）。白地に薄いグレーの波と細い赤い線の画像を、画面に固定して本文の裏に敷く。
+   スクロールしても動かない。白い区画からはそのまま見え、灰色の区画（--gray-veil）からは少し透けて見える。
+   画像は縦長（941×1672）。横長の画面でも波の線が四隅に収まるよう、画面いっぱいに引き伸ばして敷く。
+   高さは画面の「大きいほう」の高さ（100lvh）に固定する（スマホでアドレスバーが出入りしても伸び縮みしない） */
 .site-bg {
   position: fixed;
   z-index: -1;
   inset: 0 0 auto 0;
   height: 100vh;
   height: 100lvh;
-  filter: blur(1.5px);
-}
-.site-bg .footer-dot {
-  background: none;
-  border: 2px solid var(--c);
-  translate: none;
-  will-change: auto;
-  /* 漂う動きはやめ、漂いの途中の傾き（--r）だけ残して止めておく */
-  animation: none;
-  transform: rotate(var(--r));
+  background: var(--white) url("../img/site-bg.jpg") center / 100% 100% no-repeat;
+  pointer-events: none;
 }
 .site-footer__grid {
   position: relative;
@@ -2838,7 +2831,7 @@ body.jsrv .rv.on .ink-sweep {
 /* ============ 14. 下層ページ ============ */
 .page-head {
   position: relative;
-  background: var(--gray-050);
+  background: var(--gray-veil);
   border-bottom: 1px solid var(--gray-200);
   padding-block: 32px 40px;
   overflow: hidden;
@@ -3244,16 +3237,30 @@ body.jsrv .rv.on .ink-sweep {
   transition: opacity .3s ease;
 }
 .hscroll.is-overflow:not(.is-end) .hscroll__hint { opacity: 1; }
-.hscroll__arrow { position: relative; width: 14px; height: 1px; background: currentColor; animation: hs-nudge 1.8s ease-in-out infinite; }
-.hscroll__arrow::after {
+.hscroll__arrow { animation: hs-nudge 1.8s ease-in-out infinite; }
+/* 線の矢印：細い横線の右端から、短い線を左上へ跳ね上げただけの矢印（——\ の形）。
+   SCROLL の矢印（.hscroll__arrow）と、トップの大会情報の「終了した大会／今後の大会」に使う。
+   --left は左向き（左右を反転） */
+.ln-arrow, .hscroll__arrow {
+  position: relative;
+  flex: none;
+  display: inline-block;
+  width: 26px;
+  height: 1px;
+  background: currentColor;
+}
+.ln-arrow::after, .hscroll__arrow::after {
   content: '';
   position: absolute;
-  top: -2.5px; right: 0;
-  width: 6px; height: 6px;
-  border-top: 1px solid currentColor;
-  border-right: 1px solid currentColor;
-  transform: rotate(45deg);
+  right: 0; bottom: 0;
+  width: 8px;
+  height: 1px;
+  background: currentColor;
+  transform-origin: right center;
+  transform: rotate(35deg);
 }
+.ln-arrow--left { transform: scaleX(-1); }
+.hint--lr { display: inline-flex; align-items: center; gap: 10px; }
 @keyframes hs-nudge { 50% { transform: translateX(4px); } }
 @media (prefers-reduced-motion: reduce) { .hscroll__arrow { animation: none; } }
 
