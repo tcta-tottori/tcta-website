@@ -344,6 +344,10 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   align-self: stretch;  /* 横幅いっぱいに取り、VIEW ALL を右端に寄せる */
 }
 .sec-bar__aside .view-all { margin-left: auto; }
+/* 見出しと VIEW ALL を1行に：見出しは左、VIEW ALL は右端で見出しの下端にそろえる（トップの大会情報・コート案内） */
+.sec-bar--row { flex-direction: row; align-items: flex-end; justify-content: space-between; }
+.sec-bar--row .sec-bar__aside { align-self: auto; flex: none; }
+.sec-hint { margin: 14px 0 0; }
 @media (min-width: 1024px) { .sec-bar__aside { gap: 24px; } }
 
 .hint {
