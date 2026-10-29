@@ -106,7 +106,7 @@ const upcomingTournaments = TOURNAMENTS.filter((t) => t.status !== 'past');
   </section>
 
   <!-- ============ 大会情報（カルーセル） ============ -->
-  <section class="section" id="tournaments" aria-labelledby="tournaments-title">
+  <section class="section section--gray section--cards" id="tournaments" aria-labelledby="tournaments-title">
     <span class="ghost" aria-hidden="true">TOURNAMENT</span>
     <div class="container">
       <div class="sec-bar rv">
@@ -186,7 +186,7 @@ const upcomingTournaments = TOURNAMENTS.filter((t) => t.status !== 'past');
   </section>
 
   <!-- ============ お知らせ ============ -->
-  <section class="section section--flush-top" id="news" aria-labelledby="news-title">
+  <section class="section" id="news" aria-labelledby="news-title">
     <span class="ghost" aria-hidden="true">NEWS</span>
     <div class="container">
       {/* 見出しの横に VIEW ALL は置かない。全件は一覧の下の「お知らせをすべて見る」で開く。 */}

@@ -1319,6 +1319,11 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 /* 遷移先が決まっていないカード（結果待ちなど） */
 .tcard--nolink { cursor: default; }
 .tcard--nolink:hover { transform: none; box-shadow: none; border-color: var(--gray-200); }
+/* トップの大会情報：区画の地を少し濃いグレーにし、白いカードを影で浮かせて目立たせる（index.html の .section--cards） */
+.section--cards { background: var(--gray-100); }
+.section--cards .tcard { border-color: transparent; box-shadow: 0 2px 12px rgba(26, 26, 26, .07); }
+.section--cards .tcard:hover { border-color: transparent; box-shadow: var(--shadow-hover); }
+.section--cards .tcard--nolink:hover { box-shadow: 0 2px 12px rgba(26, 26, 26, .07); }
 
 /* 種目・会場の段。文字は上揃えで詰め（1行ずつ、折り返さない）、ピクトグラムは文字の下のレイヤーに右下寄せで置く。
    カードの高さは固定なので、文字が短くても長くても位置は変わらない。文字と重なっても構わない。 */
@@ -2644,7 +2649,7 @@ body.jsrv .rv.on .ink-sweep {
 }
 /* サイト全体の固定背景（Base.astro。白地に枠だけの四角）。画面に固定して本文の裏に敷く。
    背景を塗っていない区画（白い区画）から透けて見える。灰色の帯や写真の区画では隠れる。
-   スクロールでは動かさず、漂う動き（footer-drift）だけを一定に続ける。
+   動かさない（漂う動きもなし）。枠は細い線をぼかして、文字の邪魔にならない柔らかい線にする。
    高さは画面の「大きいほう」の高さ（100lvh）に固定する。inset: 0 のままだと、スマホでスクロールして
    アドレスバーが出入りするたびに高さが変わり、％で置いた四角の位置がずれて動いて見える */
 .site-bg {
@@ -2653,12 +2658,16 @@ body.jsrv .rv.on .ink-sweep {
   inset: 0 0 auto 0;
   height: 100vh;
   height: 100lvh;
+  filter: blur(1.5px);
 }
 .site-bg .footer-dot {
   background: none;
-  border: 1px solid var(--c);
+  border: 2px solid var(--c);
   translate: none;
-  will-change: transform;
+  will-change: auto;
+  /* 漂う動きはやめ、漂いの途中の傾き（--r）だけ残して止めておく */
+  animation: none;
+  transform: rotate(var(--r));
 }
 .site-footer__grid {
   position: relative;
