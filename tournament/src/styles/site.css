@@ -821,3 +821,26 @@
 .wait-panel p { margin: 0 0 8px; font: 400 14px/1.9 var(--fjp); color: var(--gray-800); }
 .wait-panel .note { font-size: 12px; color: var(--gray-500); }
 .wait-panel code { font: 700 13px/1 var(--flt); letter-spacing: .08em; color: var(--ink); }
+
+/* ---------------------------------------------------------------------------
+   役員ログインの案内（OfficerGate.tsx）
+   --------------------------------------------------------------------------- */
+.officer-gate { max-width: 720px; margin: 40px auto; }
+.officer-gate__title { display: flex; align-items: center; gap: 10px; margin: 0 0 16px; font: 700 19px/1.5 var(--fjp); color: var(--ink); }
+.officer-gate__title svg { color: var(--red); }
+.officer-gate p { margin: 0 0 10px; font: 400 15px/1.9 var(--fjp); color: var(--gray-800); }
+.officer-gate .note { font-size: 13px; color: var(--gray-500); }
+.officer-gate__actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 28px; }
+/* 使っている途中で期限が切れたときの帯（サイトの「重要なお知らせ」と同じ赤） */
+.officer-expired {
+  flex: none;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+  padding: 10px var(--gutter);
+  background: var(--red);
+  color: #fff;
+  font: 700 13px/1.6 var(--fjp);
+}
+.officer-expired a { color: #fff; text-decoration: underline; text-underline-offset: 3px; white-space: nowrap; }

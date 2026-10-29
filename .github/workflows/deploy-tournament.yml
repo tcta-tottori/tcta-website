@@ -6,6 +6,9 @@ name: Deploy tournament app to Cloudflare Workers
 # tournament/ を変更して push すると配備する。公式サイト本体と同じ Secrets（CLOUDFLARE_API_TOKEN / CLOUDFLARE_ACCOUNT_ID）を使う。
 # 中継（Durable Object「SyncRoom」）は最初の配備で作られる（wrangler.jsonc の migrations）。
 # リポジトリの Secrets に GEMINI_API_KEY があれば、音声コール（Gemini TTS）の鍵として Worker に入れる（無ければブラウザ内蔵の声だけ）。
+# 役員ログイン（Cloudflare Access）: リポジトリの Variables の ACCESS_TEAM_DOMAIN・ACCESS_AUD を Worker に入れる。
+#   無ければ運営の操作（運営端末としての同期・音声コール）はすべて断られる。Secrets に OFFICER_EMAILS があれば二重の鍵として入れる。
+#   手順は tournament/README.md の「役員ログイン」。
 on:
   push:
     branches: [main, ccr-adeb62f8-4n5xza]
@@ -28,6 +31,9 @@ jobs:
       APP_URL: https://tcta-tournament.tcta-admin-worker.workers.dev
       # secrets は if: で直接読めないので、有無だけを env に移す
       HAS_GEMINI_KEY: ${{ secrets.GEMINI_API_KEY != '' }}
+      HAS_OFFICER_EMAILS: ${{ secrets.OFFICER_EMAILS != '' }}
+      ACCESS_TEAM_DOMAIN: ${{ vars.ACCESS_TEAM_DOMAIN }}
+      ACCESS_AUD: ${{ vars.ACCESS_AUD }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -37,14 +43,25 @@ jobs:
           cache-dependency-path: tournament/package-lock.json
       - run: npm ci --legacy-peer-deps
       - run: npm run typecheck
+      # 役員ログインの証明の検証（自分で作った鍵で署名した証明で確かめる）
+      - run: npm run test:auth
       - run: npm run build
       - name: Deploy worker (creates the Durable Object on first run)
-        run: npx wrangler deploy
+        run: |
+          args=()
+          if [ -n "$ACCESS_TEAM_DOMAIN" ]; then args+=(--var "ACCESS_TEAM_DOMAIN:$ACCESS_TEAM_DOMAIN"); fi
+          if [ -n "$ACCESS_AUD" ]; then args+=(--var "ACCESS_AUD:$ACCESS_AUD"); fi
+          npx wrangler deploy "${args[@]}"
       - name: Set Gemini API key (only when the repository has one)
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         if: env.HAS_GEMINI_KEY == 'true'
         run: printf '%s' "$GEMINI_API_KEY" | npx wrangler secret put GEMINI_API_KEY
+      - name: Set officer emails (only when the repository has them)
+        env:
+          OFFICER_EMAILS: ${{ secrets.OFFICER_EMAILS }}
+        if: env.HAS_OFFICER_EMAILS == 'true'
+        run: printf '%s' "$OFFICER_EMAILS" | npx wrangler secret put OFFICER_EMAILS
       - name: Smoke test against the deployed app
         run: |
           for i in $(seq 1 30); do

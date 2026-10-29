@@ -3,6 +3,8 @@
 > **2026-10-29 追記：大会運営システムは段階 0・1 を実施した。** GitHub Pages 版を残したまま、Cloudflare 版を
 > [`tournament/`](../tournament/)（https://tcta-tournament.tcta-admin-worker.workers.dev/ ）に作った。
 > 中継は Durable Object に移し（Render 不要）、音声コールの鍵は Worker の secret に、見た目は協会サイトと同じ枠にそろえた。
+> 運営画面・運営端末としての同期・音声コールは役員だけ（Cloudflare Access のメールのコードでログインし、Worker が毎回確かめる）。
+> Access の設定（tournament/README.md の「役員ログイン」）が入るまでは、運営の操作はすべて止めてある。
 > Workers Paid への切り替えはまだ行っていない（Free のまま）。ドロー会議システムは未着手。
 
 2026-10-29 時点の整理。公式サイト（Astro ＋ EmDash、Cloudflare Workers）と

@@ -1,8 +1,12 @@
 // 大会運営システム（Cloudflare 版）の Worker。
 //
-//   /ws?room=<ルームコード>   … 端末どうしの同期と観戦配信の WebSocket。ルームごとに Durable Object（SyncRoom）1 つ
+//   /ws?room=<ルームコード>&role=operator|viewer
+//                             … 端末どうしの同期と観戦配信の WebSocket。ルームごとに Durable Object（SyncRoom）1 つ。
+//                               運営端末（operator）は役員ログインが要る。観戦端末（viewer）は誰でも
+//   /auth/login・/auth/logout … 役員ログイン（Cloudflare Access。worker/auth.ts）
+//   /api/me                   … ログイン中の役員（運営画面が最初に確かめる）
 //   /api/gemini-status        … 音声コール（Gemini TTS）が使えるか
-//   /api/gemini-tts           … 音声コールの生成（API キーは Worker の secret。ブラウザには渡さない）
+//   /api/gemini-tts           … 音声コールの生成（役員だけ。API キーは Worker の secret。ブラウザには渡さない）
 //   /api/health               … 動作確認
 //   それ以外                  … アプリ本体（dist/ の静的ファイル。SPA なので未知の URL は index.html）
 //
@@ -11,6 +15,8 @@
 //
 // GitHub Pages 版が使っていた Render の中継サーバー（sync-server/server.mjs）と同じ約束事
 // （join / leave / broadcast / cache / ping）をそのまま受けるので、アプリ側の同期処理は変えていない。
+
+import { handleAuth, handleMe, officerOf, sameOrigin } from './auth';
 
 export { SyncRoom } from './sync-room';
 
@@ -21,6 +27,13 @@ export interface Env {
   GEMINI_API_KEY?: string;
   /** 既定の TTS モデル */
   GEMINI_TTS_MODEL?: string;
+  /** 役員ログイン（worker/auth.ts）。Zero Trust のチーム名と、/auth のアプリケーションの AUD */
+  ACCESS_TEAM_DOMAIN?: string;
+  ACCESS_AUD?: string;
+  /** 任意。役員のメールアドレス（カンマ区切り）。Access を通っても、ここに無い人は断る */
+  OFFICER_EMAILS?: string;
+  /** 手元の確認だけ 'dev'（localhost のときだけ効く） */
+  AUTH_MODE?: string;
 }
 
 const ROOM_RE = /^[A-Za-z0-9_-]{1,40}$/;
@@ -35,8 +48,25 @@ export default {
       }
       const room = url.searchParams.get('room') ?? '';
       if (!ROOM_RE.test(room)) return json({ error: 'room が不正です' }, 400);
+      // 運営端末として入るには役員ログインが要る（大会データを流せるのは運営端末だけ）
+      const role = url.searchParams.get('role') === 'viewer' ? 'viewer' : 'operator';
+      if (role === 'operator') {
+        if (!sameOrigin(request, url)) return json({ error: 'このサイトの画面からだけ接続できます' }, 403);
+        if (!(await officerOf(request, env, url))) return json({ error: '役員ログインが必要です' }, 401);
+      }
+      // 役割は Worker が決めて Durable Object に渡す（クライアントの申告は使わない）
+      const headers = new Headers(request.headers);
+      headers.set('X-Sync-Role', role);
       const stub = env.SYNC_ROOM.get(env.SYNC_ROOM.idFromName(room));
-      return stub.fetch(request);
+      return stub.fetch(new Request(request, { headers }));
+    }
+
+    if (url.pathname === '/auth/login' || url.pathname === '/auth/logout') {
+      return handleAuth(request, env, url);
+    }
+
+    if (url.pathname === '/api/me') {
+      return handleMe(request, env, url);
     }
 
     if (url.pathname === '/api/health') {
@@ -50,6 +80,7 @@ export default {
     if (url.pathname === '/api/gemini-tts') {
       if (request.method !== 'POST') return json({ error: 'POST で呼んでください' }, 405);
       if (!sameOrigin(request, url)) return json({ error: 'このサイトの画面からだけ使えます' }, 403);
+      if (!(await officerOf(request, env, url))) return json({ error: '役員ログインが必要です' }, 401);
       return geminiTts(request, env);
     }
 
@@ -65,14 +96,6 @@ function json(body: unknown, status = 200): Response {
     status,
     headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' },
   });
-}
-
-/** 他のサイトから API キーを使われないよう、同じオリジンの画面からの呼び出しだけ受ける */
-function sameOrigin(request: Request, url: URL): boolean {
-  const origin = request.headers.get('Origin');
-  if (origin) return origin === url.origin;
-  const site = request.headers.get('Sec-Fetch-Site');
-  return site === 'same-origin';
 }
 
 // ---------------------------------------------------------------------------

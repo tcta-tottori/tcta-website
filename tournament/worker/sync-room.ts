@@ -11,6 +11,7 @@
 //   ・眠らない（接続のたびに数十秒待つことがない）。待っているあいだは WebSocket Hibernation で課金も止まる
 //   ・預かった大会データはメモリではなく Durable Object の SQLite に置くので、再起動や配備で消えない
 //   ・観戦端末（viewer）から大会データの変更は流さない（観戦用 URL を知っているだけの人が運営のデータを書き換えられないように）
+//   ・運営端末として入れるのは役員ログインを通った人だけ（Worker が確かめて X-Sync-Role で渡す）
 import { DurableObject } from 'cloudflare:workers';
 import type { Env } from './index';
 
@@ -58,7 +59,9 @@ export class SyncRoom extends DurableObject<Env> {
     const pair = new WebSocketPair();
     const [client, server] = Object.values(pair);
     this.ctx.acceptWebSocket(server);
-    server.serializeAttachment({ viewer: false, left: false } satisfies Attachment);
+    // 役割は Worker が役員ログインを確かめて決めたもの。観戦端末は join で運営端末を名乗っても観戦端末のまま
+    const viewer = request.headers.get('X-Sync-Role') !== 'operator';
+    server.serializeAttachment({ viewer, left: false } satisfies Attachment);
     return new Response(null, { status: 101, webSocket: client });
   }
 
@@ -79,7 +82,8 @@ export class SyncRoom extends DurableObject<Env> {
         return;
 
       case 'join': {
-        const viewer = data.viewer === true;
+        // 運営端末が観戦端末として入り直す（viewer: true）ことはできる。逆はできない
+        const viewer = att.viewer || data.viewer === true;
         ws.serializeAttachment({ viewer, left: false } satisfies Attachment);
         // 観戦端末には預かっている最新の大会データをすぐ送る（運営端末がいなくても見られる）。
         // 運営端末には送らない（手元の編集を上書きしないため）

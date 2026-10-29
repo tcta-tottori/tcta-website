@@ -35,7 +35,7 @@ export interface NavLinkItem {
 // ---------------------------------------------------------------------------
 
 export function SiteHeader({
-  homeTo, tag, tagEm, items, contact, aux, menuOpen, onToggleMenu,
+  homeTo, tag, tagEm, items, contact, aux, menuOpen, onToggleMenu, hideMenu = false,
 }: {
   homeTo: string;
   /** ロゴの横の札（「大会運営」「観戦」など） */
@@ -49,6 +49,8 @@ export function SiteHeader({
   aux?: ReactNode;
   menuOpen: boolean;
   onToggleMenu: () => void;
+  /** メニューを出さない（ログインの案内など） */
+  hideMenu?: boolean;
 }) {
   return (
     <header className={`site-header ${menuOpen ? 'is-menu' : ''}`}>
@@ -71,10 +73,12 @@ export function SiteHeader({
         {contact && (contact.href
           ? <a className="header-contact" href={contact.href} target="_blank" rel="noopener noreferrer">{contact.label}</a>
           : <Link className="header-contact" to={contact.to ?? '/'}>{contact.label}</Link>)}
-        <button className="hamburger" type="button" aria-expanded={menuOpen} aria-controls="mobile-nav" onClick={onToggleMenu}>
-          <span /><span /><span />
-          <span className="visually-hidden">{menuOpen ? 'メニューを閉じる' : 'メニューを開く'}</span>
-        </button>
+        {!hideMenu && (
+          <button className="hamburger" type="button" aria-expanded={menuOpen} aria-controls="mobile-nav" onClick={onToggleMenu}>
+            <span /><span /><span />
+            <span className="visually-hidden">{menuOpen ? 'メニューを閉じる' : 'メニューを開く'}</span>
+          </button>
+        )}
       </div>
     </header>
   );

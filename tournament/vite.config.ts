@@ -31,7 +31,8 @@ export default defineConfig({
         cleanupOutdatedCaches: true,
         // ナビゲーションリクエストはネットワーク優先でキャッシュの陳腐化を防ぐ
         navigateFallback: 'index.html',
-        navigateFallbackDenylist: [/^\/api/, /^\/ws/],
+        // 役員ログイン（/auth・Access の /cdn-cgi）は必ずネットワークへ（キャッシュの画面を出さない）
+        navigateFallbackDenylist: [/^\/api/, /^\/ws/, /^\/auth/, /^\/cdn-cgi/],
         runtimeCaching: [
           {
             urlPattern: /\.(?:js|css)$/,
