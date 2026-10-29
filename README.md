@@ -74,6 +74,7 @@ Cloudflare Workers で公開しています（2026-10-21 に GitHub Pages から
 - [`docs/content.md`](./docs/content.md) — 原稿仕様書 v2.0（各ページの実テキストと `要確認` 項目）
 - [`docs/design-chat-log.md`](./docs/design-chat-log.md) — ファーストビュー3案から採用案決定までの検討ログ
 - [`docs/cloudflare.md`](./docs/cloudflare.md) — Cloudflare（Pages／Workers／Wrangler）導入の検討メモ
+- [`docs/ops-systems-cloudflare.md`](./docs/ops-systems-cloudflare.md) — 大会運営システム・ドロー会議システム（GitHub Pages）を Cloudflare に寄せるかの検討メモ（費用・運用・段階案）
 - [`docs/emdash.md`](./docs/emdash.md) — CMS「EmDash」への移行。内容モデル、設置手順、更新のしかた、AI からの更新、検討の経緯
 - [`docs/admin.md`](./docs/admin.md) — （置き換え前の記録）自作のサイト更新アプリの構成と設置手順
 
