@@ -123,6 +123,14 @@ export const LINKS = [
     banner: 'assets/img/banners/kotoura-tc.png',
   },
   {
+    group: 'nearby',
+    name: '遊ポートT.C.',
+    row: 'other',
+    desc: '鳥取市のジュニアテニススクール',
+    url: 'https://u-port.xyz/u-port',
+    banner: 'assets/img/banners/u-port-tc.png',
+  },
+  {
     group: 'sponsor',
     name: 'テニスショップ フラシーノ',
     row: 'other',
@@ -137,6 +145,14 @@ export const LINKS = [
     desc: '鳥取市の中国上海料理店',
     url: 'https://www.shanghai-charo.com/',
     banner: 'assets/img/banners/shanghai-charo.png',
+  },
+  {
+    group: 'sponsor',
+    name: 'スポーツショップ HEART',
+    row: 'other',
+    desc: '鳥取市のスポーツ用品店',
+    url: 'https://spsheart.com/cms/',
+    banner: 'assets/img/banners/sports-heart.png',
   },
 ];
 
