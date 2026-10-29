@@ -3,10 +3,9 @@ import Base from '../layouts/Base.astro';
 import ScheduleCalendar from '../components/ScheduleCalendar.astro';
 import TournamentList from '../components/TournamentList.astro';
 import { siteData } from '../lib/cms.js';
-import { CURRENT_NENDO } from '../data/schedule.js';
 import { SCHEDULE_PDF } from '../data/events.js';
 
-const { SCHEDULE, SCHEDULE_NEXT, EVENTS } = await siteData(Astro);
+const { SCHEDULE, SCHEDULE_NEXT } = await siteData(Astro);
 
 const title = "大会情報｜鳥取市テニス協会";
 const description = "令和8年度（2026年度）に鳥取市テニス協会が主催・主管する全19大会の一覧。エントリー締切・会場・登録区分を掲載しています。";
@@ -17,9 +16,6 @@ const count = {
   open: SCHEDULE.filter((t) => t.status === 'open').length,
   done: SCHEDULE.filter((t) => t.status === 'done').length,
 };
-
-// 一覧に入らない大会（協会が結果を預かっているもの）は、表の下に別立てで案内する
-const extras = EVENTS.filter((e) => e.kind === 'extra' && e.nendo === CURRENT_NENDO);
 
 // 協会の Google カレンダー（旧サイトで埋め込んでいたもの）。
 // embed は表示用、subscribe は「＋」と同じく自分のカレンダーに追加する入口。
@@ -66,7 +62,7 @@ const GCAL = {
         </div>
       </div>
 
-      <p class="note mt-24">要項・申込用紙・ドロー・結果は、掲載ずみのものだけボタンが押せます。申込用紙は PDF がそのまま開きます。大会名をタップすると、その大会のページで全部まとめて見られます。</p>
+      <p class="note mt-24">要項・ドロー・結果は、掲載ずみのものだけボタンが押せます。申込用紙は要項のページに載せています。大会名をタップすると、その大会のページで全部まとめて見られます。</p>
 
       {/* 絞り込み（左）と表示の切り替え（右）。灰色の帯（ページ上部）には入れず、一覧のすぐ上に置く。
           表示の切り替えはこのページの大会一覧すべてに効く（main.js の initViewSwitch。選んだ方を覚えておく） */}
@@ -89,23 +85,6 @@ const GCAL = {
       <TournamentList items={SCHEDULE} id="r8-list" caption="令和8年度 大会一覧" />
       <p class="note" id="r8-list-empty" hidden>該当する大会はありません。</p>
 
-      {extras.length > 0 && (
-        <div class="rv" style="margin-top:56px">
-          <h2 class="sub-head">協会が結果を預かっている大会</h2>
-          <p class="note" style="margin-bottom:20px">協会の主催ではありませんが、要項・ドロー・結果をお預かりして掲載している大会です。</p>
-          <ul class="sch-list">
-            {extras.map((e) => (
-              <li><a class="sch-item" href={e.url}>
-                <span class="sch-item__text">
-                  <span class="sch-item__title">{e.name}</span>
-                  <span class="sch-item__place">{e.label}　／　{e.place}　／　{e.event}</span>
-                </span>
-                <span class="sqbtn" aria-hidden="true">→</span>
-              </a></li>
-            ))}
-          </ul>
-        </div>
-      )}
 
       <div class="rv mt-40" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:20px">
         <a class="btn btn--outline" href={SCHEDULE_PDF.src} target="_blank" rel="noopener noreferrer">令和8年度 大会日程をダウンロード（PDF / {SCHEDULE_PDF.kb.toLocaleString()}KB）<span aria-hidden="true" class="text-red">↓</span></a>

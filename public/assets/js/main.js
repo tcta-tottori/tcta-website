@@ -1427,7 +1427,6 @@
     initHScroll();
     initChampAccordion();
     initFullPanel('news-all', '[data-news-open]', '[data-news-close]', { title: { from: '#news .sec-head__row > div', to: '.news-all__head > div' } });
-    initFullPanel('court-all', '[data-court-open]', '[data-court-close]', { title: { from: '#courts .sec-head__row > div', to: '.news-all__head > div' } });
     initCourtLinks();
     initCourtMap();
     initCalendar();
