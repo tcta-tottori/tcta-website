@@ -1321,14 +1321,17 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 .tcard__link { color: inherit; }
 .tcard__link::after { content: ''; position: absolute; inset: 0; z-index: 1; }
 .tcard__link:hover { color: inherit; }
-.tcard:hover { transform: translateY(-4px); box-shadow: var(--shadow-hover); border-color: var(--gray-300); color: inherit; }
+/* 浮き上がりはマウスのある端末だけ（スマホではタップのあとホバーの状態が残り、そのカードだけ上にずれて見えるため） */
+@media (hover: hover) {
+  .tcard:hover { transform: translateY(-4px); box-shadow: var(--shadow-hover); border-color: var(--gray-300); color: inherit; }
+}
 /* 遷移先が決まっていないカード（結果待ちなど） */
 .tcard--nolink { cursor: default; }
 .tcard--nolink:hover { transform: none; box-shadow: none; border-color: var(--gray-200); }
 /* トップの大会情報：区画の地を少し濃いグレーにし、白いカードを影で浮かせて目立たせる（index.html の .section--cards） */
 .section--cards { background: var(--gray-100); }
 .section--cards .tcard { border-color: transparent; box-shadow: 0 2px 12px rgba(26, 26, 26, .07); }
-.section--cards .tcard:hover { border-color: transparent; box-shadow: var(--shadow-hover); }
+@media (hover: hover) { .section--cards .tcard:hover { border-color: transparent; box-shadow: var(--shadow-hover); } }
 .section--cards .tcard--nolink:hover { box-shadow: 0 2px 12px rgba(26, 26, 26, .07); }
 
 /* 種目・会場の段。文字は上揃えで詰め（1行ずつ、折り返さない）、ピクトグラムは文字の下のレイヤーに右下寄せで置く。
@@ -1347,13 +1350,14 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   .tcard__icons[data-n="2"] .tcard__icon { height: 36px; }
   .tcard__icons[data-n="3"] .tcard__icon, .tcard__icons[data-n="4"] .tcard__icon { height: 28px; }
 }
-.tcard:hover .tcard__icon { transform: translateY(-2px); }
+@media (hover: hover) { .tcard:hover .tcard__icon { transform: translateY(-2px); } }
 /* 終了した大会はピクトグラムを薄く、文字をグレーに */
 .tcard--past .tcard__icon { filter: grayscale(1); opacity: .45; }
 .tcard--past:hover .tcard__icon { filter: grayscale(0); opacity: 1; }
 .tcard--past .tcard__title { color: var(--gray-600); }
-/* 受付中・本日開催は上端に赤い線 */
-.tcard--open, .tcard--live { border-top: 3px solid var(--red); }
+/* 受付中・本日開催はカード全体を赤い枠で囲む（ホバーやトップの灰色の区画でも赤のまま） */
+.tcard.tcard--open, .tcard.tcard--live,
+.section--cards .tcard.tcard--open, .section--cards .tcard.tcard--live { border: 2px solid var(--red); }
 
 .tcard__body { display: flex; flex-direction: column; gap: 12px; flex: 1; padding: 16px 16px 16px; }
 @media (min-width: 640px) { .tcard__body { padding: 20px 20px 18px; } }
@@ -1391,8 +1395,6 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 .tcard__ico { width: 14px; height: 14px; flex: none; color: var(--gray-500); }
 .tcard__action {
   margin-top: 10px;
-  padding-top: 10px;
-  border-top: 1px solid var(--gray-200);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1507,7 +1509,10 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 6px;
-  margin-top: 14px;
+  /* 状態のバッジ（上）とボタン（下）のあいだに区切りの線 */
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--gray-200);
 }
 .tcard .tcard__btn {
   min-height: 40px;
@@ -3029,8 +3034,8 @@ body.jsrv .rv.on .ink-sweep {
    その下に 日程・会場・種目、要項／申込書／ドロー／結果 の4ボタン、備考 の順。
    表だと7列を横に読まされるが、ブロックなら上から順に読めば済むので
    スマホで横にずらさなくてよい。ボタンは共通の .btn--outline をそのまま使う。 */
-.tl { display: flex; flex-direction: column; gap: 56px; }
-@media (min-width: 1024px) { .tl { gap: 72px; } }
+.tl__cards { display: flex; flex-direction: column; gap: 56px; }
+@media (min-width: 1024px) { .tl__cards { gap: 72px; } }
 .tl-item[hidden] { display: none; }
 
 .tl-item__head {
@@ -3150,60 +3155,104 @@ body.jsrv .rv.on .ink-sweep {
   justify-content: center;
 }
 
-/* ---- 大会一覧の「1行表示」（.tl--rows。初めの表示）----
-   1大会を1行に：日程｜大会名｜会場｜状態・登録区分｜4つのボタン。
-   ブロックの入れ物（見出し・情報の段）は箱にせず（display: contents）、中身をそのまま行の grid に並べる。
-   種目・ピクトグラム・備考は出さない（詳細表示で見る）。画面が狭いほど列を減らす：
-     〜767px：日程｜大会名｜状態、768px〜：＋会場、1024px〜：＋ボタン */
-.tl.tl--rows { gap: 0; border-top: 1px solid var(--gray-200); }
-.tl--rows .tl-item {
-  display: grid;
-  grid-template-columns: 86px minmax(0, 1fr) auto;
-  grid-template-areas: "date title tags";
-  align-items: center;
-  column-gap: 14px;
-  padding: 14px 4px;
-  border-bottom: 1px solid var(--gray-200);
-  transition: background-color .3s ease;
+/* ---- 大会一覧の切り替え（TournamentList.astro）----
+   .tl--rows のときは縮小表示（.tlx）、外れているときは拡大表示（.tl__cards）だけを出す */
+.tl--rows .tl__cards, .tl:not(.tl--rows) .tlx { display: none; }
+
+/* ---- 縮小表示（.tlx）：1大会1行の表 ----
+   列の幅は --tlx-cols（左から 日程・大会名｜状態｜登録区分｜種目｜会場｜締切｜予備日｜要項｜申込用紙｜ドロー｜結果｜備考）。
+   左端の列は横スクロールしても固定（position: sticky; left: 0）。
+   項目名の行（.tlx__head）は本体の外に置いて画面の上端に固定し（position: sticky; top）、横の位置は main.js の initTlx が本体と合わせる。
+   スマホでは上端にロゴとメニューのボタンが浮いているので、その下（--header-h）に止める。
+   PC はヘッダーが出ているあいだはその下、下へ読み進めてヘッダーが引っ込んだら画面の上端に止める */
+.tlx {
+  --tlx-cols: 156px 76px 82px 150px 150px 72px 196px 64px 78px 64px 64px 170px;
+  position: relative;
+  margin-top: 8px;
 }
-.tl--rows .tl-item:hover { background: var(--gray-050); }
-.tl--rows .tl-item__head, .tl--rows .tl-item__info { display: contents; }
-.tl--rows .tl-item__head .sec-head__mark,
-.tl--rows .tl-item__event,
-.tl--rows .tl-item__note,
-.tl--rows .tl-item__btns,
-.tl--rows .tl-item__date-note { display: none; }
-.tl--rows .tl-item__title { grid-area: title; font-size: 15px; line-height: 1.5; }
-.tl--rows .tl-item__tags { grid-area: tags; flex-direction: column; align-items: flex-end; gap: 4px; margin: 0; padding: 0; }
-.tl--rows .tl-item__meta .tl-item__row:first-child { grid-area: date; }
-.tl--rows .tl-item__meta .tl-item__row:last-child { grid-area: place; display: none; min-width: 0; }
-.tl--rows .tl-item__meta .tl-item__row:first-child dt { display: none; }
-.tl--rows .tl-item__date { gap: 0 6px; }
-.tl--rows .tl-item__ymd { font-size: 15px; line-height: 20px; }
-.tl--rows .tl-item__dow { font-size: 11px; line-height: 20px; }
-.tl--rows .tl-item__place { overflow: hidden; text-overflow: ellipsis; font-size: 14px; }
-@media (min-width: 768px) {
-  .tl--rows .tl-item {
-    grid-template-columns: 128px minmax(0, 1fr) 190px auto;
-    grid-template-areas: "date title place tags";
-    column-gap: 20px;
-    padding: 16px 8px;
-  }
-  .tl--rows .tl-item__meta .tl-item__row:last-child { display: flex; align-items: center; }
-  .tl--rows .tl-item__meta .tl-item__row:last-child dt { height: auto; }
-  .tl--rows .tl-item__ico { width: 16px; height: 16px; }
-  .tl--rows .tl-item__tags { flex-direction: row; align-items: center; }
-  .tl--rows .tl-item__title { font-size: 16px; }
+@media (min-width: 768px) { .tlx { --tlx-cols: 236px 84px 88px 170px 180px 76px 206px 68px 84px 68px 68px 180px; } }
+.tlx__row {
+  display: grid;
+  grid-template-columns: var(--tlx-cols);
+  width: max-content;
+  min-width: 100%;
+}
+.tlx__head {
+  position: sticky;
+  top: var(--header-h);
+  z-index: 20;
+  overflow-x: auto;
+  scrollbar-width: none;
+  background: var(--white);
+  border-top: 1px solid var(--gray-200);
+  border-bottom: 1px solid var(--ink);
+}
+.tlx__head::-webkit-scrollbar { display: none; }
+/* スマホ：止まっているあいだは、項目名の行より上（ロゴとメニューのボタンの裏）も白で覆い、下を流れる行が透けないようにする */
+@media (max-width: 1023px) {
+  .tlx__head.is-stuck { box-shadow: 0 -30px 0 var(--white), 0 -60px 0 var(--white), 0 calc(-1 * var(--header-h)) 0 var(--white); }
 }
 @media (min-width: 1024px) {
-  .tl--rows .tl-item {
-    grid-template-columns: 128px minmax(0, 1fr) 180px auto 252px;
-    grid-template-areas: "date title place tags btns";
-  }
-  .tl--rows .tl-item__btns { display: grid; grid-area: btns; margin: 0; gap: 6px; }
-  .tl--rows .tl-btn { min-height: 34px; padding: 6px 4px; gap: 0; justify-content: center; font-size: 12px; letter-spacing: .02em; white-space: nowrap; }
-  .tl--rows .tl-btn .aw { display: none; }
+  .tlx__head { transition: top .35s var(--ease); }
+  body:has(.site-header--hidden) .tlx__head { top: 0; }
 }
+.tlx__row--head .tlx__cell {
+  padding: 10px 8px;
+  font: 700 11px/1.4 var(--fjp);
+  letter-spacing: .04em;
+  color: var(--gray-600);
+  white-space: nowrap;
+}
+.tlx__body {
+  overflow-x: auto;
+  scrollbar-width: thin;
+  -webkit-overflow-scrolling: touch;
+}
+.tlx__body .tlx__row { border-bottom: 1px solid var(--gray-200); }
+.tlx__body .tlx__row[hidden] { display: none; }
+.tlx__cell {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 2px;
+  min-width: 0;
+  padding: 12px 8px;
+  background: var(--white);
+}
+.tlx__body .tlx__row:hover .tlx__cell { background: var(--gray-050); }
+/* 左端（日程・大会名）は固定。横に送ったときは右端に薄い影を付けて、下を流れていく列と分ける */
+.tlx__cell--name { position: sticky; left: 0; z-index: 1; padding-left: 4px; }
+.tlx.is-scrolled .tlx__cell--name { box-shadow: 6px 0 8px -6px rgba(26, 26, 26, .25); }
+.tlx__date { display: flex; align-items: baseline; gap: 6px; }
+.tlx__ymd { font: 700 13px/1.3 var(--flt); letter-spacing: .03em; color: var(--ink); }
+.tlx__dow { font: 700 10px/1.3 var(--flt); letter-spacing: .1em; color: var(--red); }
+/* 大会名：意味の切れ目（<wbr>）でだけ折り返す */
+.tlx__name { font: 700 14px/1.5 var(--fjp); letter-spacing: .02em; color: var(--ink); word-break: keep-all; overflow-wrap: anywhere; }
+@media (min-width: 768px) { .tlx__name { font-size: 15px; } }
+.tlx__name a { transition: color .3s ease; }
+.tlx__name a:hover { color: var(--red); }
+.tlx__cell--text { font: 400 13px/1.6 var(--fjp); color: var(--gray-800); word-break: keep-all; overflow-wrap: anywhere; }
+.tlx__sub { font-size: 11px; color: var(--gray-500); }
+.tlx__row--done .tlx__name, .tlx__row--done .tlx__ymd { color: var(--gray-600); }
+.tlx__row--done .tlx__dow { color: var(--gray-500); }
+.tlx .tlx__btn { width: 100%; min-height: 34px; padding: 6px 2px; gap: 0; justify-content: center; font-size: 12px; letter-spacing: 0; white-space: nowrap; }
+.tlx .tlx__btn .aw { display: none; }
+/* 右へ送れることを示す（main.js が送り切ったら .is-end、送れる幅が無ければ .is-fit を付けて消す） */
+.tlx__hint {
+  display: flex;
+  justify-content: flex-end;
+  align-items: baseline;
+  gap: 8px;
+  margin: 0 2px 8px;
+  font: 500 10px/1 var(--flt);
+  letter-spacing: .18em;
+  color: var(--gray-600);
+  transition: opacity .3s ease;
+}
+.tlx__hint .ln-arrow { animation: hs-nudge 1.8s ease-in-out infinite; }
+.tlx.is-end .tlx__hint, .tlx.is-fit .tlx__hint { opacity: 0; }
+@media (prefers-reduced-motion: reduce) { .tlx__hint .ln-arrow { animation: none; } }
 
 /* 絞り込み（左）と表示の切り替え（右） */
 .tl-tools { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 20px; margin: 28px 0 24px; }
@@ -3223,7 +3272,7 @@ body.jsrv .rv.on .ink-sweep {
 .view-switch__btn + .view-switch__btn { border-left: 1px solid var(--gray-300); }
 .view-switch__btn:hover { color: var(--ink); }
 .view-switch__btn.is-active { background: var(--ink); color: #fff; }
-/* 切り替えの絵：1行表示は細い横線3本、詳細表示は太い帯2本（どちらも currentColor で描く） */
+/* 切り替えの絵：縮小表示は細い横線3本、拡大表示は太い帯2本（どちらも currentColor で描く） */
 .view-switch__ico { position: relative; width: 14px; height: 12px; flex: none; }
 .view-switch__ico--rows { background: linear-gradient(currentColor, currentColor) 0 0 / 100% 2px no-repeat, linear-gradient(currentColor, currentColor) 0 5px / 100% 2px no-repeat, linear-gradient(currentColor, currentColor) 0 10px / 100% 2px no-repeat; }
 .view-switch__ico--cards { background: linear-gradient(currentColor, currentColor) 0 0 / 100% 5px no-repeat, linear-gradient(currentColor, currentColor) 0 7px / 100% 5px no-repeat; }

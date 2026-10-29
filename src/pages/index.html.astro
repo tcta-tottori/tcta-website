@@ -122,9 +122,9 @@ const upcomingTournaments = TOURNAMENTS.filter((t) => t.status !== 'past');
         <div class="sec-bar__aside">
           {/* 左右に送れることを、線の矢印（.ln-arrow）で示す。送るのは指（横スクロール）か下の点で */}
           <span class="hint hint--lr"><span class="ln-arrow ln-arrow--left" aria-hidden="true"></span>終了した大会　／　今後の大会<span class="ln-arrow" aria-hidden="true"></span></span>
-          <button class="ghost-link view-all" type="button" data-tall-open aria-expanded="false" aria-controls="tournaments-all">
+          <a class="ghost-link view-all" href="tournaments.html">
             <span class="view-all__label">VIEW ALL</span><span class="sqbtn">→</span>
-          </button>
+          </a>
         </div>
       </div>
 
@@ -158,28 +158,6 @@ const upcomingTournaments = TOURNAMENTS.filter((t) => t.status !== 'past');
       </div>
     </div>
 
-    {/* VIEW ALL で開く全件表示。カードが見出しの下から順に滑り出す（style.css の .panel-item）。 */}
-    <div class="tall" id="tournaments-all" hidden>
-      <div class="tall__panel" role="dialog" aria-modal="true" aria-labelledby="tall-title">
-        <div class="container tall__head">
-          <div>
-            <p class="sec-head__eyebrow">Tournament</p>
-            <h2 class="sec-head__title" id="tall-title">大会情報</h2>
-          </div>
-          <button class="close-x" type="button" data-tall-close aria-label="大会情報を閉じる">
-            <span aria-hidden="true"></span><span aria-hidden="true"></span><span aria-hidden="true"></span>
-          </button>
-        </div>
-        <div class="container tall__body">
-          <div class="tall__list">
-            {TOURNAMENTS.map((t, i) => (
-              <div class="tall__item panel-item" style={`--i:${i}`}><TournamentCard tournament={t} /></div>
-            ))}
-          </div>
-          <a class="btn btn--outline tall__more" href="tournaments.html">年間の大会日程・カレンダーを見る <span class="aw">→</span></a>
-        </div>
-      </div>
-    </div>
   </section>
 
   <!-- ============ お知らせ ============ -->
