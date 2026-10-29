@@ -41,21 +41,25 @@ const DOTS = [
   { x: '20.5%', y: '26.3%', s: '85px', c: '#232323', d: '10.1s', delay: '-7.8s', dx: '1px', dy: '7px', depth: 0.65, r: '-0.0deg' },
 ];
 
-/** 白地用の枠の色（黒地用の色ごとに対応させる。細い線でも見える程度の、控えめなグレー） */
+/** 白地用の枠の色（黒地用の色ごとに対応させる）。文字の邪魔にならないよう、ごく薄いグレーにとどめる */
 const LIGHT: Record<string, string> = {
-  '#0E0E0E': '#F0F0F0',
-  '#101010': '#EDEDED',
-  '#121212': '#EBEBEB',
-  '#171717': '#E8E8E8',
-  '#202020': '#E5E5E5',
-  '#232323': '#E2E2E2',
-  '#1E1414': '#F2D5D5',
+  '#0E0E0E': '#F4F4F4',
+  '#101010': '#F2F2F2',
+  '#121212': '#F2F2F2',
+  '#171717': '#F0F0F0',
+  '#202020': '#EFEFEF',
+  '#232323': '#EEEEEE',
+  '#1E1414': '#F8E6E6',
 };
-const color = (c: string) => (tone === 'light' ? LIGHT[c] ?? '#F5F5F5' : c);
+const color = (c: string) => (tone === 'light' ? LIGHT[c] ?? '#F2F2F2' : c);
+
+/** 白地用は線が重なって文字が読みにくくならないよう、重なりの少ない9個だけに減らす（DOTS の何番目か） */
+const LIGHT_PICK = [5, 4, 18, 8, 13, 24, 2, 20, 10];
+const dots = tone === 'light' ? LIGHT_PICK.map((i) => DOTS[i]) : DOTS;
 ---
 
 <div class:list={['footer-deco', extra]} aria-hidden="true">
-  {DOTS.map((d) => (
+  {dots.map((d) => (
     <span class="footer-dot" style={`--x:${d.x};--y:${d.y};--s:${d.s};--c:${color(d.c)};--d:${d.d};--delay:${d.delay};--dx:${d.dx};--dy:${d.dy};--depth:${d.depth};--r:${d.r}`}></span>
   ))}
 </div>
