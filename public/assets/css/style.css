@@ -1680,6 +1680,7 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 
 /* 4件目（NEWS_VISIBLE の次）。まだ続きがあることだけ伝えたいので、薄くフェードさせて押せなくする。 */
 .news-peek { position: relative; }
+.news-peek__more { display: flex; justify-content: center; margin-top: 8px; }
 .news-list--peek {
   margin-top: 0;
   opacity: .34;
@@ -1688,33 +1689,20 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   pointer-events: none;
 }
 .news-list--peek .news-row { border-bottom: 0; }
-.news-peek__btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  width: 100%;
-  margin-top: 4px;
-  padding: 14px 8px;
-  font: 700 13px/1 var(--fjp);
-  letter-spacing: .04em;
-  color: var(--gray-600);
-  transition: color .3s ease;
-}
-.news-peek__btn:hover { color: var(--red); }
-.news-peek__btn .aw { transition: transform .3s ease; }
-.news-peek__btn:hover .aw { transform: translateY(3px); }
 
 /* コート案内の施設一覧の4件目。お知らせの4件目（.news-list--peek）と同じ見せ方で、1件ぶんの高さに切る。
    全施設は「すべての施設を見る」で全画面のパネル（.news-all）に開く。 */
 .court-peek { max-height: 96px; overflow: hidden; }
 
 /* 全件表示（お知らせ・コート案内）。画面いっぱいに白い面を出し、右上で閉じる。項目の動きは .panel-item。 */
+/* サイトのヘッダーの下から画面の下までに出す（ヘッダーとメニューはこの上に残る：ヘッダー 100、メニュー 90 より下の 85）。
+   スマホのヘッダーは帯が無いので、ヘッダーの裏（画面の上端〜--header-h）も白で覆う（box-shadow を上へずらして重ねる） */
 .news-all {
   position: fixed;
-  inset: 0;
-  z-index: 120;
+  inset: var(--header-h) 0 0 0;
+  z-index: 85;
   background: var(--white);
+  box-shadow: 0 calc(-1 * var(--header-h)) 0 var(--white);
   overflow-y: auto;
   overscroll-behavior: contain;
 }
@@ -1766,7 +1754,7 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   transition: opacity .3s ease;
 }
 .news-all::after { bottom: 0; background: linear-gradient(to top, var(--white) 20%, rgba(255, 255, 255, 0)); }
-.news-all::before { top: var(--panel-head, 96px); background: linear-gradient(to bottom, var(--white), rgba(255, 255, 255, 0)); height: 48px; }
+.news-all::before { top: calc(var(--header-h) + var(--panel-head, 96px)); background: linear-gradient(to bottom, var(--white), rgba(255, 255, 255, 0)); height: 48px; }
 .news-all.is-bottom::after, .news-all.is-top::before { opacity: 0; }
 
 
