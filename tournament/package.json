@@ -10,7 +10,8 @@
     "lint": "eslint .",
     "preview": "npm run build && wrangler dev",
     "test": "node scripts/smoke.mjs",
-    "deploy": "npm run build && wrangler deploy"
+    "deploy": "npm run build && wrangler deploy",
+    "test:auth": "node --experimental-strip-types --no-warnings scripts/auth.test.mts"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.90.21",

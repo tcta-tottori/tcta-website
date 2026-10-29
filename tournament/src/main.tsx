@@ -73,16 +73,18 @@ import PublicMatchOrderView from './features/view/PublicMatchOrderView';
 import PublicLiveScoreView from './features/view/PublicLiveScoreView';
 import EmbedLiveScoreView from './features/view/EmbedLiveScoreView';
 import LiveScorePage from './features/livescore/LiveScorePage';
+// 運営画面は役員だけ（観戦ページ /view・HP 埋め込み /embed は誰でも）
+import OfficerGate from './components/site/OfficerGate';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ErrorBoundary>
     <BrowserRouter basename={import.meta.env.BASE_URL}>
       <Routes>
-        <Route path="/live" element={<LiveDashboard />} />
+        <Route path="/live" element={<OfficerGate><LiveDashboard /></OfficerGate>} />
 
         {/* ライブスコア入力（コートサイド用の専用画面・運営メニュー無し） */}
-        <Route path="/live-score" element={<LiveScorePage />} />
+        <Route path="/live-score" element={<OfficerGate><LiveScorePage /></OfficerGate>} />
 
         {/* HP埋め込み用（ライブスコアだけを表示する単独ページ） */}
         <Route path="/embed/livescore" element={<EmbedLiveScoreView />} />
@@ -98,7 +100,7 @@ createRoot(document.getElementById('root')!).render(
           <Route path="live" element={<PublicLiveView />} />
         </Route>
 
-        <Route path="/" element={<AppLayout />}>
+        <Route path="/" element={<OfficerGate><AppLayout /></OfficerGate>}>
           <Route index element={<Navigate to="/data" replace />} />
           <Route path="data" element={<DataManagement />} />
           <Route path="entry" element={<EntryRegistration />} />

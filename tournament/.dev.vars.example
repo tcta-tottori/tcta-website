@@ -1,0 +1,5 @@
+# 手元（npm run preview = wrangler dev）だけで使う設定。.dev.vars にコピーして使う（.dev.vars は Git に入れない）。
+# AUTH_MODE=dev … 役員ログインを「メールアドレスを入れるだけ」の画面で代用する（localhost のときだけ効く）
+AUTH_MODE=dev
+# 音声コールを手元で試すときだけ
+# GEMINI_API_KEY=

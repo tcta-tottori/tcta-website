@@ -70,7 +70,7 @@ Cloudflare Workers で公開しています（2026-10-21 に GitHub Pages から
 GitHub Pages で動いている大会運営システム（`tcta-tottori/tournament-management-app`）を、このサイトと同じ Cloudflare に載せた版を
 [`tournament/`](./tournament/) に置いています。GitHub Pages 版はそのまま残し、こちらは別の URL
 （https://tcta-tournament.tcta-admin-worker.workers.dev/ ）で動きます。見た目はこのサイトと同じ枠にそろえ、
-Render の中継サーバーは同じ Worker の Durable Object に置き換えました。公式サイト本体とは別の Worker・別の `package.json` です。
+Render の中継サーバーは同じ Worker の Durable Object に置き換えました。運営画面は役員だけ（Cloudflare Access でログイン）、観戦ページは誰でも見られます。公式サイト本体とは別の Worker・別の `package.json` です。
 使い方は [`tournament/README.md`](./tournament/README.md)。
 
 ## 設計資料

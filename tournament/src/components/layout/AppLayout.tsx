@@ -18,6 +18,8 @@ import { callTts } from '../../features/broadcast/callTts';
 import {
   SiteHeader, MobileNav, PageHead, AppTabs, StatusBar, SiteFooter, SITE_URL, type NavLinkItem,
 } from '../site/SiteChrome';
+import { OfficerExpiredBar } from '../site/OfficerGate';
+import { useOfficer, logout } from '../../features/auth/officer';
 
 interface MainTab {
   id: string;
@@ -89,6 +91,7 @@ export default function AppLayout() {
   const [menuOpen, setMenuOpen] = useState(false);
   const syncState = useSyncStore((s) => s.connectionState);
   const syncRoom = useSyncStore((s) => s.roomCode);
+  const officer = useOfficer();
 
   // モバイルの自動再生制約対策: 最初のユーザー操作でオーディオをアンロックする
   useEffect(() => {
@@ -362,6 +365,9 @@ export default function AppLayout() {
         onToggleMenu={() => setMenuOpen(v => !v)}
       />
 
+      {/* ===== 役員ログインの期限切れ（画面は止めずに知らせる） ===== */}
+      <OfficerExpiredBar />
+
       {/* ===== 大会の状況（大会名・進捗・コート・時間超過）。読み込み中だけ出す ===== */}
       {hasTournament && (
         <StatusBar
@@ -382,6 +388,7 @@ export default function AppLayout() {
             <a className="mobile-nav__foot-link" href="/view" target="_blank" rel="noopener noreferrer" onClick={closeMenu}>観戦ページ ↗</a>
             <a className="mobile-nav__foot-link" href={SITE_URL} target="_blank" rel="noopener noreferrer" onClick={closeMenu}>協会サイト ↗</a>
             <button className="mobile-nav__foot-link" onClick={() => { closeMenu(); setVersionModalOpen(true); }}>Ver 2.4 · {__BUILD_TIMESTAMP__}</button>
+            {officer.email && <button className="mobile-nav__foot-link" onClick={logout}>ログアウト（{officer.email}）</button>}
           </div>
         }
       />
@@ -433,6 +440,9 @@ export default function AppLayout() {
               <button className="fw site-footer__ver" onClick={() => setVersionModalOpen(true)}>
                 Ver 2.4<small>{__BUILD_TIMESTAMP__}</small>
               </button>
+              {officer.email && (
+                <button className="fw site-footer__ver" onClick={logout} title="役員ログインを終える">ログアウト<small>{officer.email}</small></button>
+              )}
             </>}
           />
         )}

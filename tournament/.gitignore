@@ -30,3 +30,7 @@ dist-ssr
 
 # Test scripts
 seed_draw_test.mjs
+
+# wrangler dev の手元の設定・状態
+.dev.vars
+.wrangler

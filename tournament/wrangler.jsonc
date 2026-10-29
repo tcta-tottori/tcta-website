@@ -12,14 +12,16 @@
 		"binding": "ASSETS",
 		// /view/league などアプリ内の URL を直接開いても index.html を返す
 		"not_found_handling": "single-page-application",
-		// Worker が動くのはこの 2 つだけ（ほかは静的ファイルとして直接返る）
-		"run_worker_first": ["/ws", "/api/*"]
+		// Worker が動くのはこの 3 つだけ（ほかは静的ファイルとして直接返る）
+		"run_worker_first": ["/ws", "/api/*", "/auth/*"]
 	},
 	"durable_objects": {
 		"bindings": [{ "name": "SYNC_ROOM", "class_name": "SyncRoom" }]
 	},
 	// Free プランで使えるのは SQLite を使う Durable Object だけ
 	"migrations": [{ "tag": "v1", "new_sqlite_classes": ["SyncRoom"] }],
+	// 役員ログイン（Cloudflare Access）の ACCESS_TEAM_DOMAIN・ACCESS_AUD は、GitHub のリポジトリ変数から配備のときに入れる
+	// （.github/workflows/deploy-tournament.yml。手順は README の「役員ログイン」）。無ければ運営の操作はすべて断る。
 	"vars": {
 		"GEMINI_TTS_MODEL": "gemini-3.1-flash-preview-tts"
 	},
