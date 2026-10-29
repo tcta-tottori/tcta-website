@@ -9,7 +9,7 @@
 //   'past'   終了（モノクロ表示・TODAY より前に並ぶ）
 //   'live'   開催当日
 //   'closed' 受付終了
-//   'soon'   まもなく受付
+//   'soon'   未受付（管理画面の受付状態は「まもなく受付」。表示は「未受付」）
 //   'open'   受付中（赤バッジ）
 //
 // ■ リンク先（カードをタップしたときの遷移先）
@@ -37,7 +37,7 @@ export const STATUS = {
   past: { label: '終了', badge: 'badge--muted' },
   live: { label: '本日開催', badge: 'badge--open' },
   closed: { label: '受付終了', badge: 'badge--muted' },
-  soon: { label: 'まもなく受付', badge: 'badge--muted' },
+  soon: { label: '未受付', badge: 'badge--muted' },
   open: { label: '受付中', badge: 'badge--open' },
 };
 
@@ -130,7 +130,7 @@ export function buildCards(rows, { ROWS, eventBySlug }) {
         href: t.link_url || null,
       };
       card.action = cardAction(card, e);
-      // 要項・申込用紙・ドロー・結果の4つのボタン（大会情報ページの一覧と同じ）
+      // 要項・ドロー・結果の3つのボタン（大会情報ページの一覧と同じ。申込用紙は要項のページに載せる）
       card.buttons = eventButtons(e, { outline: card.outlineUrl, draw: card.drawUrl, result: card.resultUrl });
       return card;
     })

@@ -4,7 +4,7 @@
 //
 // ■ 縮小表示（初め。.tl--rows のとき .tlx を出す）
 //   1大会1行の表。左端の「大会名」の列だけを固定し、右へ横スクロールすると
-//   日程・状態・登録区分・種目・会場・締切・予備日・要項／申込用紙／ドロー／結果・備考 が順に見える。
+//   日程・状態・登録区分・種目・会場・締切・予備日（予備会場は「千代」「ヤマタ」のように短く）・要項／ドロー／結果 が順に見える。
 //   項目名の行（.tlx__head）は下へスクロールしても画面の上端についてくる（横スクロールは本体と連動。main.js の initTlx）。
 //   大会名は「第56回｜東部地区｜テニス選手権」のように意味の切れ目でだけ折り返す（nameParts と <wbr>）。
 //
@@ -12,11 +12,11 @@
 //
 //   大会名（左に赤い縦線）＋ 受付状態・登録区分のバッジ
 //   日付（カレンダー印）／会場（地図のピン）
-//   要項・申込用紙・ドロー・結果 の4つのボタン（素材の無いものは灰色で押せない）
+//   要項・ドロー・結果 の3つのボタン（素材の無いものは灰色で押せない。src/data/event-buttons.js）
 //   備考（締切・予備日・荒天時の扱い・外部の申込先）
 //
-// ボタンの行き先：要項 → outline-<slug>.html、ドロー → draw-<slug>.html、結果 → result-<slug>.html（それぞれ独立したページ）、
-// 申込用紙 → PDF を直接（別タブ）。素材の無い大会は4つとも押せない状態で出す（大会名から大会ページへは行ける）。
+// ボタンの行き先：要項 → outline-<slug>.html（申込用紙もこのページに載せる）、ドロー → draw-<slug>.html、結果 → result-<slug>.html。
+// 素材の無い大会は3つとも押せない状態で出す（大会名から大会ページへは行ける）。
 import Icon from './Icon.astro';
 import { REG_LABEL, STATUS_LABEL, dateCell } from '../data/schedule.js';
 import EventIcon from './EventIcon.astro';
@@ -52,11 +52,18 @@ function notes(t, e) {
 const nameParts = (name) =>
   String(name ?? '').split(/(?<=第\d+回)|(?<=年度)|(?<=協会)|(?=（)|(?<=.)(?=テニス|シングルス|ダブルス|ミックス)|(?<=\s)/u).filter(Boolean);
 
-/** 予備日の欄（予備日＋予備会場、無ければ補足） */
-const spareText = (t) => (t.spareDate ? `${t.spareDate}${t.spareVenue ? `（${t.spareVenue}）` : ''}` : t.spareNote || '');
+/** 予備会場の短い呼び方（縮小表示の予備日の欄用）。鳥取市千代テニス場 → 千代、ヤマタスポーツパーク → ヤマタ */
+const shortVenue = (v) =>
+  String(v ?? '')
+    .replace(/ヤマタスポーツパーク/g, 'ヤマタ')
+    .replace(/^鳥取(市|県)/, '')
+    .replace(/(公園)?テニス(場|コート)$/, '');
+
+/** 予備日の欄（予備日＋短い予備会場、無ければ補足） */
+const spareText = (t) => (t.spareDate ? `${t.spareDate}${t.spareVenue ? `（${shortVenue(t.spareVenue)}）` : ''}` : t.spareNote || '');
 
 /** 縮小表示の項目（左から）。幅は CSS の --tlx-cols と同じ順 */
-const COLS = ['大会名', '日程', '状態', '登録区分', '種目', '会場', '締切', '予備日', '要項', '申込用紙', 'ドロー', '結果', '備考'];
+const COLS = ['大会名', '日程', '状態', '登録区分', '種目', '会場', '締切', '予備日', '要項', 'ドロー', '結果'];
 
 const rows = items.map((t) => {
   const e = eventForSchedule(t);
@@ -100,7 +107,7 @@ const parts = (text) => String(text ?? '').split(/(?<=[／/・])|(?=（)/);
           <div class="tlx__cell"><span class="visually-hidden">状態：</span><span class={`badge ${badge.badge}`}>{badge.label}</span></div>
           <div class="tlx__cell"><span class="visually-hidden">登録区分：</span><span class={`reg reg--${t.reg}`}>{REG_LABEL[t.reg]}</span></div>
           <div class="tlx__cell tlx__cell--text"><span class="visually-hidden">種目：</span>{parts(t.event).map((part, i, arr) => <>{part}{i < arr.length - 1 && <wbr />}</>)}</div>
-          <div class="tlx__cell tlx__cell--text"><span class="visually-hidden">会場：</span><span><Venue text={t.place} breaks /></span>{date.note && <small class="tlx__sub">{date.note}</small>}</div>
+          <div class="tlx__cell tlx__cell--text"><span class="visually-hidden">会場：</span><span><Venue text={t.place} breaks /></span></div>
           <div class="tlx__cell tlx__cell--text"><span class="visually-hidden">締切：</span>{t.due && t.due !== '—' ? t.due : '—'}</div>
           <div class="tlx__cell tlx__cell--text"><span class="visually-hidden">予備日：</span>{spareText(t) ? parts(spareText(t)).map((part, i, arr) => <>{part}{i < arr.length - 1 && <wbr />}</>) : '—'}</div>
           {buttons.map((b) => (
@@ -110,10 +117,6 @@ const parts = (text) => String(text ?? '').split(/(?<=[／/・])|(?=（)/);
                 : <span class="btn tl-btn tl-btn--off tlx__btn" aria-disabled="true" title="準備中">{b.label}</span>}
             </div>
           ))}
-          <div class="tlx__cell tlx__cell--text">
-            <span class="visually-hidden">備考：</span>
-            {e?.link ? <a class="ghost-link" href={e.link.url} target="_blank" rel="noopener noreferrer">{e.link.label}<span class="aw" aria-hidden="true">↗</span></a> : '—'}
-          </div>
         </div>
       ))}
     </div>

@@ -2154,8 +2154,8 @@
             {
               "src": "assets/img/events/r8-tottori-univ-open/draw-01.webp",
               "label": "1ページ目",
-              "w": 1240,
-              "h": 1754
+              "w": 1161,
+              "h": 1032
             }
           ],
           "pdfs": [
@@ -2171,8 +2171,8 @@
             {
               "src": "assets/img/events/r8-tottori-univ-open/result-01.webp",
               "label": "結果一覧",
-              "w": 1240,
-              "h": 1754
+              "w": 1029,
+              "h": 945
             }
           ],
           "pdfs": [

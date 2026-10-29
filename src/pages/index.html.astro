@@ -10,10 +10,6 @@ import { LINKS_ASSOC, LINKS_OTHER } from '../data/links.js';
 import { NEWS_VISIBLE } from '../data/news.js';
 import { COURTS } from '../data/courts.js';
 import CourtMap from '../components/CourtMap.astro';
-import CourtRow from '../components/CourtRow.astro';
-
-/** コート案内の一覧で、最初から見せる施設の数。残りは白いフェードで隠し、ボタンで出す */
-const COURT_VISIBLE = 3;
 
 // 大会カード・お知らせは EmDash から（1 リクエストに 1 回だけ読む）
 const { TOURNAMENTS, NEWS } = await siteData(Astro);
@@ -217,65 +213,30 @@ const upcomingTournaments = TOURNAMENTS.filter((t) => t.status !== 'past');
   <section class="section section--gray" id="courts" aria-labelledby="courts-title">
     <span class="ghost" aria-hidden="true">COURT GUIDE</span>
     <div class="container">
-      <div class="sec-head rv">
-        <div class="sec-head__row">
-          <span class="sec-head__mark" aria-hidden="true"></span>
-          <div>
-            <p class="sec-head__eyebrow">Court Guide</p>
-            <h2 class="sec-head__title" id="courts-title">コート案内</h2>
-          </div>
-        </div>
-      </div>
-
-      {/* まず地図、次に施設の一覧。横に並ぶ幅では地図を左の広い側に置く（split--reverse）。 */}
-      <div class="split split--reverse">
-        {/* 施設ごとの地図。上のボタンで切り替える（緯度経度とコートの輪郭は courts.js / court-shapes.json）。 */}
-        <div class="rv embed-wrap">
-          <CourtMap courts={COURTS} />
-          <span class="embed-wrap__square" aria-hidden="true"></span>
-        </div>
-        <div class="rv" style="transition-delay:.1s">
-          {/* 最初は3件だけ（COURT_VISIBLE）。4件目はお知らせと同じく薄くフェードさせて続きがあることだけ伝え、
-              「すべての施設を見る」で全施設を全画面のパネル（#court-all）に開く（main.js の initFullPanel）。 */}
-          <ul class="sch-list">
-            {COURTS.slice(0, COURT_VISIBLE).map((c) => <CourtRow court={c} />)}
-          </ul>
-          {COURTS.length > COURT_VISIBLE && (
-            <div class="news-peek">
-              <ul class="sch-list news-list--peek court-peek" aria-hidden="true">
-                <CourtRow court={COURTS[COURT_VISIBLE]} />
-              </ul>
-              <button class="news-peek__btn" type="button" data-court-open aria-expanded="false" aria-controls="court-all">
-                すべての施設を見る（{COURTS.length}施設）<span class="aw">↓</span>
-              </button>
-            </div>
-          )}
-        </div>
-
-      </div>
-    </div>
-
-    {/* 「すべての施設を見る」で開く全施設の一覧。お知らせの全件表示（#news-all）と同じ見た目で、閉じるボタンは右上。 */}
-    {COURTS.length > COURT_VISIBLE && (
-      <div class="news-all" id="court-all" hidden>
-        <div class="news-all__panel" role="dialog" aria-modal="true" aria-labelledby="court-all-title">
-          <div class="container news-all__head">
+      <div class="sec-bar rv">
+        <div class="sec-head">
+          <div class="sec-head__row">
+            <span class="sec-head__mark" aria-hidden="true"></span>
             <div>
               <p class="sec-head__eyebrow">Court Guide</p>
-              <h2 class="sec-head__title" id="court-all-title">コート案内</h2>
+              <h2 class="sec-head__title" id="courts-title">コート案内</h2>
             </div>
-            <button class="close-x" type="button" data-court-close aria-label="コート案内を閉じる">
-              <span aria-hidden="true"></span><span aria-hidden="true"></span><span aria-hidden="true"></span>
-            </button>
-          </div>
-          <div class="container news-all__body">
-            <ul class="sch-list">
-              {COURTS.map((c, i) => <CourtRow court={c} index={i} />)}
-            </ul>
           </div>
         </div>
+        <div class="sec-bar__aside">
+          <a class="ghost-link view-all" href="courts.html">
+            <span class="view-all__label">VIEW ALL</span><span class="sqbtn">→</span>
+          </a>
+        </div>
       </div>
-    )}
+
+      {/* 施設ごとの地図。上のボタンで切り替える（緯度経度とコートの輪郭は courts.js / court-shapes.json）。
+          施設の一覧は置かず、VIEW ALL からコート案内のページへ */}
+      <div class="rv embed-wrap mt-32">
+        <CourtMap courts={COURTS} />
+        <span class="embed-wrap__square" aria-hidden="true"></span>
+      </div>
+    </div>
   </section>
   <!-- ============ リンク集 ============ -->
   <section class="section" id="links" aria-labelledby="links-title">

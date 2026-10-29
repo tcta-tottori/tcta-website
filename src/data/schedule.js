@@ -11,7 +11,7 @@
 //   spare_venue … 予備会場
 //   spare_note  … 予備日ではない補足（'荒天中止' など）
 //
-// ■ 受付状態（管理画面の選択肢）  終了／受付終了／受付中／まもなく受付／本日開催
+// ■ 受付状態（管理画面の選択肢）  終了／受付終了／受付中／まもなく受付／本日開催（「まもなく受付」は「未受付」と表示する）
 // ■ 登録区分（管理画面の選択肢）  県登録／市登録／登録不要
 // ■ 区分                          協会主催（一覧に出る）／預かり（一覧の下に別立て）／その他（トップのカードだけ）
 //
@@ -22,7 +22,7 @@
 //   室内の尾坂杯だけは体育館開催なので、この形に当てはめない。
 
 /** 管理画面の文言 → コードで使うキー */
-export const STATE_KEY = { '終了': 'done', '受付終了': 'closed', '受付中': 'open', 'まもなく受付': 'soon', '本日開催': 'live' };
+export const STATE_KEY = { '終了': 'done', '受付終了': 'closed', '受付中': 'open', 'まもなく受付': 'soon', '未受付': 'soon', '本日開催': 'live' };
 export const REG_KEY = { '県登録': 'ken', '市登録': 'shi', '登録不要': 'free' };
 export const KIND_KEY = { '協会主催': 'main', '預かり': 'extra', 'その他': 'other' };
 
@@ -30,7 +30,7 @@ export const STATUS_LABEL = {
   done: { label: '終了', badge: 'badge--muted' },
   closed: { label: '受付終了', badge: 'badge--muted' },
   open: { label: '受付中', badge: 'badge--open' },
-  soon: { label: 'まもなく受付', badge: 'badge--muted' },
+  soon: { label: '未受付', badge: 'badge--muted' },
   live: { label: '本日開催', badge: 'badge--open' },
 };
 
