@@ -5,7 +5,7 @@ import { CLUB_GROUPS, clubDivisions, divisionChampion, clubDivisionOrder } from 
 import { CLUB_SEASONS } from '../data/club-league.js';
 
 const title = "クラブ対抗戦｜鳥取市テニス協会";
-const description = "鳥取市テニス協会のクラブ対抗戦。令和9年度の編成表と、平成26年度から令和8年度までの各部の優勝クラブを年度ごとに掲載しています。";
+const description = "鳥取市テニス協会のクラブ対抗戦。令和9年度の編成表と、平成22年度から令和8年度までの各部の優勝クラブを年度ごとに掲載しています。";
 
 // ■ 令和7年度〜（EmDash に移ってから）
 //   結果表と写真は EmDash の大会ページ（event-r8-club-taiko-1.html など）。
@@ -25,8 +25,11 @@ const seasons = CLUB_SEASONS.map((season) => ({
 // ■ 令和6年度まで（旧サイトから引き継いだ results.json）
 //   旧サイトで「男子1部〜6部」「男子7部・8部」「女子…」と分かれていたページを年度ごとに1つに束ね、
 //   男子1部→8部 → 男子予選会 → 女子1部→5部 → 女子予選会 の順に優勝クラブを出す（results.js の clubDivisions）。
-const archive = CLUB_GROUPS.map((g) => ({
+//   平成21年度（2009）以前はリーグ表が残っていないので載せない（平成22年度〜）。
+const FIRST_NENDO = 2010;
+const archive = CLUB_GROUPS.filter((g) => Number(g.nendo) >= FIRST_NENDO).map((g) => ({
   label: g.yearLabel,
+  nendo: g.nendo,
   divisions: clubDivisions(g).divisions
     .map((d) => ({ div: d.name, club: divisionChampion(d) }))
     .filter((x) => x.club),
@@ -41,6 +44,7 @@ const byDivision = (a, b) => clubDivisionOrder(a.div) - clubDivisionOrder(b.div)
 const years = [
   ...seasons.map((season) => ({
     label: season.label,
+    nendo: season.nendo,
     divisions: season.terms.flatMap((term) => term.divisions).slice().sort(byDivision),
     links: season.terms.filter((t) => t.href).map((t) => ({ label: `${t.label}（${t.event}）の結果表と写真`, href: t.href })),
   })),
@@ -96,7 +100,7 @@ const years = [
       <div class="rv" style="margin-top:56px" role="region" aria-label="各年度の優勝クラブ">
         {years.map((y) => (
           <details class="champ">
-            <summary class="champ__year">{y.label}<span class="champ__count">{new Set(y.divisions.map((c) => c.div.replace(/\s.*$/, ''))).size}部</span></summary>
+            <summary class="champ__year">{y.label}<span class="champ__count">{y.nendo}</span></summary>
             <div class="champ__body">
               <div class="champ__block">
                 {y.divisions.length > 0 ? (
