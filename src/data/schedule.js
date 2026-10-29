@@ -72,6 +72,16 @@ export function autoStatus(status, due, date, now = Date.now()) {
   return at !== null && now >= at ? 'closed' : status;
 }
 
+/**
+ * 協会のサイトに大会ページを作らず、外部のページへ飛ばす大会（大会名で見分ける）。
+ * 大会情報ページの一覧で、大会名を押すとこの URL が別タブで開く（大会ページがある大会はそちらが優先）。
+ */
+const EXTERNAL_PAGES = [
+  // 鳥取市市民体育祭（鳥取市のページ）
+  { match: /市民体育祭/, url: 'https://www.city.tottori.lg.jp/page/35046.html' },
+];
+const externalUrl = (name) => EXTERNAL_PAGES.find((x) => x.match.test(String(name ?? '')))?.url ?? null;
+
 /** EmDash の 1 行を、移行前の schedule.json の 1 行と同じ形にする。 */
 export function scheduleRow(t) {
   const date = String(t.date ?? '').slice(0, 10);
@@ -91,6 +101,7 @@ export function scheduleRow(t) {
     due: t.due || '',
     status: autoStatus(STATE_KEY[t.state] ?? 'soon', t.due, date),
     reg: REG_KEY[t.reg] ?? 'free',
+    externalUrl: externalUrl(t.name),
   };
 }
 

@@ -3300,6 +3300,7 @@ body.jsrv .rv.on .ink-sweep {
 .tlx__name { font: 700 14px/1.5 var(--fjp); letter-spacing: .02em; color: var(--ink); word-break: keep-all; overflow-wrap: anywhere; }
 @media (min-width: 768px) { .tlx__name { font-size: 15px; } }
 .tlx__name a { transition: color .3s ease; }
+.tlx__ext { margin-left: 4px; font-weight: 400; color: var(--red); }  /* 外部のページへ飛ぶ大会名の印 */
 .tlx__name a:hover { color: var(--red); }
 .tlx__cell--text { font: 400 13px/1.6 var(--fjp); color: var(--gray-800); word-break: keep-all; overflow-wrap: anywhere; }
 .tlx__sub { font-size: 11px; color: var(--gray-500); }
