@@ -1224,25 +1224,34 @@
   }
 
   /* ---------- 大会一覧の縮小表示（.tlx） ----------
-     本体（.tlx__body）の横スクロールに、項目名の行（.tlx__head。画面の上端に固定）を transform でついていかせる。
-     項目名の行はスクロールさせない（両方のスクロール位置を書き合うと、指を離したあとの惰性のスクロールが止まってカクつくため）。
+     本体（.tlx__body）の横スクロールに、項目名の行（.tlx__head。画面の上端に固定）をついていかせる。
+       スクロール連動アニメーションが使えるブラウザ … .tlx--sda を付け、送れる最大の幅（--tlx-max）だけ測って入れる。
+         動かすのはブラウザ（style.css の tlx-shift / tlx-keep）。スクロールと同じコマで動くので、遅れもカクつきも出ない
+       使えないブラウザ … スクロールのたびに（requestAnimationFrame で1コマ1回）transform でずらす
+     項目名の行はスクロールさせない（両方のスクロール位置を書き合うと、惰性のスクロールが止まってカクつくため）。
      横に送ったら .is-scrolled（左端の列に影）、右端まで送ったら .is-end、送れる幅が無ければ .is-fit（SCROLL の案内を消す）。
      項目名の行が画面の上端に止まっているあいだ .is-stuck（スマホではロゴの裏まで白で覆う。style.css） */
   function initTlx() {
+    var sda = !!(window.CSS && CSS.supports && CSS.supports('animation-timeline: --a') && CSS.supports('timeline-scope: --a'));
     document.querySelectorAll('[data-tlx]').forEach(function (box) {
       var head = box.querySelector('.tlx__head');
       var headRow = head && head.querySelector('.tlx__row');
-      var headFixed = head ? head.querySelectorAll('.tlx__cell--date, .tlx__cell--name') : [];
+      var headFixed = head ? head.querySelectorAll('.tlx__cell--name') : [];
       var body = box.querySelector('.tlx__body');
       if (!head || !headRow || !body) return;
+      box.classList.toggle('tlx--sda', sda);
       var x = -1, ticking = false;
+      var measure = function () {
+        var max = body.scrollWidth - body.clientWidth;
+        box.style.setProperty('--tlx-max', Math.max(0, max) + 'px');
+        return max;
+      };
       var update = function () {
         ticking = false;
         var left = body.scrollLeft;
-        if (left !== x) {
+        if (!sda && left !== x) {
           x = left;
           headRow.style.transform = 'translate3d(' + (-left) + 'px,0,0)';
-          // 「日程」「大会名」は本体の固定列と同じく、その場にとどめる
           for (var i = 0; i < headFixed.length; i++) headFixed[i].style.transform = 'translate3d(' + left + 'px,0,0)';
         }
         var max = body.scrollWidth - body.clientWidth;
@@ -1255,7 +1264,8 @@
         ticking = true;
         requestAnimationFrame(update);
       }, { passive: true });
-      window.addEventListener('resize', update);
+      window.addEventListener('resize', function () { measure(); update(); });
+      measure();
       update();
 
       var sTick = false;
