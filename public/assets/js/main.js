@@ -1194,8 +1194,8 @@
   }
 
   /* ---------- 大会一覧の表示の切り替え（大会情報ページ） ----------
-     「1行表示」（.tl--rows。初め）と「詳細表示」を切り替える。ページ内の大会一覧（.tl）すべてに効き、
-     選んだ方はこの端末に覚えておいて次に開いたときも使う（覚えられない環境では毎回「1行表示」） */
+     「縮小表示」（.tl--rows。初め）と「拡大表示」を切り替える。ページ内の大会一覧（.tl）すべてに効き、
+     選んだ方はこの端末に覚えておいて次に開いたときも使う（覚えられない環境では毎回「縮小表示」） */
   function initViewSwitch() {
     var sw = document.querySelector('[data-view-switch]');
     if (!sw) return;
@@ -1219,6 +1219,46 @@
       var view = b.getAttribute('data-view');
       set(view);
       try { localStorage.setItem(KEY, view); } catch (x) {}
+      window.dispatchEvent(new Event('resize')); // 縮小表示に戻したとき、横に送れるかを測り直す（initTlx）
+    });
+  }
+
+  /* ---------- 大会一覧の縮小表示（.tlx） ----------
+     項目名の行（.tlx__head。画面の上端に固定）と本体（.tlx__body）の横スクロールをそろえる（どちらを送っても両方動く）。
+     横に送ったら .is-scrolled（左端の列に影）、右端まで送ったら .is-end、送れる幅が無ければ .is-fit（SCROLL の案内を消す） */
+  function initTlx() {
+    document.querySelectorAll('[data-tlx]').forEach(function (box) {
+      var head = box.querySelector('.tlx__head');
+      var body = box.querySelector('.tlx__body');
+      if (!head || !body) return;
+      var lock = null;
+      var update = function () {
+        var max = body.scrollWidth - body.clientWidth;
+        box.classList.toggle('is-scrolled', body.scrollLeft > 2);
+        box.classList.toggle('is-end', max > 2 && body.scrollLeft >= max - 2);
+        box.classList.toggle('is-fit', max <= 2);
+      };
+      var sync = function (from, to) {
+        return function () {
+          if (lock && lock !== from) return;
+          lock = from;
+          to.scrollLeft = from.scrollLeft;
+          update();
+          requestAnimationFrame(function () { lock = null; });
+        };
+      };
+      body.addEventListener('scroll', sync(body, head), { passive: true });
+      head.addEventListener('scroll', sync(head, body), { passive: true });
+      window.addEventListener('resize', update);
+      update();
+      // 項目名の行が画面の上端に止まっているあいだ .is-stuck（スマホではロゴの裏まで白で覆う。style.css）
+      var stuck = function () {
+        var top = parseFloat(getComputedStyle(head).top) || 0;
+        var r = head.getBoundingClientRect();
+        head.classList.toggle('is-stuck', r.top <= top + 1 && box.getBoundingClientRect().bottom > r.bottom + 1);
+      };
+      window.addEventListener('scroll', stuck, { passive: true });
+      stuck();
     });
   }
 
@@ -1364,7 +1404,6 @@
     initHScroll();
     initChampAccordion();
     initFullPanel('news-all', '[data-news-open]', '[data-news-close]', { title: { from: '#news .sec-head__row > div', to: '.news-all__head > div' } });
-    initFullPanel('tournaments-all', '[data-tall-open]', '[data-tall-close]');
     initFullPanel('court-all', '[data-court-open]', '[data-court-close]', { title: { from: '#courts .sec-head__row > div', to: '.news-all__head > div' } });
     initCourtLinks();
     initCourtMap();
@@ -1374,6 +1413,7 @@
     initCarousel();
     initFilters();
     initViewSwitch();
+    initTlx();
     initTabs();
     initForm();
     initLightbox();

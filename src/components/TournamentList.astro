@@ -1,7 +1,14 @@
 ---
-// 大会一覧の1件ずつのブロック。src/lib/cms.js の SCHEDULE（schedule.js の形）をそのまま受け取る。
-// 表示は2通り。初めは「1行表示」（.tl--rows：日程・大会名・会場・状態・ボタンを1行に）。
-// 大会情報ページの切り替えボタンで「詳細表示」（下のブロックの形）にできる（main.js の initViewSwitch。選んだ方を覚えておく）。
+// 大会一覧。src/lib/cms.js の SCHEDULE（schedule.js の形）をそのまま受け取る。
+// 表示は2通り。大会情報ページの切り替えボタンで選ぶ（main.js の initViewSwitch。選んだ方を覚えておく）。
+//
+// ■ 縮小表示（初め。.tl--rows のとき .tlx を出す）
+//   1大会1行の表。左端の「日程・大会名」の列は固定し、右へ横スクロールすると
+//   状態・登録区分・種目・会場・締切・予備日・要項／申込用紙／ドロー／結果・備考 が順に見える。
+//   項目名の行（.tlx__head）は下へスクロールしても画面の上端についてくる（横スクロールは本体と連動。main.js の initTlx）。
+//   大会名は「第56回｜東部地区｜テニス選手権」のように意味の切れ目でだけ折り返す（nameParts と <wbr>）。
+//
+// ■ 拡大表示（.tl__cards。下の1大会1ブロックの形）
 //
 //   大会名（左に赤い縦線）＋ 受付状態・登録区分のバッジ
 //   日付（カレンダー印）／会場（地図のピン）
@@ -36,6 +43,20 @@ function notes(t, e) {
   return list;
 }
 
+/**
+ * 大会名の折り返してよい位置。「第56回」「令和8年度」の後ろ、「テニス」「シングルス」などの前、「協会」の後ろ、「（」の前、空白の後ろ。
+ * 例）第61回鳥取市テニス協会会長杯（春季） → 第61回｜鳥取市｜テニス協会｜会長杯｜（春季）
+ * CSS（word-break: keep-all）で文字の途中では折り返さないので、ここで区切った位置でだけ行が変わる。
+ */
+const nameParts = (name) =>
+  String(name ?? '').split(/(?<=第\d+回)|(?<=年度)|(?<=協会)|(?=（)|(?<=.)(?=テニス|シングルス|ダブルス|ミックス)|(?<=\s)/u).filter(Boolean);
+
+/** 予備日の欄（予備日＋予備会場、無ければ補足） */
+const spareText = (t) => (t.spareDate ? `${t.spareDate}${t.spareVenue ? `（${t.spareVenue}）` : ''}` : t.spareNote || '');
+
+/** 縮小表示の項目（左から）。幅は CSS の --tlx-cols と同じ順 */
+const COLS = ['日程・大会名', '状態', '登録区分', '種目', '会場', '締切', '予備日', '要項', '申込用紙', 'ドロー', '結果', '備考'];
+
 const rows = items.map((t) => {
   const e = eventForSchedule(t);
   return { t, e, date: dateText(t), buttons: eventButtons(e), notes: notes(t, e), badge: STATUS_LABEL[t.status], icons: eventIcons(t.event) };
@@ -47,7 +68,54 @@ const parts = (text) => String(text ?? '').split(/(?<=[／/・])|(?=（)/);
 
 ---
 
-<div class="tl tl--rows" id={id} role="list" aria-label={caption}>
+<div class="tl tl--rows" id={id}>
+  {/* ===== 縮小表示 ===== */}
+  <div class="tlx" data-tlx>
+    <p class="tlx__hint" aria-hidden="true"><span class="ln-arrow"></span>SCROLL</p>
+    <div class="tlx__head" aria-hidden="true">
+      <div class="tlx__row tlx__row--head">
+        {COLS.map((c, i) => <span class:list={['tlx__cell', i === 0 && 'tlx__cell--name']}>{c}</span>)}
+      </div>
+    </div>
+    <div class="tlx__body" role="list" aria-label={caption}>
+      {rows.map(({ t, e, date, buttons, badge }) => (
+        <div
+          class:list={['tlx__row', t.status === 'done' && 'tlx__row--done']}
+          data-tags={`${t.status} ${t.reg}`}
+          role="listitem"
+        >
+          <div class="tlx__cell tlx__cell--name">
+            <span class="tlx__date"><span class="tlx__ymd">{date.ymd}</span><span class="tlx__dow">{date.dow}</span></span>
+            <span class="tlx__name">
+              {e
+                ? <a href={e.url}>{nameParts(t.name).map((part, i, arr) => <>{part}{i < arr.length - 1 && <wbr />}</>)}</a>
+                : nameParts(t.name).map((part, i, arr) => <>{part}{i < arr.length - 1 && <wbr />}</>)}
+            </span>
+          </div>
+          <div class="tlx__cell"><span class="visually-hidden">状態：</span><span class={`badge ${badge.badge}`}>{badge.label}</span></div>
+          <div class="tlx__cell"><span class="visually-hidden">登録区分：</span><span class={`reg reg--${t.reg}`}>{REG_LABEL[t.reg]}</span></div>
+          <div class="tlx__cell tlx__cell--text"><span class="visually-hidden">種目：</span>{parts(t.event).map((part, i, arr) => <>{part}{i < arr.length - 1 && <wbr />}</>)}</div>
+          <div class="tlx__cell tlx__cell--text"><span class="visually-hidden">会場：</span>{parts(t.place).map((part, i, arr) => <>{part}{i < arr.length - 1 && <wbr />}</>)}{date.note && <small class="tlx__sub">{date.note}</small>}</div>
+          <div class="tlx__cell tlx__cell--text"><span class="visually-hidden">締切：</span>{t.due && t.due !== '—' ? t.due : '—'}</div>
+          <div class="tlx__cell tlx__cell--text"><span class="visually-hidden">予備日：</span>{spareText(t) ? parts(spareText(t)).map((part, i, arr) => <>{part}{i < arr.length - 1 && <wbr />}</>) : '—'}</div>
+          {buttons.map((b) => (
+            <div class="tlx__cell">
+              {b.href
+                ? <a class="btn btn--outline tl-btn tlx__btn" href={b.href} {...(b.external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}>{b.label}</a>
+                : <span class="btn tl-btn tl-btn--off tlx__btn" aria-disabled="true" title="準備中">{b.label}</span>}
+            </div>
+          ))}
+          <div class="tlx__cell tlx__cell--text">
+            <span class="visually-hidden">備考：</span>
+            {e?.link ? <a class="ghost-link" href={e.link.url} target="_blank" rel="noopener noreferrer">{e.link.label}<span class="aw" aria-hidden="true">↗</span></a> : '—'}
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+
+  {/* ===== 拡大表示 ===== */}
+  <div class="tl__cards" role="list" aria-label={caption}>
   {rows.map(({ t, e, date, buttons, notes, badge, icons }) => (
     <article
       class:list={['tl-item rv', t.status === 'done' && 'tl-item--done', t.status === 'open' && 'tl-item--open']}
@@ -115,4 +183,5 @@ const parts = (text) => String(text ?? '').split(/(?<=[／/・])|(?=（)/);
       )}
     </article>
   ))}
+  </div>
 </div>
