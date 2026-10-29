@@ -1,0 +1,239 @@
+// =============================================================================
+// 音声（コール読み上げ）設定
+//
+// エンジンは2種類。
+// - browser: ブラウザ内蔵音声（Web Speech API）。ネット・APIキー不要で待ち時間ゼロ。
+//            会場で確実に鳴らしたい通常運用はこちら（既定）。
+// - gemini:  Gemini TTS。声は自然だがネットワーク・APIキー・モデルに依存する。
+// =============================================================================
+
+export type VoiceMode = 'direct' | 'proxy';
+
+/** 読み上げエンジン */
+export type VoiceEngine = 'browser' | 'gemini';
+
+export interface VoiceConfig {
+  /** 使用する読み上げエンジン */
+  engine: VoiceEngine;
+  /** `direct` = ブラウザから直接 Gemini API を叩く（APIキーが必要）
+   *  `proxy`  = sync-server 経由（APIキーはサーバー側） */
+  mode: VoiceMode;
+  /** direct モード時に使用する API キー（localStorage に保存） */
+  apiKey: string;
+  /** proxy モード時に使用する sync-server の HTTP URL */
+  serverUrl: string;
+  /** direct モード時のモデル名 */
+  model: string;
+  /** Gemini の組み込み音声名 */
+  voiceName: string;
+  /** 自然言語で指定する話し方の指示（Gemini のみ） */
+  styleInstruction: string;
+  /** ブラウザ内蔵音声で使う音声の voiceURI（空なら日本語音声を自動選択） */
+  browserVoiceURI: string;
+  /** ブラウザ内蔵音声の話速（0.5〜2.0） */
+  browserRate: number;
+  /** ブラウザ内蔵音声の高さ（0.5〜2.0） */
+  browserPitch: number;
+  /** Gemini が失敗したときにブラウザ内蔵音声でコールし直すか */
+  fallbackToBrowser: boolean;
+}
+
+/** sync-settings-storage（zustand persist）から WS URL を抜き取り HTTP URL へ変換 */
+function defaultServerUrl(): string {
+  try {
+    const raw = localStorage.getItem('sync-settings-storage');
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      const wsUrl: string | undefined = parsed?.state?.serverUrl;
+      if (wsUrl) {
+        const u = new URL(wsUrl);
+        const proto = u.protocol === 'wss:' ? 'https:' : 'http:';
+        return `${proto}//${u.host}`;
+      }
+    }
+  } catch {
+    // 無視
+  }
+  // ホスト名だけに 8787 を付けるのは通常誤設定のため、空にしてユーザーに入力させる
+  return '';
+}
+
+const KEY_ENGINE = 'voice_engine';
+const KEY_MODE = 'voice_mode';
+const KEY_API = 'voice_api_key';
+const KEY_SERVER = 'voice_server_url';
+const KEY_MODEL = 'voice_model';
+const KEY_VOICE = 'voice_name';
+const KEY_STYLE = 'voice_style';
+const KEY_BROWSER_VOICE = 'voice_browser_voice';
+const KEY_BROWSER_RATE = 'voice_browser_rate';
+const KEY_BROWSER_PITCH = 'voice_browser_pitch';
+const KEY_FALLBACK = 'voice_fallback_browser';
+const EVENT_CHANGED = 'voice-settings-changed';
+
+/**
+ * 既定モデル。Flash 系は Pro 系より生成が速く、コールの待ち時間が短い。
+ * ここで指定した ID がその API キーで使えない場合は
+ * `MODEL_FALLBACKS` の順に自動で切り替える（callTts 側で処理）。
+ */
+const DEFAULT_MODEL = 'gemini-3.1-flash-preview-tts';
+
+/**
+ * モデル ID が存在しなかったときに順に試す候補。
+ * Gemini の TTS モデルは ID の付き方（`-tts-preview` / `-preview-tts`）が
+ * 世代ごとに揺れているため、速い順に並べて総当たりする。
+ */
+export const MODEL_FALLBACKS = [
+  'gemini-3.1-flash-preview-tts',
+  'gemini-3.1-flash-tts-preview',
+  'gemini-2.5-flash-preview-tts',
+  'gemini-3.1-pro-preview-tts',
+  'gemini-2.5-pro-preview-tts',
+];
+
+/** 以前の既定値。ユーザーが明示的に選んだものではないので、新しい既定へ載せ替える */
+const LEGACY_DEFAULT_MODELS = ['gemini-2.5-flash-preview-tts'];
+
+const DEFAULT_STYLE =
+  '落ち着いた女性アナウンサーの声で、はっきりと丁寧に読み上げてください';
+
+/**
+ * 既定のエンジン。
+ * 会場ではネットワークが不安定になりがちで、コールが出ないと運営が止まるため、
+ * 端末内蔵の音声（オフラインで即時に鳴る）を標準にしている。
+ * より自然な声で読ませたい場合は音声設定から Gemini TTS に切り替えられる。
+ */
+const DEFAULT_ENGINE: VoiceEngine = 'browser';
+
+/** ブラウザ内蔵音声の既定値（コールはやや落ち着いた速さが聞き取りやすい） */
+const DEFAULT_BROWSER_RATE = 1.0;
+const DEFAULT_BROWSER_PITCH = 1.0;
+
+/** 実際に音声生成に成功したモデル（自動フォールバックの結果） */
+const KEY_RESOLVED_MODEL = 'voice_model_resolved';
+
+/**
+ * ビルド時に `VITE_GEMINI_API_KEY` / `VITE_GEMINI_MODEL` が設定されていれば、
+ * それらをロックされた既定値として使用する（ユーザーが編集不可）。
+ * GitHub Actions の secrets から注入される想定。
+ */
+export const BAKED_API_KEY = (import.meta.env.VITE_GEMINI_API_KEY as string | undefined) || '';
+export const BAKED_MODEL = (import.meta.env.VITE_GEMINI_MODEL as string | undefined) || '';
+/** API キーがビルド時に埋め込まれているか（UI を簡略化するために使用） */
+export const IS_KEY_LOCKED = BAKED_API_KEY.length > 0;
+/** モデルがビルド時に埋め込まれているか */
+export const IS_MODEL_LOCKED = BAKED_MODEL.length > 0;
+
+/** 選択可能な既知モデル（カスタム入力も可） */
+export const GEMINI_TTS_MODELS: { id: string; label: string }[] = [
+  { id: 'gemini-3.1-flash-preview-tts', label: 'Gemini 3.1 Flash TTS（最新・高速）' },
+  { id: 'gemini-3.1-flash-tts-preview', label: 'Gemini 3.1 Flash TTS（別ID表記）' },
+  { id: 'gemini-3.1-pro-preview-tts', label: 'Gemini 3.1 Pro TTS（最新・高品質）' },
+  { id: 'gemini-2.5-flash-preview-tts', label: 'Gemini 2.5 Flash TTS（安定）' },
+  { id: 'gemini-2.5-pro-preview-tts', label: 'Gemini 2.5 Pro TTS（高品質）' },
+];
+
+/** 実際に音声生成に成功したモデル ID（未確定なら空文字） */
+export function getResolvedModel(): string {
+  try {
+    return localStorage.getItem(KEY_RESOLVED_MODEL) || '';
+  } catch {
+    return '';
+  }
+}
+
+/** 自動フォールバックで確定したモデルを記録する */
+export function setResolvedModel(model: string): void {
+  try {
+    if (getResolvedModel() === model) return;
+    localStorage.setItem(KEY_RESOLVED_MODEL, model);
+    window.dispatchEvent(new Event(EVENT_CHANGED));
+  } catch {
+    // 無視
+  }
+}
+
+/** 数値設定の読み出し（未設定・不正値は既定値にフォールバック） */
+function readNumber(key: string, fallback: number, min: number, max: number): number {
+  const raw = localStorage.getItem(key);
+  if (raw === null) return fallback;
+  const n = Number(raw);
+  if (!Number.isFinite(n)) return fallback;
+  return Math.min(max, Math.max(min, n));
+}
+
+export function getVoiceSettings(): VoiceConfig {
+  const engine: VoiceEngine =
+    localStorage.getItem(KEY_ENGINE) === 'gemini' ? 'gemini' : DEFAULT_ENGINE;
+  const mode: VoiceMode = IS_KEY_LOCKED
+    ? 'direct'
+    : ((localStorage.getItem(KEY_MODE) as VoiceMode) || 'direct');
+  const stored = localStorage.getItem(KEY_MODEL) || '';
+  // 旧バージョンの既定値がそのまま残っている場合は新しい既定（高速なFlash）へ載せ替える
+  const model = IS_MODEL_LOCKED
+    ? BAKED_MODEL
+    : (!stored || LEGACY_DEFAULT_MODELS.includes(stored) ? DEFAULT_MODEL : stored);
+  return {
+    engine,
+    mode,
+    apiKey: IS_KEY_LOCKED ? BAKED_API_KEY : (localStorage.getItem(KEY_API) || ''),
+    serverUrl: localStorage.getItem(KEY_SERVER) || defaultServerUrl(),
+    model,
+    voiceName: localStorage.getItem(KEY_VOICE) || 'Kore',
+    styleInstruction: localStorage.getItem(KEY_STYLE) ?? DEFAULT_STYLE,
+    browserVoiceURI: localStorage.getItem(KEY_BROWSER_VOICE) || '',
+    browserRate: readNumber(KEY_BROWSER_RATE, DEFAULT_BROWSER_RATE, 0.5, 2),
+    browserPitch: readNumber(KEY_BROWSER_PITCH, DEFAULT_BROWSER_PITCH, 0.5, 2),
+    // 既定は ON。Gemini が落ちてもコールが無音にならないようにする。
+    fallbackToBrowser: localStorage.getItem(KEY_FALLBACK) !== 'false',
+  };
+}
+
+export function setVoiceSettings(patch: Partial<VoiceConfig>): void {
+  if (patch.engine !== undefined) localStorage.setItem(KEY_ENGINE, patch.engine);
+  // ロック済みの値はユーザー編集を無視する
+  if (patch.mode !== undefined && !IS_KEY_LOCKED) localStorage.setItem(KEY_MODE, patch.mode);
+  if (patch.apiKey !== undefined && !IS_KEY_LOCKED) localStorage.setItem(KEY_API, patch.apiKey);
+  if (patch.serverUrl !== undefined) localStorage.setItem(KEY_SERVER, patch.serverUrl);
+  if (patch.model !== undefined && !IS_MODEL_LOCKED) {
+    localStorage.setItem(KEY_MODEL, patch.model);
+    // モデルを変えたら、自動フォールバックで確定した結果は捨てて選び直す
+    localStorage.removeItem(KEY_RESOLVED_MODEL);
+  }
+  if (patch.voiceName !== undefined) localStorage.setItem(KEY_VOICE, patch.voiceName);
+  if (patch.styleInstruction !== undefined) localStorage.setItem(KEY_STYLE, patch.styleInstruction);
+  if (patch.browserVoiceURI !== undefined) localStorage.setItem(KEY_BROWSER_VOICE, patch.browserVoiceURI);
+  if (patch.browserRate !== undefined) localStorage.setItem(KEY_BROWSER_RATE, String(patch.browserRate));
+  if (patch.browserPitch !== undefined) localStorage.setItem(KEY_BROWSER_PITCH, String(patch.browserPitch));
+  if (patch.fallbackToBrowser !== undefined) localStorage.setItem(KEY_FALLBACK, String(patch.fallbackToBrowser));
+  try {
+    window.dispatchEvent(new Event(EVENT_CHANGED));
+  } catch {
+    // 無視
+  }
+}
+
+export function onVoiceSettingsChange(handler: () => void): () => void {
+  window.addEventListener(EVENT_CHANGED, handler);
+  window.addEventListener('storage', handler);
+  return () => {
+    window.removeEventListener(EVENT_CHANGED, handler);
+    window.removeEventListener('storage', handler);
+  };
+}
+
+/** Gemini TTS で利用可能な事前構築音声（代表的なもの） */
+export const GEMINI_VOICES: { name: string; label: string }[] = [
+  { name: 'Kore', label: 'Kore（落ち着いた女性）' },
+  { name: 'Aoede', label: 'Aoede（軽やかな女性）' },
+  { name: 'Leda', label: 'Leda（若々しい女性）' },
+  { name: 'Zephyr', label: 'Zephyr（明るい女性）' },
+  { name: 'Callirhoe', label: 'Callirhoe（穏やかな女性）' },
+  { name: 'Autonoe', label: 'Autonoe（柔らかい女性）' },
+  { name: 'Despina', label: 'Despina（透明感のある女性）' },
+  { name: 'Erinome', label: 'Erinome（はきはきした女性）' },
+  { name: 'Puck', label: 'Puck（軽快な男性）' },
+  { name: 'Charon', label: 'Charon（落ち着いた男性）' },
+  { name: 'Fenrir', label: 'Fenrir（力強い男性）' },
+  { name: 'Orus', label: 'Orus（標準的な男性）' },
+];

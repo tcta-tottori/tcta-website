@@ -1,0 +1,789 @@
+import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
+import type {
+  MixedLeague, MixedTeam, LeagueMatchScore, LeagueStanding,
+  PlacementBracket, PlacementCategory, BracketMatch,
+  MixedPhase, TournamentInfo, ExcelSheetData
+} from './types';
+import { calculateLeagueStandings, generateAllBrackets, regenerateLeagueMatches } from './mixedLogic';
+import { applyConsolation, isConsolation, rulesMentionConsolation, syncAllConsolation } from './consolation';
+
+/** コンソレを行うか（明示設定 → ルール文の記載） */
+function consolationEnabled(info: TournamentInfo | null | undefined): boolean {
+  if (info?.consolation !== undefined) return info.consolation;
+  return rulesMentionConsolation(info?.rules) || /コンソレ/.test(info?.bracketGameRule ?? '');
+}
+
+interface MixedState {
+  // Data
+  tournamentInfo: TournamentInfo | null;
+  leagues: MixedLeague[];
+  leagueMatches: LeagueMatchScore[];
+  brackets: PlacementBracket[];
+  allTeams: MixedTeam[];
+  rawExcelSheets: ExcelSheetData[];
+
+  // UI State
+  currentPhase: MixedPhase;
+  selectedLeagueId: string | null;
+  selectedBracketCategory: PlacementCategory;
+  importFileName: string;
+  isImported: boolean;
+  /** 抽選で決定した順位オーバーライド: leagueId -> { teamId -> rank } */
+  rankOverrides: Record<string, Record<string, number>>;
+  /** ブラケット試合のコート割当: matchId -> { courtName, startedAt } */
+  bracketCourtAssignments: Record<string, { courtName: string; startedAt: number }>;
+  /** ブラケット生成時のリーグ順位ハッシュ（再生成判定用） */
+  lastStandingsHash: string;
+
+  // Actions: Import
+  importData: (info: TournamentInfo, leagues: MixedLeague[], matches: LeagueMatchScore[]) => void;
+  setRawExcelSheets: (sheets: ExcelSheetData[]) => void;
+  resetAll: () => void;
+  /** 決勝トーナメントのデータのみクリア */
+  clearBrackets: () => void;
+  /** 予選リーグの結果（スコア）のみクリア（対戦表・チーム構成は保持） */
+  clearLeagueResults: () => void;
+
+  // Actions: League
+  updateLeagueScore: (matchId: string, score1: number, score2: number, tiebreakScore?: number | null, overrideWinnerId?: string | null) => void;
+  setLeagueMatchStatus: (matchId: string, status: LeagueMatchScore['status']) => void;
+
+  // Actions: Standings & Brackets
+  getStandings: () => Map<string, LeagueStanding[]>;
+  generateBrackets: () => void;
+
+  // Actions: Tournament
+  updateBracketScore: (matchId: string, score1: number, score2: number, overrideWinnerId?: string | null, tiebreakScore?: number | null) => void;
+  setBracketMatchStatus: (matchId: string, status: BracketMatch['status']) => void;
+  advanceWinner: (matchId: string) => void;
+
+  // Court & Team editing
+  updateCourtName: (leagueId: string, courtName: string) => void;
+  updateTeamPlayer: (teamId: string, field: 'maleName' | 'maleAffiliation' | 'femaleName' | 'femaleAffiliation', value: string) => void;
+
+  // Team status & league move
+  setTeamStatus: (teamId: string, status: 'none' | 'entry' | 'def') => void;
+  setLeagueAllStatus: (leagueId: string, status: 'none' | 'entry' | 'def') => void;
+  setAllTeamsStatus: (status: 'none' | 'entry' | 'def') => void;
+  moveTeamToLeague: (teamId: string, targetLeagueId: string) => void;
+
+  // Tournament info editing
+  updateTournamentInfo: (field: 'name' | 'date' | 'venue', value: string) => void;
+
+  // Bracket seed shuffle (roulette)
+  shuffleBracketSeeds: (category: PlacementCategory, newOrder: string[]) => void;
+
+  // Rebuild bracket from raw 16-slot array (null=BYE or unassigned)
+  rebuildBracketFromSlots: (category: PlacementCategory, slots: (string | null)[], byePositions?: Set<number>, slotLeagueIds?: (string | null)[]) => void;
+
+  /** コンソレーション（敗者同士の試合）の有無を切り替える */
+  setBracketConsolation: (category: PlacementCategory, enabled: boolean) => void;
+
+  // Auto-populate non-1st brackets from league standings
+  autoPopulateBrackets: () => void;
+
+  // Re-generate brackets with correct draw sheet ordering (preserves 1st bracket if matches started)
+  regenerateBrackets: () => void;
+
+  // Navigation
+  setCurrentPhase: (phase: MixedPhase) => void;
+  setRankOverride: (leagueId: string, teamId: string, rank: number) => void;
+  assignBracketMatchToCourt: (matchId: string, courtName: string) => void;
+  removeBracketMatchFromCourt: (matchId: string) => void;
+  setSelectedLeagueId: (id: string | null) => void;
+  setSelectedBracketCategory: (cat: PlacementCategory) => void;
+  setImportFileName: (name: string) => void;
+  updateGameRule: (teamCount: number, rule: string) => void;
+  updateBracketGameRule: (rule: string) => void;
+
+  // Test helpers
+  fillAllScoresForTest: () => void;
+}
+
+export const useMixedStore = create<MixedState>()(
+  persist(
+    (set, get) => ({
+      tournamentInfo: null,
+      leagues: [],
+      leagueMatches: [],
+      brackets: [],
+      allTeams: [],
+      rawExcelSheets: [],
+      currentPhase: 'import',
+      selectedLeagueId: null,
+      selectedBracketCategory: '1st',
+      importFileName: '',
+      isImported: false,
+      rankOverrides: {},
+      bracketCourtAssignments: {},
+      lastStandingsHash: '',
+
+      importData: (info, leagues, matches) => {
+        // 旧データの persist hydration 競合を防ぐため、localStorage を先にクリア
+        try { localStorage.removeItem('mixed-tournament-storage'); } catch {}
+        const allTeams = leagues.flatMap(l => l.teams);
+        set({
+          tournamentInfo: info,
+          leagues,
+          leagueMatches: matches,
+          allTeams,
+          isImported: true,
+          currentPhase: 'league',
+          selectedLeagueId: leagues[0]?.leagueId || null,
+          brackets: [],
+          rankOverrides: {},
+          bracketCourtAssignments: {},
+          lastStandingsHash: '',
+        });
+      },
+
+      setRawExcelSheets: (sheets) => set({ rawExcelSheets: sheets }),
+
+      resetAll: () => {
+        // localStorage も明示的にクリア
+        try { localStorage.removeItem('mixed-tournament-storage'); } catch {}
+        set({
+          tournamentInfo: null,
+          leagues: [],
+          leagueMatches: [],
+          brackets: [],
+          allTeams: [],
+          rawExcelSheets: [],
+          currentPhase: 'import',
+          selectedLeagueId: null,
+          selectedBracketCategory: '1st',
+          importFileName: '',
+          isImported: false,
+          rankOverrides: {},
+          bracketCourtAssignments: {},
+          lastStandingsHash: '',
+        });
+      },
+
+      clearBrackets: () =>
+        set({
+          brackets: [],
+          bracketCourtAssignments: {},
+          currentPhase: 'league',
+          selectedBracketCategory: '1st',
+        }),
+
+      clearLeagueResults: () =>
+        set(state => ({
+          leagueMatches: state.leagueMatches.map(m => ({
+            ...m,
+            score1: null,
+            score2: null,
+            tiebreakScore: null,
+            winnerId: null,
+            status: 'waiting' as const,
+          })),
+        })),
+
+      updateLeagueScore: (matchId, score1, score2, tiebreakScore, overrideWinnerId) => {
+        set(state => {
+          const newMatches = state.leagueMatches.map(m => {
+            if (m.matchId !== matchId) return m;
+            // Clear: score1=-1 && score2=-1
+            if (score1 === -1 && score2 === -1) {
+              return { ...m, score1: null, score2: null, tiebreakScore: null, winnerId: null, status: 'waiting' as const };
+            }
+            const winnerId = overrideWinnerId !== undefined && overrideWinnerId !== null
+              ? overrideWinnerId
+              : (score1 > score2 ? m.team1Id : score2 > score1 ? m.team2Id : null);
+            const tb = tiebreakScore !== undefined ? tiebreakScore : null;
+            return { ...m, score1, score2, tiebreakScore: tb, winnerId, status: 'finished' as const };
+          });
+          // スコアクリア時: ブラケットが既に生成されていれば旧データになるためクリア
+          const isClearing = score1 === -1 && score2 === -1;
+          return {
+            leagueMatches: newMatches,
+            ...(isClearing && state.brackets.length > 0 ? { brackets: [] } : {}),
+          };
+        });
+      },
+
+      setLeagueMatchStatus: (matchId, status) => {
+        set(state => ({
+          leagueMatches: state.leagueMatches.map(m =>
+            m.matchId === matchId ? { ...m, status } : m
+          ),
+        }));
+      },
+
+      getStandings: () => {
+        const { leagues, leagueMatches, rankOverrides } = get();
+        return calculateLeagueStandings(leagues, leagueMatches, rankOverrides);
+      },
+
+      generateBrackets: () => {
+        const { leagues, leagueMatches, allTeams, tournamentInfo, rankOverrides } = get();
+        const standings = calculateLeagueStandings(leagues, leagueMatches, rankOverrides);
+        const brackets = generateAllBrackets(standings, allTeams, leagues, tournamentInfo?.bracketOrders, { consolation: consolationEnabled(tournamentInfo) });
+        set({ brackets, currentPhase: 'tournament' });
+      },
+
+      updateBracketScore: (matchId, score1, score2, overrideWinnerId, tiebreakScore) => {
+        set(state => ({
+          brackets: syncAllConsolation(state.brackets.map(b => ({
+            ...b,
+            matches: b.matches.map(m => {
+              if (m.matchId !== matchId) return m;
+              const winnerId = overrideWinnerId !== undefined && overrideWinnerId !== null
+                ? overrideWinnerId
+                : (score1 > score2 ? m.team1Id : score2 > score1 ? m.team2Id : null);
+              const tb = tiebreakScore !== undefined ? tiebreakScore : null;
+              return { ...m, score1, score2, tiebreakScore: tb, winnerId, status: 'finished' as const };
+            }),
+          }))),
+        }));
+      },
+
+      setBracketMatchStatus: (matchId, status) => {
+        set(state => ({
+          brackets: state.brackets.map(b => ({
+            ...b,
+            matches: b.matches.map(m =>
+              m.matchId === matchId ? { ...m, status } : m
+            ),
+          })),
+        }));
+      },
+
+      advanceWinner: (matchId) => {
+        set(state => {
+          const newBrackets = state.brackets.map(b => {
+            const match = b.matches.find(m => m.matchId === matchId);
+            if (!match || !match.winnerId || !match.nextMatchId) return b;
+
+            const winnerTeam = state.allTeams.find(t => t.teamId === match.winnerId);
+            const winnerName = winnerTeam?.teamName || '';
+            const winnerLeague = winnerTeam?.leagueId || '';
+
+            // 次の試合の既存のチームIDを確認（スコア修正時に勝者が変わったか判定）
+            const nextMatch = b.matches.find(m => m.matchId === match.nextMatchId);
+            const prevTeamInSlot = nextMatch && match.nextSlot === 'team1' ? nextMatch.team1Id : nextMatch?.team2Id;
+            const winnerChanged = prevTeamInSlot !== null && prevTeamInSlot !== match.winnerId;
+
+            // 勝者が変わった場合、下流の全試合をリセットする対象を収集
+            const matchesToReset = new Set<string>();
+            if (winnerChanged && nextMatch) {
+              // 次の試合以降で、旧勝者に依存する試合を再帰的にリセット
+              const collectDownstream = (mid: string) => {
+                matchesToReset.add(mid);
+                const m = b.matches.find(mm => mm.matchId === mid);
+                if (m?.nextMatchId) collectDownstream(m.nextMatchId);
+              };
+              collectDownstream(nextMatch.matchId);
+            }
+
+            return {
+              ...b,
+              matches: b.matches.map(m => {
+                // 下流試合をリセット（スコア修正で勝者変更時）
+                if (matchesToReset.has(m.matchId)) {
+                  const isNextMatch = m.matchId === match.nextMatchId;
+                  if (isNextMatch) {
+                    // 次の試合: 勝者スロットを更新、スコアとステータスをリセット
+                    if (match.nextSlot === 'team1') {
+                      return { ...m, team1Id: match.winnerId, team1Name: winnerName, team1League: winnerLeague,
+                        score1: null, score2: null, winnerId: null, status: m.team2Id ? 'ready' as const : 'waiting' as const };
+                    } else {
+                      return { ...m, team2Id: match.winnerId, team2Name: winnerName, team2League: winnerLeague,
+                        score1: null, score2: null, winnerId: null, status: m.team1Id ? 'ready' as const : 'waiting' as const };
+                    }
+                  }
+                  // さらに下流: 完全リセット（チーム情報もクリア）
+                  return { ...m, team1Id: null, team2Id: null, team1Name: '', team2Name: '', team1League: '', team2League: '',
+                    score1: null, score2: null, winnerId: null, status: 'waiting' as const };
+                }
+                // 通常の勝者進出（勝者が変わっていない場合）
+                if (m.matchId !== match.nextMatchId) return m;
+                if (match.nextSlot === 'team1') {
+                  return { ...m, team1Id: match.winnerId, team1Name: winnerName, team1League: winnerLeague, status: m.team2Id ? 'ready' as const : m.status };
+                } else {
+                  return { ...m, team2Id: match.winnerId, team2Name: winnerName, team2League: winnerLeague, status: m.team1Id ? 'ready' as const : m.status };
+                }
+              }),
+            };
+          });
+          return { brackets: syncAllConsolation(newBrackets) };
+        });
+      },
+
+      updateCourtName: (leagueId, courtName) => {
+        set(state => ({
+          leagues: state.leagues.map(l =>
+            l.leagueId === leagueId ? { ...l, courtName } : l
+          ),
+        }));
+      },
+
+      updateTeamPlayer: (teamId, field, value) => {
+        const extractLast = (n: string) => n.replace(/\u3000/g, ' ').trim().split(/\s+/)[0] || n;
+        set(state => {
+          const updateTeam = (team: MixedTeam): MixedTeam => {
+            if (team.teamId !== teamId) return team;
+            const updated = { ...team };
+            if (field === 'maleName') { updated.male = { ...updated.male, name: value }; updated.teamName = extractLast(value) + '・' + extractLast(updated.female.name); }
+            else if (field === 'maleAffiliation') updated.male = { ...updated.male, affiliation: value };
+            else if (field === 'femaleName') { updated.female = { ...updated.female, name: value }; updated.teamName = extractLast(updated.male.name) + '・' + extractLast(value); }
+            else if (field === 'femaleAffiliation') updated.female = { ...updated.female, affiliation: value };
+            return updated;
+          };
+          return {
+            leagues: state.leagues.map(l => ({ ...l, teams: l.teams.map(updateTeam) })),
+            allTeams: state.allTeams.map(updateTeam),
+          };
+        });
+      },
+
+      setTeamStatus: (teamId, status) => {
+        set(state => {
+          const updateTeam = (team: MixedTeam): MixedTeam =>
+            team.teamId === teamId ? { ...team, status } : team;
+
+          // DEFの場合: そのチームの全予選試合を相手勝利(0-0, DEF)にする
+          let newLeagueMatches = state.leagueMatches;
+          if (status === 'def') {
+            newLeagueMatches = state.leagueMatches.map(m => {
+              if (m.status === 'finished') return m; // 既に完了済みはそのまま
+              if (m.team1Id === teamId) {
+                return { ...m, score1: 0, score2: 0, winnerId: m.team2Id, status: 'finished' as const };
+              }
+              if (m.team2Id === teamId) {
+                return { ...m, score1: 0, score2: 0, winnerId: m.team1Id, status: 'finished' as const };
+              }
+              return m;
+            });
+          }
+          // DEF解除の場合: DEFで自動処理した試合をリセット
+          if (status !== 'def') {
+            newLeagueMatches = state.leagueMatches.map(m => {
+              if ((m.team1Id === teamId || m.team2Id === teamId) &&
+                  m.status === 'finished' && m.score1 === 0 && m.score2 === 0) {
+                return { ...m, score1: null, score2: null, winnerId: null, status: 'waiting' as const };
+              }
+              return m;
+            });
+          }
+
+          return {
+            leagues: state.leagues.map(l => ({ ...l, teams: l.teams.map(updateTeam) })),
+            allTeams: state.allTeams.map(updateTeam),
+            leagueMatches: newLeagueMatches,
+          };
+        });
+      },
+
+      setLeagueAllStatus: (leagueId, status) => {
+        set(state => {
+          const updateTeam = (team: MixedTeam): MixedTeam =>
+            team.leagueId === leagueId ? { ...team, status } : team;
+          return {
+            leagues: state.leagues.map(l => l.leagueId === leagueId ? { ...l, teams: l.teams.map(t => ({ ...t, status })) } : l),
+            allTeams: state.allTeams.map(updateTeam),
+          };
+        });
+      },
+
+      setAllTeamsStatus: (status) => {
+        set(state => ({
+          leagues: state.leagues.map(l => ({ ...l, teams: l.teams.map(t => ({ ...t, status })) })),
+          allTeams: state.allTeams.map(t => ({ ...t, status })),
+        }));
+      },
+
+      moveTeamToLeague: (teamId, targetLeagueId) => {
+        set(state => {
+          // Find the team and its source league
+          let movingTeam: MixedTeam | null = null;
+          let sourceLeagueId = '';
+          for (const l of state.leagues) {
+            const t = l.teams.find(t => t.teamId === teamId);
+            if (t) { movingTeam = t; sourceLeagueId = l.leagueId; break; }
+          }
+          if (!movingTeam || sourceLeagueId === targetLeagueId) return state;
+
+          // Update leagues
+          const newLeagues = state.leagues.map(l => {
+            if (l.leagueId === sourceLeagueId) {
+              // Remove team from source
+              const newTeams = l.teams.filter(t => t.teamId !== teamId)
+                .map((t, i) => ({ ...t, numberInLeague: i + 1 }));
+              return { ...l, teams: newTeams, matchOrder: [] };
+            }
+            if (l.leagueId === targetLeagueId) {
+              // Add team to target
+              const newNum = l.teams.length + 1;
+              const newTeam: MixedTeam = {
+                ...movingTeam!,
+                leagueId: targetLeagueId,
+                teamId: `${targetLeagueId}-${newNum}`,
+                numberInLeague: newNum,
+              };
+              const newTeams = [...l.teams, newTeam];
+              return { ...l, teams: newTeams, matchOrder: [] };
+            }
+            return l;
+          });
+
+          // Regenerate matches for affected leagues
+          let newMatches = state.leagueMatches.filter(
+            m => m.leagueId !== sourceLeagueId && m.leagueId !== targetLeagueId
+          );
+          for (const l of newLeagues) {
+            if (l.leagueId === sourceLeagueId || l.leagueId === targetLeagueId) {
+              if (l.teams.length >= 2) {
+                newMatches = [...newMatches, ...regenerateLeagueMatches(l)];
+              }
+            }
+          }
+
+          const allTeams = newLeagues.flatMap(l => l.teams);
+
+          return { leagues: newLeagues, leagueMatches: newMatches, allTeams };
+        });
+      },
+
+      updateTournamentInfo: (field, value) => {
+        set(state => ({
+          tournamentInfo: state.tournamentInfo ? { ...state.tournamentInfo, [field]: value } : null,
+        }));
+      },
+
+
+      shuffleBracketSeeds: (category, newOrder) => {
+        set(state => {
+          const bracketIdx = state.brackets.findIndex(b => b.category === category);
+          if (bracketIdx === -1) return state;
+
+          const bracket = state.brackets[bracketIdx];
+          const reorderedTeams = newOrder.map((teamId, i) => {
+            const existing = bracket.teams.find(t => t.teamId === teamId);
+            if (existing) return { ...existing, seedPosition: i + 1 };
+            // bracket.teams にない場合は allTeams から取得
+            const fromAll = state.allTeams.find(t => t.teamId === teamId);
+            if (fromAll) return { teamId, teamName: fromAll.teamName, leagueId: fromAll.leagueId, seedPosition: i + 1 };
+            return null;
+          }).filter((t): t is NonNullable<typeof t> => t !== null);
+
+          const drawSize = bracket.drawSize;
+          const totalRounds = Math.log2(drawSize);
+          const matches: BracketMatch[] = [];
+
+          for (let round = 1; round <= totalRounds; round++) {
+            const matchesInRound = drawSize / Math.pow(2, round);
+            for (let pos = 1; pos <= matchesInRound; pos++) {
+              const matchId = `bracket-${category}-R${round}-${pos}`;
+              const nextRound = round + 1;
+              const nextPos = Math.ceil(pos / 2);
+              const nextMatchId = round < totalRounds ? `bracket-${category}-R${nextRound}-${nextPos}` : null;
+              const nextSlot = pos % 2 === 1 ? 'team1' as const : 'team2' as const;
+              matches.push({
+                matchId, category, round, position: pos,
+                team1Id: null, team2Id: null, team1Name: '', team2Name: '',
+                team1League: '', team2League: '',
+                score1: null, score2: null, tiebreakScore: null, winnerId: null,
+                status: 'waiting', isBye: false,
+                nextMatchId, nextSlot: nextMatchId ? nextSlot : null,
+              });
+            }
+          }
+
+          // スロット配列を構築（BYE位置はブラケット生成時に決めたものを使う）
+          const BYE_POSITIONS = new Set(bracket.byePositions ?? [1, 9, 15]);
+          const slots: (typeof reorderedTeams[0] | null)[] = Array(drawSize).fill(null);
+          let teamIdx = 0;
+          for (let i = 0; i < drawSize; i++) {
+            if (BYE_POSITIONS.has(i)) continue; // BYEスロットはnullのまま
+            if (teamIdx < reorderedTeams.length) {
+              slots[i] = reorderedTeams[teamIdx++];
+            }
+          }
+
+          // R1マッチにスロットから配置
+          const r1 = matches.filter(m => m.round === 1);
+          for (let i = 0; i < r1.length; i++) {
+            const s1 = slots[i * 2];
+            const s2 = slots[i * 2 + 1];
+            if (s1) { r1[i].team1Id = s1.teamId; r1[i].team1Name = s1.teamName; r1[i].team1League = s1.leagueId; }
+            if (s2) { r1[i].team2Id = s2.teamId; r1[i].team2Name = s2.teamName; r1[i].team2League = s2.leagueId; }
+            if (r1[i].team1Id && !r1[i].team2Id) {
+              r1[i].isBye = true; r1[i].status = 'bye'; r1[i].winnerId = r1[i].team1Id; r1[i].team2Name = 'BYE';
+            } else if (!r1[i].team1Id && r1[i].team2Id) {
+              r1[i].isBye = true; r1[i].status = 'bye'; r1[i].winnerId = r1[i].team2Id; r1[i].team1Name = 'BYE';
+            } else if (r1[i].team1Id && r1[i].team2Id) {
+              r1[i].status = 'ready';
+            }
+          }
+
+          // BYE winners advance
+          for (const m of r1) {
+            if (m.isBye && m.winnerId && m.nextMatchId) {
+              const next = matches.find(nm => nm.matchId === m.nextMatchId);
+              if (next) {
+                const team = reorderedTeams.find(t => t.teamId === m.winnerId);
+                if (m.nextSlot === 'team1') {
+                  next.team1Id = m.winnerId; next.team1Name = team?.teamName || ''; next.team1League = team?.leagueId || '';
+                } else {
+                  next.team2Id = m.winnerId; next.team2Name = team?.teamName || ''; next.team2League = team?.leagueId || '';
+                }
+                if (next.team1Id && next.team2Id) next.status = 'ready';
+              }
+            }
+          }
+
+          const newBrackets = [...state.brackets];
+          newBrackets[bracketIdx] = applyConsolation({ ...bracket, teams: reorderedTeams, matches }, !!bracket.consolation);
+          return { brackets: newBrackets };
+        });
+      },
+
+      rebuildBracketFromSlots: (category, slotsArray, byePositions, slotLeagueIds) => {
+        set(state => {
+          const bracketIdx = state.brackets.findIndex(b => b.category === category);
+          if (bracketIdx === -1) return state;
+          const bracket = state.brackets[bracketIdx];
+          const drawSize = slotsArray.length;
+          const totalRounds = Math.log2(drawSize);
+          const matches: BracketMatch[] = [];
+
+          for (let round = 1; round <= totalRounds; round++) {
+            const matchesInRound = drawSize / Math.pow(2, round);
+            for (let pos = 1; pos <= matchesInRound; pos++) {
+              const matchId = `bracket-${category}-R${round}-${pos}`;
+              const nextRound = round + 1;
+              const nextPos = Math.ceil(pos / 2);
+              const nextMatchId = round < totalRounds ? `bracket-${category}-R${nextRound}-${nextPos}` : null;
+              const nextSlot = pos % 2 === 1 ? 'team1' as const : 'team2' as const;
+              matches.push({
+                matchId, category, round, position: pos,
+                team1Id: null, team2Id: null, team1Name: '', team2Name: '',
+                team1League: '', team2League: '',
+                score1: null, score2: null, tiebreakScore: null, winnerId: null,
+                status: 'waiting', isBye: false,
+                nextMatchId, nextSlot: nextMatchId ? nextSlot : null,
+              });
+            }
+          }
+
+          const r1 = matches.filter(m => m.round === 1);
+          for (let i = 0; i < r1.length; i++) {
+            const tid1 = slotsArray[i * 2];
+            const tid2 = slotsArray[i * 2 + 1];
+            const t1 = tid1 ? state.allTeams.find(t => t.teamId === tid1) : null;
+            const t2 = tid2 ? state.allTeams.find(t => t.teamId === tid2) : null;
+            if (t1) { r1[i].team1Id = t1.teamId; r1[i].team1Name = t1.teamName; r1[i].team1League = t1.leagueId; }
+            if (t2) { r1[i].team2Id = t2.teamId; r1[i].team2Name = t2.teamName; r1[i].team2League = t2.leagueId; }
+            // byePositionsが指定されている場合、BYE位置のnullのみBYE扱い（ルーレット中の未配置はBYEにしない）
+            const s1IsBye = byePositions ? byePositions.has(i * 2) : !tid1;
+            const s2IsBye = byePositions ? byePositions.has(i * 2 + 1) : !tid2;
+            if (r1[i].team1Id && !r1[i].team2Id && s2IsBye) {
+              r1[i].isBye = true; r1[i].status = 'bye'; r1[i].winnerId = r1[i].team1Id; r1[i].team2Name = 'BYE';
+            } else if (!r1[i].team1Id && r1[i].team2Id && s1IsBye) {
+              r1[i].isBye = true; r1[i].status = 'bye'; r1[i].winnerId = r1[i].team2Id; r1[i].team1Name = 'BYE';
+            } else if (r1[i].team1Id && r1[i].team2Id) {
+              r1[i].status = 'ready';
+            }
+          }
+
+          // BYE winners advance
+          for (const m of r1) {
+            if (m.isBye && m.winnerId && m.nextMatchId) {
+              const next = matches.find(nm => nm.matchId === m.nextMatchId);
+              if (next) {
+                const team = state.allTeams.find(t => t.teamId === m.winnerId);
+                if (m.nextSlot === 'team1') {
+                  next.team1Id = m.winnerId; next.team1Name = team?.teamName || ''; next.team1League = team?.leagueId || '';
+                } else {
+                  next.team2Id = m.winnerId; next.team2Name = team?.teamName || ''; next.team2League = team?.leagueId || '';
+                }
+                if (next.team1Id && next.team2Id) next.status = 'ready';
+              }
+            }
+          }
+
+          // 配置済みチームのseedPositionを更新し、未配置チームも保持する
+          const assignedTeams = slotsArray.filter((id): id is string => id !== null)
+            .map((teamId, i) => {
+              const existing = bracket.teams.find(t => t.teamId === teamId)
+                || (() => { const a = state.allTeams.find(t => t.teamId === teamId); return a ? { teamId: a.teamId, teamName: a.teamName, leagueId: a.leagueId, seedPosition: 0 } : null; })();
+              return existing ? { ...existing, seedPosition: i + 1 } : null;
+            }).filter((t): t is NonNullable<typeof t> => t !== null);
+          const assignedIds = new Set(assignedTeams.map(t => t.teamId));
+          const unassignedTeams = bracket.teams.filter(t => !assignedIds.has(t.teamId));
+          const allBracketTeams = [...assignedTeams, ...unassignedTeams];
+
+          const newBrackets = [...state.brackets];
+          // ドロー編集でBYEを動かしたときは、その形をBYE位置として残す（コンソレの組合せもここから決まる）
+          const nextBracket: PlacementBracket = {
+            ...bracket, teams: allBracketTeams, matches,
+            ...(byePositions ? { byePositions: [...byePositions].sort((a, b) => a - b) } : {}),
+            ...(slotLeagueIds ? { slotLeagueIds } : {}),
+          };
+          newBrackets[bracketIdx] = applyConsolation(nextBracket, !!bracket.consolation);
+          return { brackets: newBrackets };
+        });
+      },
+
+      setBracketConsolation: (category, enabled) => {
+        set(state => {
+          const removed = new Set<string>();
+          const brackets = state.brackets.map(b => {
+            if (b.category !== category) return b;
+            if (!enabled) b.matches.filter(isConsolation).forEach(m => removed.add(m.matchId));
+            return applyConsolation(b, enabled);
+          });
+          const bracketCourtAssignments = Object.fromEntries(
+            Object.entries(state.bracketCourtAssignments).filter(([mid]) => !removed.has(mid)),
+          );
+          return {
+            brackets,
+            bracketCourtAssignments,
+            tournamentInfo: state.tournamentInfo ? { ...state.tournamentInfo, consolation: enabled } : state.tournamentInfo,
+          };
+        });
+      },
+
+      autoPopulateBrackets: () => {
+        const { leagues, leagueMatches, allTeams } = get();
+        if (leagues.length === 0) return;
+
+        // 全リーグの standings を生成
+        const baseStandings = calculateLeagueStandings(leagues, leagueMatches, get().rankOverrides);
+
+        // 未完了リーグのチームがトーナメントの枠に空から入るのを防ぐため、全試合完了しているリーグのみを抽出する
+        const completedStandings = new Map<string, LeagueStanding[]>();
+        for (const [leagueId, stds] of baseStandings) {
+          const lMatches = leagueMatches.filter(m => m.leagueId === leagueId);
+          const isCompleted = lMatches.length > 0 && lMatches.every(m => m.status === 'finished');
+          completedStandings.set(leagueId, isCompleted ? stds : []);
+        }
+
+        const brackets = generateAllBrackets(completedStandings, allTeams, leagues, get().tournamentInfo?.bracketOrders, { consolation: consolationEnabled(get().tournamentInfo) });
+        set({ brackets, bracketCourtAssignments: {} });
+      },
+
+      regenerateBrackets: () => {
+        const { leagues, leagueMatches, allTeams, brackets: oldBrackets, tournamentInfo, rankOverrides, bracketCourtAssignments } = get();
+        
+        const baseStandings = calculateLeagueStandings(leagues, leagueMatches, rankOverrides);
+        
+        // 未完了リーグのチームが暫定順位でトーナメントに進出するのを防ぐ
+        const completedStandings = new Map<string, LeagueStanding[]>();
+        for (const [leagueId, stds] of baseStandings) {
+          const lMatches = leagueMatches.filter(m => m.leagueId === leagueId);
+          const isCompleted = lMatches.length > 0 && lMatches.every(m => m.status === 'finished');
+          completedStandings.set(leagueId, isCompleted ? stds : []);
+        }
+
+        const newBrackets = generateAllBrackets(completedStandings, allTeams, leagues, tournamentInfo?.bracketOrders, { consolation: consolationEnabled(tournamentInfo) });
+
+        // 実際に試合が進行中/完了のブラケットは維持する（'ready'だけでは保護しない）
+        // 全カテゴリ（1位/2位/3位/4位）に適用
+        const preservedCategories = new Set<string>();
+        for (const oldB of oldBrackets) {
+          const hasRealProgress = oldB.matches.some(m => m.status === 'finished' || m.status === 'playing');
+          if (hasRealProgress) {
+            const idx = newBrackets.findIndex(b => b.category === oldB.category);
+            if (idx >= 0) {
+              newBrackets[idx] = oldB;
+              preservedCategories.add(oldB.category);
+            }
+          }
+        }
+
+        // コート割当をクリア（保護されたブラケットのコート割当のみ維持）
+        const newCourtAssignments: Record<string, { courtName: string; startedAt: number }> = {};
+        for (const [matchId, ca] of Object.entries(bracketCourtAssignments)) {
+          const cat = matchId.match(/^bracket-(\w+)-/)?.[1];
+          if (cat && preservedCategories.has(cat)) {
+            newCourtAssignments[matchId] = ca;
+          }
+        }
+
+        set({ brackets: newBrackets, bracketCourtAssignments: newCourtAssignments });
+      },
+
+      setCurrentPhase: (phase) => set({ currentPhase: phase }),
+      setRankOverride: (leagueId, teamId, rank) => set(state => ({
+        rankOverrides: { ...state.rankOverrides, [leagueId]: { ...state.rankOverrides[leagueId], [teamId]: rank } },
+      })),
+      assignBracketMatchToCourt: (matchId, courtName) => set(state => {
+        // ステータスをplayingに更新
+        const brackets = state.brackets.map(b => ({
+          ...b,
+          matches: b.matches.map(m => m.matchId === matchId ? { ...m, status: 'playing' as const } : m),
+        }));
+        return {
+          brackets,
+          bracketCourtAssignments: { ...state.bracketCourtAssignments, [matchId]: { courtName, startedAt: Date.now() } },
+        };
+      }),
+      removeBracketMatchFromCourt: (matchId) => set(state => {
+        const { [matchId]: _, ...rest } = state.bracketCourtAssignments;
+        return { bracketCourtAssignments: rest };
+      }),
+      setSelectedLeagueId: (id) => set({ selectedLeagueId: id }),
+      setSelectedBracketCategory: (cat) => set({ selectedBracketCategory: cat }),
+      setImportFileName: (name) => set({ importFileName: name }),
+      updateGameRule: (teamCount, rule) => set(state => ({
+        tournamentInfo: state.tournamentInfo ? {
+          ...state.tournamentInfo,
+          gameRules: { ...(state.tournamentInfo.gameRules || {}), [teamCount]: rule },
+        } : null,
+      })),
+      updateBracketGameRule: (rule) => set(state => ({
+        tournamentInfo: state.tournamentInfo ? {
+          ...state.tournamentInfo,
+          bracketGameRule: rule,
+        } : null,
+      })),
+
+      fillAllScoresForTest: () => {
+        set(state => ({
+          leagueMatches: state.leagueMatches.map(m => {
+            if (m.status === 'finished') return m;
+            // team1が6-4で勝利（テスト用）
+            return { ...m, score1: 6, score2: 4, tiebreakScore: null, winnerId: m.team1Id, status: 'finished' as const };
+          }),
+        }));
+        
+        // リーグ戦が全試合完了状態になったため、決勝トーナメントを再生成して反映させる
+        get().generateBrackets();
+      },
+    }),
+    {
+      name: 'mixed-tournament-storage',
+      version: 5,
+      migrate: (persisted: any, version: number) => {
+        const state = { ...persisted };
+        if (version < 2) {
+          state.rankOverrides = state.rankOverrides ?? {};
+          state.bracketCourtAssignments = state.bracketCourtAssignments ?? {};
+          state.rawExcelSheets = state.rawExcelSheets ?? [];
+        }
+        if (version >= 4 && version < 5) {
+          // v5: 順位別トーナメントの形（BYE位置）をドロー表通りに直し、コンソレを追加。
+          // まだ1試合も行っていなければ作り直させる（進行中の大会は手を付けない）
+          const brackets: any[] = state.brackets ?? [];
+          const started = brackets.some(b => (b.matches ?? []).some((m: any) => !m.isBye && (m.status === 'finished' || m.status === 'playing')));
+          if (!started) {
+            state.lastStandingsHash = '';
+            state.brackets = [];
+            state.bracketCourtAssignments = {};
+          }
+        }
+        if (version < 4) {
+          // v4: 旧ブラケット・コート割当・順位ハッシュを完全クリアして再生成させる
+          state.lastStandingsHash = '';
+          state.brackets = [];
+          state.bracketCourtAssignments = {};
+        }
+        return state;
+      },
+    }
+  )
+);

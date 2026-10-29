@@ -1,0 +1,371 @@
+import Dexie, { type EntityTable } from 'dexie';
+
+// ---------------------------
+// 1. 大会情報 (Tournament)
+// ---------------------------
+export interface Tournament {
+  id?: number;
+  tournamentId: string; // "T-2026-001" 等
+  name: string;
+  date: string;
+  venue: string;
+  reserveDate: string;
+  reserveVenue: string;
+  createdAt: number;
+  /** ドロー表から検出した最早試合開始時刻（'HH:MM'）。時間割自動生成の既定値。 */
+  drawStartTime?: string;
+  /** ドロー表から検出した同時進行試合数（＝使用コート数の目安）。 */
+  suggestedCourtCount?: number;
+}
+
+// ---------------------------
+// 2. 選手マスタ (Player)
+// ランキング情報や所属情報を持つ
+// ---------------------------
+export interface Player {
+  id?: number;
+  playerId: string;     // ハッシュ等の一意なID
+  name: string;         // "山田 太郎"
+  furigana: string;     // "ヤマダ タロウ"
+  affiliation: string;  // "フューズTC"
+  rankings: Record<string, number>; // { "mens-singles": 1500 }
+  isManual: boolean;
+}
+
+// ---------------------------
+// 3. ふりがな辞書 (FuriganaDict)
+// Playerとは独立して名前→ふりがなの変換規則を保持
+// ---------------------------
+export interface FuriganaDict {
+  name: string;      // primary key "山田太郎" (スペース除去)
+  furigana: string;  // "ヤマダタロウ"
+  type: 'auto' | 'manual';
+  updatedAt: number;
+}
+
+// ---------------------------
+// 4. 種目 (Event)
+// 大会に紐づく各カテゴリー
+// ---------------------------
+/** 試合方式 */
+export type MatchFormatType =
+  | 'game'             // Nゲームマッチ（1セット）: "8ゲームマッチ（8-8タイブレーク）"
+  | 'twoSetsSuper10';  // 2セットマッチ＋ファイナルセット10ポイントSTB
+
+/** 回戦ごとのゲームルール */
+export interface RoundGameRule {
+  roundLabel: string;         // "全回戦", "１～２回戦", "準々決勝以降" 等
+  ruleText: string;           // "8ゲームマッチ（8-8タイブレーク）"
+  games: number;              // ゲーム数
+  matchFormat?: MatchFormatType; // 試合方式（省略時='game'）
+  // --- 熱中症警戒アラート時のパターン（任意） ---
+  // 設定されている場合、審判用紙に通常形式と併記する。
+  heatRuleText?: string;         // 熱中症時のルール文 "6ゲームマッチ（ノーアド）" 等
+  heatGames?: number;            // 熱中症時のゲーム数
+  heatMatchFormat?: MatchFormatType; // 熱中症時の試合方式
+}
+
+export interface Event {
+  id?: number;
+  tournamentId: string; // 外部キー
+  eventId: string;      // "E-001"
+  name: string;         // "一般男子シングルス"
+  type: 'Singles' | 'Doubles' | 'Team';
+  gameRules: {
+    sets: number;
+    games: number;
+    deuce: boolean;
+    tiebreakPoint: number;
+  };
+  /** 回戦別ゲームルール（Excelから読み込み） */
+  roundGameRules?: RoundGameRule[];
+}
+
+// ---------------------------
+// 5. エントリーリスト (Entry)
+// 種目に対して誰がエントリーしたか
+// ---------------------------
+export interface Entry {
+  id?: number;
+  eventId: string;      // 外部キー
+  entryId: string;      // "EN-001"
+  playerId: string;     // Playerのキー
+  partnerId?: string;   // ダブルス時のパートナーのPlayerId
+  teamId?: string;      // 団体戦時のチームID
+  seedNo?: number;      // シード番号
+  rankPoint: number;    // エントリー時の所持ポイント
+  status: 'active' | 'withdrawn';
+}
+
+// ---------------------------
+// 6. ドロー管理 (Draw)
+// 抽選結果のポジションとエントリーの紐付けを保持
+// ---------------------------
+export interface Draw {
+  id?: number;
+  eventId: string;      // 外部キー
+  drawSize: number;
+  drawType?: 'tournament' | 'roundRobin';
+  slots: {
+    position: number;   // 1-indexed
+    entryId: string | null;
+    seed: number;
+    isBye: boolean;
+  }[];
+  /**
+   * 1回戦の各試合の開始時刻（'HH:MM'）。キーはペアの上側ブラケット位置。
+   * ドロー表(Excel)に記載された時刻。時間割自動生成でそのまま配置に使う。
+   */
+  matchTimes?: Record<number, string>;
+  /**
+   * 2回戦以降の各試合の開始時刻（'HH:MM'）。キーは "R{round}-{matchNumInRound}"。
+   * ドロー表(Excel)に記載された後続ラウンドの時刻。時間割自動生成で優先配置する。
+   */
+  roundMatchTimes?: Record<string, string>;
+  /**
+   * 種目全体の開始時刻（'HH:MM'）。ドロー表に「決勝リーグ 11：00開始予定」のように
+   * 文章で記載されている場合に保持する（主にリーグ戦）。
+   */
+  eventStartTime?: string;
+  /**
+   * 3位決定戦を行うか。準決勝の敗者同士の試合を1つ追加する。
+   * 未設定（undefined）の場合は種目のゲームルール文（「決勝・３位決定戦」等）から判定する。
+   */
+  hasThirdPlace?: boolean;
+  /**
+   * リーグ戦で使うコート（courtId・最大2面）。
+   * リーグは1〜2面を固定で使って総当たりを回すため、試合ごとにコートを選ぶのではなく
+   * リーグ単位で割り当てておき、そのコートが空いたら次の試合を入れる運用にする。
+   * 割り当てたコートは他の種目の「入るコート」候補から外れる（リーグの専有コート）。
+   */
+  leagueCourtIds?: string[];
+  updatedAt: number;
+}
+
+// ---------------------------
+// 7. 試合管理 (Match)
+// ドローの各対戦カードと試合進行・スコアを管理
+// ---------------------------
+export interface Match {
+  id?: number;
+  eventId: string;
+  matchId: string;         // "M-001"
+  round: number;           // ラウンド番号 (1=1回戦, 2=2回戦...)
+  matchOrder: number;      // 対戦順 (表示/進行用)
+  position: number;        // ドロー内の位置 (1回戦: 1,2,3,4...)
+  player1EntryId: string | null;
+  player2EntryId: string | null;
+  player1Name: string;
+  player2Name: string;
+  player1Affiliation: string;
+  player2Affiliation: string;
+  score: string;           // "6-4 6-3" 等のスコア文字列
+  winnerEntryId: string | null;
+  gameRule?: string;       // 個別試合ルール（上書き用）
+  courtId: string | null;  // 割り当てコートID
+  scheduledTime: string | null; // "10:00" 等
+  status: 'waiting' | 'ready' | 'playing' | 'finished' | 'walkover';
+  refereeId: string | null;
+  refereeName: string;
+  updatedAt: number;
+}
+
+// ---------------------------
+// 8. コート管理 (Court)
+// ---------------------------
+export interface Court {
+  id?: number;
+  tournamentId: string;
+  courtId: string;         // "C-001"
+  name: string;            // "A-1コート"
+  surface: string;         // "ハード" | "オムニ" | "クレー"
+  isAvailable: boolean;
+  currentMatchId: string | null;
+  order: number;           // 表示順
+}
+
+// ---------------------------
+// 9. 所属ふりがな辞書 (AffiliationFurigana)
+// 所属名（団体・クラブ名）のふりがな読みを保持
+// ---------------------------
+export interface AffiliationFurigana {
+  id?: number;
+  name: string;        // 所属名（漢字） e.g. "鳥取グリーンTC"
+  furigana: string;    // ふりがな e.g. "とっとりグリーンティーシー"
+  updatedAt: number;
+}
+
+// ---------------------------
+// 10. ライブスコア (LiveScore)
+// 1ポイントごとの進行状況を保持し、観戦ページへリアルタイム配信する。
+// 論理キーは matchId（種目間で重複しうるため eventId と併せて特定する）。
+// ---------------------------
+
+/** 1セット分のゲーム数（タイブレークで決着した場合は内訳も保持） */
+export interface LiveScoreSet {
+  p1: number;
+  p2: number;
+  /** タイブレーク（またはファイナル10ポイントSTB）の得点内訳 */
+  tb?: { p1: number; p2: number };
+}
+
+/** ライブスコアの進行ルール */
+export interface LiveScoreConfig {
+  /** 試合方式 */
+  format: MatchFormatType;
+  /** 1セットの必要ゲーム数（8ゲームマッチなら8） */
+  targetGames: number;
+  /** ノーアド（デュースなし）方式か */
+  noAd: boolean;
+  /** 通常タイブレークの目標点（既定7・2点差） */
+  tiebreakTo: number;
+  /** ファイナルセットのスーパータイブレーク目標点（既定10・2点差） */
+  superTiebreakTo: number;
+}
+
+export interface LiveScore {
+  id?: number;
+  matchId: string;         // 論理キー（Match.matchId）
+  eventId: string;
+  tournamentId: string;
+  eventName: string;
+  roundName: string;
+  matchOrder: number;
+  courtId: string | null;
+  courtName: string;
+  player1Name: string;
+  player2Name: string;
+  player1Affiliation: string;
+  player2Affiliation: string;
+  player1EntryId: string | null;
+  player2EntryId: string | null;
+  /** ドロー番号（結果表と同じ「番号 選手名（所属）」表示に使う） */
+  player1Number?: number;
+  player2Number?: number;
+  player1Seed?: number;
+  player2Seed?: number;
+  config: LiveScoreConfig;
+  /** セットごとのゲーム数（末尾が進行中のセット） */
+  sets: LiveScoreSet[];
+  /** 現在のゲームのポイント（0,1,2,3=40, 4=AD / タイブレーク中は実点数） */
+  p1Points: number;
+  p2Points: number;
+  isTiebreak: boolean;
+  isSuperTiebreak: boolean;
+  /** サーブ側 */
+  server: 1 | 2;
+  /**
+   * 進行中のタイブレークで最初にサーブした側。
+   * タイブレーク後のセットは「最初にサーブした側がレシーブ」から始まるため、
+   * 次セットの先サーブを決めるのに使う（タイブレーク中以外は null）。
+   */
+  tiebreakFirstServer?: 1 | 2 | null;
+  status: 'live' | 'finished';
+  winner: 1 | 2 | null;
+  /** 直近のポイント取得者（表示のハイライト用） */
+  lastPointBy: 1 | 2 | null;
+  startedAt: number;
+  updatedAt: number;
+}
+
+// ---------------------------
+// データベースクラス定義
+// ---------------------------
+const db = new Dexie('TennisTournamentDB') as Dexie & {
+  tournaments: EntityTable<Tournament, 'id'>;
+  players: EntityTable<Player, 'id'>;
+  furiganaDict: EntityTable<FuriganaDict, 'name'>;
+  events: EntityTable<Event, 'id'>;
+  entries: EntityTable<Entry, 'id'>;
+  draws: EntityTable<Draw, 'id'>;
+  matches: EntityTable<Match, 'id'>;
+  courts: EntityTable<Court, 'id'>;
+  affiliationFurigana: EntityTable<AffiliationFurigana, 'id'>;
+  liveScores: EntityTable<LiveScore, 'id'>;
+};
+
+// スキーマのバージョン定義
+db.version(1).stores({
+  tournaments: '++id, tournamentId, name',
+  players: '++id, playerId, name, affiliation',
+  furiganaDict: 'name',
+  events: '++id, tournamentId, eventId, type',
+  entries: '++id, eventId, playerId, partnerId, teamId'
+});
+
+db.version(2).stores({
+  draws: '++id, eventId'
+});
+
+db.version(3).stores({
+  matches: '++id, eventId, matchId, round, status, courtId',
+  courts: '++id, tournamentId, courtId'
+});
+
+db.version(4).stores({
+  affiliationFurigana: '++id, &name'
+});
+
+// ライブスコア（1ポイントごとの実況配信用）
+// matchId は種目間で重複しうるため一意制約は付けない（eventId と併せて特定する）
+db.version(5).stores({
+  liveScores: '++id, matchId, eventId, status'
+});
+
+export { db };
+
+// ---------------------------
+// シードデータの初期ロード
+// 初回起動時にふりがな辞書・所属ふりがなをプリセット
+// ---------------------------
+const SEED_KEY = 'tennis-seed-loaded-v2';
+
+export async function loadSeedDataIfNeeded(): Promise<void> {
+  if (localStorage.getItem(SEED_KEY)) return; // 既に初期化済み
+
+  try {
+    const { FURIGANA_SEED, AFFILIATION_SEED } = await import('./seedData');
+
+    // ふりがな辞書（bulkPut = 既存キーは上書き、新規は追加）
+    if (FURIGANA_SEED.length > 0) {
+      const entries = FURIGANA_SEED.map(([name, furigana]) => ({
+        name,
+        furigana,
+        type: 'manual' as const,
+        updatedAt: Date.now(),
+      }));
+      await db.furiganaDict.bulkPut(entries);
+      console.log(`シード: ふりがな辞書 ${entries.length}件を登録`);
+    }
+
+    // 所属ふりがな
+    if (AFFILIATION_SEED.length > 0) {
+      const entries = AFFILIATION_SEED.map(([name, furigana]) => ({
+        name,
+        furigana,
+        updatedAt: Date.now(),
+      }));
+      // 重複名除去（最初に出現したものを採用）
+      const seen = new Set<string>();
+      const unique = entries.filter(e => {
+        if (seen.has(e.name)) return false;
+        seen.add(e.name);
+        return true;
+      });
+      // 既存データがあれば上書き
+      for (const entry of unique) {
+        const existing = await db.affiliationFurigana.where('name').equals(entry.name).first();
+        if (existing) {
+          await db.affiliationFurigana.update(existing.id!, { furigana: entry.furigana, updatedAt: entry.updatedAt });
+        } else {
+          await db.affiliationFurigana.add(entry);
+        }
+      }
+      console.log(`シード: 所属ふりがな ${unique.length}件を登録`);
+    }
+
+    localStorage.setItem(SEED_KEY, '1');
+  } catch (err) {
+    console.error('シードデータ読み込みエラー:', err);
+  }
+}

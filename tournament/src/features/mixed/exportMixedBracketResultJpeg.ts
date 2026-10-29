@@ -1,0 +1,629 @@
+// =============================================
+// ミックス大会 決勝トーナメントの結果画像
+//
+// 意匠は団体戦の結果画像（exportTeamBracketResultJpeg）に合わせ、
+// ヘッダー（赤い四角＋種目名 + 大会名 + 会場ロゴ）と
+// 協会ロゴはシングルス大会と共通の resultCanvasKit を使う。
+// =============================================
+
+import type { BracketMatch, MixedTeam, PlacementBracket } from './types';
+import { blackCircled, isConsolation, resolveByePositions } from './consolation';
+import {
+  COL, drawLine, drawResultFrame, drawResultHeader, drawText, fontOf,
+  fitLogo, getAssociationLogoEnabled, loadResultLogos, roundRect,
+} from '../draw/resultCanvasKit';
+import { renderTournamentResultCanvas } from '../draw/DrawResultExporter';
+import type { Draw, Entry, Event, Match, Player, Tournament } from '../../db/database';
+
+/** 順位カテゴリの表示名 */
+export const MIXED_CATEGORY_LABELS: Record<string, string> = {
+  '1st': '1位トーナメント',
+  '2nd': '2位トーナメント',
+  '3rd': '3位トーナメント',
+  '4th': '4・5位トーナメント',
+};
+
+export interface MixedBracketResultOptions {
+  bracket: PlacementBracket;
+  allTeams: MixedTeam[];
+  tournamentName: string;
+  /** 会場名（大会名の下にロゴ／名称を表示する） */
+  venue?: string;
+  /** 協会ロゴを入れるか（未指定なら保存済みの設定に従う） */
+  showAssociationLogo?: boolean;
+  /**
+   * 描き方。card = 試合ごとのカードを並べる形式、
+   * chart = 個人戦と同じ通常のトーナメント表（線で勝ち上がりを示す）。
+   * 未指定なら保存済みの設定に従う。
+   */
+  layout?: MixedBracketLayout;
+  /** 優勝者として表示する名前（トーナメント表形式のみ。空なら苗字を自動表示） */
+  championName?: string;
+}
+
+export type MixedBracketLayout = 'card' | 'chart';
+
+const LAYOUT_KEY = 'mixedBracketResultLayout';
+
+/** 保存済みの結果画像の形式（既定はカード形式） */
+export function getMixedBracketLayout(): MixedBracketLayout {
+  try {
+    return localStorage.getItem(LAYOUT_KEY) === 'chart' ? 'chart' : 'card';
+  } catch {
+    return 'card';
+  }
+}
+
+export function setMixedBracketLayout(layout: MixedBracketLayout): void {
+  try {
+    localStorage.setItem(LAYOUT_KEY, layout);
+  } catch {
+    // 保存できなくても表示には影響しない
+  }
+}
+
+/** 姓だけを取り出す（2回戦以降の表示に使う） */
+function familyName(name: string): string {
+  const t = name.trim();
+  const sp = t.split(/[\s\u3000]+/);
+  if (sp.length > 1) return sp[0];
+  return t.length >= 4 ? t.slice(0, 2) : t;
+}
+
+/** 空白を詰めた氏名 */
+function compactName(name: string): string {
+  return name.replace(/[\s\u3000]+/g, '');
+}
+
+/** 結果画像のファイル名（順位区分のみ。例: 1位トーナメント.jpg） */
+export function buildMixedBracketResultFileName(o: MixedBracketResultOptions): string {
+  const cat = MIXED_CATEGORY_LABELS[o.bracket.category] || o.bracket.category;
+  return `${cat.replace(/[\\/:*?"<>|]/g, '').trim()}.jpg`;
+}
+
+/** ミックス大会の決勝トーナメント結果画像を生成する */
+export async function generateMixedBracketResultDataUrl(
+  o: MixedBracketResultOptions,
+): Promise<string> {
+  if ((o.layout ?? getMixedBracketLayout()) === 'chart') return generateChartDataUrl(o);
+
+  const { bracket, allTeams, tournamentName, venue } = o;
+  // 本戦とコンソレーション（敗者同士の試合・round=0）を分けて描く
+  const matches = bracket.matches.filter(m => !isConsolation(m));
+  const consolationMatches = bracket.matches.filter(isConsolation).sort((a, b) => a.position - b.position);
+  if (matches.length === 0) throw new Error('No matches');
+
+  const logos = await loadResultLogos();
+  const showLogo = (o.showAssociationLogo ?? getAssociationLogoEnabled()) && !!logos.tcta;
+
+  const maxRound = Math.max(...matches.map(m => m.round));
+  const roundMatches: BracketMatch[][] = [];
+  for (let r = 1; r <= maxRound; r++) {
+    roundMatches.push(matches.filter(m => m.round === r).sort((a, b) => a.position - b.position));
+  }
+
+  // ---- レイアウト定数（団体戦の結果画像に合わせる） ----
+  const scale = 2;
+  const paddingX = 30;
+  const paddingY = 26;
+  const headerH = 110; // 見出し + 大会名 + 会場ロゴ
+  const matchW = 300;
+  /** 2回戦以降は姓のみの表示なので、カード幅を詰めて余白を減らす */
+  const matchWLater = 200;
+  const rowH = 48;
+  const matchH = rowH * 2;
+  const roundGap = 44;
+  /** 2回戦以降の列間も合わせて詰める */
+  const roundGapLater = 32;
+  const matchGap = 22;
+  /**
+   * 2回戦以降の縦の間隔をどれだけ詰めるか（1回戦は変えない）。
+   * ラウンドが進むごとに ROUND_COMPRESS 倍ずつ間隔が縮み、
+   * 後半の列が上下に間延びして見えるのを防ぐ。
+   */
+  const ROUND_COMPRESS = 0.68;
+
+  const gridUnit = matchH + matchGap;
+  const r1Count = roundMatches[0]?.length || 0;
+
+  const bracketTopPad = 56;   // ラウンドラベル用
+  const bracketSidePad = 28;
+  /** 各ラウンドのカード幅 */
+  const roundW = (ri: number) => (ri === 0 ? matchW : matchWLater);
+  /** ブラケット左端からの各ラウンドの相対X座標 */
+  const roundOffsets: number[] = [];
+  {
+    let x = 0;
+    for (let ri = 0; ri < maxRound; ri++) {
+      roundOffsets.push(x);
+      x += roundW(ri) + (ri === 0 ? roundGap : roundGapLater);
+    }
+  }
+  const bracketW = roundOffsets[maxRound - 1] + roundW(maxRound - 1);
+  const tableW = Math.max(bracketW + bracketSidePad * 2, 760);
+
+  // 協会ロゴ（ブラケット枠内の右下に配置）
+  const tcta = showLogo ? fitLogo(logos.tcta, Math.min(440, tableW * 0.5), 96) : { w: 0, h: 0 };
+
+  // ---- コンソレーション欄（本戦の下に、ラベル付きのカードを横に並べる） ----
+  const consTitleH = 44;
+  const consLabelH = 24;
+  const consGapX = 24;
+  const consGapY = 18;
+  const consPerRow = Math.max(1, Math.floor((tableW - bracketSidePad * 2 + consGapX) / (matchW + consGapX)));
+  const consRows = Math.ceil(consolationMatches.length / consPerRow);
+  const consH = consolationMatches.length > 0
+    ? consTitleH + consRows * (consLabelH + matchH) + (consRows - 1) * consGapY + 20
+      // 協会ロゴは枠の右下に置くので、カードと重ならないよう下に余白を取る
+      + (showLogo ? tcta.h + 4 : 0)
+    : 0;
+
+  const mainH = r1Count * gridUnit + bracketTopPad + 14;
+  const bracketH = mainH + consH;
+  const totalW = tableW + paddingX * 2;
+  const totalH = paddingY + 12 + headerH + bracketH;
+
+  const canvas = document.createElement('canvas');
+  canvas.width = totalW * scale;
+  canvas.height = totalH * scale;
+  const ctx = canvas.getContext('2d')!;
+  ctx.scale(scale, scale);
+
+  ctx.fillStyle = COL.white;
+  ctx.fillRect(0, 0, totalW, totalH);
+
+  // ---- ヘッダー（赤い四角＋墨の見出し。白ベース＋赤の差し色） ----
+  drawResultHeader(ctx, {
+    title: MIXED_CATEGORY_LABELS[bracket.category] || bracket.category,
+    tournamentName,
+    venue,
+    paddingX,
+    paddingY,
+    tableW,
+    headerH,
+    logos,
+  });
+
+  // ---- ブラケット本体エリア ----
+  const bracketAreaX = paddingX + Math.max(bracketSidePad, (tableW - bracketW) / 2);
+  const bracketAreaY = paddingY + headerH;
+
+  ctx.save();
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.06)';
+  ctx.shadowBlur = 22;
+  ctx.shadowOffsetY = 6;
+  roundRect(ctx, paddingX, bracketAreaY, tableW, bracketH, 18, COL.white);
+  ctx.restore();
+  drawResultFrame(ctx, paddingX, bracketAreaY, tableW, bracketH, 18);
+
+  // 1回戦の並びの中心。2回戦以降はこの線に向かって間隔を詰める
+  const bracketCenterY =
+    bracketAreaY + bracketTopPad + matchH / 2 + Math.max(0, r1Count - 1) * gridUnit / 2;
+
+  const getMatchY = (ri: number, mi: number) => {
+    const spacing = Math.pow(2, ri);
+    const offset = (spacing - 1) * gridUnit / 2;
+    const y = bracketAreaY + bracketTopPad + mi * spacing * gridUnit + offset + matchH / 2;
+    if (ri === 0) return y;
+    // 中心からの距離を縮めることで、並び順を保ったまま縦の余白だけを詰める
+    return bracketCenterY + (y - bracketCenterY) * Math.pow(ROUND_COMPRESS, ri);
+  };
+  const getRoundX = (ri: number) => bracketAreaX + roundOffsets[ri];
+
+  const getRoundName = (round: number) => {
+    if (round === maxRound) return '決勝';
+    if (round === maxRound - 1) return '準決勝';
+    if (round === maxRound - 2) return '準々決勝';
+    return `${round}回戦`;
+  };
+
+  // ---- 接続線 ----
+  ctx.strokeStyle = COL.gray300;
+  ctx.lineWidth = 2;
+  ctx.globalAlpha = 0.7;
+  for (let ri = 0; ri < roundMatches.length - 1; ri++) {
+    const x1 = getRoundX(ri) + roundW(ri);
+    const x2 = getRoundX(ri + 1);
+    const xMid = (x1 + x2) / 2;
+    const rMatches = roundMatches[ri];
+    for (let i = 0; i + 1 < rMatches.length; i += 2) {
+      const y1 = getMatchY(ri, i);
+      const y2 = getMatchY(ri, i + 1);
+      const yNext = getMatchY(ri + 1, Math.floor(i / 2));
+      ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(xMid, y1); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x1, y2); ctx.lineTo(xMid, y2); ctx.stroke();
+      // 縦線は次戦の位置まで伸ばす。間隔を詰めた分だけ次戦は2試合の中点から
+      // ずれるため、中点だけを結ぶと横線が縦線から浮いてしまう。
+      ctx.beginPath();
+      ctx.moveTo(xMid, Math.min(y1, y2, yNext));
+      ctx.lineTo(xMid, Math.max(y1, y2, yNext));
+      ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(xMid, yNext); ctx.lineTo(x2, yNext); ctx.stroke();
+    }
+  }
+  ctx.globalAlpha = 1;
+
+  // ---- ラウンドラベル ----
+  for (let ri = 0; ri < roundMatches.length; ri++) {
+    const round = ri + 1;
+    const roundName = getRoundName(round);
+    const labelX = getRoundX(ri) + roundW(ri) / 2;
+    const labelY = bracketAreaY + 26;
+    const isFinal = round === maxRound;
+
+    ctx.font = fontOf('bold', 12);
+    const labelW = ctx.measureText(roundName).width + 24;
+    const labelH = 22;
+    const labelBoxX = labelX - labelW / 2;
+    const labelBoxY = labelY - labelH / 2;
+
+    if (isFinal) {
+      const grad = ctx.createLinearGradient(labelBoxX, 0, labelBoxX + labelW, 0);
+      grad.addColorStop(0, COL.champ2);
+      grad.addColorStop(1, COL.champ3);
+      roundRect(ctx, labelBoxX, labelBoxY, labelW, labelH, 11, grad);
+      ctx.fillStyle = COL.white;
+    } else {
+      roundRect(ctx, labelBoxX, labelBoxY, labelW, labelH, 11, COL.white, COL.gray300, 1);
+      ctx.fillStyle = COL.gray700;
+    }
+    ctx.font = fontOf('bold', 12);
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(roundName, labelX, labelY + 1);
+  }
+
+  /** ペア1組分の行を描く */
+  const drawPairRow = (
+    cx: number, rowY: number, round: number, cardW: number,
+    teamId: string | null, league: string, score: number | null,
+    isWinner: boolean, tiebreak: number | null, defLabel?: string, placeholder?: string,
+  ) => {
+    if (isWinner) {
+      ctx.fillStyle = COL.winRow;
+      ctx.fillRect(cx + 6, rowY + 2, cardW - 12, rowH - 4);
+    }
+    const t = teamId ? allTeams.find(tm => tm.teamId === teamId) : null;
+    if (!t) {
+      // まだ決まっていない枠（コンソレの「❷敗者」など）は出どころを薄く表示する
+      if (placeholder) drawText(ctx, placeholder, cx + 14, rowY + rowH / 2, 12, 'left', COL.gray400, 'medium', cardW - 28);
+      return;
+    }
+
+    // リーグバッジ
+    const badgeLabel = (league || t.leagueId || '').trim() || '-';
+    ctx.font = fontOf('bold', 11);
+    const bgW = Math.max(22, ctx.measureText(badgeLabel).width + 12);
+    const bgH = 20;
+    const bgX = cx + 10;
+    const bgY = rowY + (rowH - bgH) / 2;
+    roundRect(ctx, bgX, bgY, bgW, bgH, 5, COL.gray100, COL.gray200, 1);
+    drawText(ctx, badgeLabel, bgX + bgW / 2, bgY + bgH / 2 + 0.5, 11, 'center', COL.gray700, 'bold', bgW - 6);
+
+    // ペア番号
+    const numX = bgX + bgW + 8;
+    drawText(ctx, String(t.pairNumber), numX + 8, rowY + rowH / 2, 11, 'center', isWinner ? COL.gray700 : COL.gray400, 'medium');
+
+    // 勝者は黒文字で強調する（敗者はグレー）。
+    // 太いウェイトは漢字がつぶれて読みにくいため、太字は使わず色で差をつける。
+    const nameColor = isWinner ? COL.gray900 : COL.gray700;
+    const nameX = numX + 20;
+    const y1 = rowY + rowH * 0.32;
+    const y2 = rowY + rowH * 0.70;
+    const scoreW = 34;
+
+    if (round === 1) {
+      // 1回戦: フルネーム + 所属
+      const nameW = 96;
+      drawText(ctx, compactName(t.male.name), nameX, y1, 14, 'left', nameColor, 'normal', nameW);
+      drawText(ctx, compactName(t.female.name), nameX, y2, 14, 'left', nameColor, 'normal', nameW);
+      const affX = nameX + nameW + 8;
+      const affW = cardW - (affX - cx) - scoreW - 10;
+      if (affW > 16) {
+        drawText(ctx, t.male.affiliation, affX, y1, 10, 'left', COL.gray400, 'medium', affW);
+        drawText(ctx, t.female.affiliation, affX, y2, 10, 'left', COL.gray400, 'medium', affW);
+      }
+    } else {
+      // 2回戦以降: 姓のみ（横に長くならないように）
+      const parts = t.teamName.split('・');
+      const f1 = parts[0] && parts[0] !== t.male.name ? parts[0] : familyName(t.male.name);
+      const f2 = parts[1] && parts[1] !== t.female.name ? parts[1] : familyName(t.female.name);
+      const nameW = cardW - (nameX - cx) - scoreW - 10;
+      drawText(ctx, f1, nameX, y1, 14, 'left', nameColor, 'normal', nameW);
+      drawText(ctx, f2, nameX, y2, 14, 'left', nameColor, 'normal', nameW);
+    }
+
+    // スコア（棄権時はラベル）
+    const scoreX = cx + cardW - 12;
+    if (defLabel) {
+      drawText(ctx, defLabel, scoreX, rowY + rowH / 2, 12, 'right', defLabel === 'W.O' ? COL.gray400 : COL.win, 'medium');
+    } else if (score !== null) {
+      // 勝者側のスコアは赤文字で目立たせる
+      drawText(ctx, String(score), scoreX, rowY + rowH / 2, 20, 'right', isWinner ? COL.win : COL.gray300, 'medium');
+      if (!isWinner && tiebreak != null) {
+        ctx.font = fontOf('medium', 20);
+        const sw = ctx.measureText(String(score)).width;
+        drawText(ctx, `(${tiebreak})`, scoreX - sw - 3, rowY + rowH / 2, 10, 'right', COL.gray400, 'normal');
+      }
+    }
+  };
+
+  // ---- マッチカード ----
+  const drawMatchCard = (ri: number, mi: number, match: BracketMatch) =>
+    drawCard(getRoundX(ri), getMatchY(ri, mi), roundW(ri), ri + 1, match);
+
+  /** 試合カードを描く（round=1 はフルネーム＋所属、それ以外は姓のみ） */
+  const drawCard = (
+    cx: number, cyCenter: number, cardW: number, round: number, match: BracketMatch,
+    placeholders?: [string, string],
+  ) => {
+
+    // BYE: 勝ち上がったペアだけを1行で表示する
+    if (match.isBye) {
+      const winnerId = match.winnerId || match.team1Id || match.team2Id;
+      if (!winnerId) return;
+      const byeY = cyCenter - rowH / 2;
+      ctx.save();
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.08)';
+      ctx.shadowBlur = 10;
+      ctx.shadowOffsetY = 3;
+      roundRect(ctx, cx, byeY, cardW, rowH, 12, COL.white);
+      ctx.restore();
+      roundRect(ctx, cx, byeY, cardW, rowH, 12, undefined, COL.gray200, 1.5);
+      const league = winnerId === match.team1Id ? match.team1League : match.team2League;
+      drawPairRow(cx, byeY, round, cardW, winnerId, league || '', null, false, null);
+      return;
+    }
+
+    const cy = cyCenter - matchH / 2;
+    const isFinished = match.status === 'finished';
+
+    ctx.save();
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.08)';
+    ctx.shadowBlur = 10;
+    ctx.shadowOffsetY = 3;
+    roundRect(ctx, cx, cy, cardW, matchH, 12, COL.white);
+    ctx.restore();
+    roundRect(ctx, cx, cy, cardW, matchH, 12, undefined, isFinished ? COL.gray300 : COL.gray200, 1.5);
+
+    const win1 = !!match.winnerId && match.winnerId === match.team1Id;
+    const win2 = !!match.winnerId && match.winnerId === match.team2Id;
+
+    // 棄権表示: W.O（0-0で勝者あり）/ Ret（スコアの低い側が勝者＝途中棄権）
+    let def1 = '';
+    let def2 = '';
+    if (match.winnerId && isFinished) {
+      const s1 = match.score1 ?? 0;
+      const s2 = match.score2 ?? 0;
+      if (s1 === 0 && s2 === 0) {
+        if (win1) def2 = 'W.O'; else if (win2) def1 = 'W.O';
+      } else if ((win1 && s1 < s2) || (win2 && s2 < s1)) {
+        if (win1) def2 = 'Ret'; else if (win2) def1 = 'Ret';
+      }
+    }
+    const isWO = def1 === 'W.O' || def2 === 'W.O';
+
+    drawPairRow(cx, cy, round, cardW, match.team1Id, match.team1League || '',
+      isWO && win1 ? null : match.score1, win1, match.tiebreakScore, def1 || undefined, placeholders?.[0]);
+    drawLine(ctx, cx + 8, cy + rowH, cx + cardW - 8, cy + rowH, COL.gray100, 1);
+    drawPairRow(cx, cy + rowH, round, cardW, match.team2Id, match.team2League || '',
+      isWO && win2 ? null : match.score2, win2, match.tiebreakScore, def2 || undefined, placeholders?.[1]);
+  };
+
+  for (let ri = 0; ri < roundMatches.length; ri++) {
+    for (let mi = 0; mi < roundMatches[ri].length; mi++) {
+      drawMatchCard(ri, mi, roundMatches[ri][mi]);
+    }
+  }
+
+  // ---- コンソレーション ----
+  if (consolationMatches.length > 0) {
+    const consTop = bracketAreaY + mainH;
+    drawLine(ctx, paddingX + bracketSidePad, consTop, paddingX + tableW - bracketSidePad, consTop, COL.gray200, 1);
+
+    // 見出し（ラウンドラベルと同じ白抜きのピル）
+    const title = 'コンソレーション';
+    ctx.font = fontOf('bold', 12);
+    const titleW = ctx.measureText(title).width + 24;
+    const titleX = paddingX + bracketSidePad;
+    const titleY = consTop + 14;
+    roundRect(ctx, titleX, titleY, titleW, 22, 11, COL.white, COL.gray300, 1);
+    drawText(ctx, title, titleX + titleW / 2, titleY + 12, 12, 'center', COL.gray700, 'bold');
+
+    const rowW = consPerRow * matchW + (consPerRow - 1) * consGapX;
+    const startX = paddingX + Math.max(bracketSidePad, (tableW - rowW) / 2);
+    consolationMatches.forEach((m, i) => {
+      const col = i % consPerRow;
+      const row = Math.floor(i / consPerRow);
+      const x = startX + col * (matchW + consGapX);
+      const y = consTop + consTitleH + row * (consLabelH + matchH + consGapY);
+      // 試合番号と組合せ（例: ❽ ❷敗者-❸敗者）
+      const label = `${m.matchNo !== undefined ? `${blackCircled(m.matchNo)} ` : ''}${m.consolationLabel ?? ''}`;
+      drawText(ctx, label, x + 2, y + consLabelH / 2, 12, 'left', COL.gray700, 'bold', matchW);
+      const [ph1 = '', ph2 = ''] = (m.consolationLabel ?? '').split('-');
+      drawCard(x, y + consLabelH + matchH / 2, matchW, 1, m, [ph1, ph2]);
+    });
+  }
+
+  // ---- 協会ロゴ（ブラケット枠内の右下） ----
+  if (showLogo && logos.tcta && tcta.w > 0) {
+    const logoX = paddingX + tableW - tcta.w - 16;
+    const logoY = bracketAreaY + bracketH - tcta.h - 6;
+    ctx.drawImage(logos.tcta, logoX, logoY, tcta.w, tcta.h);
+  }
+
+  return new Promise<string>((resolve, reject) => {
+    canvas.toBlob(blob => {
+      if (!blob) { reject(new Error('Canvas to Blob failed')); return; }
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    }, 'image/jpeg', 0.95);
+  });
+}
+
+// =============================================
+// トーナメント表形式（個人戦の結果画像と同じ描き方）
+// =============================================
+
+/** 試合のスコアを個人戦の形式（"6-4" / "7-6(3)" / "6-2 Ret"）に変換する */
+function toMatchScore(m: BracketMatch): { score: string; status: Match['status'] } {
+  if (m.status !== 'finished' || !m.winnerId) return { score: '', status: m.status === 'playing' ? 'playing' : 'waiting' };
+  const s1 = m.score1 ?? 0;
+  const s2 = m.score2 ?? 0;
+  if (s1 === 0 && s2 === 0) return { score: '', status: 'walkover' };
+  const win1 = m.winnerId === m.team1Id;
+  const ret = (win1 && s1 < s2) || (!win1 && s2 < s1);
+  const tb = m.tiebreakScore != null ? `(${m.tiebreakScore})` : '';
+  return { score: `${s1}-${s2}${tb}${ret ? ' Ret' : ''}`, status: 'finished' };
+}
+
+/** ミックスのブラケットを個人戦の結果画像に渡せる形へ置き換える */
+function toDrawResultData(o: MixedBracketResultOptions) {
+  const { bracket, allTeams } = o;
+  const main = bracket.matches.filter(m => !isConsolation(m));
+  const byes = resolveByePositions(bracket);
+  const teamById = new Map(allTeams.map(t => [t.teamId, t]));
+
+  const slots: Draw['slots'] = Array.from({ length: bracket.drawSize }, (_, i) => ({
+    position: i + 1, entryId: null, seed: 0, isBye: byes.has(i),
+  }));
+  for (const m of main.filter(x => x.round === 1)) {
+    const base = (m.position - 1) * 2;
+    if (m.team1Id && slots[base]) slots[base].entryId = m.team1Id;
+    if (m.team2Id && slots[base + 1]) slots[base + 1].entryId = m.team2Id;
+  }
+
+  const players: Player[] = [];
+  const entries: Entry[] = [];
+  for (const id of new Set(slots.map(x => x.entryId).filter((x): x is string => !!x))) {
+    const t = teamById.get(id);
+    if (!t) continue;
+    const mk = (suffix: string, name: string, affiliation: string): Player => ({
+      playerId: `${id}-${suffix}`, name, furigana: '', affiliation, rankings: {}, isManual: true,
+    });
+    players.push(mk('m', t.male.name, t.male.affiliation), mk('f', t.female.name, t.female.affiliation));
+    entries.push({
+      eventId: bracket.category, entryId: id, playerId: `${id}-m`, partnerId: `${id}-f`,
+      rankPoint: 0, status: 'active',
+    });
+  }
+
+  const pairName = (id: string | null) => {
+    const t = id ? teamById.get(id) : null;
+    return t ? `${t.male.name}・${t.female.name}` : '';
+  };
+  const matches: Match[] = main.map(m => {
+    const { score, status } = toMatchScore(m);
+    return {
+      eventId: bracket.category, matchId: m.matchId, round: m.round, matchOrder: 0, position: m.position,
+      player1EntryId: m.team1Id, player2EntryId: m.team2Id,
+      player1Name: pairName(m.team1Id), player2Name: pairName(m.team2Id),
+      player1Affiliation: '', player2Affiliation: '',
+      score,
+      // BYE の勝ち上がりは描画側がドローの BYE から解決するので、勝者は実試合だけに入れる
+      winnerEntryId: m.isBye ? null : (m.status === 'finished' ? m.winnerId : null),
+      courtId: null, scheduledTime: null, status, refereeId: null, refereeName: '', updatedAt: 0,
+    };
+  });
+
+  const tournament: Tournament = {
+    tournamentId: 'mixed', name: o.tournamentName, date: '', venue: o.venue ?? '',
+    reserveDate: '', reserveVenue: '', createdAt: 0,
+  };
+  const event: Event = {
+    tournamentId: 'mixed', eventId: bracket.category,
+    name: MIXED_CATEGORY_LABELS[bracket.category] || bracket.category,
+    type: 'Doubles', gameRules: { sets: 1, games: 6, deuce: true, tiebreakPoint: 7 },
+  };
+  const draw: Draw = {
+    eventId: bracket.category, drawSize: bracket.drawSize, drawType: 'tournament',
+    slots, hasThirdPlace: false, updatedAt: 0,
+  };
+  return { tournament, event, draw, matches, entries, players };
+}
+
+/** トーナメント表形式の結果画像（コンソレがあれば表の下に結果を並べる） */
+async function generateChartDataUrl(o: MixedBracketResultOptions): Promise<string> {
+  const chart = await renderTournamentResultCanvas({
+    ...toDrawResultData(o),
+    showAssociationLogo: o.showAssociationLogo,
+    championName: o.championName,
+  });
+
+  const cons = o.bracket.matches.filter(isConsolation).sort((a, b) => a.position - b.position);
+  let canvas = chart;
+  if (cons.length > 0) {
+    const scale = 2;
+    const W = chart.width / scale;
+    const H = chart.height / scale;
+    // 個人戦の結果画像と同じ左右の余白
+    const paddingX = 30;
+    const tableW = W - paddingX * 2;
+    const titleH = 44;
+    const rowH = 40;
+    const consH = titleH + cons.length * rowH + 16;
+    const gap = 12;
+
+    canvas = document.createElement('canvas');
+    canvas.width = W * scale;
+    canvas.height = (H + gap + consH + 20) * scale;
+    const ctx = canvas.getContext('2d')!;
+    ctx.fillStyle = COL.white;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(chart, 0, 0);
+    ctx.scale(scale, scale);
+
+    const top = H + gap;
+    roundRect(ctx, paddingX, top, tableW, consH, 18, COL.white);
+    drawResultFrame(ctx, paddingX, top, tableW, consH, 18);
+
+    const title = 'コンソレーション';
+    ctx.font = fontOf('bold', 12);
+    const pillW = ctx.measureText(title).width + 24;
+    roundRect(ctx, paddingX + 22, top + 14, pillW, 22, 11, COL.white, COL.gray300, 1);
+    drawText(ctx, title, paddingX + 22 + pillW / 2, top + 26, 12, 'center', COL.gray700, 'bold');
+
+    const teamById = new Map(o.allTeams.map(t => [t.teamId, t]));
+    const left = paddingX + 22;
+    const right = paddingX + tableW - 22;
+    const labelW = 150;
+    const scoreW = 90;
+    const sideW = (right - left - labelW - scoreW) / 2;
+    const scoreX = left + labelW + sideW + scoreW / 2;
+
+    /** ペア名（姓・姓）と所属 */
+    const drawSide = (id: string | null, placeholder: string, x: number, y: number, align: 'left' | 'right', win: boolean) => {
+      const t = id ? teamById.get(id) : null;
+      if (!t) {
+        drawText(ctx, placeholder, x, y, 13, align, COL.gray400, 'medium', sideW - 12);
+        return;
+      }
+      const aff = t.male.affiliation === t.female.affiliation
+        ? t.male.affiliation : `${t.male.affiliation}/${t.female.affiliation}`;
+      drawText(ctx, `${compactName(t.male.name)}・${compactName(t.female.name)}`, x, y - 6, 15, align,
+        win ? COL.gray900 : COL.gray700, win ? 'bold' : 'normal', sideW - 12);
+      drawText(ctx, aff, x, y + 11, 10, align, COL.gray400, 'medium', sideW - 12);
+    };
+
+    cons.forEach((m, i) => {
+      const y = top + titleH + i * rowH + rowH / 2;
+      if (i > 0) drawLine(ctx, left, y - rowH / 2, right, y - rowH / 2, COL.gray100, 1);
+      const label = `${m.matchNo !== undefined ? `${blackCircled(m.matchNo)} ` : ''}${m.consolationLabel ?? ''}`;
+      drawText(ctx, label, left, y, 12, 'left', COL.gray700, 'bold', labelW - 10);
+
+      const [ph1 = '', ph2 = ''] = (m.consolationLabel ?? '').split('-');
+      const win1 = !!m.winnerId && m.winnerId === m.team1Id;
+      const win2 = !!m.winnerId && m.winnerId === m.team2Id;
+      drawSide(m.team1Id, ph1, scoreX - scoreW / 2 - 6, y, 'right', win1);
+      drawSide(m.team2Id, ph2, scoreX + scoreW / 2 + 6, y, 'left', win2);
+
+      const { score, status } = toMatchScore(m);
+      const text = status === 'walkover' ? 'W.O' : score || 'vs';
+      drawText(ctx, text, scoreX, y, score ? 16 : 12, 'center', score ? COL.win : COL.gray400, 'medium', scoreW - 8);
+    });
+  }
+
+  return canvas.toDataURL('image/jpeg', 0.95);
+}

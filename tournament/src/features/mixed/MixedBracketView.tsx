@@ -1,0 +1,1980 @@
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import { createPortal } from 'react-dom';
+import { Trophy, Medal, Award, Users, Shuffle, RotateCcw, Ban, Save, Volume2, X, Printer, Settings2, MapPin } from 'lucide-react';
+import { useMixedStore } from './mixedStore';
+import { leagueBadgeStyle } from './leagueColors';
+import { BRACKET_SLOT_MAP as DEFAULT_BRACKET_SLOT_MAP } from './mixedLogic';
+import type { PlacementCategory, BracketMatch, PlacementBracket, MixedTeam } from './types';
+import { useCallTts } from '../broadcast/useCallTts';
+import CallPreviewDialog, { toCourtCallName } from './CallPreviewDialog';
+import CallStatusPopup from '../../components/ui/CallStatusPopup';
+import MixedBracketResultPreview from './MixedBracketResultPreview';
+import BracketTopBar from '../../components/ui/BracketTopBar';
+import { useVisualViewport } from '../../components/ui/useVisualViewport';
+import { autoBracketStartRound, startRoundLabel } from './bracketRounds';
+import { blackCircled, bracketMatchRoundLabel, isConsolation, resolveByePositions } from './consolation';
+
+/**
+ * ゲームルールの表示用テキストを整形する。
+ * 「（1）■ 試合方法：ノーアド・6ゲームマッチ ■ 試合順：①-② …」のような
+ * 表紙の1行から、試合方法の部分だけを取り出す。
+ */
+function cleanGameRuleText(raw: string): string {
+  let s = raw.replace(/^（[０-９\d]+）\s*/, '').trim();
+  const segs = s.split(/[■◆●]/).map(x => x.trim()).filter(Boolean);
+  const hit = segs.find(x => /ゲームマッチ|ノーアド|タイブレ|セットマッチ|先取/.test(x));
+  if (hit) s = hit;
+  return s.replace(/^(試合方法|ゲームルール|方法)\s*[：:]\s*/, '').trim();
+}
+
+/** 全角数字→半角変換 */
+function toHalfWidth(s: string): string {
+  return s.replace(/[０-９]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xFEE0));
+}
+
+/** Extract winning game number from rules */
+function getWinningGamesFromRules(rules: string[]): number {
+  for (const r of rules) {
+    if (/ゲームマッチ|ゲーム/.test(r)) {
+      const cleaned = r.replace(/^（[０-９\d]+）\s*/, '').trim();
+      const m = cleaned.match(/(\d+)\s*ゲーム/);
+      if (m) return parseInt(m[1]);
+      const m2 = cleaned.match(/([０-９]+)\s*ゲーム/);
+      if (m2) return parseInt(toHalfWidth(m2[1]));
+    }
+  }
+  return 6;
+}
+
+
+const CATEGORY_TABS: { id: PlacementCategory; label: string; icon: React.ElementType; color: string }[] = [
+  { id: '1st', label: '1位', icon: Trophy, color: 'from-primary-500 to-primary-600' },
+  { id: '2nd', label: '2位', icon: Medal, color: 'from-gray-400 to-gray-500' },
+  { id: '3rd', label: '3位', icon: Award, color: 'from-gray-400 to-gray-500' },
+  { id: '4th', label: '4・5位', icon: Users, color: 'from-gray-400 to-gray-500' },
+];
+
+/** 審判用紙を印刷（B5横・Excel原本と同じ構成） */
+function printRefereeSheet(
+  match: BracketMatch,
+  allTeams: MixedTeam[],
+  _tournamentName: string,
+  bracketLabel: string,
+  roundLabel: string,
+  gameRule: string,
+  tournamentInfo?: { date?: string; name?: string } | null,
+) {
+  const team1 = allTeams.find(t => t.teamId === match.team1Id);
+  const team2 = allTeams.find(t => t.teamId === match.team2Id);
+  if (!team1 || !team2) return;
+
+  const dateStr = (tournamentInfo?.date || '').split(/予備日[：:]?/)[0].trim();
+
+  const html = `<!DOCTYPE html>
+<html><head><meta charset="utf-8">
+<title>審判用紙 - ${bracketLabel}</title>
+<style>
+  @page { size: B5 landscape; margin: 8mm; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', 'Meiryo', sans-serif;
+    color: #222; -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  }
+  .toolbar { text-align: center; padding: 8px; background: #f5f5f5; border-bottom: 1px solid #ddd; margin-bottom: 4mm; }
+  .toolbar button { padding: 6px 20px; font-size: 13px; cursor: pointer; border: 1px solid #999; border-radius: 4px; background: #fff; }
+  .toolbar button:hover { background: #e0e0e0; }
+  .toolbar .hint { font-size: 11px; color: #888; margin-top: 4px; }
+  @media print { .toolbar { display: none !important; } }
+  [contenteditable="true"]:hover { background: #fffde7; cursor: text; }
+  [contenteditable="true"]:focus { background: #fff9c4; outline: none; }
+  @media print { [contenteditable="true"]:hover, [contenteditable="true"]:focus { background: transparent; } }
+
+  .page { width: 241mm; height: 166mm; margin: auto; display: flex; flex-direction: column; }
+  .title {
+    text-align: center; font-size: 26pt; font-weight: 900;
+    letter-spacing: 0.8em; padding: 1mm 0 0;
+    font-family: 'Hiragino Mincho ProN', 'Yu Mincho', 'MS PMincho', serif;
+  }
+  .meta { text-align: center; font-size: 11pt; padding: 0 0 1mm; color: #333; position: relative; }
+  .meta-name { display: block; }
+  .meta-date { position: absolute; right: 0; top: 0; }
+
+  .tbl-wrap { flex: 1; border: 2px solid #333; border-radius: 10px; overflow: hidden; display: flex; flex-direction: column; }
+  table { width: 100%; border-collapse: collapse; }
+  td, th { border: 1px solid #888; padding: 1mm 3mm; font-size: 10pt; vertical-align: middle; }
+  .lbl { width: 24mm; text-align: center; font-weight: 700; font-size: 9pt; letter-spacing: 0.1em; background: #fafafa; white-space: nowrap; }
+
+  /* 種目行 */
+  .r-event td, .r-event th { height: 16mm; }
+  .val { font-weight: 700; font-size: 14pt; text-align: center; }
+
+  /* コートNo行 */
+  .r-court td, .r-court th { height: 20mm; }
+  .r-court td { text-align: center; }
+
+  /* 50/50分割行用 */
+  .split-cell { padding: 0 !important; }
+  .split { display: grid; grid-template-columns: 1fr 1fr; height: 100%; }
+  .split-half { display: flex; align-items: center; justify-content: center; padding: 1mm 3mm; }
+  .split-half:first-child { border-right: 1px solid #888; }
+
+  /* エントリーNo行 */
+  .r-entry td, .r-entry th { height: 16mm; }
+  .entry-num { font-weight: 800; font-size: 22pt; font-family: 'Arial', sans-serif; }
+
+  /* 選手氏名行 */
+  .r-name td, .r-name th { height: 34mm; }
+  .name-half { display: flex; align-items: center; justify-content: center; gap: 3mm; padding: 2mm 4mm !important; height: 100%; }
+  .p-name {
+    font-size: 16pt; font-weight: 600; line-height: 1.9; white-space: nowrap;
+    font-family: 'Hiragino Mincho ProN', 'Yu Mincho', serif;
+  }
+  .p-aff { font-size: 9pt; line-height: 1.9; color: #444; white-space: nowrap; }
+
+  /* スコア行（残りをすべて使う） */
+  .r-score td, .r-score th { height: auto; }
+  .score-wrap { flex: 1; display: flex; flex-direction: column; }
+  .score-inner { flex: 1; }
+  .score-split { display: grid; grid-template-columns: 1fr 1fr; height: 100%; }
+  .score-half { display: flex; align-items: center; justify-content: center; }
+  .score-half:first-child { border-right: none; }
+  .score-center { display: flex; flex-direction: column; align-items: center; justify-content: center; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); }
+  .score-area { position: relative; height: 100%; }
+  .score-lbl { font-size: 11pt; font-weight: 700; letter-spacing: 0.3em; white-space: nowrap; }
+  .score-tb { font-size: 9pt; color: #555; white-space: nowrap; }
+  .score-dash { font-size: 28pt; font-weight: 700; color: #333; }
+  .tb-par { font-size: 13pt; color: #555; margin-top: 4mm; }
+
+  .credit { text-align: right; font-size: 8pt; color: #999; padding: 0.5mm 2mm 0; flex-shrink: 0; }
+</style>
+</head><body>
+
+<div class="toolbar">
+  <button onclick="window.print()">🖨️ 印刷</button>
+  <div class="hint">黄色くなる箇所はクリックして編集できます</div>
+</div>
+
+<div class="page">
+  <div class="title">審　判　用　紙</div>
+  <div class="meta">
+    <span class="meta-name">${tournamentInfo?.name || ''}</span>
+    <span class="meta-date">${dateStr}</span>
+  </div>
+  <div class="tbl-wrap">
+    <table>
+      <tr class="r-event">
+        <th class="lbl">種　目</th>
+        <td class="val" colspan="2" contenteditable="true">${bracketLabel}</td>
+        <th class="lbl" style="width:auto">回　戦</th>
+        <td class="val" colspan="2" contenteditable="true">${roundLabel}</td>
+      </tr>
+      <tr class="r-court">
+        <th class="lbl">コートNo.</th>
+        <td contenteditable="true" style="width:16%">&nbsp;</td>
+        <th class="lbl" style="width:auto">試合方法</th>
+        <td style="font-size:9pt; text-align:center;" contenteditable="true">${gameRule.replace(/\n/g, '<br>')}</td>
+        <th class="lbl" style="width:auto">開始時間</th>
+        <td contenteditable="true" style="width:16%">&nbsp;</td>
+      </tr>
+    </table>
+
+    <table style="border-top:3px double #333; flex:1; height:100%;">
+      <colgroup><col style="width:24mm"><col style="width:calc(50% - 12mm)"><col></colgroup>
+      <tr class="r-entry">
+        <th class="lbl">エントリーNo.</th>
+        <td style="text-align:center;"><span class="entry-num" contenteditable="true">No.　${team1.pairNumber}</span></td>
+        <td style="text-align:center;"><span class="entry-num" contenteditable="true">No.　${team2.pairNumber}</span></td>
+      </tr>
+      <tr class="r-name">
+        <th class="lbl">選手氏名</th>
+        <td style="padding:0;"><div class="name-half"><div><div class="p-name" contenteditable="true">${team1.male.name}</div><div class="p-name" contenteditable="true">${team1.female.name}</div></div><div><div class="p-aff" contenteditable="true">（${team1.male.affiliation}）</div><div class="p-aff" contenteditable="true">（${team1.female.affiliation}）</div></div></div></td>
+        <td style="padding:0;"><div class="name-half"><div><div class="p-name" contenteditable="true">${team2.male.name}</div><div class="p-name" contenteditable="true">${team2.female.name}</div></div><div><div class="p-aff" contenteditable="true">（${team2.male.affiliation}）</div><div class="p-aff" contenteditable="true">（${team2.female.affiliation}）</div></div></div></td>
+      </tr>
+      <tr>
+        <th class="lbl" style="vertical-align:middle;"><div class="score-lbl">スコア</div><div style="margin-top:10mm;" class="score-tb">（ＴＢ）</div></th>
+        <td colspan="2" style="text-align:center; vertical-align:middle;"><div class="score-dash">―</div><div class="tb-par">（　　　）</div></td>
+      </tr>
+    </table>
+  </div>
+  <div class="credit">鳥取市テニス協会</div>
+</div>
+</body></html>`;
+
+  const win = window.open('', '_blank', 'width=900,height=650');
+  if (win) {
+    win.document.write(html);
+    win.document.close();
+    win.focus();
+  }
+}
+
+export default function MixedBracketView() {
+  const { brackets, selectedBracketCategory, setSelectedBracketCategory, updateBracketScore, advanceWinner, rebuildBracketFromSlots, setBracketConsolation, tournamentInfo, leagues, updateBracketGameRule } = useMixedStore();
+  const [editingMatch, setEditingMatch] = useState<BracketMatch | null>(null);
+  const [score1Input, setScore1Input] = useState('');
+  const [score2Input, setScore2Input] = useState('');
+  const [tiebreakInput, setTiebreakInput] = useState('');
+  const score2Ref = useRef<HTMLInputElement>(null);
+  const tiebreakRef = useRef<HTMLInputElement>(null);
+  const [callMatch, setCallMatch] = useState<BracketMatch | null>(null);
+  const [callCourt, setCallCourt] = useState('');
+  const [callTime, setCallTime] = useState('');
+  const { speak, stop, isSpeaking, isLoading: isCallLoading } = useCallTts();
+  // コール中に画面下部へ出す情報（シングルス大会と同じ表示にするため試合ごと保持する）
+  const [callingInfo, setCallingInfo] = useState<{ match: BracketMatch; courtName: string; roundLabel: string } | null>(null);
+  const [courtAssignMatch, setCourtAssignMatch] = useState<BracketMatch | null>(null);
+  const [courtAssignValue, setCourtAssignValue] = useState('');
+  const { assignBracketMatchToCourt, bracketCourtAssignments } = useMixedStore();
+  const [drawEditMode, setDrawEditMode] = useState(false);
+  // 表示回戦の手動指定（null = 自動: 決着済みの回戦を省略）。クラスごとに保持する。
+  const [roundOverride, setRoundOverride] = useState<{ category: PlacementCategory; value: number } | null>(null);
+  // ゲームルール設定ポップアップ
+  const [ruleDialogOpen, setRuleDialogOpen] = useState(false);
+  // ソフトキーボードが出ている間も、見えている領域（画面上半分）にスコア入力を収める
+  const { height: viewportHeight, offsetTop: viewportOffsetTop, keyboardOpen } = useVisualViewport(true);
+
+  const bracketGameRule = tournamentInfo?.bracketGameRule || '';
+  // ドロー表のルールから初期値を自動設定。
+  // 表紙は「■ 試合方法：〜 ■ 試合順：〜」のように複数項目が1行に入っていることがあるため、
+  // 試合方法の部分だけを取り出して使う（そのまま入れると見出しが読めなくなる）。
+  useEffect(() => {
+    if (!tournamentInfo?.rules) return;
+    if (bracketGameRule) {
+      // 既に取り込み済みでも、複数項目が混ざったままなら整形し直す
+      const fixed = cleanGameRuleText(bracketGameRule);
+      if (fixed && fixed !== bracketGameRule) updateBracketGameRule(fixed);
+      return;
+    }
+    const ruleFromDraw = tournamentInfo.rules.find(r => /ゲームマッチ|ノーアド|タイブレ|セットマッチ/.test(r));
+    if (ruleFromDraw) {
+      const cleaned = cleanGameRuleText(ruleFromDraw);
+      if (cleaned) updateBracketGameRule(cleaned);
+    }
+  }, [tournamentInfo?.rules]);
+  const winGames = useMemo(() => {
+    // bracketGameRuleが設定されていればそれからゲーム数を抽出
+    if (bracketGameRule) {
+      const m = bracketGameRule.match(/(\d+)\s*ゲーム/);
+      if (m) return parseInt(m[1]);
+      const m2 = bracketGameRule.match(/([０-９]+)\s*ゲーム/);
+      if (m2) return parseInt(toHalfWidth(m2[1]));
+    }
+    return getWinningGamesFromRules(tournamentInfo?.rules || []);
+  }, [tournamentInfo, bracketGameRule]);
+
+  const currentBracket = brackets.find(b => b.category === selectedBracketCategory);
+
+  const getRoundLabel = (round: number, totalRounds: number): string => {
+    const fromFinal = totalRounds - round;
+    if (fromFinal === 0) return '決勝';
+    if (fromFinal === 1) return '準決勝';
+    if (fromFinal === 2) return '準々決勝';
+    return `${round}回戦`;
+  };
+
+  const openScoreEditor = (match: BracketMatch) => {
+    if (!match.team1Id || !match.team2Id || match.isBye) return;
+    // 控え中 → コート割当ポップアップ
+    const ca = bracketCourtAssignments[match.matchId];
+    if (!ca && match.status !== 'finished' && match.status !== 'playing') {
+      setCourtAssignMatch(match);
+      setCourtAssignValue('');
+      return;
+    }
+    // 試合中/完了 → スコア入力
+    setEditingMatch(match);
+    setScore1Input(match.score1 !== null && match.score1 >= 0 ? match.score1.toString() : '');
+    setScore2Input(match.score2 !== null && match.score2 >= 0 ? match.score2.toString() : '');
+    setTiebreakInput(match.tiebreakScore?.toString() ?? '');
+  };
+
+  /**
+   * コート割当ポップアップを開く。
+   * 既にコートが決まっている試合から開いたときは、今のコートを選んだ状態にして
+   * そのまま別のコートへ振り替えられるようにする（コートの入れ違い・移動の修正用）。
+   */
+  const openCourtAssign = (match: BracketMatch) => {
+    if (!match.team1Id || !match.team2Id || match.isBye) return;
+    setEditingMatch(null);
+    setCourtAssignMatch(match);
+    setCourtAssignValue(bracketCourtAssignments[match.matchId]?.courtName || '');
+  };
+
+  const handleCourtAssignConfirm = () => {
+    if (!courtAssignMatch || !courtAssignValue) return;
+    const before = bracketCourtAssignments[courtAssignMatch.matchId]?.courtName;
+    assignBracketMatchToCourt(courtAssignMatch.matchId, courtAssignValue);
+    // コール確認: 新しくコートに入れたときだけ聞く（コートの修正では聞かない）
+    if (!before) {
+      const doCalling = window.confirm(`${courtAssignValue}でコールしますか？`);
+      if (doCalling) {
+        setCallMatch(courtAssignMatch);
+        setCallCourt(courtAssignValue);
+        setCallTime('');
+      }
+    }
+    setCourtAssignMatch(null);
+  };
+
+  /** コート割当を解除する（間違ったコートに入れてしまったときの取り消し） */
+  const handleCourtRelease = () => {
+    if (!courtAssignMatch) return;
+    useMixedStore.getState().removeBracketMatchFromCourt(courtAssignMatch.matchId);
+    setCourtAssignMatch(null);
+  };
+
+  const saveScore = () => {
+    if (!editingMatch) return;
+    const s1 = parseInt(score1Input);
+    const s2 = parseInt(score2Input);
+    if (isNaN(s1) || isNaN(s2) || s1 === s2) return;
+    const isTb = (s1 === winGames + 1 && s2 === winGames) || (s1 === winGames && s2 === winGames + 1);
+    const tb = isTb && tiebreakInput ? parseInt(tiebreakInput) : null;
+    updateBracketScore(editingMatch.matchId, s1, s2, undefined, tb);
+    setTimeout(() => advanceWinner(editingMatch.matchId), 50);
+    // コートから解放
+    if (bracketCourtAssignments[editingMatch.matchId]) {
+      useMixedStore.getState().removeBracketMatchFromCourt(editingMatch.matchId);
+    }
+    setEditingMatch(null);
+  };
+
+  const handleDEF = (winnerTeamId: string) => {
+    if (!editingMatch) return;
+    const s1 = parseInt(score1Input);
+    const s2 = parseInt(score2Input);
+    const finalScore1 = !isNaN(s1) && s1 >= 0 ? s1 : 0;
+    const finalScore2 = !isNaN(s2) && s2 >= 0 ? s2 : 0;
+    updateBracketScore(editingMatch.matchId, finalScore1, finalScore2, winnerTeamId);
+    setTimeout(() => advanceWinner(editingMatch.matchId), 50);
+    if (bracketCourtAssignments[editingMatch.matchId]) {
+      useMixedStore.getState().removeBracketMatchFromCourt(editingMatch.matchId);
+    }
+    setEditingMatch(null);
+  };
+
+  const handleScore1Change = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const raw = toHalfWidth(e.target.value).replace(/[^0-9]/g, '');
+    setScore1Input(raw);
+    if (raw.length === 1 && /^[0-9]$/.test(raw)) {
+      const num = parseInt(raw);
+      if (num !== winGames && num !== winGames + 1 && score2Input === '') {
+        setScore2Input(winGames.toString());
+      }
+      setTimeout(() => {
+        score2Ref.current?.focus();
+        score2Ref.current?.select();
+      }, 50);
+    }
+  };
+
+  const handleScore2Change = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const raw = toHalfWidth(e.target.value).replace(/[^0-9]/g, '');
+    setScore2Input(raw);
+    if (raw.length === 1) {
+      const num = parseInt(raw);
+      if (!isNaN(num) && num !== winGames && num !== winGames + 1 && score1Input === '') {
+        setScore1Input(winGames.toString());
+      }
+      const s1 = parseInt(score1Input);
+      if (!isNaN(s1) && ((s1 === winGames + 1 && num === winGames) || (s1 === winGames && num === winGames + 1))) {
+        setTimeout(() => { tiebreakRef.current?.focus(); tiebreakRef.current?.select(); }, 50);
+      }
+    }
+  };
+
+  const handleTiebreakChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const raw = toHalfWidth(e.target.value).replace(/[^0-9]/g, '');
+    setTiebreakInput(raw);
+  };
+
+  // Winner highlight
+  const winnerSide = (() => {
+    const s1 = parseInt(score1Input);
+    const s2 = parseInt(score2Input);
+    if (isNaN(s1) || isNaN(s2)) return 0;
+    if (s1 > s2) return 1;
+    if (s2 > s1) return 2;
+    return 0;
+  })();
+
+  // Tiebreak detection
+  const isTiebreak = useMemo(() => {
+    const s1 = parseInt(score1Input);
+    const s2 = parseInt(score2Input);
+    return (s1 === winGames + 1 && s2 === winGames) || (s1 === winGames && s2 === winGames + 1);
+  }, [score1Input, score2Input, winGames]);
+
+  const loserSide = useMemo(() => {
+    const s1 = parseInt(score1Input);
+    const s2 = parseInt(score2Input);
+    if (s1 === winGames + 1 && s2 === winGames) return 2;
+    if (s1 === winGames && s2 === winGames + 1) return 1;
+    return 0;
+  }, [score1Input, score2Input, winGames]);
+
+  // 1位トーナメントかつ試合がまだ始まっていないかチェック
+  const is1stBracket = selectedBracketCategory === '1st';
+
+  // クラス切替ヘッダー用のタブ（進捗つき）
+  const categoryTabs = CATEGORY_TABS.map(tab => {
+    const b = brackets.find(x => x.category === tab.id);
+    const nonBye = b?.matches.filter(m => !m.isBye) || [];
+    return {
+      id: tab.id,
+      label: `${tab.label}トーナメント`,
+      finished: nonBye.filter(m => m.status === 'finished').length,
+      total: nonBye.length,
+    };
+  }).filter(t => brackets.some(b => b.category === t.id));
+
+  // 表示回戦の絞り込み（回戦が進むと前半を隠して表示を縮小する）
+  const bracketTotalRounds = currentBracket ? Math.log2(currentBracket.drawSize) : 0;
+  const autoStartRound = currentBracket
+    ? autoBracketStartRound(currentBracket.matches, bracketTotalRounds)
+    : 0;
+  const maxStartRound = Math.max(0, bracketTotalRounds - 1);
+  const manualStartRound = roundOverride?.category === selectedBracketCategory ? roundOverride.value : null;
+  const startRound = Math.min(manualStartRound ?? autoStartRound, maxStartRound);
+  const canAdjustRounds = maxStartRound >= 1;
+  const startRoundLabelText = startRoundLabel(startRound, bracketTotalRounds);
+  // 決勝が終わったら、結果画像・賞状印刷のボタンをクラスのカード内に出す
+  const isBracketFinished = !!currentBracket && (() => {
+    const last = Math.max(...currentBracket.matches.map(m => m.round));
+    const final = currentBracket.matches.find(m => m.round === last);
+    return !!final && final.status === 'finished' && !!final.winnerId;
+  })();
+  const setStartRound = (value: number | null) =>
+    setRoundOverride(value == null ? null : { category: selectedBracketCategory, value });
+
+  // ブラケット未生成のときの案内。
+  // ※この早期リターンは必ず全てのフックを呼び終えたあとに置くこと。
+  //   予選リーグの結果が変わると MixedScoreView が brackets を一旦空にして作り直すため、
+  //   フックより前で return するとレンダーごとにフック数が変わり React が例外を投げる。
+  if (brackets.length === 0) {
+    // 予選リーグを読み込み済みなら、順位変更を受けて作り直している最中
+    return (
+      <div className="text-center py-20 text-gray-400">
+        <Trophy size={48} className="mx-auto mb-4 opacity-30" />
+        <p className="text-lg">
+          {leagues.length > 0
+            ? '予選リーグの順位からトーナメント表を作成中です…'
+            : 'データをインポートするとトーナメント表が表示されます'}
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-2 sm:space-y-4">
+      {/* クラス切替ヘッダー（シングルス大会と同じ形式・左右/スワイプ/ドット）
+          決勝が終わったクラスは、カード内に結果画像・賞状印刷のボタンを出す */}
+      <BracketTopBar
+        tabs={categoryTabs}
+        selectedId={selectedBracketCategory}
+        onSelect={id => setSelectedBracketCategory(id as PlacementCategory)}
+        subtitle={bracketGameRule || undefined}
+        playing={Object.keys(bracketCourtAssignments).length}
+        canAdjustRounds={canAdjustRounds}
+        startRound={startRound}
+        maxStartRound={maxStartRound}
+        startRoundLabel={startRoundLabelText}
+        onStartRoundChange={setStartRound}
+        fullBleedClass="-mx-2 sm:-mx-4 -mt-2 sm:-mt-4"
+        right={(
+          <div className="flex items-center gap-1.5">
+            {/* コンソレーション（敗者同士の試合）の有無 */}
+            {currentBracket && (
+              <button
+                onClick={() => {
+                  const next = !currentBracket.consolation;
+                  const played = currentBracket.matches.some(m => isConsolation(m) && (m.status === 'finished' || m.status === 'playing'));
+                  if (!next && played && !window.confirm('コンソレの結果が消えます。コンソレなしにしますか？')) return;
+                  setBracketConsolation(currentBracket.category, next);
+                }}
+                className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold shadow-sm active:scale-95 transition-all whitespace-nowrap ${
+                  currentBracket.consolation
+                    ? 'bg-primary-500 text-white border border-primary-500'
+                    : 'text-gray-600 bg-gray-50 border border-gray-200 hover:bg-gray-100'
+                }`}
+                title="各山の敗者同士の試合（コンソレーション）を入れる／外す"
+              >
+                コンソレ{currentBracket.consolation ? 'あり' : 'なし'}
+              </button>
+            )}
+            {/* ドロー編集（クラスカード内に配置） */}
+            <button
+              onClick={() => setDrawEditMode(!drawEditMode)}
+              className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold shadow-sm active:scale-95 transition-all whitespace-nowrap ${
+                drawEditMode
+                  ? 'bg-gray-600 text-white border border-gray-600'
+                  : 'text-gray-600 bg-gray-50 border border-gray-200 hover:bg-gray-100'
+              }`}
+            >
+              <RotateCcw size={12} className={drawEditMode ? 'text-white' : 'text-gray-500'} />
+              {drawEditMode ? '編集を終了' : 'ドロー編集'}
+            </button>
+            {/* ゲームルール（アイコンのみ・タップでポップアップ） */}
+            <button
+              onClick={() => setRuleDialogOpen(true)}
+              className="flex items-center justify-center w-7 h-7 rounded-full text-gray-500 bg-gray-50 border border-gray-200 hover:bg-gray-100 active:scale-95 transition-all"
+              title={bracketGameRule ? `ゲームルール: ${bracketGameRule}` : 'ゲームルールを設定'}
+              aria-label="ゲームルールを設定"
+            >
+              <Settings2 size={14} />
+            </button>
+            {currentBracket && isBracketFinished && (
+              <>
+                <MixedBracketResultPreview
+                  opts={{
+                    bracket: currentBracket,
+                    allTeams: useMixedStore.getState().allTeams,
+                    tournamentName: tournamentInfo?.name || '',
+                    venue: tournamentInfo?.venue,
+                  }}
+                />
+                <CertificatePrintButton
+                  brackets={brackets}
+                  allTeams={useMixedStore.getState().allTeams}
+                  selectedCategory={selectedBracketCategory}
+                />
+              </>
+            )}
+          </div>
+        )}
+      />
+
+      {/* ゲームルール設定ポップアップ */}
+      {ruleDialogOpen && createPortal(
+        <div className="fixed inset-0 bg-black/40 z-[100] flex items-center justify-center p-4" onClick={() => setRuleDialogOpen(false)}>
+          <div className="bg-white rounded-2xl shadow-2xl w-[440px] max-w-[92vw] max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+            <div className="px-4 py-3 bg-gray-50 border-b border-gray-200 flex items-center justify-between">
+              <h3 className="text-sm font-bold text-gray-800 flex items-center gap-2">
+                <Settings2 size={15} className="text-gray-500" />
+                決勝トーナメントのゲームルール
+              </h3>
+              <button onClick={() => setRuleDialogOpen(false)} className="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+                <X size={18} />
+              </button>
+            </div>
+            <div className="p-4 space-y-2">
+              <div className="flex flex-col gap-1.5">
+                {[
+                  'ノーアド・6ゲームマッチ（6-6タイブレーク）',
+                  'ノーアド・4ゲームマッチ（4-4タイブレーク）',
+                  'デュースあり・6ゲームマッチ（6-6タイブレーク）',
+                  '1セットマッチ（6-6タイブレーク）',
+                  '8ゲームマッチ（8-8タイブレーク）',
+                ].map(preset => (
+                  <button
+                    key={preset}
+                    onClick={() => updateBracketGameRule(preset)}
+                    className={`px-3 py-2 text-xs text-left rounded-xl border transition-colors ${
+                      bracketGameRule === preset
+                        ? 'bg-gray-500 text-white border-gray-500'
+                        : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                    }`}
+                  >
+                    {preset}
+                  </button>
+                ))}
+              </div>
+              <input
+                type="text"
+                value={bracketGameRule}
+                onChange={e => updateBracketGameRule(e.target.value)}
+                placeholder="上記から選択、または直接入力"
+                className="w-full text-xs border border-gray-300 rounded-lg px-2 py-2 focus:ring-1 focus:ring-gray-400 focus:border-gray-400 outline-none"
+              />
+              <button
+                onClick={() => setRuleDialogOpen(false)}
+                className="w-full py-2.5 min-h-[44px] bg-gray-100 text-gray-600 rounded-xl hover:bg-gray-200 text-sm font-bold active:scale-[0.98] transition-all"
+              >
+                閉じる
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* ドロー編集パネル */}
+      {drawEditMode && currentBracket && (
+        <DrawEditPanel bracket={currentBracket} />
+      )}
+
+      {/* 1位トーナメント: ルーレット抽選（1回戦に未配置スロットがある場合のみ） */}
+      {is1stBracket && currentBracket && (() => {
+        const r1 = currentBracket.matches.filter(m => m.round === 1 && !m.isBye);
+        const hasEmptySlot = r1.some(m => !m.team1Id || !m.team2Id);
+        return hasEmptySlot;
+      })() && (
+        <RouletteDrawPanel
+          bracket={currentBracket}
+          onRebuild={rebuildBracketFromSlots}
+        />
+      )}
+
+      {/* ブラケット表示 */}
+      {currentBracket && (
+        <BracketDisplay
+          bracket={currentBracket}
+          onMatchClick={openScoreEditor}
+          onCourtClick={openCourtAssign}
+          getRoundLabel={getRoundLabel}
+          allTeams={useMixedStore.getState().allTeams}
+          courtAssignments={bracketCourtAssignments}
+          startRound={drawEditMode ? 0 : startRound}
+        />
+      )}
+
+      {/* コート割当ポップアップ */}
+      {courtAssignMatch && (() => {
+        const allTeamsData = useMixedStore.getState().allTeams;
+        const t1 = allTeamsData.find(t => t.teamId === courtAssignMatch.team1Id);
+        const t2 = allTeamsData.find(t => t.teamId === courtAssignMatch.team2Id);
+        // 使用中コートを除外（ただし、この試合が今入っているコートは選べるままにする）
+        const currentCourt = bracketCourtAssignments[courtAssignMatch.matchId]?.courtName;
+        const usedCourts = new Set(
+          Object.entries(bracketCourtAssignments)
+            .filter(([mid]) => mid !== courtAssignMatch.matchId)
+            .map(([, ca]) => ca.courtName)
+        );
+        const courtOpts = Array.from({ length: 16 }, (_, i) => `${i + 1}コート`);
+        const leagueInProgress = new Set<string>();
+        for (const l of leagues) {
+          const lm = useMixedStore.getState().leagueMatches.filter(m => m.leagueId === l.leagueId);
+          if (lm.some(m => m.status !== 'finished')) {
+            const nums = l.courtName?.match(/\d+/g);
+            if (nums) for (const n of nums) leagueInProgress.add(`${n}コート`);
+          }
+        }
+        return createPortal(
+          <div className="fixed inset-0 bg-black/40 z-[100]" onClick={() => setCourtAssignMatch(null)}>
+            <div
+              className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-2xl shadow-2xl w-[380px] max-w-[92vw] max-h-[85vh] overflow-y-auto z-[110] p-5"
+              onClick={e => e.stopPropagation()}
+            >
+              <h3 className="text-sm font-bold text-gray-800 mb-3">{currentCourt ? 'コートを変更' : 'コートを決定'}</h3>
+              <div className="bg-gray-50 rounded-lg p-3 mb-4 text-xs">
+                <div className="flex items-center gap-2 mb-1">
+                  {courtAssignMatch.team1League && <span className="w-4 h-4 rounded bg-gray-200 text-[8px] font-bold text-gray-600 flex items-center justify-center">{courtAssignMatch.team1League}</span>}
+                  <span className="font-bold">{t1?.teamName || courtAssignMatch.team1Name}</span>
+                </div>
+                <div className="text-gray-400 text-[9px] my-0.5">vs</div>
+                <div className="flex items-center gap-2">
+                  {courtAssignMatch.team2League && <span className="w-4 h-4 rounded bg-gray-200 text-[8px] font-bold text-gray-600 flex items-center justify-center">{courtAssignMatch.team2League}</span>}
+                  <span className="font-bold">{t2?.teamName || courtAssignMatch.team2Name}</span>
+                </div>
+              </div>
+              <label className="text-xs font-bold text-gray-600 block mb-2">コートを選択 <span className="text-gray-400 font-normal">（使用中は選択不可）</span></label>
+              <div className="grid grid-cols-4 gap-2 mb-4">
+                {courtOpts.map(c => {
+                  const isUsed = c !== currentCourt && (usedCourts.has(c) || leagueInProgress.has(c));
+                  return (
+                    <button key={c} onClick={() => !isUsed && setCourtAssignValue(c)}
+                      disabled={isUsed}
+                      className={`py-2 text-xs font-bold rounded-lg border-2 transition-all
+                        ${isUsed ? 'border-gray-100 bg-gray-50 text-gray-300 cursor-not-allowed' :
+                          courtAssignValue === c ? 'border-primary-500 bg-primary-50 text-gray-800' :
+                          'border-gray-200 text-gray-600 hover:border-gray-300'}`}
+                    >{c.replace('コート', '')}
+                      {isUsed && <span className="block text-[7px] text-gray-300">使用中</span>}
+                      {c === currentCourt && <span className="block text-[7px] text-primary-500">現在</span>}
+                    </button>
+                  );
+                })}
+              </div>
+              <div className="flex gap-2">
+                <button onClick={() => setCourtAssignMatch(null)} className="flex-1 py-2.5 bg-gray-100 text-gray-600 rounded-xl text-sm hover:bg-gray-200">キャンセル</button>
+                <button onClick={handleCourtAssignConfirm} disabled={!courtAssignValue || courtAssignValue === currentCourt}
+                  className="flex-1 py-2.5 bg-primary-500 text-white rounded-xl text-sm font-bold hover:bg-primary-600 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                >{currentCourt ? '変更' : '決定'}</button>
+              </div>
+              {currentCourt && (
+                <button onClick={handleCourtRelease}
+                  className="w-full mt-2 py-2 text-xs font-bold text-red-500 bg-red-50 border border-red-100 rounded-xl hover:bg-red-100 transition-colors">
+                  コートから出す（割当を解除）
+                </button>
+              )}
+              <button onClick={() => {
+                // スキップしてスコア入力へ
+                setCourtAssignMatch(null);
+                setEditingMatch(courtAssignMatch);
+                setScore1Input(courtAssignMatch.score1 !== null && courtAssignMatch.score1 >= 0 ? courtAssignMatch.score1.toString() : '');
+                setScore2Input(courtAssignMatch.score2 !== null && courtAssignMatch.score2 >= 0 ? courtAssignMatch.score2.toString() : '');
+                setTiebreakInput(courtAssignMatch.tiebreakScore?.toString() ?? '');
+              }} className="w-full mt-2 py-2 text-xs text-gray-400 hover:text-gray-600 transition-colors">
+                スキップしてスコア入力 →
+              </button>
+            </div>
+          </div>,
+          document.body
+        );
+      })()}
+
+      {/* スコア入力モーダル */}
+      {editingMatch && createPortal(
+        // キーボード表示中は visualViewport の高さ・位置に合わせ、見えている領域（画面上半分）いっぱいに表示する
+        <div
+          className={`fixed left-0 right-0 z-[100] flex justify-center p-2 sm:p-4 ${keyboardOpen ? 'items-start' : 'items-center'}`}
+          style={{ top: viewportOffsetTop, height: viewportHeight || undefined }}
+          onClick={() => setEditingMatch(null)}
+        >
+          <div className="fixed inset-0 bg-black/40" />
+          <div
+            className={`relative bg-white rounded-2xl shadow-2xl w-[420px] max-w-[92vw] max-h-full flex flex-col overflow-hidden z-[110] ${keyboardOpen ? 'h-full' : ''}`}
+            onClick={e => e.stopPropagation()}
+          >
+            <h3 className={`shrink-0 text-sm font-bold text-gray-800 px-5 ${keyboardOpen ? 'pt-3 pb-1' : 'pt-5 pb-2'}`}>スコア入力</h3>
+
+            <div className={`flex-1 min-h-0 overflow-y-auto px-5 ${keyboardOpen ? 'py-1' : 'py-2'}`}>
+            <div className={`flex items-center gap-4 ${keyboardOpen ? 'mb-3' : 'mb-5'}`}>
+              <div className={`flex-1 text-center p-2 rounded-xl border-2 transition-all ${winnerSide === 1 ? 'bg-primary-50 border-primary-300' : 'border-transparent'}`}>
+                <div className="font-medium text-sm">{editingMatch.team1Name}</div>
+                <div className="text-xs text-gray-400">{editingMatch.team1League}</div>
+              </div>
+              <span className="text-gray-300 font-bold">VS</span>
+              <div className={`flex-1 text-center p-2 rounded-xl border-2 transition-all ${winnerSide === 2 ? 'bg-primary-50 border-primary-300' : 'border-transparent'}`}>
+                <div className="font-medium text-sm">{editingMatch.team2Name}</div>
+                <div className="text-xs text-gray-400">{editingMatch.team2League}</div>
+              </div>
+            </div>
+
+            <div className={`flex items-center justify-center gap-2 ${keyboardOpen ? 'mb-3' : 'mb-5'}`}>
+              {isTiebreak && loserSide === 1 && (
+                <div className="flex flex-col items-center">
+                  <div className="text-[9px] text-gray-500 mb-0.5">TB</div>
+                  <input
+                    ref={tiebreakRef}
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={2}
+                    value={tiebreakInput}
+                    onChange={handleTiebreakChange}
+                    onKeyDown={e => { if (e.key === 'Enter') saveScore(); }}
+                    className="w-10 h-12 text-center text-lg font-bold border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-gray-400 bg-gray-50 transition-all"
+                  />
+                </div>
+              )}
+              <input
+                type="text"
+                inputMode="numeric"
+                maxLength={1}
+                value={score1Input}
+                onChange={handleScore1Change}
+                className={`w-14 h-12 text-center text-2xl font-bold border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all ${winnerSide === 1 ? 'border-primary-500 bg-primary-50 ring-2 ring-primary-300' : 'border-primary-300'}`}
+                autoFocus
+              />
+              <span className="text-2xl font-bold text-gray-300">-</span>
+              <input
+                ref={score2Ref}
+                type="text"
+                inputMode="numeric"
+                maxLength={1}
+                value={score2Input}
+                onChange={handleScore2Change}
+                onKeyDown={e => { if (e.key === 'Enter' && !isTiebreak) saveScore(); }}
+                className={`w-14 h-12 text-center text-2xl font-bold border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all ${winnerSide === 2 ? 'border-primary-500 bg-primary-50 ring-2 ring-primary-300' : 'border-primary-300'}`}
+              />
+              {isTiebreak && loserSide === 2 && (
+                <div className="flex flex-col items-center">
+                  <div className="text-[9px] text-gray-500 mb-0.5">TB</div>
+                  <input
+                    ref={tiebreakRef}
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={2}
+                    value={tiebreakInput}
+                    onChange={handleTiebreakChange}
+                    onKeyDown={e => { if (e.key === 'Enter') saveScore(); }}
+                    className="w-10 h-12 text-center text-lg font-bold border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-gray-400 bg-gray-50 transition-all"
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* DEF buttons */}
+            <div className={`grid grid-cols-2 gap-2 ${keyboardOpen ? 'mb-2' : 'mb-3'}`}>
+              <button
+                onClick={() => editingMatch.team2Id && handleDEF(editingMatch.team2Id)}
+                className="flex items-center justify-center gap-1.5 px-3 py-3 min-h-[48px] bg-primary-50 border-2 border-primary-300 text-gray-800 rounded-xl hover:bg-primary-100 transition-all text-sm font-bold active:scale-[0.98]"
+              >
+                <Ban size={14} />
+                <span className="truncate">{editingMatch.team1Name}</span>
+                <span className="text-xs">DEF</span>
+              </button>
+              <button
+                onClick={() => editingMatch.team1Id && handleDEF(editingMatch.team1Id)}
+                className="flex items-center justify-center gap-1.5 px-3 py-3 min-h-[48px] bg-primary-50 border-2 border-primary-300 text-gray-800 rounded-xl hover:bg-primary-100 transition-all text-sm font-bold active:scale-[0.98]"
+              >
+                <Ban size={14} />
+                <span className="truncate">{editingMatch.team2Name}</span>
+                <span className="text-xs">DEF</span>
+              </button>
+            </div>
+
+            {/* 印刷・コールボタン */}
+            <div className={`flex gap-2 ${keyboardOpen ? 'mb-1' : 'mb-3'}`}>
+              <button onClick={() => {
+                const at = useMixedStore.getState().allTeams;
+                const gr = tournamentInfo?.bracketGameRule
+                  || tournamentInfo?.gameRules?.[0]
+                  || tournamentInfo?.rules?.find(r => /ゲームマッチ|ノーアド|タイブレ/.test(r))?.replace(/^（[０-９\d]+）\s*/, '').trim()
+                  || '';
+                // 日付から予備日を除去
+                const dateStr = (tournamentInfo?.date || '').split(/予備日[：:]?/)[0].trim();
+                printRefereeSheet(editingMatch, at, tournamentInfo?.name || '', currentBracket?.label || '', bracketMatchRoundLabel(editingMatch, Math.log2(currentBracket?.drawSize || 16)), gr, { date: dateStr, name: tournamentInfo?.name || '' });
+              }} className="flex-1 flex items-center justify-center gap-1 py-2 bg-gray-50 border border-gray-200 rounded-xl text-gray-600 text-xs hover:bg-gray-100 active:scale-[0.98] transition-all">
+                印刷
+              </button>
+              {/* コートを間違えた・移動したときにここから直せる */}
+              <button onClick={() => openCourtAssign(editingMatch)}
+                className="flex-1 flex items-center justify-center gap-1 py-2 bg-primary-50 border border-primary-200 rounded-xl text-gray-800 text-xs hover:bg-primary-100 active:scale-[0.98] transition-all">
+                <MapPin size={12} />
+                {bracketCourtAssignments[editingMatch.matchId] ? 'コート変更' : 'コート決定'}
+              </button>
+              <button onClick={() => {
+                const ca = bracketCourtAssignments[editingMatch.matchId];
+                setEditingMatch(null);
+                setCallMatch(editingMatch);
+                setCallCourt(ca ? ca.courtName : '');
+                setCallTime('');
+              }}
+                className="flex-1 flex items-center justify-center gap-1 py-2 bg-gray-50 border border-gray-200 rounded-xl text-gray-600 text-xs hover:bg-gray-100 active:scale-[0.98] transition-all">
+                <Volume2 size={12} />コール
+              </button>
+            </div>
+
+            </div>
+
+            {/* Footer（保存は常に見える位置に固定する） */}
+            <div className={`shrink-0 border-t border-gray-100 bg-white px-5 ${keyboardOpen ? 'py-2 space-y-1.5' : 'py-3 space-y-2'}`}>
+              <button
+                onClick={saveScore}
+                className={`w-full flex items-center justify-center gap-2 bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-xl hover:from-primary-700 hover:to-primary-800 text-sm font-bold active:scale-[0.98] transition-all shadow-md ${keyboardOpen ? 'py-2.5 min-h-[44px]' : 'py-3 min-h-[48px]'}`}
+              >
+                <Save size={14} />保存
+              </button>
+              <button onClick={() => setEditingMatch(null)} className={`w-full bg-gray-100 text-gray-600 rounded-xl hover:bg-gray-200 text-sm active:scale-[0.98] transition-all ${keyboardOpen ? 'py-2 min-h-[40px]' : 'py-2.5 min-h-[48px]'}`}>
+                キャンセル
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* コール読込中／コール中の表示（シングルス大会と共通） */}
+      {(isSpeaking || isCallLoading) && callingInfo && createPortal(
+        (() => {
+          const at = useMixedStore.getState().allTeams;
+          const ct1 = at.find(t => t.teamId === callingInfo.match.team1Id);
+          const ct2 = at.find(t => t.teamId === callingInfo.match.team2Id);
+          const side = (t?: typeof at[number]) => ({
+            name: t ? [t.male.name, t.female.name] : ['-'],
+            sub: t ? [t.male.affiliation, t.female.affiliation] : undefined,
+          });
+          return (
+            <CallStatusPopup
+              loading={isCallLoading}
+              courtLabel={toCourtCallName(callingInfo.courtName)}
+              subtitle={`${currentBracket?.label || ''} ${callingInfo.roundLabel}`}
+              left={side(ct1)}
+              right={side(ct2)}
+              onStop={() => { stop(); setCallingInfo(null); }}
+            />
+          );
+        })(),
+        document.body
+      )}
+
+      {/* 音声コールプレビュー */}
+      {callMatch && currentBracket && (() => {
+        const ct1 = useMixedStore.getState().allTeams.find(t => t.teamId === callMatch.team1Id);
+        const ct2 = useMixedStore.getState().allTeams.find(t => t.teamId === callMatch.team2Id);
+        if (!ct1 || !ct2) return null;
+        const totalR = Math.log2(currentBracket.drawSize);
+        const rl = bracketMatchRoundLabel(callMatch, totalR);
+        return (
+          <CallPreviewDialog
+            match={callMatch}
+            team1={ct1}
+            team2={ct2}
+            category={currentBracket.category}
+            roundLabel={rl}
+            courtName={callCourt}
+            startTime={callTime}
+            allTeams={useMixedStore.getState().allTeams}
+            onConfirm={(text) => {
+              if (text) {
+                setCallingInfo({ match: callMatch, courtName: callCourt, roundLabel: rl });
+                speak(text, { rate: 0.9, pitch: 1.0, volume: 1.0, repeatCount: 1 }, () => setCallingInfo(null));
+              }
+              setCallMatch(null);
+            }}
+            onClose={() => setCallMatch(null)}
+          />
+        );
+      })()}
+    </div>
+  );
+}
+
+/** ドロー編集パネル: 1回戦の対戦順を手動で修正 */
+function DrawEditPanel({ bracket }: { bracket: PlacementBracket }) {
+  const totalLeagues = useMixedStore(s => s.leagues.length);
+  const { rebuildBracketFromSlots, regenerateBrackets } = useMixedStore();
+  const allTeams = useMixedStore(s => s.allTeams);
+  const hasProgress = bracket.matches.some(m => !m.isBye && (m.status === 'finished' || m.status === 'playing'));
+
+  // 1回戦の16スロット（BYE=null含む）を構築
+  const r1Matches = bracket.matches.filter(m => m.round === 1).sort((a, b) => a.position - b.position);
+  const slots: { teamId: string | null; teamName: string; league: string; isBye: boolean }[] = [];
+  // BYEかどうかはドロー表の形（byePositions）で決める。予選が終わる前はチームが空なので名前では判定できない
+  const byeSet = resolveByePositions(bracket);
+  for (const m of r1Matches) {
+    const base = (m.position - 1) * 2;
+    slots.push({
+      teamId: m.team1Id || null,
+      teamName: m.team1Name, league: m.team1League,
+      isBye: !m.team1Id && byeSet.has(base),
+    });
+    slots.push({
+      teamId: m.team2Id || null,
+      teamName: m.team2Name, league: m.team2League,
+      isBye: !m.team2Id && byeSet.has(base + 1),
+    });
+  }
+
+  const [dragIdx, setDragIdx] = useState<number | null>(null);
+
+  const swapSlots = (fromIdx: number, toIdx: number) => {
+    if (fromIdx === toIdx) return;
+    const newSlots = [...slots];
+    const temp = newSlots[fromIdx];
+    newSlots[fromIdx] = newSlots[toIdx];
+    newSlots[toIdx] = temp;
+    // 16スロット配列を直接渡してブラケットを再構築。
+    // BYEを動かした場合もドロー表の形として残す（コンソレの組合せもここから決まる）
+    const slotArray: (string | null)[] = newSlots.map(s => s.isBye ? null : s.teamId);
+    const byes = new Set(newSlots.map((s, i) => (s.isBye ? i : -1)).filter(i => i >= 0));
+    let leagueMap: (string | null)[] | undefined;
+    if (bracket.slotLeagueIds && bracket.slotLeagueIds.length === newSlots.length) {
+      leagueMap = [...bracket.slotLeagueIds];
+      [leagueMap[fromIdx], leagueMap[toIdx]] = [leagueMap[toIdx], leagueMap[fromIdx]];
+    }
+    rebuildBracketFromSlots(bracket.category, slotArray, byes, leagueMap);
+  };
+
+  return (
+    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+      <div className="bg-gradient-to-r from-gray-50 to-white px-4 py-3 border-b border-gray-100">
+        <h3 className="text-sm font-bold text-gray-800 flex items-center gap-2">
+          <RotateCcw size={16} className="text-gray-600" />
+          ドロー編集
+          <span className="text-[10px] font-normal text-gray-500">（スロットをタップして入れ替え。BYEも動かせます）</span>
+        </h3>
+        {!hasProgress && (
+          <button
+            onClick={() => {
+              if (window.confirm('予選リーグの順位とドロー表の形から、順位別トーナメントを作り直します。\n（試合が始まっているクラスはそのまま残します。1位トーナメントの抽選はやり直しになります）')) {
+                regenerateBrackets();
+              }
+            }}
+            className="mt-2 px-3 py-1.5 text-[11px] font-bold text-gray-700 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100"
+          >
+            ドロー表の形で作り直す
+          </button>
+        )}
+      </div>
+      <div className="p-4">
+        <div className="space-y-0.5">
+          {slots.map((slot, idx) => {
+            const isMatchBoundary = idx % 2 === 0 && idx > 0;
+            const teamData = slot.teamId ? allTeams.find(t => t.teamId === slot.teamId) : null;
+            const isSelected = dragIdx === idx;
+            const matchNum = Math.floor(idx / 2) + 1;
+
+            return (
+              <div key={idx}>
+                {isMatchBoundary && <div className="h-2" />}
+                {idx % 2 === 0 && (
+                  <div className="text-[9px] text-gray-400 font-bold mb-0.5 ml-1">第{matchNum}試合</div>
+                )}
+                <button
+                  onClick={() => {
+                    if (dragIdx === null) {
+                      setDragIdx(idx);
+                    } else {
+                      swapSlots(dragIdx, idx);
+                      setDragIdx(null);
+                    }
+                  }}
+                  className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-left text-xs transition-all ${
+                    isSelected ? 'bg-gray-100 border-2 border-gray-400 ring-2 ring-gray-200' :
+                    dragIdx !== null ? 'bg-primary-50 border border-primary-200 hover:bg-primary-100 cursor-pointer' :
+                    slot.isBye ? 'bg-gray-50 border border-gray-200 text-gray-400' :
+                    'bg-white border border-gray-200 hover:bg-gray-50'
+                  }`}
+                >
+                  <span className="w-5 text-center text-[10px] text-gray-400 font-mono shrink-0">{idx + 1}</span>
+                  {slot.teamId && slot.league ? (
+                    <span className={`w-5 h-5 rounded text-[9px] font-bold flex items-center justify-center shrink-0`} style={leagueBadgeStyle(slot.league, totalLeagues)}>
+                      {slot.league}
+                    </span>
+                  ) : <span className="w-5 shrink-0" />}
+                  {teamData ? (
+                    <span className="font-bold text-gray-800">{teamData.teamName}</span>
+                  ) : slot.isBye ? (
+                    <span className="text-gray-400 italic">BYE</span>
+                  ) : bracket.slotLeagueIds?.[idx] ? (
+                    <span className="text-gray-500">{bracket.slotLeagueIds[idx]}リーグ（未確定）</span>
+                  ) : (
+                    <span className="text-gray-400">―</span>
+                  )}
+                  {teamData && <span className="text-[10px] text-gray-400 ml-auto">No.{teamData.pairNumber}</span>}
+                </button>
+              </div>
+            );
+          })}
+        </div>
+        {dragIdx !== null && (
+          <div className="mt-3 text-center text-xs text-gray-600 font-medium animate-pulse">
+            入れ替え先のスロットをタップしてください
+          </div>
+        )}
+        {dragIdx !== null && (
+          <button onClick={() => setDragIdx(null)} className="mt-2 w-full py-2 bg-gray-100 text-gray-500 rounded-lg text-xs hover:bg-gray-200">
+            選択を取り消し
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/** ルーレット抽選パネル（改善版: 全ペア表示・個別選択・手動配置） */
+function RouletteDrawPanel({ bracket, onRebuild }: {
+  bracket: PlacementBracket;
+  onRebuild: (category: PlacementCategory, slots: (string | null)[], byePositions?: Set<number>) => void;
+}) {
+  const [spinning, setSpinning] = useState(false);
+  const [currentHighlight, setCurrentHighlight] = useState(-1);
+  // 抽選結果は配置するたびにブラケットへ反映済みなので、途中で別ページへ移動して
+  // 戻ってきたときはブラケットの1回戦から配置状況を復元する
+  const [assignedSlots, setAssignedSlots] = useState<Map<number, string>>(() => {
+    const teamIds = new Set(bracket.teams.map(t => t.teamId));
+    const restored = new Map<number, string>();
+    for (const m of bracket.matches) {
+      if (m.round !== 1) continue;
+      const base = (m.position - 1) * 2;
+      if (m.team1Id && teamIds.has(m.team1Id)) restored.set(base, m.team1Id);
+      if (m.team2Id && teamIds.has(m.team2Id)) restored.set(base + 1, m.team2Id);
+    }
+    return restored;
+  });
+  const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null);
+  const [drawComplete, setDrawComplete] = useState(false);
+  const spinTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const teams = bracket.teams;
+
+  // スロット構造は大会のペア数から決まる（例: 13ペア→16ドロー, BYE=slot1,9,15）
+  const DRAW_SIZE = bracket.drawSize;
+  const BYE_POSITIONS = useMemo(
+    () => new Set(bracket.byePositions ?? [1, 9, 15]),
+    [bracket.byePositions],
+  );
+  const circled = (n: number) => String.fromCodePoint(0x2460 + n);
+
+  // チーム配置可能なスロット（BYE以外）
+  const teamSlots = useMemo(() =>
+    Array.from({ length: DRAW_SIZE }, (_, i) => i).filter(i => !BYE_POSITIONS.has(i)),
+  [DRAW_SIZE, BYE_POSITIONS]);
+
+  // 割当済みチームID
+  const assignedTeamIds = useMemo(() => new Set(assignedSlots.values()), [assignedSlots]);
+  const availableSlots = useMemo(() => teamSlots.filter(i => !assignedSlots.has(i)), [teamSlots, assignedSlots]);
+  const unassignedTeams = useMemo(() => teams.filter(t => !assignedTeamIds.has(t.teamId)), [teams, assignedTeamIds]);
+  const activeTeam = selectedTeamId ? teams.find(t => t.teamId === selectedTeamId) : unassignedTeams[0];
+
+  // 現在の割当状態をブラケットに即時反映するヘルパー（未配置スロットはnullのまま、BYE位置のみBYE扱い）
+  const syncToBracket = useCallback((slotsMap: Map<number, string>) => {
+    const slots16: (string | null)[] = Array(DRAW_SIZE).fill(null);
+    slotsMap.forEach((teamId, slot) => { slots16[slot] = teamId; });
+    onRebuild(bracket.category, slots16, BYE_POSITIONS);
+  }, [bracket.category, onRebuild, DRAW_SIZE, BYE_POSITIONS]);
+
+  // ルーレット
+  const spinRoulette = useCallback(() => {
+    if (!activeTeam || availableSlots.length === 0) return;
+    setSpinning(true);
+    let count = 0;
+    const totalSpins = 12 + Math.floor(Math.random() * 8);
+    const spin = () => {
+      setCurrentHighlight(availableSlots[Math.floor(Math.random() * availableSlots.length)]);
+      count++;
+      if (count < totalSpins) {
+        spinTimerRef.current = setTimeout(spin, 50 + count * 18);
+      } else {
+        const finalSlot = availableSlots[Math.floor(Math.random() * availableSlots.length)];
+        setCurrentHighlight(finalSlot);
+        const newSlots = new Map(assignedSlots);
+        newSlots.set(finalSlot, activeTeam.teamId);
+        setAssignedSlots(newSlots);
+        setSpinning(false);
+        setSelectedTeamId(null);
+        // トーナメント表に即座に反映
+        syncToBracket(newSlots);
+      }
+    };
+    spin();
+  }, [activeTeam, availableSlots, assignedSlots, syncToBracket]);
+
+  const manualAssign = (slotIdx: number) => {
+    if (!activeTeam || assignedSlots.has(slotIdx) || BYE_POSITIONS.has(slotIdx)) return;
+    const newSlots = new Map(assignedSlots);
+    newSlots.set(slotIdx, activeTeam.teamId);
+    setAssignedSlots(newSlots);
+    setSelectedTeamId(null);
+    // トーナメント表に即座に反映
+    syncToBracket(newSlots);
+  };
+
+  // 全自動抽選
+  const autoDrawAll = useCallback(() => {
+    const shuffled = [...teams].sort(() => Math.random() - 0.5);
+    // BYE以外のスロットに順に配置
+    const slots16: (string | null)[] = Array(DRAW_SIZE).fill(null);
+    let ti = 0;
+    for (let i = 0; i < DRAW_SIZE; i++) {
+      if (BYE_POSITIONS.has(i)) continue;
+      if (ti < shuffled.length) { slots16[i] = shuffled[ti].teamId; ti++; }
+    }
+    onRebuild(bracket.category, slots16, BYE_POSITIONS);
+    setDrawComplete(true);
+  }, [teams, bracket.category, onRebuild, DRAW_SIZE, BYE_POSITIONS]);
+
+  // 手動割当確定
+  const confirmDraw = useCallback(() => {
+    const slots16: (string | null)[] = Array(DRAW_SIZE).fill(null);
+    assignedSlots.forEach((teamId, slot) => { slots16[slot] = teamId; });
+    onRebuild(bracket.category, slots16, BYE_POSITIONS);
+    setDrawComplete(true);
+  }, [assignedSlots, bracket.category, onRebuild, DRAW_SIZE, BYE_POSITIONS]);
+
+  const resetDraw = () => {
+    setAssignedSlots(new Map());
+    setSelectedTeamId(null);
+    setCurrentHighlight(-1);
+    setDrawComplete(false);
+    if (spinTimerRef.current) clearTimeout(spinTimerRef.current);
+    // ブラケットも全スロット空にリセット
+    const emptySlots: (string | null)[] = Array(DRAW_SIZE).fill(null);
+    onRebuild(bracket.category, emptySlots, BYE_POSITIONS);
+  };
+
+  useEffect(() => () => { if (spinTimerRef.current) clearTimeout(spinTimerRef.current); }, []);
+
+  // チーム番号（スロット内の通し番号、BYE除く）
+  let teamNumCounter = 0;
+  const slotTeamNum: number[] = [];
+  for (let i = 0; i < DRAW_SIZE; i++) {
+    if (BYE_POSITIONS.has(i)) { slotTeamNum.push(-1); }
+    else { teamNumCounter++; slotTeamNum.push(teamNumCounter); }
+  }
+
+  return (
+    <div className="bg-white rounded-xl shadow-sm border border-primary-200 overflow-hidden">
+      <div className="bg-gradient-to-r from-primary-50 to-white px-4 py-2 border-b border-primary-100 flex items-center justify-between">
+        <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2">
+          <Shuffle size={14} className="text-primary-600" />
+          1位トーナメント 抽選
+        </h3>
+        <button onClick={resetDraw} className="flex items-center gap-1 px-2 py-1 text-xs text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg">
+          <RotateCcw size={12} />リセット
+        </button>
+      </div>
+
+      <div className="p-3">
+        {!drawComplete ? (
+          <>
+            {/* ペア選択 */}
+            <div className="mb-3">
+              <div className="text-[10px] text-gray-500 mb-1.5">ペアを選択してスロットに配置</div>
+              <div className="flex flex-wrap gap-1">
+                {teams.map(t => {
+                  const isAssigned = assignedTeamIds.has(t.teamId);
+                  const isSelected = activeTeam?.teamId === t.teamId;
+                  return (
+                    <button key={t.teamId} onClick={() => !isAssigned && setSelectedTeamId(t.teamId)}
+                      disabled={isAssigned || spinning}
+                      className={`px-2 py-1 rounded text-[10px] font-medium border transition-all ${
+                        isAssigned ? 'bg-primary-50 border-primary-200 text-primary-500 line-through opacity-60' :
+                        isSelected ? 'bg-primary-100 border-primary-400 text-gray-900 ring-1 ring-primary-300' :
+                        'bg-white border-gray-200 text-gray-700 hover:border-gray-300'}`}
+                    >
+                      {t.leagueId} {t.teamName}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* ルーレットボタン */}
+            {activeTeam && !spinning && (
+              <div className="mb-3 flex items-center gap-2 px-2 py-1.5 bg-primary-50 border border-primary-200 rounded-lg">
+                <span className="text-[10px] text-gray-800 flex-1 truncate">
+                  <span className="font-bold">{activeTeam.leagueId}</span> {activeTeam.teamName}
+                </span>
+                <button onClick={spinRoulette}
+                  className="px-3 py-1 rounded-lg text-[10px] font-bold bg-primary-500 text-white hover:bg-primary-600 shrink-0">
+                  🎲 ルーレット
+                </button>
+              </div>
+            )}
+            {spinning && (
+              <div className="mb-3 py-2 bg-primary-100 border border-primary-300 rounded-lg text-center text-xs font-bold text-gray-800 animate-pulse">抽選中...</div>
+            )}
+
+            {/* ドロー表形式スロット（対戦ペアで2列表示） */}
+            <div className="grid grid-cols-2 gap-x-2 gap-y-0.5 mb-3">
+              {Array.from({ length: DRAW_SIZE / 2 }, (_, matchIdx) => {
+                const s1 = matchIdx * 2;
+                const s2 = matchIdx * 2 + 1;
+                const isBye1 = BYE_POSITIONS.has(s1);
+                const isBye2 = BYE_POSITIONS.has(s2);
+                const a1 = assignedSlots.get(s1);
+                const a2 = assignedSlots.get(s2);
+                const t1 = a1 ? teams.find(t => t.teamId === a1) : null;
+                const t2 = a2 ? teams.find(t => t.teamId === a2) : null;
+                const hl1 = currentHighlight === s1 && spinning;
+                const hl2 = currentHighlight === s2 && spinning;
+                const canPlace1 = !isBye1 && !assignedSlots.has(s1) && !!activeTeam && !spinning;
+                const canPlace2 = !isBye2 && !assignedSlots.has(s2) && !!activeTeam && !spinning;
+
+                const renderSlot = (si: number, isBye: boolean, team: typeof t1, hl: boolean, canPlace: boolean) => (
+                  <div
+                    onClick={() => canPlace && manualAssign(si)}
+                    className={`flex items-center gap-1.5 px-2 py-1.5 text-[10px] transition-all ${
+                      isBye ? 'bg-gray-100 text-gray-400' :
+                      hl ? 'bg-primary-200' :
+                      team ? 'bg-primary-50' :
+                      canPlace ? 'bg-primary-50 cursor-pointer hover:bg-primary-100' : 'bg-white'
+                    }`}
+                  >
+                    <span className="text-gray-400 font-bold w-4 text-center shrink-0">
+                      {isBye ? '' : circled(slotTeamNum[si] - 1)}
+                    </span>
+                    {isBye ? (
+                      <span className="text-gray-300 italic">BYE</span>
+                    ) : team ? (
+                      <span className="font-bold text-gray-800 truncate"><span className="text-gray-400">{team.leagueId}</span> {team.teamName}</span>
+                    ) : canPlace ? (
+                      <span className="text-primary-500">← タップ</span>
+                    ) : (
+                      <span className="text-gray-300">―</span>
+                    )}
+                  </div>
+                );
+
+                return (
+                  <div key={matchIdx} className="rounded border border-gray-200 overflow-hidden">
+                    {renderSlot(s1, isBye1, t1, hl1, canPlace1)}
+                    <div className="border-t border-gray-100" />
+                    {renderSlot(s2, isBye2, t2, hl2, canPlace2)}
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* ボタン群 */}
+            <div className="flex gap-2">
+              <button onClick={autoDrawAll}
+                className="flex-1 py-2 bg-primary-500 text-white rounded-lg text-xs font-bold hover:bg-primary-600">
+                🎲 全自動抽選
+              </button>
+              {unassignedTeams.length === 0 && (
+                <button onClick={confirmDraw}
+                  className="flex-1 py-2 bg-primary-500 text-white rounded-lg text-xs font-bold hover:bg-primary-600">
+                  ✓ 確定
+                </button>
+              )}
+            </div>
+          </>
+        ) : (
+          <div className="text-center py-4">
+            <div className="text-gray-700 font-bold text-sm mb-2">抽選完了</div>
+            <p className="text-xs text-gray-500">トーナメント表に反映されました</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/** ブラケット描画コンポーネント */
+function BracketDisplay({ bracket, onMatchClick, onCourtClick, getRoundLabel, allTeams, courtAssignments, compact = false, startRound = 0 }: {
+  bracket: PlacementBracket;
+  onMatchClick: (match: BracketMatch) => void;
+  /** コート表示をタップしたとき（コートの変更・解除）。未指定なら通常のカードタップと同じ */
+  onCourtClick?: (match: BracketMatch) => void;
+  getRoundLabel: (round: number, total: number) => string;
+  allTeams: { teamId: string; teamName: string; male: { name: string; affiliation: string }; female: { name: string; affiliation: string }; pairNumber: number; leagueId: string }[];
+  courtAssignments: Record<string, { courtName: string; startedAt: number }>;
+  compact?: boolean;
+  /** 表示を始める回戦（0=1回戦から。1以上で前の回戦を隠して詰めて表示する） */
+  startRound?: number;
+}) {
+  const totalLeagues = useMixedStore(s => s.leagues.length);
+  const [now, setNow] = useState(Date.now());
+  useEffect(() => { const t = setInterval(() => setNow(Date.now()), 30000); return () => clearInterval(t); }, []);
+
+  // 4・5位トーナメント: 同一リーグから複数チーム参加時にM4, M5等のサフィックスを付ける
+  const teamLeagueSuffix = useMemo(() => {
+    if (bracket.category !== '4th') return new Map<string, string>();
+    const leagueCount = new Map<string, number>();
+    const result = new Map<string, string>();
+    // 1回戦のチームを順に見て、同一リーグの出現回数をカウント
+    for (const t of bracket.teams) {
+      const lid = t.leagueId.trim();
+      const count = (leagueCount.get(lid) || 0) + 1;
+      leagueCount.set(lid, count);
+      // 2回目以降は5位
+      if (count > 1) result.set(t.teamId, `${lid}5`);
+      else result.set(t.teamId, leagueCount.get(lid)! > 0 ? `${lid}4` : lid);
+    }
+    // 1回しか出現しないリーグはサフィックス不要
+    for (const [tid, suffix] of result) {
+      const lid = suffix.replace(/[0-9]$/, '');
+      if ((leagueCount.get(lid) || 0) <= 1) result.set(tid, lid);
+    }
+    return result;
+  }, [bracket]);
+
+  const getLeagueBadge = (teamId: string | null, league: string) => {
+    if (teamId && teamLeagueSuffix.size > 0) {
+      return teamLeagueSuffix.get(teamId) || league;
+    }
+    return league;
+  };
+
+  const totalRounds = Math.log2(bracket.drawSize);
+  const allMatchesByRound: BracketMatch[][] = [];
+  for (let r = 1; r <= totalRounds; r++) {
+    allMatchesByRound.push(bracket.matches.filter(m => m.round === r).sort((a, b) => a.position - b.position));
+  }
+  // 決着済みの前半の回戦を隠し、残りを詰めて描画する（最低2列は残す）
+  const hiddenRounds = Math.min(Math.max(Math.floor(startRound), 0), Math.max(0, totalRounds - 1));
+  const matchesByRound = allMatchesByRound.slice(hiddenRounds);
+  const visibleRounds = matchesByRound.length;
+
+  // 1試合カードの高さは中身（選手2行＋ステータス行）と揃える。
+  // 余白が余ると対戦どうしの間隔が広がり、スマートフォンでスクロール量が増えるため。
+  const SLOT_HEIGHT = compact ? 22 : 40;
+  const STATUS_HEIGHT = compact ? 16 : 22;
+  const MATCH_HEIGHT = SLOT_HEIGHT * 2 + STATUS_HEIGHT;
+  const BYE_HEIGHT = compact ? 28 : 48;
+  const MATCH_WIDTH = compact ? 160 : 300;
+  const ROUND_GAP = compact ? 20 : 32;
+  const MATCH_GAP = compact ? 6 : 10;
+
+  // 1位トーナメント以外: 配置されるリーグ情報をビジュアル表示
+  const is1stBracket = bracket.category === '1st';
+
+
+  // 未配置スロットに配置予定のリーグ情報を表示
+  // Excel から並び順を読み込めた場合は bracket.slotLeagueIds を使う
+  const slotLeagueIds = bracket.slotLeagueIds ?? DEFAULT_BRACKET_SLOT_MAP[bracket.category];
+  // 1位トーナメント: BYE位置 (0-indexed)
+  const BYE_POSITIONS_1ST = useMemo(
+    () => new Set(bracket.byePositions ?? [1, 9, 15]),
+    [bracket.byePositions],
+  );
+  // スロット→丸番号マップ（BYE以外に①~⑬を割り当て）
+  const slotCircledNum = useMemo(() => {
+    const map = new Map<number, string>();
+    let num = 0;
+    for (let i = 0; i < bracket.drawSize; i++) {
+      if (BYE_POSITIONS_1ST.has(i)) continue;
+      map.set(i, String.fromCodePoint(0x2460 + num));
+      num++;
+    }
+    return map;
+  }, [bracket.drawSize, BYE_POSITIONS_1ST]);
+
+  // 1回戦スロットの丸番号を取得（1位トーナメントの1回戦のみ）
+  const getSlotNumber = (match: BracketMatch, slot: 'team1' | 'team2'): string | null => {
+    if (!is1stBracket || match.round !== 1) return null;
+    const slotIdx = slot === 'team1' ? (match.position - 1) * 2 : (match.position - 1) * 2 + 1;
+    return slotCircledNum.get(slotIdx) || null;
+  };
+
+  const getPlaceholderInfo = (match: BracketMatch, slot: 'team1' | 'team2'): { text: string; leagueId?: string; rank?: string } | null => {
+    const id = slot === 'team1' ? match.team1Id : match.team2Id;
+    if (id) return null; // 既に配置済み
+    // コンソレ: どの試合の勝者／敗者が入るかを表示
+    if (isConsolation(match)) {
+      const src = slot === 'team1' ? match.team1Src : match.team2Src;
+      if (!src) return null;
+      const no = bracket.matches.find(m => m.matchId === src.matchId)?.matchNo;
+      return { text: `${no !== undefined ? blackCircled(no) : ''}${src.result === 'winner' ? '勝者' : '敗者'}` };
+    }
+    // 1回戦のみプレースホルダー表示
+    if (match.round !== 1) return null;
+    const pos = match.position;
+    const slotIdx = slot === 'team1' ? (pos - 1) * 2 : (pos - 1) * 2 + 1;
+
+    if (is1stBracket) {
+      if (BYE_POSITIONS_1ST.has(slotIdx)) return { text: 'BYE' };
+      const num = slotCircledNum.get(slotIdx) || '';
+      return { text: `${num} 未配置` };
+    }
+
+    // スロットマップからリーグIDを取得
+    const slotMap = slotLeagueIds;
+    const defaultRank = bracket.category === '2nd' ? '2' : bracket.category === '3rd' ? '3' : '4';
+    if (slotMap && slotIdx < slotMap.length) {
+      const code = slotMap[slotIdx];
+      if (code === null || code === '') return { text: 'BYE' };
+      // "M5" のように順位まで指定されている場合に対応
+      const m = code.match(/^(.+?)(\d)$/);
+      const lid = m ? m[1] : code;
+      const rank = m ? m[2] : defaultRank;
+      return { text: `${lid}リーグ ${rank}位`, leagueId: lid, rank };
+    }
+    if (slotIdx < bracket.teams.length) {
+      const t = bracket.teams[slotIdx];
+      return { text: `${t.leagueId}リーグ ${defaultRank}位`, leagueId: t.leagueId, rank: defaultRank };
+    }
+    return { text: 'BYE' };
+  };
+
+  // グリッドの基本単位（BYEも通常マッチと同じグリッド位置を占める）
+  const GRID_UNIT = MATCH_HEIGHT + MATCH_GAP;
+
+  // 接続線: 各マッチの中心Y座標を計算（グリッド基準）
+  const getMatchY = (roundIdx: number, matchIdx: number) => {
+    const spacing = Math.pow(2, roundIdx);
+    const offset = (spacing - 1) * GRID_UNIT / 2;
+    return 36 + matchIdx * spacing * GRID_UNIT + offset + MATCH_HEIGHT / 2;
+  };
+
+  // SVG全体の高さ（表示する先頭列の試合数で決まる）
+  const r1count = matchesByRound[0]?.length || 0;
+  const svgHeight = r1count * GRID_UNIT + 36;
+  const boardWidth = (MATCH_WIDTH + ROUND_GAP) * visibleRounds;
+
+  const consolationMatches = bracket.matches.filter(isConsolation).sort((a, b) => a.position - b.position);
+
+  /** 試合カード（本戦・コンソレ共通） */
+  const renderMatchCard = (match: BracketMatch) => {
+    const ph1 = getPlaceholderInfo(match, 'team1');
+    const ph2 = getPlaceholderInfo(match, 'team2');
+    const ca = courtAssignments[match.matchId];
+    const isPlaying = !!ca;
+    const elapsedMs = ca ? now - ca.startedAt : 0;
+    const elapsedMin = Math.floor(elapsedMs / 60000);
+    const elapsedStr = `${Math.floor(elapsedMin / 60)}:${String(elapsedMin % 60).padStart(2, '0')}`;
+    const renderSlot = (slot: { teamId: string | null; name: string; league: string; score: number | null; isWinner: boolean; isLoser: boolean; tiebreakScore: number | null; ph: ReturnType<typeof getPlaceholderInfo>; isTop: boolean; slotNum: string | null; defLabel?: string }) => {
+      // teamIdから探す。なければnameから逆引き
+      let teamData = slot.teamId ? allTeams.find(t => t.teamId === slot.teamId) : null;
+      if (!teamData && slot.name && slot.league) {
+        teamData = allTeams.find(t => t.teamName === slot.name && t.leagueId === slot.league.trim()) || null;
+      }
+      return (
+        <div className={`flex items-center px-2 text-xs ${slot.isTop ? 'border-b border-gray-100' : ''}
+          ${slot.isWinner ? 'bg-primary-50 font-bold text-primary-800' : 'bg-white text-gray-700'}
+        `} style={{ height: SLOT_HEIGHT }}>
+          {slot.slotNum && (
+            <span className="text-sm text-primary-500 shrink-0 mr-1 w-5 text-center">{slot.slotNum}</span>
+          )}
+          {slot.league ? (() => {
+            const badge = getLeagueBadge(slot.teamId, slot.league);
+            return <span className={`shrink-0 mr-1.5 rounded text-[9px] font-bold flex items-center justify-center ${badge.length > 1 ? 'w-7 h-5 text-[8px]' : 'w-5 h-5'}`} style={leagueBadgeStyle(slot.league, totalLeagues)}>{badge}</span>;
+          })() : !slot.slotNum ? <span className="w-5 shrink-0 mr-1.5" /> : null}
+          <div className="flex-1 min-w-0">
+            {teamData ? (
+              <div className="flex items-center gap-1">
+                <span className="text-[10px] text-gray-400 font-mono shrink-0 w-4 text-center">{teamData.pairNumber}</span>
+                <div className="shrink-0" style={{ width: 95 }}>
+                  <div className="text-sm font-bold text-gray-800 leading-tight"><span className="inline-block w-[5em] text-justify" style={{ textAlignLast: 'justify' }}>{teamData.male.name.replace(/[\s\u3000]+/g, '')}</span></div>
+                  <div className="text-sm font-bold text-gray-800 leading-tight"><span className="inline-block w-[5em] text-justify" style={{ textAlignLast: 'justify' }}>{teamData.female.name.replace(/[\s\u3000]+/g, '')}</span></div>
+                </div>
+                <div className="w-px h-7 bg-gray-200 shrink-0" />
+                <div className="flex-1 min-w-0 text-center">
+                  <div className="text-[11px] text-gray-400 truncate">{teamData.male.affiliation}</div>
+                  <div className="text-[11px] text-gray-400 truncate">{teamData.female.affiliation}</div>
+                </div>
+              </div>
+            ) : slot.ph?.leagueId ? (
+              <span className="inline-flex items-center gap-1.5">
+                <span className="inline-block px-1.5 py-0.5 rounded bg-gray-100 text-gray-600 text-[10px] font-bold">{slot.ph.leagueId}</span>
+                <span className="text-[10px] text-gray-400">{slot.ph.rank}位</span>
+              </span>
+            ) : slot.ph ? <span className="text-[10px] text-gray-400">{slot.ph.text}</span>
+            : slot.name ? <span className="text-[11px] truncate">{slot.name}</span>
+            : <span className="text-[10px] text-gray-400">―</span>}
+          </div>
+          {slot.defLabel ? (
+            <span className={`font-mono font-bold ml-1 text-sm shrink-0 ${slot.defLabel === 'W.O' ? 'text-gray-400' : 'text-red-500'}`}>
+              {slot.defLabel}
+            </span>
+          ) : slot.score !== null && (
+            <span className={`font-mono font-bold ml-1 text-base shrink-0 ${slot.isWinner ? 'text-primary-600' : 'text-gray-500'}`}>
+              {slot.score}
+              {slot.isLoser && slot.tiebreakScore != null && (
+                <span className="text-[9px] text-gray-500 align-super ml-0.5">({slot.tiebreakScore})</span>
+              )}
+            </span>
+          )}
+        </div>
+      );
+    };
+
+    return (
+      <div
+        onClick={() => onMatchClick(match)}
+        className={`rounded-lg border-2 overflow-hidden cursor-pointer transition-all
+          ${isPlaying ? 'border-primary-400 shadow-md bracket-playing-blink' :
+            match.status === 'finished' ? 'border-primary-300 shadow-sm' :
+            match.team1Id && match.team2Id ? 'border-gray-300 hover:shadow-md' :
+            'border-gray-200 hover:border-gray-300'}
+        `}
+        style={{ height: MATCH_HEIGHT }}
+      >
+        {(() => {
+          // 棄権判定
+          const s1 = match.score1 ?? 0; const s2 = match.score2 ?? 0;
+          const mW1 = match.winnerId === match.team1Id && match.winnerId != null;
+          const mW2 = match.winnerId === match.team2Id && match.winnerId != null;
+          let def1 = ''; let def2 = '';
+          if (match.winnerId && match.status === 'finished') {
+            if (s1 === 0 && s2 === 0) { if (mW1) def2 = 'W.O'; else if (mW2) def1 = 'W.O'; }
+            else if ((mW1 && s1 < s2) || (mW2 && s2 < s1)) { if (mW1) def2 = 'Ret'; else if (mW2) def1 = 'Ret'; }
+          }
+          return (<>
+            {renderSlot({ teamId: match.team1Id, name: match.team1Name, league: match.team1League, score: match.score1, isWinner: mW1, isLoser: match.winnerId !== null && !mW1, tiebreakScore: match.tiebreakScore, ph: ph1, isTop: true, slotNum: getSlotNumber(match, 'team1'), defLabel: def1 || undefined })}
+            {renderSlot({ teamId: match.team2Id, name: match.team2Name, league: match.team2League, score: match.score2, isWinner: mW2, isLoser: match.winnerId !== null && !mW2, tiebreakScore: match.tiebreakScore, ph: ph2, isTop: false, slotNum: getSlotNumber(match, 'team2'), defLabel: def2 || undefined })}
+          </>);
+        })()}
+        {/* 枠内ステータスバー（左端にドロー表の試合番号 ❶❷…） */}
+        {((match.team1Id && match.team2Id) || match.matchNo !== undefined || isConsolation(match)) && (
+          <div className={`flex items-center text-[10px] font-medium border-t border-gray-100 px-2
+            ${isPlaying ? 'bg-primary-50 text-gray-800' :
+              match.status === 'finished' ? 'bg-gray-50 text-gray-500' :
+              match.team1Id && match.team2Id ? 'bg-primary-50/50 text-gray-700' : 'bg-white text-gray-400'}
+          `} style={{ height: STATUS_HEIGHT }}>
+            {match.matchNo !== undefined && !isConsolation(match) && (
+              <span className="shrink-0 mr-1.5 text-[13px] leading-none text-gray-700">{blackCircled(match.matchNo)}</span>
+            )}
+            {!(match.team1Id && match.team2Id) ? (
+              <span className="mx-auto text-gray-400">対戦待ち</span>
+            ) : isPlaying ? (
+              <>
+                {/* コート表示をタップするとコートを変更・解除できる */}
+                <button
+                  onClick={e => { if (onCourtClick) { e.stopPropagation(); onCourtClick(match); } }}
+                  className="flex items-center gap-1 shrink-0 rounded px-1 -ml-1 hover:bg-primary-100 transition-colors"
+                  title={onCourtClick ? 'コートを変更する' : undefined}
+                >
+                  <span className="w-2 h-2 rounded-full bg-primary-500 animate-pulse" />
+                  <span className="font-bold text-gray-800">{ca.courtName.replace('コート', '')}コート</span>
+                  {onCourtClick && <MapPin size={9} className="text-primary-500" />}
+                </button>
+                <span className="ml-auto font-mono text-gray-700">{elapsedStr}</span>
+              </>
+            ) : match.status === 'finished' ? (
+              <span className="mx-auto text-gray-400">完了</span>
+            ) : (
+              <span className="mx-auto flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-primary-400" />控え中</span>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  return (
+    <div className={`bg-white shadow-sm border border-gray-200 p-2 sm:p-4 overflow-x-auto ${compact ? 'rounded-b-xl' : 'rounded-xl'}`}>
+      <div className="relative" style={{ minWidth: boardWidth, height: svgHeight }}>
+        {/* 接続線SVG */}
+        <svg className="absolute inset-0 pointer-events-none" style={{ width: boardWidth, height: svgHeight }}>
+          {matchesByRound.slice(0, -1).map((roundMatches, roundIdx) => {
+            const x1 = roundIdx * (MATCH_WIDTH + ROUND_GAP) + MATCH_WIDTH;
+            const x2 = (roundIdx + 1) * (MATCH_WIDTH + ROUND_GAP);
+            const xMid = (x1 + x2) / 2;
+            const pairs: React.ReactNode[] = [];
+            for (let i = 0; i < roundMatches.length; i += 2) {
+              if (i + 1 >= roundMatches.length) break;
+              const y1 = getMatchY(roundIdx, i);
+              const y2 = getMatchY(roundIdx, i + 1);
+              const yNext = getMatchY(roundIdx + 1, Math.floor(i / 2));
+              pairs.push(
+                <g key={`line-${roundIdx}-${i}`}>
+                  <line x1={x1} y1={y1} x2={xMid} y2={y1} stroke="#c9cdd3" strokeWidth="1.5" />
+                  <line x1={x1} y1={y2} x2={xMid} y2={y2} stroke="#c9cdd3" strokeWidth="1.5" />
+                  <line x1={xMid} y1={y1} x2={xMid} y2={y2} stroke="#c9cdd3" strokeWidth="1.5" />
+                  <line x1={xMid} y1={yNext} x2={x2} y2={yNext} stroke="#c9cdd3" strokeWidth="1.5" />
+                </g>
+              );
+            }
+            return pairs;
+          })}
+        </svg>
+
+        {/* 各マッチをabsolute配置（接続線の中心と正確に一致） */}
+        {matchesByRound.map((roundMatches, roundIdx) => {
+          const round = hiddenRounds + roundIdx + 1;
+          const colX = roundIdx * (MATCH_WIDTH + ROUND_GAP);
+
+          return (
+            <div key={round}>
+              {/* ラウンドラベル */}
+              <div className="absolute" style={{ left: colX, top: 4, width: MATCH_WIDTH }}>
+                <div className="text-center">
+                  <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold
+                    ${round === totalRounds ? 'bg-gradient-to-r from-primary-400 to-primary-500 text-white' :
+                      round === totalRounds - 1 ? 'bg-primary-100 text-gray-800' : 'bg-gray-100 text-gray-600'}`}>
+                    {getRoundLabel(round, totalRounds)}
+                  </span>
+                </div>
+              </div>
+
+              {roundMatches.map((match, matchIdx) => {
+                const centerY = getMatchY(roundIdx, matchIdx);
+                const isBye = match.isBye;
+
+                // BYEマッチ: 勝者を通常マッチと同じスタイルで表示
+                if (isBye) {
+                  const winnerId = match.winnerId;
+                  let winnerData = winnerId ? allTeams.find(t => t.teamId === winnerId) : null;
+                  if (!winnerData) {
+                    const wName = match.team1Name || match.team2Name;
+                    const wLeague = match.team1League || match.team2League;
+                    if (wName && wLeague) winnerData = allTeams.find(t => t.teamName === wName && t.leagueId === wLeague.trim()) || null;
+                  }
+                  const winnerLeague = winnerId === match.team1Id ? match.team1League : match.team2League;
+                  const byeBoxH = winnerData ? (compact ? 28 : 52) : BYE_HEIGHT;
+                  const byeSlotNum = match.round === 1 ? getSlotNumber(match, match.team1Id ? 'team1' : 'team2') : null;
+                  return (
+                    <div key={match.matchId} className="absolute" style={{ left: colX, top: centerY - byeBoxH / 2, width: MATCH_WIDTH }}>
+                      <div className="flex items-center gap-1.5 px-2 rounded-lg border border-gray-200 bg-white" style={{ height: byeBoxH }}>
+                        {byeSlotNum && (
+                          <span className="text-sm text-primary-500 shrink-0 w-5 text-center">{byeSlotNum}</span>
+                        )}
+                        {winnerLeague && (
+                          <span className={`w-5 h-5 rounded text-[9px] font-bold flex items-center justify-center shrink-0`} style={leagueBadgeStyle(winnerLeague, totalLeagues)}>
+                            {winnerLeague}
+                          </span>
+                        )}
+                        {winnerData ? (
+                          <div className="flex items-center gap-1 flex-1 min-w-0">
+                            <span className="text-[10px] text-gray-400 font-mono shrink-0 w-4 text-center">{winnerData.pairNumber}</span>
+                            <div className="shrink-0" style={{ width: 95 }}>
+                              <div className="text-sm font-bold text-gray-800 leading-tight"><span className="inline-block w-[5em] text-justify" style={{ textAlignLast: 'justify' }}>{winnerData.male.name.replace(/[\s\u3000]+/g, '')}</span></div>
+                              <div className="text-sm font-bold text-gray-800 leading-tight"><span className="inline-block w-[5em] text-justify" style={{ textAlignLast: 'justify' }}>{winnerData.female.name.replace(/[\s\u3000]+/g, '')}</span></div>
+                            </div>
+                            <div className="w-px h-7 bg-gray-200 shrink-0" />
+                            <div className="flex-1 min-w-0 text-center">
+                              <div className="text-[11px] text-gray-400 truncate">{winnerData.male.affiliation}</div>
+                              <div className="text-[11px] text-gray-400 truncate">{winnerData.female.affiliation}</div>
+                            </div>
+                          </div>
+                        ) : (
+                          <span className="text-[11px] font-bold text-gray-700 truncate flex-1">{match.team1Name || match.team2Name}</span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                }
+
+                // 通常マッチ
+                return (
+                  <div key={match.matchId} className="absolute" style={{ left: colX, top: centerY - MATCH_HEIGHT / 2, width: MATCH_WIDTH, zIndex: 1 }}>
+                    {renderMatchCard(match)}
+                  </div>
+                );
+              })}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* コンソレーション（敗者同士の試合） */}
+      {consolationMatches.length > 0 && (
+        <div className="mt-4 pt-3 border-t border-dashed border-gray-200">
+          <div className="flex flex-wrap items-center gap-2 mb-2">
+            <span className="inline-block px-3 py-1 rounded-full text-xs font-bold bg-gray-100 text-gray-600">コンソレーション</span>
+            <span className="text-[10px] text-gray-400">各山の敗者同士の試合（敗者復活戦ではありません）</span>
+          </div>
+          <div className="flex flex-wrap gap-x-4 gap-y-3">
+            {consolationMatches.map(m => (
+              <div key={m.matchId} style={{ width: MATCH_WIDTH }}>
+                <div className="text-[11px] font-bold text-gray-600 mb-1">
+                  {m.matchNo !== undefined && <span className="mr-1 text-[13px]">{blackCircled(m.matchNo)}</span>}
+                  {m.consolationLabel}
+                </div>
+                <div style={{ height: MATCH_HEIGHT }}>{renderMatchCard(m)}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* 点滅アニメーション */}
+      <style>{`
+        @keyframes bracket-playing {
+          0%, 100% { border-color: rgb(74, 222, 128); box-shadow: 0 0 0 0 rgba(212,106,102, 0); }
+          50% { border-color: rgb(34, 197, 94); box-shadow: 0 0 8px 2px rgba(198,56,52, 0.3); }
+        }
+        .bracket-playing-blink { animation: bracket-playing 2s ease-in-out infinite; }
+      `}</style>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// 賞状印刷機能
+// ---------------------------------------------------------------------------
+
+/** ブラケットから入賞者を取得 */
+function getWinnersFromBrackets(brackets: PlacementBracket[], allTeams: MixedTeam[], filterCategory?: PlacementCategory): { rank: string; category: string; names: string }[] {
+  const results: { rank: string; category: string; names: string }[] = [];
+  const catLabels: Record<string, string> = { '1st': '1位トーナメント', '2nd': '2位トーナメント', '3rd': '3位トーナメント', '4th': '4・5位トーナメント' };
+  const familyN = (n: string) => n.trim().split(/[\s　]+/)[0] || n;
+
+  for (const b of brackets) {
+    if (filterCategory && b.category !== filterCategory) continue;
+    const maxRound = Math.max(...b.matches.map(m => m.round));
+    const finalMatch = b.matches.find(m => m.round === maxRound);
+    if (!finalMatch || finalMatch.status !== 'finished' || !finalMatch.winnerId) continue;
+
+    const cat = catLabels[b.category] || b.category;
+    const winner = allTeams.find(t => t.teamId === finalMatch.winnerId);
+    const loserId = finalMatch.winnerId === finalMatch.team1Id ? finalMatch.team2Id : finalMatch.team1Id;
+    const runnerUp = loserId ? allTeams.find(t => t.teamId === loserId) : null;
+
+    if (winner) results.push({ rank: '優勝', category: cat, names: `${familyN(winner.male.name)}・${familyN(winner.female.name)}　組` });
+    if (runnerUp) results.push({ rank: '準優勝', category: cat, names: `${familyN(runnerUp.male.name)}・${familyN(runnerUp.female.name)}　組` });
+
+    const sfMatches = b.matches.filter(m => m.round === maxRound - 1 && m.status === 'finished' && m.winnerId);
+    for (const sf of sfMatches) {
+      const loserId2 = sf.winnerId === sf.team1Id ? sf.team2Id : sf.team1Id;
+      const third = loserId2 ? allTeams.find(t => t.teamId === loserId2) : null;
+      if (third) results.push({ rank: '第3位', category: cat, names: `${familyN(third.male.name)}・${familyN(third.female.name)}　組` });
+    }
+  }
+  return results;
+}
+
+/** 賞状CSS（太筆行書風 Google Font: Yuji Mai） */
+const CERT_FONT_URL = 'https://fonts.googleapis.com/css2?family=Yuji+Mai&display=swap';
+
+function buildCertificateHtml(entries: { rank: string; category: string; names: string }[]): string {
+  const pages = entries.map(e => `
+    <div class="page">
+      <div class="cert-content">
+        <div class="class-name">${e.category}</div>
+        <div class="rank-name">${e.rank}</div>
+        <div class="player-name">${e.names}</div>
+      </div>
+    </div>
+  `).join('');
+
+  return `<!DOCTYPE html><html><head><meta charset="utf-8"><title>賞状印刷</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="${CERT_FONT_URL}" rel="stylesheet">
+<style>
+  @page { size: A4; margin: 0; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: "Yuji Mai", "游明朝", "Yu Mincho", serif; color: #000; }
+  .page {
+    width: 210mm; height: 297mm;
+    page-break-after: always; position: relative;
+  }
+  .page:last-child { page-break-after: auto; }
+  .cert-content {
+    position: absolute;
+    top: 35%; left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center; width: 80%;
+    height: 50mm;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+  }
+  .class-name {
+    font-size: 28pt; font-weight: 400;
+    letter-spacing: 0.4em; color: #000;
+    margin-bottom: 5mm;
+    -webkit-text-stroke: 0.5px #000;
+  }
+  .rank-name {
+    font-size: 32pt; font-weight: 400;
+    letter-spacing: 0.6em; color: #000;
+    margin-bottom: 6mm;
+    -webkit-text-stroke: 0.5px #000;
+  }
+  .player-name {
+    font-size: 36pt; font-weight: 400;
+    letter-spacing: 0.4em; color: #000;
+    -webkit-text-stroke: 0.5px #000;
+  }
+  @media print { body { -webkit-print-color-adjust: exact; } }
+</style></head><body>${pages}</body></html>`;
+}
+
+/** 賞状印刷ボタン */
+function CertificatePrintButton({ brackets, allTeams, selectedCategory }: {
+  brackets: PlacementBracket[];
+  allTeams: MixedTeam[];
+  selectedCategory: PlacementCategory;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [entries, setEntries] = useState<{ rank: string; category: string; names: string; selected: boolean }[]>([]);
+  const [previewIdx, setPreviewIdx] = useState(0);
+
+  // Yuji Bokuフォントを動的にロード
+  useEffect(() => {
+    if (!isOpen) return;
+    const id = 'yuji-boku-font';
+    if (document.getElementById(id)) return;
+    const link = document.createElement('link');
+    link.id = id;
+    link.rel = 'stylesheet';
+    link.href = CERT_FONT_URL;
+    document.head.appendChild(link);
+  }, [isOpen]);
+
+  const openDialog = () => {
+    const auto = getWinnersFromBrackets(brackets, allTeams, selectedCategory);
+    setEntries(auto.map(e => ({ ...e, selected: true })));
+    setPreviewIdx(0);
+    setIsOpen(true);
+  };
+
+  const updateEntry = (idx: number, field: 'rank' | 'category' | 'names', value: string) => {
+    setEntries(prev => prev.map((e, i) => i === idx ? { ...e, [field]: value } : e));
+  };
+  const toggleEntry = (idx: number) => {
+    setEntries(prev => prev.map((e, i) => i === idx ? { ...e, selected: !e.selected } : e));
+  };
+  const addEntry = () => {
+    setEntries(prev => [...prev, { rank: '優勝', category: '', names: '', selected: true }]);
+  };
+  const removeEntry = (idx: number) => {
+    setEntries(prev => prev.filter((_, i) => i !== idx));
+    if (previewIdx >= entries.length - 1) setPreviewIdx(Math.max(0, entries.length - 2));
+  };
+
+  const handlePrint = () => {
+    const selected = entries.filter(e => e.selected && e.names.trim());
+    if (selected.length === 0) return;
+    const html = buildCertificateHtml(selected);
+    const win = window.open('', '_blank', 'width=800,height=1000');
+    if (win) { win.document.write(html); win.document.close(); win.focus(); setTimeout(() => win.print(), 800); }
+  };
+
+  const selectedEntries = entries.filter(e => e.selected && e.names.trim());
+  const previewEntry = entries[previewIdx] || entries[0];
+
+  return (
+    <>
+      <button onClick={openDialog}
+        className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold text-gray-800 bg-primary-50 border border-primary-200 shadow-sm hover:bg-primary-100 active:scale-95 transition-all whitespace-nowrap">
+        <Printer size={12} className="text-primary-600" /> 賞状印刷
+      </button>
+
+      {isOpen && createPortal(
+        <div className="fixed inset-0 bg-black/50 z-[200]" onClick={() => setIsOpen(false)}>
+          <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-xl shadow-2xl w-[95vw] max-w-4xl max-h-[90vh] overflow-hidden flex flex-col z-[210]" onClick={e => e.stopPropagation()}>
+            {/* ヘッダー */}
+            <div className="px-4 py-2.5 bg-primary-50 border-b border-primary-200 flex items-center justify-between shrink-0">
+              <h3 className="font-bold text-gray-800 text-sm flex items-center gap-2">
+                <Printer size={16} className="text-primary-600" /> 賞状印刷
+              </h3>
+              <div className="flex items-center gap-2">
+                <button onClick={handlePrint} disabled={selectedEntries.length === 0}
+                  className="flex items-center gap-1.5 px-4 py-1.5 bg-primary-500 text-white text-xs font-bold rounded-lg shadow hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors active:scale-95">
+                  <Printer size={14} /> {selectedEntries.length}枚を印刷
+                </button>
+                <button onClick={() => setIsOpen(false)} className="p-1 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-white transition-colors">
+                  <X size={18} />
+                </button>
+              </div>
+            </div>
+
+            {/* 本体: 左=編集リスト、右=プレビュー */}
+            <div className="flex-1 overflow-hidden flex">
+              {/* 左: エントリーリスト */}
+              <div className="w-[45%] border-r border-gray-200 overflow-y-auto p-3 space-y-2">
+                <p className="text-[10px] text-gray-500 mb-1">クリックでプレビュー表示。チェックで印刷対象を選択。</p>
+                {entries.map((entry, idx) => (
+                  <div key={idx}
+                    onClick={() => setPreviewIdx(idx)}
+                    className={`border rounded-lg p-2.5 cursor-pointer transition-all ${
+                      previewIdx === idx ? 'ring-2 ring-primary-400 border-primary-300' : ''
+                    } ${entry.selected ? 'border-primary-200 bg-primary-50/30' : 'border-gray-200 bg-gray-50 opacity-60'}`}>
+                    <div className="flex items-center gap-1.5 mb-1.5">
+                      <input type="checkbox" checked={entry.selected} onChange={e => { e.stopPropagation(); toggleEntry(idx); }} className="accent-primary-500" />
+                      <select value={entry.rank} onChange={e => updateEntry(idx, 'rank', e.target.value)} onClick={e => e.stopPropagation()} className="text-[11px] border border-gray-200 rounded px-1.5 py-0.5 font-bold bg-white">
+                        <option value="優勝">優勝</option><option value="準優勝">準優勝</option><option value="第3位">第3位</option>
+                      </select>
+                      <input type="text" value={entry.category} onChange={e => updateEntry(idx, 'category', e.target.value)} onClick={e => e.stopPropagation()}
+                        placeholder="クラス名" className="flex-1 text-[11px] border border-gray-200 rounded px-1.5 py-0.5 min-w-0" />
+                      <button onClick={e => { e.stopPropagation(); removeEntry(idx); }} className="text-gray-400 hover:text-red-500 p-0.5"><X size={12} /></button>
+                    </div>
+                    <input type="text" value={entry.names} onChange={e => updateEntry(idx, 'names', e.target.value)} onClick={e => e.stopPropagation()}
+                      placeholder="氏名（例: 田中・山本）" className="w-full text-xs border border-gray-200 rounded px-2 py-1 font-bold" />
+                  </div>
+                ))}
+                <button onClick={addEntry} className="w-full py-1.5 border-2 border-dashed border-gray-300 rounded-lg text-[11px] text-gray-500 hover:border-primary-400 hover:text-gray-700 transition-colors">
+                  + 手動で追加
+                </button>
+              </div>
+
+              {/* 右: A4プレビュー */}
+              <div className="flex-1 bg-gray-100 overflow-auto flex items-center justify-center p-4">
+                {previewEntry ? (
+                  <div className="bg-white shadow-lg border border-gray-300" style={{ width: '280px', height: '396px', position: 'relative' }}>
+                    {/* 賞状の外枠イメージ */}
+                    <div className="absolute inset-2 border-2 border-primary-300/40 rounded" />
+                    <div className="absolute inset-3 border border-primary-200/30 rounded" />
+                    {/* 上部: 表彰状（印刷済み模擬） */}
+                    <div className="absolute top-[10%] left-0 right-0 text-center">
+                      <span className="text-gray-300 text-lg tracking-[0.5em]" style={{ fontFamily: '"Yuji Mai", serif' }}>表　彰　状</span>
+                    </div>
+                    {/* 印刷対象エリア: A4中央より少し上、約3cm幅 */}
+                    <div className="absolute left-0 right-0 flex flex-col items-center justify-center px-4" style={{ top: '35%', height: '11%' }}>
+                      <div className="border-y-2 border-dashed border-primary-300/50 py-2 w-full flex flex-col items-center justify-center">
+                        <div className="text-sm text-black tracking-[0.3em] mb-1.5" style={{ fontFamily: '"Yuji Mai", serif' }}>
+                          {previewEntry.category || '（クラス未入力）'}
+                        </div>
+                        <div className="text-base text-black tracking-[0.5em] mb-1.5" style={{ fontFamily: '"Yuji Mai", serif' }}>
+                          {previewEntry.rank}
+                        </div>
+                        <div className="text-lg text-black tracking-[0.35em]" style={{ fontFamily: '"Yuji Mai", serif' }}>
+                          {previewEntry.names || '（氏名未入力）'}
+                        </div>
+                      </div>
+                    </div>
+                    {/* 印刷エリア注釈 */}
+                    <div className="absolute right-1 text-[6px] text-primary-400" style={{ top: '34%' }}>印刷範囲↓</div>
+                    {/* 下部: 鳥取市テニス協会（印刷済み模擬） */}
+                    <div className="absolute bottom-[10%] left-0 right-0 text-center">
+                      <span className="text-gray-300 text-[8px] tracking-[0.2em]" style={{ fontFamily: '"Yuji Mai", serif' }}>鳥取市テニス協会</span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-sm text-gray-400">エントリーを追加してください</div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+    </>
+  );
+}
