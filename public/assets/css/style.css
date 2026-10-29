@@ -336,20 +336,11 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   align-items: flex-start;
 }
 @media (min-width: 1024px) { .sec-bar { gap: 20px; } }
-.sec-bar__aside {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  flex-wrap: wrap;
-  align-self: stretch;  /* 横幅いっぱいに取り、VIEW ALL を右端に寄せる */
-}
-.sec-bar__aside .view-all { margin-left: auto; }
 .sec-hint { margin: 14px 0 0; }
 /* 区画の下の右端に置く VIEW ALL（トップの大会情報：カードの下） */
 .sec-more { display: flex; justify-content: flex-end; margin-top: 20px; }
 /* 地図の中の右上に置く VIEW ALL（トップのコート案内。CourtMap の viewAll） */
 .cmap__viewall { position: absolute; top: 14px; right: 14px; z-index: 1000; box-shadow: 0 1px 6px rgba(26, 26, 26, .12); }
-@media (min-width: 1024px) { .sec-bar__aside { gap: 24px; } }
 
 .hint {
   font: 500 13px/1.4 var(--fjp);
