@@ -138,6 +138,14 @@ export const LINKS = [
     url: 'https://www.shanghai-charo.com/',
     banner: 'assets/img/banners/shanghai-charo.png',
   },
+  {
+    group: 'sponsor',
+    name: 'スポーツショップ HEART',
+    row: 'other',
+    desc: '鳥取市のスポーツ用品店',
+    url: 'https://spsheart.com/cms/',
+    banner: 'assets/img/banners/sports-heart.png',
+  },
 ];
 
 /** トップページのマーキー上段（テニス協会・連盟のHP） */
