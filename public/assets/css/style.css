@@ -402,12 +402,26 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 .ghost-link:hover .sqbtn { background: var(--red); border-color: var(--red); color: #fff; }
 .ghost-link .aw { color: var(--red); }
 
-.view-all { display: inline-flex; align-items: center; gap: 12px; }
+/* VIEW ALL：枠の中に「VIEW ALL ——\」を収めたバッジ。矢印（.ln-arrow）は文字の下端にそろえる。ホバーで黒く塗る */
+.view-all {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 11px 14px;
+  border: 1px solid var(--ink);
+  border-radius: var(--radius);
+  background: var(--white);
+  color: var(--ink);
+  white-space: nowrap;
+  transition: background-color .3s ease, color .3s ease;
+}
 .view-all__label {
   font: 700 12px/1 var(--flt);
   letter-spacing: .12em;
-  color: var(--ink);
 }
+.view-all .ln-arrow { width: 22px; transition: transform .3s ease; }
+.view-all:hover { background: var(--ink); color: #fff; }
+.view-all:hover .ln-arrow { transform: translateX(3px); }
 
 .sqbtn {
   flex: none;
@@ -785,7 +799,7 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   position: fixed;
   inset: 0;
   z-index: 90;
-  background: var(--ink);
+  background: #353535;  /* フッター（--ink）より少しグレーに寄せた地 */
   color: #fff;
   /* 上の余白はヘッダーの下端まで（main.js が通知バーの有無に合わせて上書きする） */
   padding: var(--header-h) var(--gutter) calc(32px + env(safe-area-inset-bottom, 0px));
@@ -806,6 +820,8 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   transition: clip-path var(--mn-up) var(--mn-up-ease), visibility 0s;
 }
 @media (min-width: 1024px) { .mobile-nav { display: none; } }
+/* 地をグレーに寄せた分、四角（フッターと同じ黒に近い色）は薄めて、地との差を控えめにする */
+.mobile-nav__deco { opacity: .45; }
 /* 漂う四角（DecoSquares.astro。フッターと共用）。開くとき、大きい（手前の）四角ほど下から遅れて追いつく */
 .mobile-nav__deco .footer-dot {
   translate: 0 calc(var(--depth, .5) * 140px);
@@ -921,6 +937,24 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   /* 黒地の上では白いにじみを消す（白抜きのロゴの重ね出し＝opacity も、同じ指定の中で切り替える） */
   .site-header__logo img, .site-header .hamburger { transition: filter .2s ease .12s, opacity .2s ease .12s; }
   .site-header.is-menu .site-header__logo img, .site-header.is-menu .hamburger { filter: none; transition: filter .2s ease .4s, opacity .2s ease .4s; }
+}
+/* スマホ・タブレット：ロゴの文字を、裏の色に合わせて黒／白に塗り分ける（重なったところだけ、その瞬間だけ白くなる）。
+   文字の形（logo-cut-ink.png）で切り抜いた面に backdrop-filter を掛け、裏を白黒にしてから明暗をはっきり分け（contrast）、反転する：
+   明るい地 → 黒、暗い地（赤・黒・黒い文字）→ 白。赤い四角（logo-cut-red.png）は塗り分けずに上に重ねる。
+   切り抜いた面に裏をぼかす類の効果が効かないブラウザでは、これまでどおりの黒いロゴ（.site-header__logo-img）のまま */
+.site-header__logo-ink, .site-header__logo-red { display: none; }
+@media (max-width: 1023px) {
+  @supports ((backdrop-filter: invert(1)) or (-webkit-backdrop-filter: invert(1))) and ((mask-image: none) or (-webkit-mask-image: none)) {
+    .site-header__logo .site-header__logo-img { visibility: hidden; }
+    .site-header__logo-ink, .site-header__logo-red { display: block; position: absolute; inset: 0; }
+    .site-header__logo .site-header__logo-red { width: 100%; height: 100%; filter: none; }
+    .site-header__logo-ink {
+      -webkit-mask: url("../img/logo-cut-ink.png") center / 100% 100% no-repeat;
+      mask: url("../img/logo-cut-ink.png") center / 100% 100% no-repeat;
+      -webkit-backdrop-filter: grayscale(1) contrast(100) invert(1);
+      backdrop-filter: grayscale(1) contrast(100) invert(1);
+    }
+  }
 }
 @media (prefers-reduced-motion: reduce) {
   .site-header__logo-w, .site-header.is-menu .site-header__logo-w,
@@ -1646,6 +1680,7 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 
 /* 4件目（NEWS_VISIBLE の次）。まだ続きがあることだけ伝えたいので、薄くフェードさせて押せなくする。 */
 .news-peek { position: relative; }
+.news-peek__more { display: flex; justify-content: center; margin-top: 8px; }
 .news-list--peek {
   margin-top: 0;
   opacity: .34;
@@ -1654,33 +1689,20 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   pointer-events: none;
 }
 .news-list--peek .news-row { border-bottom: 0; }
-.news-peek__btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  width: 100%;
-  margin-top: 4px;
-  padding: 14px 8px;
-  font: 700 13px/1 var(--fjp);
-  letter-spacing: .04em;
-  color: var(--gray-600);
-  transition: color .3s ease;
-}
-.news-peek__btn:hover { color: var(--red); }
-.news-peek__btn .aw { transition: transform .3s ease; }
-.news-peek__btn:hover .aw { transform: translateY(3px); }
 
 /* コート案内の施設一覧の4件目。お知らせの4件目（.news-list--peek）と同じ見せ方で、1件ぶんの高さに切る。
    全施設は「すべての施設を見る」で全画面のパネル（.news-all）に開く。 */
 .court-peek { max-height: 96px; overflow: hidden; }
 
 /* 全件表示（お知らせ・コート案内）。画面いっぱいに白い面を出し、右上で閉じる。項目の動きは .panel-item。 */
+/* サイトのヘッダーの下から画面の下までに出す（ヘッダーとメニューはこの上に残る：ヘッダー 100、メニュー 90 より下の 85）。
+   スマホのヘッダーは帯が無いので、ヘッダーの裏（画面の上端〜--header-h）も白で覆う（box-shadow を上へずらして重ねる） */
 .news-all {
   position: fixed;
-  inset: 0;
-  z-index: 120;
+  inset: var(--header-h) 0 0 0;
+  z-index: 85;
   background: var(--white);
+  box-shadow: 0 calc(-1 * var(--header-h)) 0 var(--white);
   overflow-y: auto;
   overscroll-behavior: contain;
 }
@@ -1732,7 +1754,7 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   transition: opacity .3s ease;
 }
 .news-all::after { bottom: 0; background: linear-gradient(to top, var(--white) 20%, rgba(255, 255, 255, 0)); }
-.news-all::before { top: var(--panel-head, 96px); background: linear-gradient(to bottom, var(--white), rgba(255, 255, 255, 0)); height: 48px; }
+.news-all::before { top: calc(var(--header-h) + var(--panel-head, 96px)); background: linear-gradient(to bottom, var(--white), rgba(255, 255, 255, 0)); height: 48px; }
 .news-all.is-bottom::after, .news-all.is-top::before { opacity: 0; }
 
 

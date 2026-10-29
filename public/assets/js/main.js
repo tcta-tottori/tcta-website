@@ -392,6 +392,9 @@
           panel.classList.remove('is-closing');
           panel.hidden = false;
           document.body.classList.add('is-locked');
+          // パネルはヘッダーの下に出すので、引っ込んでいたヘッダーを出しておく
+          var siteHeader = document.querySelector('.site-header');
+          if (siteHeader) siteHeader.classList.remove('site-header--hidden');
           panel.scrollTop = 0;
           // 開くたびに項目の動き（見出しの下から順に滑り出す）を流し直す
           panel.querySelectorAll('[style*="--i"]').forEach(function (el) {
