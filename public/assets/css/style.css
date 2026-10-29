@@ -377,6 +377,9 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 .btn--primary { background: var(--red); color: #fff; border: 1px solid var(--red); }
 .btn--primary:hover { background: var(--red-dark); border-color: var(--red-dark); color: #fff; }
 .btn--primary:hover .aw { transform: translateX(4px); }
+/* ボタンの矢印は SCROLL と同じ線の矢印（.ln-arrow）。文字の下端（ベースライン）の高さにそろえ、ホバーで少し右へ */
+.btn .ln-arrow { position: relative; top: .32em; transition: transform .3s ease; }
+.btn:hover .ln-arrow { transform: translateX(4px); }
 
 .btn--outline { background: var(--white); color: var(--ink); border: 1px solid var(--gray-300); }
 .btn--outline:hover { border-color: var(--red); color: var(--red); }
@@ -2438,15 +2441,28 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 .cfac + .cfac { margin-top: 72px; }
 @media (min-width: 1024px) { .cfac + .cfac { margin-top: 96px; } }
 .cfac__hero {
-  position: relative;
+  /* スクロールすると写真はヘッダーの下で止まり、その施設の説明が流れ終わるまでとどまる（次の施設に入ると一緒に上へ抜ける）。
+     止まる位置はヘッダーの下端。PC はヘッダーが引っ込んだら画面の上端。説明が読めるよう、写真の高さは画面の 55% まで */
+  position: sticky;
+  top: var(--header-h);
+  z-index: 3;
   display: block;
   width: 100%;
   height: clamp(260px, 62vw, 420px);
+  max-height: 55svh;
   margin: 0;
   overflow: hidden;
   background: var(--ink);
 }
-@media (min-width: 1024px) { .cfac__hero { height: clamp(420px, 42vw, 560px); } }
+@media (min-width: 1024px) {
+  .cfac__hero { height: clamp(420px, 42vw, 560px); transition: top .35s var(--ease); }
+  body:has(.site-header--hidden) .cfac__hero { top: 0; }
+}
+/* スマホ：止まっているあいだは、写真より上（ロゴとメニューのボタンの裏）を白で覆い、下を流れる説明が透けないようにする
+   （main.js の initStickyHero が .is-stuck を付ける） */
+@media (max-width: 1023px) {
+  .cfac__hero.is-stuck { box-shadow: 0 -30px 0 var(--white), 0 -60px 0 var(--white), 0 calc(-1 * var(--header-h)) 0 var(--white); }
+}
 .cfac__hero--noimg { height: auto; min-height: 200px; }
 .cfac__hero-link { position: absolute; inset: 0; border-radius: 0; background: var(--ink); }
 .cfac__hero-link img {

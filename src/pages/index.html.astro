@@ -8,7 +8,7 @@ import { siteData } from '../lib/cms.js';
 import { today } from '../data/tournaments.js';
 import { LINKS_ASSOC, LINKS_OTHER } from '../data/links.js';
 import { NEWS_VISIBLE } from '../data/news.js';
-import { COURTS } from '../data/courts.js';
+import { COURTS, CITY_RESERVE } from '../data/courts.js';
 import CourtMap from '../components/CourtMap.astro';
 
 // 大会カード・お知らせは EmDash から（1 リクエストに 1 回だけ読む）
@@ -91,7 +91,7 @@ const upcomingTournaments = TOURNAMENTS.filter((t) => t.status !== 'past');
             </p>
           </div>
         </div>
-        <a class="btn btn--primary hero__cta fu" style="animation-delay:var(--rest-in)" href="about.html">協会について見る <span class="aw">→</span></a>
+        <a class="btn btn--primary hero__cta fu" style="animation-delay:var(--rest-in)" href="about.html">協会について見る <span class="ln-arrow" aria-hidden="true"></span></a>
       </div>
     </div>
     <div class="hero__square fu" style="animation-delay:var(--rest-in)" aria-hidden="true"></div>
@@ -237,6 +237,10 @@ const upcomingTournaments = TOURNAMENTS.filter((t) => t.status !== 'past');
       <div class="rv embed-wrap mt-32">
         <CourtMap courts={COURTS} />
         <span class="embed-wrap__square" aria-hidden="true"></span>
+      </div>
+      {/* 地図の下に、市のテニスコートの予約先（鳥取市公共施設予約システム。courts.js の CITY_RESERVE）へのボタン */}
+      <div class="rv mt-24">
+        <a class="btn btn--primary" href={CITY_RESERVE.url} target="_blank" rel="noopener noreferrer">テニスコートの予約はこちら <span class="ln-arrow" aria-hidden="true"></span></a>
       </div>
     </div>
   </section>

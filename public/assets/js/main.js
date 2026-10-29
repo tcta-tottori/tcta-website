@@ -987,6 +987,32 @@
     place();
   }
 
+  /* ---------- コート案内のページ：写真が止まっているあいだ .is-stuck ----------
+     写真（.cfac__hero）は CSS の position: sticky でヘッダーの下に止まる。止まっているあいだだけ .is-stuck を付け、
+     スマホでは写真より上（ロゴの裏）を白で覆う（style.css） */
+  function initStickyHero() {
+    var heroes = Array.prototype.slice.call(document.querySelectorAll('.cfac__hero'));
+    if (!heroes.length) return;
+    var ticking = false;
+    var check = function () {
+      ticking = false;
+      heroes.forEach(function (h) {
+        var box = h.parentElement.getBoundingClientRect();
+        var r = h.getBoundingClientRect();
+        var top = parseFloat(getComputedStyle(h).top) || 0;
+        h.classList.toggle('is-stuck', r.top <= top + 1 && r.top > -r.height && box.bottom > r.bottom + 1 && box.top < r.top - 1);
+      });
+    };
+    var request = function () {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(check);
+    };
+    window.addEventListener('scroll', request, { passive: true });
+    window.addEventListener('resize', request);
+    request();
+  }
+
   /* ---------- ヘッダーのロゴの塗り分けを、写真の上では止める ----------
      スマホのロゴは裏の色に合わせて黒／白に塗り分ける（style.css の .site-header__logo-ink）が、写真の上では塗り分けない。
      ロゴの左・中・右の3点で、ヘッダーの下に重なっている要素を上から順に見て、
@@ -1477,6 +1503,7 @@
     initCalendar();
     initFooterDeco();
     initLogoInk();
+    initStickyHero();
     initToday();
     initCarousel();
     initFilters();
