@@ -1358,6 +1358,10 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 /* 受付中・本日開催はカード全体を赤い枠で囲む（ホバーやトップの灰色の区画でも赤のまま） */
 .tcard.tcard--open, .tcard.tcard--live,
 .section--cards .tcard.tcard--open, .section--cards .tcard.tcard--live { border: 2px solid var(--red); }
+/* 受付中は赤い枠をゆっくり点滅させる（締切の点滅 due-blink と同じ間隔。動きを減らす設定の端末では点滅しない） */
+.tcard.tcard--open { animation: card-blink 1.6s ease-in-out infinite; }
+@keyframes card-blink { 0%, 100% { border-color: var(--red); } 50% { border-color: rgba(216, 35, 42, .15); } }
+@media (prefers-reduced-motion: reduce) { .tcard.tcard--open { animation: none; } }
 
 .tcard__body { display: flex; flex-direction: column; gap: 12px; flex: 1; padding: 16px 16px 16px; }
 @media (min-width: 640px) { .tcard__body { padding: 20px 20px 18px; } }
