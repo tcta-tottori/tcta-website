@@ -9,6 +9,7 @@
 import Icon from './Icon.astro';
 import { STATUS, dateChip, shortEvent } from '../data/tournaments.js';
 import EventIcon from './EventIcon.astro';
+import Venue from './Venue.astro';
 import { eventIcons } from '../data/event-icons.js';
 
 const { tournament } = Astro.props;
@@ -38,7 +39,7 @@ const len = eventLabel.length > 10 ? 'long' : 'short';
       <div class="tcard__info" data-len={len}>
         <div class="tcard__text">
           <p class="tcard__event"><Icon name="list" class="tcard__ico" /><span class="tcard__line">{eventLabel}</span></p>
-          <p class="tcard__venue"><Icon name="pin" class="tcard__ico" /><span class="tcard__line">{venue}</span></p>
+          <p class="tcard__venue"><Icon name="pin" class="tcard__ico" /><span class="tcard__line"><Venue text={venue} /></span></p>
         </div>
         {icons.length > 0 && (
           <span class="tcard__icons" data-n={icons.length} aria-hidden="true">

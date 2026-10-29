@@ -3159,22 +3159,27 @@ body.jsrv .rv.on .ink-sweep {
   justify-content: center;
 }
 
+/* 会場名の「ヤマタスポーツパーク」のロゴ（Venue.astro）。文字の高さに合わせて行の中に置く */
+.venue-logo { display: inline-block; height: 1.1em; width: auto; vertical-align: -.18em; }
+
 /* ---- 大会一覧の切り替え（TournamentList.astro）----
    .tl--rows のときは縮小表示（.tlx）、外れているときは拡大表示（.tl__cards）だけを出す */
 .tl--rows .tl__cards, .tl:not(.tl--rows) .tlx { display: none; }
 
 /* ---- 縮小表示（.tlx）：1大会1行の表 ----
-   列の幅は --tlx-cols（左から 日程・大会名｜状態｜登録区分｜種目｜会場｜締切｜予備日｜要項｜申込用紙｜ドロー｜結果｜備考）。
-   左端の列は横スクロールしても固定（position: sticky; left: 0）。
-   項目名の行（.tlx__head）は本体の外に置いて画面の上端に固定し（position: sticky; top）、横の位置は main.js の initTlx が本体と合わせる。
+   列の幅は --tlx-cols（左から 日程｜大会名｜状態｜登録区分｜種目｜会場｜締切｜予備日｜要項｜申込用紙｜ドロー｜結果｜備考）。
+   左端の2列（日程・大会名）は横スクロールしても固定（position: sticky。大会名の列は日程の列の幅 --tlx-c1 だけ右に止める）。
+   項目名の行（.tlx__head）は本体の外に置いて画面の上端に固定し（position: sticky; top）、
+   横の位置は main.js の initTlx が本体のスクロール量に合わせて中の行を transform でずらす（スクロールの連動はしない＝カクつかない）。
    スマホでは上端にロゴとメニューのボタンが浮いているので、その下（--header-h）に止める。
    PC はヘッダーが出ているあいだはその下、下へ読み進めてヘッダーが引っ込んだら画面の上端に止める */
 .tlx {
-  --tlx-cols: 156px 76px 82px 150px 150px 72px 196px 64px 78px 64px 64px 170px;
+  --tlx-c1: 54px;
+  --tlx-cols: var(--tlx-c1) 150px 76px 82px 150px 150px 72px 196px 64px 78px 64px 64px 170px;
   position: relative;
   margin-top: 8px;
 }
-@media (min-width: 768px) { .tlx { --tlx-cols: 236px 84px 88px 170px 180px 76px 206px 68px 84px 68px 68px 180px; } }
+@media (min-width: 768px) { .tlx { --tlx-c1: 72px; --tlx-cols: var(--tlx-c1) 210px 84px 88px 170px 180px 76px 206px 68px 84px 68px 68px 180px; } }
 .tlx__row {
   display: grid;
   grid-template-columns: var(--tlx-cols);
@@ -3185,13 +3190,14 @@ body.jsrv .rv.on .ink-sweep {
   position: sticky;
   top: var(--header-h);
   z-index: 20;
-  overflow-x: auto;
-  scrollbar-width: none;
+  overflow: hidden;
   background: var(--white);
   border-top: 1px solid var(--gray-200);
   border-bottom: 1px solid var(--ink);
 }
-.tlx__head::-webkit-scrollbar { display: none; }
+.tlx__head .tlx__row { will-change: transform; }
+/* 項目名の行の「日程」「大会名」は、行ごと左へずらす分を main.js が打ち消して、本体の固定列の上にとどめる */
+.tlx__head .tlx__cell--date, .tlx__head .tlx__cell--name { position: relative; left: auto; z-index: 1; background: var(--white); }
 /* スマホ：止まっているあいだは、項目名の行より上（ロゴとメニューのボタンの裏）も白で覆い、下を流れる行が透けないようにする */
 @media (max-width: 1023px) {
   .tlx__head.is-stuck { box-shadow: 0 -30px 0 var(--white), 0 -60px 0 var(--white), 0 calc(-1 * var(--header-h)) 0 var(--white); }
@@ -3226,10 +3232,12 @@ body.jsrv .rv.on .ink-sweep {
 }
 .tlx__body .tlx__row:hover .tlx__cell { background: var(--gray-050); }
 /* 左端（日程・大会名）は固定。横に送ったときは右端に薄い影を付けて、下を流れていく列と分ける */
-.tlx__cell--name { position: sticky; left: 0; z-index: 1; padding-left: 4px; }
+.tlx__cell--date { position: sticky; left: 0; z-index: 1; padding-left: 4px; padding-right: 4px; gap: 0; }
+.tlx__cell--name { position: sticky; left: var(--tlx-c1); z-index: 1; }
 .tlx.is-scrolled .tlx__cell--name { box-shadow: 6px 0 8px -6px rgba(26, 26, 26, .25); }
-.tlx__date { display: flex; align-items: baseline; gap: 6px; }
-.tlx__ymd { font: 700 13px/1.3 var(--flt); letter-spacing: .03em; color: var(--ink); }
+/* 日程の列：年（小さく）／月日／曜日 の3段 */
+.tlx__y { font: 500 10px/1.3 var(--flt); letter-spacing: .04em; color: var(--gray-500); }
+.tlx__md { font: 700 15px/1.25 var(--flt); letter-spacing: .02em; color: var(--ink); }
 .tlx__dow { font: 700 10px/1.3 var(--flt); letter-spacing: .1em; color: var(--red); }
 /* 大会名：意味の切れ目（<wbr>）でだけ折り返す */
 .tlx__name { font: 700 14px/1.5 var(--fjp); letter-spacing: .02em; color: var(--ink); word-break: keep-all; overflow-wrap: anywhere; }
@@ -3238,7 +3246,7 @@ body.jsrv .rv.on .ink-sweep {
 .tlx__name a:hover { color: var(--red); }
 .tlx__cell--text { font: 400 13px/1.6 var(--fjp); color: var(--gray-800); word-break: keep-all; overflow-wrap: anywhere; }
 .tlx__sub { font-size: 11px; color: var(--gray-500); }
-.tlx__row--done .tlx__name, .tlx__row--done .tlx__ymd { color: var(--gray-600); }
+.tlx__row--done .tlx__name, .tlx__row--done .tlx__md { color: var(--gray-600); }
 .tlx__row--done .tlx__dow { color: var(--gray-500); }
 .tlx .tlx__btn { width: 100%; min-height: 34px; padding: 6px 2px; gap: 0; justify-content: center; font-size: 12px; letter-spacing: 0; white-space: nowrap; }
 .tlx .tlx__btn .aw { display: none; }
