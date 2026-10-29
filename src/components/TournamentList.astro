@@ -3,7 +3,7 @@
 // 表示は2通り。大会情報ページの切り替えボタンで選ぶ（main.js の initViewSwitch。選んだ方を覚えておく）。
 //
 // ■ 縮小表示（初め。.tl--rows のとき .tlx を出す）
-//   1大会1行の表。左端の「日程・大会名」の列は固定し、右へ横スクロールすると
+//   1大会1行の表。左端の「日程」「大会名」の2列は固定し、右へ横スクロールすると
 //   状態・登録区分・種目・会場・締切・予備日・要項／申込用紙／ドロー／結果・備考 が順に見える。
 //   項目名の行（.tlx__head）は下へスクロールしても画面の上端についてくる（横スクロールは本体と連動。main.js の initTlx）。
 //   大会名は「第56回｜東部地区｜テニス選手権」のように意味の切れ目でだけ折り返す（nameParts と <wbr>）。
@@ -20,6 +20,7 @@
 import Icon from './Icon.astro';
 import { REG_LABEL, STATUS_LABEL, dateCell } from '../data/schedule.js';
 import EventIcon from './EventIcon.astro';
+import Venue from './Venue.astro';
 import { eventIcons } from '../data/event-icons.js';
 import { siteData } from '../lib/cms.js';
 import { eventButtons } from '../data/event-buttons.js';
@@ -55,7 +56,7 @@ const nameParts = (name) =>
 const spareText = (t) => (t.spareDate ? `${t.spareDate}${t.spareVenue ? `（${t.spareVenue}）` : ''}` : t.spareNote || '');
 
 /** 縮小表示の項目（左から）。幅は CSS の --tlx-cols と同じ順 */
-const COLS = ['日程・大会名', '状態', '登録区分', '種目', '会場', '締切', '予備日', '要項', '申込用紙', 'ドロー', '結果', '備考'];
+const COLS = ['日程', '大会名', '状態', '登録区分', '種目', '会場', '締切', '予備日', '要項', '申込用紙', 'ドロー', '結果', '備考'];
 
 const rows = items.map((t) => {
   const e = eventForSchedule(t);
@@ -74,7 +75,7 @@ const parts = (text) => String(text ?? '').split(/(?<=[／/・])|(?=（)/);
     <p class="tlx__hint" aria-hidden="true"><span class="ln-arrow"></span>SCROLL</p>
     <div class="tlx__head" aria-hidden="true">
       <div class="tlx__row tlx__row--head">
-        {COLS.map((c, i) => <span class:list={['tlx__cell', i === 0 && 'tlx__cell--name']}>{c}</span>)}
+        {COLS.map((c, i) => <span class:list={['tlx__cell', i === 0 && 'tlx__cell--date', i === 1 && 'tlx__cell--name']}>{c}</span>)}
       </div>
     </div>
     <div class="tlx__body" role="list" aria-label={caption}>
@@ -84,8 +85,12 @@ const parts = (text) => String(text ?? '').split(/(?<=[／/・])|(?=（)/);
           data-tags={`${t.status} ${t.reg}`}
           role="listitem"
         >
+          <div class="tlx__cell tlx__cell--date">
+            <span class="tlx__y">{date.ymd.slice(0, 4)}</span>
+            <span class="tlx__md">{date.ymd.slice(5)}</span>
+            <span class="tlx__dow">{date.dow}</span>
+          </div>
           <div class="tlx__cell tlx__cell--name">
-            <span class="tlx__date"><span class="tlx__ymd">{date.ymd}</span><span class="tlx__dow">{date.dow}</span></span>
             <span class="tlx__name">
               {e
                 ? <a href={e.url}>{nameParts(t.name).map((part, i, arr) => <>{part}{i < arr.length - 1 && <wbr />}</>)}</a>
@@ -95,7 +100,7 @@ const parts = (text) => String(text ?? '').split(/(?<=[／/・])|(?=（)/);
           <div class="tlx__cell"><span class="visually-hidden">状態：</span><span class={`badge ${badge.badge}`}>{badge.label}</span></div>
           <div class="tlx__cell"><span class="visually-hidden">登録区分：</span><span class={`reg reg--${t.reg}`}>{REG_LABEL[t.reg]}</span></div>
           <div class="tlx__cell tlx__cell--text"><span class="visually-hidden">種目：</span>{parts(t.event).map((part, i, arr) => <>{part}{i < arr.length - 1 && <wbr />}</>)}</div>
-          <div class="tlx__cell tlx__cell--text"><span class="visually-hidden">会場：</span>{parts(t.place).map((part, i, arr) => <>{part}{i < arr.length - 1 && <wbr />}</>)}{date.note && <small class="tlx__sub">{date.note}</small>}</div>
+          <div class="tlx__cell tlx__cell--text"><span class="visually-hidden">会場：</span><span><Venue text={t.place} breaks /></span>{date.note && <small class="tlx__sub">{date.note}</small>}</div>
           <div class="tlx__cell tlx__cell--text"><span class="visually-hidden">締切：</span>{t.due && t.due !== '—' ? t.due : '—'}</div>
           <div class="tlx__cell tlx__cell--text"><span class="visually-hidden">予備日：</span>{spareText(t) ? parts(spareText(t)).map((part, i, arr) => <>{part}{i < arr.length - 1 && <wbr />}</>) : '—'}</div>
           {buttons.map((b) => (
@@ -146,7 +151,7 @@ const parts = (text) => String(text ?? '').split(/(?<=[／/・])|(?=（)/);
           <div class="tl-item__row">
             <dt><Icon name="pin" class="tl-item__ico" /><span class="visually-hidden">会場</span></dt>
             {/* 会場名は途中で折り返さない（.tl-item__place）。「／」「・」の区切りの後ろだけ折り返してよい（<wbr>） */}
-            <dd class="tl-item__place">{parts(t.place).map((part, i, arr) => <>{part}{i < arr.length - 1 && <wbr />}</>)}</dd>
+            <dd class="tl-item__place"><Venue text={t.place} breaks /></dd>
           </div>
         </dl>
         <div class="tl-item__event">

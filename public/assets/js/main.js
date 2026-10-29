@@ -1224,40 +1224,53 @@
   }
 
   /* ---------- 大会一覧の縮小表示（.tlx） ----------
-     項目名の行（.tlx__head。画面の上端に固定）と本体（.tlx__body）の横スクロールをそろえる（どちらを送っても両方動く）。
-     横に送ったら .is-scrolled（左端の列に影）、右端まで送ったら .is-end、送れる幅が無ければ .is-fit（SCROLL の案内を消す） */
+     本体（.tlx__body）の横スクロールに、項目名の行（.tlx__head。画面の上端に固定）を transform でついていかせる。
+     項目名の行はスクロールさせない（両方のスクロール位置を書き合うと、指を離したあとの惰性のスクロールが止まってカクつくため）。
+     横に送ったら .is-scrolled（左端の列に影）、右端まで送ったら .is-end、送れる幅が無ければ .is-fit（SCROLL の案内を消す）。
+     項目名の行が画面の上端に止まっているあいだ .is-stuck（スマホではロゴの裏まで白で覆う。style.css） */
   function initTlx() {
     document.querySelectorAll('[data-tlx]').forEach(function (box) {
       var head = box.querySelector('.tlx__head');
+      var headRow = head && head.querySelector('.tlx__row');
+      var headFixed = head ? head.querySelectorAll('.tlx__cell--date, .tlx__cell--name') : [];
       var body = box.querySelector('.tlx__body');
-      if (!head || !body) return;
-      var lock = null;
+      if (!head || !headRow || !body) return;
+      var x = -1, ticking = false;
       var update = function () {
+        ticking = false;
+        var left = body.scrollLeft;
+        if (left !== x) {
+          x = left;
+          headRow.style.transform = 'translate3d(' + (-left) + 'px,0,0)';
+          // 「日程」「大会名」は本体の固定列と同じく、その場にとどめる
+          for (var i = 0; i < headFixed.length; i++) headFixed[i].style.transform = 'translate3d(' + left + 'px,0,0)';
+        }
         var max = body.scrollWidth - body.clientWidth;
-        box.classList.toggle('is-scrolled', body.scrollLeft > 2);
-        box.classList.toggle('is-end', max > 2 && body.scrollLeft >= max - 2);
+        box.classList.toggle('is-scrolled', left > 2);
+        box.classList.toggle('is-end', max > 2 && left >= max - 2);
         box.classList.toggle('is-fit', max <= 2);
       };
-      var sync = function (from, to) {
-        return function () {
-          if (lock && lock !== from) return;
-          lock = from;
-          to.scrollLeft = from.scrollLeft;
-          update();
-          requestAnimationFrame(function () { lock = null; });
-        };
-      };
-      body.addEventListener('scroll', sync(body, head), { passive: true });
-      head.addEventListener('scroll', sync(head, body), { passive: true });
+      body.addEventListener('scroll', function () {
+        if (ticking) return;
+        ticking = true;
+        requestAnimationFrame(update);
+      }, { passive: true });
       window.addEventListener('resize', update);
       update();
-      // 項目名の行が画面の上端に止まっているあいだ .is-stuck（スマホではロゴの裏まで白で覆う。style.css）
+
+      var sTick = false;
       var stuck = function () {
-        var top = parseFloat(getComputedStyle(head).top) || 0;
+        sTick = false;
+        var top = parseFloat(getComputedStyle(head).top) || 0; // PC はヘッダーの出入りで変わるので毎回読む
         var r = head.getBoundingClientRect();
         head.classList.toggle('is-stuck', r.top <= top + 1 && box.getBoundingClientRect().bottom > r.bottom + 1);
       };
-      window.addEventListener('scroll', stuck, { passive: true });
+      window.addEventListener('scroll', function () {
+        if (sTick) return;
+        sTick = true;
+        requestAnimationFrame(stuck);
+      }, { passive: true });
+      window.addEventListener('resize', stuck);
       stuck();
     });
   }

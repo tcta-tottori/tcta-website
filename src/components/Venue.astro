@@ -1,0 +1,23 @@
+---
+// 会場名。「ヤマタスポーツパーク」はロゴ（venue-yamata-color.png。バナーから白地を抜いて切り出したもの）に置き換えて出す。
+// 大会カード（TournamentCard.astro）と大会情報ページの一覧（TournamentList.astro）で使う。
+// breaks を付けると、「／」「/」「・」の後ろと「（」の前に折り返してよい位置（<wbr>）を入れる（会場名は途中で折らない前提）。
+interface Props {
+  text?: string;
+  breaks?: boolean;
+}
+const { text = '', breaks = false } = Astro.props;
+
+const NAME = 'ヤマタスポーツパーク';
+const segs = String(text ?? '').split(NAME);
+const cut = (t: string) => (breaks ? t.split(/(?<=[／/・])|(?=（)/) : [t]);
+---
+
+{segs.map((seg, i) => (
+  <>
+    {cut(seg).map((p, j, arr) => <>{p}{j < arr.length - 1 && <wbr />}</>)}
+    {i < segs.length - 1 && (
+      <>{breaks && seg && <wbr />}<img class="venue-logo" src="assets/img/venue-yamata-color.png" alt={NAME} width="770" height="80" decoding="async" />{breaks && segs[i + 1] && <wbr />}</>
+    )}
+  </>
+))}
