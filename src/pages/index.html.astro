@@ -105,8 +105,7 @@ const upcomingTournaments = TOURNAMENTS.filter((t) => t.status !== 'past');
   <section class="section section--gray section--cards" id="tournaments" aria-labelledby="tournaments-title">
     <span class="ghost" aria-hidden="true">TOURNAMENT</span>
     <div class="container">
-      {/* 見出しの右端に、見出しの下端にそろえて VIEW ALL（.sec-bar--row） */}
-      <div class="sec-bar sec-bar--row rv">
+      <div class="sec-bar rv">
         <div class="sec-head">
           <div class="sec-head__row">
             <span class="sec-head__mark" aria-hidden="true"></span>
@@ -115,11 +114,6 @@ const upcomingTournaments = TOURNAMENTS.filter((t) => t.status !== 'past');
               <h2 class="sec-head__title" id="tournaments-title">大会情報</h2>
             </div>
           </div>
-        </div>
-        <div class="sec-bar__aside">
-          <a class="view-all" href="tournaments.html">
-            <span class="view-all__label">VIEW ALL</span><span class="ln-arrow" aria-hidden="true"></span>
-          </a>
         </div>
       </div>
       {/* 左右に送れることを、線の矢印（.ln-arrow）で示す。送るのは指（横スクロール）か下の点で */}
@@ -147,11 +141,11 @@ const upcomingTournaments = TOURNAMENTS.filter((t) => t.status !== 'past');
     </div>
 
     <div class="container">
-      {/* いま何枚目を見ているか。点を押すとその大会まで送る。 */}
-      <div class="cdots rv" role="tablist" aria-label="大会カードの位置">
-        {TOURNAMENTS.map((t, i) => (
-          <button class="cdot" type="button" data-cdot={i} aria-label={`${t.date} ${t.title}`}></button>
-        ))}
+      {/* カードの下の右端に VIEW ALL（大会情報のページへ） */}
+      <div class="sec-more rv">
+        <a class="view-all" href="tournaments.html">
+          <span class="view-all__label">VIEW ALL</span><span class="ln-arrow" aria-hidden="true"></span>
+        </a>
       </div>
     </div>
 
@@ -161,7 +155,7 @@ const upcomingTournaments = TOURNAMENTS.filter((t) => t.status !== 'past');
   <section class="section" id="news" aria-labelledby="news-title">
     <span class="ghost" aria-hidden="true">NEWS</span>
     <div class="container">
-      {/* 全件は一覧の下の VIEW ALL で開く（ヘッダーは残したまま、その下にお知らせの見出しと全件を出す）。 */}
+      {/* 全件は4件目（薄くした行）の右端の VIEW ALL で開く（ヘッダーは残したまま、その下にお知らせの見出しと全件を出す）。 */}
       <div class="sec-head rv">
         <div class="sec-head__row">
           <span class="sec-head__mark" aria-hidden="true"></span>
@@ -216,7 +210,7 @@ const upcomingTournaments = TOURNAMENTS.filter((t) => t.status !== 'past');
   <section class="section section--gray" id="courts" aria-labelledby="courts-title">
     <span class="ghost" aria-hidden="true">COURT GUIDE</span>
     <div class="container">
-      <div class="sec-bar sec-bar--row rv">
+      <div class="sec-bar rv">
         <div class="sec-head">
           <div class="sec-head__row">
             <span class="sec-head__mark" aria-hidden="true"></span>
@@ -226,17 +220,13 @@ const upcomingTournaments = TOURNAMENTS.filter((t) => t.status !== 'past');
             </div>
           </div>
         </div>
-        <div class="sec-bar__aside">
-          <a class="view-all" href="courts.html">
-            <span class="view-all__label">VIEW ALL</span><span class="ln-arrow" aria-hidden="true"></span>
-          </a>
-        </div>
       </div>
 
       {/* 施設ごとの地図。上のボタンで切り替える（緯度経度とコートの輪郭は courts.js / court-shapes.json）。
           施設の一覧は置かず、VIEW ALL からコート案内のページへ */}
       <div class="rv embed-wrap mt-32">
-        <CourtMap courts={COURTS_HOME} />
+        {/* VIEW ALL（コート案内のページへ）は地図の中の右上に置く（CourtMap の viewAll） */}
+        <CourtMap courts={COURTS_HOME} viewAll="courts.html" />
         <span class="embed-wrap__square" aria-hidden="true"></span>
       </div>
       {/* 地図の下に、市のテニスコートの予約先（鳥取市公共施設予約システム。courts.js の CITY_RESERVE）へのボタン */}

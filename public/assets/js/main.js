@@ -1192,32 +1192,6 @@
              (parseFloat(cs.getPropertyValue('--carousel-peek')) || 0);
     };
 
-    /* いま何枚目を見ているかを点で示す。押すとその大会まで送る。 */
-    var dots = document.querySelectorAll('[data-cdot]');
-    if (dots.length) {
-      var cards = track.querySelectorAll('.tcard');
-      var mark = function () {
-        // 左端にいちばん近いカードを「いま見ている1枚」とみなす
-        var here = track.scrollLeft + padStart();
-        var near = 0;
-        var best = Infinity;
-        for (var i = 0; i < cards.length; i++) {
-          var d = Math.abs(cards[i].offsetLeft - here);
-          if (d < best) { best = d; near = i; }
-        }
-        for (var j = 0; j < dots.length; j++) dots[j].classList.toggle('is-active', j === near);
-      };
-      track.addEventListener('scroll', mark, { passive: true });
-      window.addEventListener('resize', mark);
-      Array.prototype.forEach.call(dots, function (dot, i) {
-        dot.addEventListener('click', function () {
-          if (!cards[i]) return;
-          track.scrollTo({ left: Math.max(0, cards[i].offsetLeft - padStart()), behavior: reduceMotion ? 'auto' : 'smooth' });
-        });
-      });
-      mark();
-    }
-
     // 初期表示：TODAY の線を左に置く。
     // scroll-padding のぶんだけ手前を空けるので、左には終了した大会の端が覗き、
     // 線のすぐ右に直近の大会が1枚まるごと入り、その次の大会が右端で少し切れる。
