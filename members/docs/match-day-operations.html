@@ -1,0 +1,580 @@
+<title>当日受付・呼び出し 運用イメージ</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jost:wght@500;600;700&family=Noto+Sans+JP:wght@400;500;700;900&family=Barlow:wght@500;600&display=swap">
+<style>
+/* 協会サイト（style.css）の赤・墨・グレーと直角に近い枠にそろえた、役員会向けの資料。
+   1 列の読み物。図（構成図・タイムライン・画面）だけ幅いっぱいに使う。 */
+:root {
+  --bg: #FFFFFF;
+  --surface: #F6F6F5;
+  --line: #E2E2E0;
+  --ink: #1A1A1A;
+  --muted: #5E5E5C;
+  --red: #D8232A;
+  --red-tint: #FCEDEE;
+  --ondeck: #B86E00;
+  --ondeck-tint: #FFF4E0;
+  --play: #1F7A4D;
+  --play-tint: #E6F4EC;
+  --phone: #FFFFFF;
+  --phone-frame: #1A1A1A;
+  --fjp: "Noto Sans JP", "Hiragino Sans", "Yu Gothic", sans-serif;
+  --fdisp: "Jost", "Barlow", system-ui, sans-serif;
+  --fnum: "Barlow", system-ui, sans-serif;
+  --radius: 4px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #141414; --surface: #1E1E1D; --line: #343432; --ink: #EDEDEB; --muted: #A3A3A0;
+    --red: #F0454B; --red-tint: #3A1A1B; --ondeck: #F0A63A; --ondeck-tint: #33280F;
+    --play: #4CC48A; --play-tint: #112A1E; --phone: #1E1E1D; --phone-frame: #3A3A38;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #141414; --surface: #1E1E1D; --line: #343432; --ink: #EDEDEB; --muted: #A3A3A0;
+  --red: #F0454B; --red-tint: #3A1A1B; --ondeck: #F0A63A; --ondeck-tint: #33280F;
+  --play: #4CC48A; --play-tint: #112A1E; --phone: #1E1E1D; --phone-frame: #3A3A38;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink); font-family: var(--fjp); font-size: 15px; line-height: 1.8;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 0 64px;
+}
+.wrap { max-width: 1040px; margin: 0 auto; }
+.prose { max-width: 720px; }
+h1, h2, h3 { text-wrap: balance; line-height: 1.4; margin: 0; }
+p { margin: 0; }
+
+/* 表紙 */
+.cover { padding-block: 48px 36px; border-bottom: 1px solid var(--line); display: grid; gap: 18px; }
+.eyebrow { font-family: var(--fdisp); font-weight: 600; letter-spacing: .18em; font-size: 12px; color: var(--red); text-transform: uppercase; }
+.cover h1 { font-size: clamp(26px, 5vw, 40px); font-weight: 900; letter-spacing: .02em; }
+.cover .lead { color: var(--muted); max-width: 680px; }
+.meta { display: flex; flex-wrap: wrap; gap: 8px 20px; font-size: 13px; color: var(--muted); }
+.verdict { display: grid; grid-template-columns: auto 1fr; gap: 14px; align-items: center; border: 2px solid var(--red); border-radius: var(--radius); padding: 16px 18px; max-width: 760px; }
+.verdict b { font-family: var(--fdisp); font-size: 34px; color: var(--red); line-height: 1; }
+.verdict p { font-weight: 500; }
+
+section { padding-block: 44px 8px; display: grid; gap: 20px; }
+section > *, .cover > * { min-width: 0; }
+.sec-no { font-family: var(--fdisp); font-weight: 600; color: var(--red); letter-spacing: .12em; font-size: 13px; }
+section h2 { font-size: clamp(20px, 3.4vw, 26px); font-weight: 900; }
+.sub { color: var(--muted); max-width: 720px; }
+h3 { font-size: 16px; font-weight: 700; }
+
+/* 判定の表 */
+.scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th, td { text-align: left; vertical-align: top; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+th { font-weight: 700; font-size: 12px; letter-spacing: .06em; color: var(--muted); white-space: nowrap; }
+td.mark { font-size: 20px; font-weight: 700; text-align: center; width: 3em; line-height: 1.3; }
+.ok { color: var(--play); } .mid { color: var(--ondeck); } .ng { color: var(--red); }
+.num { font-family: var(--fnum); font-variant-numeric: tabular-nums; }
+
+/* 構成図 */
+.diagram { border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
+.diagram svg { display: block; min-width: 760px; width: 100%; height: auto; }
+.d-zone { fill: var(--bg); stroke: var(--line); stroke-width: 1.5; }
+.d-cf { fill: var(--bg); stroke: var(--ondeck); stroke-width: 1.5; stroke-dasharray: 6 4; }
+.d-box { fill: var(--bg); stroke: var(--ink); stroke-width: 1.2; }
+.d-new { fill: var(--red-tint); stroke: var(--red); stroke-width: 1.4; }
+.d-t { fill: var(--ink); font-family: var(--fjp); font-size: 13px; font-weight: 700; }
+.d-s { fill: var(--muted); font-family: var(--fjp); font-size: 11px; }
+.d-z { fill: var(--muted); font-family: var(--fdisp); font-size: 12px; font-weight: 600; letter-spacing: .14em; }
+.d-a { stroke: var(--ink); stroke-width: 1.4; fill: none; marker-end: url(#arr); }
+.d-a2 { stroke: var(--red); stroke-width: 1.6; fill: none; marker-end: url(#arr-r); }
+.d-al { fill: var(--ink); font-family: var(--fjp); font-size: 11px; }
+.d-alr { fill: var(--red); font-family: var(--fjp); font-size: 11px; font-weight: 700; }
+.d-mk { fill: var(--ink); } .d-mkr { fill: var(--red); }
+.legend { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 12px; color: var(--muted); padding: 10px 14px; border-top: 1px solid var(--line); }
+.legend i { display: inline-block; width: 14px; height: 10px; vertical-align: -1px; margin-right: 6px; border: 1.4px solid var(--ink); background: var(--bg); }
+.legend i.n { border-color: var(--red); background: var(--red-tint); }
+.legend i.c { border: 1.4px dashed var(--ondeck); }
+
+/* タイムライン */
+.tl { display: grid; gap: 0; border-top: 1px solid var(--line); }
+.tl-row { display: grid; grid-template-columns: 74px 1fr 1fr 1fr; border-bottom: 1px solid var(--line); }
+.tl-row > div { padding: 12px 12px; min-width: 0; font-size: 13.5px; line-height: 1.7; }
+.tl-row > div + div { border-left: 1px solid var(--line); }
+.tl-head > div { font-size: 12px; font-weight: 700; letter-spacing: .06em; color: var(--muted); padding-block: 8px; }
+.tl-time { font-family: var(--fnum); font-weight: 600; font-size: 16px; font-variant-numeric: tabular-nums; }
+.tl-time small { display: block; font-family: var(--fjp); font-size: 11px; font-weight: 500; color: var(--muted); }
+.tl-sys { color: var(--muted); }
+.tag { display: inline-block; font-size: 11px; font-weight: 700; padding: 0 6px; border-radius: 2px; margin-right: 4px; line-height: 1.7; }
+.tag.mail { background: var(--surface); border: 1px solid var(--line); color: var(--ink); }
+.tag.call { background: var(--red); color: #fff; }
+.tag.deck { background: var(--ondeck-tint); color: var(--ondeck); border: 1px solid var(--ondeck); }
+.lane-label { display: none; }
+@media (max-width: 760px) {
+  .tl-head { display: none; }
+  .tl-row { grid-template-columns: 1fr; }
+  .tl-row > div + div { border-left: 0; padding-top: 0; }
+  .tl-row > div:empty { display: none; }
+  .lane-label { display: inline; font-size: 11px; font-weight: 700; color: var(--muted); margin-right: 6px; }
+}
+
+/* スマホ画面 */
+.phones { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px; }
+@media (max-width: 960px) { .phones { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 480px) { .phones { grid-template-columns: minmax(0, 1fr); max-width: 300px; } }
+figure { margin: 0; display: grid; gap: 10px; min-width: 0; }
+figcaption { font-size: 13px; color: var(--muted); line-height: 1.6; }
+figcaption b { color: var(--ink); display: block; font-size: 14px; }
+.phone { border: 8px solid var(--phone-frame); border-radius: 22px; background: var(--phone); aspect-ratio: 9 / 17; max-width: 100%; overflow: hidden; display: flex; flex-direction: column; font-size: 12px; line-height: 1.6; }
+.ph-bar { display: flex; justify-content: space-between; padding: 6px 12px 4px; font-family: var(--fnum); font-size: 10px; color: var(--muted); }
+.ph-head { padding: 6px 12px 8px; border-bottom: 1px solid var(--line); font-family: var(--fdisp); font-size: 10px; letter-spacing: .14em; font-weight: 600; }
+.ph-body { padding: 12px; display: grid; gap: 10px; align-content: start; flex: 1; }
+.ph-title { font-weight: 900; font-size: 15px; line-height: 1.4; }
+.ph-kv { display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; font-size: 11.5px; }
+.ph-kv dt { color: var(--muted); } .ph-kv dd { margin: 0; font-weight: 500; }
+.ph-btn { display: block; text-align: center; padding: 10px; border-radius: var(--radius); background: var(--red); color: #fff; font-weight: 700; font-size: 13px; }
+.ph-btn.ghost { background: transparent; color: var(--ink); border: 1px solid var(--line); font-weight: 500; }
+.ph-note { font-size: 10.5px; color: var(--muted); }
+.ph-ok { display: grid; place-items: center; gap: 4px; padding: 14px 8px; border: 1px solid var(--play); background: var(--play-tint); border-radius: var(--radius); text-align: center; }
+.ph-ok b { color: var(--play); font-size: 16px; }
+.ph-ok .num { font-size: 22px; font-weight: 600; }
+.ph-deck { border: 1px solid var(--ondeck); background: var(--ondeck-tint); border-radius: var(--radius); padding: 10px; display: grid; gap: 4px; }
+.ph-deck .lbl { color: var(--ondeck); font-weight: 900; font-size: 13px; }
+.ph-court { font-family: var(--fnum); font-weight: 600; font-size: 38px; line-height: 1; }
+.ph-court small { font-family: var(--fjp); font-size: 13px; font-weight: 700; margin-left: 2px; }
+.phone.call { background: var(--red); color: #fff; }
+.phone.call .ph-bar, .phone.call .ph-note { color: rgba(255,255,255,.8); }
+.phone.call .ph-head { border-color: rgba(255,255,255,.35); }
+.phone.call .ph-kv dt { color: rgba(255,255,255,.8); }
+.phone.call .ph-btn { background: #fff; color: #B31C22; }
+.phone.call .ph-court { font-size: 64px; }
+.loc { display: flex; gap: 8px; align-items: center; font-size: 11px; padding: 8px; border: 1px dashed var(--line); border-radius: var(--radius); }
+.loc .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--play); flex: none; }
+
+/* 本部の盤面 */
+.board { border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
+.board-top { display: flex; flex-wrap: wrap; gap: 8px 22px; align-items: baseline; padding: 12px 14px; background: var(--surface); border-bottom: 1px solid var(--line); font-size: 13px; }
+.board-top b { font-size: 15px; }
+.board-top .num { font-weight: 600; font-size: 18px; }
+.courts { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); }
+.court { padding: 12px 14px; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); display: grid; gap: 8px; min-width: 0; }
+.court-no { font-family: var(--fnum); font-weight: 600; font-size: 13px; color: var(--muted); letter-spacing: .06em; }
+.slot { border-radius: var(--radius); padding: 8px 10px; font-size: 12.5px; line-height: 1.55; display: grid; gap: 2px; }
+.slot .st { font-size: 11px; font-weight: 700; display: flex; justify-content: space-between; gap: 6px; }
+.slot.play { background: var(--play-tint); border: 1px solid var(--play); } .slot.play .st { color: var(--play); }
+.slot.deck { background: var(--ondeck-tint); border: 1px solid var(--ondeck); } .slot.deck .st { color: var(--ondeck); }
+.slot.callme { background: var(--red-tint); border: 1px solid var(--red); } .slot.callme .st { color: var(--red); }
+.slot .acts { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+.slot .acts span { font-size: 11px; font-weight: 700; padding: 2px 8px; border: 1px solid var(--ink); border-radius: 2px; }
+.slot .acts span.p { background: var(--red); color: #fff; border-color: var(--red); }
+.ack { color: var(--play); font-weight: 700; } .noack { color: var(--red); font-weight: 700; }
+
+/* メール */
+.mails { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+.mail { border: 1px solid var(--line); border-radius: var(--radius); display: grid; min-width: 0; }
+.mail-h { padding: 10px 14px; border-bottom: 1px solid var(--line); font-size: 12px; color: var(--muted); display: grid; gap: 2px; }
+.mail-h b { color: var(--ink); font-size: 14px; }
+.mail-b { padding: 12px 14px; font-size: 13px; white-space: pre-wrap; line-height: 1.75; font-family: var(--fjp); }
+
+/* 費用・段階 */
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
+.card { border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; display: grid; gap: 6px; align-content: start; min-width: 0; }
+.card .big { font-family: var(--fnum); font-weight: 600; font-size: 28px; line-height: 1.2; font-variant-numeric: tabular-nums; }
+.card .big small { font-family: var(--fjp); font-size: 13px; font-weight: 500; color: var(--muted); margin-left: 4px; }
+.card p { font-size: 13px; color: var(--muted); }
+.steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; border: 1px solid var(--line); border-radius: var(--radius); }
+@media (max-width: 760px) { .steps { grid-template-columns: minmax(0, 1fr); } }
+.step { padding: 16px; display: grid; gap: 8px; align-content: start; min-width: 0; }
+.step + .step { border-left: 1px solid var(--line); }
+@media (max-width: 760px) { .step + .step { border-left: 0; border-top: 1px solid var(--line); } }
+.step .n { font-family: var(--fdisp); font-weight: 700; color: var(--red); letter-spacing: .1em; font-size: 12px; }
+.step ul, .prose ul, .prose ol { margin: 0; padding-left: 1.3em; font-size: 14px; }
+.step li + li, .prose li + li { margin-top: 4px; }
+.step .try { font-size: 12.5px; color: var(--muted); border-top: 1px dashed var(--line); padding-top: 8px; }
+.note { font-size: 12.5px; color: var(--muted); }
+.callout { border-left: 3px solid var(--ondeck); background: var(--ondeck-tint); padding: 12px 16px; font-size: 14px; max-width: 760px; }
+footer { margin-top: 48px; padding-top: 16px; border-top: 1px solid var(--line); font-size: 12px; color: var(--muted); }
+</style>
+
+<div class="wrap">
+
+<header class="cover">
+  <div class="eyebrow">Tottori-City Tennis Association · Match Day</div>
+  <h1>大会当日の受付と呼び出し<br>運用イメージ</h1>
+  <p class="lead">協会に登録した会員が、自分のスマホで会場の QR を読む（または位置情報で）当日受付をし、受付完了・控え・コールをメールと画面で受け取る仕組みです。会員ポータル（Cloudflare Workers）に機能を足して実現します。</p>
+  <div class="meta"><span>役員会 検討資料（案）</span><span>2026年10月29日</span><span>設計書: members/docs/match-day-checkin.md</span></div>
+  <div class="verdict"><b>可能</b><p>今の Cloudflare の構成で実現できます。必要な追加契約は Workers Paid（月 5 ドル）だけです。「コートに近づいただけで自動受付」は Web ではできないため、<strong>受付ページを開いて押したときの位置で判定</strong>します。</p></div>
+</header>
+
+<section>
+  <div class="sec-no">01 — 実現性</div>
+  <h2>できること・できないこと</h2>
+  <div class="scroll">
+    <table>
+      <thead><tr><th>判定</th><th>機能</th><th>理由・条件</th></tr></thead>
+      <tbody>
+        <tr><td class="mark ok">◎</td><td>会場の QR を読んで受付</td><td>ログイン済みのスマホで QR を読み、［受付する］を押すだけ。QR の鍵は当日だけ有効</td></tr>
+        <tr><td class="mark ok">○</td><td>位置情報で受付</td><td>［受付する］を押した瞬間の GPS で会場から 200m 以内か判定。屋外の誤差は 5〜20m。拒否されたら QR で</td></tr>
+        <tr><td class="mark ng">×</td><td>近づいただけで自動受付</td><td>ブラウザは画面を閉じていると位置を取れない（iPhone のホーム画面アプリも同じ）。ネイティブアプリが必要で、協会の規模に合わない</td></tr>
+        <tr><td class="mark ok">◎</td><td>受付完了メール</td><td>Cloudflare Email Sending。会員のアドレスに送るには Workers Paid が必要</td></tr>
+        <tr><td class="mark ok">○</td><td>控え・コールのメール</td><td>多くは数秒で届くが、携帯会社のメールなどで遅れることがある。画面と放送を併用する</td></tr>
+        <tr><td class="mark ok">◎</td><td>マイ試合画面（自動更新）</td><td>開いている間 20 秒ごとに更新。コールになると画面が赤くなり振動する</td></tr>
+        <tr><td class="mark ok">○</td><td>プッシュ通知</td><td>Android はそのまま。iPhone は iOS 16.4 以降で「ホーム画面に追加」したときだけ（第 3 段階）</td></tr>
+        <tr><td class="mark mid">△</td><td>LINE で通知</td><td>無料プランは月 200 通で大会 1 回分にも足りない。ライトプラン（月 5,000 円）なら可</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <div class="sec-no">02 — 設計図</div>
+  <h2>全体の構成</h2>
+  <p class="sub">新しいサーバーは作らず、既存の会員ポータル（tcta-members）に経路を足します。会員のログインをそのまま使えるので、選手はアプリを入れる必要がありません。</p>
+  <div class="diagram">
+    <div class="scroll">
+      <svg viewBox="0 0 980 470" role="img" aria-label="会場の QR・選手のスマホ・本部タブレットが Cloudflare の Workers につながり、D1 に記録し、Email Sending でメールを送る構成図">
+        <defs>
+          <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-mk"/></marker>
+          <marker id="arr-r" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-mkr"/></marker>
+        </defs>
+        <!-- 会場 -->
+        <rect x="16" y="16" width="270" height="438" rx="4" class="d-zone"/>
+        <text x="32" y="40" class="d-z">VENUE 会場</text>
+        <rect x="40" y="62" width="222" height="70" rx="4" class="d-box"/>
+        <text x="56" y="90" class="d-t">QR ポスター（A3）</text>
+        <text x="56" y="110" class="d-s">受付テント・各コート入口に掲示</text>
+        <text x="56" y="125" class="d-s">当日だけ有効な鍵入りの URL</text>
+        <rect x="40" y="178" width="222" height="96" rx="4" class="d-box"/>
+        <text x="56" y="206" class="d-t">選手のスマホ</text>
+        <text x="56" y="226" class="d-s">ブラウザ（ログイン済み）</text>
+        <text x="56" y="242" class="d-s">受付・マイ試合画面・［了解］</text>
+        <text x="56" y="258" class="d-s">メールを受け取る</text>
+        <rect x="40" y="322" width="222" height="104" rx="4" class="d-box"/>
+        <text x="56" y="350" class="d-t">本部のタブレット</text>
+        <text x="56" y="370" class="d-s">受付状況・代行受付</text>
+        <text x="56" y="386" class="d-s">コート盤面（控え・コール・</text>
+        <text x="56" y="402" class="d-s">開始・終了）</text>
+        <path d="M151,132 L151,174" class="d-a"/>
+        <text x="160" y="158" class="d-al">カメラで読む</text>
+
+        <!-- Cloudflare -->
+        <rect x="336" y="16" width="380" height="438" rx="4" class="d-cf"/>
+        <text x="352" y="40" class="d-z">CLOUDFLARE</text>
+        <rect x="360" y="62" width="332" height="62" rx="4" class="d-box"/>
+        <text x="376" y="88" class="d-t">Cloudflare Access（既存）</text>
+        <text x="376" y="108" class="d-s">本部画面は大会運営ロールだけが入れる</text>
+        <rect x="360" y="150" width="332" height="128" rx="4" class="d-new"/>
+        <text x="376" y="176" class="d-t">Workers  tcta-members（既存に追加）</text>
+        <text x="376" y="198" class="d-s">/t/:id/checkin … QR・位置の受付</text>
+        <text x="376" y="214" class="d-s">/t/:id/me … マイ試合画面（20 秒ごとに更新）</text>
+        <text x="376" y="230" class="d-s">/admin/tournaments/:id/desk・board … 本部</text>
+        <text x="376" y="246" class="d-s">/p/:pass … 前日メールの受付パス</text>
+        <text x="376" y="262" class="d-s">/m/:match/ack … ［了解］</text>
+        <rect x="360" y="304" width="156" height="122" rx="4" class="d-new"/>
+        <text x="376" y="330" class="d-t">D1（既存に追加）</text>
+        <text x="376" y="350" class="d-s">checkins 受付</text>
+        <text x="376" y="366" class="d-s">matches 試合・コート</text>
+        <text x="376" y="382" class="d-s">notifications 通知</text>
+        <text x="376" y="398" class="d-s">match_acks 了解</text>
+        <rect x="536" y="304" width="156" height="56" rx="4" class="d-new"/>
+        <text x="552" y="328" class="d-t">Email Sending</text>
+        <text x="552" y="346" class="d-s">send_email（要 Paid）</text>
+        <rect x="536" y="370" width="156" height="56" rx="4" class="d-box"/>
+        <text x="552" y="394" class="d-t">Cron Triggers</text>
+        <text x="552" y="412" class="d-s">前日案内・締切前・再コール</text>
+        <path d="M526,278 L526,300" class="d-a"/>
+        <path d="M438,278 L438,300" class="d-a"/>
+        <path d="M614,370 L614,286" class="d-a"/>
+
+        <!-- 選手 ⇔ Workers -->
+        <path d="M262,212 L356,212" class="d-a"/>
+        <text x="270" y="204" class="d-al">受付・画面</text>
+        <!-- 本部 → Access → Workers -->
+        <path d="M262,360 C 310,360 310,96 356,96" class="d-a"/>
+        <text x="268" y="300" class="d-al">操作</text>
+        <path d="M526,124 L526,146" class="d-a"/>
+        <!-- メール → スマホ -->
+        <path d="M614,360 C 614,450 210,450 151,278" class="d-a2"/>
+        <text x="330" y="444" class="d-alr">受付完了・控え・コールのメール</text>
+
+        <!-- 外部 -->
+        <rect x="766" y="16" width="198" height="438" rx="4" class="d-zone"/>
+        <text x="782" y="40" class="d-z">EXISTING 既存</text>
+        <rect x="786" y="150" width="158" height="96" rx="4" class="d-box"/>
+        <text x="802" y="176" class="d-t">大会運営アプリ</text>
+        <text x="802" y="196" class="d-s">GitHub Pages</text>
+        <text x="802" y="212" class="d-s">エントリーを読む（既存）</text>
+        <text x="802" y="228" class="d-s">試合の状態を送る（第 3 段階）</text>
+        <rect x="786" y="300" width="158" height="76" rx="4" class="d-box"/>
+        <text x="802" y="326" class="d-t">公式サイト</text>
+        <text x="802" y="346" class="d-s">大会の要項・ドロー・結果</text>
+        <text x="802" y="362" class="d-s">（これまでどおり）</text>
+        <path d="M782,198 L696,198" class="d-a"/>
+        <text x="708" y="190" class="d-al">API</text>
+      </svg>
+    </div>
+    <div class="legend"><span><i></i>既存のもの</span><span><i class="n"></i>今回足すもの</span><span><i class="c"></i>Cloudflare の中</span></div>
+  </div>
+</section>
+
+<section>
+  <div class="sec-no">03 — 当日の流れ</div>
+  <h2>大会当日のタイムライン</h2>
+  <p class="sub">例: 鳥取市秋季ダブルス大会（ヤマタスポーツパーク、受付 8:00〜8:45、9:00 試合開始）。時刻は例です。</p>
+  <div class="tl">
+    <div class="tl-row tl-head"><div>時刻</div><div>選手</div><div>本部</div><div>システム</div></div>
+    <div class="tl-row">
+      <div class="tl-time">18:00<small>前日</small></div>
+      <div><span class="lane-label">選手</span>案内メールを受け取る。「受付パス」のリンクを一度開いておく</div>
+      <div><span class="lane-label">本部</span>紙の受付名簿を印刷（通信障害の備え）</div>
+      <div class="tl-sys"><span class="lane-label">システム</span><span class="tag mail">メール</span>前日案内（受付時間・会場・受付パス・位置情報の許可のお願い）</div>
+    </div>
+    <div class="tl-row">
+      <div class="tl-time">7:40</div>
+      <div></div>
+      <div><span class="lane-label">本部</span>QR ポスターを受付テントとコート入口に掲示。タブレットで受付状況を開く</div>
+      <div class="tl-sys"><span class="lane-label">システム</span>当日の鍵が有効になる</div>
+    </div>
+    <div class="tl-row">
+      <div class="tl-time">8:00<small>受付開始</small></div>
+      <div><span class="lane-label">選手</span>到着したら QR を読む（または受付ページで［受付する］）。画面に「受付済み」</div>
+      <div><span class="lane-label">本部</span>受付数が増えていくのを見る。スマホが無い人は氏名で検索して代行受付</div>
+      <div class="tl-sys"><span class="lane-label">システム</span><span class="tag mail">メール</span>受付完了。範囲外の受付には「要確認」の印</div>
+    </div>
+    <div class="tl-row">
+      <div class="tl-time">8:30</div>
+      <div><span class="lane-label">選手</span>未受付の人にリマインドが届く</div>
+      <div></div>
+      <div class="tl-sys"><span class="lane-label">システム</span><span class="tag mail">メール</span>締切 15 分前のお知らせ（未受付の人だけ）</div>
+    </div>
+    <div class="tl-row">
+      <div class="tl-time">8:45<small>受付締切</small></div>
+      <div></div>
+      <div><span class="lane-label">本部</span>未受付の一覧を見て、放送・電話で確認。来ない組の扱いを決める</div>
+      <div class="tl-sys"><span class="lane-label">システム</span>未受付の一覧を確定（片方だけ受付の組も分かる）</div>
+    </div>
+    <div class="tl-row">
+      <div class="tl-time">9:00<small>試合開始</small></div>
+      <div><span class="lane-label">選手</span>マイ試合画面で自分の試合とコートを確認</div>
+      <div><span class="lane-label">本部</span>コート盤面で 1 試合目を各コートに割り当て、［コール］</div>
+      <div class="tl-sys"><span class="lane-label">システム</span><span class="tag call">コール</span>該当の 4 人にメール。画面が赤くなる</div>
+    </div>
+    <div class="tl-row">
+      <div class="tl-time">9:05</div>
+      <div><span class="lane-label">選手</span>次の試合の人に「控え」が届く。コート付近で待つ</div>
+      <div><span class="lane-label">本部</span>試合が始まったら［開始］→ そのコートの次の試合を［控えにする］</div>
+      <div class="tl-sys"><span class="lane-label">システム</span><span class="tag deck">控え</span>「3 番コートの次の試合です」</div>
+    </div>
+    <div class="tl-row">
+      <div class="tl-time">9:40</div>
+      <div><span class="lane-label">選手</span>コールを受けて［了解］を押し、コートへ</div>
+      <div><span class="lane-label">本部</span>結果を受け取り［終了・結果］→ 控えの試合を［コール］。了解した人に ✓ が付く</div>
+      <div class="tl-sys"><span class="lane-label">システム</span><span class="tag call">コール</span>メール＋画面。放送も従来どおり</div>
+    </div>
+    <div class="tl-row">
+      <div class="tl-time">9:45</div>
+      <div></div>
+      <div><span class="lane-label">本部</span>了解の無い組を放送で呼ぶ</div>
+      <div class="tl-sys"><span class="lane-label">システム</span><span class="tag call">再コール</span>コールから 5 分たっても了解が無い人に自動で</div>
+    </div>
+    <div class="tl-row">
+      <div class="tl-time">16:00<small>終了後</small></div>
+      <div></div>
+      <div><span class="lane-label">本部</span>結果を公式サイトへ（これまでどおり）</div>
+      <div class="tl-sys"><span class="lane-label">システム</span>操作はすべて監査ログに残る。位置の座標は保存しない</div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="sec-no">04 — 選手の画面</div>
+  <h2>スマホで見えるもの</h2>
+  <p class="sub">会員ポータルの画面に追加します。協会サイトと同じ見た目で、アプリのインストールは要りません。</p>
+  <div class="phones">
+    <figure>
+      <div class="phone">
+        <div class="ph-bar"><span>8:11</span><span>members.tottori-tenis.net</span></div>
+        <div class="ph-head">CHECK-IN 当日受付</div>
+        <div class="ph-body">
+          <div class="ph-title">鳥取市秋季ダブルス大会</div>
+          <dl class="ph-kv"><dt>種目</dt><dd>一般男子ダブルス B</dd><dt>ペア</dt><dd>鳥取 太郎・因幡 次郎</dd><dt>受付</dt><dd class="num">8:00〜8:45</dd></dl>
+          <div class="loc"><span class="dot"></span><span>会場から約 40m（位置情報で確認）</span></div>
+          <span class="ph-btn">受付する</span>
+          <p class="ph-note">QR を読めない場所では、位置情報で受付できます。位置の座標は保存しません。</p>
+        </div>
+      </div>
+      <figcaption><b>① QR を読むと</b>本人の確認は済んでいるので、［受付する］を押すだけ。</figcaption>
+    </figure>
+    <figure>
+      <div class="phone">
+        <div class="ph-bar"><span>8:12</span><span>members.tottori-tenis.net</span></div>
+        <div class="ph-head">MY MATCH マイ試合</div>
+        <div class="ph-body">
+          <div class="ph-ok"><b>受付済み</b><span class="num">8:12</span><span>ペアの因幡さんも受付済み</span></div>
+          <dl class="ph-kv"><dt>次の試合</dt><dd>1 回戦（予定 9:40 ごろ）</dd><dt>対戦</dt><dd>山田・佐藤 組（湖山 TC）</dd></dl>
+          <p class="ph-note">この画面は自動で更新されます。控え・コールはメールでも届きます。</p>
+          <span class="ph-btn ghost">ホーム画面に追加</span>
+        </div>
+      </div>
+      <figcaption><b>② 受付完了</b>同時に受付完了メール。ペアの状態も分かる。</figcaption>
+    </figure>
+    <figure>
+      <div class="phone">
+        <div class="ph-bar"><span>9:06</span><span>members.tottori-tenis.net</span></div>
+        <div class="ph-head">MY MATCH マイ試合</div>
+        <div class="ph-body">
+          <div class="ph-deck"><span class="lbl">控え</span><span class="ph-court">3<small>番コート</small></span><span>いまの試合の次です。コート付近でお待ちください。</span></div>
+          <dl class="ph-kv"><dt>対戦</dt><dd>山田・佐藤 組（湖山 TC）</dd><dt>試合中</dt><dd>3 番コート 2 ゲーム目</dd></dl>
+          <p class="ph-note">控えになった時刻 9:05</p>
+        </div>
+      </div>
+      <figcaption><b>③ 控え</b>前の試合が始まった時点で届く。画面はオレンジ。</figcaption>
+    </figure>
+    <figure>
+      <div class="phone call">
+        <div class="ph-bar"><span>9:40</span><span>members.tottori-tenis.net</span></div>
+        <div class="ph-head">CALL コール</div>
+        <div class="ph-body">
+          <div class="ph-title">コートへお入りください</div>
+          <span class="ph-court">3<small>番コート</small></span>
+          <dl class="ph-kv"><dt>対戦</dt><dd>山田・佐藤 組</dd><dt>コール</dt><dd class="num">9:40</dd></dl>
+          <span class="ph-btn">了解（向かいます）</span>
+          <p class="ph-note">5 分たっても了解が無いと再コールします。</p>
+        </div>
+      </div>
+      <figcaption><b>④ コール</b>画面が赤くなり振動。［了解］が本部の盤面に出る。</figcaption>
+    </figure>
+  </div>
+</section>
+
+<section>
+  <div class="sec-no">05 — 本部の画面</div>
+  <h2>コート盤面（本部のタブレット）</h2>
+  <p class="sub">進行係が 1 人で操作できるよう、コートごとに「試合中」と「控え」だけを並べます。押すボタンは各コートで 1 つか 2 つです。</p>
+  <div class="board">
+    <div class="board-top">
+      <b>鳥取市秋季ダブルス大会</b>
+      <span>受付 <span class="num">138</span> / 152 人</span>
+      <span>未受付の組 <span class="num">5</span></span>
+      <span>要確認 <span class="num">1</span></span>
+      <span>通知の失敗 <span class="num">0</span></span>
+    </div>
+    <div class="courts">
+      <div class="court">
+        <div class="court-no">COURT 1</div>
+        <div class="slot play"><div class="st"><span>試合中 9:12〜</span><span>男子 B 1R</span></div>鳥取・因幡 組 vs 湖山・千代 組<div class="acts"><span>終了・結果</span></div></div>
+        <div class="slot deck"><div class="st"><span>控え</span><span>男子 B 1R</span></div>布勢・浜村 組 vs 岩美・国府 組</div>
+      </div>
+      <div class="court">
+        <div class="court-no">COURT 2</div>
+        <div class="slot callme"><div class="st"><span>コール 9:40</span><span>女子 A 1R</span></div>青谷・気高 組 <span class="ack">✓✓</span> vs 用瀬・佐治 組 <span class="noack">✓ ・</span><div class="acts"><span>開始</span><span>再コール</span></div></div>
+        <div class="slot deck"><div class="st"><span>控え</span><span>女子 A 1R</span></div>河原・八東 組 vs 福部・若葉 組</div>
+      </div>
+      <div class="court">
+        <div class="court-no">COURT 3</div>
+        <div class="slot play"><div class="st"><span>試合中 9:05〜</span><span>男子 A 1R</span></div>末広・久松 組 vs 吉方・醇風 組<div class="acts"><span>終了・結果</span></div></div>
+        <div class="slot"><div class="st"><span>控えなし</span></div><div class="acts"><span class="p">次の試合を控えにする</span></div></div>
+      </div>
+      <div class="court">
+        <div class="court-no">COURT 4</div>
+        <div class="slot play"><div class="st"><span>試合中 9:20〜</span><span>混合 1R</span></div>美保・面影 組 vs 城北・湖東 組<div class="acts"><span>終了・結果</span></div></div>
+        <div class="slot deck"><div class="st"><span>控え</span><span>混合 1R</span></div>高草・大正 組 vs 稲葉・明治 組</div>
+      </div>
+    </div>
+  </div>
+  <p class="note">氏名は例です。✓ は［了解］を押した人、・は押していない人。受付状況の画面（未受付の一覧・氏名検索で代行受付・紙の名簿）は別のタブにあります。</p>
+</section>
+
+<section>
+  <div class="sec-no">06 — 届くメール</div>
+  <h2>通知の文面（例）</h2>
+  <div class="mails">
+    <div class="mail">
+      <div class="mail-h"><b>【受付完了】鳥取市秋季ダブルス大会</b><span>差出人: テニス協会 会員ポータル &lt;noreply@tottori-tenis.net&gt;</span></div>
+      <div class="mail-b">鳥取 太郎 様
+
+8:12 に当日受付を済ませました。
+種目: 一般男子ダブルス B
+ペア: 因幡 次郎 様（受付済み）
+
+試合の呼び出しはこのメールと「マイ試合」画面でお知らせします。
+マイ試合: https://members…/t/T-2026-AUTUMN/me</div>
+    </div>
+    <div class="mail">
+      <div class="mail-h"><b>【控え】3 番コートの次の試合です</b><span>差出人: テニス協会 会員ポータル</span></div>
+      <div class="mail-b">鳥取 太郎 様
+
+3 番コートで、いまの試合の次があなたの試合です。
+コート付近でお待ちください。
+
+対戦: 山田・佐藤 組（湖山 TC）
+一般男子ダブルス B　1 回戦</div>
+    </div>
+    <div class="mail">
+      <div class="mail-h"><b>【コール】3 番コートへお入りください</b><span>差出人: テニス協会 会員ポータル</span></div>
+      <div class="mail-b">鳥取 太郎 様
+
+3 番コートへお入りください（9:40 コール）。
+対戦: 山田・佐藤 組
+
+向かうときは「了解」を押してください。
+https://members…/m/01JC…/ack?s=…
+
+5 分たっても了解が無いと再コールします。</div>
+    </div>
+  </div>
+  <div class="callout">メールは多くの場合すぐ届きますが、携帯会社のメール（docomo・au・SoftBank）は受信設定で <strong>@tottori-tenis.net</strong> を許可してもらう必要があります。前日の案内と入会案内でお願いします。コールは<strong>放送も続けます</strong>。</div>
+</section>
+
+<section>
+  <div class="sec-no">07 — 費用</div>
+  <h2>費用と量の見積もり</h2>
+  <p class="sub">参加 150 人・試合 120 の大会で 1 回あたり約 1,450 通、主催 19 大会で年に約 28,000 通（多い月で 3,000 通前後）。</p>
+  <div class="cards">
+    <div class="card"><span class="note">Workers Paid（必須）</span><span class="big">5<small>ドル / 月</small></span><p>約 800 円。メール月 3,000 通込み。会員のアドレスに送るのに必要。マイ試合画面の自動更新（1 日約 19 万回）も無料枠を超えるため。</p></div>
+    <div class="card"><span class="note">メールの超過分</span><span class="big">0.35<small>ドル / 1,000 通</small></span><p>多い月に 3,000 通を少し超えても数十円。</p></div>
+    <div class="card"><span class="note">D1・Cron・Access</span><span class="big">0<small>円</small></span><p>今の利用の範囲に収まる見込み（Paid の枠内）。</p></div>
+    <div class="card"><span class="note">LINE（任意・第 3 段階）</span><span class="big">5,000<small>円 / 月</small></span><p>ライトプラン 5,000 通。メールとプッシュで足りれば不要。</p></div>
+  </div>
+  <p class="note">Email Sending は 2026 年 10 月時点でベータです。料金と上限は導入時に Cloudflare の料金ページで確認します。送信部分は差し替えられる作りにしておき、問題があれば他の送信サービスに切り替えます。</p>
+</section>
+
+<section>
+  <div class="sec-no">08 — 進め方</div>
+  <h2>3 段階で試す</h2>
+  <div class="steps">
+    <div class="step">
+      <span class="n">STEP 1 · 受付</span>
+      <ul><li>掲示 QR と受付パス</li><li>受付完了メール</li><li>本部の受付状況・代行受付</li><li>締切前リマインド</li><li>紙の受付名簿の出力</li></ul>
+      <p class="try">小さな大会で、紙の受付と並行して使う</p>
+    </div>
+    <div class="step">
+      <span class="n">STEP 2 · 呼び出し</span>
+      <ul><li>位置情報の受付</li><li>コート盤面</li><li>控え・コール・再コールのメール</li><li>マイ試合画面と［了解］</li></ul>
+      <p class="try">進行係 1 人が盤面を操作。放送は従来どおり</p>
+    </div>
+    <div class="step">
+      <span class="n">STEP 3 · 拡張</span>
+      <ul><li>プッシュ通知（ホーム画面に追加）</li><li>大会運営アプリから進行を送る API</li><li>30 秒ごとに変わる QR（不正があれば）</li><li>LINE（必要なら）</li></ul>
+      <p class="try">利用率と通知の遅れを見て判断</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="sec-no">09 — 決めること</div>
+  <h2>役員会で決めていただきたいこと</h2>
+  <div class="prose">
+    <ol>
+      <li>Workers Paid（月 5 ドル）の契約</li>
+      <li>送信元のドメイン（tottori-tenis.net）を Cloudflare の DNS に置けるか（今の管理先の確認）</li>
+      <li>試合の進行（コートの割り当て）を、会員ポータルの本部画面で入力するか、大会運営アプリから送るか</li>
+      <li>受付の単位（個人か組か）、受付時間と締切、締切までに来ない組の扱い</li>
+      <li>スマホを持っていない会員の受付（本部で代行・相方が受付）</li>
+      <li>会場の携帯電波と、本部の電源・タブレットの用意</li>
+    </ol>
+  </div>
+</section>
+
+<footer>鳥取市テニス協会 会員ポータル 検討資料（案）。画面と氏名は例です。詳しい設計（データの持ち方・経路・セキュリティ）は members/docs/match-day-checkin.md。</footer>
+</div>
