@@ -922,6 +922,24 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   .site-header__logo img, .site-header .hamburger { transition: filter .2s ease .12s, opacity .2s ease .12s; }
   .site-header.is-menu .site-header__logo img, .site-header.is-menu .hamburger { filter: none; transition: filter .2s ease .4s, opacity .2s ease .4s; }
 }
+/* スマホ・タブレット：ロゴの文字を、裏の色に合わせて黒／白に塗り分ける（重なったところだけ、その瞬間だけ白くなる）。
+   文字の形（logo-cut-ink.png）で切り抜いた面に backdrop-filter を掛け、裏を白黒にしてから明暗をはっきり分け（contrast）、反転する：
+   明るい地 → 黒、暗い地（赤・黒・黒い文字）→ 白。赤い四角（logo-cut-red.png）は塗り分けずに上に重ねる。
+   切り抜いた面に裏をぼかす類の効果が効かないブラウザでは、これまでどおりの黒いロゴ（.site-header__logo-img）のまま */
+.site-header__logo-ink, .site-header__logo-red { display: none; }
+@media (max-width: 1023px) {
+  @supports ((backdrop-filter: invert(1)) or (-webkit-backdrop-filter: invert(1))) and ((mask-image: none) or (-webkit-mask-image: none)) {
+    .site-header__logo .site-header__logo-img { visibility: hidden; }
+    .site-header__logo-ink, .site-header__logo-red { display: block; position: absolute; inset: 0; }
+    .site-header__logo .site-header__logo-red { width: 100%; height: 100%; filter: none; }
+    .site-header__logo-ink {
+      -webkit-mask: url("../img/logo-cut-ink.png") center / 100% 100% no-repeat;
+      mask: url("../img/logo-cut-ink.png") center / 100% 100% no-repeat;
+      -webkit-backdrop-filter: grayscale(1) contrast(100) invert(1);
+      backdrop-filter: grayscale(1) contrast(100) invert(1);
+    }
+  }
+}
 @media (prefers-reduced-motion: reduce) {
   .site-header__logo-w, .site-header.is-menu .site-header__logo-w,
   .site-header .hamburger span, .site-header.is-menu .hamburger span { transition: none; }
