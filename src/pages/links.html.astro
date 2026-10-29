@@ -1,22 +1,6 @@
 ---
 import Base from '../layouts/Base.astro';
-import { siteData } from '../lib/cms.js';
-import { LINK_GROUPS, LINE_OFFICIAL } from '../data/links.js';
-
-// 協会の SNS（管理画面 → Settings → Social）
-const { SOCIAL } = await siteData(Astro);
-
-// 「協会の公式アカウント」は画像のボタン（YouTube・Instagram・LINE の順。public/assets/img/sns/）で出す。
-// 入会案内のボタンと同じく縦に積む（スマホは幅いっぱい、広い画面では内容幅）。URL は LINE が links.js、
-// Instagram・YouTube が管理画面の Social 設定。設定の無いものは出さない。
-const social = (key) => SOCIAL.find((x) => x.key === key)?.url;
-const SNS_BUTTONS = [
-  { key: 'youtube', url: social('youtube'), img: 'assets/img/sns/youtube-button.webp', w: 1600, h: 310, alt: '鳥取市テニス協会 YouTube（大会や教室の動画を配信中）' },
-  { key: 'instagram', url: social('instagram'), img: 'assets/img/sns/instagram-button.webp', w: 1600, h: 318, alt: '鳥取市テニス協会 Instagram（大会・教室の写真を投稿中）' },
-  { key: 'line', url: LINE_OFFICIAL.url, img: 'assets/img/sns/line-button.webp', w: 1600, h: 303, alt: '鳥取市テニス協会 LINE 公式アカウント（大会・教室のお知らせを配信中）' },
-].filter((b) => b.url);
-// LINE はボタンで出すので、公式アカウントのバナー一覧からは外す
-const itemsOf = (g) => (g.id === 'official' ? g.items.filter((l) => l !== LINE_OFFICIAL) : g.items);
+import { LINK_GROUPS } from '../data/links.js';
 
 const title = "リンク集｜鳥取市テニス協会";
 const description = "鳥取市テニス協会に関係する団体・施設のリンク集。鳥取県テニス協会、公共施設予約システム、近隣協会など。";
@@ -51,22 +35,15 @@ const description = "鳥取市テニス協会に関係する団体・施設の�
         {LINK_GROUPS.map((g) => (
           <div class="lgroup">
             <h2 class="sub-head rv">{g.title}</h2>
-            {g.id === 'official' && SNS_BUTTONS.length > 0 && (
-              <div class="sns-buttons rv">
-                {SNS_BUTTONS.map((b) => (
-                  <a class="sns-button" href={b.url} target="_blank" rel="me noopener noreferrer">
-                    <img src={b.img} alt={b.alt} width={b.w} height={b.h} loading="lazy" decoding="async">
-                  </a>
-                ))}
-              </div>
-            )}
-            {itemsOf(g).length > 0 && (
+            {g.items.length > 0 && (
               <ul class="llist">
-                {itemsOf(g).map((l) => (
+                {g.items.map((l) => (
                   <li class="rv">
                     {/* バナーを白い枠の中央に大きく → 団体名と ↗ → 説明（全文） */}
                     <a class="litem" href={l.url} target="_blank" rel="noopener noreferrer">
+                      {/* 枠の余白には、同じバナーを大きくしてぼかしたものを敷く（.litem__bg。style.css） */}
                       <span class="litem__media">
+                        {l.banner && <span class="litem__bg" style={`background-image:url('${l.banner}')`} aria-hidden="true"></span>}
                         {l.banner
                           ? <img src={l.banner} alt="" width="1018" height="168" loading="lazy" decoding="async">
                           : <span class="litem__noimg">{l.name}</span>}
