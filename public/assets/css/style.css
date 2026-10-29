@@ -336,19 +336,11 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   align-items: flex-start;
 }
 @media (min-width: 1024px) { .sec-bar { gap: 20px; } }
-.sec-bar__aside {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  flex-wrap: wrap;
-  align-self: stretch;  /* 横幅いっぱいに取り、VIEW ALL を右端に寄せる */
-}
-.sec-bar__aside .view-all { margin-left: auto; }
-/* 見出しと VIEW ALL を1行に：見出しは左、VIEW ALL は右端で見出しの下端にそろえる（トップの大会情報・コート案内） */
-.sec-bar--row { flex-direction: row; align-items: flex-end; justify-content: space-between; }
-.sec-bar--row .sec-bar__aside { align-self: auto; flex: none; }
 .sec-hint { margin: 14px 0 0; }
-@media (min-width: 1024px) { .sec-bar__aside { gap: 24px; } }
+/* 区画の下の右端に置く VIEW ALL（トップの大会情報：カードの下） */
+.sec-more { display: flex; justify-content: flex-end; margin-top: 20px; }
+/* 地図の中の右上に置く VIEW ALL（トップのコート案内。CourtMap の viewAll） */
+.cmap__viewall { position: absolute; top: 14px; right: 14px; z-index: 1000; box-shadow: 0 1px 6px rgba(26, 26, 26, .12); }
 
 .hint {
   font: 500 13px/1.4 var(--fjp);
@@ -1502,23 +1494,6 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   .evicon__body, .evicon__arm, .evicon__ball, .evicon__fig { animation: none !important; }
 }
 
-/* カルーセルの位置を示す点。押すとその大会まで送る。 */
-.cdots {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 8px;
-  margin-top: 20px;
-}
-.cdot {
-  width: 8px; height: 8px;
-  border-radius: 50%;
-  background: var(--gray-300);
-  transition: background .3s ease, width .3s ease;
-}
-.cdot:hover { background: var(--gray-600); }
-.cdot.is-active { width: 22px; border-radius: 9999px; background: var(--red); }
-@media (prefers-reduced-motion: reduce) { .cdot { transition: none; } }
 
 /* VIEW ALL で開く全件表示。横並びだったカードが、縦に並び直して出てくる。 */
 .tall {
@@ -1693,7 +1668,8 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 
 /* 4件目（NEWS_VISIBLE の次）。まだ続きがあることだけ伝えたいので、薄くフェードさせて押せなくする。 */
 .news-peek { position: relative; }
-.news-peek__more { display: flex; justify-content: flex-end; margin-top: 8px; }  /* VIEW ALL は右寄せ（ほかの区画と同じ） */
+/* VIEW ALL は4件目（薄くした行）の右端に、行の高さの中央にそろえて重ねる */
+.news-peek__more { position: absolute; inset: 0 0 0 auto; display: flex; align-items: center; }
 .news-list--peek {
   margin-top: 0;
   opacity: .34;
