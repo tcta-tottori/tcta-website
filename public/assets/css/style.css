@@ -2644,10 +2644,15 @@ body.jsrv .rv.on .ink-sweep {
 }
 /* サイト全体の固定背景（Base.astro。白地に枠だけの四角）。画面に固定して本文の裏に敷く。
    背景を塗っていない区画（白い区画）から透けて見える。灰色の帯や写真の区画では隠れる。
-   スクロールでは動かさず、漂う動き（footer-drift）だけを一定に続ける */
+   スクロールでは動かさず、漂う動き（footer-drift）だけを一定に続ける。
+   高さは画面の「大きいほう」の高さ（100lvh）に固定する。inset: 0 のままだと、スマホでスクロールして
+   アドレスバーが出入りするたびに高さが変わり、％で置いた四角の位置がずれて動いて見える */
 .site-bg {
   position: fixed;
   z-index: -1;
+  inset: 0 0 auto 0;
+  height: 100vh;
+  height: 100lvh;
 }
 .site-bg .footer-dot {
   background: none;
