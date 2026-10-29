@@ -8,7 +8,7 @@ import { siteData } from '../lib/cms.js';
 import { today } from '../data/tournaments.js';
 import { LINKS_ASSOC, LINKS_OTHER } from '../data/links.js';
 import { NEWS_VISIBLE } from '../data/news.js';
-import { COURTS, CITY_RESERVE } from '../data/courts.js';
+import { COURTS_HOME, CITY_RESERVE } from '../data/courts.js';
 import CourtMap from '../components/CourtMap.astro';
 
 // 大会カード・お知らせは EmDash から（1 リクエストに 1 回だけ読む）
@@ -236,7 +236,7 @@ const upcomingTournaments = TOURNAMENTS.filter((t) => t.status !== 'past');
       {/* 施設ごとの地図。上のボタンで切り替える（緯度経度とコートの輪郭は courts.js / court-shapes.json）。
           施設の一覧は置かず、VIEW ALL からコート案内のページへ */}
       <div class="rv embed-wrap mt-32">
-        <CourtMap courts={COURTS} />
+        <CourtMap courts={COURTS_HOME} />
         <span class="embed-wrap__square" aria-hidden="true"></span>
       </div>
       {/* 地図の下に、市のテニスコートの予約先（鳥取市公共施設予約システム。courts.js の CITY_RESERVE）へのボタン */}
