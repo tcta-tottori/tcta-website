@@ -26,6 +26,8 @@
 //   URL を入れていない段階では、その状態を飛ばして1つ前の案内に留まる。
 //   例）ドロー未発表なら「要項を見る」、結果未掲載なら「結果は準備中」と出る。
 
+import { eventButtons } from './event-buttons.js';
+
 /** カルーセル中央の「TODAY」マーカーの日付。見た日の日本時間。 */
 export const today = () => new Intl.DateTimeFormat('ja-JP', {
   timeZone: 'Asia/Tokyo', year: 'numeric', month: '2-digit', day: '2-digit',
@@ -128,6 +130,8 @@ export function buildCards(rows, { ROWS, eventBySlug }) {
         href: t.link_url || null,
       };
       card.action = cardAction(card, e);
+      // 要項・申込用紙・ドロー・結果の4つのボタン（大会情報ページの一覧と同じ）
+      card.buttons = eventButtons(e, { outline: card.outlineUrl, draw: card.drawUrl, result: card.resultUrl });
       return card;
     })
     .sort((a, b) => a.date.localeCompare(b.date));

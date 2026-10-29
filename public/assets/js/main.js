@@ -1193,6 +1193,35 @@
     });
   }
 
+  /* ---------- 大会一覧の表示の切り替え（大会情報ページ） ----------
+     「1行表示」（.tl--rows。初め）と「詳細表示」を切り替える。ページ内の大会一覧（.tl）すべてに効き、
+     選んだ方はこの端末に覚えておいて次に開いたときも使う（覚えられない環境では毎回「1行表示」） */
+  function initViewSwitch() {
+    var sw = document.querySelector('[data-view-switch]');
+    if (!sw) return;
+    var KEY = 'tcta-tl-view';
+    var lists = document.querySelectorAll('.tl');
+    var btns = sw.querySelectorAll('[data-view]');
+    var set = function (view) {
+      lists.forEach(function (l) { l.classList.toggle('tl--rows', view === 'rows'); });
+      btns.forEach(function (b) {
+        var on = b.getAttribute('data-view') === view;
+        b.classList.toggle('is-active', on);
+        b.setAttribute('aria-pressed', String(on));
+      });
+    };
+    var saved = null;
+    try { saved = localStorage.getItem(KEY); } catch (e) {}
+    if (saved === 'rows' || saved === 'cards') set(saved);
+    sw.addEventListener('click', function (e) {
+      var b = e.target.closest('[data-view]');
+      if (!b) return;
+      var view = b.getAttribute('data-view');
+      set(view);
+      try { localStorage.setItem(KEY, view); } catch (x) {}
+    });
+  }
+
   /* ---------- 年度タブ（大会結果ページ など） ---------- */
   function initTabs() {
     var lists = document.querySelectorAll('[role="tablist"]');
@@ -1344,6 +1373,7 @@
     initToday();
     initCarousel();
     initFilters();
+    initViewSwitch();
     initTabs();
     initForm();
     initLightbox();

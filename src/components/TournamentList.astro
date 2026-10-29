@@ -1,5 +1,7 @@
 ---
 // 大会一覧の1件ずつのブロック。src/lib/cms.js の SCHEDULE（schedule.js の形）をそのまま受け取る。
+// 表示は2通り。初めは「1行表示」（.tl--rows：日程・大会名・会場・状態・ボタンを1行に）。
+// 大会情報ページの切り替えボタンで「詳細表示」（下のブロックの形）にできる（main.js の initViewSwitch。選んだ方を覚えておく）。
 //
 //   大会名（左に赤い縦線）＋ 受付状態・登録区分のバッジ
 //   日付（カレンダー印）／会場（地図のピン）
@@ -13,6 +15,7 @@ import { REG_LABEL, STATUS_LABEL, dateCell } from '../data/schedule.js';
 import EventIcon from './EventIcon.astro';
 import { eventIcons } from '../data/event-icons.js';
 import { siteData } from '../lib/cms.js';
+import { eventButtons } from '../data/event-buttons.js';
 
 const { items, id, caption } = Astro.props;
 const { eventForSchedule } = await siteData(Astro);
@@ -21,19 +24,6 @@ const { eventForSchedule } = await siteData(Astro);
 function dateText(t) {
   const c = dateCell(t);
   return { ymd: `${t.date.slice(0, 4)}.${c.md}`, dow: c.dow, note: c.note };
-}
-
-/** 4つのボタン。要項・ドロー・結果はそれぞれの独立したページへ、申込用紙は PDF を直接開く（無ければ大会ページの節へ）。 */
-function buttons(t, e) {
-  const sec = (key) => e?.sections.find((s) => s.key === key) ?? null;
-  const entry = sec('entry');
-  const entryPdf = entry?.pdfs[0]?.src ?? null;
-  return [
-    { key: 'outline', label: '要項', href: sec('outline') ? `outline-${e.slug}.html` : null },
-    { key: 'entry', label: '申込用紙', href: entryPdf ?? (entry ? `${e.url}#entry` : null), external: !!entryPdf },
-    { key: 'draw', label: 'ドロー', href: sec('draw') ? `draw-${e.slug}.html` : null },
-    { key: 'result', label: '結果', href: e?.hasResult ? `result-${e.slug}.html` : null },
-  ];
 }
 
 /** 備考の文言。締切・予備日・荒天時の扱い・外部の申込先を並べる。 */
@@ -48,7 +38,7 @@ function notes(t, e) {
 
 const rows = items.map((t) => {
   const e = eventForSchedule(t);
-  return { t, e, date: dateText(t), buttons: buttons(t, e), notes: notes(t, e), badge: STATUS_LABEL[t.status], icons: eventIcons(t.event) };
+  return { t, e, date: dateText(t), buttons: eventButtons(e), notes: notes(t, e), badge: STATUS_LABEL[t.status], icons: eventIcons(t.event) };
 });
 // 会場名・種目名は文字の途中で折り返さない（CSS の word-break: keep-all）。
 // 「／」「/」「・」の区切りの後ろと「（」の前にだけ折り返してよい位置（<wbr>）を入れる。テンプレート側で parts を <wbr> でつなぐ。
@@ -57,7 +47,7 @@ const parts = (text) => String(text ?? '').split(/(?<=[／/・])|(?=（)/);
 
 ---
 
-<div class="tl" id={id} role="list" aria-label={caption}>
+<div class="tl tl--rows" id={id} role="list" aria-label={caption}>
   {rows.map(({ t, e, date, buttons, notes, badge, icons }) => (
     <article
       class:list={['tl-item rv', t.status === 'done' && 'tl-item--done', t.status === 'open' && 'tl-item--open']}

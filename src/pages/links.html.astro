@@ -47,19 +47,9 @@ const description = "鳥取市テニス協会に関係する団体・施設の�
 
   <section class="section">
     <div class="container">
-      {/* 種類のタブ（すべて／協会の公式アカウント／関係団体 …）。1行に並べ、収まらない分は横スクロール。
-          押した種類だけを出す（main.js の initFilters。大会情報の絞り込みと同じ仕組み） */}
-      <div class="ltabs hscroll" data-hscroll>
-        <div class="ltabs__track hscroll__track" data-filter-group data-filter-target="#link-list" role="group" aria-label="リンクの種類">
-          <button class="chip ltab is-active" type="button" data-filter="all" aria-pressed="true">すべて</button>
-          {LINK_GROUPS.map((g) => <button class="chip ltab" type="button" data-filter={g.id} aria-pressed="false">{g.title}</button>)}
-        </div>
-        <span class="hscroll__hint" aria-hidden="true"><span class="hscroll__arrow"></span>SCROLL</span>
-      </div>
-
       <div id="link-list">
         {LINK_GROUPS.map((g) => (
-          <div class="lgroup" data-tags={g.id}>
+          <div class="lgroup">
             <h2 class="sub-head rv">{g.title}</h2>
             {g.id === 'official' && SNS_BUTTONS.length > 0 && (
               <div class="sns-buttons rv">
