@@ -15,6 +15,7 @@
 //
 // ■ group
 //   links ページの見出し分け。GROUPS の並び順がそのままページの並び順になる。
+//   見出しの中の並びは LINKS の並び順（トップのマーキーも同じ順）。
 //
 // ■ row
 //   トップページのマーキーは2段組み。'assoc'（テニス協会・連盟のHP）が上段、
@@ -24,9 +25,9 @@
 export const GROUPS = [
   { id: 'official', title: '協会の公式アカウント' },
   { id: 'shop', title: 'テニスショップ' },
-  { id: 'org', title: '関係団体' },
-  { id: 'facility', title: '施設の予約・会場' },
-  { id: 'nearby', title: '近隣のテニス協会・加盟クラブ' },
+  { id: 'facility', title: '施設の予約' },
+  { id: 'assoc', title: 'テニス協会・連盟' },
+  { id: 'club', title: 'クラブ・会場' },
   { id: 'sponsor', title: '協賛・関連' },
 ];
 
@@ -52,38 +53,6 @@ export const LINKS = [
     banner: 'assets/img/banners/frassino.png',
   },
   {
-    group: 'org',
-    name: '日本テニス協会',
-    row: 'assoc',
-    desc: '全国の大会情報',
-    url: 'https://www.jta-tennis.or.jp/',
-    banner: 'assets/img/banners/jta.png',
-  },
-  {
-    group: 'org',
-    name: '中国テニス協会',
-    row: 'assoc',
-    desc: '中国地方の大会情報',
-    url: 'https://www.chugoku-ta.jp/',
-    banner: 'assets/img/banners/chugoku-tennis.jpg',
-  },
-  {
-    group: 'org',
-    name: '鳥取県テニス協会',
-    row: 'assoc',
-    desc: '県登録・県大会に関する情報はこちら',
-    url: 'https://tottoritennis.sakura.ne.jp/wp/',
-    banner: 'assets/img/banners/tottori-ken-tennis.png',
-  },
-  {
-    group: 'org',
-    name: '日本女子テニス連盟 鳥取県支部',
-    row: 'assoc',
-    desc: '女子テニスの県支部',
-    url: 'https://jltf-tottori.sakura.ne.jp/wp/',
-    banner: 'assets/img/banners/jltf-tottori.png',
-  },
-  {
     group: 'facility',
     name: 'とっとり施設予約サービス',
     row: 'other',
@@ -92,15 +61,15 @@ export const LINKS = [
     banner: 'assets/img/banners/tottori-yoyaku.jpg',
   },
   {
-    group: 'facility',
-    name: 'ヤマタスポーツパーク',
-    row: 'other',
-    desc: '鳥取県立布勢総合運動公園（大会会場）',
-    url: 'https://www.fuse-sportspark.com/',
-    banner: 'assets/img/banners/yamata-sportspark.png',
+    group: 'assoc',
+    name: '鳥取県テニス協会',
+    row: 'assoc',
+    desc: '県登録・県大会に関する情報はこちら',
+    url: 'https://tottoritennis.sakura.ne.jp/wp/',
+    banner: 'assets/img/banners/tottori-ken-tennis.png',
   },
   {
-    group: 'nearby',
+    group: 'assoc',
     name: '米子市テニス協会',
     row: 'assoc',
     desc: '鳥取県西部の大会情報',
@@ -108,7 +77,7 @@ export const LINKS = [
     banner: 'assets/img/banners/yonago-tennis.png',
   },
   {
-    group: 'nearby',
+    group: 'assoc',
     name: '境港市テニス協会',
     row: 'assoc',
     desc: '境港市の大会情報',
@@ -116,7 +85,31 @@ export const LINKS = [
     banner: 'assets/img/banners/sakaiminato-tennis.png',
   },
   {
-    group: 'nearby',
+    group: 'assoc',
+    name: '日本女子テニス連盟 鳥取県支部',
+    row: 'assoc',
+    desc: '女子テニスの県支部',
+    url: 'https://jltf-tottori.sakura.ne.jp/wp/',
+    banner: 'assets/img/banners/jltf-tottori.png',
+  },
+  {
+    group: 'assoc',
+    name: '中国テニス協会',
+    row: 'assoc',
+    desc: '中国地方の大会情報',
+    url: 'https://www.chugoku-ta.jp/',
+    banner: 'assets/img/banners/chugoku-tennis.jpg',
+  },
+  {
+    group: 'assoc',
+    name: '日本テニス協会',
+    row: 'assoc',
+    desc: '全国の大会情報',
+    url: 'https://www.jta-tennis.or.jp/',
+    banner: 'assets/img/banners/jta.png',
+  },
+  {
+    group: 'assoc',
     name: '京丹後市テニス協会',
     row: 'assoc',
     desc: '京都府北部の大会情報',
@@ -124,7 +117,7 @@ export const LINKS = [
     banner: 'assets/img/banners/kyotango-tennis.png',
   },
   {
-    group: 'nearby',
+    group: 'club',
     name: '遊ポートT.C.',
     row: 'other',
     desc: '鳥取市のジュニアテニススクール',
@@ -132,12 +125,12 @@ export const LINKS = [
     banner: 'assets/img/banners/u-port-tc.png',
   },
   {
-    group: 'sponsor',
-    name: '上海茶楼',
+    group: 'club',
+    name: 'ヤマタスポーツパーク',
     row: 'other',
-    desc: '鳥取市の中国上海料理店',
-    url: 'https://www.shanghai-charo.com/',
-    banner: 'assets/img/banners/shanghai-charo.png',
+    desc: '鳥取県立布勢総合運動公園（大会会場）',
+    url: 'https://www.fuse-sportspark.com/',
+    banner: 'assets/img/banners/yamata-sportspark.png',
   },
   {
     group: 'sponsor',
@@ -146,6 +139,14 @@ export const LINKS = [
     desc: '鳥取市のスポーツ用品店',
     url: 'https://spsheart.com/cms/',
     banner: 'assets/img/banners/sports-heart.png',
+  },
+  {
+    group: 'sponsor',
+    name: '上海茶楼',
+    row: 'other',
+    desc: '鳥取市の中国上海料理店',
+    url: 'https://www.shanghai-charo.com/',
+    banner: 'assets/img/banners/shanghai-charo.png',
   },
 ];
 
