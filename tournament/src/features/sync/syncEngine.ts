@@ -4,6 +4,7 @@
 // Dexie / Zustand の変更を双方向に同期する
 // =============================================
 
+import type { IndexableType } from 'dexie';
 import { db } from '../../db/database';
 import { useSyncStore, DEFAULT_SERVER_URL } from './syncStore';
 import { useMixedStore } from '../mixed/mixedStore';
@@ -796,7 +797,7 @@ class SyncEngine {
             tableData.rows.map(r => r.id).filter(v => v != null)
           );
           await db.transaction('rw', table, async () => {
-            const localIds: unknown[] = await table.toCollection().primaryKeys();
+            const localIds = (await table.toCollection().primaryKeys()) as IndexableType[];
             const stale = localIds.filter(id => !incomingIds.has(id));
             if (stale.length > 0) await table.bulkDelete(stale);
             await table.bulkPut(tableData.rows);

@@ -3,10 +3,10 @@ import { persist } from 'zustand/middleware';
 import type {
   TeamLeague, TeamEntry, TeamLeagueMatch, TeamLeagueStanding,
   TeamPlacementBracket, PlacementCategory, TeamBracketMatch,
-  TeamPhase, TeamTournamentInfo, ExcelSheetData, SubMatchScore,
-  MatchType, BracketSubMatchScore, TeamMember, TiebreakRuleId
+  TeamPhase, TeamTournamentInfo, ExcelSheetData,
+  MatchType, TeamMember, TiebreakRuleId
 } from './types';
-import { calculateTeamStandings, generateAllBrackets, regenerateLeagueMatches, determineTeamWinner, getMatchTypeOrder, DEFAULT_TIEBREAK_ORDER } from './teamLogic';
+import { calculateTeamStandings, generateAllBrackets, determineTeamWinner, getMatchTypeOrder, DEFAULT_TIEBREAK_ORDER } from './teamLogic';
 import { findMembersByTeamName } from './clubExcelParser';
 
 /**

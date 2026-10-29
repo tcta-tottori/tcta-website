@@ -1,13 +1,13 @@
 import { useState, useMemo, useEffect } from 'react';
-import { Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { Trophy, Swords, Radio, Info, Wifi, WifiOff, Network, Menu, X, AlertTriangle, ClipboardList, RefreshCw, Activity, BarChart2, ArrowRight } from 'lucide-react';
+import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { Trophy, Swords, Radio, Network, ClipboardList, RefreshCw, Activity, BarChart2, Calendar, MapPin } from 'lucide-react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../../db/database';
 import { useAppStore } from '../../stores/appStore';
 import { useMixedStore } from '../mixed/mixedStore';
 import { useTeamStore } from '../team/teamStore';
 import { usePublicSync } from './usePublicSync';
-import HeaderBackdrop from '../../components/layout/HeaderBackdrop';
+import { SiteHeader, MobileNav, PageHead, StatusBar, SiteFooter, SITE_URL, type NavLinkItem } from '../../components/site/SiteChrome';
 
 /**
  * 参加者・HP訪問者向け公開ビューのレイアウト（読み取り専用）。
@@ -176,109 +176,111 @@ export default function PublicLayout() {
 
   const menuItems = isGroup
     ? [
-        { path: '/view/league', label: '予選リーグ', icon: Swords },
-        { path: '/view/bracket', label: '決勝トーナメント', icon: Trophy },
-        { path: '/view/live', label: 'ダッシュボード', icon: BarChart2 },
+        { path: '/view/league', label: '予選リーグ', en: 'LEAGUE', icon: Swords },
+        { path: '/view/bracket', label: '決勝トーナメント', en: 'FINALS', icon: Trophy },
+        { path: '/view/live', label: 'ダッシュボード', en: 'DASHBOARD', icon: BarChart2 },
       ]
     : [
-        { path: '/view/livescore', label: 'ライブスコア', icon: Activity },
-        { path: '/view/draw', label: 'ドロー', icon: Network },
-        { path: '/view/order', label: '対戦順', icon: ClipboardList },
-        { path: '/view/live', label: 'ダッシュボード', icon: Radio },
+        { path: '/view/livescore', label: 'ライブスコア', en: 'LIVE SCORE', icon: Activity },
+        { path: '/view/draw', label: 'ドロー', en: 'DRAW', icon: Network },
+        { path: '/view/order', label: '対戦順', en: 'ORDER OF PLAY', icon: ClipboardList },
+        { path: '/view/live', label: 'ダッシュボード', en: 'DASHBOARD', icon: Radio },
       ];
   const current = menuItems.find(mi => location.pathname.startsWith(mi.path)) || menuItems[0];
-  const CurrentIcon = current.icon;
-  const go = (path: string) => { navigate(`${path}${location.search}`); setMenuOpen(false); };
+  // 観戦 URL の ?room= / ?server= は画面を移っても持ち回る
+  const navItems: NavLinkItem[] = menuItems.map(mi => ({
+    key: mi.path, label: mi.label, to: `${mi.path}${location.search}`, active: mi === current,
+  }));
+  const live = sync.connectionState === 'connected';
 
   return (
-    <div className="h-screen flex flex-col bg-bg-main overflow-hidden">
-      {/* ヘッダー（本アプリと同一。左=メニュータイトル / 右=メニューボタン） */}
-      <header className="header-main flex items-center gap-3 px-4 lg:px-5 shrink-0 z-30">
-        <HeaderBackdrop />
-        <div className="header-page-name min-w-0">
-          <CurrentIcon style={{ width: 18, height: 18 }} className="shrink-0" />
-          <span className="truncate">{current.label}</span>
-        </div>
-        {/* メニューボタン（開くと × に変わる） */}
-        <button
-          className="header-menu-btn"
-          onClick={() => setMenuOpen(v => !v)}
-          aria-label={menuOpen ? 'メニューを閉じる' : 'メニューを開く'}
-          aria-expanded={menuOpen}
-        >
-          {menuOpen
-            ? <X style={{ width: 26, height: 26 }} strokeWidth={2} />
-            : <Menu style={{ width: 26, height: 26 }} strokeWidth={2} />}
-        </button>
-      </header>
+    <div className="app-shell">
+      <a className="skip-link" href="#main">本文へスキップ</a>
 
-      {/* 流れる表示バー（本アプリと同一） */}
-      <div className="info-bar flex items-center shrink-0 h-9 overflow-hidden text-xs sticky top-0 z-20">
-        <div className="flex-1 overflow-hidden relative h-full info-ticker-area">
-          <div className="info-ticker flex items-center h-full whitespace-nowrap">
-            {/* 大会名はヘッダーではなくここに流す */}
-            <span className="info-ticker-item info-ticker-lead">
-              <span>{tournamentName || '観戦用ページ'}</span>
-              <span className="info-ticker-dot" />
-            </span>
-            {tickerItems.length > 0 ? tickerItems.map((item, i) => (
-              <span key={i} className={`info-ticker-item ${item.startsWith('⚠') ? 'info-ticker-alert' : ''}`}>
-                {item.startsWith('⚠') && <AlertTriangle className="w-3 h-3" />}
-                <span>{item.startsWith('⚠') ? item.slice(2) : item}</span>
-                {i < tickerItems.length - 1 && <span className="info-ticker-dot" />}
-              </span>
-            )) : null}
-          </div>
-        </div>
-      </div>
+      {/* ヘッダー（協会サイトと同じ。右上の赤いブロックは協会サイトへ） */}
+      <SiteHeader
+        homeTo={`/view${location.search}`}
+        tag="観戦"
+        tagEm="LIVE"
+        items={navItems}
+        contact={{ label: '協会サイト', href: SITE_URL }}
+        aux={sync.hasRoom ? <SyncBadge sync={sync} /> : null}
+        menuOpen={menuOpen}
+        onToggleMenu={() => setMenuOpen(v => !v)}
+      />
 
-      {/* 全画面メニュー（ヘッダーは出したまま、その下いっぱいに開く） */}
-      <div className={`fullmenu ${menuOpen ? 'fullmenu-open' : ''}`}>
-        <div className="fullmenu-list">
-          {menuItems.map((item, i) => {
-            const isActive = location.pathname.startsWith(item.path);
-            return (
-              <button key={item.path}
-                className={`fullmenu-item ${isActive ? 'fullmenu-item-active' : ''}`}
-                style={{ '--i': i } as React.CSSProperties}
-                onClick={() => go(item.path)}>
-                <item.icon className="shrink-0" />
-                <span>{item.label}</span>
-                <ArrowRight className="fullmenu-arrow" style={{ width: 18, height: 18 }} />
-              </button>
-            );
-          })}
-        </div>
-        <div
-          className="fullmenu-footer"
-          style={{ '--footer-delay': `${menuItems.length * 45}ms` } as React.CSSProperties}
-        >
-          <div className="drawer-action-row">
-            {sync.hasRoom && <SyncBadge sync={sync} />}
-            <span className="text-[10px] bg-white/15 border border-white/30 rounded-full px-2.5 py-1 font-bold text-white">観戦用ページ</span>
+      {/* 大会の状況（大会名・進捗・コート・時間超過） */}
+      <StatusBar
+        label={live ? 'LIVE' : 'WAIT'}
+        live={live}
+        lead={tournamentName || '観戦用ページ'}
+        items={tickerItems}
+      />
+
+      {/* スマホ: 黒地のメニュー */}
+      <MobileNav
+        open={menuOpen}
+        onClose={() => setMenuOpen(false)}
+        groups={[{ label: 'LIVE', items: navItems }]}
+        foot={
+          <div className="mobile-nav__foot-row">
+            <a className="mobile-nav__foot-link" href={SITE_URL} target="_blank" rel="noopener noreferrer">協会サイト ↗</a>
+            <a className="mobile-nav__foot-link" href={`${SITE_URL}tournaments.html`} target="_blank" rel="noopener noreferrer">大会情報 ↗</a>
           </div>
-          <img src={`${import.meta.env.BASE_URL}logo-tcta-white.png`} alt="鳥取市テニス協会"
-            className="fullmenu-logo" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-        </div>
-      </div>
+        }
+      />
 
       {/* コンテンツ */}
-      <main className="flex-1 overflow-y-auto relative bg-bg-main">
-        {!info ? (
-          <div className="max-w-2xl mx-auto p-4">
-            <WaitingCard sync={sync} />
-          </div>
-        ) : (
-          <div key={location.pathname} className="page-enter min-h-full pb-24 [padding-bottom:calc(6rem_+_env(safe-area-inset-bottom))]">
-            {isGroup ? (
-              <div className="max-w-7xl w-full mx-auto px-3 md:px-4 py-4">
+      <main id="main" className="app-main">
+        <PageHead
+          key={`head-${current.path}`}
+          crumbs={[{ label: '協会サイト', href: SITE_URL }, { label: '観戦', to: `/view${location.search}` }, { label: current.label }]}
+          en={current.en}
+          title={tournamentName || current.label}
+          lead={info ? (
+            <>
+              <span className="page-lead__item page-lead__name">{current.label}</span>
+              {info.date && <span className="page-lead__item"><Calendar className="w-3.5 h-3.5" />{info.date}</span>}
+              {info.venue && <span className="page-lead__item"><MapPin className="w-3.5 h-3.5" />{info.venue}</span>}
+            </>
+          ) : undefined}
+        />
+        <div className="app-page app-page--gray min-h-[60vh]">
+          {!info ? (
+            <div className="site-container">
+              <WaitingCard sync={sync} />
+            </div>
+          ) : (
+            <div key={location.pathname} className="page-enter min-h-full pb-12">
+              {isGroup ? (
+                <div className="max-w-7xl w-full mx-auto px-3 md:px-4 py-4">
+                  <Outlet />
+                </div>
+              ) : (
                 <Outlet />
-              </div>
-            ) : (
-              <Outlet />
-            )}
-          </div>
-        )}
+              )}
+            </div>
+          )}
+        </div>
+        <SiteFooter
+          note={<>大会の進み具合を、会場の外からも。<br />結果は運営の入力と同時に反映されます。</>}
+          columns={<>
+            <div>
+              {navItems.slice(0, 2).map(it => <Link key={it.key} className="fw fw--head" to={it.to!}>{it.label}</Link>)}
+            </div>
+            <div>
+              {navItems.slice(2).map(it => <Link key={it.key} className="fw fw--head" to={it.to!}>{it.label}</Link>)}
+            </div>
+            <div>
+              <a className="fw fw--head fw--head-tight" href={SITE_URL} target="_blank" rel="noopener noreferrer">協会サイト ↗</a>
+              <a className="fw fw--sub" href={`${SITE_URL}tournaments.html`} target="_blank" rel="noopener noreferrer">大会情報</a>
+              <a className="fw fw--sub" href={`${SITE_URL}results.html`} target="_blank" rel="noopener noreferrer">大会結果</a>
+            </div>
+            <div>
+              <a className="fw fw--head" href={`${SITE_URL}membership.html`} target="_blank" rel="noopener noreferrer">入会案内 ↗</a>
+            </div>
+          </>}
+        />
       </main>
     </div>
   );
@@ -300,44 +302,31 @@ function WaitingCard({ sync }: { sync: ReturnType<typeof usePublicSync> }) {
   // 観戦者には「待てば映る」と誤解させず、運営側の設定漏れだと分かる文言にする。
   if (!sync.serverConfigured) {
     return (
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-10 text-center mt-6">
-        <Info className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-        <p className="text-gray-500 text-sm">観戦用の配信設定が有効になっていません。</p>
-        <p className="text-gray-400 text-xs mt-1">
-          中継サーバーが設定されていないため、他の端末の大会データを受信できません。
-        </p>
-        <p className="text-gray-400 text-xs mt-3 leading-relaxed">
-          運営の方へ: リポジトリの Variables に SYNC_SERVER_URL を登録して再デプロイしてください。
-        </p>
+      <div className="panel wait-panel">
+        <h2 className="wait-panel__title">観戦用の配信が有効になっていません。</h2>
+        <p>中継の接続先が見つからないため、運営端末の大会データを受信できません。</p>
+        <p className="note">運営の方へ: この URL（Cloudflare 版）の Worker が配備されているか確認してください。</p>
       </div>
     );
   }
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-10 text-center mt-6">
-      <Info className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-      <p className="text-gray-500 text-sm">
+    <div className="panel wait-panel">
+      <h2 className="wait-panel__title">
         {sync.connectionState === 'connected'
-          ? '運営端末からのデータ受信を待っています...'
+          ? '運営端末からのデータを待っています'
           : sync.connectionState === 'disconnected'
-            ? '中継サーバーに接続できていません。'
-            : '運営端末のルームに接続しています...'}
-      </p>
-      <p className="text-gray-400 text-xs mt-1">
-        ルーム: <span className="font-mono font-bold">{sync.roomCode}</span>
-      </p>
-      <p className="text-gray-400 text-xs mt-3 leading-relaxed">
+            ? '中継に接続できていません'
+            : '運営端末のルームに接続しています'}
+      </h2>
+      <p>
         {sync.connectionState === 'connected'
-          ? '運営端末で大会データを読み込み、ヘッダーの電波アイコンから「インターネット公開を開始」すると自動で表示されます。'
-          : '運営端末で大会データが読み込まれ、同期が開始されると自動で表示されます。'}
+          ? '運営端末で大会データを読み込み、設定の「インターネット公開を開始」を押すと自動で表示されます。'
+          : '運営端末で大会データが読み込まれ、同期が始まると自動で表示されます。'}
       </p>
-      <button
-        onClick={handleRetry}
-        disabled={retrying}
-        className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold text-gray-800 bg-primary-50 border border-primary-200 hover:bg-primary-100 disabled:opacity-60 transition-colors"
-      >
-        <RefreshCw className={`w-3.5 h-3.5 ${retrying ? 'animate-spin' : ''}`} />
-        再読み込み
+      <p className="note">ルーム: <code>{sync.roomCode}</code></p>
+      <button onClick={handleRetry} disabled={retrying} className="btn btn--outline" style={{ marginTop: 16 }}>
+        <span className="inline-flex items-center gap-2"><RefreshCw className={`w-4 h-4 ${retrying ? 'animate-spin' : ''}`} />再読み込み</span>
       </button>
     </div>
   );
@@ -346,15 +335,10 @@ function WaitingCard({ sync }: { sync: ReturnType<typeof usePublicSync> }) {
 function SyncBadge({ sync }: { sync: ReturnType<typeof usePublicSync> }) {
   const connected = sync.connectionState === 'connected';
   const connecting = sync.connectionState === 'connecting' || sync.connectionState === 'reconnecting';
-  const label = connected ? 'ライブ受信中' : connecting ? '接続中...' : sync.serverConfigured ? '切断' : 'ローカル同期';
-  const Icon = connected ? Wifi : WifiOff;
-  // 白地のヘッダーに合わせ、受信中だけ赤、それ以外は無彩色にする
-  const color = connected
-    ? 'bg-primary-50 border-primary-200 text-gray-800'
-    : connecting ? 'bg-gray-50 border-gray-200 text-gray-600' : 'bg-white border-gray-200 text-gray-500';
+  const label = connected ? 'ライブ受信中' : connecting ? '接続中' : sync.serverConfigured ? '切断' : 'ローカル同期';
   return (
-    <span className={`flex items-center gap-1 text-[10px] md:text-xs rounded-full px-2 py-1 font-bold border ${color}`} title={`ルーム: ${sync.roomCode}`}>
-      <Icon className="w-3 h-3" />{label}
+    <span className={`sync-chip ${connected ? 'sync-chip--on' : connecting ? 'sync-chip--wait' : ''}`} title={`ルーム: ${sync.roomCode}`}>
+      <i aria-hidden="true" /><span>{label}</span>
     </span>
   );
 }

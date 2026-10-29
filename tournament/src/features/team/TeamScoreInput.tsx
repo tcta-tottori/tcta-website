@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef, useMemo, useId } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Save, Trash2, Trophy, ChevronDown, Check, Users, Pencil, OctagonX } from 'lucide-react';
+import { X, Trash2, Trophy, ChevronDown, Check, Users, Pencil, OctagonX } from 'lucide-react';
 import { useTeamStore } from './teamStore';
 import type { SubMatchScore, MatchType, BracketSubMatchScore } from './types';
 import { MATCH_TYPE_LABELS, MATCH_TYPE_SHORT, getDisplayNameParts, playersPerSubMatch } from './teamLogic';
@@ -1214,7 +1214,7 @@ export default function TeamScoreInput({
         const tMembers = isTeam1 ? team1Members : team2Members;
         const theme = MATCH_TYPE_THEME[pickerState.mt];
         const teamTheme = TEAM_THEME[pickerState.side];
-        const current = scores[pickerState.mt][pickerState.key];
+        const current = scores[pickerState.mt]?.[pickerState.key] ?? '';
 
         // 同チームの他スロットで既に使っている選手名を集める
         // （現在編集中のスロット自体は除外することで、再選択・クリアが自然に動く）

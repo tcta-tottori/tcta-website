@@ -16,7 +16,7 @@ const LEAGUE_COLORS = [
 ];
 
 export default function TeamStandingsView() {
-  const { leagues, leagueMatches, rankOverrides, generateBrackets, currentPhase } = useTeamStore();
+  const { leagues, leagueMatches, rankOverrides, generateBrackets } = useTeamStore();
 
   const allStandings = useMemo(
     () => calculateTeamStandings(leagues, leagueMatches, rankOverrides),

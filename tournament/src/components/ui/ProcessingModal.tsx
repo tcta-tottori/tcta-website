@@ -76,7 +76,7 @@ export default function ProcessingModal({ open, title, steps, progress, result, 
               <div className="relative w-16 h-16">
                 {/* C字型アーク回転 */}
                 <div className="absolute inset-0 drive-ring-flow" style={{
-                  background: 'conic-gradient(from 0deg, #c63834, #c63834, #5a5a5a, transparent)',
+                  background: 'conic-gradient(from 0deg, #D8232A, #D8232A, #5a5a5a, transparent)',
                   borderRadius: '50%',
                   mask: 'radial-gradient(circle, transparent 62%, black 64%, black 72%, transparent 74%)',
                   WebkitMask: 'radial-gradient(circle, transparent 62%, black 64%, black 72%, transparent 74%)',
@@ -102,8 +102,8 @@ export default function ProcessingModal({ open, title, steps, progress, result, 
                   style={{
                     width: `${Math.min(100, Math.max(0, progress))}%`,
                     background: progress >= 100
-                      ? 'linear-gradient(90deg, #c63834, #c63834)'
-                      : 'linear-gradient(90deg, #c63834, #c63834)',
+                      ? 'linear-gradient(90deg, #D8232A, #D8232A)'
+                      : 'linear-gradient(90deg, #D8232A, #D8232A)',
                   }}
                 />
               </div>

@@ -8,7 +8,7 @@ import { MapPin, Play, Clock, CheckCircle, AlertCircle, X, Trophy, Timer, Settin
 
 /** テニスコート型のSVGオーバーレイ（縦向き・モバイル用） */
 function CourtLines({ status }: { status: string }) {
-  const color = status === 'playing' ? 'rgba(198,56,52,0.25)'
+  const color = status === 'playing' ? 'rgba(216, 35, 42,0.25)'
     : status === 'ready' ? 'rgba(118,118,118,0.2)'
     : status === 'unavailable' ? 'rgba(166,166,166,0.2)'
     : 'rgba(166,166,166,0.15)';
@@ -29,7 +29,7 @@ function CourtLines({ status }: { status: string }) {
 
 /** テニスコート型のSVGオーバーレイ（横向き・PC用） */
 function CourtLinesH({ status }: { status: string }) {
-  const color = status === 'playing' ? 'rgba(198,56,52,0.25)'
+  const color = status === 'playing' ? 'rgba(216, 35, 42,0.25)'
     : status === 'ready' ? 'rgba(118,118,118,0.2)'
     : status === 'unavailable' ? 'rgba(166,166,166,0.2)'
     : 'rgba(166,166,166,0.15)';
@@ -338,7 +338,7 @@ export default function CourtMap() {
       bg: 'bg-primary-100',
       border: 'border-primary-400',
       text: 'text-gray-900',
-      glow: 'shadow-[0_0_12px_rgba(198,56,52,0.3)]',
+      glow: 'shadow-[0_0_12px_rgba(216, 35, 42,0.3)]',
     },
     ready: {
       bg: 'bg-gray-50',
@@ -373,7 +373,7 @@ export default function CourtMap() {
     if (!cs) return null;
     const isOver = timeOverCourts.has(courtName);
     const style = isOver
-      ? { bg: 'bg-red-100', border: 'border-red-500', text: 'text-red-800', glow: 'shadow-[0_0_16px_rgba(198,56,52,0.4)]' }
+      ? { bg: 'bg-red-100', border: 'border-red-500', text: 'text-red-800', glow: 'shadow-[0_0_16px_rgba(216, 35, 42,0.4)]' }
       : statusStyles[cs.status];
     const isSelected = selectedCourt === courtName;
 
@@ -427,7 +427,7 @@ export default function CourtMap() {
     if (!cs) return null;
     const isOver = timeOverCourts.has(courtName);
     const style = isOver
-      ? { bg: 'bg-red-100', border: 'border-red-500', text: 'text-red-800', glow: 'shadow-[0_0_16px_rgba(198,56,52,0.4)]' }
+      ? { bg: 'bg-red-100', border: 'border-red-500', text: 'text-red-800', glow: 'shadow-[0_0_16px_rgba(216, 35, 42,0.4)]' }
       : statusStyles[cs.status];
     const isSelected = selectedCourt === courtName;
 

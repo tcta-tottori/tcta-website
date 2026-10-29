@@ -12,7 +12,8 @@ const buildTimestamp = new Date().toLocaleString('ja-JP', {
 
 // https://vite.dev/config/
 export default defineConfig({
-  base: '/tournament-management-app/',
+  // Cloudflare 版は Worker のルートで配る（GitHub Pages 版は /tournament-management-app/）
+  base: '/',
   define: {
     __BUILD_TIMESTAMP__: JSON.stringify(buildTimestamp),
   },
@@ -30,7 +31,7 @@ export default defineConfig({
         cleanupOutdatedCaches: true,
         // ナビゲーションリクエストはネットワーク優先でキャッシュの陳腐化を防ぐ
         navigateFallback: 'index.html',
-        navigateFallbackDenylist: [/^\/api/],
+        navigateFallbackDenylist: [/^\/api/, /^\/ws/],
         runtimeCaching: [
           {
             urlPattern: /\.(?:js|css)$/,
@@ -50,9 +51,9 @@ export default defineConfig({
         'logo.png',
       ],
       manifest: {
-        name: '大会運営統合Webアプリケーション',
-        short_name: '大会運営アプリ',
-        description: '鳥取県テニス協会 大会運営統合Webアプリケーション',
+        name: '大会運営システム（鳥取市テニス協会）',
+        short_name: '大会運営',
+        description: '鳥取市テニス協会 大会運営システム（Cloudflare 版）',
         theme_color: '#ffffff',
         background_color: '#ffffff',
         icons: [

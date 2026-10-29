@@ -2305,7 +2305,7 @@ export default function DataImport({ externalTournamentExcel, externalScheduleEx
 
           {/* メッシュグラデーション装飾 */}
           <div className="absolute inset-0 opacity-30"
-            style={{ background: 'radial-gradient(circle at 20% 20%, rgba(198,56,52,0.3) 0%, transparent 50%), radial-gradient(circle at 80% 80%, rgba(118,118,118,0.3) 0%, transparent 50%)' }} />
+            style={{ background: 'radial-gradient(circle at 20% 20%, rgba(216, 35, 42,0.3) 0%, transparent 50%), radial-gradient(circle at 80% 80%, rgba(118,118,118,0.3) 0%, transparent 50%)' }} />
 
           {/* パーティクル装飾 */}
           <div className="absolute top-4 right-8 w-2 h-2 bg-white rounded-full animate-[pulse_2s_ease-in-out_infinite]" />

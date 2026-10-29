@@ -561,7 +561,7 @@ function TournamentCard({ event, draw, matches, previewOpts, onExcel, onJpeg }: 
               className="h-full rounded-full transition-all duration-500 ease-out"
               style={{
                 width: `${completionPct}%`,
-                backgroundColor: completionPct === 100 ? '#c63834' : '#767676',
+                backgroundColor: completionPct === 100 ? '#D8232A' : '#767676',
               }}
             />
           </div>
@@ -685,7 +685,7 @@ function RoundRobinCard({ event, draw, matches, entries, players, previewOpts, o
               className="h-full rounded-full transition-all duration-500 ease-out"
               style={{
                 width: `${completionPct}%`,
-                backgroundColor: completionPct === 100 ? '#c63834' : '#767676',
+                backgroundColor: completionPct === 100 ? '#D8232A' : '#767676',
               }}
             />
           </div>

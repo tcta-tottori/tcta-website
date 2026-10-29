@@ -6,9 +6,9 @@ import type { TeamLeague, TeamLeagueMatch } from './types';
 
 /** SVG コートライン（縦向き） */
 function VerticalCourtLines({ status }: { status: 'playing' | 'ready' | 'complete' | 'empty' }) {
-  const color = status === 'playing' ? 'rgba(198,56,52,0.15)'
+  const color = status === 'playing' ? 'rgba(216, 35, 42,0.15)'
     : status === 'ready' ? 'rgba(118,118,118,0.1)'
-    : status === 'complete' ? 'rgba(198,56,52,0.08)'
+    : status === 'complete' ? 'rgba(216, 35, 42,0.08)'
     : 'rgba(0,0,0,0.04)';
   return (
     <svg className="absolute inset-0 w-full h-full" viewBox="0 0 100 160" preserveAspectRatio="none">
@@ -128,7 +128,7 @@ export default function TeamLiveCourtView() {
       <style>{`
         @keyframes court-blink {
           0%, 100% { border-color: rgb(74, 222, 128); box-shadow: 0 0 0 0 rgba(212,106,102, 0); }
-          50% { border-color: rgb(34, 197, 94); box-shadow: 0 0 6px 1px rgba(198,56,52, 0.25); }
+          50% { border-color: rgb(34, 197, 94); box-shadow: 0 0 6px 1px rgba(216, 35, 42, 0.25); }
         }
         .court-playing-blink { animation: court-blink 2s ease-in-out infinite; }
       `}</style>

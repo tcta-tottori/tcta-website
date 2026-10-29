@@ -160,7 +160,7 @@ export default function ScoreboardBracket({
       const winnerIsTop = isFinished && matchResult.winnerEntryId === matchResult.player1EntryId;
       const winnerIsBottom = isFinished && matchResult.winnerEntryId === matchResult.player2EntryId;
 
-      const getStroke = (isWinner: boolean) => isWinner ? '#ad2c29' : isPlaying ? '#ad2c29' : '#d6d6d6';
+      const getStroke = (isWinner: boolean) => isWinner ? '#B31C22' : isPlaying ? '#B31C22' : '#d6d6d6';
       const getWidth = (isWinner: boolean) => isWinner ? '2.5' : isPlaying ? '2' : '1.5';
 
       paths.push(<path key={`r${r}-m${m}-top`} d={`M ${x} ${yTop} L ${xMid} ${yTop} L ${xMid} ${yMid}`}
@@ -170,7 +170,7 @@ export default function ScoreboardBracket({
 
       const winnerExists = winnerIsTop || winnerIsBottom;
       paths.push(<path key={`r${r}-m${m}-conn`} d={`M ${xMid} ${yMid} L ${xNext} ${yMid}`}
-        fill="none" stroke={winnerExists ? '#ad2c29' : isPlaying ? '#ad2c29' : '#d6d6d6'}
+        fill="none" stroke={winnerExists ? '#B31C22' : isPlaying ? '#B31C22' : '#d6d6d6'}
         strokeWidth={winnerExists ? '2.5' : '1.5'} />);
     }
   }

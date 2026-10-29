@@ -444,7 +444,7 @@ export default function LiveBroadcastPage() {
                 <div className="mt-2 flex flex-wrap gap-2">
                   <button
                     onClick={() => openInput(live)}
-                    className="flex items-center gap-1.5 text-xs font-bold text-white bg-gradient-to-r from-[#d2504c] to-[#c63834] rounded-lg px-3 py-2 hover:brightness-110"
+                    className="flex items-center gap-1.5 text-xs font-bold text-white bg-gradient-to-r from-[#d2504c] to-[#D8232A] rounded-lg px-3 py-2 hover:brightness-110"
                   >
                     <Radio className="w-3.5 h-3.5" />スコア入力を開く
                   </button>
@@ -524,7 +524,7 @@ export default function LiveBroadcastPage() {
                 <button
                   onClick={() => void handleStart(m)}
                   disabled={busyKey === `start-${m.id}`}
-                  className="mt-2 w-full flex items-center justify-center gap-1.5 text-xs font-bold text-white bg-gradient-to-r from-[#d2504c] to-[#c63834] rounded-lg px-3 py-2 hover:brightness-110 disabled:opacity-40"
+                  className="mt-2 w-full flex items-center justify-center gap-1.5 text-xs font-bold text-white bg-gradient-to-r from-[#d2504c] to-[#D8232A] rounded-lg px-3 py-2 hover:brightness-110 disabled:opacity-40"
                 >
                   <Play className="w-3.5 h-3.5" />配信を開始
                 </button>

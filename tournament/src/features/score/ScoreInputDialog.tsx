@@ -1064,7 +1064,7 @@ export default function ScoreInputDialog({
             <button
               onClick={handleOpenLiveScore}
               disabled={isProcessing || !match.player1Name || !match.player2Name}
-              className="w-full inline-flex items-center justify-center gap-2 text-sm font-bold px-4 py-3.5 rounded-xl bg-gradient-to-r from-[#d2504c] to-[#c63834] text-white hover:brightness-110 active:scale-[0.98] disabled:opacity-40 transition-all min-h-[48px] shadow-lg shadow-[#c63834]/30"
+              className="w-full inline-flex items-center justify-center gap-2 text-sm font-bold px-4 py-3.5 rounded-xl bg-gradient-to-r from-[#d2504c] to-[#D8232A] text-white hover:brightness-110 active:scale-[0.98] disabled:opacity-40 transition-all min-h-[48px] shadow-lg shadow-[#D8232A]/30"
             >
               <Radio className="w-5 h-5" />
               {hasLiveScore ? 'ライブスコアを再開' : 'ライブスコア開始'}

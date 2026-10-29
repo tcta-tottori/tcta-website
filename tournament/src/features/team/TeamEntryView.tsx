@@ -56,11 +56,6 @@ const LEAGUE_COLORS = [
 ];
 const getColor = (i: number) => LEAGUE_COLORS[i % LEAGUE_COLORS.length];
 
-/** 苗字のみ抽出（フォールバック用） */
-function familyName(name: string): string {
-  return name.trim().split(/[\s　]+/)[0] || name;
-}
-
 /** メンバー編集モーダル */
 function TeamEditModal({
   team,
@@ -430,7 +425,7 @@ export default function TeamEntryView() {
                 <span className="chrome-tab-label chrome-tab-label-rainbow">ALL</span>
                 <span
                   className={`chrome-tab-progress ${allComplete ? 'chrome-tab-progress-done' : ''}`}
-                  style={{ color: allComplete ? '#c63834' : '#767676' }}
+                  style={{ color: allComplete ? '#D8232A' : '#767676' }}
                 >
                   {totalEntered}/{totalTeams}
                 </span>

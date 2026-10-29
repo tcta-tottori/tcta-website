@@ -53,7 +53,7 @@ interface CourtBracketViewProps {
 
 // 結果画像（DrawResultExporter）と揃えた線・スコアの色
 /** 勝ち上がりライン・勝者スコアの赤 */
-const WIN_RED = '#c63834';
+const WIN_RED = '#D8232A';
 /** 通常のトーナメント線のグレー */
 const LINE_GRAY = '#a6a6a6';
 /** 敗者スコア・注記のグレー */
@@ -450,7 +450,7 @@ export default function CourtBracketView({
       if (bottomText) {
         paths.push(
           <text key={`bt-${r}-${m}`} x={cardCenterX} y={cardBottomY}
-            fill={isPlaying ? '#ad2c29' : '#262626'}
+            fill={isPlaying ? '#B31C22' : '#262626'}
             fontSize="8.5" fontWeight="bold" textAnchor="middle">
             {bottomText}
           </text>

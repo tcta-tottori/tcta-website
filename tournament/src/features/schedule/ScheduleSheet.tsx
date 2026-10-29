@@ -1105,12 +1105,12 @@ export default function ScheduleSheet() {
               100% { background-position: 200% 0; }
             }
             @keyframes glow-pulse {
-              0%, 100% { box-shadow: inset 0 0 0 2px rgba(198,56,52,0.5); }
-              50% { box-shadow: inset 0 0 12px 2px rgba(198,56,52,0.35), inset 0 0 0 2px rgba(198,56,52,0.6); }
+              0%, 100% { box-shadow: inset 0 0 0 2px rgba(216, 35, 42,0.5); }
+              50% { box-shadow: inset 0 0 12px 2px rgba(216, 35, 42,0.35), inset 0 0 0 2px rgba(216, 35, 42,0.6); }
             }
             .cell-playing {
               animation: glow-pulse 2s ease-in-out infinite, shimmer 2.5s linear infinite;
-              background-image: linear-gradient(90deg, transparent 20%, rgba(198,56,52,0.12) 50%, transparent 80%) !important;
+              background-image: linear-gradient(90deg, transparent 20%, rgba(216, 35, 42,0.12) 50%, transparent 80%) !important;
               background-size: 200% 100%;
               background-color: #dcfce7 !important;
               position: relative;
@@ -1120,14 +1120,14 @@ export default function ScheduleSheet() {
               position: absolute;
               top: 1px; left: 1px;
               width: 6px; height: 6px;
-              background: #c63834;
+              background: #D8232A;
               border-radius: 50%;
               animation: playing-dot-ping 1.5s ease-in-out infinite;
               z-index: 2;
             }
             @keyframes playing-dot-ping {
-              0%, 100% { opacity: 1; transform: scale(1); box-shadow: 0 0 0 0 rgba(198,56,52,0.6); }
-              50% { opacity: 0.8; transform: scale(1.3); box-shadow: 0 0 0 4px rgba(198,56,52,0); }
+              0%, 100% { opacity: 1; transform: scale(1); box-shadow: 0 0 0 0 rgba(216, 35, 42,0.6); }
+              50% { opacity: 0.8; transform: scale(1.3); box-shadow: 0 0 0 4px rgba(216, 35, 42,0); }
             }
             .cell-waiting {
               position: relative;
@@ -1160,15 +1160,15 @@ export default function ScheduleSheet() {
               bottom: 0;
               right: -1px;
               width: 3px;
-              background: linear-gradient(180deg, #c63834, #5a5a5a);
+              background: linear-gradient(180deg, #D8232A, #5a5a5a);
               z-index: 5;
               border-radius: 2px;
-              box-shadow: 0 0 8px rgba(198,56,52,0.5);
+              box-shadow: 0 0 8px rgba(216, 35, 42,0.5);
               animation: pulse-line 2s ease-in-out infinite;
             }
             @keyframes pulse-line {
-              0%, 100% { opacity: 1; box-shadow: 0 0 8px rgba(198,56,52,0.5); }
-              50% { opacity: 0.7; box-shadow: 0 0 4px rgba(198,56,52,0.3); }
+              0%, 100% { opacity: 1; box-shadow: 0 0 8px rgba(216, 35, 42,0.5); }
+              50% { opacity: 0.7; box-shadow: 0 0 4px rgba(216, 35, 42,0.3); }
             }
             .time-now-header {
               position: relative;
@@ -1179,7 +1179,7 @@ export default function ScheduleSheet() {
               bottom: -2px;
               right: -4px;
               font-size: 8px;
-              color: #c63834;
+              color: #D8232A;
               z-index: 5;
             }
           `}</style>

@@ -63,7 +63,7 @@ type CourtStatus = {
 function BroadcastBadge({ compact = false }: { compact?: boolean }) {
   return (
     <span
-      className={`flex items-center gap-0.5 bg-[#c63834] text-white font-bold rounded-full leading-none shrink-0 ${
+      className={`flex items-center gap-0.5 bg-[#D8232A] text-white font-bold rounded-full leading-none shrink-0 ${
         compact ? 'text-[7px] px-1 py-0.5' : 'text-[7px] sm:text-[8px] px-1 sm:px-1.5 py-0.5'
       }`}
       title="ライブスコアを配信中"
@@ -118,7 +118,7 @@ function DonutChart({
         {/* Playing arc (on top of finished) */}
         <circle
           cx={center} cy={center} r={radius}
-          fill="none" stroke="#c63834" strokeWidth={strokeWidth}
+          fill="none" stroke="#D8232A" strokeWidth={strokeWidth}
           strokeDasharray={`${playingDash} ${circumference - playingDash}`}
           strokeDashoffset={`${-finishedDash}`}
           strokeLinecap="round"
@@ -140,7 +140,7 @@ function DonutChart({
 
 /** Vertical court SVG lines overlay */
 function VerticalCourtLines({ status }: { status: string }) {
-  const color = status === 'playing' ? 'rgba(198,56,52,0.3)'
+  const color = status === 'playing' ? 'rgba(216, 35, 42,0.3)'
     : status === 'ready' ? 'rgba(118,118,118,0.25)'
     : status === 'unavailable' ? 'rgba(166,166,166,0.2)'
     : 'rgba(166,166,166,0.18)';
@@ -172,7 +172,7 @@ function formatElapsed(updatedAt: number | undefined): string {
 
 /** テニスコート型SVG（横向き・PC用） */
 function HorizontalCourtLines({ status }: { status: string }) {
-  const color = status === 'playing' ? 'rgba(198,56,52,0.3)'
+  const color = status === 'playing' ? 'rgba(216, 35, 42,0.3)'
     : status === 'ready' ? 'rgba(118,118,118,0.25)'
     : status === 'unavailable' ? 'rgba(166,166,166,0.2)'
     : 'rgba(166,166,166,0.18)';
@@ -198,13 +198,13 @@ function TennisCourtBlockH({
   cs: CourtStatus; isSelected: boolean; onSelect: () => void; eventName?: string; roundLabel?: string; isTimeOver?: boolean;
 }) {
   const statusStyles: Record<string, { bg: string; border: string; text: string; glow: string }> = {
-    playing: { bg: 'bg-primary-100', border: 'border-primary-400', text: 'text-gray-900', glow: 'shadow-[0_0_12px_rgba(198,56,52,0.3)]' },
+    playing: { bg: 'bg-primary-100', border: 'border-primary-400', text: 'text-gray-900', glow: 'shadow-[0_0_12px_rgba(216, 35, 42,0.3)]' },
     ready: { bg: 'bg-gray-50', border: 'border-gray-300', text: 'text-gray-700', glow: '' },
     empty: { bg: 'bg-white/80', border: 'border-primary-200', text: 'text-gray-600', glow: '' },
     unavailable: { bg: 'bg-gray-100', border: 'border-gray-300', text: 'text-gray-400', glow: '' },
   };
   const style = isTimeOver
-    ? { bg: 'bg-red-100', border: 'border-red-500', text: 'text-red-800', glow: 'shadow-[0_0_16px_rgba(198,56,52,0.4)]' }
+    ? { bg: 'bg-red-100', border: 'border-red-500', text: 'text-red-800', glow: 'shadow-[0_0_16px_rgba(216, 35, 42,0.4)]' }
     : statusStyles[cs.status];
   const courtNum = cs.court.name.replace(/[^\d]/g, '') || cs.court.name;
   const elapsed = cs.currentMatch?.status === 'playing' ? formatElapsed(cs.currentMatch.updatedAt) : '';
@@ -294,14 +294,14 @@ function TennisCourtBlock({
   isTimeOver?: boolean;
 }) {
   const statusStyles: Record<string, { bg: string; border: string; text: string; glow: string }> = {
-    playing: { bg: 'bg-primary-100', border: 'border-primary-400', text: 'text-gray-900', glow: 'shadow-[0_0_12px_rgba(198,56,52,0.3)]' },
+    playing: { bg: 'bg-primary-100', border: 'border-primary-400', text: 'text-gray-900', glow: 'shadow-[0_0_12px_rgba(216, 35, 42,0.3)]' },
     ready: { bg: 'bg-gray-50', border: 'border-gray-300', text: 'text-gray-700', glow: '' },
     empty: { bg: 'bg-white/80', border: 'border-primary-200', text: 'text-gray-600', glow: '' },
     unavailable: { bg: 'bg-gray-100', border: 'border-gray-300', text: 'text-gray-400', glow: '' },
   };
   // Time-over override
   const style = isTimeOver
-    ? { bg: 'bg-red-100', border: 'border-red-500', text: 'text-red-800', glow: 'shadow-[0_0_16px_rgba(198,56,52,0.4)]' }
+    ? { bg: 'bg-red-100', border: 'border-red-500', text: 'text-red-800', glow: 'shadow-[0_0_16px_rgba(216, 35, 42,0.4)]' }
     : statusStyles[cs.status];
   const courtNum = cs.court.name.replace(/[^\d]/g, '') || cs.court.name;
   const elapsed = cs.currentMatch?.status === 'playing' ? formatElapsed(cs.currentMatch.updatedAt) : '';
@@ -738,7 +738,7 @@ function LiveDashboardInner() {
             </h2>
             <div className="flex gap-4 text-xs flex-wrap">
               {courtStats.broadcasting > 0 && (
-                <span className="flex items-center gap-1 font-bold text-[#c63834]">
+                <span className="flex items-center gap-1 font-bold text-[#D8232A]">
                   <Radio className="w-3 h-3" />
                   ライブ配信 {courtStats.broadcasting}
                 </span>
@@ -880,7 +880,7 @@ function LiveDashboardInner() {
             </h3>
             <div className="flex items-center gap-2">
               {selectedDetail.isBroadcasting && (
-                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-[#c63834] text-white">
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-[#D8232A] text-white">
                   <Radio className="w-3 h-3" />ライブスコア配信中
                 </span>
               )}

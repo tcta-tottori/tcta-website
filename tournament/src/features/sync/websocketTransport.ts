@@ -272,7 +272,7 @@ export class WebSocketTransport implements SyncTransport {
 
     let ws: WebSocket;
     try {
-      ws = new WebSocket(this.serverUrl);
+      ws = new WebSocket(withRoom(this.serverUrl, this.roomCode));
     } catch {
       this.scheduleReconnect();
       return;
@@ -394,5 +394,21 @@ export class WebSocketTransport implements SyncTransport {
     for (const handler of this.stateHandlers) {
       handler(state);
     }
+  }
+}
+
+/**
+ * 接続先 URL にルームコードを付ける（?room=XXXX）。
+ * Cloudflare 版の中継（Durable Object）はルームごとに別のオブジェクトなので、
+ * 接続の時点でどのルームか分かっている必要がある。Render 版の中継サーバーは
+ * クエリを読まないので、付けても動きは変わらない。
+ */
+function withRoom(serverUrl: string, roomCode: string): string {
+  try {
+    const u = new URL(serverUrl);
+    if (roomCode) u.searchParams.set('room', roomCode);
+    return u.toString();
+  } catch {
+    return serverUrl;
   }
 }

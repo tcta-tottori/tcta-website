@@ -837,7 +837,7 @@ function NormalScoreboard() {
                 key={c.courtId}
                 className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium transition-colors ${
                   isOver
-                    ? 'bg-red-50 border-red-400 text-red-700 shadow-[0_0_8px_rgba(198,56,52,0.3)]'
+                    ? 'bg-red-50 border-red-400 text-red-700 shadow-[0_0_8px_rgba(216, 35, 42,0.3)]'
                     : c.matchInfo
                       ? 'bg-primary-50 border-primary-300 text-gray-800'
                       : c.isAvailable
