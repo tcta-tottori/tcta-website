@@ -16,13 +16,6 @@ const count = {
   open: SCHEDULE.filter((t) => t.status === 'open').length,
   done: SCHEDULE.filter((t) => t.status === 'done').length,
 };
-
-// 協会の Google カレンダー（旧サイトで埋め込んでいたもの）。
-// embed は表示用、subscribe は「＋」と同じく自分のカレンダーに追加する入口。
-const GCAL = {
-  embed: 'https://calendar.google.com/calendar/embed?src=t.c.t.a.r7%40gmail.com&ctz=Asia%2FTokyo',
-  subscribe: 'https://calendar.google.com/calendar/u/0/r?cid=t.c.t.a.r7%40gmail.com',
-};
 ---
 
 <Base
@@ -67,17 +60,19 @@ const GCAL = {
       {/* 絞り込み（左）と表示の切り替え（右）。灰色の帯（ページ上部）には入れず、一覧のすぐ上に置く。
           表示の切り替えはこのページの大会一覧すべてに効く（main.js の initViewSwitch。選んだ方を覚えておく） */}
       <div class="tl-tools rv">
-        <div class="chips chips--list" data-filter-group data-filter-target="#r8-list" role="group" aria-label="大会一覧の絞り込み">
-          <button class="chip is-active" type="button" data-filter="all" aria-pressed="true">すべて（{count.all}）</button>
-          <button class="chip" type="button" data-filter="open" aria-pressed="false">受付中（{count.open}）</button>
-          <button class="chip" type="button" data-filter="done" aria-pressed="false">終了（{count.done}）</button>
+        {/* 絞り込みは1つの枠に並べた切り替え（1行）。件数は名前の右に小さく */}
+        <div class="seg" data-filter-group data-filter-target="#r8-list" role="group" aria-label="大会一覧の絞り込み">
+          <button class="chip seg__btn is-active" type="button" data-filter="all" aria-pressed="true">すべて<span class="seg__n">{count.all}</span></button>
+          <button class="chip seg__btn" type="button" data-filter="open" aria-pressed="false">受付中<span class="seg__n">{count.open}</span></button>
+          <button class="chip seg__btn" type="button" data-filter="done" aria-pressed="false">終了<span class="seg__n">{count.done}</span></button>
         </div>
+        {/* 表示の切り替えは絵だけ（文字は読み上げ用とマウスを載せたときの説明） */}
         <div class="view-switch" role="group" aria-label="表示の切り替え" data-view-switch>
-          <button class="view-switch__btn is-active" type="button" data-view="rows" aria-pressed="true">
-            <span class="view-switch__ico view-switch__ico--rows" aria-hidden="true"></span>縮小表示
+          <button class="view-switch__btn is-active" type="button" data-view="rows" aria-pressed="true" aria-label="縮小表示（一覧表）" title="縮小表示">
+            <span class="view-switch__ico view-switch__ico--rows" aria-hidden="true"></span>
           </button>
-          <button class="view-switch__btn" type="button" data-view="cards" aria-pressed="false">
-            <span class="view-switch__ico view-switch__ico--cards" aria-hidden="true"></span>拡大表示
+          <button class="view-switch__btn" type="button" data-view="cards" aria-pressed="false" aria-label="拡大表示（カード）" title="拡大表示">
+            <span class="view-switch__ico view-switch__ico--cards" aria-hidden="true"></span>
           </button>
         </div>
       </div>
@@ -86,9 +81,8 @@ const GCAL = {
       <p class="note" id="r8-list-empty" hidden>該当する大会はありません。</p>
 
 
-      <div class="rv mt-40" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:20px">
+      <div class="rv mt-40">
         <a class="btn btn--outline" href={SCHEDULE_PDF.src} target="_blank" rel="noopener noreferrer">令和8年度 大会日程をダウンロード（PDF / {SCHEDULE_PDF.kb.toLocaleString()}KB）<span aria-hidden="true" class="text-red">↓</span></a>
-        <p style="margin:0;font:400 14px/1.8 var(--fjp);color:var(--gray-600)">大会日程はGoogleカレンダーでも公開しています。<a class="ghost-link" href="#gcal" style="border-bottom:1px solid var(--gray-300)">カレンダーに追加する</a></p>
       </div>
 
       <div class="rv" style="margin-top:64px">
@@ -117,18 +111,10 @@ const GCAL = {
           </div>
         </div>
       </div>
-      <p class="sec-head__lead rv">令和8年度の大会を月ごとに並べています。赤いマスが開催日です。年間の日程はGoogleカレンダーでも公開しています。</p>
+      <p class="sec-head__lead rv">令和8年度の大会を月ごとに並べています。開催日のほか、エントリー締切とドロー会議（締切の週の土曜 18:00〜、テニスショップ フラシーノ）の日も載せています。</p>
 
       <ScheduleCalendar />
 
-      <div class="rv gcal mt-40" id="gcal">
-        <p class="panel__title">Googleカレンダー</p>
-        <p class="note" style="margin:8px 0 16px">協会のGoogleカレンダーです。右下の「＋」を押すと、自分のGoogleカレンダーに大会日程を追加できます。</p>
-        <iframe class="gcal__frame" src={GCAL.embed} title="鳥取市テニス協会 大会日程（Googleカレンダー）" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
-      </div>
-      <div class="btn-stack rv mt-40">
-        <a class="btn btn--primary" href={GCAL.subscribe} target="_blank" rel="noopener noreferrer">Googleカレンダーに追加する <span class="aw">↗</span></a>
-      </div>
     </div>
   </section>
 

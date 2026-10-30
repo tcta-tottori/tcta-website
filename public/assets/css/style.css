@@ -800,7 +800,7 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   position: fixed;
   inset: 0;
   z-index: 90;
-  background: #353535;  /* フッター（--ink）より少しグレーに寄せた地 */
+  background: #262626;  /* フッター（--ink）よりわずかにグレーに寄せた地 */
   color: #fff;
   /* 上の余白はヘッダーの下端まで（main.js が通知バーの有無に合わせて上書きする） */
   padding: var(--header-h) var(--gutter) calc(32px + env(safe-area-inset-bottom, 0px));
@@ -1056,7 +1056,7 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 .hero__media img.hero__photo {
   width: 100%; height: 100%;
   object-fit: cover;
-  /* 動画は横長（16:9）の集合（空・横断幕・参加者・芝）。人の並びが高さの 55〜80% にある */
+  /* 動画は正方形の集合（上から空・木・横断幕・参加者・芝）。人の並びが高さの 52〜74% にある */
   object-position: 50% 50%;
 }
 .hero__media video.hero__photo {
@@ -1065,9 +1065,19 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   object-fit: cover;
   object-position: 50% 50%;
 }
-/* スマホ・タブレットは下半分にキャッチコピーが重なるので、動画を上へずらして横断幕と人の並びを文字より上に出す
-   （下に空いたところは白いぼかし .hero__scrim の下になる） */
-@media (max-width: 1023px) { .hero__media .hero__photo { transform: translateY(-4%); } }  /* ロゴの裏に空が見える程度に */
+/* スマホ・タブレットは正方形の動画を画面の上に置く（ロゴの裏は空）。下の芝生から白へ溶かし、その下にキャッチコピーを載せる。
+   一辺 --hp は画面幅〜その 1.25 倍（画面の高さの 62% まで）。左右の端の人は少し切れるが、人の並びを大きく見せる */
+@media (max-width: 1023px) {
+  .hero { --hp: max(100vw, min(125vw, 62vh)); --hp: max(100vw, min(125vw, 62svh)); }
+  .hero .hero__media .hero__photo {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    width: var(--hp);
+    height: var(--hp);
+    transform: translateX(-50%);
+  }
+}
 /* PC は写真が右半分に立つ（文字は重ならない）。下端の白いぼかしを浅くして、人の並びまで見せる */
 @media (min-width: 1024px) {
   .hero__media img.hero__photo { object-position: 50% 50%; }
@@ -1075,16 +1085,12 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 .hero__scrim {
   position: absolute;
   inset: 0;
+  /* 人の並びの下（芝生）から白へ溶かし、写真の下端より下は白。キャッチコピーはこの白い所に載る */
   background:
-    /* 下：キャッチコピーを載せる帯。写真が下へいくほど白へ溶け、
-       黒い文字をそのまま読ませる（面で覆わず、下端からの一方向で自然に見せる） */
-    linear-gradient(0deg,
-      rgba(255, 255, 255, .97) 0%,
-      rgba(255, 255, 255, .94) 32%,
-      rgba(255, 255, 255, .76) 52%,
-      rgba(255, 255, 255, 0) 78%),
-    /* 左：本文側へのなじませ */
-    linear-gradient(90deg, rgba(255, 255, 255, .55) 0%, rgba(255, 255, 255, 0) 24%);
+    linear-gradient(180deg,
+      rgba(255, 255, 255, 0) calc(var(--hp) * .76),
+      rgba(255, 255, 255, .8) calc(var(--hp) * .9),
+      #fff calc(var(--hp) - 1px));
 }
 
 
@@ -1097,7 +1103,8 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   }
 }
 
-.hero__body { padding-block: 0 26px; }
+/* スマホ・タブレットは文字を人の並びより下（芝生から先）に置く。画面が低いとヒーローはそのぶん伸びる */
+.hero__body { padding-block: calc(var(--hp, 0px) * .8) 26px; }
 .hero__title { margin: 0; }
 
 /* ---- キャッチコピー「PLAY BEYOND.」----
@@ -1167,20 +1174,23 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   --pb-x0: var(--gutter);
   --play-x: calc(94vw - var(--pbw-w) * var(--pbw-sc) - var(--pb-x0));
   --beyond-x: calc(7vw - var(--pb-x0) - var(--pbw-gap));
-  /* いちばん狭い画面はリード文が折り返して行が上がるので、上へ運ぶ量を控えめにする */
-  --play-y: calc(400px - 70svh);
-  --beyond-y: calc(360px - 18svh);
+  /* スマホ・タブレットは、PLAY を写真の空（高さの 20%）、BEYOND. を人の並びの下の芝生（85%）に置く。
+     行の位置（--pb-line）は、画面の下端から 369px 上（キャッチコピーから下の高さ）。
+     画面が低くて文字が写真の 80% より下へ押し出されるときは、そちらに合わせる（.hero__body の上の余白） */
+  --pb-line: max(100svh - 369px, var(--hp, 0px) * .8 + 17px);
+  --play-y: calc(var(--hp, 0px) * .2 - var(--pb-line));
+  --beyond-y: calc(var(--hp, 0px) * .85 - var(--pb-line));
 }
-@media (min-width: 360px) { .pb { --play-y: calc(400px - 82svh); } }
 /* 1024px 以上は写真が右半分だけ、キャッチコピーは左上に来る。
-   PLAY は写真の右上、BEYOND. はキャッチコピーより下の左から寄ってくる。
+   PLAY は写真の右上の空、BEYOND. は写真の左下の芝生（人の並びの下）から寄ってくる。
    行頭はコンテナの左余白（画面が広いと中央寄せの分だけ内側に入る）。 */
 @media (min-width: 1024px) {
   .pb {
     --pbw-sc: 1.7;
     --pb-x0: max(var(--gutter), calc((100vw - var(--container-max)) / 2 + var(--gutter)));
+    --beyond-x: calc(54vw - var(--pb-x0) - var(--pbw-gap));
     --play-y: calc(15svh - 112px);
-    --beyond-y: calc(78svh - 172px);
+    --beyond-y: calc(84svh - 172px);
   }
 }
 
@@ -1928,6 +1938,44 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 .cal__cell.is-on.is-today::after { inset: -4px; border-radius: var(--radius); }
 @media (prefers-reduced-motion: reduce) { .cal__cell.is-today::after { animation: none; } }
 
+/* 月を送ったときの動き（main.js の initCalendar が .is-enter・--cal-dir・--k・--i を付ける）。
+   月の数字は送った向きから回り込み、曜日とマスは送った向きの端から波のように小さく弾んで並び、
+   開催日は赤い地が出たあとに輪が広がって消える。下の大会の一覧は1件ずつ下から起き上がる */
+.cal { --cal-dir: 1; }
+.cal__label.is-flip { perspective: 400px; }
+.cal__label.is-flip .cal__num { display: inline-block; animation: cal-num .55s var(--ease) both; }
+.cal__label.is-flip .cal__meta { animation: cal-meta .55s var(--ease) .08s both; }
+@keyframes cal-num {
+  from { opacity: 0; transform: translateX(calc(var(--cal-dir) * 28px)) rotateY(calc(var(--cal-dir) * -70deg)); }
+}
+@keyframes cal-meta { from { opacity: 0; transform: translateY(8px); } }
+.cal__month.is-enter .cal__dow,
+.cal__month.is-enter .cal__cell:not(.cal__cell--empty) {
+  animation: cal-pop .5s cubic-bezier(.34, 1.56, .64, 1) both;
+  animation-delay: calc(var(--k, 0) * 22ms);
+}
+.cal__month.is-enter .cal__cell.is-on {
+  animation:
+    cal-pop .5s cubic-bezier(.34, 1.56, .64, 1) calc(var(--k, 0) * 22ms) both,
+    cal-ring .9s ease-out calc(var(--k, 0) * 22ms + .3s) both;
+}
+@keyframes cal-pop {
+  from { opacity: 0; transform: translateX(calc(var(--cal-dir) * 16px)) scale(.5); }
+}
+@keyframes cal-ring {
+  from { box-shadow: 0 0 0 0 rgba(216, 35, 42, .55); }
+  to   { box-shadow: 0 0 0 12px rgba(216, 35, 42, 0); }
+}
+.cal__month.is-enter .cal__item { animation: cal-item .55s var(--ease) both; animation-delay: calc(.18s + var(--i, 0) * 70ms); }
+@keyframes cal-item {
+  from { opacity: 0; transform: translateY(14px); clip-path: inset(0 0 100% 0); }
+  to   { opacity: 1; transform: none; clip-path: inset(0 0 0 0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cal__label.is-flip .cal__num, .cal__label.is-flip .cal__meta,
+  .cal__month.is-enter .cal__dow, .cal__month.is-enter .cal__cell, .cal__month.is-enter .cal__item { animation: none; }
+}
+
 .cal__list { margin-top: 20px; display: flex; flex-direction: column; }
 @media (min-width: 768px) { .cal__list { margin-top: 0; } }
 .cal__list:empty::after {
@@ -1942,7 +1990,7 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   padding: 10px 0;
   border-top: 1px solid var(--gray-200);
 }
-.cal__item-day { flex: none; font: 700 15px/1 var(--flt); color: var(--red); }
+.cal__item-day { flex: none; min-width: 1.4em; font: 700 15px/1 var(--flt); color: var(--red); }
 .cal__item-body { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
 .cal__item-name {
   font: 700 14px/1.5 var(--fjp);
@@ -1951,6 +1999,37 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 }
 .cal__item-sub { font: 400 12px/1.5 var(--fjp); color: var(--gray-500); }
 .cal__item-badge { margin-left: auto; flex: none; min-width: 0; height: 22px; font-size: 11px; padding: 0 8px; }
+
+/* 締切（黒い点）とドロー会議（赤い枠の点）。マスでは数字の下に並べ、凡例でも同じ点を使う */
+.cal__cell { position: relative; }
+.cal__mks { position: absolute; left: 50%; bottom: 14%; display: flex; gap: 3px; transform: translateX(-50%); }
+.cal__mk { display: inline-block; flex: none; width: 6px; height: 6px; border-radius: 50%; }
+.cal__mk--due { background: var(--ink); }
+.cal__mk--draw { background: var(--white); box-shadow: inset 0 0 0 1.5px var(--red); }
+.cal__cell.is-on .cal__mk--due { background: var(--white); }
+.cal__cell.is-on .cal__mk--draw { background: transparent; box-shadow: inset 0 0 0 1.5px var(--white); }
+@media (min-width: 768px) { .cal__mk { width: 7px; height: 7px; } }
+/* 凡例 */
+.cal__legend { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: 0 0 14px; font: 500 12px/1.6 var(--fjp); color: var(--gray-600); }
+.cal__legend li { display: inline-flex; align-items: center; gap: 6px; }
+.cal__key--game { display: inline-block; width: 12px; height: 12px; border-radius: 3px; background: var(--red); }
+/* 一覧の締切・ドロー会議の行。日付は黒（ドロー会議は赤）、頭に小さな札 */
+.cal__item--due .cal__item-day { color: var(--ink); }
+.cal__item-name .cal__tag { margin-right: 8px; }
+.cal__tag {
+  display: inline-flex;
+  align-items: center;
+  height: 20px;
+  padding: 0 7px;
+  border-radius: 3px;
+  font: 700 11px/1 var(--fjp);
+  letter-spacing: .04em;
+  vertical-align: 2px;
+}
+.cal__tag--due { background: var(--ink); color: #fff; }
+.cal__tag--draw { border: 1px solid var(--red); color: var(--red); background: var(--white); }
+.cal__item-when { font: 700 13px/1.5 var(--fjp); color: var(--ink); white-space: nowrap; }
+.cal__item--due .cal__item-sub, .cal__item--draw .cal__item-sub { color: var(--gray-600); }
 
 /* ---- コート案内の地図 ----
    Leaflet で自前に描く（main.js の initCourtMap）。上のボタンで施設を切り替え、「すべて」で全施設、
@@ -2243,13 +2322,6 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 .embed__note { font: 400 11px/1.6 ui-monospace, Menlo, monospace; color: var(--gray-500); }
 /* design.md: モバイルではGoogleカレンダー埋め込みを表示しない */
 @media (max-width: 639px) { .embed--calendar { display: none; } }
-
-/* 大会情報ページの Google カレンダー埋め込み。枠だけこちらで持ち、中身は Google に任せる */
-.gcal { background: var(--white); border: 1px solid var(--gray-200); padding: 20px; }
-.gcal__frame { display: block; width: 100%; height: 480px; border: 0; background: var(--white); }
-@media (min-width: 1024px) { .gcal { padding: 28px; } .gcal__frame { height: 600px; } }
-/* design.md: モバイルでは埋め込みを出さず、追加ボタンだけ残す */
-@media (max-width: 639px) { .gcal { display: none; } }
 
 .embed-wrap { position: relative; }
 .embed-wrap__square {
@@ -2691,7 +2763,7 @@ body.jsrv .rv.on .ink-sweep {
   }
 }
 
-.site-footer { position: relative; background: #353535; overflow: hidden; }  /* スマホのメニューと同じ、少しグレーに寄せた地 */
+.site-footer { position: relative; background: #262626; overflow: hidden; }  /* スマホのメニューと同じ、わずかにグレーに寄せた地 */
 .site-footer .footer-deco { opacity: .45; }  /* 四角は地との差を控えめに（メニューと同じ） */
 /* 地の黒とわずかに色の違う四角を散らした背景。
    位置・大きさ・色・速さは要素ごとの変数で持たせる。
@@ -3106,8 +3178,14 @@ body.jsrv .rv.on .ink-sweep {
    その下に 日程・会場・種目、要項／申込書／ドロー／結果 の4ボタン、備考 の順。
    表だと7列を横に読まされるが、ブロックなら上から順に読めば済むので
    スマホで横にずらさなくてよい。ボタンは共通の .btn--outline をそのまま使う。 */
-.tl__cards { display: flex; flex-direction: column; gap: 56px; }
-@media (min-width: 1024px) { .tl__cards { gap: 72px; } }
+/* 拡大表示（.tl__cards）は、トップの大会カード（.tcard）をスマホ1列・タブレット2列・PC3列で並べる。
+   カードの高さは同じ行でそろえる。.tl-item の一式は大会ページの見出し（EventMeta.astro）が使っている */
+.tl__cards { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; }
+@media (min-width: 640px) { .tl__cards { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 1024px) { .tl__cards { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; } }
+.tl__card { display: flex; }
+.tl__card[hidden] { display: none; }
+.tl__cards .tcard { flex: 1 1 auto; width: auto; max-width: none; }
 .tl-item[hidden] { display: none; }
 
 .tl-item__head {
@@ -3322,7 +3400,6 @@ body.jsrv .rv.on .ink-sweep {
 .tlx__name { font: 700 14px/1.5 var(--fjp); letter-spacing: .02em; color: var(--ink); word-break: keep-all; overflow-wrap: anywhere; }
 @media (min-width: 768px) { .tlx__name { font-size: 15px; } }
 .tlx__name a { transition: color .3s ease; }
-.tlx__ext { margin-left: 4px; font-weight: 400; color: var(--red); }  /* 外部のページへ飛ぶ大会名の印 */
 .tlx__name a:hover { color: var(--red); }
 .tlx__cell--text { font: 400 13px/1.6 var(--fjp); color: var(--gray-800); word-break: keep-all; overflow-wrap: anywhere; }
 .tlx__sub { font-size: 11px; color: var(--gray-500); }
@@ -3346,28 +3423,49 @@ body.jsrv .rv.on .ink-sweep {
 .tlx.is-end .tlx__hint, .tlx.is-fit .tlx__hint { opacity: 0; }
 @media (prefers-reduced-motion: reduce) { .tlx__hint .ln-arrow { animation: none; } }
 
-/* 絞り込み（左）と表示の切り替え（右） */
-.tl-tools { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 20px; margin: 28px 0 24px; }
+/* 絞り込み（左）と表示の切り替え（右）。スマホでも1行に収める */
+.tl-tools { display: flex; flex-wrap: nowrap; align-items: center; justify-content: space-between; gap: 10px; margin: 28px 0 24px; }
 .tl-tools .chips { margin: 0; }
-.view-switch { display: inline-flex; border: 1px solid var(--gray-300); border-radius: var(--radius); overflow: hidden; }
+/* 絞り込み：1つの枠の中に「すべて｜受付中｜終了」を並べた切り替え。選んだ所は赤。件数は名前の右に小さく */
+.seg { display: inline-flex; flex: 0 1 auto; min-width: 0; border: 1px solid var(--gray-300); border-radius: var(--radius); overflow: hidden; background: var(--white); }
+.seg .seg__btn {
+  display: inline-flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 4px;
+  min-height: 40px;
+  padding: 10px 12px;
+  border: 0;
+  border-radius: 0;
+  white-space: nowrap;
+  font: 700 13px/1.4 var(--fjp);
+}
+@media (min-width: 640px) { .seg .seg__btn { padding: 10px 18px; } }
+.seg .seg__btn + .seg__btn { border-left: 1px solid var(--gray-300); }
+.seg .seg__btn:hover { border-color: var(--gray-300); }
+.seg .seg__btn.is-active { border-left-color: var(--red); }
+.seg .seg__btn.is-active + .seg__btn { border-left-color: var(--red); }
+.seg__n { font: 600 11px/1 var(--flt); letter-spacing: .02em; opacity: .7; }
+.seg .seg__btn.is-active .seg__n { opacity: .9; }
+/* 表示の切り替え：絵だけの四角いボタン2つ */
+.view-switch { display: inline-flex; flex: none; border: 1px solid var(--gray-300); border-radius: var(--radius); overflow: hidden; }
 .view-switch__btn {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  min-height: 38px;
-  padding: 8px 14px;
-  font: 700 13px/1 var(--fjp);
-  letter-spacing: .02em;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
   color: var(--gray-600);
   transition: background-color .25s ease, color .25s ease;
 }
 .view-switch__btn + .view-switch__btn { border-left: 1px solid var(--gray-300); }
 .view-switch__btn:hover { color: var(--ink); }
 .view-switch__btn.is-active { background: var(--ink); color: #fff; }
-/* 切り替えの絵：縮小表示は細い横線3本、拡大表示は太い帯2本（どちらも currentColor で描く） */
+/* 切り替えの絵：縮小表示は細い横線3本、拡大表示はカード4枚（どちらも currentColor で描く） */
 .view-switch__ico { position: relative; width: 14px; height: 12px; flex: none; }
+.view-switch__ico--cards { width: 14px; height: 14px; }
 .view-switch__ico--rows { background: linear-gradient(currentColor, currentColor) 0 0 / 100% 2px no-repeat, linear-gradient(currentColor, currentColor) 0 5px / 100% 2px no-repeat, linear-gradient(currentColor, currentColor) 0 10px / 100% 2px no-repeat; }
-.view-switch__ico--cards { background: linear-gradient(currentColor, currentColor) 0 0 / 100% 5px no-repeat, linear-gradient(currentColor, currentColor) 0 7px / 100% 5px no-repeat; }
+.view-switch__ico--cards { background: linear-gradient(currentColor, currentColor) 0 0 / 6px 6px no-repeat, linear-gradient(currentColor, currentColor) 8px 0 / 6px 6px no-repeat, linear-gradient(currentColor, currentColor) 0 8px / 6px 6px no-repeat, linear-gradient(currentColor, currentColor) 8px 8px / 6px 6px no-repeat; }
 
 .tl-item__note { margin-top: 24px; }
 .tl-item__note-label {

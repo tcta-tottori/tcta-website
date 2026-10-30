@@ -585,11 +585,31 @@
     var count = root.querySelector('[data-cal-count]');
     if (!months.length || !prev || !next) return;
 
+    // 月を送ったときの動き（style.css の .cal__month.is-enter）。送った向き（--cal-dir：次へ 1／前へ -1）から、
+    // 曜日とマスを1つずつ波のように出し（--k：送った向きの列順＋行）、開催日は赤い輪を広げ、下の大会は順に起き上がる
+    var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var enter = function (m, dir) {
+      root.style.setProperty('--cal-dir', String(dir));
+      var cells = m.querySelectorAll('.cal__dow, .cal__cell');
+      for (var n = 0; n < cells.length; n++) {
+        var col = n % 7, row = Math.floor(n / 7);
+        cells[n].style.setProperty('--k', String((dir > 0 ? col : 6 - col) + row));
+      }
+      var items = m.querySelectorAll('.cal__item');
+      for (var q = 0; q < items.length; q++) items[q].style.setProperty('--i', String(q));
+      for (var r = 0; r < months.length; r++) months[r].classList.remove('is-enter');
+      void m.offsetWidth; // 付け直しで動きを最初からやり直す
+      m.classList.add('is-enter');
+      if (label) label.classList.add('is-flip');
+    };
+
     var at = 0;
-    var show = function (i) {
+    var show = function (i, animate) {
+      var dir = i < at ? -1 : 1;
       at = Math.min(Math.max(i, 0), months.length - 1);
       for (var j = 0; j < months.length; j++) months[j].hidden = j !== at;
       var m = months[at];
+      if (animate && !reduce) enter(m, dir);
       if (label) {
         label.innerHTML = '<span class="cal__num">' + m.getAttribute('data-month') + '</span>' +
           '<span class="cal__meta"><span class="cal__en">' + m.getAttribute('data-en') + '</span>' +
@@ -600,8 +620,8 @@
       next.disabled = at === months.length - 1;
     };
 
-    prev.addEventListener('click', function () { show(at - 1); });
-    next.addEventListener('click', function () { show(at + 1); });
+    prev.addEventListener('click', function () { show(at - 1, true); });
+    next.addEventListener('click', function () { show(at + 1, true); });
 
     // 今日（日本時間）のマスを点滅させ、今月（無ければその次の月）から出す。描いたページが残っていても合うように、見た時点で付け直す
     var today = null;

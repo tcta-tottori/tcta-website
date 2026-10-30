@@ -65,6 +65,29 @@ export function dueAt(due, date) {
   const year = month > em ? y - 1 : y;
   return Date.UTC(year, month - 1, day, 20, 0, 0) - JST_OFFSET;
 }
+/** 申込締切の日付（'YYYY-MM-DD'）。年の当て方は dueAt と同じ。読めない形（「別記」「—」など）は null */
+export function dueDate(due, date) {
+  const m = String(due ?? '').trim().match(/^(\d{1,2})\/(\d{1,2})$/);
+  if (!m || !date) return null;
+  const [y, em] = String(date).split('-').map(Number);
+  const month = Number(m[1]), day = Number(m[2]);
+  const year = month > em ? y - 1 : y;
+  return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+}
+/** ドロー会議の場所と時刻（締切の週の土曜 18:00 から） */
+export const DRAW_MEETING = { time: '18:00', place: 'テニスショップ フラシーノ', short: 'フラシーノ' };
+/**
+ * ドロー会議の日付（'YYYY-MM-DD'）。締切の週の土曜（締切が土曜ならその日）。
+ * 大会の当日より前に来ないとき（締切が大会の直前など）は null
+ */
+export function drawMeetingDate(dueIso, date) {
+  if (!dueIso) return null;
+  const [y, m, d] = dueIso.split('-').map(Number);
+  const t = new Date(Date.UTC(y, m - 1, d));
+  t.setUTCDate(t.getUTCDate() + ((6 - t.getUTCDay()) % 7));
+  const iso = t.toISOString().slice(0, 10);
+  return date && iso < String(date).slice(0, 10) ? iso : null;
+}
 /** 受付中の大会は、締切日の 20:00（日本時間）を過ぎたら自動で受付終了にする（管理画面を直さなくてもよいように） */
 export function autoStatus(status, due, date, now = Date.now()) {
   if (status !== 'open') return status;

@@ -64,7 +64,7 @@ export function shortEvent(text) {
 }
 
 /** 受付状態（schedule.js のキー）→ カードの状態 */
-const CARD_STATUS = { done: 'past', closed: 'closed', open: 'open', soon: 'soon', live: 'live' };
+export const CARD_STATUS = { done: 'past', closed: 'closed', open: 'open', soon: 'soon', live: 'live' };
 
 const DOW = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
 

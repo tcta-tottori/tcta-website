@@ -8,22 +8,20 @@
 //   項目名の行（.tlx__head）は下へスクロールしても画面の上端についてくる（横スクロールは本体と連動。main.js の initTlx）。
 //   大会名は「第56回｜東部地区｜テニス選手権」のように意味の切れ目でだけ折り返す（nameParts と <wbr>）。
 //
-// ■ 拡大表示（.tl__cards。下の1大会1ブロックの形）
+// ■ 拡大表示（.tl__cards）
+//   トップの大会カード（TournamentCard.astro）と同じカードを、スマホは1列・タブレットは2列・PCは3列で並べる。
+//   カードを押すとその大会のページへ（大会ページの無い大会は押せない）。
 //
-//   大会名（左に赤い縦線）＋ 受付状態・登録区分のバッジ
-//   日付（カレンダー印）／会場（地図のピン）
-//   要項・ドロー・結果 の3つのボタン（素材の無いものは灰色で押せない。src/data/event-buttons.js）
-//   備考（締切・予備日・荒天時の扱い・外部の申込先）
-//
+// 外部のページへ飛ばす大会（市民体育祭など。schedule.js の EXTERNAL_PAGES）は、大会名にはリンクを付けず、
+// 要項の欄の「詳細」ボタンからだけそのページを別タブで開く。
 // ボタンの行き先：要項 → outline-<slug>.html（申込用紙もこのページに載せる）、ドロー → draw-<slug>.html、結果 → result-<slug>.html。
 // 素材の無い大会は3つとも押せない状態で出す（大会名から大会ページへは行ける）。
-import Icon from './Icon.astro';
 import { REG_LABEL, STATUS_LABEL, dateCell } from '../data/schedule.js';
-import EventIcon from './EventIcon.astro';
 import Venue from './Venue.astro';
-import { eventIcons } from '../data/event-icons.js';
+import TournamentCard from './TournamentCard.astro';
 import { siteData } from '../lib/cms.js';
 import { eventButtons } from '../data/event-buttons.js';
+import { CARD_STATUS } from '../data/tournaments.js';
 
 const { items, id, caption } = Astro.props;
 const { eventForSchedule } = await siteData(Astro);
@@ -32,16 +30,6 @@ const { eventForSchedule } = await siteData(Astro);
 function dateText(t) {
   const c = dateCell(t);
   return { ymd: `${t.date.slice(0, 4)}.${c.md}`, dow: c.dow, note: c.note };
-}
-
-/** 備考の文言。締切・予備日・荒天時の扱い・外部の申込先を並べる。 */
-function notes(t, e) {
-  const list = [];
-  if (t.due && t.due !== '—') list.push({ text: `エントリー締切 ${t.due}` });
-  if (t.spareDate) list.push({ text: `予備日 ${t.spareDate}${t.spareVenue ? `（${t.spareVenue}）` : ''}` });
-  else if (t.spareNote) list.push({ text: t.spareNote });
-  if (e?.link) list.push({ text: e.link.label, href: e.link.url, external: true });
-  return list;
 }
 
 /**
@@ -67,7 +55,22 @@ const COLS = ['大会名', '日程', '状態', '登録区分', '種目', '会場
 
 const rows = items.map((t) => {
   const e = eventForSchedule(t);
-  return { t, e, date: dateText(t), buttons: eventButtons(e, { outline: t.externalUrl }), notes: notes(t, e), badge: STATUS_LABEL[t.status], icons: eventIcons(t.event) };
+  // 外部のページへ飛ばす大会は、要項のボタンを「詳細」にしてそのページを開く
+  const buttons = eventButtons(e, { outline: t.externalUrl })
+    .map((b) => (!e && t.externalUrl && b.key === 'outline' ? { ...b, label: '詳細' } : b));
+  // 拡大表示のカード（トップの大会カードと同じ形。src/data/tournaments.js の buildCards を参照）
+  const card = {
+    date: t.date.replace(/-/g, '.'),
+    title: t.name,
+    event: t.event,
+    venue: t.place,
+    status: CARD_STATUS[t.status] ?? 'soon',
+    reg: t.reg,
+    due: t.due && t.due !== '—' ? t.due : '',
+    action: { href: e ? e.url : null },
+    buttons,
+  };
+  return { t, e, date: dateText(t), buttons, badge: STATUS_LABEL[t.status], card };
 });
 // 会場名・種目名は文字の途中で折り返さない（CSS の word-break: keep-all）。
 // 「／」「/」「・」の区切りの後ろと「（」の前にだけ折り返してよい位置（<wbr>）を入れる。テンプレート側で parts を <wbr> でつなぐ。
@@ -96,9 +99,7 @@ const parts = (text) => String(text ?? '').split(/(?<=[／/・])|(?=（)/);
             <span class="tlx__name">
               {e
                 ? <a href={e.url}>{nameParts(t.name).map((part, i, arr) => <>{part}{i < arr.length - 1 && <wbr />}</>)}</a>
-                : t.externalUrl
-                  ? <a href={t.externalUrl} target="_blank" rel="noopener noreferrer">{nameParts(t.name).map((part, i, arr) => <>{part}{i < arr.length - 1 && <wbr />}</>)}<span class="tlx__ext" aria-hidden="true">↗</span></a>
-                  : nameParts(t.name).map((part, i, arr) => <>{part}{i < arr.length - 1 && <wbr />}</>)}
+                : nameParts(t.name).map((part, i, arr) => <>{part}{i < arr.length - 1 && <wbr />}</>)}
             </span>
           </div>
           <div class="tlx__cell tlx__cell--date">
@@ -124,78 +125,12 @@ const parts = (text) => String(text ?? '').split(/(?<=[／/・])|(?=（)/);
     </div>
   </div>
 
-  {/* ===== 拡大表示 ===== */}
+  {/* ===== 拡大表示（トップの大会カードと同じカードを並べる） ===== */}
   <div class="tl__cards" role="list" aria-label={caption}>
-  {rows.map(({ t, e, date, buttons, notes, badge, icons }) => (
-    <article
-      class:list={['tl-item rv', t.status === 'done' && 'tl-item--done', t.status === 'open' && 'tl-item--open']}
-      data-tags={`${t.status} ${t.reg}`}
-      role="listitem"
-    >
-      <header class="tl-item__head">
-        <span class="sec-head__mark" aria-hidden="true"></span>
-        <h3 class="tl-item__title">
-          {e
-            ? <a href={e.url}>{t.name}</a>
-            : t.externalUrl
-              ? <a href={t.externalUrl} target="_blank" rel="noopener noreferrer">{t.name} <span aria-hidden="true">↗</span></a>
-              : t.name}
-        </h3>
-        <p class="tl-item__tags">
-          <span class={`badge ${badge.badge}`}>{badge.label}</span>
-          <span class={`reg reg--${t.reg}`}>{REG_LABEL[t.reg]}</span>
-        </p>
-      </header>
-
-      {/* 1行目：日程と種目、2行目：会場とピクトグラム（種目の下） */}
-      <div class="tl-item__info">
-        <dl class="tl-item__meta">
-          <div class="tl-item__row">
-            <dt><Icon name="calendar" class="tl-item__ico" /><span class="visually-hidden">日程</span></dt>
-            <dd class="tl-item__date">
-              <span class="tl-item__ymd">{date.ymd}</span><span class="tl-item__dow">{date.dow}</span>
-              {date.note && <span class="tl-item__date-note">{date.note}</span>}
-            </dd>
-          </div>
-          <div class="tl-item__row">
-            <dt><Icon name="pin" class="tl-item__ico" /><span class="visually-hidden">会場</span></dt>
-            {/* 会場名は途中で折り返さない（.tl-item__place）。「／」「・」の区切りの後ろだけ折り返してよい（<wbr>） */}
-            <dd class="tl-item__place"><Venue text={t.place} breaks /></dd>
-          </div>
-        </dl>
-        <div class="tl-item__event">
-          {icons.length > 0 && (
-            <span class="tl-item__event-icons" data-n={icons.length} aria-hidden="true">
-              {icons.map((ic) => <EventIcon icon={ic} />)}
-            </span>
-          )}
-          <span class="tl-item__event-text"><Icon name="list" class="tl-item__ico" /><span class="visually-hidden">種目：</span><span class="tl-item__event-label">{parts(t.event).map((part, i, arr) => <>{part}{i < arr.length - 1 && <wbr />}</>)}</span></span>
-        </div>
+    {rows.map(({ t, card }) => (
+      <div class="tl__card" data-tags={`${t.status} ${t.reg}`} role="listitem">
+        <TournamentCard tournament={card} />
       </div>
-
-      <div class="tl-item__btns">
-        {buttons.map((b) =>
-          b.href
-            ? <a class="btn btn--outline tl-btn" href={b.href} {...(b.external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}>{b.label}{b.external ? <span class="aw" aria-hidden="true">↗</span> : <span class="ln-arrow" aria-hidden="true"></span>}</a>
-            : <span class="btn tl-btn tl-btn--off" aria-disabled="true" title="準備中">{b.label}</span>
-        )}
-      </div>
-
-      {notes.length > 0 && (
-        <div class="tl-item__note">
-          <p class="tl-item__note-label">備考</p>
-          <ul class="tl-item__note-list">
-            {notes.map((n) => (
-              <li>
-                {n.href
-                  ? <a class="ghost-link" href={n.href} target="_blank" rel="noopener noreferrer">{n.text}<span class="aw" aria-hidden="true">↗</span></a>
-                  : n.text}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-    </article>
-  ))}
+    ))}
   </div>
 </div>
