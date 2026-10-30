@@ -800,7 +800,7 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   position: fixed;
   inset: 0;
   z-index: 90;
-  background: #353535;  /* フッター（--ink）より少しグレーに寄せた地 */
+  background: #262626;  /* フッター（--ink）よりわずかにグレーに寄せた地 */
   color: #fff;
   /* 上の余白はヘッダーの下端まで（main.js が通知バーの有無に合わせて上書きする） */
   padding: var(--header-h) var(--gutter) calc(32px + env(safe-area-inset-bottom, 0px));
@@ -1056,7 +1056,7 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 .hero__media img.hero__photo {
   width: 100%; height: 100%;
   object-fit: cover;
-  /* 動画は横長（16:9）の集合（空・横断幕・参加者・芝）。人の並びが高さの 55〜80% にある */
+  /* 動画は正方形の集合（上から空・木・横断幕・参加者・芝）。人の並びが高さの 52〜74% にある */
   object-position: 50% 50%;
 }
 .hero__media video.hero__photo {
@@ -1065,9 +1065,19 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   object-fit: cover;
   object-position: 50% 50%;
 }
-/* スマホ・タブレットは下半分にキャッチコピーが重なるので、動画を上へずらして横断幕と人の並びを文字より上に出す
-   （下に空いたところは白いぼかし .hero__scrim の下になる） */
-@media (max-width: 1023px) { .hero__media .hero__photo { transform: translateY(-4%); } }  /* ロゴの裏に空が見える程度に */
+/* スマホ・タブレットは正方形の動画を画面の上に置く（ロゴの裏は空）。下の芝生から白へ溶かし、その下にキャッチコピーを載せる。
+   一辺 --hp は画面幅〜その 1.25 倍（画面の高さの 62% まで）。左右の端の人は少し切れるが、人の並びを大きく見せる */
+@media (max-width: 1023px) {
+  .hero { --hp: max(100vw, min(125vw, 62vh)); --hp: max(100vw, min(125vw, 62svh)); }
+  .hero .hero__media .hero__photo {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    width: var(--hp);
+    height: var(--hp);
+    transform: translateX(-50%);
+  }
+}
 /* PC は写真が右半分に立つ（文字は重ならない）。下端の白いぼかしを浅くして、人の並びまで見せる */
 @media (min-width: 1024px) {
   .hero__media img.hero__photo { object-position: 50% 50%; }
@@ -1075,16 +1085,12 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 .hero__scrim {
   position: absolute;
   inset: 0;
+  /* 人の並びの下（芝生）から白へ溶かし、写真の下端より下は白。キャッチコピーはこの白い所に載る */
   background:
-    /* 下：キャッチコピーを載せる帯。写真が下へいくほど白へ溶け、
-       黒い文字をそのまま読ませる（面で覆わず、下端からの一方向で自然に見せる） */
-    linear-gradient(0deg,
-      rgba(255, 255, 255, .97) 0%,
-      rgba(255, 255, 255, .94) 32%,
-      rgba(255, 255, 255, .76) 52%,
-      rgba(255, 255, 255, 0) 78%),
-    /* 左：本文側へのなじませ */
-    linear-gradient(90deg, rgba(255, 255, 255, .55) 0%, rgba(255, 255, 255, 0) 24%);
+    linear-gradient(180deg,
+      rgba(255, 255, 255, 0) calc(var(--hp) * .76),
+      rgba(255, 255, 255, .8) calc(var(--hp) * .9),
+      #fff calc(var(--hp) - 1px));
 }
 
 
@@ -1097,7 +1103,8 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   }
 }
 
-.hero__body { padding-block: 0 26px; }
+/* スマホ・タブレットは文字を人の並びより下（芝生から先）に置く。画面が低いとヒーローはそのぶん伸びる */
+.hero__body { padding-block: calc(var(--hp, 0px) * .8) 26px; }
 .hero__title { margin: 0; }
 
 /* ---- キャッチコピー「PLAY BEYOND.」----
@@ -1167,20 +1174,23 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   --pb-x0: var(--gutter);
   --play-x: calc(94vw - var(--pbw-w) * var(--pbw-sc) - var(--pb-x0));
   --beyond-x: calc(7vw - var(--pb-x0) - var(--pbw-gap));
-  /* いちばん狭い画面はリード文が折り返して行が上がるので、上へ運ぶ量を控えめにする */
-  --play-y: calc(400px - 70svh);
-  --beyond-y: calc(360px - 18svh);
+  /* スマホ・タブレットは、PLAY を写真の空（高さの 20%）、BEYOND. を人の並びの下の芝生（85%）に置く。
+     行の位置（--pb-line）は、画面の下端から 369px 上（キャッチコピーから下の高さ）。
+     画面が低くて文字が写真の 80% より下へ押し出されるときは、そちらに合わせる（.hero__body の上の余白） */
+  --pb-line: max(100svh - 369px, var(--hp, 0px) * .8 + 17px);
+  --play-y: calc(var(--hp, 0px) * .2 - var(--pb-line));
+  --beyond-y: calc(var(--hp, 0px) * .85 - var(--pb-line));
 }
-@media (min-width: 360px) { .pb { --play-y: calc(400px - 82svh); } }
 /* 1024px 以上は写真が右半分だけ、キャッチコピーは左上に来る。
-   PLAY は写真の右上、BEYOND. はキャッチコピーより下の左から寄ってくる。
+   PLAY は写真の右上の空、BEYOND. は写真の左下の芝生（人の並びの下）から寄ってくる。
    行頭はコンテナの左余白（画面が広いと中央寄せの分だけ内側に入る）。 */
 @media (min-width: 1024px) {
   .pb {
     --pbw-sc: 1.7;
     --pb-x0: max(var(--gutter), calc((100vw - var(--container-max)) / 2 + var(--gutter)));
+    --beyond-x: calc(54vw - var(--pb-x0) - var(--pbw-gap));
     --play-y: calc(15svh - 112px);
-    --beyond-y: calc(78svh - 172px);
+    --beyond-y: calc(84svh - 172px);
   }
 }
 
@@ -2691,7 +2701,7 @@ body.jsrv .rv.on .ink-sweep {
   }
 }
 
-.site-footer { position: relative; background: #353535; overflow: hidden; }  /* スマホのメニューと同じ、少しグレーに寄せた地 */
+.site-footer { position: relative; background: #262626; overflow: hidden; }  /* スマホのメニューと同じ、わずかにグレーに寄せた地 */
 .site-footer .footer-deco { opacity: .45; }  /* 四角は地との差を控えめに（メニューと同じ） */
 /* 地の黒とわずかに色の違う四角を散らした背景。
    位置・大きさ・色・速さは要素ごとの変数で持たせる。
