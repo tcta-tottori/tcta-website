@@ -2634,6 +2634,25 @@ body.jsrv .cfac.rv.on.cfac--vt .cfac__name, body.jsrv .cfac.rv.on.cfac--vt .cfac
 .cfac__hero .badge--light { background: #D99A00; border-color: #D99A00; }
 .cfac__hero .badge--img { background: none; border: 0; backdrop-filter: none; -webkit-backdrop-filter: none; text-shadow: none; box-shadow: 0 1px 3px rgba(0, 0, 0, .35); }
 .cfac__body { margin-top: 28px; }
+/* 写真が止まっているあいだ、上へ流れる説明は写真の下端を少し越えて写真の上に重なり（--hold のぶんはそのまま）、
+   そこから --band のあいだでなめらかに消える（写真に入り込んでいくように見せる）。
+   --cut は説明の上端から写真の下端までの距離（main.js の initStickyHero がスクロールのたびに入れる）。
+   写真より手前に重ねるので z-index を写真（3）より上にし、消えた所は mask で透かす */
+.cfac__body {
+  position: relative;
+  z-index: 4;
+  --cut: -9999px;
+  --hold: 18px;
+  --band: 72px;
+  -webkit-mask-image: linear-gradient(180deg, transparent calc(var(--cut) - var(--hold) - var(--band)), #000 calc(var(--cut) - var(--hold)));
+  mask-image: linear-gradient(180deg, transparent calc(var(--cut) - var(--hold) - var(--band)), #000 calc(var(--cut) - var(--hold)));
+}
+@media (min-width: 1024px) { .cfac__body { --hold: 28px; --band: 120px; } }
+/* 写真に重なったところの文字を読みやすく（白いにじみ） */
+.cfac__body.is-over { text-shadow: 0 0 6px rgba(255, 255, 255, .85), 0 0 2px rgba(255, 255, 255, .9); }
+@media (prefers-reduced-motion: reduce) {
+  .cfac__body { -webkit-mask-image: none; mask-image: none; z-index: auto; }
+}
 .cfac__desc { margin: 0; font: 400 15px/1.9 var(--fjp); color: var(--gray-800); }
 .cfac .deflist { margin-top: 20px; }
 .cfac__tbd { color: var(--gray-500); }
