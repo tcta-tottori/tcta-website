@@ -1,28 +1,32 @@
 ---
 // 大会カード1枚（トップの大会情報）。src/data/tournaments.js の buildCards が組んだ1件をそのまま受け取る。
 // 日程チップ＋大会名、次の段に種目・会場（短い表記で1行ずつ、上揃えで折り返さない）、
-// 種目のピクトグラム（src/data/event-icons.js。種目の文言から選ぶ）は文字の下のレイヤーに右下寄せで置く（重なってもよい）、
 // その下に状態のバッジ（受付中なら横に申込締切）、いちばん下に 要項・ドロー・結果 の3つのボタン
 // （大会情報ページの一覧と同じ。src/data/event-buttons.js。素材の無いものは灰色で押せない）。
 // カードのほかの部分を押すと、大会名のリンク（大会のページなど。action.href）へ飛ぶ（.tcard__link を全面に広げてある）。
-// 写真は使わない（種目が一目で分かるようにするため。管理画面の「カードの写真」は無視される）。
+// カードの上には種目の写真を敷く（src/data/event-photos.js。種目の文言から選ぶ。管理画面の「カードの写真」は使わない）。
 import Icon from './Icon.astro';
 import { STATUS, dateChip, shortEvent } from '../data/tournaments.js';
-import EventIcon from './EventIcon.astro';
 import Venue from './Venue.astro';
-import { eventIcons } from '../data/event-icons.js';
+import { eventPhoto } from '../data/event-photos.js';
 
 const { tournament } = Astro.props;
 const { date, title, event, venue, status, due, action, buttons = [] } = tournament;
 const badge = STATUS[status];
 const chip = dateChip(date);
-const icons = eventIcons(event);
+// 種目の写真（写真の無い種目は、種目名だけの薄いグレーの面）
+const { photo, label: photoLabel } = eventPhoto(event);
 // 種目は短い表記で1行に。長いときは文字を少し小さくし、ピクトグラムは文字の下の行に下がる（CSS）
 const eventLabel = shortEvent(event);
 const len = eventLabel.length > 10 ? 'long' : 'short';
 ---
 
 <article class:list={['tcard', `tcard--${status}`, !action.href && 'tcard--nolink']}>
+  <div class:list={['tcard__photo', !photo && 'tcard__photo--none']} aria-hidden={photo ? undefined : 'true'}>
+    {photo
+      ? <img src={photo.src} alt={photo.alt} width={photo.w} height={photo.h} style={`object-position:${photo.pos}`} loading="lazy" decoding="async">
+      : <span class="tcard__photo-label">{photoLabel}</span>}
+  </div>
   <div class="tcard__body">
     <div class="tcard__head">
       <span class="date-chip date-chip--card">
@@ -35,17 +39,11 @@ const len = eventLabel.length > 10 ? 'long' : 'short';
     </div>
 
     <div class="tcard__foot">
-      {/* 左に種目・会場の文字、右に種目のピクトグラム（同じ段に並べる） */}
       <div class="tcard__info" data-len={len}>
         <div class="tcard__text">
           <p class="tcard__event"><Icon name="list" class="tcard__ico" /><span class="tcard__line">{eventLabel}</span></p>
           <p class="tcard__venue"><Icon name="pin" class="tcard__ico" /><span class="tcard__line"><Venue text={venue} /></span></p>
         </div>
-        {icons.length > 0 && (
-          <span class="tcard__icons" data-n={icons.length} aria-hidden="true">
-            {icons.map((ic) => <EventIcon icon={ic} class="tcard__icon" />)}
-          </span>
-        )}
       </div>
       <div class="tcard__action">
         {/* 受付中は、バッジの横に申込締切 */}
