@@ -110,8 +110,9 @@ const upcomingTournaments = TOURNAMENTS.filter((t) => t.status !== 'past');
       ヒーローから入ると TODAY の線が伸びて日付が出て、続けてカードが出る。カードを右端まで送ったら次の区画（お知らせ）へ。
       カードは指・トラックパッドの横スクロールでも送れる。上へ戻ると TODAY まで戻ってヒーローへ（終了した大会へは横に送ったときだけ） */}
   <section class="section section--gray section--cards" id="tournaments" aria-labelledby="tournaments-title" data-hpin>
-    <span class="ghost" aria-hidden="true">TOURNAMENT</span>
     <div class="hpin-track"><div class="hpin">
+    {/* 背景の英字も止める区画の中に置く（止まっているあいだ一緒に止まる） */}
+    <span class="ghost" aria-hidden="true">TOURNAMENT</span>
     <div class="container">
       <div class="sec-bar rv">
         <div class="sec-head">

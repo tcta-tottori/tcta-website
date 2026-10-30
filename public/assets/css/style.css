@@ -1644,7 +1644,9 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
    .hpin を画面に止め（sticky。top は main.js がヘッダーの高さか、区画が高いときは下端がそろう位置に入れる）、
    止まっている長さ（.hpin-track の高さ）は main.js が「区画の高さ＋横に送る幅」で入れる。
    止めているあいだは縦のスクロール量をそのまま横の位置にするので、吸い付き（scroll-snap）は切る */
-.is-hpin .hpin { position: sticky; }
+.is-hpin .hpin { position: sticky; background: var(--gray-100); }
+/* 背景の英字は止める区画の見出しに合わせる（--hpin-pad は main.js が入れる、中身の上の余白） */
+.is-hpin .hpin > .ghost { top: calc(var(--hpin-pad, 0px) + var(--head-half)); }
 .is-hpin .carousel { scroll-snap-type: none; }
 
 /* ---- 入ってきたときの動き（.js-intro → .is-intro。main.js）----

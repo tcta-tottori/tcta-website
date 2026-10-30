@@ -1304,11 +1304,24 @@
       dist = Math.max(0, sw - track.clientWidth - x0);
       on = dist > 40;
       sec.classList.toggle('is-hpin', on);
-      if (!on) { wrap.style.height = ''; pin.style.top = ''; place(); return; }
+      if (!on) { wrap.style.height = ''; pin.style.top = ''; pin.style.height = ''; pin.style.paddingTop = ''; place(); return; }
+      pin.style.height = '';
+      pin.style.paddingTop = '';
       var ph = pin.offsetHeight;
-      // ヘッダーの下の残りの高さの中ほどに止める。区画が画面より高いときは下端をそろえる
-      var hh = headerH(), room = window.innerHeight - hh;
-      var top = ph <= room ? hh + (room - ph) / 2 : window.innerHeight - ph;
+      // ヘッダーの下の残り（画面の高さ − ヘッダー）いっぱいを灰色の地で覆って止め、中身はその中ほどに置く
+      // （止まっているあいだ、見出し・背景の英字・灰色の地は動かず、カードだけが横に流れる）。
+      // 区画が画面より高いときは、下端をそろえて止める
+      var hh = headerH(), room = window.innerHeight - hh, top, pad = 0;
+      if (ph <= room) {
+        pad = Math.floor((room - ph) / 2);
+        pin.style.paddingTop = pad + 'px';
+        pin.style.height = room + 'px';
+        ph = room;
+        top = hh;
+      } else {
+        top = window.innerHeight - ph;
+      }
+      pin.style.setProperty('--hpin-pad', pad + 'px');
       pin.style.top = top + 'px';
       wrap.style.height = (ph + dist) + 'px';
       start = wrap.getBoundingClientRect().top + window.pageYOffset - top;
