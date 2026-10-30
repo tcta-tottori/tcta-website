@@ -26,13 +26,14 @@ const len = eventLabel.length > 10 ? 'long' : 'short';
     {photo
       ? <img src={photo.src} alt={photo.alt} width={photo.w} height={photo.h} style={`object-position:${photo.pos}`} loading="lazy" decoding="async">
       : <span class="tcard__photo-label">{photoLabel}</span>}
+    {/* 日付は写真の左上に重ねる */}
+    <span class="date-chip date-chip--card tcard__date">
+      <span class="date-chip__md">{chip.md}</span>
+      <span class="date-chip__dow">{chip.dow}</span>
+    </span>
   </div>
   <div class="tcard__body">
     <div class="tcard__head">
-      <span class="date-chip date-chip--card">
-        <span class="date-chip__md">{chip.md}</span>
-        <span class="date-chip__dow">{chip.dow}</span>
-      </span>
       <h3 class="tcard__title">
         {action.href ? <a class="tcard__link" href={action.href}>{title}</a> : title}
       </h3>
