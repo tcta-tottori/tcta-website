@@ -1,22 +1,22 @@
 // 種目の写真。トップの大会カードの上に敷く（ピクトグラムの代わり）。
 //
 // 画像は public/assets/img/event-photos/<key>.webp（幅 960px・3:2）。key は event-icons.js と同じ：
-//   s … シングルス／d … ダブルス／x … ミックスダブルス／team … 団体戦（クラブ対抗戦・チーム対抗戦など）
+//   s … シングルス／d … ダブルス／x … ミックスダブルス／team … 団体戦（会長杯団体戦・校区別対抗戦など。クラブ対抗戦・プリンスは BY_NAME）
 // pos は切り抜くときに残す位置（CSS の object-position）。人が写っているところに合わせる。
 // 写真が無い種目のカードは、写真の場所を薄いグレーにして種目名だけを出す（写真が届いたらここに足す）。
 import { eventIcons } from './event-icons.js';
 
 export const EVENT_PHOTOS = {
   s: { src: 'assets/img/event-photos/s.webp', w: 960, h: 640, pos: '58% 45%', alt: 'シングルスでフォアハンドを打つ選手' },
-  s: { src: 'assets/img/event-photos/s.webp', w: 960, h: 640, pos: '58% 45%', alt: 'シングルスでフォアハンドを打つ選手' },
   x: { src: 'assets/img/event-photos/x.webp', w: 960, h: 640, pos: '50% 62%', alt: 'ネット越しにラケットを掲げる男女のペア' },
-  team: { src: 'assets/img/event-photos/team.webp', w: 960, h: 640, pos: '55% 45%', alt: 'クラブ対抗戦の試合後、コートで礼をする選手たち' },
+  team: { src: 'assets/img/event-photos/team-rainbow.webp', w: 960, h: 627, pos: '50% 80%', alt: '虹のかかったコートに並ぶ選手たち' },
   d: { src: 'assets/img/event-photos/d.webp', w: 960, h: 640, pos: '45% 45%', alt: 'ダブルスでフォアハンドを打つ選手' },
 };
 
 /** 大会ごとの写真（大会名で見分ける）。種目の写真より優先する */
 const BY_NAME = [
   { match: /エネトピア/, photo: { src: 'assets/img/event-photos/enetopia.webp', w: 960, h: 655, pos: '50% 12%', alt: 'enetopia の旗を広げる2人の選手' } },
+  { match: /クラブ対抗/, photo: { src: 'assets/img/event-photos/team.webp', w: 960, h: 640, pos: '55% 45%', alt: 'クラブ対抗戦の試合後、コートで礼をする選手たち' } },
   { match: /プリンスオープン/, photo: { src: 'assets/img/event-photos/prince-open.webp', w: 729, h: 370, pos: '50% 60%', alt: 'プリンスオープンの参加者の集合写真' } },
 ];
 
