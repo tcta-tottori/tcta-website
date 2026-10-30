@@ -5,6 +5,7 @@
 //
 // 中身は「概要」＋「節」で、節は大会の進み具合で並びが変わる（events.js を参照）。
 // 終わった大会なら結果が先、これからの大会なら要項が先に来る。
+import EntryForms from '../components/EntryForms.astro';
 import Base from '../layouts/Base.astro';
 import EventResult from '../components/EventResult.astro';
 import EventMeta from '../components/EventMeta.astro';
@@ -134,8 +135,11 @@ const description = `${e.label}に${e.place}で行われる${e.name}（${e.event
           </div>
           {s.lead && <p class="note mt-24" style="margin-bottom:0">{s.lead}</p>}
 
+          {/* 申込用紙はボタン（押すとこのページの中で全画面に開く。EntryForms.astro） */}
+          {s.key === 'entry' && <EntryForms e={e} section={s} />}
+
           {/* 当日の写真は升目に、要項・ドロー・結果はその場で読める大きさで並べる */}
-          {s.images.length > 0 && (s.key === 'photo'
+          {s.key !== 'entry' && s.images.length > 0 && (s.key === 'photo'
             ? <div class="gallery">
                 {s.images.map((img, i) => (
                   <a class="gallery__item" href={img.src}>
@@ -153,7 +157,7 @@ const description = `${e.label}に${e.place}で行われる${e.name}（${e.event
               </div>
           )}
 
-          {s.pdfs.length > 0 && (
+          {s.key !== 'entry' && s.pdfs.length > 0 && (
             <ul class="mt-32">
               {s.pdfs.map((p) => (
                 <li><a class="dl-item" href={p.src} target="_blank" rel="noopener noreferrer">

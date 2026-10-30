@@ -1510,6 +1510,188 @@
     Array.prototype.forEach.call(icons, function (el) { io.observe(el); });
   }
 
+  /* ---------- 申込用紙のビューア（要項のページ・大会ページの「申込用紙」のボタン） ----------
+     ボタン（[data-pdf-viewer]。EntryForms.astro）を押すと、別タブではなくこのページの中で全画面に開く。
+     PDF は PDF.js（jsDelivr の pdfjs-dist。初めて開いたときに読む）でページごとに描いて縦に並べる（スマホでも同じに見える）。
+     上の帯に「ダウンロード」「印刷」「閉じる」。印刷は描いた紙面だけを1枚1ページで刷る（style.css の @media print）。
+     閉じるのは ×・Esc・端末の「戻る」（開くときに履歴を1つ積む）。
+     PDF.js が読めない・描けないときは、ブラウザの PDF 表示（iframe）に任せる。 */
+  function initPdfViewer() {
+    var links = document.querySelectorAll('[data-pdf-viewer]');
+    if (!links.length) return;
+    var PDFJS = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/';
+    var ICON = {
+      dl: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>',
+      print: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 9V3h10v6M7 17H4v-7h16v7h-3M7 14h10v7H7z"/></svg>',
+      close: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>'
+    };
+
+    var box = document.createElement('div');
+    box.className = 'pdfv';
+    box.setAttribute('role', 'dialog');
+    box.setAttribute('aria-modal', 'true');
+    box.hidden = true;
+    box.innerHTML =
+      '<div class="pdfv__bar">' +
+        '<p class="pdfv__title"><span class="pdfv__name"></span><span class="pdfv__sub"></span></p>' +
+        '<div class="pdfv__actions">' +
+          '<a class="pdfv__btn pdfv__btn--dl" href="#" download>' + ICON.dl + '<span>ダウンロード</span></a>' +
+          '<button class="pdfv__btn pdfv__btn--print" type="button">' + ICON.print + '<span>印刷</span></button>' +
+          '<button class="pdfv__close" type="button" aria-label="閉じる">' + ICON.close + '</button>' +
+        '</div>' +
+      '</div>' +
+      '<div class="pdfv__body"><p class="pdfv__status" aria-live="polite"></p><div class="pdfv__pages"></div></div>';
+    document.body.appendChild(box);
+    var nameEl = box.querySelector('.pdfv__name');
+    var subEl = box.querySelector('.pdfv__sub');
+    var dl = box.querySelector('.pdfv__btn--dl');
+    var printBtn = box.querySelector('.pdfv__btn--print');
+    var closeBtn = box.querySelector('.pdfv__close');
+    var pages = box.querySelector('.pdfv__pages');
+    var status = box.querySelector('.pdfv__status');
+    var body = box.querySelector('.pdfv__body');
+
+    var lib = null;
+    var loadLib = function () {
+      if (lib) return lib;
+      lib = new Promise(function (resolve, reject) {
+        if (window.pdfjsLib) { resolve(window.pdfjsLib); return; }
+        var sc = document.createElement('script');
+        sc.src = PDFJS + 'build/pdf.min.js';
+        sc.crossOrigin = 'anonymous';
+        sc.referrerPolicy = 'no-referrer';
+        sc.onload = function () {
+          if (!window.pdfjsLib) { reject(new Error('pdfjs')); return; }
+          window.pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJS + 'build/pdf.worker.min.js';
+          resolve(window.pdfjsLib);
+        };
+        sc.onerror = reject;
+        document.head.appendChild(sc);
+      });
+      lib.catch(function () { lib = null; });
+      return lib;
+    };
+
+    var opened = false, pushed = false, last = null, job = 0, urls = [];
+    var clear = function () {
+      pages.innerHTML = '';
+      urls.forEach(function (u) { URL.revokeObjectURL(u); });
+      urls = [];
+    };
+    var addPage = function (src, i, n) {
+      var fig = document.createElement('figure');
+      fig.className = 'pdfv__page';
+      var img = new Image();
+      img.alt = nameEl.textContent + '（' + i + '／' + n + 'ページ）';
+      img.src = src;
+      fig.appendChild(img);
+      pages.appendChild(fig);
+    };
+    var fallback = function (src) {
+      clear();
+      status.textContent = '';
+      var fr = document.createElement('iframe');
+      fr.className = 'pdfv__frame';
+      fr.src = src;
+      fr.title = nameEl.textContent;
+      pages.appendChild(fr);
+      box.classList.add('is-frame');
+    };
+    var render = function (src, type) {
+      var my = ++job;
+      clear();
+      box.classList.remove('is-frame', 'is-ready');
+      if (type === 'image') { addPage(src, 1, 1); box.classList.add('is-ready'); return; }
+      status.textContent = '読み込んでいます…';
+      loadLib().then(function (pdfjs) {
+        // 日本語の PDF の文字の対応表（CMap）も同じ所から読む
+        return pdfjs.getDocument({ url: src, cMapUrl: PDFJS + 'cmaps/', cMapPacked: true }).promise;
+      }).then(function (doc) {
+        if (my !== job) return;
+        // 画面の幅に合わせ、印刷でもにじまない細かさで描く（端末の密度は 2 倍まで、幅は 2000px まで）
+        var width = Math.min(2000, Math.max(1200, body.clientWidth * Math.min(2, window.devicePixelRatio || 1)));
+        var chain = Promise.resolve();
+        for (var i = 1; i <= doc.numPages; i++) {
+          (function (n) {
+            chain = chain.then(function () {
+              if (my !== job) return;
+              return doc.getPage(n).then(function (page) {
+                var v1 = page.getViewport({ scale: 1 });
+                var vp = page.getViewport({ scale: width / v1.width });
+                var cv = document.createElement('canvas');
+                cv.width = Math.round(vp.width);
+                cv.height = Math.round(vp.height);
+                var ctx = cv.getContext('2d');
+                ctx.fillStyle = '#fff';
+                ctx.fillRect(0, 0, cv.width, cv.height);
+                return page.render({ canvasContext: ctx, viewport: vp }).promise.then(function () {
+                  return new Promise(function (res) { cv.toBlob(res, 'image/jpeg', .92); });
+                }).then(function (blob) {
+                  if (my !== job) return;
+                  var u = URL.createObjectURL(blob);
+                  urls.push(u);
+                  addPage(u, n, doc.numPages);
+                  if (n === 1) { status.textContent = ''; box.classList.add('is-ready'); }
+                });
+              });
+            });
+          })(i);
+        }
+        return chain;
+      }).catch(function () {
+        if (my === job) fallback(src);
+      });
+    };
+
+    var open = function (a) {
+      last = a;
+      var src = a.getAttribute('href');
+      nameEl.textContent = a.getAttribute('data-title') || '';
+      subEl.textContent = a.getAttribute('data-sub') || '';
+      box.setAttribute('aria-label', nameEl.textContent);
+      dl.href = src;
+      dl.setAttribute('download', a.getAttribute('data-filename') || '');
+      box.hidden = false;
+      document.documentElement.classList.add('is-pdfv');
+      body.scrollTop = 0;
+      opened = true;
+      requestAnimationFrame(function () { box.classList.add('is-open'); });
+      try { history.pushState({ pdfv: 1 }, ''); pushed = true; } catch (x) { pushed = false; }
+      render(src, a.getAttribute('data-type') || 'pdf');
+      closeBtn.focus();
+    };
+    var shut = function () {
+      if (!opened) return;
+      opened = false;
+      job++;
+      box.classList.remove('is-open');
+      document.documentElement.classList.remove('is-pdfv');
+      setTimeout(function () { if (!opened) { box.hidden = true; clear(); } }, 300);
+      if (last) last.focus();
+    };
+    // 閉じる・Esc は履歴を1つ戻し（積んだ分を消す）、戻ったときに閉じる
+    var close = function () {
+      if (pushed) { pushed = false; history.back(); } else shut();
+    };
+    window.addEventListener('popstate', function () { pushed = false; shut(); });
+
+    Array.prototype.forEach.call(links, function (a) {
+      a.addEventListener('click', function (ev) {
+        if (ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.button > 0) return; // 新しいタブで開くときは任せる
+        ev.preventDefault();
+        open(a);
+      });
+    });
+    closeBtn.addEventListener('click', close);
+    document.addEventListener('keydown', function (ev) { if (opened && ev.key === 'Escape') close(); });
+    printBtn.addEventListener('click', function () {
+      // ブラウザの PDF 表示に任せているときは、その中身を刷る（できなければ全体の印刷）
+      var fr = pages.querySelector('iframe');
+      if (fr) { try { fr.contentWindow.focus(); fr.contentWindow.print(); return; } catch (x) {} }
+      window.print();
+    });
+  }
+
   function init() {
     initSplash();
     initReveal();
@@ -1524,6 +1706,7 @@
     initCourtLinks();
     initCourtMap();
     initCalendar();
+    initPdfViewer();
     initFooterDeco();
     initLogoInk();
     initHeroVideo();

@@ -1,8 +1,11 @@
 ---
 // 大会1件の「要項」のページ（大会情報ページ・トップの大会カードの「要項」ボタンの行き先）。
-// 申込用紙もこのページに載せる（申込用紙のボタンは置かない）。要項がまだで申込用紙だけある大会も、このページで申込用紙を出す。
+// 紙面には要項だけを出し、領収証のついた申込用紙は「大会名 申込用紙」のボタンにする（EntryForms.astro）。
+// ボタンを押すと、このページの中で全画面に開いてダウンロード・印刷ができる（main.js の initPdfViewer）。
+// 要項がまだで申込用紙だけある大会も、このページで申込用紙のボタンを出す。
 import EventSection from '../components/EventSection.astro';
 import SheetList from '../components/SheetList.astro';
+import EntryForms from '../components/EntryForms.astro';
 import { siteData } from '../lib/cms.js';
 
 const { eventBySlug } = await siteData(Astro);
@@ -13,17 +16,18 @@ if (!e || (!outline && !entry)) return Astro.rewrite('/404');
 ---
 
 <EventSection e={e} label="要項" en="Outline">
-  {outline && (
-    <>
-      <p class="note rv" style="margin-bottom:0">{outline.lead}</p>
-      <div class="rv"><SheetList images={outline.images} pdfs={outline.pdfs} alt={`${e.name} 要項`} /></div>
-    </>
-  )}
   {entry && (
-    <div class="rv" style={outline ? 'margin-top:56px' : undefined}>
+    <div class="rv">
       <h2 class="sub-head">申込用紙</h2>
       <p class="note" style="margin-bottom:0">{entry.lead}</p>
-      <SheetList images={entry.images} pdfs={entry.pdfs} alt={`${e.name} 申込用紙`} />
+      <EntryForms e={e} section={entry} />
+    </div>
+  )}
+  {outline && (
+    <div class="rv" style={entry ? 'margin-top:56px' : undefined}>
+      {entry && <h2 class="sub-head">要項</h2>}
+      <p class="note" style="margin-bottom:0">{outline.lead}</p>
+      <SheetList images={outline.images} pdfs={outline.pdfs} alt={`${e.name} 要項`} />
     </div>
   )}
 </EventSection>

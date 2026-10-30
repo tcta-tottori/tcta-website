@@ -13,6 +13,7 @@
 //   見に来る人が最初に知りたいものを先頭に置くため。
 
 import { nendoLabel, STATUS_LABEL, REG_LABEL, dateCell } from './schedule.js';
+import { splitEntryForms } from './entry-forms.js';
 
 /** 令和8年度の大会日程（PDF）。年度はじめに差し替える。 */
 export const SCHEDULE_PDF = { src: 'assets/pdf/events/r8-schedule.pdf', kb: 86 };
@@ -20,7 +21,7 @@ export const SCHEDULE_PDF = { src: 'assets/pdf/events/r8-schedule.pdf', kb: 86 }
 /** 節の見出しと説明。key は素材の「種類」と対応する。 */
 export const SECTIONS = {
   outline: { label: '要項', en: 'Outline', lead: '募集要項です。' },
-  entry: { label: '申込用紙', en: 'Entry', lead: '印刷してお使いください。' },
+  entry: { label: '申込用紙', en: 'Entry', lead: 'ボタンを押すとこのページの中で開きます。ダウンロード・印刷もできます。' },
   draw: { label: 'ドロー', en: 'Draw', lead: '組み合わせです。当日の変更は会場の掲示が優先します。' },
   result: { label: '結果', en: 'Result', lead: '種目ごとの結果です。' },
   photo: { label: '当日の写真', en: 'Photo', lead: '' },
@@ -42,6 +43,8 @@ function collectMaterials(t, mediaUrl) {
     for (const img of s.images ?? []) sec(key).images.push({ src: img.src, label: img.label ?? null, w: img.w, h: img.h });
     for (const pdf of s.pdfs ?? []) sec(key).pdfs.push({ src: pdf.src, label: pdf.label, kb: pdf.kb ?? 0 });
   }
+  // 要項に混ざっている領収証つきの申込用紙を、申込用紙（ボタン）へ分け直す（entry-forms.js）
+  splitEntryForms(t.slug, out);
   for (const b of Array.isArray(t.materials) ? t.materials : []) {
     const key = SECTION_KEY[b.section];
     if (!key) continue;
