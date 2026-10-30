@@ -1381,24 +1381,19 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 
 /* 種目・会場の段。文字は上揃えで詰め（1行ずつ、折り返さない）、ピクトグラムは文字の下のレイヤーに右下寄せで置く。
    カードの高さは固定なので、文字が短くても長くても位置は変わらない。文字と重なっても構わない。 */
-.tcard__info { position: relative; flex: 1 1 auto; min-height: 64px; }
+.tcard__info { position: relative; flex: 1 1 auto; }
 .tcard__text { position: relative; z-index: 1; display: flex; flex-direction: column; gap: 2px; max-width: 100%; min-width: 0; }
 .tcard__line { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .tcard__info[data-len="long"] .tcard__event { font-size: 13px; }
-.tcard__icons { position: absolute; right: 0; bottom: 0; z-index: 0; display: flex; justify-content: flex-end; align-items: flex-end; gap: 6px; }
-/* 絵は横長（高さ 200px に対し幅 300〜550px）なので、高さで大きさを決め、幅は絵に合わせる */
-.tcard__icon { height: 40px; transition: transform .4s var(--ease), filter .4s ease, opacity .4s ease; }
-@media (min-width: 640px) { .tcard__icon { height: 44px; } }
-.tcard__icons[data-n="2"] .tcard__icon { height: 32px; }
-.tcard__icons[data-n="3"] .tcard__icon, .tcard__icons[data-n="4"] .tcard__icon { height: 26px; }
-@media (min-width: 640px) {
-  .tcard__icons[data-n="2"] .tcard__icon { height: 36px; }
-  .tcard__icons[data-n="3"] .tcard__icon, .tcard__icons[data-n="4"] .tcard__icon { height: 28px; }
-}
-@media (hover: hover) { .tcard:hover .tcard__icon { transform: translateY(-2px); } }
-/* 終了した大会はピクトグラムを薄く、文字をグレーに */
-.tcard--past .tcard__icon { filter: grayscale(1); opacity: .45; }
-.tcard--past:hover .tcard__icon { filter: grayscale(0); opacity: 1; }
+/* 種目の写真（カードの上。TournamentCard.astro・src/data/event-photos.js）。写真の無い種目は、種目名だけの薄いグレーの面 */
+.tcard__photo { position: relative; aspect-ratio: 16 / 7; overflow: hidden; background: var(--gray-100); }
+.tcard__photo img { display: block; width: 100%; height: 100%; object-fit: cover; transition: transform .6s var(--ease), filter .4s ease; }
+@media (hover: hover) { .tcard:hover .tcard__photo img { transform: scale(1.04); } }
+.tcard__photo--none { display: flex; align-items: center; justify-content: center; }
+.tcard__photo-label { font: 700 13px/1 var(--fjp); letter-spacing: .12em; color: var(--gray-400, #b0b0b0); }
+/* 終了した大会は写真をモノクロに（ホバーで色を戻す） */
+.tcard--past .tcard__photo img { filter: grayscale(1); opacity: .75; }
+@media (hover: hover) { .tcard--past:hover .tcard__photo img { filter: none; opacity: 1; } }
 .tcard--past .tcard__title { color: var(--gray-600); }
 /* 受付中・本日開催はカード全体を赤い枠で囲む（ホバーやトップの灰色の区画でも赤のまま） */
 .tcard.tcard--open, .tcard.tcard--live,
