@@ -958,6 +958,9 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
     /* メニューを開いたときも白抜きの画像（.site-header__logo-w）は重ねず、この塗り分けのまま。
        せり上がる黒地の上端が通ったところから順に白へ変わる */
     .site-header .site-header__logo-w { display: none; }
+    /* トップの登場の動き（PLAY BEYOND.）のあいだも塗り分けず黒いロゴのまま（main.js の initLogoInk が .is-hero-anim を付ける） */
+    .site-header.is-hero-anim:not(.is-menu) .site-header__logo-img { visibility: visible; }
+    .site-header.is-hero-anim:not(.is-menu) .site-header__logo-ink, .site-header.is-hero-anim:not(.is-menu) .site-header__logo-red { display: none; }
     /* 写真の上では塗り分けず、黒いロゴのまま（main.js の initLogoInk が .is-over-image を付ける） */
     .site-header.is-over-image:not(.is-menu) .site-header__logo-img { visibility: visible; }
     .site-header.is-over-image:not(.is-menu) .site-header__logo-ink, .site-header.is-over-image:not(.is-menu) .site-header__logo-red { display: none; }

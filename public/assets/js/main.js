@@ -1026,7 +1026,8 @@
       var stack = document.elementsFromPoint(x, y);
       for (var i = 0; i < stack.length; i++) {
         var el = stack[i];
-        if (header.contains(el)) continue;
+        // ヘッダー自身と、オープニング（.splash。終わると消える）は見ない
+        if (header.contains(el) || (el.closest && el.closest('.splash'))) continue;
         var tag = el.tagName;
         if (tag === 'IMG' || tag === 'VIDEO' || tag === 'PICTURE' || tag === 'CANVAS') return true;
         var bg = getComputedStyle(el).backgroundColor;
@@ -1051,7 +1052,20 @@
     window.addEventListener('scroll', request, { passive: true });
     window.addEventListener('resize', request);
     window.addEventListener('load', request);
+    // オープニングやトップの写真の出方（アニメーション）が終わったときにも測り直す
+    document.addEventListener('animationend', request, true);
+    document.addEventListener('transitionend', request, true);
     request();
+
+    // トップの登場の動き（PLAY BEYOND. の文字が画面を横切る）のあいだは塗り分けず、黒いロゴのままにする
+    // （.is-hero-anim。CSS）。最後に出るボタン（.hero__cta）の動きが終わったら外す。動きを減らす設定ではすぐ外す
+    var cta = document.querySelector('.hero__cta');
+    if (cta && !reduceMotion) {
+      header.classList.add('is-hero-anim');
+      var done = function () { header.classList.remove('is-hero-anim'); request(); };
+      cta.addEventListener('animationend', done, { once: true });
+      setTimeout(done, 20000); // 念のため（オープニングを飛ばさずに見ても収まる長さ）
+    }
   }
 
   /* ---------- TODAY の日付（見ている時点の日本時間） ----------
