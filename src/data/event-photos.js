@@ -14,12 +14,20 @@ export const EVENT_PHOTOS = {
   d: { src: 'assets/img/event-photos/d.webp', w: 960, h: 640, pos: '45% 45%', alt: 'ダブルスでフォアハンドを打つ選手' },
 };
 
+/** 大会ごとの写真（大会名で見分ける）。種目の写真より優先する */
+const BY_NAME = [
+  { match: /エネトピア/, photo: { src: 'assets/img/event-photos/enetopia.webp', w: 960, h: 655, pos: '50% 12%', alt: 'enetopia の旗を広げる2人の選手' } },
+  { match: /プリンスオープン/, photo: { src: 'assets/img/event-photos/prince-open.webp', w: 729, h: 370, pos: '50% 60%', alt: 'プリンスオープンの参加者の集合写真' } },
+];
+
 /**
- * 種目の文言 → カードに出す写真（無ければ null）と、写真が無いときに出す種目名。
- * 種目が複数あるときは、写真のある最初の種目を使う。
+ * 大会名・種目の文言 → カードに出す写真（無ければ null）と、写真が無いときに出す種目名。
+ * 大会ごとの写真（BY_NAME）があればそれを、無ければ種目の写真を使う。種目が複数あるときは、写真のある最初の種目。
  */
-export function eventPhoto(text) {
+export function eventPhoto(text, name = '') {
   const icons = eventIcons(text);
+  const own = BY_NAME.find((x) => x.match.test(String(name ?? '')));
+  if (own) return { photo: own.photo, label: icons[0]?.label ?? '' };
   const hit = icons.find((ic) => EVENT_PHOTOS[ic.key]);
   return { photo: hit ? EVENT_PHOTOS[hit.key] : null, label: icons[0]?.label ?? '' };
 }
