@@ -67,7 +67,7 @@ const COLS = ['大会名', '日程', '状態', '登録区分', '種目', '会場
 
 const rows = items.map((t) => {
   const e = eventForSchedule(t);
-  return { t, e, date: dateText(t), buttons: eventButtons(e), notes: notes(t, e), badge: STATUS_LABEL[t.status], icons: eventIcons(t.event) };
+  return { t, e, date: dateText(t), buttons: eventButtons(e, { outline: t.externalUrl }), notes: notes(t, e), badge: STATUS_LABEL[t.status], icons: eventIcons(t.event) };
 });
 // 会場名・種目名は文字の途中で折り返さない（CSS の word-break: keep-all）。
 // 「／」「/」「・」の区切りの後ろと「（」の前にだけ折り返してよい位置（<wbr>）を入れる。テンプレート側で parts を <wbr> でつなぐ。

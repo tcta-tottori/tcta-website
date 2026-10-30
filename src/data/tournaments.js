@@ -132,7 +132,7 @@ export function buildCards(rows, { ROWS, eventBySlug }) {
       };
       card.action = cardAction(card, e);
       // 要項・ドロー・結果の3つのボタン（大会情報ページの一覧と同じ。申込用紙は要項のページに載せる）
-      card.buttons = eventButtons(e, { outline: card.outlineUrl, draw: card.drawUrl, result: card.resultUrl });
+      card.buttons = eventButtons(e, { outline: card.outlineUrl ?? b.externalUrl, draw: card.drawUrl, result: card.resultUrl });
       return card;
     })
     .sort((a, b) => a.date.localeCompare(b.date));

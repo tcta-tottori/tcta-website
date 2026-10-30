@@ -4,6 +4,7 @@
 // 行き先：要項 → outline-<slug>.html（申込用紙もこのページに載せる）、ドロー → draw-<slug>.html、結果 → result-<slug>.html。
 // 要項のボタンは、要項か申込用紙のどちらかがあれば押せる。素材の無いものは href が null（押せない灰色のボタン）。
 // 大会ページの無い大会（区分「その他」）は、管理画面の要項・ドロー・結果の URL を使う（urls）。
+// 外部のページへ飛ばす大会（schedule.js の EXTERNAL_PAGES。市民体育祭など）は、要項のボタンでそのページを開く。
 
 /**
  * @param {object|null} e 大会ページの情報（cms.js の eventForSchedule / eventBySlug）
