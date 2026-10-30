@@ -1381,7 +1381,8 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 
 /* 種目・会場の段。文字は上揃えで詰め（1行ずつ、折り返さない）、ピクトグラムは文字の下のレイヤーに右下寄せで置く。
    カードの高さは固定なので、文字が短くても長くても位置は変わらない。文字と重なっても構わない。 */
-.tcard__info { position: relative; flex: 1 1 auto; }
+.tcard__info { position: relative; flex: 1 1 auto; display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+.tcard__info .tcard__text { flex: 1 1 auto; }
 .tcard__text { position: relative; z-index: 1; display: flex; flex-direction: column; gap: 2px; max-width: 100%; min-width: 0; }
 .tcard__line { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .tcard__info[data-len="long"] .tcard__event { font-size: 13px; }
@@ -1446,13 +1447,6 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 }
 .tcard__ico { width: 14px; height: 14px; flex: none; color: var(--gray-500); }
 .tcard__venue .tcard__ico { color: var(--red); }  /* 会場の地図のピンは赤 */
-.tcard__action {
-  margin-top: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
 /* ---- 種目のピクトグラム（components/EventIcon.astro） ----
    高さは外側が決め、幅は絵の縦横比（aspect-ratio）で決まる。中の img は枠いっぱいに重ねる。
    1つずつ、画面に入った瞬間（main.js の initEventIcons が .is-on を付ける）に一度だけ動く：
@@ -1562,7 +1556,7 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 
 /* 受付中のバッジの横に申込締切（「締切 10/2」）。受付中のカードだけ。
    見落とされないよう赤い太字でゆっくり点滅させる（動きを減らす設定の端末では点滅しない） */
-.tcard__status { display: inline-flex; align-items: center; gap: 10px; min-width: 0; }
+.tcard__status { flex: none; display: inline-flex; flex-direction: column; align-items: flex-end; gap: 6px; }
 .tcard__due {
   font: 700 13px/1 var(--fjp);
   letter-spacing: .02em;

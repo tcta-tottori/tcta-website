@@ -45,9 +45,7 @@ const len = eventLabel.length > 10 ? 'long' : 'short';
           <p class="tcard__event"><Icon name="list" class="tcard__ico" /><span class="tcard__line">{eventLabel}</span></p>
           <p class="tcard__venue"><Icon name="pin" class="tcard__ico" /><span class="tcard__line"><Venue text={venue} /></span></p>
         </div>
-      </div>
-      <div class="tcard__action">
-        {/* 受付中は、バッジの横に申込締切 */}
+        {/* 種目の行の右に状態のバッジ、その下に申込締切（受付中のとき） */}
         <span class="tcard__status">
           <span class={`badge ${badge.badge}`}>{badge.label}</span>
           {status === 'open' && due && <span class="tcard__due"><small>締切</small>{due}</span>}
