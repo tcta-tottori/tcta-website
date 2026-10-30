@@ -1990,7 +1990,7 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   padding: 10px 0;
   border-top: 1px solid var(--gray-200);
 }
-.cal__item-day { flex: none; font: 700 15px/1 var(--flt); color: var(--red); }
+.cal__item-day { flex: none; min-width: 1.4em; font: 700 15px/1 var(--flt); color: var(--red); }
 .cal__item-body { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
 .cal__item-name {
   font: 700 14px/1.5 var(--fjp);
@@ -1999,6 +1999,37 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 }
 .cal__item-sub { font: 400 12px/1.5 var(--fjp); color: var(--gray-500); }
 .cal__item-badge { margin-left: auto; flex: none; min-width: 0; height: 22px; font-size: 11px; padding: 0 8px; }
+
+/* 締切（黒い点）とドロー会議（赤い枠の点）。マスでは数字の下に並べ、凡例でも同じ点を使う */
+.cal__cell { position: relative; }
+.cal__mks { position: absolute; left: 50%; bottom: 14%; display: flex; gap: 3px; transform: translateX(-50%); }
+.cal__mk { display: inline-block; flex: none; width: 6px; height: 6px; border-radius: 50%; }
+.cal__mk--due { background: var(--ink); }
+.cal__mk--draw { background: var(--white); box-shadow: inset 0 0 0 1.5px var(--red); }
+.cal__cell.is-on .cal__mk--due { background: var(--white); }
+.cal__cell.is-on .cal__mk--draw { background: transparent; box-shadow: inset 0 0 0 1.5px var(--white); }
+@media (min-width: 768px) { .cal__mk { width: 7px; height: 7px; } }
+/* 凡例 */
+.cal__legend { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: 0 0 14px; font: 500 12px/1.6 var(--fjp); color: var(--gray-600); }
+.cal__legend li { display: inline-flex; align-items: center; gap: 6px; }
+.cal__key--game { display: inline-block; width: 12px; height: 12px; border-radius: 3px; background: var(--red); }
+/* 一覧の締切・ドロー会議の行。日付は黒（ドロー会議は赤）、頭に小さな札 */
+.cal__item--due .cal__item-day { color: var(--ink); }
+.cal__item-name .cal__tag { margin-right: 8px; }
+.cal__tag {
+  display: inline-flex;
+  align-items: center;
+  height: 20px;
+  padding: 0 7px;
+  border-radius: 3px;
+  font: 700 11px/1 var(--fjp);
+  letter-spacing: .04em;
+  vertical-align: 2px;
+}
+.cal__tag--due { background: var(--ink); color: #fff; }
+.cal__tag--draw { border: 1px solid var(--red); color: var(--red); background: var(--white); }
+.cal__item-when { font: 700 13px/1.5 var(--fjp); color: var(--ink); white-space: nowrap; }
+.cal__item--due .cal__item-sub, .cal__item--draw .cal__item-sub { color: var(--gray-600); }
 
 /* ---- コート案内の地図 ----
    Leaflet で自前に描く（main.js の initCourtMap）。上のボタンで施設を切り替え、「すべて」で全施設、
@@ -2291,13 +2322,6 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 .embed__note { font: 400 11px/1.6 ui-monospace, Menlo, monospace; color: var(--gray-500); }
 /* design.md: モバイルではGoogleカレンダー埋め込みを表示しない */
 @media (max-width: 639px) { .embed--calendar { display: none; } }
-
-/* 大会情報ページの Google カレンダー埋め込み。枠だけこちらで持ち、中身は Google に任せる */
-.gcal { background: var(--white); border: 1px solid var(--gray-200); padding: 20px; }
-.gcal__frame { display: block; width: 100%; height: 480px; border: 0; background: var(--white); }
-@media (min-width: 1024px) { .gcal { padding: 28px; } .gcal__frame { height: 600px; } }
-/* design.md: モバイルでは埋め込みを出さず、追加ボタンだけ残す */
-@media (max-width: 639px) { .gcal { display: none; } }
 
 .embed-wrap { position: relative; }
 .embed-wrap__square {

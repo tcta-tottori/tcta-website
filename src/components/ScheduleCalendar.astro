@@ -1,22 +1,63 @@
 ---
-// 令和8年度の大会を、月ごとのカレンダーで見せる。
+// 令和8年度の大会を、月ごとのカレンダーで見せる。開催日のほかに、エントリー締切とドロー会議の日も載せる。
+//   開催日 … 赤いマス
+//   締切 … 黒い点（申込締切の日。schedule.js の dueDate）
+//   ドロー会議 … 赤い枠の点（締切の週の土曜 18:00 から、テニスショップ フラシーノ。drawMeetingDate）
+// 同じ日に締切やドロー会議が重なる大会は、1件にまとめて大会名を並べる。
 // 出すのは1か月ぶんだけ。前後のボタンで月を移す（main.js の initCalendar）。
 // 全月ぶんのマス目は最初から書き出しておき、表示の切り替えだけをJSが行うので、
 // JSが動かない環境でも先頭の月は読める。
 import { siteData } from '../lib/cms.js';
-import { STATUS_LABEL, byMonth, monthGrid, todayJST } from '../data/schedule.js';
+import { STATUS_LABEL, monthGrid, todayJST, dueDate, drawMeetingDate, DRAW_MEETING } from '../data/schedule.js';
 
 const { SCHEDULE } = await siteData(Astro);
 
 const DOW = ['日', '月', '火', '水', '木', '金', '土'];
-const months = byMonth(SCHEDULE).map((m) => ({ ...m, ...monthGrid(m) }));
-// 最初に出す月は今月（日本時間）。今月に大会が無ければその次の月、年度の最後より後なら最後の月。
+
+// 締切・ドロー会議を日付ごとにまとめる（日付 → 大会の一覧）
+const dues = new Map();
+const draws = new Map();
+const push = (map, iso, t) => { if (!map.has(iso)) map.set(iso, []); map.get(iso).push(t); };
+for (const t of SCHEDULE) {
+  const due = dueDate(t.due, t.date);
+  if (!due) continue;
+  push(dues, due, t);
+  const draw = drawMeetingDate(due, t.date);
+  if (draw) push(draws, draw, t);
+}
+
+// 月は、大会・締切・ドロー会議のどれかがある月をすべて並べる
+const keys = [...new Set([...SCHEDULE.map((t) => t.date), ...dues.keys(), ...draws.keys()].map((iso) => iso.slice(0, 7)))].sort();
+const months = keys.map((key) => {
+  const [year, month] = key.split('-').map(Number);
+  const games = SCHEDULE.filter((t) => t.date.startsWith(key)).sort((a, b) => a.date.localeCompare(b.date));
+  const grid = monthGrid({ year, month, items: games });
+  const cells = grid.cells.map((c) => c && { ...c, dues: dues.get(c.iso) ?? [], draws: draws.get(c.iso) ?? [] });
+  // マスの下の一覧。日付順で、同じ日はドロー会議 → 締切 → 大会の順
+  const entries = [
+    ...[...draws].filter(([iso]) => iso.startsWith(key)).map(([iso, list]) => ({ iso, kind: 'draw', order: 0, list })),
+    ...[...dues].filter(([iso]) => iso.startsWith(key)).map(([iso, list]) => ({ iso, kind: 'due', order: 1, list })),
+    ...games.map((t) => ({ iso: t.date, kind: 'game', order: 2, t })),
+  ].sort((a, b) => a.iso.localeCompare(b.iso) || a.order - b.order);
+  return { key, year, month, en: grid.en, cells, entries, count: games.length };
+});
+// 最初に出す月は今月（日本時間）。今月に何も無ければその次の月、年度の最後より後なら最後の月。
 // 今日のマス（.is-today）は点滅させる。描いたページが残っていても合うよう、main.js の initCalendar が見た時点の日付で付け直す
 const today = todayJST();
 const start = months.findIndex((m) => m.key >= today.slice(0, 7));
 const initial = start < 0 ? months.length - 1 : start;
 // 大会がまだ 1 件も無いとき（配備直後など）は、カレンダーを出さずに一言だけ出す
 const first = months[initial];
+
+const names = (list) => list.map((t) => t.name).join('・');
+const day = (iso) => String(Number(iso.slice(8))).padStart(2, '0');
+// マスに載せる説明（マウスを載せたときの小さな吹き出し）
+const cellTitle = (c) => [
+  ...c.items.map((t) => t.name),
+  ...(c.dues.length ? [`締切：${names(c.dues)}`] : []),
+  ...(c.draws.length ? [`ドロー会議 ${DRAW_MEETING.time}〜：${names(c.draws)}`] : []),
+].join(' / ') || undefined;
+const countText = (m) => `${m.count}大会`;
 ---
 
 {!first && <p class="note">大会が登録されるとカレンダーが表示されます。</p>}
@@ -33,8 +74,15 @@ const first = months[initial];
       </span>
     </p>
     <button class="circle-btn circle-btn--solid" type="button" data-cal-next aria-label="次の月へ">→</button>
-    <span class="cal__count" data-cal-count>{first.items.length}大会</span>
+    <span class="cal__count" data-cal-count>{countText(first)}</span>
   </div>
+
+  {/* 凡例 */}
+  <ul class="cal__legend">
+    <li><span class="cal__key cal__key--game" aria-hidden="true"></span>大会</li>
+    <li><span class="cal__mk cal__mk--due" aria-hidden="true"></span>エントリー締切</li>
+    <li><span class="cal__mk cal__mk--draw" aria-hidden="true"></span>ドロー会議（{DRAW_MEETING.time}〜 {DRAW_MEETING.place}）</li>
+  </ul>
 
   {months.map((m, i) => (
     <section
@@ -44,7 +92,7 @@ const first = months[initial];
       data-month={String(m.month).padStart(2, '0')}
       data-en={m.en}
       data-year={m.year}
-      data-count={`${m.items.length}大会`}
+      data-count={countText(m)}
       aria-label={`${m.year}年${m.month}月の大会`}
       hidden={i !== initial}
     >
@@ -64,22 +112,41 @@ const first = months[initial];
                   c.iso === today && 'is-today',
                 ]}
                 data-date={c.iso}
-                title={c.items.length ? c.items.map((t) => t.name).join(' / ') : undefined}
+                title={cellTitle(c)}
                 aria-current={c.iso === today ? 'date' : undefined}
-              >{c.day}</span>
+              >
+                {c.day}
+                {(c.dues.length > 0 || c.draws.length > 0) && (
+                  <span class="cal__mks" aria-hidden="true">
+                    {c.dues.length > 0 && <span class="cal__mk cal__mk--due"></span>}
+                    {c.draws.length > 0 && <span class="cal__mk cal__mk--draw"></span>}
+                  </span>
+                )}
+              </span>
         ))}
       </div>
 
       <ul class="cal__list">
-        {m.items.map((t) => (
-          <li class="cal__item">
-            <span class="cal__item-day">{String(Number(t.date.slice(8))).padStart(2, '0')}</span>
-            <span class="cal__item-body">
-              <span class="cal__item-name">{t.name}</span>
-              <span class="cal__item-sub">{t.event}／{t.place}</span>
-            </span>
-            <span class={`badge ${STATUS_LABEL[t.status].badge} cal__item-badge`}>{STATUS_LABEL[t.status].label}</span>
-          </li>
+        {m.entries.map((x) => (
+          x.kind === 'game'
+            ? <li class="cal__item">
+                <span class="cal__item-day">{day(x.iso)}</span>
+                <span class="cal__item-body">
+                  <span class="cal__item-name">{x.t.name}</span>
+                  <span class="cal__item-sub">{x.t.event}／{x.t.place}</span>
+                </span>
+                <span class={`badge ${STATUS_LABEL[x.t.status].badge} cal__item-badge`}>{STATUS_LABEL[x.t.status].label}</span>
+              </li>
+            : <li class={`cal__item cal__item--${x.kind}`}>
+                <span class="cal__item-day">{day(x.iso)}</span>
+                <span class="cal__item-body">
+                  <span class="cal__item-name">
+                    <span class={`cal__tag cal__tag--${x.kind}`}>{x.kind === 'due' ? 'エントリー締切' : 'ドロー会議'}</span>
+                    {x.kind === 'draw' && <span class="cal__item-when">{DRAW_MEETING.time}〜　{DRAW_MEETING.short}</span>}
+                  </span>
+                  <span class="cal__item-sub">{names(x.list)}</span>
+                </span>
+              </li>
         ))}
       </ul>
     </section>
