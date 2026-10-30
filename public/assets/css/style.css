@@ -1048,7 +1048,6 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
      モバイルはこの上に文字とボタンを重ねる。 */
   height: auto;
   overflow: hidden;
-  border-bottom-left-radius: 80px;
 }
 /* 写真とベール。払いのアニメーション（.phv）はここに掛ける */
 .hero__shot { position: absolute; inset: 0; }
@@ -1068,7 +1067,7 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 }
 /* スマホ・タブレットは下半分にキャッチコピーが重なるので、動画を上へずらして横断幕と人の並びを文字より上に出す
    （下に空いたところは白いぼかし .hero__scrim の下になる） */
-@media (max-width: 1023px) { .hero__media .hero__photo { transform: translateY(-26%); } }
+@media (max-width: 1023px) { .hero__media .hero__photo { transform: translateY(-4%); } }  /* ロゴの裏に空が見える程度に */
 /* PC は写真が右半分に立つ（文字は重ならない）。下端の白いぼかしを浅くして、人の並びまで見せる */
 @media (min-width: 1024px) {
   .hero__media img.hero__photo { object-position: 50% 50%; }
@@ -1289,7 +1288,6 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   .hero .pb { font-size: clamp(38px, 4.6vw, 58px); }
   .hero__media {
     grid-area: 1 / 2;
-    border-radius: 0 0 0 280px;
   }
   .hero__body {
     grid-area: 1 / 1;
