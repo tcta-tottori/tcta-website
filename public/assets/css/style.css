@@ -1390,6 +1390,14 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 .tcard__photo img { display: block; width: 100%; height: 100%; object-fit: cover; transition: transform .6s var(--ease), filter .4s ease; }
 @media (hover: hover) { .tcard:hover .tcard__photo img { transform: scale(1.04); } }
 .tcard__photo--none { display: flex; align-items: center; justify-content: center; }
+/* 写真の左上に重ねる日付（白い札に影を付けて、写真の上でも読めるようにする） */
+.tcard__photo .tcard__date {
+  position: absolute;
+  top: 10px; left: 10px;
+  z-index: 1;
+  background: rgba(255, 255, 255, .94);
+  box-shadow: 0 2px 8px rgba(26, 26, 26, .18);
+}
 .tcard__photo-label { font: 700 13px/1 var(--fjp); letter-spacing: .12em; color: var(--gray-400, #b0b0b0); }
 /* 終了した大会は写真をモノクロに（ホバーで色を戻す） */
 .tcard--past .tcard__photo img { filter: grayscale(1); opacity: .75; }
