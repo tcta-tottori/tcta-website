@@ -122,6 +122,7 @@ export function buildCards(rows, { ROWS, eventBySlug }) {
         event: t.card_event || b.event,
         venue: b.place,
         status: CARD_STATUS[b.status] ?? 'soon',
+        reg: b.reg, // 登録区分（ken／shi／free）。カードの写真の選び分けに使う（event-photos.js）
         due: b.due && b.due !== '—' ? b.due : '',
         liveUrl: t.live_url || null,
         outlineUrl: t.outline_url || null,
