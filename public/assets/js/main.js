@@ -1068,6 +1068,21 @@
     }
   }
 
+  /* ---------- トップの動画（.hero__video） ----------
+     動きを減らす設定では止めて最初のコマ（poster）のままにする。画面の外に出たら止め、戻ったら再生する */
+  function initHeroVideo() {
+    var v = document.querySelector('.hero__video');
+    if (!v) return;
+    if (reduceMotion) { v.removeAttribute('autoplay'); v.pause(); return; }
+    if (!('IntersectionObserver' in window)) return;
+    new IntersectionObserver(function (es) {
+      es.forEach(function (e) {
+        if (e.isIntersecting) { var p = v.play(); if (p && p.catch) p.catch(function () {}); }
+        else v.pause();
+      });
+    }).observe(v);
+  }
+
   /* ---------- TODAY の日付（見ている時点の日本時間） ----------
      ビルド時の日付を書き出してあるので、JS が動く環境だけ今日の日付に差し替える。 */
   function initToday() {
@@ -1491,6 +1506,7 @@
     initCalendar();
     initFooterDeco();
     initLogoInk();
+    initHeroVideo();
     initStickyHero();
     initToday();
     initCarousel();

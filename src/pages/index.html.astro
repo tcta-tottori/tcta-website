@@ -57,7 +57,11 @@ const upcomingTournaments = TOURNAMENTS.filter((t) => t.status !== 'past');
       {/* 写真とベールだけを左から右へ払う。キャッチコピーは払いの対象に含めない
           （含めると1文字ずつの登場が払いに隠れてしまう） */}
       <div class="hero__shot phv">
-        <img class="hero__photo" src="assets/img/hero.webp" alt="鳥取市テニス協会の横断幕の前で、大会の参加者がそろった集合写真" width="1254" height="1254" fetchpriority="high" decoding="async">
+        {/* 動画（横断幕の前の参加者の集合。10秒・音なしでくり返す）。読み込むまでと、動きを減らす設定では最初のコマ（poster）を出す */}
+        <video class="hero__photo hero__video" autoplay muted loop playsinline preload="auto" poster="assets/img/hero-poster.webp"
+          aria-label="鳥取市テニス協会の横断幕の前で、大会の参加者がそろった集合の動画" width="1280" height="720">
+          <source src="assets/video/hero.mp4" type="video/mp4">
+        </video>
         <div class="hero__scrim" aria-hidden="true"></div>
       </div>
     </div>

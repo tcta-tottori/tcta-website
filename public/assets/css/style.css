@@ -1048,7 +1048,6 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
      モバイルはこの上に文字とボタンを重ねる。 */
   height: auto;
   overflow: hidden;
-  border-bottom-left-radius: 80px;
 }
 /* 写真とベール。払いのアニメーション（.phv）はここに掛ける */
 .hero__shot { position: absolute; inset: 0; }
@@ -1057,11 +1056,18 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 .hero__media img.hero__photo {
   width: 100%; height: 100%;
   object-fit: cover;
-  /* 写真は正方形の集合写真（空・横断幕・参加者・芝）。人の並びが写真の高さの 51〜69% にある */
+  /* 動画は横長（16:9）の集合（空・横断幕・参加者・芝）。人の並びが高さの 55〜80% にある */
   object-position: 50% 50%;
 }
-/* スマホ・タブレットは下半分にキャッチコピーが重なるので、下端を軸に拡大して人の並びを文字より上へ持ち上げる */
-@media (max-width: 1023px) { .hero__media img.hero__photo { transform: scale(1.3); transform-origin: 50% 100%; } }
+.hero__media video.hero__photo {
+  display: block;
+  width: 100%; height: 100%;
+  object-fit: cover;
+  object-position: 50% 50%;
+}
+/* スマホ・タブレットは下半分にキャッチコピーが重なるので、動画を上へずらして横断幕と人の並びを文字より上に出す
+   （下に空いたところは白いぼかし .hero__scrim の下になる） */
+@media (max-width: 1023px) { .hero__media .hero__photo { transform: translateY(-4%); } }  /* ロゴの裏に空が見える程度に */
 /* PC は写真が右半分に立つ（文字は重ならない）。下端の白いぼかしを浅くして、人の並びまで見せる */
 @media (min-width: 1024px) {
   .hero__media img.hero__photo { object-position: 50% 50%; }
@@ -1282,7 +1288,6 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   .hero .pb { font-size: clamp(38px, 4.6vw, 58px); }
   .hero__media {
     grid-area: 1 / 2;
-    border-radius: 0 0 0 280px;
   }
   .hero__body {
     grid-area: 1 / 1;
