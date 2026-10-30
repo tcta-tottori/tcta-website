@@ -1938,6 +1938,44 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 .cal__cell.is-on.is-today::after { inset: -4px; border-radius: var(--radius); }
 @media (prefers-reduced-motion: reduce) { .cal__cell.is-today::after { animation: none; } }
 
+/* 月を送ったときの動き（main.js の initCalendar が .is-enter・--cal-dir・--k・--i を付ける）。
+   月の数字は送った向きから回り込み、曜日とマスは送った向きの端から波のように小さく弾んで並び、
+   開催日は赤い地が出たあとに輪が広がって消える。下の大会の一覧は1件ずつ下から起き上がる */
+.cal { --cal-dir: 1; }
+.cal__label.is-flip { perspective: 400px; }
+.cal__label.is-flip .cal__num { display: inline-block; animation: cal-num .55s var(--ease) both; }
+.cal__label.is-flip .cal__meta { animation: cal-meta .55s var(--ease) .08s both; }
+@keyframes cal-num {
+  from { opacity: 0; transform: translateX(calc(var(--cal-dir) * 28px)) rotateY(calc(var(--cal-dir) * -70deg)); }
+}
+@keyframes cal-meta { from { opacity: 0; transform: translateY(8px); } }
+.cal__month.is-enter .cal__dow,
+.cal__month.is-enter .cal__cell:not(.cal__cell--empty) {
+  animation: cal-pop .5s cubic-bezier(.34, 1.56, .64, 1) both;
+  animation-delay: calc(var(--k, 0) * 22ms);
+}
+.cal__month.is-enter .cal__cell.is-on {
+  animation:
+    cal-pop .5s cubic-bezier(.34, 1.56, .64, 1) calc(var(--k, 0) * 22ms) both,
+    cal-ring .9s ease-out calc(var(--k, 0) * 22ms + .3s) both;
+}
+@keyframes cal-pop {
+  from { opacity: 0; transform: translateX(calc(var(--cal-dir) * 16px)) scale(.5); }
+}
+@keyframes cal-ring {
+  from { box-shadow: 0 0 0 0 rgba(216, 35, 42, .55); }
+  to   { box-shadow: 0 0 0 12px rgba(216, 35, 42, 0); }
+}
+.cal__month.is-enter .cal__item { animation: cal-item .55s var(--ease) both; animation-delay: calc(.18s + var(--i, 0) * 70ms); }
+@keyframes cal-item {
+  from { opacity: 0; transform: translateY(14px); clip-path: inset(0 0 100% 0); }
+  to   { opacity: 1; transform: none; clip-path: inset(0 0 0 0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cal__label.is-flip .cal__num, .cal__label.is-flip .cal__meta,
+  .cal__month.is-enter .cal__dow, .cal__month.is-enter .cal__cell, .cal__month.is-enter .cal__item { animation: none; }
+}
+
 .cal__list { margin-top: 20px; display: flex; flex-direction: column; }
 @media (min-width: 768px) { .cal__list { margin-top: 0; } }
 .cal__list:empty::after {
@@ -3116,8 +3154,14 @@ body.jsrv .rv.on .ink-sweep {
    その下に 日程・会場・種目、要項／申込書／ドロー／結果 の4ボタン、備考 の順。
    表だと7列を横に読まされるが、ブロックなら上から順に読めば済むので
    スマホで横にずらさなくてよい。ボタンは共通の .btn--outline をそのまま使う。 */
-.tl__cards { display: flex; flex-direction: column; gap: 56px; }
-@media (min-width: 1024px) { .tl__cards { gap: 72px; } }
+/* 拡大表示（.tl__cards）は、トップの大会カード（.tcard）をスマホ1列・タブレット2列・PC3列で並べる。
+   カードの高さは同じ行でそろえる。.tl-item の一式は大会ページの見出し（EventMeta.astro）が使っている */
+.tl__cards { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; }
+@media (min-width: 640px) { .tl__cards { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 1024px) { .tl__cards { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; } }
+.tl__card { display: flex; }
+.tl__card[hidden] { display: none; }
+.tl__cards .tcard { flex: 1 1 auto; width: auto; max-width: none; }
 .tl-item[hidden] { display: none; }
 
 .tl-item__head {
@@ -3332,7 +3376,6 @@ body.jsrv .rv.on .ink-sweep {
 .tlx__name { font: 700 14px/1.5 var(--fjp); letter-spacing: .02em; color: var(--ink); word-break: keep-all; overflow-wrap: anywhere; }
 @media (min-width: 768px) { .tlx__name { font-size: 15px; } }
 .tlx__name a { transition: color .3s ease; }
-.tlx__ext { margin-left: 4px; font-weight: 400; color: var(--red); }  /* 外部のページへ飛ぶ大会名の印 */
 .tlx__name a:hover { color: var(--red); }
 .tlx__cell--text { font: 400 13px/1.6 var(--fjp); color: var(--gray-800); word-break: keep-all; overflow-wrap: anywhere; }
 .tlx__sub { font-size: 11px; color: var(--gray-500); }
@@ -3356,28 +3399,49 @@ body.jsrv .rv.on .ink-sweep {
 .tlx.is-end .tlx__hint, .tlx.is-fit .tlx__hint { opacity: 0; }
 @media (prefers-reduced-motion: reduce) { .tlx__hint .ln-arrow { animation: none; } }
 
-/* 絞り込み（左）と表示の切り替え（右） */
-.tl-tools { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 20px; margin: 28px 0 24px; }
+/* 絞り込み（左）と表示の切り替え（右）。スマホでも1行に収める */
+.tl-tools { display: flex; flex-wrap: nowrap; align-items: center; justify-content: space-between; gap: 10px; margin: 28px 0 24px; }
 .tl-tools .chips { margin: 0; }
-.view-switch { display: inline-flex; border: 1px solid var(--gray-300); border-radius: var(--radius); overflow: hidden; }
+/* 絞り込み：1つの枠の中に「すべて｜受付中｜終了」を並べた切り替え。選んだ所は赤。件数は名前の右に小さく */
+.seg { display: inline-flex; flex: 0 1 auto; min-width: 0; border: 1px solid var(--gray-300); border-radius: var(--radius); overflow: hidden; background: var(--white); }
+.seg .seg__btn {
+  display: inline-flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 4px;
+  min-height: 40px;
+  padding: 10px 12px;
+  border: 0;
+  border-radius: 0;
+  white-space: nowrap;
+  font: 700 13px/1.4 var(--fjp);
+}
+@media (min-width: 640px) { .seg .seg__btn { padding: 10px 18px; } }
+.seg .seg__btn + .seg__btn { border-left: 1px solid var(--gray-300); }
+.seg .seg__btn:hover { border-color: var(--gray-300); }
+.seg .seg__btn.is-active { border-left-color: var(--red); }
+.seg .seg__btn.is-active + .seg__btn { border-left-color: var(--red); }
+.seg__n { font: 600 11px/1 var(--flt); letter-spacing: .02em; opacity: .7; }
+.seg .seg__btn.is-active .seg__n { opacity: .9; }
+/* 表示の切り替え：絵だけの四角いボタン2つ */
+.view-switch { display: inline-flex; flex: none; border: 1px solid var(--gray-300); border-radius: var(--radius); overflow: hidden; }
 .view-switch__btn {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  min-height: 38px;
-  padding: 8px 14px;
-  font: 700 13px/1 var(--fjp);
-  letter-spacing: .02em;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
   color: var(--gray-600);
   transition: background-color .25s ease, color .25s ease;
 }
 .view-switch__btn + .view-switch__btn { border-left: 1px solid var(--gray-300); }
 .view-switch__btn:hover { color: var(--ink); }
 .view-switch__btn.is-active { background: var(--ink); color: #fff; }
-/* 切り替えの絵：縮小表示は細い横線3本、拡大表示は太い帯2本（どちらも currentColor で描く） */
+/* 切り替えの絵：縮小表示は細い横線3本、拡大表示はカード4枚（どちらも currentColor で描く） */
 .view-switch__ico { position: relative; width: 14px; height: 12px; flex: none; }
+.view-switch__ico--cards { width: 14px; height: 14px; }
 .view-switch__ico--rows { background: linear-gradient(currentColor, currentColor) 0 0 / 100% 2px no-repeat, linear-gradient(currentColor, currentColor) 0 5px / 100% 2px no-repeat, linear-gradient(currentColor, currentColor) 0 10px / 100% 2px no-repeat; }
-.view-switch__ico--cards { background: linear-gradient(currentColor, currentColor) 0 0 / 100% 5px no-repeat, linear-gradient(currentColor, currentColor) 0 7px / 100% 5px no-repeat; }
+.view-switch__ico--cards { background: linear-gradient(currentColor, currentColor) 0 0 / 6px 6px no-repeat, linear-gradient(currentColor, currentColor) 8px 0 / 6px 6px no-repeat, linear-gradient(currentColor, currentColor) 0 8px / 6px 6px no-repeat, linear-gradient(currentColor, currentColor) 8px 8px / 6px 6px no-repeat; }
 
 .tl-item__note { margin-top: 24px; }
 .tl-item__note-label {
