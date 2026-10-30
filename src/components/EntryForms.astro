@@ -10,10 +10,13 @@ const forms = [
   ...(section?.images ?? []).map((img) => ({ type: 'image', src: img.src, label: img.label ?? '', note: '画像' })),
 ];
 const title = `${e.name} 申込用紙`;
-// ダウンロードしたときのファイル名（大会名＋申込用紙。2つ以上あるときは中身の名前も添える）
+// ダウンロードしたときのファイル名（大会名＋申込用紙。2つ以上あるときは中身の名前も添える）。
 const ext = (src) => (String(src).match(/\.([a-z0-9]+)(?:[?#].*)?$/i)?.[1] ?? 'pdf').toLowerCase();
-const fileName = (f) =>
-  `${e.name}_申込用紙${forms.length > 1 && f.label ? `_${f.label}` : ''}.${ext(f.src)}`.replace(/[\\/:*?"<>|\s]+/g, '_');
+// 中身の名前に「申込用紙」が入っているときは、大会名にそのまま続ける（「申込用紙_申込用紙…」と重ねない）
+const fileName = (f) => {
+  const tail = forms.length > 1 && f.label ? (f.label.includes('申込用紙') ? f.label : `申込用紙_${f.label}`) : '申込用紙';
+  return `${e.name}_${tail}.${ext(f.src)}`.replace(/[\\/:*?"<>|\s]+/g, '_');
+};
 ---
 
 {forms.length > 0 && (
