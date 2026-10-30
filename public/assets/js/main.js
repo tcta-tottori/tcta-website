@@ -1245,15 +1245,101 @@
     // scroll-padding のぶんだけ手前を空けるので、左には終了した大会の端が覗き、
     // 線のすぐ右に直近の大会が1枚まるごと入り、その次の大会が右端で少し切れる。
     var marker = track.querySelector('[data-carousel-today]');
+    var todayX = function () { return marker ? Math.max(0, marker.offsetLeft - padStart()) : 0; };
+    var place = function () { track.scrollLeft = todayX(); };
     if (marker) {
-      var place = function () {
-        track.scrollLeft = Math.max(0, marker.offsetLeft - padStart());
-      };
       place();
       window.addEventListener('load', place);
-      window.addEventListener('resize', place);
     }
+
+    /* 入ってきたときの動き（style.css の .carousel.is-intro）。区画が画面に入ったら1度だけ、
+       TODAY の線が上から伸び → 日付が出て → 今後の大会のカードが右から順に入る */
+    var cards = track.querySelectorAll('.tcard');
+    var after = false, k = 0;
+    Array.prototype.forEach.call(track.children, function (el) {
+      if (el === marker) { after = true; return; }
+      if (el.classList.contains('tcard')) el.style.setProperty('--ci', String(after ? ++k : 0));
+    });
+    if (!reduceMotion && 'IntersectionObserver' in window && cards.length) {
+      track.classList.add('js-intro');
+      var io = new IntersectionObserver(function (es) {
+        es.forEach(function (e) {
+          if (!e.isIntersecting) return;
+          track.classList.add('is-intro');
+          io.disconnect();
+        });
+      }, { threshold: 0.2 });
+      io.observe(track);
+    }
+
+    /* ---- 縦スクロールで横に送る（トップの大会情報 [data-hpin]） ----
+       区画（.hpin）を画面に止め（position: sticky）、止まっているあいだの縦のスクロール量を
+       そのままカードの横の位置にする（TODAY → 今後の大会の右端）。送り切ったら区画が外れて次へ進む。
+       止めておく長さ（.hpin-track の高さ）＝区画の高さ＋横に送る幅。
+       指やトラックパッドで横に送ったときは、その位置に合わせて縦の位置も動かす（どちらで送っても続きから動く）。
+       上へ戻ると TODAY に戻ってから区画が外れ、ヒーローへ（終了した大会は横に送ったときだけ見える）。
+       動きを減らす設定の端末では止めない（ふつうの横スクロールのまま） */
+    var sec = track.closest('[data-hpin]');
+    var wrap = sec && sec.querySelector('.hpin-track');
+    var pin = sec && sec.querySelector('.hpin');
+    if (!sec || !wrap || !pin || !marker || reduceMotion) {
+      window.addEventListener('resize', place);
+      return;
+    }
+    var on = false, x0 = 0, dist = 0, start = 0, sw = 0;
+    var setX = -1, setY = -1, userUntil = 0, ticking = false;
+    var headerH = function () {
+      var v = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--header-h'));
+      return isNaN(v) ? 0 : v;
+    };
+    var measure = function () {
+      x0 = todayX();
+      sw = track.scrollWidth;
+      dist = Math.max(0, sw - track.clientWidth - x0);
+      on = dist > 40;
+      sec.classList.toggle('is-hpin', on);
+      if (!on) { wrap.style.height = ''; pin.style.top = ''; place(); return; }
+      var ph = pin.offsetHeight;
+      // ヘッダーの下の残りの高さの中ほどに止める。区画が画面より高いときは下端をそろえる
+      var hh = headerH(), room = window.innerHeight - hh;
+      var top = ph <= room ? hh + (room - ph) / 2 : window.innerHeight - ph;
+      pin.style.top = top + 'px';
+      wrap.style.height = (ph + dist) + 'px';
+      start = wrap.getBoundingClientRect().top + window.pageYOffset - top;
+      update(true);
+    };
+    var update = function (force) {
+      if (!on) return;
+      if (track.scrollWidth !== sw) { measure(); return; } // 写真や文字の読み込みでカードの幅が変わったら測り直す
+      var y = window.pageYOffset;
+      if (!force && (Math.abs(y - setY) < 1 || Date.now() < userUntil)) return; // 自分で合わせた分・横に送っている最中は動かさない
+      var p = Math.min(1, Math.max(0, (y - start) / dist));
+      var x = x0 + p * dist;
+      if (Math.abs(track.scrollLeft - x) >= 0.5) { setX = x; track.scrollLeft = x; }
+    };
+    window.addEventListener('scroll', function () {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(function () { ticking = false; update(false); });
+    }, { passive: true });
+    track.addEventListener('scroll', function () {
+      if (!on) return;
+      var x = track.scrollLeft;
+      if (Math.abs(x - setX) < 1.5) return; // 縦のスクロールから合わせた分
+      // 指・トラックパッドで横に送った：止まっている間だけ、縦の位置をその横の位置に合わせる
+      userUntil = Date.now() + 250;
+      var y = window.pageYOffset;
+      if (y < start - 2 || y > start + dist + 2) return;
+      var ny = start + Math.min(1, Math.max(0, (x - x0) / dist)) * dist;
+      if (Math.abs(ny - y) < 1) return;
+      setY = ny;
+      window.scrollTo({ top: ny, behavior: 'instant' });
+    }, { passive: true });
+    measure();
+    window.addEventListener('load', measure);
+    window.addEventListener('resize', measure);
   }
+
 
   /* ---------- 一覧のフィルタチップ（大会情報ページ） ---------- */
   function initFilters() {

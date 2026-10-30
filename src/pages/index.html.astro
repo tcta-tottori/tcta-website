@@ -106,8 +106,12 @@ const upcomingTournaments = TOURNAMENTS.filter((t) => t.status !== 'past');
   </section>
 
   <!-- ============ 大会情報（カルーセル） ============ -->
-  <section class="section section--gray section--cards" id="tournaments" aria-labelledby="tournaments-title">
+  {/* 縦にスクロールすると、この区画が画面に止まったまま大会カードが横に流れる（main.js の initCarouselPin）。
+      ヒーローから入ると TODAY の線が伸びて日付が出て、続けてカードが出る。カードを右端まで送ったら次の区画（お知らせ）へ。
+      カードは指・トラックパッドの横スクロールでも送れる。上へ戻ると TODAY まで戻ってヒーローへ（終了した大会へは横に送ったときだけ） */}
+  <section class="section section--gray section--cards" id="tournaments" aria-labelledby="tournaments-title" data-hpin>
     <span class="ghost" aria-hidden="true">TOURNAMENT</span>
+    <div class="hpin-track"><div class="hpin">
     <div class="container">
       <div class="sec-bar rv">
         <div class="sec-head">
@@ -127,7 +131,7 @@ const upcomingTournaments = TOURNAMENTS.filter((t) => t.status !== 'past');
 
     {/* カルーセルは画面いっぱいに流す。コンテナの外に置き、1枚目だけ
         本文と同じ位置から始まるよう内側に余白を取る。 */}
-    <div class="carousel rv" data-carousel tabindex="0" role="group" aria-label="大会カルーセル（横スクロール）">
+    <div class="carousel" data-carousel tabindex="0" role="group" aria-label="大会カルーセル（横スクロール）">
 
         <!-- 終了した大会 -->
         {pastTournaments.map((t) => <TournamentCard tournament={t} />)}
@@ -152,6 +156,7 @@ const upcomingTournaments = TOURNAMENTS.filter((t) => t.status !== 'past');
         </a>
       </div>
     </div>
+    </div></div>
 
   </section>
 

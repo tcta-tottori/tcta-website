@@ -1623,6 +1623,32 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   writing-mode: vertical-rl;
 }
 
+/* ---- 縦スクロールで横に送る（トップの大会情報。main.js の initCarousel） ----
+   .hpin を画面に止め（sticky。top は main.js がヘッダーの高さか、区画が高いときは下端がそろう位置に入れる）、
+   止まっている長さ（.hpin-track の高さ）は main.js が「区画の高さ＋横に送る幅」で入れる。
+   止めているあいだは縦のスクロール量をそのまま横の位置にするので、吸い付き（scroll-snap）は切る */
+.is-hpin .hpin { position: sticky; }
+.is-hpin .carousel { scroll-snap-type: none; }
+
+/* ---- 入ってきたときの動き（.js-intro → .is-intro。main.js）----
+   TODAY の文字 → 赤い線が上から伸びる → 日付 → 今後の大会のカードが右から順に（--ci）入る。
+   終了した大会（線の左。端だけ覗いている）は最初に静かに出す */
+.carousel.js-intro .today-marker__label,
+.carousel.js-intro .today-marker__date { opacity: 0; transform: translateY(-8px); }
+.carousel.js-intro .today-marker__line { transform: scaleY(0); transform-origin: 50% 0; }
+.carousel.js-intro .tcard { opacity: 0; translate: 48px 0; }
+.carousel.is-intro .today-marker__label { opacity: 1; transform: none; transition: opacity .4s ease .1s, transform .5s var(--ease) .1s; }
+.carousel.is-intro .today-marker__line { transform: none; transition: transform .8s cubic-bezier(.7, 0, .2, 1) .3s; }
+.carousel.is-intro .today-marker__date { opacity: 1; transform: none; transition: opacity .4s ease 1s, transform .5s var(--ease) 1s; }
+.carousel.is-intro .tcard {
+  opacity: 1;
+  translate: 0 0;
+  transition:
+    opacity .5s ease calc(1.15s + min(var(--ci, 0), 4) * .12s),
+    translate .7s var(--ease) calc(1.15s + min(var(--ci, 0), 4) * .12s),
+    box-shadow .3s ease, transform .3s ease, border-color .3s ease;
+}
+
 /* ============ 09. お知らせリスト ============ */
 .news-list { margin-top: 32px; }
 @media (min-width: 1024px) { .news-list { margin-top: 48px; } }
@@ -2903,20 +2929,21 @@ body.jsrv .rv.on .ink-sweep {
   transition: border-color .3s ease;
 }
 .litem:hover { color: inherit; border-color: var(--gray-300); }
-/* 枠全体の下地：同じバナーを枠いっぱいに拡大してぼかしたもの（ガウスぼかし）。
-   薄めて、下へ行くほど白を重ね（::before）、団体名と説明を読みやすくする */
+/* 枠全体の下地：同じバナーを枠いっぱいに拡大して強くぼかしたもの（ガウスぼかし）。
+   明るく薄めて色の気配だけを残し、全体に白を薄く、下へ行くほど濃く重ね（::before）、団体名と説明を読みやすくする。
+   ぼかしを強くすると縁が暗く欠けるので、枠より大きめ（inset）に敷く */
 .litem__bg {
   position: absolute;
-  inset: -12%;
+  inset: -30%;
   background: center / cover no-repeat;
-  filter: blur(18px) saturate(1.1);
-  opacity: .5;
+  filter: blur(40px) saturate(1.15) brightness(1.15);
+  opacity: .42;
 }
 .litem::before {
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0) 25%, rgba(255, 255, 255, .6) 100%);
+  background: linear-gradient(180deg, rgba(255, 255, 255, .18) 0%, rgba(255, 255, 255, .3) 40%, rgba(255, 255, 255, .72) 100%);
   pointer-events: none;
 }
 .litem > :not(.litem__bg) { position: relative; }
