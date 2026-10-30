@@ -22,6 +22,7 @@ const BY_REG = {
 
 /** 大会ごとの写真（大会名で見分ける）。種目の写真より優先する */
 const BY_NAME = [
+  { match: /会長杯.*秋/, photo: { src: 'assets/img/event-photos/kaichou-autumn.webp', w: 960, h: 630, pos: '45% 38%', alt: '紅葉のコートでダブルスのサーブを打つ選手' } },
   { match: /健康テニス/, photo: { src: 'assets/img/event-photos/kenko.webp', w: 960, h: 611, pos: '38% 35%', alt: 'サーブのトスを上げる選手' } },
   { match: /エネトピア/, photo: { src: 'assets/img/event-photos/enetopia.webp', w: 960, h: 655, pos: '50% 12%', alt: 'enetopia の旗を広げる2人の選手' } },
   // クラブ対抗戦の後期日程（女子の各部・予選会）。前期日程などは次の行の写真（BY_NAME は上から順に見る）
