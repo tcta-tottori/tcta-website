@@ -11,11 +11,11 @@ import Venue from './Venue.astro';
 import { eventPhoto } from '../data/event-photos.js';
 
 const { tournament } = Astro.props;
-const { date, title, event, venue, status, due, action, buttons = [] } = tournament;
+const { date, title, event, venue, status, due, action, buttons = [], reg } = tournament;
 const badge = STATUS[status];
 const chip = dateChip(date);
 // 種目の写真（写真の無い種目は、種目名だけの薄いグレーの面）
-const { photo, label: photoLabel } = eventPhoto(event, title);
+const { photo, label: photoLabel } = eventPhoto(event, title, reg);
 // 種目は短い表記で1行に。長いときは文字を少し小さくし、ピクトグラムは文字の下の行に下がる（CSS）
 const eventLabel = shortEvent(event);
 const len = eventLabel.length > 10 ? 'long' : 'short';
