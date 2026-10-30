@@ -4411,3 +4411,151 @@ button.dl-item { width: 100%; text-align: left; }
   /* トップの写真はヘッダーの裏（画面の上端）から敷く。文字とボタンは下端に揃えてあるので、位置は変わらない */
   .hero { min-height: 100svh; }
 }
+
+/* ============ 申込用紙のボタンと、ページの中で開くビューア ============
+   ボタン（.eform。EntryForms.astro）は「大会名 申込用紙」を大きく、その下に中身の名前と大きさ。
+   押すと .pdfv（main.js の initPdfViewer）が画面いっぱいに開く。上の帯にダウンロード・印刷・閉じる */
+.eforms { display: grid; gap: 12px; margin-top: 20px; }
+@media (min-width: 768px) { .eforms { grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); } }
+.eform {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 76px;
+  padding: 14px 16px;
+  border: 2px solid var(--red);
+  border-radius: var(--radius);
+  background: var(--white);
+  color: var(--ink);
+  transition: background-color .25s ease, color .25s ease, transform .25s ease, box-shadow .25s ease;
+}
+.eform__type {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 52px;
+  border-radius: 3px;
+  background: var(--red);
+  color: #fff;
+  font: 700 11px/1 var(--flt);
+  letter-spacing: .06em;
+  transition: background-color .25s ease, color .25s ease;
+}
+.eform__text { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.eform__title { font: 700 15px/1.5 var(--fjp); letter-spacing: .03em; }
+.eform__kind { display: inline-block; margin-left: .5em; color: var(--red); transition: color .25s ease; }
+.eform__note { font: 400 12px/1.5 var(--fjp); color: var(--gray-600); transition: color .25s ease; }
+.eform__open {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius);
+  background: var(--gray-100);
+  color: var(--ink);
+  transition: background-color .25s ease, color .25s ease, transform .3s var(--ease);
+}
+@media (hover: hover) {
+  .eform:hover { background: var(--red); color: #fff; box-shadow: var(--shadow-hover); }
+  .eform:hover .eform__type { background: #fff; color: var(--red); }
+  .eform:hover .eform__kind, .eform:hover .eform__note { color: #fff; }
+  .eform:hover .eform__open { background: rgba(255, 255, 255, .2); color: #fff; transform: scale(1.08); }
+}
+
+.pdfv {
+  position: fixed;
+  inset: 0;
+  z-index: 3000;
+  display: flex;
+  flex-direction: column;
+  background: #3a3a3a;
+  opacity: 0;
+  transform: scale(.98);
+  transition: opacity .28s ease, transform .28s var(--ease);
+}
+.pdfv[hidden] { display: none; }
+.pdfv.is-open { opacity: 1; transform: none; }
+html.is-pdfv, html.is-pdfv body { overflow: hidden; }
+.pdfv__bar {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px 10px 16px;
+  padding-top: max(10px, env(safe-area-inset-top));
+  background: var(--ink);
+  color: #fff;
+}
+.pdfv__title { flex: 1 1 auto; min-width: 0; margin: 0; display: flex; flex-direction: column; gap: 2px; }
+.pdfv__name { font: 700 14px/1.4 var(--fjp); letter-spacing: .03em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pdfv__sub { font: 400 11px/1.4 var(--fjp); color: rgba(255, 255, 255, .7); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pdfv__sub:empty { display: none; }
+.pdfv__actions { flex: none; display: flex; align-items: center; gap: 6px; }
+.pdfv__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 40px;
+  padding: 0 14px;
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, .12);
+  color: #fff;
+  font: 700 13px/1 var(--fjp);
+  letter-spacing: .03em;
+  transition: background-color .2s ease;
+}
+.pdfv__btn:hover { background: rgba(255, 255, 255, .22); color: #fff; }
+.pdfv__btn--dl { background: var(--red); }
+.pdfv__btn--dl:hover { background: #b81d23; }
+/* スマホは絵だけ（文字は読み上げ用に残す） */
+@media (max-width: 639px) {
+  .pdfv__btn { width: 40px; padding: 0; justify-content: center; }
+  .pdfv__btn span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+}
+.pdfv__close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  margin-left: 4px;
+  border-radius: var(--radius);
+  color: #fff;
+  transition: background-color .2s ease;
+}
+.pdfv__close:hover { background: rgba(255, 255, 255, .12); }
+.pdfv__body {
+  position: relative;
+  flex: 1 1 auto;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  padding: 16px 12px max(24px, env(safe-area-inset-bottom));
+}
+@media (min-width: 768px) { .pdfv__body { padding: 28px 24px 40px; } }
+.pdfv__status { margin: 40px 0 0; text-align: center; font: 500 13px/1.6 var(--fjp); color: rgba(255, 255, 255, .8); }
+.pdfv__status:empty { display: none; }
+.pdfv__pages { display: flex; flex-direction: column; align-items: center; gap: 16px; }
+.pdfv__page { margin: 0; width: 100%; max-width: 900px; box-shadow: 0 6px 24px rgba(0, 0, 0, .35); background: #fff; animation: pdfv-page .4s var(--ease) both; }
+.pdfv__page img { display: block; width: 100%; height: auto; }
+@keyframes pdfv-page { from { opacity: 0; transform: translateY(12px); } }
+.pdfv.is-frame .pdfv__body { padding: 0; overflow: hidden; }
+.pdfv.is-frame .pdfv__pages { height: 100%; }
+.pdfv__frame { display: block; width: 100%; height: 100%; border: 0; background: #fff; }
+
+/* 印刷はビューアの紙面だけ。1枚を1ページに収める */
+@media print {
+  html.is-pdfv body > *:not(.pdfv) { display: none !important; }
+  html.is-pdfv, html.is-pdfv body { overflow: visible; background: #fff; }
+  html.is-pdfv .pdfv { position: static; display: block; background: #fff; opacity: 1; transform: none; }
+  html.is-pdfv .pdfv__bar, html.is-pdfv .pdfv__status { display: none; }
+  html.is-pdfv .pdfv__body { overflow: visible; padding: 0; }
+  html.is-pdfv .pdfv__pages { display: block; }
+  html.is-pdfv .pdfv__page { max-width: none; box-shadow: none; animation: none; break-after: page; page-break-after: always; break-inside: avoid; }
+  html.is-pdfv .pdfv__page:last-child { break-after: auto; page-break-after: auto; }
+  html.is-pdfv .pdfv__page img { width: 100%; max-height: 100vh; object-fit: contain; }
+}

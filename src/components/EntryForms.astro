@@ -1,0 +1,44 @@
+---
+// 申込用紙のボタン（要項のページ・大会ページの「申込用紙」）。
+// 1つのPDF（または紙面の画像）につき1つ。「大会名 申込用紙」と、その下に中身の名前と大きさを出す。
+// 押すと別タブではなく、このページの中で全画面に開く（main.js の initPdfViewer。ダウンロード・印刷のボタン付き）。
+// JS が動かない環境では、ふつうのリンクとして PDF そのものを開く。
+// section: 申込用紙の { images, pdfs }（events.js。領収証つきの紙は entry-forms.js でここへ集めてある）
+const { e, section } = Astro.props;
+const forms = [
+  ...(section?.pdfs ?? []).map((p) => ({ type: 'pdf', src: p.src, label: p.label, note: `PDF・${p.kb.toLocaleString()}KB` })),
+  ...(section?.images ?? []).map((img) => ({ type: 'image', src: img.src, label: img.label ?? '', note: '画像' })),
+];
+const title = `${e.name} 申込用紙`;
+// ダウンロードしたときのファイル名（大会名＋申込用紙。2つ以上あるときは中身の名前も添える）
+const ext = (src) => (String(src).match(/\.([a-z0-9]+)(?:[?#].*)?$/i)?.[1] ?? 'pdf').toLowerCase();
+const fileName = (f) =>
+  `${e.name}_申込用紙${forms.length > 1 && f.label ? `_${f.label}` : ''}.${ext(f.src)}`.replace(/[\\/:*?"<>|\s]+/g, '_');
+---
+
+{forms.length > 0 && (
+  <ul class="eforms">
+    {forms.map((f) => (
+      <li>
+        <a
+          class="eform"
+          href={f.src}
+          data-pdf-viewer
+          data-type={f.type}
+          data-title={title}
+          data-sub={f.label}
+          data-filename={fileName(f)}
+        >
+          <span class="eform__type" aria-hidden="true">{f.type === 'pdf' ? 'PDF' : 'IMG'}</span>
+          <span class="eform__text">
+            <span class="eform__title">{e.name}<span class="eform__kind">申込用紙</span></span>
+            <span class="eform__note">{f.label && <>{f.label}／</>}{f.note}</span>
+          </span>
+          <span class="eform__open" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
+          </span>
+        </a>
+      </li>
+    ))}
+  </ul>
+)}
