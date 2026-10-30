@@ -1057,14 +1057,15 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 .hero__media img.hero__photo {
   width: 100%; height: 100%;
   object-fit: cover;
-  /* 写真は横長（3:2）。スマホ（縦長）では左寄りの子どもが入る位置で切り抜き、
-     PC（右半分）では子どもと奥のコーチの両方が入る位置にする */
-  object-position: 30% 50%;
+  /* 写真は正方形の集合写真（空・横断幕・参加者・芝）。人の並びが写真の高さの 51〜69% にある */
+  object-position: 50% 50%;
 }
-/* スマホ・タブレットは下半分にキャッチコピーが重なるので、子どもの足元を軸に少し拡大して、
-   頭とラケットが文字より上に来るようにする */
-@media (max-width: 1023px) { .hero__media img.hero__photo { transform: scale(1.35); transform-origin: 30% 95%; } }
-@media (min-width: 1024px) { .hero__media img.hero__photo { object-position: 45% 50%; } }
+/* スマホ・タブレットは下半分にキャッチコピーが重なるので、下端を軸に拡大して人の並びを文字より上へ持ち上げる */
+@media (max-width: 1023px) { .hero__media img.hero__photo { transform: scale(1.3); transform-origin: 50% 100%; } }
+/* PC は写真が右半分に立つ（文字は重ならない）。下端の白いぼかしを浅くして、人の並びまで見せる */
+@media (min-width: 1024px) {
+  .hero__media img.hero__photo { object-position: 50% 50%; }
+}
 .hero__scrim {
   position: absolute;
   inset: 0;
@@ -1080,6 +1081,15 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
     linear-gradient(90deg, rgba(255, 255, 255, .55) 0%, rgba(255, 255, 255, 0) 24%);
 }
 
+
+/* PC は写真が右半分に立つ（文字は重ならない）。下端の白いぼかしを浅くして、人の並びまで見せる（.hero__scrim の後ろに置く） */
+@media (min-width: 1024px) {
+  .hero__scrim {
+    background:
+      linear-gradient(0deg, rgba(255, 255, 255, .95) 0%, rgba(255, 255, 255, 0) 18%),
+      linear-gradient(90deg, rgba(255, 255, 255, .55) 0%, rgba(255, 255, 255, 0) 24%);
+  }
+}
 
 .hero__body { padding-block: 0 26px; }
 .hero__title { margin: 0; }
