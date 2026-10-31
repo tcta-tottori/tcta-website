@@ -14,6 +14,7 @@
 
 import { nendoLabel, STATUS_LABEL, REG_LABEL, dateCell } from './schedule.js';
 import { splitEntryForms } from './entry-forms.js';
+import { EXTRA_MATERIALS } from './official-extra.js';
 
 /** 令和8年度の大会日程（PDF）。年度はじめに差し替える。 */
 export const SCHEDULE_PDF = { src: 'assets/pdf/events/r8-schedule.pdf', kb: 86 };
@@ -45,6 +46,13 @@ function collectMaterials(t, mediaUrl) {
   }
   // 要項に混ざっている領収証つきの申込用紙を、申込用紙（ボタン）へ分け直す（entry-forms.js）
   splitEntryForms(t.slug, out);
+  // 公式サイトに先に載った素材（管理画面に入るまでの補い。official-extra.js）。同じ画像・PDF は重ねない
+  for (const [key, s] of Object.entries(EXTRA_MATERIALS[t.slug] ?? {})) {
+    if (!SECTIONS[key]) continue;
+    const has = new Set([...sec(key).images, ...sec(key).pdfs].map((x) => x.src));
+    for (const img of s.images ?? []) if (!has.has(img.src)) sec(key).images.push({ ...img });
+    for (const pdf of s.pdfs ?? []) if (!has.has(pdf.src)) sec(key).pdfs.push({ ...pdf });
+  }
   for (const b of Array.isArray(t.materials) ? t.materials : []) {
     const key = SECTION_KEY[b.section];
     if (!key) continue;
@@ -90,7 +98,8 @@ export function buildEvents(rows, { ROWS }, mediaUrl = () => null) {
     (Array.isArray(t.materials) && t.materials.length > 0) ||
     (t.legacy_materials && Object.keys(t.legacy_materials).length > 0) ||
     (Array.isArray(t.winners) && t.winners.length > 0) ||
-    !!t.note || !!t.link_url;
+    !!t.note || !!t.link_url ||
+    !!EXTRA_MATERIALS[t.slug];
   const withPage = rows.filter((t) => base.has(t.slug) && base.get(t.slug).kind !== 'other' && hasContent(t));
 
   // 東部地区選手権のように、シングルスとダブルスで同じ大会名を使うものがある。
