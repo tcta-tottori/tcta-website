@@ -1605,20 +1605,39 @@
       var best = null;
       stops().forEach(function (sx) { if (best === null || Math.abs(sx - x) < Math.abs(best - x)) best = sx; });
       if (best === null || Math.abs(best - x) < 2) return;
-      settling = true;
-      window.scrollTo({ top: start + (best - x0), behavior: 'smooth' });
-      // なめらかな移動が終わるころに解除（scrollend が来ればそこで解除）
-      clearTimeout(settleTimer);
-      settleTimer = setTimeout(function () { settling = false; }, 700);
+      glide(start + (best - x0));
     };
+    /* 寄せる動き。ブラウザのなめらかなスクロール（遅く、端末でまちまち）は使わず、
+       距離に応じて 0.22〜0.38 秒で、出だしは速く最後はすっと止まる曲線で縦の位置を動かす。
+       途中で指・ホイール・キーで操作されたら、そこでやめる */
+    var glideRaf = 0;
+    var glide = function (to) {
+      cancelAnimationFrame(glideRaf);
+      var from = window.pageYOffset, d = to - from;
+      if (Math.abs(d) < 1) return;
+      var dur = Math.min(380, Math.max(220, Math.abs(d) * 1.1));
+      var t0 = 0;
+      settling = true;
+      var step = function (now) {
+        if (!t0) t0 = now;
+        var k = Math.min(1, (now - t0) / dur);
+        var e = 1 - Math.pow(1 - k, 3);
+        window.scrollTo({ top: from + d * e, behavior: 'instant' });
+        if (k < 1 && settling) glideRaf = requestAnimationFrame(step);
+        else settleTimer = setTimeout(function () { settling = false; }, 60);
+      };
+      glideRaf = requestAnimationFrame(step);
+    };
+    var stopGlide = function () { if (settling) { cancelAnimationFrame(glideRaf); settling = false; } };
+    ['wheel', 'touchstart', 'keydown'].forEach(function (ev) { window.addEventListener(ev, stopGlide, { passive: true }); });
     var settleSoon = function () {
       if (settling) return;
       clearTimeout(settleTimer);
-      settleTimer = setTimeout(settle, 160);
+      settleTimer = setTimeout(settle, 90);
     };
     if ('onscrollend' in window) {
       window.addEventListener('scrollend', function () {
-        if (settling) { settling = false; return; }
+        if (settling) return; // 寄せている最中の動き
         settle();
       });
       track.addEventListener('scrollend', function () { if (!settling) settleSoon(); });
