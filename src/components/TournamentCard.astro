@@ -11,7 +11,7 @@ import Venue from './Venue.astro';
 import { eventPhoto } from '../data/event-photos.js';
 
 const { tournament } = Astro.props;
-const { date, title, event, venue, status, due, action, buttons = [], reg } = tournament;
+const { date, title, event, venue, status, due, action, buttons = [], reg, winners = [] } = tournament;
 const badge = STATUS[status];
 const chip = dateChip(date);
 // 種目の写真（写真の無い種目は、種目名だけの薄いグレーの面）
@@ -22,10 +22,17 @@ const len = eventLabel.length > 10 ? 'long' : 'short';
 ---
 
 <article class:list={['tcard', `tcard--${status}`, !action.href && 'tcard--nolink']}>
-  <div class:list={['tcard__photo', !photo && 'tcard__photo--none']} aria-hidden={photo ? undefined : 'true'}>
-    {photo
-      ? <img src={photo.src} alt={photo.alt} width={photo.w} height={photo.h} style={`object-position:${photo.pos}`} loading="lazy" decoding="async">
-      : <span class="tcard__photo-label">{photoLabel}</span>}
+  <div class:list={['tcard__photo', !photo && !winners.length && 'tcard__photo--none']} aria-hidden={photo || winners.length ? undefined : 'true'}>
+    {/* 結果の出た大会は、優勝者の写真を3秒ずつ順に重ねて切り替える（main.js の initCardSlides）。無ければ種目の写真 */}
+    {winners.length > 0
+      ? <span class="tcard__slides" data-card-slides>
+          {winners.map((w, i) => (
+            <img class:list={['tcard__slide', i === 0 && 'is-on']} src={w.src} alt={w.alt} width={w.w} height={w.h} loading="lazy" decoding="async">
+          ))}
+        </span>
+      : photo
+        ? <img src={photo.src} alt={photo.alt} width={photo.w} height={photo.h} style={`object-position:${photo.pos}`} loading="lazy" decoding="async">
+        : <span class="tcard__photo-label">{photoLabel}</span>}
     {/* 日付は写真の左上に重ねる */}
     <span class="date-chip date-chip--card tcard__date">
       <span class="date-chip__md">{chip.md}</span>

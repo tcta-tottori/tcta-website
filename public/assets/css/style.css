@@ -1469,6 +1469,11 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 .tcard__photo img { display: block; width: 100%; height: 100%; object-fit: cover; transition: transform .6s var(--ease), filter .4s ease; }
 @media (hover: hover) { .tcard:hover .tcard__photo img { transform: scale(1.04); } }
 .tcard__photo--none { display: flex; align-items: center; justify-content: center; }
+/* 結果の出た大会：優勝者の写真を重ねておき、.is-on の1枚だけを見せてゆっくり入れ替える（ディゾルブ。main.js の initCardSlides） */
+.tcard__slides { position: absolute; inset: 0; display: block; }
+.tcard__photo .tcard__slide { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 35%; opacity: 0; transition: opacity 1.2s ease, transform .6s var(--ease); }
+.tcard__photo .tcard__slide.is-on { opacity: 1; }
+@media (prefers-reduced-motion: reduce) { .tcard__photo .tcard__slide { transition: none; } }
 /* 写真の左上に重ねる日付（白い札に影を付けて、写真の上でも読めるようにする） */
 .tcard__photo .tcard__date {
   position: absolute;
