@@ -52,13 +52,45 @@ const description = g ? `${g.yearLabel}に行われた${g.title}の結果です�
 
 // 束ねたページごとに、画像のかたまり・入賞者・PDFを組む。できるだけ写真と入賞者の名前をセットにする。
 // 画像を「結果表（1枚以上）→ 写真」のまとまりに切り、次の順に試す（旧サイトの並びが種目順だったため）：
+//   0. ファイル名の種目の記号（mas＝男子A級シングルス、w45d＝女子45歳以上ダブルス など）で、写真のあるまとまりが
+//      すべてどれか1つの種目に当てはまる … その種目に。記号が無い・当てはまらないまとまりは種目なし
 //   1. まとまりの数 ＝ 種目の数        … n番目のまとまり ＝ n番目の種目。その種目の入賞者を写真1枚ずつに添える
+//      （結果表のあるまとまり・写真のあるまとまりの数が種目の数と同じときも、それぞれの順で同じこと。
+//        先頭の集合写真だけのまとまりや、写真の無い結果表だけのまとまりを除いて数える）
 //   2. 結果画像の数 ＝ 種目の数        … 結果画像1枚ごとに切り直して同じこと
 //   3. まとまりの数 ＝ 入賞者の数      … n番目のまとまり ＝ n番目の入賞者（同じ種目に優勝が2人いて、それぞれ表と写真があるときなど）
 //   4. 結果画像の数 ＝ 入賞者の数      … 結果画像1枚ごとに切り直して同じこと
 //   5. 写真の数 ＝ 入賞者の数          … 種目は分からないが、写真の順に入賞者を1人ずつ添える
 //   6. それでも合わなければ、入賞者の名前は画像のあとに種目ごとに並べる（loose）
 // 各まとまり：{ sheets, photos, category, caps: 写真ごとの入賞者 { category, text } か null, extra: 写真の無い入賞者 }
+/** 種目名 → ファイル名に使われる記号（男子A級シングルス → mas、女子45歳以上ダブルス → w45d）。作れないときは null */
+const catCode = (name) => {
+  const t = String(name ?? '').normalize('NFKC');
+  const g = /^男子/.test(t) ? 'm' : /^女子/.test(t) ? 'w' : null;
+  const lv = (t.match(/([ABC])級/) || [])[1]?.toLowerCase() ?? (t.match(/(\d{2})歳以上/) || [])[1] ?? null;
+  const ty = /シングルス/.test(t) ? 's' : /ダブルス/.test(t) ? 'd' : null;
+  return g && lv && ty ? g + lv + ty : null;
+};
+/** 画像のファイル名から種目の記号を拾う（…-mas-002.webp、…_m45d-001.webp など） */
+const fileCodes = (imgs) => imgs.flatMap((p) => [...String(p.src).split('/').pop().matchAll(/(?:^|[-_])([mw](?:[abc]|\d{2})[sd])(?=[-_.\d])/gi)].map((m) => m[1].toLowerCase()));
+/** ファイル名の記号で、写真のあるまとまりをすべて種目に当てはめられるとき、まとまりごとの種目（無いところは null）。できなければ null */
+const codeMatch = (runs, cats) => {
+  const byCode = new Map();
+  for (const c of cats) { const k = catCode(c.category); if (!k || byCode.has(k)) return null; byCode.set(k, c); }
+  if (byCode.size < 2) return null;
+  const used = new Set();
+  const out = runs.map((b) => {
+    const codes = [...new Set(fileCodes(b.photos).length ? fileCodes(b.photos) : fileCodes(b.sheets).slice(-1))];
+    const hit = codes.map((k) => byCode.get(k)).filter(Boolean);
+    return hit.length === 1 ? hit[0] : null;
+  });
+  for (let k = 0; k < runs.length; k++) {
+    if (!runs[k].photos.length) continue;
+    if (!out[k] || used.has(out[k])) return null;
+    used.add(out[k]);
+  }
+  return out.some(Boolean) ? out : null;
+};
 const placeText = (pl) => `${pl.award} ${pl.name}${pl.note ? (/^[（(]/.test(pl.note) ? pl.note : `（${pl.note}）`) : ''}`;
 const placesOf = (c) => c.places.filter((pl) => pl.name).map((pl) => ({ category: c.category, text: placeText(pl) }));
 // ギャラリーを別ページに出すときは、その分をここから外す
@@ -77,12 +109,28 @@ const parts = inline.map((e) => {
     b.extra = places.slice(b.photos.length);
   };
   const fill = (list, units, pick) => { let n = 0; for (const b of list) { const u = b.sheets.length ? units[n++] : null; if (u) pick(b, u); else give(b, null, []); } };
-  if (cats.length && runs.length === cats.length && runs.some((r) => r.sheets.length)) {
-    fill(runs, cats, (b, c) => give(b, c.category, placesOf(c)));
+  // 条件に合うまとまりにだけ、順に割り当てる（合わないまとまりは種目なし）
+  const fillIf = (list, units, ok, pick) => { let n = 0; for (const b of list) { const u = ok(b) ? units[n++] : null; if (u) pick(b, u); else give(b, null, []); } };
+  const hasPhoto = (b) => b.photos.length > 0;
+  const hasSheet = (b) => b.sheets.length > 0;
+  const byCode = codeMatch(runs, cats);
+  if (byCode) {
+    runs.forEach((b, k) => (byCode[k] ? give(b, byCode[k].category, placesOf(byCode[k])) : give(b, null, [])));
+    loose = cats.filter((c) => !byCode.includes(c)).flatMap(placesOf);
+  } else if (cats.length && runs.length === cats.length && runs.some(hasSheet)) {
+    runs.forEach((b, k) => give(b, cats[k].category, placesOf(cats[k])));
+  } else if (cats.length && runs.filter(hasSheet).length === cats.length) {
+    fillIf(runs, cats, hasSheet, (b, c) => give(b, c.category, placesOf(c)));
+  } else if (cats.length && runs.filter(hasPhoto).length === cats.length && runs.some(hasSheet)) {
+    fillIf(runs, cats, hasPhoto, (b, c) => give(b, c.category, placesOf(c)));
   } else if (cats.length && withSheet(perSheet).length === cats.length) {
     blocks = perSheet; fill(perSheet, cats, (b, c) => give(b, c.category, placesOf(c)));
   } else if (flat.length && runs.length === flat.length && runs.some((r) => r.sheets.length)) {
     fill(runs, flat, (b, p) => give(b, p.category, [p]));
+  } else if (flat.length && runs.filter(hasSheet).length === flat.length) {
+    fillIf(runs, flat, hasSheet, (b, p) => give(b, p.category, [p]));
+  } else if (flat.length && runs.filter(hasPhoto).length === flat.length && runs.some(hasSheet)) {
+    fillIf(runs, flat, hasPhoto, (b, p) => give(b, p.category, [p]));
   } else if (flat.length && withSheet(perSheet).length === flat.length) {
     blocks = perSheet; fill(perSheet, flat, (b, p) => give(b, p.category, [p]));
   } else {
