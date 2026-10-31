@@ -1,6 +1,7 @@
 ---
 import Base from '../layouts/Base.astro';
 import { siteData } from '../lib/cms.js';
+import { LINE_OFFICIAL } from '../data/links.js';
 
 // 「該当する大会」の選択肢：今年度の大会（大会情報ページと同じ一覧）を開催順に。
 // 「第56回」「令和8年度」「2026」などの回数・年度は省いて短くし、同じ名前になる大会（東部地区の単・複など）は種目を添えて分ける
@@ -40,15 +41,24 @@ const description = "鳥取市テニス協会へのお問い合わせフォー�
           <h1 class="page-title">お問い合わせ</h1>
         </div>
       </div>
-      <p class="page-lead fu" style="animation-delay:.15s">大会、登録、教室に関するご質問はこちらからお寄せください。</p>
+      <p class="page-lead fu" style="animation-delay:.15s">大会、登録、教室に関するご質問はこちらからお寄せください。LINE公式アカウントからもお問い合わせいただけます。</p>
     </div>
   </section>
 
   <section class="section">
     <div class="container">
-      {/* フォームだけを1列で（LINE 公式アカウントの案内は載せない） */}
-      <div class="contact-wrap">
-        <div class="rv">
+      {/* 左にフォーム、右（スマホは下）に LINE 公式アカウントの入口 */}
+      <div class="split split--reverse" style="margin-top:0">
+
+        <div class="rv" style="order:2">
+          <div class="panel panel--tint">
+            <p class="panel__title">LINE公式アカウント</p>
+            <p class="prose" style="margin:0">LINEからもお問い合わせいただけます。</p>
+            <a class="btn btn--primary" style="margin-top:24px" href={LINE_OFFICIAL.url} target="_blank" rel="noopener noreferrer">LINEを開く <span class="aw">↗</span></a>
+          </div>
+        </div>
+
+        <div class="rv" style="order:1">
           <form class="form" data-validate novalidate>
             <div class="form__row">
               <label class="form__label" for="f-name">お名前 <span class="form__req">必須</span></label>
@@ -110,10 +120,11 @@ const description = "鳥取市テニス協会へのお問い合わせフォー�
 
           <div class="form-done" data-form-done role="status">
             <h2 class="form-done__title">お問い合わせを受け付けました。</h2>
-            <p class="form-done__text">数日以内にご入力のメールアドレスへご返信します。</p>
+            <p class="form-done__text">数日以内にご入力のメールアドレスへご返信します。<br>お急ぎの場合はLINE公式アカウントからご連絡ください。</p>
             <a class="btn btn--outline" href="index.html">ホームに戻る</a>
           </div>
         </div>
+
       </div>
     </div>
   </section>

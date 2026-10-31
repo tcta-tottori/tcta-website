@@ -281,8 +281,6 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   margin-top: 40px;
 }
 .split > * { min-width: 0; }
-/* お問い合わせ：フォームだけを読みやすい幅で1列に */
-.contact-wrap { max-width: 760px; }
 @media (min-width: 1024px) {
   .split { grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 48px; margin-top: 48px; }
   /* 本文が広い側（フォームなど）を左に置く場合 */
