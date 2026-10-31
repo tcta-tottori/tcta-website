@@ -1,5 +1,23 @@
 ---
 import Base from '../layouts/Base.astro';
+import { siteData } from '../lib/cms.js';
+import { LINE_OFFICIAL } from '../data/links.js';
+
+// 「該当する大会」の選択肢：今年度の大会（大会情報ページと同じ一覧）を開催順に。
+// 「第56回」「令和8年度」「2026」などの回数・年度は省いて短くし、同じ名前になる大会（東部地区の単・複など）は種目を添えて分ける
+const { SCHEDULE } = await siteData(Astro);
+const shortName = (name) => String(name ?? '')
+  .replace(/第\d+回\s*/g, '')
+  .replace(/(令和|平成)\d+年度\s*/g, '')
+  .replace(/^(19|20)\d{2}\s*/, '')
+  .trim();
+const shortCount = new Map();
+for (const t of SCHEDULE) shortCount.set(shortName(t.name), (shortCount.get(shortName(t.name)) ?? 0) + 1);
+const EVENT_OPTIONS = [...new Set(
+  [...SCHEDULE]
+    .sort((a, b) => a.date.localeCompare(b.date))
+    .map((t) => (shortCount.get(shortName(t.name)) > 1 && t.event ? `${shortName(t.name)}（${t.event}）` : shortName(t.name))),
+)];
 
 const title = "お問い合わせ｜鳥取市テニス協会";
 const description = "鳥取市テニス協会へのお問い合わせフォーム。大会・協会登録・水曜テニス教室・コートに関するご質問をお寄せください。";
@@ -23,21 +41,22 @@ const description = "鳥取市テニス協会へのお問い合わせフォー�
           <h1 class="page-title">お問い合わせ</h1>
         </div>
       </div>
-      <p class="page-lead fu" style="animation-delay:.15s">大会、登録、教室に関するご質問はこちらからお寄せください。お急ぎの場合はLINE公式アカウントもご利用いただけます。</p>
+      <p class="page-lead fu" style="animation-delay:.15s">大会、登録、教室に関するご質問はこちらからお寄せください。LINE公式アカウントからもお問い合わせいただけます。</p>
     </div>
   </section>
 
   <section class="section">
     <div class="container">
+      {/* 左にフォーム、右（スマホは下）に LINE 公式アカウントの入口 */}
       <div class="split split--reverse" style="margin-top:0">
 
         <div class="rv" style="order:2">
-          <div class="panel panel--tint">
-            <p class="panel__title">LINE公式アカウント</p>
-            <p class="prose" style="margin:0">大会情報・中止連絡もこちらで配信しています。</p>
-            <a class="btn btn--primary" style="margin-top:24px" href="#">LINEを開く <span class="aw">↗</span></a>
-          </div>
-          <p class="note">その他の連絡手段：LINE公式アカウント／Mail（協会メールアドレスは<span class="todo-note">要確認</span>）。事務局の住所・電話番号を掲載するかどうかは協会で決定してください。</p>
+          {/* LINE の色（緑）で塗りつぶした札。全体を押すと LINE 公式アカウントが別タブで開く */}
+          <a class="line-badge" href={LINE_OFFICIAL.url} target="_blank" rel="noopener noreferrer">
+            <span class="line-badge__title">LINE公式アカウント</span>
+            <span class="line-badge__text">LINEからもお問い合わせいただけます。</span>
+            <span class="line-badge__btn">LINEを開く <span class="aw" aria-hidden="true">↗</span></span>
+          </a>
         </div>
 
         <div class="rv" style="order:1">
@@ -77,11 +96,7 @@ const description = "鳥取市テニス協会へのお問い合わせフォー�
               <label class="form__label" for="f-event">該当する大会 <span class="form__opt">任意</span></label>
               <select class="select" id="f-event" name="event" data-label="該当する大会">
                 <option value="">大会に関するお問い合わせの場合にお選びください</option>
-                <option>第30回エネトピア杯ミックスダブルス</option>
-                <option>第71回鳥取健康テニス（秋期）</option>
-                <option>鳥取県テニス選手権 シングルス</option>
-                <option>第62回鳥取市テニス協会会長杯（秋季）</option>
-                <option>第41回鳥取市市長杯</option>
+                {EVENT_OPTIONS.map((n) => <option>{n}</option>)}
                 <option>その他の大会</option>
               </select>
             </div>
