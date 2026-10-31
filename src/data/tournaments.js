@@ -37,7 +37,7 @@ export const today = () => new Intl.DateTimeFormat('ja-JP', {
 export const STATUS = {
   past: { label: '終了', badge: 'badge--muted' },
   live: { label: '本日開催', badge: 'badge--open' },
-  closed: { label: '受付終了', badge: 'badge--muted' },
+  closed: { label: '受付終了', badge: 'badge--closed' },
   soon: { label: '未受付', badge: 'badge--muted' },
   open: { label: '受付中', badge: 'badge--open' },
 };

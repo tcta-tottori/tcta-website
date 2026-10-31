@@ -15,6 +15,7 @@ const count = {
   all: SCHEDULE.length,
   open: SCHEDULE.filter((t) => t.status === 'open').length,
   done: SCHEDULE.filter((t) => t.status === 'done').length,
+  upcoming: SCHEDULE.filter((t) => t.status !== 'done').length,
 };
 ---
 
@@ -63,6 +64,7 @@ const count = {
         {/* 絞り込みは1つの枠に並べた切り替え（1行）。件数は名前の右に小さく */}
         <div class="seg" data-filter-group data-filter-target="#r8-list" role="group" aria-label="大会一覧の絞り込み">
           <button class="chip seg__btn is-active" type="button" data-filter="all" aria-pressed="true">すべて<span class="seg__n">{count.all}</span></button>
+          <button class="chip seg__btn" type="button" data-filter="upcoming" aria-pressed="false">開催前<span class="seg__n">{count.upcoming}</span></button>
           <button class="chip seg__btn" type="button" data-filter="open" aria-pressed="false">受付中<span class="seg__n">{count.open}</span></button>
           <button class="chip seg__btn" type="button" data-filter="done" aria-pressed="false">終了<span class="seg__n">{count.done}</span></button>
         </div>
