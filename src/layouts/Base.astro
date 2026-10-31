@@ -34,6 +34,8 @@ const {
   home = false,
   navActive,
   mobileNavActive,
+  // 本文の末尾の入会への誘い（Cta）を出すか。入会案内のページ自身では出さない
+  cta = true,
 } = Astro.props;
 ---
 
@@ -122,7 +124,7 @@ const {
 
 <main id="main">
   <slot />
-  <Cta />
+  {cta && <Cta />}
 </main>
 
 <SiteFooter />
