@@ -1683,8 +1683,7 @@
     var PDFJS = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/';
     var ICON = {
       dl: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>',
-      print: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 9V3h10v6M7 17H4v-7h16v7h-3M7 14h10v7H7z"/></svg>',
-      close: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>'
+      print: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 9V3h10v6M7 17H4v-7h16v7h-3M7 14h10v7H7z"/></svg>'
     };
 
     var box = document.createElement('div');
@@ -1698,7 +1697,7 @@
         '<div class="pdfv__actions">' +
           '<a class="pdfv__btn pdfv__btn--dl" href="#" download>' + ICON.dl + '<span>ダウンロード</span></a>' +
           '<button class="pdfv__btn pdfv__btn--print" type="button">' + ICON.print + '<span>印刷</span></button>' +
-          '<button class="pdfv__close" type="button" aria-label="閉じる">' + ICON.close + '</button>' +
+          '<button class="pdfv__close" type="button" aria-label="閉じる"><span></span><span></span><span></span></button>' +
         '</div>' +
       '</div>' +
       '<div class="pdfv__body"><p class="pdfv__status" aria-live="polite"></p><div class="pdfv__pages"></div></div>';
@@ -1816,7 +1815,7 @@
       document.documentElement.classList.add('is-pdfv');
       body.scrollTop = 0;
       opened = true;
-      requestAnimationFrame(function () { box.classList.add('is-open'); });
+      requestAnimationFrame(function () { requestAnimationFrame(function () { box.classList.add('is-open'); }); });
       try { history.pushState({ pdfv: 1 }, ''); pushed = true; } catch (x) { pushed = false; }
       render(src, a.getAttribute('data-type') || 'pdf');
       closeBtn.focus();
@@ -1827,7 +1826,7 @@
       job++;
       box.classList.remove('is-open');
       document.documentElement.classList.remove('is-pdfv');
-      setTimeout(function () { if (!opened) { box.hidden = true; clear(); } }, 300);
+      setTimeout(function () { if (!opened) { box.hidden = true; clear(); } }, 700); // 地が下がり終わってから（style.css の --pv-down-delay ＋ --pv-down）
       if (last) last.focus();
     };
     // 閉じる・Esc は履歴を1つ戻し（積んだ分を消す）、戻ったときに閉じる
