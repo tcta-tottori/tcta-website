@@ -152,6 +152,14 @@ export const LINKS = [
 export const LINKS_ASSOC = LINKS.filter((l) => l.row === 'assoc');
 /** トップページのマーキー下段（施設・クラブ・協賛など） */
 export const LINKS_OTHER = LINKS.filter((l) => l.row !== 'assoc');
+/**
+ * トップページのマーキー（3段）。リンク集の並び順のまま、前から3つに分ける（段ごとの枚数がほぼそろう）。
+ * 上の段から 右へ／左へ／右へ と交互に流す（index.html.astro）
+ */
+const rowSize = (i) => Math.floor(LINKS.length / 3) + (i < LINKS.length % 3 ? 1 : 0); // 13件なら 5・4・4
+export const LINK_ROWS = [0, 1, 2]
+  .map((i) => { const from = [0, 1, 2].slice(0, i).reduce((n, j) => n + rowSize(j), 0); return LINKS.slice(from, from + rowSize(i)); })
+  .filter((r) => r.length > 0);
 
 // group ごとにまとめ直したもの（links ページで使う）。
 // 中身が空のグループは落とすので、LINKS を減らしても見出しだけ残らない。

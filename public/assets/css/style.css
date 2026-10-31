@@ -1085,12 +1085,13 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 .hero__scrim {
   position: absolute;
   inset: 0;
-  /* 人の並びの下（芝生）から白へ溶かし、写真の下端より下は白。キャッチコピーはこの白い所に載る */
+  /* 人の足元のすぐ下（写真の高さの 74%）から白へ溶かし、写真の下端より上で白になる。キャッチコピーはこの白い所に載る */
   background:
     linear-gradient(180deg,
-      rgba(255, 255, 255, 0) calc(var(--hp) * .76),
-      rgba(255, 255, 255, .8) calc(var(--hp) * .9),
-      #fff calc(var(--hp) - 1px));
+      rgba(255, 255, 255, 0) calc(var(--hp) * .74),
+      rgba(255, 255, 255, .55) calc(var(--hp) * .8),
+      rgba(255, 255, 255, .9) calc(var(--hp) * .87),
+      #fff calc(var(--hp) * .93));
 }
 
 
@@ -1100,6 +1101,22 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
     background:
       linear-gradient(0deg, rgba(255, 255, 255, .95) 0%, rgba(255, 255, 255, 0) 18%),
       linear-gradient(90deg, rgba(255, 255, 255, .55) 0%, rgba(255, 255, 255, 0) 24%);
+  }
+  /* 写真（正方形を枠いっぱいに切り抜き）の中の足元の位置から白へ溶かす。
+     枠（.hero__media）の幅・高さ（cqw / cqh）から、写真の一辺 --s と上へはみ出した分 --oy を出し、足元は写真の高さの 74% */
+  @supports (width: 1cqw) {
+    .hero__media { container-type: size; }
+    .hero__scrim {
+      --s: max(100cqw, 100cqh);
+      --oy: calc((100cqh - var(--s)) / 2);
+      background:
+        linear-gradient(180deg,
+          rgba(255, 255, 255, 0) calc(var(--oy) + var(--s) * .74),
+          rgba(255, 255, 255, .55) calc(var(--oy) + var(--s) * .8),
+          rgba(255, 255, 255, .9) calc(var(--oy) + var(--s) * .87),
+          #fff calc(var(--oy) + var(--s) * .93)),
+        linear-gradient(90deg, rgba(255, 255, 255, .55) 0%, rgba(255, 255, 255, 0) 24%);
+    }
   }
 }
 
@@ -1118,7 +1135,7 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
    2枚重ねると字がわずかにずれて立体的に見えてしまうので、重ねないこと。 */
 .pb {
   display: block;
-  font: 700 clamp(31px, 7.4vw, 62px)/1.12 var(--fdisp);
+  font: 700 clamp(38px, 10.8vw, 84px)/1.12 var(--fdisp);
   letter-spacing: .06em;
   white-space: nowrap;
 }
@@ -1295,7 +1312,7 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   .hero { grid-template-columns: 50% 50%; }
   /* 左の列に収まる大きさにする。列幅は「画面の半分 − コンテナの左余白」なので、
      画面が広くなっても content の幅はほぼ一定になる。 */
-  .hero .pb { font-size: clamp(38px, 4.6vw, 58px); }
+  .hero .pb { font-size: clamp(46px, 4.9vw, 68px); }
   .hero__media {
     grid-area: 1 / 2;
   }
@@ -1627,7 +1644,9 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
    .hpin を画面に止め（sticky。top は main.js がヘッダーの高さか、区画が高いときは下端がそろう位置に入れる）、
    止まっている長さ（.hpin-track の高さ）は main.js が「区画の高さ＋横に送る幅」で入れる。
    止めているあいだは縦のスクロール量をそのまま横の位置にするので、吸い付き（scroll-snap）は切る */
-.is-hpin .hpin { position: sticky; }
+.is-hpin .hpin { position: sticky; background: var(--gray-100); }
+/* 背景の英字は止める区画の見出しに合わせる（--hpin-pad は main.js が入れる、中身の上の余白） */
+.is-hpin .hpin > .ghost { top: calc(var(--hpin-pad, 0px) + var(--head-half)); }
 .is-hpin .carousel { scroll-snap-type: none; }
 
 /* ---- 入ってきたときの動き（.js-intro → .is-intro。main.js）----
