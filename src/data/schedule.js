@@ -28,7 +28,7 @@ export const KIND_KEY = { '協会主催': 'main', '預かり': 'extra', 'その�
 
 export const STATUS_LABEL = {
   done: { label: '終了', badge: 'badge--muted' },
-  closed: { label: '受付終了', badge: 'badge--muted' },
+  closed: { label: '受付終了', badge: 'badge--closed' },
   open: { label: '受付中', badge: 'badge--open' },
   soon: { label: '未受付', badge: 'badge--muted' },
   live: { label: '本日開催', badge: 'badge--open' },

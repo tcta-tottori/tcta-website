@@ -94,7 +94,7 @@ const parts = (text) => String(text ?? '').split(/(?<=[／/・])|(?=（)/);
       {rows.map(({ t, e, date, buttons, badge }) => (
         <div
           class:list={['tlx__row', t.status === 'done' && 'tlx__row--done']}
-          data-tags={`${t.status} ${t.reg}`}
+          data-tags={`${t.status} ${t.reg}${t.status !== 'done' ? ' upcoming' : ''}`}
           role="listitem"
         >
           <div class="tlx__cell tlx__cell--name">
@@ -130,7 +130,7 @@ const parts = (text) => String(text ?? '').split(/(?<=[／/・])|(?=（)/);
   {/* ===== 拡大表示（トップの大会カードと同じカードを並べる） ===== */}
   <div class="tl__cards" role="list" aria-label={caption}>
     {rows.map(({ t, card }) => (
-      <div class="tl__card" data-tags={`${t.status} ${t.reg}`} role="listitem">
+      <div class="tl__card" data-tags={`${t.status} ${t.reg}${t.status !== 'done' ? ' upcoming' : ''}`} role="listitem">
         <TournamentCard tournament={card} />
       </div>
     ))}
