@@ -1102,25 +1102,17 @@
           photo.hidden = false;
         } else photo.hidden = true;
       }
-      /* 地図の下のバッジ：屋内（画像）→ サーフェス（画像があれば画像）→ 面数 → 設備（夜間照明は濃い黄色） */
+      /* 地図の下のコートの情報：「オムニコート | 16面 | 夜間照明あり」の1行（札にはしない。style.css の .cinfo） */
       function showBadges(c) {
         if (!badges) return;
         badges.textContent = '';
         if (!c) return;
-        var add = function (text, cls) {
-          var s = document.createElement('span'); s.className = 'badge' + (cls ? ' ' + cls : ''); s.textContent = text; badges.appendChild(s);
+        var add = function (text) {
+          var s = document.createElement('span'); s.textContent = text; badges.appendChild(s);
         };
-        var addImg = function (b, alt) {
-          var im = document.createElement('img');
-          im.className = 'badge badge--img'; im.src = b.img; im.alt = alt; im.width = b.w; im.height = b.h; im.decoding = 'async';
-          badges.appendChild(im);
-        };
-        if (c.badge) {
-          if (c.badge.indoor) addImg(c.badge.indoor, c.badge.indoor.alt);
-          addImg(c.badge, c.surface || '');
-        } else if (c.surface) add(c.surface);
+        if (c.surface) add(c.surface);
         if (c.faces) add(c.faces + '面');
-        (c.features || []).forEach(function (f) { add(f, /^夜間照明/.test(f) ? 'badge--light' : ''); });
+        (c.features || []).forEach(add);
       }
       /* 写真のタップ：地図の枠の中いっぱい（余白 12px）まで滑らかに拡大し、しばらくして元に戻る。もう一度押せばすぐ戻る */
       var zoomTimer = null;

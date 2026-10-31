@@ -4,15 +4,13 @@
 // トップのコート案内の一覧の行を押すと、このページのその施設の節（#<id>）に飛ぶ。
 import Base from '../layouts/Base.astro';
 import Icon from '../components/Icon.astro';
-import { COURTS, mapLink, courtSpec, surfaceBadge, isLightFeature } from '../data/courts.js';
+import { COURTS, mapLink, courtSpec } from '../data/courts.js';
 
 const title = 'コート案内｜鳥取市テニス協会';
 const description = '鳥取市テニス協会が大会・教室で使用するテニスコートのご案内。住所、コートの面数と種類、予約・申込先、電話番号、公式ページをまとめています。';
 
 /** 電話番号のリンク（数字とハイフン以外を落とす） */
 const telHref = (tel) => `tel:${String(tel).replace(/[^0-9+]/g, '')}`;
-// サーフェスのバッジ（画像）と夜間照明の判定は courts.js の surfaceBadge / isLightFeature（地図の下のバッジと共通）
-const isLight = isLightFeature;
 
 ---
 
@@ -57,16 +55,12 @@ const isLight = isLightFeature;
                 {/* 写真が出たあとで文字を出す。施設名とバッジのあいだに線があるつもりで、施設名はその線から上へ、
                     バッジは線から下へ滑り出す（.cfac__cap-top / .cfac__cap-bottom が切り取りの箱。style.css） */}
                 <div class="cfac__cap-top"><h2 class="cfac__name"><Icon name="pin" class="court-pin" />{c.name}</h2></div>
-                <div class="cfac__cap-bottom"><p class="cfac__badges">
-                  {c.main && <span class="badge badge--open">主会場</span>}
-                  {c.surface && (surfaceBadge(c.surface)
-                    ? <>
-                        {surfaceBadge(c.surface).indoor && <img class="badge badge--img" src={surfaceBadge(c.surface).indoor.img} alt={surfaceBadge(c.surface).indoor.alt} width={surfaceBadge(c.surface).indoor.w} height={surfaceBadge(c.surface).indoor.h} loading="lazy" decoding="async">}
-                        <img class="badge badge--img" src={surfaceBadge(c.surface).img} alt={c.surface} width={surfaceBadge(c.surface).w} height={surfaceBadge(c.surface).h} loading="lazy" decoding="async">
-                      </>
-                    : <span class="badge">{c.surface}</span>)}
-                  {c.courts > 0 && <span class="badge">{c.courts}面</span>}
-                  {c.features.map((f) => <span class:list={['badge', isLight(f) && 'badge--light']}>{f}</span>)}
+                {/* サーフェス・面数・設備は札にせず「オムニコート | 16面 | 夜間照明あり」の1行で（主会場だけ赤い文字で頭に） */}
+                <div class="cfac__cap-bottom"><p class="cfac__badges cinfo">
+                  {c.main && <span class="cinfo__main">主会場</span>}
+                  {c.surface && <span>{c.surface}</span>}
+                  {c.courts > 0 && <span>{c.courts}面</span>}
+                  {c.features.map((f) => <span>{f}</span>)}
                 </p></div>
               </div>
             </div>
