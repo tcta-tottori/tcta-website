@@ -9,7 +9,8 @@ import SnsLinks from './SnsLinks.astro';
   <DecoSquares />
   <div class="container site-footer__grid">
     <div class="site-footer__brand">
-      <img src="assets/img/logo-white.png" alt="鳥取市テニス協会 TOTTORI-CITY TENNIS ASSOCIATION" width="648" height="240">
+      {/* ヘッダーのロゴと同じ形（白）。スマホでは、いちばん下までスクロールしたときにヘッダーのロゴとちょうど重なる位置・大きさ（style.css） */}
+      <img class="site-footer__logo" src="assets/img/logo-cut-white.png" alt="鳥取市テニス協会 TOTTORI-CITY TENNIS ASSOCIATION" width="679" height="217">
       <SnsLinks class="site-footer__sns" />
     </div>
     <div><a class="fw fw--head" href="index.html">ホーム</a></div>
