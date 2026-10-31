@@ -1700,7 +1700,13 @@
           '<button class="pdfv__btn pdfv__btn--print" type="button">' + ICON.print + '<span>印刷</span></button>' +
         '</div>' +
       '</div>' +
-      '<div class="pdfv__body"><p class="pdfv__status" aria-live="polite"></p><div class="pdfv__pages"></div></div>';
+      // 読み込み中の表示（.pdfv.is-loading のあいだ。すぐ描けたときは出さない）と、2ページ目以降を描いているあいだの小さな表示
+      '<div class="pdfv__body">' + '<div class="pdfv__loading" role="status" aria-live="polite">' +
+          '<span class="pdfv__spin" aria-hidden="true"></span>' +
+          '<span class="pdfv__ltext">LOADING<span class="pdfv__dots" aria-hidden="true"><i>.</i><i>.</i><i>.</i></span></span>' +
+        '</div>' + '<div class="pdfv__pages"></div>' +
+        '<div class="pdfv__more" aria-hidden="true"><span class="pdfv__dots"><i>.</i><i>.</i><i>.</i></span></div>' +
+      '</div>';
     document.body.appendChild(box);
     // 閉じるボタンは黒地（clip-path で下がっていく）の外に置き、メニューのボタン（.hamburger）とまったく同じ位置に重ねる。
     // 開くとメニューのボタンを隠してこちらを出し、3本線 → ✕。閉じると ✕ → 3本線に戻り、黒地が下がりきってから
@@ -1731,7 +1737,6 @@
     var dl = box.querySelector('.pdfv__btn--dl');
     var printBtn = box.querySelector('.pdfv__btn--print');
     var pages = box.querySelector('.pdfv__pages');
-    var status = box.querySelector('.pdfv__status');
     var body = box.querySelector('.pdfv__body');
 
     var lib = null;
@@ -1772,7 +1777,7 @@
     };
     var fallback = function (src) {
       clear();
-      status.textContent = '';
+      box.classList.remove('is-loading', 'is-more');
       var fr = document.createElement('iframe');
       fr.className = 'pdfv__frame';
       fr.src = src;
@@ -1783,9 +1788,9 @@
     var render = function (src, type) {
       var my = ++job;
       clear();
-      box.classList.remove('is-frame', 'is-ready');
+      box.classList.remove('is-frame', 'is-ready', 'is-more');
       if (type === 'image') { addPage(src, 1, 1); box.classList.add('is-ready'); return; }
-      status.textContent = '読み込んでいます…';
+      box.classList.add('is-loading');
       loadLib().then(function (pdfjs) {
         // 日本語の PDF の文字の対応表（CMap）も同じ所から読む
         return pdfjs.getDocument({ url: src, cMapUrl: PDFJS + 'cmaps/', cMapPacked: true }).promise;
@@ -1814,7 +1819,8 @@
                   var u = URL.createObjectURL(blob);
                   urls.push(u);
                   addPage(u, n, doc.numPages);
-                  if (n === 1) { status.textContent = ''; box.classList.add('is-ready'); }
+                  if (n === 1) { box.classList.remove('is-loading'); box.classList.add('is-ready'); }
+                  box.classList.toggle('is-more', n < doc.numPages);
                 });
               });
             });
