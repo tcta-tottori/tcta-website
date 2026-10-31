@@ -183,35 +183,36 @@
   }
 
   /* ---------- トップのリンク集の VIEW ALL ----------
-     押したら、流れているバナーをその場で止め、画面の中ほどへ向けて大きくしながら白くしてから、
-     リンク集のページへ移る（style.css の .marquee-rows.is-leaving と .leave-veil）。
+     押したら、流れているバナーをその場で止め、画面の中心へ吸い込まれるように、ページ全体（#main）を
+     ゆっくり → 一気に（加速して）大きくし、最後は白く飛ばしてからリンク集のページへ移る
+     （style.css の #main.is-diving と .leave-veil）。
      戻るボタンで戻ってきたとき（ページが保存されていたとき）は元に戻して、また流す */
   function initLinksLeave() {
     var rows = document.querySelector('.marquee-rows');
     var link = rows && rows.parentElement.querySelector('.sec-more a.view-all[href="links.html"]');
-    if (!rows || !link || reduceMotion) return;
+    var main = document.getElementById('main');
+    if (!rows || !link || !main || reduceMotion) return;
     var veil = null, timer = 0;
     link.addEventListener('click', function (ev) {
       if (ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.button > 0) return; // 新しいタブで開くときは任せる
       ev.preventDefault();
       marqueeFrozen = true;
-      // 画面に見えている帯の中ほど（縦）を中心に大きくする
-      var r = rows.getBoundingClientRect();
-      var cy = Math.min(Math.max(window.innerHeight / 2 - r.top, 0), r.height);
-      rows.style.transformOrigin = '50% ' + Math.round(cy) + 'px';
-      rows.classList.add('is-leaving');
+      // 画面の中心（ページの座標）へ向かって大きくする
+      var top = main.getBoundingClientRect().top;
+      main.style.transformOrigin = '50% ' + Math.round(window.innerHeight / 2 - top) + 'px';
+      document.documentElement.classList.add('is-diving');
       veil = document.createElement('div');
       veil.className = 'leave-veil';
       document.body.appendChild(veil);
       requestAnimationFrame(function () { requestAnimationFrame(function () { veil.classList.add('is-on'); }); });
-      timer = setTimeout(function () { location.href = link.href; }, 900);
+      timer = setTimeout(function () { location.href = link.href; }, 950);
     });
     window.addEventListener('pageshow', function () {
       clearTimeout(timer);
       if (veil && veil.parentNode) veil.parentNode.removeChild(veil);
       veil = null;
-      rows.classList.remove('is-leaving');
-      rows.style.transformOrigin = '';
+      document.documentElement.classList.remove('is-diving');
+      main.style.transformOrigin = '';
       marqueeFrozen = false;
     });
   }
