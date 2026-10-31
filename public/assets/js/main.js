@@ -210,36 +210,108 @@
   }
 
   /* ---------- トップのリンク集の VIEW ALL ----------
-     押したら、流れているバナーをその場で止め、画面の中心へ吸い込まれるように、ページ全体（#main）を
-     ゆっくり → 一気に（加速して）大きくし、最後は白く飛ばしてからリンク集のページへ移る
-     （style.css の #main.is-diving と .leave-veil）。
+     押したら、流れているバナーをその場で止め、白い地を敷きながら、1枚ずつリンク集のページと同じ並び
+     （分類の順に、スマホ1列・タブレット2列・PC3列）へ並べ替えてから、リンク集のページへ移る。
+     ページ間ビュートランジションが使えるブラウザでは、並べ替えたバナーがそのままリンク集のページの
+     同じバナーの位置へ滑って収まる（写しの名前は lk-<バナーのファイル名>。Base.astro の pagereveal と style.css）。
+     使えないブラウザでは、並べ替えたところでそのまま移る。
      戻るボタンで戻ってきたとき（ページが保存されていたとき）は元に戻して、また流す */
+  function linkVtName(src) {
+    return 'lk-' + String(src || '').split('/').pop().replace(/\.[^.]+$/, '').toLowerCase().replace(/[^a-z0-9-]/g, '-');
+  }
   function initLinksLeave() {
     var rows = document.querySelector('.marquee-rows');
     var link = rows && rows.parentElement.querySelector('.sec-more a.view-all[href="links.html"]');
-    var main = document.getElementById('main');
-    if (!rows || !link || !main || reduceMotion) return;
-    var veil = null, timer = 0;
+    if (!rows || !link || reduceMotion) return;
+    var order = [];
+    try { order = JSON.parse(rows.getAttribute('data-link-order') || '[]'); } catch (x) {}
+    var canVT = ('onpageswap' in window) && window.CSS && CSS.supports && CSS.supports('view-transition-name', 'x');
+    var layer = null, timer = 0;
     link.addEventListener('click', function (ev) {
       if (ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.button > 0) return; // 新しいタブで開くときは任せる
       ev.preventDefault();
+      if (layer) return;
       marqueeFrozen = true;
-      // 画面の中心（ページの座標）へ向かって大きくする
-      var top = main.getBoundingClientRect().top;
-      main.style.transformOrigin = '50% ' + Math.round(window.innerHeight / 2 - top) + 'px';
-      document.documentElement.classList.add('is-diving');
-      veil = document.createElement('div');
-      veil.className = 'leave-veil';
-      document.body.appendChild(veil);
-      requestAnimationFrame(function () { requestAnimationFrame(function () { veil.classList.add('is-on'); }); });
-      timer = setTimeout(function () { location.href = link.href; }, 950);
+      var vw = document.documentElement.clientWidth, vh = window.innerHeight;
+      // 並べ替えた先：リンク集のページと同じ列数・幅・間隔（バナーの縦横比 1018:168）
+      var gutter = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--gutter')) || 20;
+      var cols = vw >= 1024 ? 3 : vw >= 640 ? 2 : 1;
+      var colGap = vw >= 1024 ? 36 : 32, rowGap = vw >= 1024 ? 28 : 18;
+      var inner = Math.min(vw - gutter * 2, 1200 - gutter * 2);
+      var left0 = (vw - inner) / 2;
+      var colW = (inner - colGap * (cols - 1)) / cols;
+      var bw = colW * 0.88, bh = bw * 168 / 1018;
+      var headH = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--header-h')) || 76;
+      var top0 = headH + 40;
+
+      layer = document.createElement('div');
+      layer.className = 'lk-layer';
+      document.body.appendChild(layer);
+
+      // 今の画面に見えているバナー（複製でない方を優先）を、リンク集の並びの順に拾う
+      var seen = {};
+      var cards = Array.prototype.slice.call(rows.querySelectorAll('.link-card__banner'));
+      var pick = function (src) {
+        var best = null, bestScore = -1;
+        cards.forEach(function (img) {
+          if ((img.getAttribute('src') || '') !== src) return;
+          var r = img.getBoundingClientRect();
+          var visible = r.right > 0 && r.left < vw && r.bottom > 0 && r.top < vh;
+          var score = (visible ? 2 : 0) + (img.closest('[aria-hidden="true"]') ? 0 : 1);
+          if (score > bestScore) { best = r; bestScore = score; }
+        });
+        return best;
+      };
+      var mid = rows.getBoundingClientRect();
+      // 分類ごとに行を改め、分類のあいだは少し空ける（リンク集のページの見出しの位置）
+      var items = [], y = top0, groupGap = vw >= 1024 ? 30 : 22;
+      order.forEach(function (group, gi) {
+        var list = (Array.isArray(group) ? group : [group]).filter(function (src) { if (!src || seen[src]) return false; seen[src] = 1; return true; });
+        if (!list.length) return;
+        if (gi > 0) y += groupGap;
+        list.forEach(function (src, j) {
+          items.push({ src: src, x: left0 + (j % cols) * (colW + colGap) + (colW - bw) / 2, y: y + Math.floor(j / cols) * (bh + rowGap) });
+        });
+        y += Math.ceil(list.length / cols) * (bh + rowGap);
+      });
+      items.forEach(function (it, i) {
+        var src = it.src;
+        var from = pick(src);
+        var tx = it.x;
+        var ty = it.y;
+        var img = document.createElement('img');
+        img.className = 'lk-layer__img';
+        img.src = src;
+        img.alt = '';
+        img.style.left = tx + 'px';
+        img.style.top = ty + 'px';
+        img.style.width = bw + 'px';
+        img.style.height = bh + 'px';
+        if (canVT) { img.style.viewTransitionName = linkVtName(src); img.style.setProperty('view-transition-class', 'lk'); }
+        layer.appendChild(img);
+        // FLIP：今の位置・大きさから、並べ替えた先へ
+        var fx, fy, fs, fo = 1;
+        if (from && from.width > 0) {
+          fx = from.left - tx; fy = from.top - ty; fs = from.width / bw;
+        } else {
+          fx = (vw / 2 - bw / 2) - tx; fy = (mid.top + mid.height / 2 - bh / 2) - ty; fs = .6; fo = 0;
+        }
+        img.animate([
+          { transform: 'translate(' + fx + 'px,' + fy + 'px) scale(' + fs + ')', opacity: fo },
+          { transform: 'none', opacity: 1 }
+        ], { duration: 720, delay: 120 + i * 28, easing: 'cubic-bezier(.7, 0, .2, 1)', fill: 'both' });
+      });
+      requestAnimationFrame(function () { layer.classList.add('is-on'); });
+      var total = 120 + items.length * 28 + 720 + 80;
+      timer = setTimeout(function () {
+        if (canVT) { try { sessionStorage.setItem('tcta-links-vt', '1'); } catch (x) {} }
+        location.href = link.href;
+      }, total);
     });
     window.addEventListener('pageshow', function () {
       clearTimeout(timer);
-      if (veil && veil.parentNode) veil.parentNode.removeChild(veil);
-      veil = null;
-      document.documentElement.classList.remove('is-diving');
-      main.style.transformOrigin = '';
+      if (layer && layer.parentNode) layer.parentNode.removeChild(layer);
+      layer = null;
       marqueeFrozen = false;
     });
   }

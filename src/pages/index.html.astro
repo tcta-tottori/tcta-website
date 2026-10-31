@@ -6,7 +6,7 @@ import NewsRow from '../components/NewsRow.astro';
 import Icon from '../components/Icon.astro';
 import { siteData } from '../lib/cms.js';
 import { today } from '../data/tournaments.js';
-import { LINK_ROWS } from '../data/links.js';
+import { LINK_ROWS, LINK_GROUPS } from '../data/links.js';
 import { NEWS_VISIBLE } from '../data/news.js';
 import { COURTS_HOME, CITY_RESERVE } from '../data/courts.js';
 import CourtMap from '../components/CourtMap.astro';
@@ -265,7 +265,8 @@ const upcomingTournaments = TOURNAMENTS.filter((t) => t.status !== 'past');
 
     {/* 3段組み。リンク集の並び順のまま3つに分け（src/data/links.js の LINK_ROWS）、
         上の段から 右へ／左へ／右へ と交互に流す。画面いっぱいに流したいので、コンテナの外に置いている。 */}
-    <div class="marquee-rows rv">
+    {/* data-link-order：リンク集のページの並び（分類ごとの配列）のバナー。VIEW ALL を押したとき、この順に並べ替えてから移る（main.js の initLinksLeave） */}
+    <div class="marquee-rows rv" data-link-order={JSON.stringify(LINK_GROUPS.map((g) => g.items.map((l) => l.banner).filter(Boolean)).filter((g) => g.length))}>
       {LINK_ROWS.map((row, i) => (
         <div class="marquee" data-marquee data-marquee-dir={i % 2 === 0 ? '1' : '-1'}>
           <div class="marquee__track">
