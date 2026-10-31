@@ -31,6 +31,8 @@ const ITEMS = [...MOBILE_NAV, { key: 'contact', label: 'お問い合わせ', hre
   {/* 下端に寄せる：SNS と著作権の表記（フッターと同じ） */}
   <div class="mobile-nav__foot">
     <div class="mobile-nav__sns" style={`--i:${ITEMS.length}`}><SnsLinks /></div>
-    <p class="mobile-nav__copy" style={`--i:${ITEMS.length + 1}`}><span>© Tottori-City Tennis Association All Rights Reserved.</span></p>
+    {/* 著作権の表記の上に、キャッチコピー（トップのヒーローと同じ書体） */}
+    <p class="mobile-nav__copy mobile-nav__tagline" style={`--i:${ITEMS.length + 1}`}><span class="tagline">PLAY BEYOND.</span></p>
+    <p class="mobile-nav__copy" style={`--i:${ITEMS.length + 2}`}><span>© Tottori-City Tennis Association All Rights Reserved.</span></p>
   </div>
 </div>

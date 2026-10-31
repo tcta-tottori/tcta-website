@@ -318,6 +318,22 @@
         layer.appendChild(img);
         clones[src] = { el: img, x: r ? r.left : vw / 2 - w / 2, y: r ? r.top : mid.top + mid.height / 2 - h / 2, w: w };
       });
+      // 協会のロゴはそのまま見せておく（白い地の上の、ヘッダーと同じ位置に写しを置く。リンク集のページも同じ位置にロゴがある）
+      var logo = document.querySelector('.site-header__logo img');
+      if (logo) {
+        var lr = logo.getBoundingClientRect();
+        var hdr = document.querySelector('.site-header');
+        if (lr.bottom <= 0 && hdr) lr = { left: lr.left, top: lr.top + hdr.offsetHeight, width: lr.width, height: lr.height }; // 引っ込んでいるヘッダー
+        var lg = document.createElement('img');
+        lg.className = 'lk-layer__logo';
+        lg.src = logo.currentSrc || logo.src;
+        lg.alt = '';
+        lg.style.left = lr.left + 'px';
+        lg.style.top = lr.top + 'px';
+        lg.style.width = lr.width + 'px';
+        lg.style.height = lr.height + 'px';
+        layer.appendChild(lg);
+      }
       requestAnimationFrame(function () { layer.classList.add('is-on'); });
 
       /* 1段目：今の位置から、画面いっぱいの升目（全部が1画面に収まるいちばん大きな列数）へ並べ替える */
