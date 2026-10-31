@@ -366,7 +366,8 @@
       // 並べ終えて、少し間を置いてから2段目へ
       var stage2At = Date.now() + STAGE1 + N * LAG1 + 260;
 
-      /* 2段目：升目から、リンク集のページの実際の位置へ。1枚ずつ少し遅らせながら（ラグ）なめらかに広げる。targets：src → 画面上の位置と幅 */
+      /* 2段目：升目から、リンク集のページの実際の位置へ。下の1枚から順に少し遅らせながら（ラグ）、
+         出だしはゆっくり・途中で速く・最後はすっと止まる緩急をつけて動かす。targets：src → 画面上の位置と幅 */
       var started = false;
       var arrange = function (targets, withFrame) {
         if (started || !layer) return;
@@ -374,6 +375,8 @@
         clearTimeout(fallbackTimer);
         var wait = Math.max(0, stage2At - Date.now());
         var i = 0;
+        var LAG2 = 60, DUR2 = 820;
+        var moving = srcs.filter(function (src) { return clones[src] && targets[src]; });
         srcs.forEach(function (src) {
           var c = clones[src], t = targets[src];
           if (!c || c.done) return;
@@ -384,10 +387,10 @@
           el.animate([
             { transform: from, opacity: 1 },
             { transform: 'translate(' + (t.x - c.x) + 'px,' + (t.y - c.y) + 'px) scale(' + (t.w / c.w) + ')', opacity: 1 }
-          ], { duration: 720, delay: wait + i * 55, easing: 'cubic-bezier(.55, 0, .15, 1)', fill: 'both' });
+          ], { duration: DUR2, delay: wait + (moving.length - 1 - moving.indexOf(src)) * LAG2, easing: 'cubic-bezier(.75, 0, .2, 1)', fill: 'both' });
           i++;
         });
-        var total = wait + Math.max(0, i - 1) * 55 + 720;
+        var total = wait + Math.max(0, i - 1) * LAG2 + DUR2;
         timer = setTimeout(function () {
           var go = function () {
             try { sessionStorage.setItem('tcta-links-vt', '1'); } catch (x) {}
