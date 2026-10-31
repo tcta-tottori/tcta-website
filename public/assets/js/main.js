@@ -6,6 +6,8 @@
   'use strict';
 
   var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  // トップのリンク集の VIEW ALL を押したあと、流れるバナーを止めておく（initLinksLeave）
+  var marqueeFrozen = false;
 
   /* ---------- オープニング（全画面の映像） ----------
      出すかどうかは Base.astro の <head> 内スクリプトが決め済み（html.splash-on）。
@@ -167,7 +169,7 @@
       var dt = (now - last) / 1000;
       last = now;
       // タブを離れていた等で間が空いたフレームは、飛ばさず捨てる
-      if (dt > 0 && dt < .1 && onScreen && !hovering && now >= holdUntil) {
+      if (dt > 0 && dt < .1 && onScreen && !hovering && !marqueeFrozen && now >= holdUntil) {
         view.scrollLeft += SPEED * dt * dir;
       }
       // 端に来たら半分ぶん入れ替える（見た目は同じなので継ぎ目が出ない）
@@ -178,6 +180,40 @@
       requestAnimationFrame(tick);
     };
     requestAnimationFrame(function (now) { last = now; requestAnimationFrame(tick); });
+  }
+
+  /* ---------- トップのリンク集の VIEW ALL ----------
+     押したら、流れているバナーをその場で止め、画面の中ほどへ向けて大きくしながら白くしてから、
+     リンク集のページへ移る（style.css の .marquee-rows.is-leaving と .leave-veil）。
+     戻るボタンで戻ってきたとき（ページが保存されていたとき）は元に戻して、また流す */
+  function initLinksLeave() {
+    var rows = document.querySelector('.marquee-rows');
+    var link = rows && rows.parentElement.querySelector('.sec-more a.view-all[href="links.html"]');
+    if (!rows || !link || reduceMotion) return;
+    var veil = null, timer = 0;
+    link.addEventListener('click', function (ev) {
+      if (ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.button > 0) return; // 新しいタブで開くときは任せる
+      ev.preventDefault();
+      marqueeFrozen = true;
+      // 画面に見えている帯の中ほど（縦）を中心に大きくする
+      var r = rows.getBoundingClientRect();
+      var cy = Math.min(Math.max(window.innerHeight / 2 - r.top, 0), r.height);
+      rows.style.transformOrigin = '50% ' + Math.round(cy) + 'px';
+      rows.classList.add('is-leaving');
+      veil = document.createElement('div');
+      veil.className = 'leave-veil';
+      document.body.appendChild(veil);
+      requestAnimationFrame(function () { requestAnimationFrame(function () { veil.classList.add('is-on'); }); });
+      timer = setTimeout(function () { location.href = link.href; }, 900);
+    });
+    window.addEventListener('pageshow', function () {
+      clearTimeout(timer);
+      if (veil && veil.parentNode) veil.parentNode.removeChild(veil);
+      veil = null;
+      rows.classList.remove('is-leaving');
+      rows.style.transformOrigin = '';
+      marqueeFrozen = false;
+    });
   }
 
   /* ---------- 押したときの波紋 ----------
@@ -1806,6 +1842,7 @@
     initReveal();
     initEventIcons();
     initMarquee();
+    initLinksLeave();
     initHeader();
     initRipple();
     initPressed();
