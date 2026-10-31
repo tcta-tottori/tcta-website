@@ -4,9 +4,9 @@ import Base from '../layouts/Base.astro';
 const title = "入会案内｜鳥取市テニス協会";
 const description = "鳥取市テニス協会の入会案内。登録の種類、登録費、登録の流れ、よくある確認事項を掲載しています。";
 
-/** 登録の用紙。kind は札の塗り分け（both＝市・県どちらにも使う／shi＝市／ken＝県） */
+/** 登録の用紙。kind は札の塗り分け（shi＝赤の塗り・白文字／ken＝赤い線・赤文字。個人（市・県）は県と同じ） */
 const REG_FORMS = [
-  { kind: 'both', title: '個人登録（市・県）', desc: '個人で登録する方（市登録・県登録とも同じ用紙）', file: '令和8年度 個人登録用紙（市・県）', src: 'assets/pdf/membership/r8-kojin-touroku.pdf', kb: 189 },
+  { kind: 'ken', title: '個人登録（市・県）', desc: '個人で登録する方（市登録・県登録とも同じ用紙）', file: '令和8年度 個人登録用紙（市・県）', src: 'assets/pdf/membership/r8-kojin-touroku.pdf', kb: 189 },
   { kind: 'shi', title: '団体登録（市）', desc: 'クラブ・団体でまとめて市登録する場合', file: '令和8年度 市登録（団体）', src: 'assets/pdf/membership/r8-shi-dantai-touroku.pdf', kb: 61 },
   { kind: 'ken', title: '団体登録（県）', desc: '県大会に出場するクラブ・団体', file: '令和8年度 県登録（団体）', src: 'assets/pdf/membership/r8-ken-dantai-touroku.pdf', kb: 62 },
 ];
@@ -43,7 +43,7 @@ const REG_FORMS = [
       <div class="rv">
         <h2 class="sub-head">登録の種類</h2>
         {/* 種類ごとに、大会情報の「登録区分」の札と同じ塗り分けにする（style.css の .regcard）。
-              市（団体）＝赤の塗り・白文字、県（団体）＝赤い線・赤文字、個人（市・県）＝両方（上が赤の塗り、まわりが赤い線）。
+              市（団体）＝赤の塗り・白文字、県（団体）と個人（市・県）＝赤い線・赤文字。
               用紙を押すと別タブではなく、このページの中で全画面に開いて印刷・ダウンロードできる（main.js の initPdfViewer） */}
         <div class="card-grid card-grid--3">
           {REG_FORMS.map((f) => (
