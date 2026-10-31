@@ -2930,8 +2930,24 @@ body.jsrv .rv.on .ink-sweep {
 }
 .site-footer__brand { grid-column: 1 / -1; margin-bottom: 32px; }
 @media (min-width: 1024px) { .site-footer__brand { grid-column: auto; margin-bottom: 0; } }
-.site-footer__brand img { width: 160px; height: auto; }
-@media (min-width: 1024px) { .site-footer__brand img { width: 190px; } }
+.site-footer__brand img { width: auto; height: 46px; }
+@media (min-width: 1024px) { .site-footer__brand img { height: 56px; } }
+/* スマホ・タブレット：フッターを画面いっぱいの高さにし、ロゴをヘッダーのロゴと同じ位置（上 12px＋帯の中ほど・左は余白）・
+   同じ大きさに置く。いちばん下までスクロールすると、画面の上端に浮いているヘッダーのロゴにちょうど重なる
+   （重なるとヘッダーのロゴは消し、フッターのロゴだけを見せる。main.js の initLogoInk の .is-over-footer） */
+@media (max-width: 1023px) {
+  .site-footer { min-height: 100vh; min-height: 100svh; display: flex; flex-direction: column; }
+  .site-footer__grid { padding-top: calc(12px + (var(--header-h) - 12px - 46px) / 2); }
+  .site-footer__bottom { margin-top: auto; }
+  .site-header .site-header__logo { transition: opacity .25s ease; }
+  .site-header.is-over-footer:not(.is-menu) .site-header__logo { opacity: 0; }
+}
+/* 背の低い画面でも1画面に収まるよう、フッターの中の余白を詰める */
+@media (max-width: 1023px) and (max-height: 720px) {
+  .site-footer__grid { padding-bottom: 20px; }
+  .site-footer__brand { margin-bottom: 20px; }
+  .site-footer__bottom { padding-bottom: 24px; gap: 14px; }
+}
 /* ロゴの下の SNS（管理画面の Social に入れたものだけ出る） */
 .site-footer__sns { display: flex; flex-wrap: wrap; gap: 8px 20px; margin-top: 20px; }
 .sns-link {

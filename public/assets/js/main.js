@@ -1332,10 +1332,15 @@
     var ticking = false;
     var check = function () {
       ticking = false;
-      if (!mobile.matches || header.classList.contains('is-menu')) { header.classList.remove('is-over-image'); return; }
+      if (!mobile.matches || header.classList.contains('is-menu')) { header.classList.remove('is-over-image', 'is-over-footer'); return; }
       var r = logo.getBoundingClientRect();
       var y = r.top + r.height / 2;
-      var hit = overImage(r.left + r.width * .15, y) || overImage(r.left + r.width / 2, y) || overImage(r.right - r.width * .15, y);
+      // フッターのロゴ（同じ形・同じ大きさ）に半分以上かかったら、ヘッダーのロゴは消してフッターのロゴだけを見せる
+      var fl = document.querySelector('.site-footer__logo');
+      var fr = fl && fl.getBoundingClientRect();
+      var overFooter = !!fr && fr.bottom > r.top && fr.top < r.bottom && Math.abs(fr.top - r.top) < r.height / 2;
+      header.classList.toggle('is-over-footer', overFooter);
+      var hit = !overFooter && (overImage(r.left + r.width * .15, y) || overImage(r.left + r.width / 2, y) || overImage(r.right - r.width * .15, y));
       header.classList.toggle('is-over-image', hit);
     };
     var request = function () {
