@@ -3463,17 +3463,22 @@ body.jsrv .rv.on .ink-sweep {
 /* ---- 大会一覧の切り替え（TournamentList.astro）----
    .tl--rows のときは縮小表示（.tlx）、外れているときは拡大表示（.tl__cards）だけを出す */
 .tl--rows .tl__cards, .tl:not(.tl--rows) .tlx { display: none; }
-/* 表示を切り替えたときの出方（main.js の initViewSwitch が .is-switching と --si を付ける）。
+/* 表示を切り替えたときの出方（main.js の initViewSwitch が .is-switching・.sw-wait／.sw-in・--si を付ける）。
    縮小表示：項目名の行がふわっと出て、大会の行が上から順に左から滑り込む。
    拡大表示：カードが上から順に、下から浮き上がりながら少し大きくなって出る */
 .tl.is-switching .tlx__head { animation: tl-fade .4s ease both; }
-.tl.is-switching .tlx__body .tlx__row { animation: tl-row-in .5s var(--ease) both; animation-delay: calc(min(var(--si, 0), 14) * 40ms); }
-.tl.is-switching .tl__card { animation: tl-card-in .6s cubic-bezier(.2, .8, .2, 1) both; animation-delay: calc(min(var(--si, 0), 9) * 70ms); }
+/* 画面に入るまでは隠して待たせ（.sw-wait）、入ったら出す（.sw-in）。同じときに入ったものは --si で少しずつずらす */
+.tl .sw-wait { opacity: 0; }
+.tlx__body .tlx__row.sw-wait { transform: translateX(-24px); }
+.tl__card.sw-wait { transform: translateY(28px) scale(.95); }
+.tlx__body .tlx__row.sw-in { animation: tl-row-in .5s var(--ease) both; animation-delay: calc(min(var(--si, 0), 14) * 40ms); }
+.tl__card.sw-in { animation: tl-card-in .6s cubic-bezier(.2, .8, .2, 1) both; animation-delay: calc(min(var(--si, 0), 9) * 70ms); }
 @keyframes tl-fade { from { opacity: 0; } }
 @keyframes tl-row-in { from { opacity: 0; transform: translateX(-24px); } }
 @keyframes tl-card-in { from { opacity: 0; transform: translateY(28px) scale(.95); } }
 @media (prefers-reduced-motion: reduce) {
-  .tl.is-switching .tlx__head, .tl.is-switching .tlx__body .tlx__row, .tl.is-switching .tl__card { animation: none; }
+  .tl.is-switching .tlx__head, .tlx__body .tlx__row.sw-in, .tl__card.sw-in { animation: none; }
+  .tl .sw-wait { opacity: 1; transform: none; }
 }
 
 /* ---- 縮小表示（.tlx）：1大会1行の表 ----
