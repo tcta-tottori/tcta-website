@@ -16,19 +16,35 @@ import EventSection from '../components/EventSection.astro';
 import EventResult from '../components/EventResult.astro';
 import AwardLine from '../components/AwardLine.astro';
 import { siteData } from '../lib/cms.js';
-import { groupById, GROUPS_BY_YEAR, photoBlocks, imageRuns, clubDivisions, divisionChampion } from '../data/results.js';
+import { groupById, GROUPS_BY_YEAR, CLUB_GROUPS, photoBlocks, imageRuns, clubDivisions, divisionChampion } from '../data/results.js';
 import { sortByCategory } from '../data/category-order.js';
 
 // 令和7年度以降（EmDash の大会）の結果も、同じ URL の形（result-<slug>.html）で出す
 const g = groupById(Astro.params.id);
-const ev = g ? null : (await siteData(Astro)).eventBySlug(Astro.params.id);
+const site = await siteData(Astro);
+const ev = g ? null : site.eventBySlug(Astro.params.id);
 if (!g && !(ev && ev.hasResult)) return Astro.rewrite('/404');
 
 // 同じ年度の前後の大会（ページ下部の行き来に使う）
 const year = g ? GROUPS_BY_YEAR.find((y) => y.nendo === g.nendo) : null;
 const idx = g ? year.groups.findIndex((x) => x.id === g.id) : -1;
-const prev = g ? year.groups[idx - 1] : null;
-const next = g ? year.groups[idx + 1] : null;
+let prev = g ? year.groups[idx - 1] : null;
+let next = g ? year.groups[idx + 1] : null;
+// クラブ対抗戦は、同じ年度の前後の大会ではなく、前の年度・次の年度のクラブ対抗戦へ行き来する
+// （CLUB_GROUPS は新しい年度が先）。いちばん新しい年度の次は、管理画面の大会（令和7年度〜）の結果があればそこへ
+const isClub = !!g?.merged;
+if (isClub) {
+  const ci = CLUB_GROUPS.findIndex((x) => x.id === g.id);
+  const older = CLUB_GROUPS[ci + 1];
+  const newer = CLUB_GROUPS[ci - 1];
+  const newerEv = !newer
+    ? (site.EVENTS ?? []).filter((e) => /クラブ対抗/.test(e.name) && e.hasResult && Number(e.nendo) > Number(g.nendo)).sort((a, b) => a.date.localeCompare(b.date))[0]
+    : null;
+  prev = older ? { href: older.href, title: `${older.yearLabel} クラブ対抗戦` } : null;
+  next = newer
+    ? { href: newer.href, title: `${newer.yearLabel} クラブ対抗戦` }
+    : newerEv ? { href: `result-${newerEv.slug}.html`, title: `${newerEv.nendoLabel} ${newerEv.name.replace(/^令和\d+年度\s*/, '')}` } : null;
+}
 
 const head = g ? g.entries[0].t : null;
 const title = g ? `${g.title}（${g.yearLabel}）｜大会結果｜鳥取市テニス協会` : '';
@@ -324,13 +340,13 @@ let photoNo = 0;
         </div>
       )}
 
-      <nav class="page-nav rv" aria-label="同じ年度の大会">
+      <nav class="page-nav rv" aria-label={isClub ? '前後の年度のクラブ対抗戦' : '同じ年度の大会'}>
         {prev
-          ? <a class="page-nav__link" href={prev.href}><span class="page-nav__dir">← 前の大会</span><span class="page-nav__title">{prev.title}</span></a>
+          ? <a class="page-nav__link" href={prev.href}><span class="page-nav__dir">{isClub ? '← 前年のクラブ対抗戦' : '← 前の大会'}</span><span class="page-nav__title">{prev.title}</span></a>
           : <span></span>}
         <a class="ghost-link" href="results.html">大会結果の一覧へ</a>
         {next
-          ? <a class="page-nav__link page-nav__link--next" href={next.href}><span class="page-nav__dir">次の大会 →</span><span class="page-nav__title">{next.title}</span></a>
+          ? <a class="page-nav__link page-nav__link--next" href={next.href}><span class="page-nav__dir">{isClub ? '翌年のクラブ対抗戦 →' : '次の大会 →'}</span><span class="page-nav__title">{next.title}</span></a>
           : <span></span>}
       </nav>
 
