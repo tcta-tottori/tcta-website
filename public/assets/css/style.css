@@ -571,7 +571,20 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   pointer-events: none;
 }
 .tall__head::after { height: 28px; }
-@media (prefers-reduced-motion: reduce) { .panel-item, .is-closing .panel-item { animation: none; } }
+/* お知らせの全画面（#news-all）だけは、行が下から浮き上がって順に出る（見出しの裏から滑り出すのではなく）。
+   上の行から 45ms ずつずらす（11件目以降はまとめて）。閉じるときは下の行から順に、少し沈みながら消える */
+#news-all .panel-item {
+  animation: news-rise .55s cubic-bezier(.2, .8, .2, 1) both;
+  animation-delay: calc(var(--k) * 45ms);
+}
+#news-all.is-vt:not(.is-closing) .panel-item { animation-delay: calc(var(--k) * 45ms + .35s); }
+#news-all.is-closing .panel-item {
+  animation: news-sink .3s cubic-bezier(.4, 0, 1, 1) both;
+  animation-delay: calc(var(--tc) * 120ms);
+}
+@keyframes news-rise { from { opacity: 0; transform: translateY(32px); } to { opacity: 1; transform: none; } }
+@keyframes news-sink { from { opacity: 1; transform: none; } to { opacity: 0; transform: translateY(20px); } }
+@media (prefers-reduced-motion: reduce) { .panel-item, .is-closing .panel-item, #news-all .panel-item, #news-all.is-closing .panel-item { animation: none; } }
 
 /* 見出しの塗り替え。薄いグレーで出しきってから 0.1秒 そのまま置き、
    残りの 0.9秒 で白いスラッシュが左から右へ走り、通ったところが黒くなる。
