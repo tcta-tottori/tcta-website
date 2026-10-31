@@ -4692,8 +4692,15 @@ html.is-pdfv, html.is-pdfv body { overflow: hidden; }
   .pdfv__btn { width: 40px; padding: 0; justify-content: center; }
   .pdfv__btn span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 }
-.pdfv__close {
-  /* メニューのボタン（.hamburger）と同じ3本線。開くと ✕ に変わり、閉じると3本線に戻る */
+/* 閉じるボタン（main.js が body の直下に置く。黒地の clip-path の外なので、閉じる途中でも欠けない）。
+   メニューのボタン（.hamburger）と同じ大きさ・同じ3本線で、同じ位置に重ねる（位置は main.js が入れる。PC は帯の右端）。
+   開くと、線が黒 → 白に変わってから ✕ に。閉じると ✕ → 3本線、黒地が下がるのに合わせて白 → 黒に戻り、
+   下がりきったらメニューのボタンと入れ替わる */
+.pdfv-close {
+  position: fixed;
+  top: 8px;
+  right: 12px;
+  z-index: 3001;
   display: inline-flex;
   flex-direction: column;
   align-items: center;
@@ -4701,18 +4708,22 @@ html.is-pdfv, html.is-pdfv body { overflow: hidden; }
   gap: 6px;
   width: 44px;
   height: 44px;
-  margin-left: 2px;
   border-radius: var(--radius);
-  transition: background-color .2s ease;
 }
-.pdfv__close span { display: block; width: 22px; height: 2px; background: #fff; transition: transform .3s var(--ease), opacity .2s ease; }
-.pdfv.is-open .pdfv__close span { transition: transform .35s var(--ease) .3s, opacity .2s ease .3s; }
-.pdfv.is-open .pdfv__close span:nth-child(1) { transform: translateY(8px) rotate(45deg); }
-.pdfv.is-open .pdfv__close span:nth-child(2) { opacity: 0; }
-.pdfv.is-open .pdfv__close span:nth-child(3) { transform: translateY(-8px) rotate(-45deg); }
-.pdfv__close:hover { background: rgba(255, 255, 255, .12); }
+.pdfv-close[hidden] { display: none; }
+.pdfv-close span { display: block; width: 22px; height: 2px; background: var(--ink); transition: transform .3s var(--ease), opacity .2s ease, background-color .3s ease .25s; }
+.pdfv-close.is-open span { background: #fff; transition: transform .35s var(--ease) .35s, opacity .2s ease .35s, background-color .25s ease .15s; }
+.pdfv-close.is-open span:nth-child(1) { transform: translateY(8px) rotate(45deg); }
+.pdfv-close.is-open span:nth-child(2) { opacity: 0; }
+.pdfv-close.is-open span:nth-child(3) { transform: translateY(-8px) rotate(-45deg); }
+.pdfv-close:hover { background: rgba(255, 255, 255, .12); }
+/* 開いているあいだと閉じ終わるまでは、メニューのボタンを隠す（閉じるボタンがその場所に重なっている） */
+html.is-pdfv-menu .site-header .hamburger { visibility: hidden; }
+/* 帯の右端は閉じるボタンのぶん空ける */
+.pdfv__bar { padding-right: 64px; }
+@media (max-width: 1023px) { .pdfv__bar { min-height: var(--header-h); padding-top: 12px; } }
 @media (prefers-reduced-motion: reduce) {
-  .pdfv, .pdfv.is-open, .pdfv__close span, .pdfv__title, .pdfv__btn, .pdfv__body { transition: none !important; }
+  .pdfv, .pdfv.is-open, .pdfv-close span, .pdfv__title, .pdfv__btn, .pdfv__body { transition: none !important; }
 }
 .pdfv__body {
   position: relative;

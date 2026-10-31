@@ -1698,16 +1698,38 @@
         '<div class="pdfv__actions">' +
           '<a class="pdfv__btn pdfv__btn--dl" href="#" download>' + ICON.dl + '<span>ダウンロード</span></a>' +
           '<button class="pdfv__btn pdfv__btn--print" type="button">' + ICON.print + '<span>印刷</span></button>' +
-          '<button class="pdfv__close" type="button" aria-label="閉じる"><span></span><span></span><span></span></button>' +
         '</div>' +
       '</div>' +
       '<div class="pdfv__body"><p class="pdfv__status" aria-live="polite"></p><div class="pdfv__pages"></div></div>';
     document.body.appendChild(box);
+    // 閉じるボタンは黒地（clip-path で下がっていく）の外に置き、メニューのボタン（.hamburger）とまったく同じ位置に重ねる。
+    // 開くとメニューのボタンを隠してこちらを出し、3本線 → ✕。閉じると ✕ → 3本線に戻り、黒地が下がりきってから
+    // メニューのボタンに戻す（同じ場所・同じ形なので、そのままメニューのボタンに戻ったように見える）
+    var closeBtn = document.createElement('button');
+    closeBtn.className = 'pdfv-close';
+    closeBtn.type = 'button';
+    closeBtn.hidden = true;
+    closeBtn.setAttribute('aria-label', '閉じる');
+    closeBtn.innerHTML = '<span></span><span></span><span></span>';
+    document.body.appendChild(closeBtn);
+    var placeClose = function () {
+      var hb = document.querySelector('.site-header .hamburger');
+      var r = hb && hb.offsetParent !== null ? hb.getBoundingClientRect() : null;
+      if (r && r.width > 0) {
+        closeBtn.style.left = r.left + 'px';
+        closeBtn.style.top = r.top + 'px';
+        closeBtn.style.right = '';
+      } else {
+        // PC（メニューのボタンが無い）は帯の右端
+        closeBtn.style.left = '';
+        closeBtn.style.top = '';
+        closeBtn.style.right = '';
+      }
+    };
     var nameEl = box.querySelector('.pdfv__name');
     var subEl = box.querySelector('.pdfv__sub');
     var dl = box.querySelector('.pdfv__btn--dl');
     var printBtn = box.querySelector('.pdfv__btn--print');
-    var closeBtn = box.querySelector('.pdfv__close');
     var pages = box.querySelector('.pdfv__pages');
     var status = box.querySelector('.pdfv__status');
     var body = box.querySelector('.pdfv__body');
@@ -1733,7 +1755,7 @@
       return lib;
     };
 
-    var opened = false, pushed = false, last = null, job = 0, urls = [];
+    var opened = false, pushed = false, last = null, job = 0, urls = [], hideTimer = 0;
     var clear = function () {
       pages.innerHTML = '';
       urls.forEach(function (u) { URL.revokeObjectURL(u); });
@@ -1813,10 +1835,13 @@
       dl.href = src;
       dl.setAttribute('download', a.getAttribute('data-filename') || '');
       box.hidden = false;
-      document.documentElement.classList.add('is-pdfv');
+      placeClose();
+      closeBtn.hidden = false;
+      clearTimeout(hideTimer);
+      document.documentElement.classList.add('is-pdfv', 'is-pdfv-menu');
       body.scrollTop = 0;
       opened = true;
-      requestAnimationFrame(function () { requestAnimationFrame(function () { box.classList.add('is-open'); }); });
+      requestAnimationFrame(function () { requestAnimationFrame(function () { box.classList.add('is-open'); closeBtn.classList.add('is-open'); }); });
       try { history.pushState({ pdfv: 1 }, ''); pushed = true; } catch (x) { pushed = false; }
       render(src, a.getAttribute('data-type') || 'pdf');
       closeBtn.focus();
@@ -1826,8 +1851,16 @@
       opened = false;
       job++;
       box.classList.remove('is-open');
+      closeBtn.classList.remove('is-open');
       document.documentElement.classList.remove('is-pdfv');
-      setTimeout(function () { if (!opened) { box.hidden = true; clear(); } }, 700); // 地が下がり終わってから（style.css の --pv-down-delay ＋ --pv-down）
+      // 地が下がり終わってから（style.css の --pv-down-delay ＋ --pv-down）、閉じるボタンをメニューのボタンに戻す
+      hideTimer = setTimeout(function () {
+        if (opened) return;
+        box.hidden = true;
+        closeBtn.hidden = true;
+        document.documentElement.classList.remove('is-pdfv-menu');
+        clear();
+      }, 700);
       if (last) last.focus();
     };
     // 閉じる・Esc は履歴を1つ戻し（積んだ分を消す）、戻ったときに閉じる
