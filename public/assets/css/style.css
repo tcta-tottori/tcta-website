@@ -1410,8 +1410,9 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   position: relative;
   display: flex;
   gap: 12px;
-  margin-top: 32px;
-  padding: 4px 4px 10px;
+  margin-top: 20px;
+  /* 上下は受付中のカードの光（ネオン）が切れないだけ空ける */
+  padding: 16px 4px 22px;
   overflow-x: auto;
   scroll-snap-type: x mandatory;
   scrollbar-width: none;
@@ -1428,7 +1429,7 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 @media (min-width: 1024px) {
   .carousel {
     gap: 24px;
-    margin-top: 48px;
+    margin-top: 36px;
     --carousel-peek: 28px;
   }
 }
@@ -1499,16 +1500,20 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 .tcard__photo-label { font: 700 13px/1 var(--fjp); letter-spacing: .12em; color: var(--gray-400, #b0b0b0); }
 /* 終了した大会は大会名だけ少し薄く（写真は色のまま） */
 .tcard--past .tcard__title { color: var(--gray-600); }
-/* まだ開催前の大会（未受付・受付終了）はカード全体を薄い赤の枠で囲む（受付中・本日開催は濃い赤の枠） */
+/* まだ開催前の大会（未受付・受付終了）はカード全体をしっかりした赤い枠で囲む（受付中はさらに赤いネオンの光が明滅する） */
 .tcard.tcard--soon, .tcard.tcard--closed,
-.section--cards .tcard.tcard--soon, .section--cards .tcard.tcard--closed { border: 2px solid rgba(216, 35, 42, .3); }
+.section--cards .tcard.tcard--soon, .section--cards .tcard.tcard--closed { border: 2px solid var(--red); }
 /* 受付中・本日開催はカード全体を赤い枠で囲む（ホバーやトップの灰色の区画でも赤のまま） */
 .tcard.tcard--open, .tcard.tcard--live,
 .section--cards .tcard.tcard--open, .section--cards .tcard.tcard--live { border: 2px solid var(--red); }
-/* 受付中は赤い枠をゆっくり点滅させる（締切の点滅 due-blink と同じ間隔。動きを減らす設定の端末では点滅しない） */
-.tcard.tcard--open { animation: card-blink 1.6s ease-in-out infinite; }
-@keyframes card-blink { 0%, 100% { border-color: var(--red); } 50% { border-color: rgba(216, 35, 42, .15); } }
-@media (prefers-reduced-motion: reduce) { .tcard.tcard--open { animation: none; } }
+/* 受付中は赤い枠のまわりの光をゆっくり明滅させる（締切の点滅 due-blink と同じ間隔。動きを減らす設定の端末では光らせたまま止める） */
+.tcard.tcard--open, .section--cards .tcard.tcard--open { animation: card-neon 1.6s ease-in-out infinite; }
+/* 受付中：赤い枠のまわりに赤いネオンの光をにじませ、ゆっくり明滅させる（枠そのものの赤は変えない） */
+@keyframes card-neon {
+  0%, 100% { box-shadow: 0 0 0 1px rgba(216, 35, 42, .9), 0 0 10px 2px rgba(216, 35, 42, .55), 0 0 26px 6px rgba(255, 60, 70, .35); }
+  50%      { box-shadow: 0 0 0 0 rgba(216, 35, 42, 0), 0 0 4px 0 rgba(216, 35, 42, .15), 0 0 10px 0 rgba(255, 60, 70, 0); }
+}
+@media (prefers-reduced-motion: reduce) { .tcard.tcard--open, .section--cards .tcard.tcard--open { animation: none; box-shadow: 0 0 0 1px rgba(216, 35, 42, .9), 0 0 10px 2px rgba(216, 35, 42, .45); } }
 
 .tcard__body { display: flex; flex-direction: column; gap: 12px; flex: 1; padding: 16px 16px 16px; }
 @media (min-width: 640px) { .tcard__body { padding: 20px 20px 18px; } }
@@ -3791,6 +3796,8 @@ body.jsrv .rv.on .ink-sweep {
 }
 .ln-arrow--left { transform: scaleX(-1); }
 .hint--lr { display: inline-flex; align-items: baseline; gap: 10px; }  /* 矢印は文字の下端にそろえる */
+/* 「終了した大会｜今後の大会」のあいだの赤い縦線 */
+.hint__bar { display: inline-block; align-self: center; width: 2px; height: 1.1em; margin: 0 6px; background: var(--red); }
 @keyframes hs-nudge { 50% { transform: translateX(4px); } }
 @media (prefers-reduced-motion: reduce) { .hscroll__arrow { animation: none; } }
 
