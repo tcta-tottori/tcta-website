@@ -1102,25 +1102,17 @@
           photo.hidden = false;
         } else photo.hidden = true;
       }
-      /* 地図の下のバッジ：屋内（画像）→ サーフェス（画像があれば画像）→ 面数 → 設備（夜間照明は濃い黄色） */
+      /* 地図の下のコートの情報：「オムニコート | 16面 | 夜間照明あり」の1行（札にはしない。style.css の .cinfo） */
       function showBadges(c) {
         if (!badges) return;
         badges.textContent = '';
         if (!c) return;
-        var add = function (text, cls) {
-          var s = document.createElement('span'); s.className = 'badge' + (cls ? ' ' + cls : ''); s.textContent = text; badges.appendChild(s);
+        var add = function (text) {
+          var s = document.createElement('span'); s.textContent = text; badges.appendChild(s);
         };
-        var addImg = function (b, alt) {
-          var im = document.createElement('img');
-          im.className = 'badge badge--img'; im.src = b.img; im.alt = alt; im.width = b.w; im.height = b.h; im.decoding = 'async';
-          badges.appendChild(im);
-        };
-        if (c.badge) {
-          if (c.badge.indoor) addImg(c.badge.indoor, c.badge.indoor.alt);
-          addImg(c.badge, c.surface || '');
-        } else if (c.surface) add(c.surface);
+        if (c.surface) add(c.surface);
         if (c.faces) add(c.faces + '面');
-        (c.features || []).forEach(function (f) { add(f, /^夜間照明/.test(f) ? 'badge--light' : ''); });
+        (c.features || []).forEach(add);
       }
       /* 写真のタップ：地図の枠の中いっぱい（余白 12px）まで滑らかに拡大し、しばらくして元に戻る。もう一度押せばすぐ戻る */
       var zoomTimer = null;
@@ -1527,7 +1519,21 @@
     // scroll-padding のぶんだけ手前を空けるので、左には終了した大会の端が覗き、
     // 線のすぐ右に直近の大会が1枚まるごと入り、その次の大会が右端で少し切れる。
     var marker = track.querySelector('[data-carousel-today]');
-    var todayX = function () { return marker ? Math.max(0, marker.offsetLeft - padStart()) : 0; };
+    /* 初めの位置：TODAY の赤い線が、見出しの下の赤い縦線（[data-today-anchor]）の真下（延長上）にくる位置。
+       縦線が無いときは、左の余白のぶん手前を空けて TODAY を左に置く */
+    var anchor = track.closest('section') && track.closest('section').querySelector('[data-today-anchor]');
+    var todayX = function () {
+      if (!marker) return 0;
+      var line = marker.querySelector('.today-marker__line') || marker;
+      if (anchor && anchor.offsetParent) {
+        var tr = track.getBoundingClientRect();
+        var lr = line.getBoundingClientRect(), ar = anchor.getBoundingClientRect();
+        var lineX = lr.left + lr.width / 2 - tr.left + track.scrollLeft;
+        var barX = ar.left + ar.width / 2 - tr.left;
+        return Math.max(0, Math.round(lineX - barX));
+      }
+      return Math.max(0, marker.offsetLeft - padStart());
+    };
     var place = function () { track.scrollLeft = todayX(); };
     if (marker) {
       place();
@@ -2258,6 +2264,15 @@
     });
   }
 
+  /* フッターの高さの補い（dvh が使えないブラウザ）。今の画面の高さを --vp-h に入れる（style.css の .site-footer） */
+  function initViewportHeight() {
+    if (window.CSS && CSS.supports && CSS.supports('height', '100dvh')) return;
+    var set = function () { document.documentElement.style.setProperty('--vp-h', window.innerHeight + 'px'); };
+    set();
+    window.addEventListener('resize', set);
+    if (window.visualViewport) window.visualViewport.addEventListener('resize', set);
+  }
+
   function init() {
     initSplash();
     initReveal();
@@ -2274,6 +2289,7 @@
     initCourtMap();
     initCalendar();
     initPdfViewer();
+    initViewportHeight();
     initCardSlides();
     initFooterDeco();
     initLogoInk();

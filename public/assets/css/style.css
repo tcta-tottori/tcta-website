@@ -2215,9 +2215,13 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 /* 地図の下のバッジ（サーフェスの画像・面数・夜間照明など。courts.js の mapData → main.js の showBadges） */
 .cmap__badges { order: 10; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; flex-basis: 100%; } /* 1行目は施設名と「Googleマップで開く」、2行目にバッジ */
 .cmap__badges:empty { display: none; }
-.cmap__badges .badge { background: var(--gray-100); color: var(--gray-800); }
-.cmap__badges .badge--light { background: #D99A00; color: #fff; }
-.cmap__badges .badge--img { background: none; }
+/* コートの情報の1行（コート案内の写真の上・地図の下で共通）：「オムニコート | 16面 | 夜間照明あり」。区切りは細い縦線 */
+.cinfo { display: flex; flex-wrap: wrap; align-items: center; row-gap: 4px; margin: 0; font: 700 13px/1.5 var(--fjp); letter-spacing: .04em; }
+.cinfo > span { display: inline-flex; align-items: center; }
+.cinfo > span + span::before { content: ''; display: inline-block; width: 1px; height: .95em; margin: 0 10px; background: currentColor; opacity: .55; }
+.cinfo__main { color: var(--red); }
+.cmap__badges.cinfo { color: var(--gray-800); gap: 4px 0; }
+.cfac__badges.cinfo { gap: 4px 0; }
 @media (min-width: 1024px) { .cmap__frame { height: 420px; } }
 /* 自前で描く地図（Leaflet）。読み終わるまでは下敷きを見せる。 */
 .cmap__map {
@@ -2686,6 +2690,12 @@ html.is-links-arrive .page-title, html.is-links-arrive .sub-head { animation: no
   pointer-events: none;
 }
 @media (min-width: 1024px) { .cfac__hero-cap { padding: 72px 0 28px; } }
+/* 写真の上のコートの情報は白い文字（影で読ませる）。PC は少し大きく */
+.cfac__hero-cap .cinfo { color: var(--white); text-shadow: 0 1px 2px rgba(0, 0, 0, .6), 0 2px 10px rgba(0, 0, 0, .4); }
+.cfac__hero-cap .cinfo__main { color: #fff; background: var(--red); padding: 1px 8px; border-radius: 3px; text-shadow: none; }
+@media (min-width: 1024px) { .cfac__hero-cap .cinfo { font-size: 15px; } }
+/* 写真は枠いっぱいに（.gallery__item img の縦横比の指定を打ち消す。打ち消さないと写真の下に地の色がのぞいていた） */
+.cfac__hero .cfac__hero-link img { width: 100%; height: 100%; aspect-ratio: auto; max-height: none; object-fit: cover; }
 .cfac__hero-cap .cfac__name { justify-content: flex-end; }
 .cfac__hero-cap .cfac__badges { justify-content: flex-end; }
 .cfac__hero--noimg .cfac__hero-cap { position: static; padding: 40px 0 28px; background: var(--ink); }
@@ -2937,11 +2947,14 @@ body.jsrv .rv.on .ink-sweep {
 @media (min-width: 1024px) { .site-footer__brand { grid-column: auto; margin-bottom: 0; } }
 .site-footer__brand img { width: auto; height: 46px; }
 @media (min-width: 1024px) { .site-footer__brand img { height: 56px; } }
-/* スマホ・タブレット：フッターを画面いっぱいの高さにし、ロゴをヘッダーのロゴと同じ位置（上 12px＋帯の中ほど・左は余白）・
+/* スマホ・タブレット：フッターを画面いっぱいの高さ（今の画面の高さ）にし、ロゴをヘッダーのロゴと同じ位置（上 12px＋帯の中ほど・左は余白）・
    同じ大きさに置く。いちばん下までスクロールすると、画面の上端に浮いているヘッダーのロゴにちょうど重なる
    （重なるとヘッダーのロゴは消し、フッターのロゴだけを見せる。main.js の initLogoInk の .is-over-footer） */
 @media (max-width: 1023px) {
-  .site-footer { min-height: 100vh; min-height: 100svh; display: flex; flex-direction: column; }
+  /* 高さは「今の」画面の高さ（dvh）。ブラウザのアドレスバーが出ている・引っ込んでいるどちらでも、いちばん下までスクロールすると
+     フッターの上端が画面の上端にそろう（svh だとバーが引っ込んだときに足りず、ロゴがずれていた）。
+     dvh が使えないブラウザは main.js が今の画面の高さ（innerHeight）を --vp-h に入れる */
+  .site-footer { min-height: var(--vp-h, 100vh); min-height: 100dvh; display: flex; flex-direction: column; }
   .site-footer__grid { padding-top: calc(12px + (var(--header-h) - 12px - 46px) / 2); }
   .site-footer__bottom { margin-top: auto; }
   .site-header .site-header__logo { transition: opacity .25s ease; }
@@ -3795,9 +3808,12 @@ body.jsrv .rv.on .ink-sweep {
   transform: rotate(35deg);
 }
 .ln-arrow--left { transform: scaleX(-1); }
-.hint--lr { display: inline-flex; align-items: baseline; gap: 10px; }  /* 矢印は文字の下端にそろえる */
-/* 「終了した大会｜今後の大会」のあいだの赤い縦線 */
-.hint__bar { display: inline-block; align-self: center; width: 2px; height: 1.1em; margin: 0 6px; background: var(--red); }
+.hint--lr { display: inline-flex; align-items: stretch; gap: 14px; }
+/* 文字の下に矢印。終了した大会は右寄せ（左向きの矢印が縦線から離れていく）、今後の大会は左寄せ */
+.hint__item { display: inline-flex; flex-direction: column; gap: 6px; align-items: flex-start; }
+.hint__item--past { align-items: flex-end; }
+/* 「終了した大会｜今後の大会」のあいだの赤い縦線（文字と矢印の高さいっぱい） */
+.hint__bar { display: block; flex: none; width: 2px; background: var(--red); }
 @keyframes hs-nudge { 50% { transform: translateX(4px); } }
 @media (prefers-reduced-motion: reduce) { .hscroll__arrow { animation: none; } }
 

@@ -92,6 +92,14 @@ export const LINKS = [
   },
   {
     group: 'assoc',
+    name: '鳥取県シニアテニス連盟',
+    row: 'assoc',
+    desc: 'シニア世代のテニスの県連盟（日本シニアテニス連盟 中国支部）',
+    url: 'https://www.ncn-t.net/nt0915593/',
+    banner: 'assets/img/banners/tottori-senior.png',
+  },
+  {
+    group: 'assoc',
     name: '中国テニス協会',
     row: 'assoc',
     desc: '中国地方の大会情報',
