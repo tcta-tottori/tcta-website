@@ -1078,12 +1078,10 @@
         var r = h.getBoundingClientRect();
         var top = parseFloat(getComputedStyle(h).top) || 0;
         h.classList.toggle('is-stuck', r.top <= top + 1 && r.top > -r.height && box.bottom > r.bottom + 1 && box.top < r.top - 1);
-        // 説明が写真の下端を越えた分（style.css の .cfac__body の --cut。写真に重なって消えていく位置）
-        var body = h.parentElement.querySelector('.cfac__body');
-        if (!body || box.bottom < 0 || box.top > window.innerHeight) return;
-        var cut = r.bottom - body.getBoundingClientRect().top;
-        body.style.setProperty('--cut', Math.round(cut) + 'px');
-        body.classList.toggle('is-over', cut > 0);
+        // 説明（白い地ごと）が写真の下端を越えた分（style.css の .cfac__flow の --cut。写真に重なって消えていく位置）
+        var flow = h.parentElement.querySelector('.cfac__flow');
+        if (!flow || box.bottom < 0 || box.top > window.innerHeight) return;
+        flow.style.setProperty('--cut', Math.round(r.bottom - flow.getBoundingClientRect().top) + 'px');
       });
     };
     var request = function () {
