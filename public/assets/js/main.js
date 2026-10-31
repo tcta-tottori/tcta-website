@@ -1527,7 +1527,21 @@
     // scroll-padding のぶんだけ手前を空けるので、左には終了した大会の端が覗き、
     // 線のすぐ右に直近の大会が1枚まるごと入り、その次の大会が右端で少し切れる。
     var marker = track.querySelector('[data-carousel-today]');
-    var todayX = function () { return marker ? Math.max(0, marker.offsetLeft - padStart()) : 0; };
+    /* 初めの位置：TODAY の赤い線が、見出しの下の赤い縦線（[data-today-anchor]）の真下（延長上）にくる位置。
+       縦線が無いときは、左の余白のぶん手前を空けて TODAY を左に置く */
+    var anchor = track.closest('section') && track.closest('section').querySelector('[data-today-anchor]');
+    var todayX = function () {
+      if (!marker) return 0;
+      var line = marker.querySelector('.today-marker__line') || marker;
+      if (anchor && anchor.offsetParent) {
+        var tr = track.getBoundingClientRect();
+        var lr = line.getBoundingClientRect(), ar = anchor.getBoundingClientRect();
+        var lineX = lr.left + lr.width / 2 - tr.left + track.scrollLeft;
+        var barX = ar.left + ar.width / 2 - tr.left;
+        return Math.max(0, Math.round(lineX - barX));
+      }
+      return Math.max(0, marker.offsetLeft - padStart());
+    };
     var place = function () { track.scrollLeft = todayX(); };
     if (marker) {
       place();
@@ -2258,6 +2272,15 @@
     });
   }
 
+  /* フッターの高さの補い（dvh が使えないブラウザ）。今の画面の高さを --vp-h に入れる（style.css の .site-footer） */
+  function initViewportHeight() {
+    if (window.CSS && CSS.supports && CSS.supports('height', '100dvh')) return;
+    var set = function () { document.documentElement.style.setProperty('--vp-h', window.innerHeight + 'px'); };
+    set();
+    window.addEventListener('resize', set);
+    if (window.visualViewport) window.visualViewport.addEventListener('resize', set);
+  }
+
   function init() {
     initSplash();
     initReveal();
@@ -2274,6 +2297,7 @@
     initCourtMap();
     initCalendar();
     initPdfViewer();
+    initViewportHeight();
     initCardSlides();
     initFooterDeco();
     initLogoInk();

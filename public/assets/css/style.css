@@ -2937,11 +2937,14 @@ body.jsrv .rv.on .ink-sweep {
 @media (min-width: 1024px) { .site-footer__brand { grid-column: auto; margin-bottom: 0; } }
 .site-footer__brand img { width: auto; height: 46px; }
 @media (min-width: 1024px) { .site-footer__brand img { height: 56px; } }
-/* スマホ・タブレット：フッターを画面いっぱいの高さにし、ロゴをヘッダーのロゴと同じ位置（上 12px＋帯の中ほど・左は余白）・
+/* スマホ・タブレット：フッターを画面いっぱいの高さ（今の画面の高さ）にし、ロゴをヘッダーのロゴと同じ位置（上 12px＋帯の中ほど・左は余白）・
    同じ大きさに置く。いちばん下までスクロールすると、画面の上端に浮いているヘッダーのロゴにちょうど重なる
    （重なるとヘッダーのロゴは消し、フッターのロゴだけを見せる。main.js の initLogoInk の .is-over-footer） */
 @media (max-width: 1023px) {
-  .site-footer { min-height: 100vh; min-height: 100svh; display: flex; flex-direction: column; }
+  /* 高さは「今の」画面の高さ（dvh）。ブラウザのアドレスバーが出ている・引っ込んでいるどちらでも、いちばん下までスクロールすると
+     フッターの上端が画面の上端にそろう（svh だとバーが引っ込んだときに足りず、ロゴがずれていた）。
+     dvh が使えないブラウザは main.js が今の画面の高さ（innerHeight）を --vp-h に入れる */
+  .site-footer { min-height: var(--vp-h, 100vh); min-height: 100dvh; display: flex; flex-direction: column; }
   .site-footer__grid { padding-top: calc(12px + (var(--header-h) - 12px - 46px) / 2); }
   .site-footer__bottom { margin-top: auto; }
   .site-header .site-header__logo { transition: opacity .25s ease; }
@@ -3795,9 +3798,12 @@ body.jsrv .rv.on .ink-sweep {
   transform: rotate(35deg);
 }
 .ln-arrow--left { transform: scaleX(-1); }
-.hint--lr { display: inline-flex; align-items: baseline; gap: 10px; }  /* 矢印は文字の下端にそろえる */
-/* 「終了した大会｜今後の大会」のあいだの赤い縦線 */
-.hint__bar { display: inline-block; align-self: center; width: 2px; height: 1.1em; margin: 0 6px; background: var(--red); }
+.hint--lr { display: inline-flex; align-items: stretch; gap: 14px; }
+/* 文字の下に矢印。終了した大会は右寄せ（左向きの矢印が縦線から離れていく）、今後の大会は左寄せ */
+.hint__item { display: inline-flex; flex-direction: column; gap: 6px; align-items: flex-start; }
+.hint__item--past { align-items: flex-end; }
+/* 「終了した大会｜今後の大会」のあいだの赤い縦線（文字と矢印の高さいっぱい） */
+.hint__bar { display: block; flex: none; width: 2px; background: var(--red); }
 @keyframes hs-nudge { 50% { transform: translateX(4px); } }
 @media (prefers-reduced-motion: reduce) { .hscroll__arrow { animation: none; } }
 
