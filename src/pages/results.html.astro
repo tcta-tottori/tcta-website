@@ -12,7 +12,7 @@ const title = "大会結果｜鳥取市テニス協会";
 const description = "鳥取市テニス協会が主催・主管した大会の結果。平成16年度から令和8年度まで、年度ごとの大会結果と当日の写真を掲載しています。";
 
 // 年度を選ぶ → その年度の大会名が開催順に並ぶ → 大会名を選ぶと結果のページへ。
-// 令和7年度以降は大会1件ごとのページ（event-*.html）、
+// 令和7年度以降は大会1件ごとの結果だけのページ（result-<slug>.html。要項・ドロー・申込用紙は載せない）、
 // 令和6年度までは旧サイトから引き継いだ結果ページ（result-*.html）に飛ぶ。
 // 旧サイトで「シングルス」「ダブルス」「写真」と分かれていたページは、
 // results.js の groupYear で1つの大会に束ねてある。
@@ -30,7 +30,7 @@ const when = (date, label) => {
 const years = [
   ...EVENTS_BY_NENDO.map((y) => ({
     nendo: y.nendo, label: y.label,
-    rows: y.events.map((e) => ({ href: e.url, title: e.displayName, when: when(e.date, e.label), event: e.event || null })),
+    rows: y.events.map((e) => ({ href: `result-${e.slug}.html`, title: e.displayName, when: when(e.date, e.label), event: e.event || null })),
   })),
   ...GROUPS_BY_YEAR.map((y) => ({
     nendo: y.nendo, label: y.label,

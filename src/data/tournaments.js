@@ -28,6 +28,7 @@
 
 import { eventButtons } from './event-buttons.js';
 import { winnerPhotos } from './event-result.js';
+import { EXTRA_CARDS } from './official-extra.js';
 
 /** カルーセル中央の「TODAY」マーカーの日付。見た日の日本時間。 */
 export const today = () => new Intl.DateTimeFormat('ja-JP', {
@@ -112,7 +113,7 @@ export function cardAction(t, e) {
 export function buildCards(rows, { ROWS, eventBySlug }) {
   const base = new Map(ROWS.map((r) => [r.slug, r]));
   const TOURNAMENTS = rows
-    .filter((t) => t.card && base.has(t.slug))
+    .filter((t) => (t.card || EXTRA_CARDS.includes(t.slug)) && base.has(t.slug))
     .map((t) => {
       const b = base.get(t.slug);
       const e = eventBySlug(t.slug);
