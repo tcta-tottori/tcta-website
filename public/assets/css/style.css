@@ -2676,16 +2676,20 @@ html.is-links-arrive .page-title, html.is-links-arrive .sub-head { animation: no
   z-index: 3;
   display: block;
   width: 100%;
-  height: calc(clamp(260px, 62vw, 420px) + var(--header-h));
-  max-height: calc(55svh + var(--header-h));
+  /* 写真は 16:9 のまま見せる（施設の写真はどれも 960×540）。スマホは画面の幅いっぱいの 16:9 */
+  aspect-ratio: 16 / 9;
+  height: auto;
   margin: 0;
   overflow: hidden;
   background: var(--ink);
 }
+/* PC：画面いっぱいの幅で 16:9 にすると画面より高くなるので、高さを画面の 70% までにし、
+   写真はその高さで 16:9 の幅にして真ん中に置く（左右の余りは地の色） */
 @media (min-width: 1024px) {
-  .cfac__hero { height: clamp(420px, 42vw, 560px); max-height: 62svh; }
+  .cfac__hero { --cfac-h: min(56.25vw, 70svh); aspect-ratio: auto; height: var(--cfac-h); }
+  .cfac__hero:not(.cfac__hero--noimg) .cfac__hero-link { left: 50%; right: auto; width: calc(var(--cfac-h) * 16 / 9); transform: translateX(-50%); }
 }
-.cfac__hero--noimg { height: auto; min-height: 200px; }
+.cfac__hero--noimg { aspect-ratio: auto; height: auto; min-height: 200px; }
 /* .gallery（写真の升目）の grid を打ち消す（写真の無い施設で、名前の帯が升目の1列ぶんの幅に縮んでいた） */
 .cfac__hero.gallery { display: block; }
 .cfac__hero-link { position: absolute; inset: 0; border-radius: 0; background: var(--ink); }
