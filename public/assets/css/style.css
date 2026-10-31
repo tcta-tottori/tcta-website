@@ -627,6 +627,11 @@ body.jsrv .rv {
   transition: opacity .7s var(--ease), transform .7s var(--ease);
 }
 body.jsrv .rv.on { opacity: 1; transform: none; }
+/* まとまりの中の1枚ずつ（main.js の RV_ITEMS）。画面に入ったら、下から少し浮き上がって出る。
+   出たあとは遅れ（--rvi）を外し、ホバーの動きまで遅れないようにする（.on のときは delay 0 の transition に戻す） */
+body.jsrv .rv-in:not(.on) { opacity: 0; transform: translateY(20px); }
+body.jsrv .rv-in.on { animation: rv-in-up .6s var(--ease) calc(var(--rvi, 0) * 70ms) both; }
+@keyframes rv-in-up { from { opacity: 0; transform: translateY(20px); } }
 /* 現れるブロックの中の写真は、少し小さい状態（.92倍）から等倍へ広がる（ズームイン）。
    .rv の浮き上がりが始まってから .2s 遅れて動き出し、最初は速く・最後はゆっくり（cubic-bezier(.16,1,.3,1)）.9s で収まる。
    transition ではなく animation にしてあるのは、終わったあとホバーの拡大（scale 1.04）の transition をそのまま効かせるため
@@ -1673,6 +1678,9 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
    止まっている長さ（.hpin-track の高さ）は main.js が「区画の高さ＋横に送る幅」で入れる。
    止めているあいだは縦のスクロール量をそのまま横の位置にするので、吸い付き（scroll-snap）は切る */
 .is-hpin .hpin { position: sticky; background: var(--gray-100); }
+/* 区画の下の余白は詰める。止める区画の下に余る灰色は、次の区画（白い地）が重なって隠す（main.js の .hpin-track の margin-bottom） */
+.section.is-hpin { padding-bottom: 0; }
+.section.is-hpin + .section { background: var(--white); }
 /* 背景の英字は止める区画の見出しに合わせる（--hpin-pad は main.js が入れる、中身の上の余白） */
 .is-hpin .hpin > .ghost { top: calc(var(--hpin-pad, 0px) + var(--head-half)); }
 .is-hpin .carousel { scroll-snap-type: none; }
@@ -1691,8 +1699,8 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   opacity: 1;
   translate: 0 0;
   transition:
-    opacity .5s ease calc(1.15s + min(var(--ci, 0), 4) * .12s),
-    translate .7s var(--ease) calc(1.15s + min(var(--ci, 0), 4) * .12s),
+    opacity .5s ease calc(1.15s + min(var(--ci, 0), 3) * .12s),
+    translate .7s var(--ease) calc(1.15s + min(var(--ci, 0), 3) * .12s),
     box-shadow .3s ease, transform .3s ease, border-color .3s ease;
 }
 
