@@ -1039,6 +1039,26 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 ::view-transition-group(court-name) { z-index: 41; }
 ::view-transition-group(mn-sheet) { z-index: 1; animation: none; }
 ::view-transition-old(mn-sheet) { animation: vt-sheet-down .5s cubic-bezier(.25, .8, .3, 1) .05s both; }
+/* 協会ロゴ（site-logo。Base.astro がメニューから移るときだけ付ける）は黒地より前に出して、消えないようにする。
+   前のページの白いロゴ（old）を、黒地と同じ時間・緩急で上から削り（黒地の上端が通ったところから消える）、
+   その下の次のページの黒いロゴ（new）を見せる。--vt-logo-from / to はロゴの上端から見た黒地の上端の位置 */
+::view-transition-group(site-logo) { z-index: 2; animation: none; }
+/* 重ねて足し合わせる既定の重ね方（plus-lighter）だと、黒いロゴが明るい地に溶けて見えなくなるので普通に重ねる */
+::view-transition-old(site-logo), ::view-transition-new(site-logo) { mix-blend-mode: normal; }
+::view-transition-old(site-logo) { z-index: 1; }  /* 既定では次のページ（new）が上なので、白いロゴを上にする */
+::view-transition-new(site-logo) { animation: none; opacity: 1; }
+::view-transition-old(site-logo) { animation: vt-logo-out .5s cubic-bezier(.25, .8, .3, 1) .05s both; }
+@keyframes vt-logo-out {
+  from { opacity: 1; clip-path: inset(var(--vt-logo-from, 0px) 0 0 0); }
+  to { opacity: 1; clip-path: inset(var(--vt-logo-to, 100vh) 0 0 0); }
+}
+/* 写しを撮るあいだのロゴは塗り分けをやめて画像にする：前のページは白抜き、次のページは黒（赤い四角入り） */
+.site-header.is-vt-logo .site-header__logo .site-header__logo-img { visibility: visible; }
+/* 白いにじみ（drop-shadow）は黒地の上で白いロゴの縁ににじみ出るので、写しのあいだは消す（明るい地では見えない程度のもの） */
+.site-header.is-vt-logo .site-header__logo img { filter: none !important; transition: none !important; }
+.site-header.is-vt-logo .site-header__logo-ink, .site-header.is-vt-logo .site-header__logo-red { display: none !important; }
+.site-header.is-vt-logo.is-menu .site-header__logo-w { display: block !important; opacity: 1; transition: none; }
+.site-header.is-vt-logo:not(.is-menu) .site-header__logo-w { display: none !important; }
 @keyframes vt-fade { to { opacity: 0; } }
 @keyframes vt-sheet-down { from { clip-path: inset(0); } to { clip-path: inset(100% 0 0 0); } }
 @media (prefers-reduced-motion: reduce) {

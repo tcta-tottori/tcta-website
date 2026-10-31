@@ -3,6 +3,7 @@
 //
 //   EXTRA_MATERIALS … 大会ごとに足す素材（種類 → { images, pdfs }）。移行前の素材のあと、管理画面の素材の前に並ぶ（events.js）
 //   STATE_OVERRIDE  … 管理画面の受付状態がまだ「まもなく受付／未受付」のときだけ、こちらの状態にする（schedule.js）
+//   EXTRA_CARDS     … 管理画面で「トップページの大会カードに出す」にチェックが無くても、トップの大会カードに出す大会（tournaments.js）
 //   EXTRA_NEWS      … お知らせに足す行（news.js。同じ日付・同じ題名の行が管理画面にあれば足さない）
 
 const img = (slug, file, label) => ({ src: `assets/img/events/${slug}/${file}`, label, w: 1241, h: 1754 });
@@ -29,6 +30,10 @@ export const EXTRA_MATERIALS = {
 export const STATE_OVERRIDE = {
   'r8-no18': '受付中',
 };
+
+export const EXTRA_CARDS = [
+  'r8-no18', // 鳥取県テニス選手権 ダブルス（受付中。11/13 締切）
+];
 
 export const EXTRA_NEWS = [
   { slug: 'official-20261030-kensen-s-draw', date: '2026-10-30', category: '大会', title: '鳥取県テニス選手権シングルスのドローを掲載しました（選手の所属を訂正）', href: 'draw-r8-kensen-singles.html' },
