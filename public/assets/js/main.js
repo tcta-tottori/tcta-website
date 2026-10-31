@@ -102,6 +102,8 @@
     if (!targets.length && !items.length) return;
 
     if (!('IntersectionObserver' in window) || reduceMotion) return; // そのまま表示
+    // トップのリンク集から並べ替えて移ってきたとき（Base.astro の html.is-links-arrive）は、出現の動きを流さずそのまま見せる
+    if (document.documentElement.classList.contains('is-links-arrive')) return;
 
     document.body.classList.add('jsrv');
     items.forEach(function (el) { el.classList.add('rv-in'); });
@@ -210,46 +212,81 @@
   }
 
   /* ---------- トップのリンク集の VIEW ALL ----------
-     押したら、流れているバナーをその場で止め、白い地を敷きながら、1枚ずつリンク集のページと同じ並び
-     （分類の順に、スマホ1列・タブレット2列・PC3列）へ並べ替えてから、リンク集のページへ移る。
-     ページ間ビュートランジションが使えるブラウザでは、並べ替えたバナーがそのままリンク集のページの
-     同じバナーの位置へ滑って収まる（写しの名前は lk-<バナーのファイル名>。Base.astro の pagereveal と style.css）。
-     使えないブラウザでは、並べ替えたところでそのまま移る。
+     押したら、流れているバナーをその場で止めて白い地を敷き、裏でリンク集のページを見えない iframe に読み込んで
+     各バナーの実際の位置（画面の上端から）を測る。バナーの写しを、今の位置からその実際の位置へ1枚ずつ動かして並べ、
+     並び終えたら iframe（リンク集のページそのもの）をふわっと重ねてから、リンク集のページへ移る。
+     移った先は同じ見た目のまま出す（Base.astro が html.is-links-arrive を付け、出現の動きを止める。style.css）。
+     iframe が読めないとき（1.5 秒待っても）は、ページと同じ列数で並べた位置へ動かしてから移る。
      戻るボタンで戻ってきたとき（ページが保存されていたとき）は元に戻して、また流す */
-  function linkVtName(src) {
-    return 'lk-' + String(src || '').split('/').pop().replace(/\.[^.]+$/, '').toLowerCase().replace(/[^a-z0-9-]/g, '-');
-  }
   function initLinksLeave() {
     var rows = document.querySelector('.marquee-rows');
     var link = rows && rows.parentElement.querySelector('.sec-more a.view-all[href="links.html"]');
     if (!rows || !link || reduceMotion) return;
     var order = [];
     try { order = JSON.parse(rows.getAttribute('data-link-order') || '[]'); } catch (x) {}
-    var canVT = ('onpageswap' in window) && window.CSS && CSS.supports && CSS.supports('view-transition-name', 'x');
-    var layer = null, timer = 0;
+    order = order.reduce(function (a, g) { return a.concat(Array.isArray(g) ? g : [g]); }, []);
+    var layer = null, frame = null, timer = 0, fallbackTimer = 0, busy = false;
+    var frameReady = false, onFrameReady = null;
+    // 測る用の iframe は、VIEW ALL が画面に近づいたら先に読み込んでおく（押したときに待たないように）
+    var loadFrame = function () {
+      if (frame) return;
+      frameReady = false;
+      frame = document.createElement('iframe');
+      frame.className = 'lk-frame';
+      frame.setAttribute('aria-hidden', 'true');
+      frame.tabIndex = -1;
+      frame.src = 'links.html#lk-arrive';
+      frame.addEventListener('load', function () {
+        frameReady = true;
+        if (onFrameReady) onFrameReady();
+      });
+      document.body.appendChild(frame);
+    };
+    var measureFrame = function () {
+      try {
+        var doc = frame.contentDocument;
+        var targets = {}, n = 0;
+        doc.querySelectorAll('#link-list .litem__media img').forEach(function (img) {
+          var src = img.getAttribute('src');
+          if (targets[src]) return;
+          var r = img.getBoundingClientRect();
+          if (r.width > 0) { targets[src] = { x: r.left, y: r.top, w: r.width }; n++; }
+        });
+        return n ? targets : null;
+      } catch (x) { return null; }
+    };
+    if ('IntersectionObserver' in window) {
+      var pre = new IntersectionObserver(function (es) {
+        if (!es.some(function (e) { return e.isIntersecting; })) return;
+        pre.disconnect();
+        loadFrame();
+      }, { rootMargin: '0px 0px 600px 0px' });
+      pre.observe(link);
+    }
+
+    var cleanup = function () {
+      clearTimeout(timer); clearTimeout(fallbackTimer);
+      if (layer && layer.parentNode) layer.parentNode.removeChild(layer);
+      if (frame) frame.classList.remove('is-on');
+      layer = null;
+      onFrameReady = null;
+      busy = false;
+      marqueeFrozen = false;
+      document.documentElement.classList.remove('is-lk-leaving');
+    };
+
     link.addEventListener('click', function (ev) {
       if (ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.button > 0) return; // 新しいタブで開くときは任せる
       ev.preventDefault();
-      if (layer) return;
+      if (busy) return;
+      busy = true;
       marqueeFrozen = true;
-      var vw = document.documentElement.clientWidth, vh = window.innerHeight;
-      // 並べ替えた先：リンク集のページと同じ列数・幅・間隔（バナーの縦横比 1018:168）
-      var gutter = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--gutter')) || 20;
-      var cols = vw >= 1024 ? 3 : vw >= 640 ? 2 : 1;
-      var colGap = vw >= 1024 ? 36 : 32, rowGap = vw >= 1024 ? 28 : 18;
-      var inner = Math.min(vw - gutter * 2, 1200 - gutter * 2);
-      var left0 = (vw - inner) / 2;
-      var colW = (inner - colGap * (cols - 1)) / cols;
-      var bw = colW * 0.88, bh = bw * 168 / 1018;
-      var headH = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--header-h')) || 76;
-      var top0 = headH + 40;
+      var vw = window.innerWidth, vh = window.innerHeight;
 
+      // 白い地と、今の位置に置いたバナーの写し
       layer = document.createElement('div');
       layer.className = 'lk-layer';
       document.body.appendChild(layer);
-
-      // 今の画面に見えているバナー（複製でない方を優先）を、リンク集の並びの順に拾う
-      var seen = {};
       var cards = Array.prototype.slice.call(rows.querySelectorAll('.link-card__banner'));
       var pick = function (src) {
         var best = null, bestScore = -1;
@@ -258,62 +295,95 @@
           var r = img.getBoundingClientRect();
           var visible = r.right > 0 && r.left < vw && r.bottom > 0 && r.top < vh;
           var score = (visible ? 2 : 0) + (img.closest('[aria-hidden="true"]') ? 0 : 1);
-          if (score > bestScore) { best = r; bestScore = score; }
+          if (score > bestScore) { best = { r: r, visible: visible }; bestScore = score; }
         });
         return best;
       };
       var mid = rows.getBoundingClientRect();
-      // 分類ごとに行を改め、分類のあいだは少し空ける（リンク集のページの見出しの位置）
-      var items = [], y = top0, groupGap = vw >= 1024 ? 30 : 22;
-      order.forEach(function (group, gi) {
-        var list = (Array.isArray(group) ? group : [group]).filter(function (src) { if (!src || seen[src]) return false; seen[src] = 1; return true; });
-        if (!list.length) return;
-        if (gi > 0) y += groupGap;
-        list.forEach(function (src, j) {
-          items.push({ src: src, x: left0 + (j % cols) * (colW + colGap) + (colW - bw) / 2, y: y + Math.floor(j / cols) * (bh + rowGap) });
-        });
-        y += Math.ceil(list.length / cols) * (bh + rowGap);
-      });
-      items.forEach(function (it, i) {
-        var src = it.src;
-        var from = pick(src);
-        var tx = it.x;
-        var ty = it.y;
+      var clones = {};
+      order.forEach(function (src) {
+        if (!src || clones[src]) return;
+        var p = pick(src);
+        var r = p && p.visible ? p.r : null;
+        var w = r ? r.width : 160, h = r ? r.height : 160 * 168 / 1018;
         var img = document.createElement('img');
         img.className = 'lk-layer__img';
         img.src = src;
         img.alt = '';
-        img.style.left = tx + 'px';
-        img.style.top = ty + 'px';
-        img.style.width = bw + 'px';
-        img.style.height = bh + 'px';
-        if (canVT) { img.style.viewTransitionName = linkVtName(src); img.style.setProperty('view-transition-class', 'lk'); }
+        img.style.left = (r ? r.left : vw / 2 - w / 2) + 'px';
+        img.style.top = (r ? r.top : mid.top + mid.height / 2 - h / 2) + 'px';
+        img.style.width = w + 'px';
+        img.style.height = h + 'px';
+        if (!r) img.style.opacity = '0';
         layer.appendChild(img);
-        // FLIP：今の位置・大きさから、並べ替えた先へ
-        var fx, fy, fs, fo = 1;
-        if (from && from.width > 0) {
-          fx = from.left - tx; fy = from.top - ty; fs = from.width / bw;
-        } else {
-          fx = (vw / 2 - bw / 2) - tx; fy = (mid.top + mid.height / 2 - bh / 2) - ty; fs = .6; fo = 0;
-        }
-        img.animate([
-          { transform: 'translate(' + fx + 'px,' + fy + 'px) scale(' + fs + ')', opacity: fo },
-          { transform: 'none', opacity: 1 }
-        ], { duration: 720, delay: 120 + i * 28, easing: 'cubic-bezier(.7, 0, .2, 1)', fill: 'both' });
+        clones[src] = { el: img, x: r ? r.left : vw / 2 - w / 2, y: r ? r.top : mid.top + mid.height / 2 - h / 2, w: w };
       });
       requestAnimationFrame(function () { layer.classList.add('is-on'); });
-      var total = 120 + items.length * 28 + 720 + 80;
-      timer = setTimeout(function () {
-        if (canVT) { try { sessionStorage.setItem('tcta-links-vt', '1'); } catch (x) {} }
-        location.href = link.href;
-      }, total);
+
+      // 並べる先へ動かす。targets：src → 画面上の位置と幅
+      var started = false;
+      var arrange = function (targets, withFrame) {
+        if (started || !layer) return;
+        started = true;
+        clearTimeout(fallbackTimer);
+        var i = 0;
+        order.forEach(function (src) {
+          var c = clones[src], t = targets[src];
+          if (!c || c.done) return;
+          c.done = true;
+          var el = c.el;
+          if (!t) { el.animate([{ opacity: el.style.opacity || 1 }, { opacity: 0 }], { duration: 300, fill: 'both' }); return; }
+          var s = t.w / c.w;
+          el.animate([
+            { transform: 'none', opacity: el.style.opacity === '0' ? 0 : 1 },
+            { transform: 'translate(' + (t.x - c.x) + 'px,' + (t.y - c.y) + 'px) scale(' + s + ')', opacity: 1 }
+          ], { duration: 760, delay: 80 + i * 32, easing: 'cubic-bezier(.7, 0, .2, 1)', fill: 'both' });
+          i++;
+        });
+        var total = 80 + i * 32 + 760;
+        timer = setTimeout(function () {
+          var go = function () {
+            try { sessionStorage.setItem('tcta-links-vt', '1'); } catch (x) {}
+            document.documentElement.classList.add('is-lk-leaving'); // 移るときの切り替えを省かない（Base.astro の pageswap）
+            location.href = link.href;
+          };
+          if (withFrame && frame) {
+            // 並べた写しの上に、リンク集のページそのもの（iframe）をふわっと重ねてから移る
+            frame.classList.add('is-on');
+            timer = setTimeout(go, 380);
+          } else {
+            go();
+          }
+        }, total + 40);
+      };
+
+      // 実際の位置を測る（見えない iframe のリンク集のページ。読み込み済みならすぐ、まだならでき次第）
+      var tryFrame = function () {
+        var t = measureFrame();
+        if (t) arrange(t, true);
+      };
+      loadFrame();
+      if (frameReady) tryFrame(); else onFrameReady = tryFrame;
+
+      // 読めないときは、ページと同じ列数で並べた位置へ
+      fallbackTimer = setTimeout(function () {
+        var gutter = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--gutter')) || 20;
+        var cw = document.documentElement.clientWidth;
+        var cols = cw >= 1024 ? 3 : cw >= 640 ? 2 : 1;
+        var gap = cw >= 1024 ? 36 : 32;
+        var inner = Math.min(cw - gutter * 2, 1200 - gutter * 2);
+        var colW = (inner - gap * (cols - 1)) / cols, bw = colW * .88, bh = bw * 168 / 1018;
+        var top0 = (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--header-h')) || 76) + 40;
+        var targets = {}, n = 0;
+        order.forEach(function (src) {
+          if (targets[src]) return;
+          targets[src] = { x: (cw - inner) / 2 + (n % cols) * (colW + gap) + (colW - bw) / 2, y: top0 + Math.floor(n / cols) * (bh + 24), w: bw };
+          n++;
+        });
+        arrange(targets, false);
+      }, 1500);
     });
-    window.addEventListener('pageshow', function () {
-      clearTimeout(timer);
-      if (layer && layer.parentNode) layer.parentNode.removeChild(layer);
-      layer = null;
-      marqueeFrozen = false;
-    });
+    window.addEventListener('pageshow', function () { if (busy || layer) cleanup(); });
   }
 
   /* ---------- 押したときの波紋 ----------

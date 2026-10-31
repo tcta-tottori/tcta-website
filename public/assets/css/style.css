@@ -1025,10 +1025,6 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 ::view-transition-group(court-name) { z-index: 41; }
 ::view-transition-group(mn-sheet) { z-index: 1; animation: none; }
 ::view-transition-old(mn-sheet) { animation: vt-sheet-down .5s cubic-bezier(.25, .8, .3, 1) .05s both; }
-/* トップのリンク集 → リンク集のページ（types: links）。並べ替えたバナーが、ページの同じバナーの位置へ滑って収まる */
-::view-transition-group(*.lk) { animation-duration: .55s; animation-timing-function: cubic-bezier(.2, .8, .2, 1); z-index: 30; }
-::view-transition-old(*.lk) { animation: vt-fade .25s ease both; }
-::view-transition-new(*.lk) { animation-duration: .3s; }
 @keyframes vt-fade { to { opacity: 0; } }
 @keyframes vt-sheet-down { from { clip-path: inset(0); } to { clip-path: inset(100% 0 0 0); } }
 @media (prefers-reduced-motion: reduce) {
@@ -2452,6 +2448,13 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 .lk-layer { position: fixed; inset: 0; z-index: 4000; background: rgba(255, 255, 255, 0); transition: background-color .45s ease .05s; pointer-events: none; }
 .lk-layer.is-on { background: rgba(255, 255, 255, 1); }
 .lk-layer__img { position: absolute; display: block; object-fit: cover; border-radius: var(--radius); box-shadow: 0 2px 10px rgba(26, 26, 26, .12); transform-origin: 0 0; }
+/* 測定用に裏で読み込むリンク集のページ。並べ終えたらふわっと重ねてから移る */
+.lk-frame { position: fixed; inset: 0; z-index: 4001; width: 100%; height: 100%; border: 0; background: transparent; opacity: 0; pointer-events: none; transition: opacity .35s ease; }
+.lk-frame.is-on { opacity: 1; }
+/* トップのリンク集から移ってきたページ（と測定用の iframe の中）は、出現の動きを止めてそのまま出す */
+html.is-links-arrive { scroll-behavior: auto; }
+html.is-links-arrive .fu, html.is-links-arrive .hl > span { animation: none !important; opacity: 1 !important; transform: none !important; }
+html.is-links-arrive .page-title, html.is-links-arrive .sub-head { animation: none; background-image: none; color: var(--ink); -webkit-text-fill-color: var(--ink); }
 
 .marquee {
   margin-top: 32px;
@@ -3256,7 +3259,7 @@ body.jsrv .rv.on .ink-sweep {
 }
 
 /* 入会案内の登録の種類。大会情報の「登録区分」の札（.reg--shi／.reg--ken）と同じ塗り分け。
-   市（団体）＝赤の塗り・白文字、県（団体）＝赤い線・赤文字、個人（市・県）＝上が赤の塗り（白文字）でまわりが赤い線 */
+   市（団体）＝赤の塗り・白文字、県（団体）と個人（市・県）＝赤い線・赤文字 */
 .regcard {
   display: flex;
   flex-direction: column;
@@ -3302,7 +3305,7 @@ body.jsrv .rv.on .ink-sweep {
   font: 700 15px/1 var(--flt);
   transition: background-color .25s ease, color .25s ease;
 }
-/* 県（団体）：赤い線・赤文字 */
+/* 県（団体）・個人（市・県）：赤い線・赤文字 */
 .regcard--ken .regcard__file:hover { background: var(--red-tint); color: var(--red); }
 .regcard--ken .regcard__file:hover .regcard__go { background: var(--red); border-color: var(--red); color: #fff; }
 /* 市（団体）：赤の塗り・白文字 */
@@ -3310,11 +3313,7 @@ body.jsrv .rv.on .ink-sweep {
 .regcard--shi .regcard__type { background: #fff; color: var(--red); }
 .regcard--shi .regcard__file:hover { background: rgba(255, 255, 255, .12); color: #fff; }
 .regcard--shi .regcard__file:hover .regcard__go { background: #fff; color: var(--red); }
-/* 個人（市・県）：上の名前の帯は赤の塗り・白文字、下の用紙は白地に赤文字 */
-.regcard--both .regcard__head { padding-bottom: 18px; background: var(--red); color: #fff; }
-.regcard--both .regcard__file { margin-top: auto; padding-top: 18px; }
-.regcard--both .regcard__file:hover { background: var(--red-tint); color: var(--red); }
-.regcard--both .regcard__file:hover .regcard__go { background: var(--red); border-color: var(--red); color: #fff; }
+
 .panel__title {
   margin: 0 0 12px;
   font: 700 17px/1.5 var(--fjp);
