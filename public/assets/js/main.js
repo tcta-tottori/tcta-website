@@ -289,12 +289,15 @@
       document.body.appendChild(layer);
       var cards = Array.prototype.slice.call(rows.querySelectorAll('.link-card__banner'));
       var pick = function (src) {
-        var best = null, bestScore = -1;
+        var best = null, bestScore = -Infinity;
         cards.forEach(function (img) {
           if ((img.getAttribute('src') || '') !== src) return;
           var r = img.getBoundingClientRect();
+          if (!(r.width > 0)) return;
           var visible = r.right > 0 && r.left < vw && r.bottom > 0 && r.top < vh;
-          var score = (visible ? 2 : 0) + (img.closest('[aria-hidden="true"]') ? 0 : 1);
+          // 見えている写しを優先。見えていなければ、流れている列の中でいちばん画面に近い写し（画面の左右の外）から動かす
+          var dx = r.right < 0 ? -r.right : r.left > vw ? r.left - vw : 0;
+          var score = (visible ? 1e6 : 0) + (img.closest('[aria-hidden="true"]') ? 0 : 1) - dx;
           if (score > bestScore) { best = { r: r, visible: visible }; bestScore = score; }
         });
         return best;
@@ -304,7 +307,7 @@
       order.forEach(function (src) {
         if (!src || clones[src]) return;
         var p = pick(src);
-        var r = p && p.visible ? p.r : null;
+        var r = p ? p.r : null; // 画面の外にあった写しも、その位置（列の続き）から滑り込ませる
         var w = r ? r.width : 160, h = r ? r.height : 160 * 168 / 1018;
         var img = document.createElement('img');
         img.className = 'lk-layer__img';
@@ -383,11 +386,12 @@
           c.done = true;
           var el = c.el;
           var from = 'translate(' + (c.g.x - c.x) + 'px,' + (c.g.y - c.y) + 'px) scale(' + (c.g.w / c.w) + ')';
-          if (!t) { el.animate([{ transform: from, opacity: 1 }, { transform: from, opacity: 0 }], { duration: 300, delay: wait, fill: 'both' }); return; }
+          // fill は forwards だけにする（both だと、待ち時間のあいだも升目の位置に貼り付いて、1段目の「今の位置から升目へ」の動きを上書きしてしまう）
+          if (!t) { el.animate([{ transform: from, opacity: 1 }, { transform: from, opacity: 0 }], { duration: 300, delay: wait, fill: 'forwards' }); return; }
           el.animate([
             { transform: from, opacity: 1 },
             { transform: 'translate(' + (t.x - c.x) + 'px,' + (t.y - c.y) + 'px) scale(' + (t.w / c.w) + ')', opacity: 1 }
-          ], { duration: DUR2, delay: wait + (moving.length - 1 - moving.indexOf(src)) * LAG2, easing: 'cubic-bezier(.75, 0, .2, 1)', fill: 'both' });
+          ], { duration: DUR2, delay: wait + (moving.length - 1 - moving.indexOf(src)) * LAG2, easing: 'cubic-bezier(.75, 0, .2, 1)', fill: 'forwards' });
           i++;
         });
         var total = wait + Math.max(0, i - 1) * LAG2 + DUR2;
