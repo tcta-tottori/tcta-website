@@ -3678,6 +3678,10 @@ body.jsrv .rv.on .ink-sweep {
   transition: opacity .3s ease;
 }
 .hscroll.is-overflow:not(.is-end) .hscroll__hint { opacity: 1; }
+/* 表の横スクロール（main.js が .table-scroll を包む）：案内は表の上の右端に出す */
+.hscroll--top.is-overflow { padding-bottom: 0; padding-top: 24px; }
+.hscroll--top .hscroll__hint { top: 0; margin-top: 0; }
+.hscroll__track.table-scroll { display: block; }
 .hscroll__arrow { animation: hs-nudge 1.8s ease-in-out infinite; }
 /* 線の矢印：細い横線の右端から、短い線を左上へ跳ね上げただけの矢印（——\ の形）。
    SCROLL の矢印（.hscroll__arrow）と、トップの大会情報の「終了した大会／今後の大会」に使う。
@@ -4690,6 +4694,21 @@ html.is-pdfv, html.is-pdfv body { overflow: hidden; }
 .pdfv__status:empty { display: none; }
 .pdfv__pages { display: flex; flex-direction: column; align-items: center; gap: 16px; }
 .pdfv__page { margin: 0; width: 100%; max-width: 900px; box-shadow: 0 6px 24px rgba(0, 0, 0, .35); background: #fff; animation: pdfv-page .4s var(--ease) both; }
+/* 2ページ以上あるとき：スクロールで下から入ってくるページが、浮き上がりながら少し大きくなって現れる
+   （スクロールの位置そのものに合わせて動く。入りはじめから 360px 送るあいだで出きる）。
+   対応していないブラウザでは、読み込んだときにふわっと出るだけ */
+@supports (animation-timeline: view()) {
+  .pdfv__page + .pdfv__page, .pdfv__page:has(+ .pdfv__page) {
+    animation: pdfv-flow linear both;
+    animation-timeline: view();
+    animation-range: entry 0% cover 360px;
+  }
+  @keyframes pdfv-flow {
+    from { opacity: .15; transform: translateY(48px) scale(.92); box-shadow: 0 2px 8px rgba(0, 0, 0, .2); }
+    to   { opacity: 1; transform: none; box-shadow: 0 6px 24px rgba(0, 0, 0, .35); }
+  }
+}
+@media (prefers-reduced-motion: reduce) { .pdfv__page { animation: none !important; } }
 .pdfv__page img { display: block; width: 100%; height: auto; }
 @keyframes pdfv-page { from { opacity: 0; transform: translateY(12px); } }
 .pdfv.is-frame .pdfv__body { padding: 0; overflow: hidden; }

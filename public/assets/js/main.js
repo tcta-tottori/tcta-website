@@ -378,6 +378,22 @@
   /* 横に 1 行で並べる列（.hscroll。大会結果の年度・地図の施設）。はみ出しの有無と位置を class で付け、
      CSS が端の透かしと「scroll →」の案内を出し分ける */
   function initHScroll() {
+    // 横にスクロールする表（.table-scroll。協会についての各委員会など）も、同じ「SCROLL →」の案内を付ける。
+    // 表の上の右端に出す（.hscroll--top）。表が収まっているあいだと、右端まで送ったあとは消える
+    document.querySelectorAll('.table-scroll').forEach(function (ts) {
+      if (ts.closest('[data-hscroll]')) return;
+      var box = document.createElement('div');
+      box.className = 'hscroll hscroll--top';
+      box.setAttribute('data-hscroll', '');
+      ts.parentNode.insertBefore(box, ts);
+      box.appendChild(ts);
+      ts.classList.add('hscroll__track');
+      var hint = document.createElement('span');
+      hint.className = 'hscroll__hint';
+      hint.setAttribute('aria-hidden', 'true');
+      hint.innerHTML = '<span class="hscroll__arrow"></span>SCROLL';
+      box.appendChild(hint);
+    });
     document.querySelectorAll('[data-hscroll]').forEach(function (box) {
       var track = box.querySelector('.hscroll__track');
       if (!track) return;
