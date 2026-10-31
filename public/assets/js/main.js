@@ -1458,7 +1458,28 @@
     var KEY = 'tcta-tl-view';
     var lists = document.querySelectorAll('.tl');
     var btns = sw.querySelectorAll('[data-view]');
+    var current = 'rows';
+    /* 切り替えるたびに、出てきた方の一覧を順に出す（style.css の .tl.is-switching）。
+       縮小表示は行が左から、拡大表示はカードが下から、上から順に少しずつずらして（--si）出す */
+    var switchTimer = 0;
+    var appear = function () {
+      if (reduceMotion) return;
+      clearTimeout(switchTimer);
+      lists.forEach(function (l) {
+        var items = l.classList.contains('tl--rows')
+          ? l.querySelectorAll('.tlx__body .tlx__row:not([hidden])')
+          : l.querySelectorAll('.tl__card:not([hidden])');
+        Array.prototype.forEach.call(items, function (el, i) { el.style.setProperty('--si', String(i)); });
+        l.classList.remove('is-switching');
+        void l.offsetWidth; // 付け直しで動きを最初からやり直す
+        l.classList.add('is-switching');
+      });
+      switchTimer = setTimeout(function () {
+        lists.forEach(function (l) { l.classList.remove('is-switching'); });
+      }, 1600);
+    };
     var set = function (view) {
+      current = view;
       lists.forEach(function (l) { l.classList.toggle('tl--rows', view === 'rows'); });
       btns.forEach(function (b) {
         var on = b.getAttribute('data-view') === view;
@@ -1473,7 +1494,9 @@
       var b = e.target.closest('[data-view]');
       if (!b) return;
       var view = b.getAttribute('data-view');
+      if (view === current) return;
       set(view);
+      appear();
       try { localStorage.setItem(KEY, view); } catch (x) {}
       window.dispatchEvent(new Event('resize')); // 縮小表示に戻したとき、横に送れるかを測り直す（initTlx）
     });
