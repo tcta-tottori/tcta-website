@@ -68,8 +68,14 @@ const {
     var LINKS = 'tcta-links-vt';     // トップのリンク集の VIEW ALL から（並べ替えたバナーを、リンク集の同じバナーへつなぐ）
     var get = function (k) { try { return sessionStorage.getItem(k); } catch (e) { return null; } };
     var del = function (k) { try { sessionStorage.removeItem(k); } catch (e) {} };
+    // トップのリンク集の VIEW ALL から来たとき（と、そのとき裏で読み込む測定用の iframe）は、ページの出現の動きを止めて
+    // 並べ替えたバナーの位置にそのまま出す（html.is-links-arrive。style.css・main.js の initReveal）
+    if (get(LINKS) === '1' || location.hash === '#lk-arrive') {
+      document.documentElement.classList.add('is-links-arrive');
+      if (location.hash !== '#lk-arrive') del(LINKS);
+    }
     window.addEventListener('pageswap', function (e) {
-      if (e.viewTransition && get(KEY) !== '1' && !get(COURT) && !get(LINKS)) e.viewTransition.skipTransition();
+      if (e.viewTransition && get(KEY) !== '1' && !get(COURT) && !document.documentElement.classList.contains('is-lk-leaving')) e.viewTransition.skipTransition();
     });
     window.addEventListener('pagereveal', function (e) {
       if (!e.viewTransition) return;
@@ -77,20 +83,9 @@ const {
       if (get(KEY) === '1') {
         del(KEY);
         if (e.viewTransition.types) e.viewTransition.types.add('menu');
-      } else if (get(LINKS) === '1') {
-        del(LINKS);
-        var imgs = document.querySelectorAll('#link-list .litem__media img');
-        if (!imgs.length) { e.viewTransition.skipTransition(); return; }
-        // バナーの写しの名前（main.js の linkVtName と同じ作り方）。一覧はすぐ見せる（出現の動きは流さない）
-        document.querySelectorAll('#link-list .rv').forEach(function (el) { el.classList.add('on'); });
-        imgs.forEach(function (img) {
-          var n = 'lk-' + String(img.getAttribute('src') || '').split('/').pop().replace(/\.[^.]+$/, '').toLowerCase().replace(/[^a-z0-9-]/g, '-');
-          img.style.viewTransitionName = n;
-          img.style.setProperty('view-transition-class', 'lk');
-        });
+      } else if (document.documentElement.classList.contains('is-links-arrive')) {
+        // トップのリンク集から：並べ替えたバナーの上に重ねた同じ見た目のページから、そのまま切り替える（動きは足さない）
         if (e.viewTransition.types) e.viewTransition.types.add('links');
-        var unname = function () { imgs.forEach(function (img) { img.style.viewTransitionName = ''; }); };
-        e.viewTransition.finished.then(unname, unname);
       } else if (court) {
         del(COURT);
         var art = document.getElementById(court);
