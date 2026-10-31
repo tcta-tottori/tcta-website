@@ -281,6 +281,34 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   margin-top: 40px;
 }
 .split > * { min-width: 0; }
+/* お問い合わせの LINE 公式アカウント。LINE の色（緑）で塗りつぶした札 */
+.line-badge {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 24px;
+  border-radius: var(--radius);
+  background: #06C755;
+  color: #fff;
+  transition: background-color .25s ease, transform .25s ease, box-shadow .25s ease;
+}
+.line-badge:hover { background: #05B34C; color: #fff; }
+@media (hover: hover) { .line-badge:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(6, 199, 85, .3); } }
+.line-badge__title { font: 700 17px/1.4 var(--fjp); letter-spacing: .04em; }
+.line-badge__text { font: 400 14px/1.8 var(--fjp); opacity: .95; }
+.line-badge__btn {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 11px 20px;
+  border-radius: var(--radius);
+  background: #fff;
+  color: #06C755;
+  font: 700 14px/1 var(--fjp);
+  letter-spacing: .04em;
+}
 @media (min-width: 1024px) {
   .split { grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 48px; margin-top: 48px; }
   /* 本文が広い側（フォームなど）を左に置く場合 */

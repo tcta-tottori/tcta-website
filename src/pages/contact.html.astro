@@ -51,11 +51,12 @@ const description = "鳥取市テニス協会へのお問い合わせフォー�
       <div class="split split--reverse" style="margin-top:0">
 
         <div class="rv" style="order:2">
-          <div class="panel panel--tint">
-            <p class="panel__title">LINE公式アカウント</p>
-            <p class="prose" style="margin:0">LINEからもお問い合わせいただけます。</p>
-            <a class="btn btn--primary" style="margin-top:24px" href={LINE_OFFICIAL.url} target="_blank" rel="noopener noreferrer">LINEを開く <span class="aw">↗</span></a>
-          </div>
+          {/* LINE の色（緑）で塗りつぶした札。全体を押すと LINE 公式アカウントが別タブで開く */}
+          <a class="line-badge" href={LINE_OFFICIAL.url} target="_blank" rel="noopener noreferrer">
+            <span class="line-badge__title">LINE公式アカウント</span>
+            <span class="line-badge__text">LINEからもお問い合わせいただけます。</span>
+            <span class="line-badge__btn">LINEを開く <span class="aw" aria-hidden="true">↗</span></span>
+          </a>
         </div>
 
         <div class="rv" style="order:1">
