@@ -29,6 +29,7 @@ const BY_NAME = [
   { match: /クラブ対抗.*後期/, photo: { src: 'assets/img/event-photos/club-latter.webp', w: 960, h: 632, pos: '50% 55%', alt: 'クラブ対抗戦の後期日程で、ネットをはさんで礼をする選手たち' } },
   { match: /クラブ対抗/, photo: { src: 'assets/img/event-photos/team.webp', w: 960, h: 640, pos: '55% 45%', alt: 'クラブ対抗戦の試合後、コートで礼をする選手たち' } },
   { match: /市民体育祭/, photo: { src: 'assets/img/event-photos/shimin-taiikusai.webp', w: 960, h: 540, pos: '55% 45%', alt: '市民体育祭のダブルスで、フォアハンドを打つ選手とそれを見守るパートナー' } },
+  { match: /尾坂杯/, photo: { src: 'assets/img/event-photos/osaka.webp', w: 960, h: 697, pos: '62% 40%', alt: '室内コートでフォアハンドを打つジュニアの選手' } },
   { match: /プリンスオープン/, photo: { src: 'assets/img/event-photos/prince-open.webp', w: 729, h: 370, pos: '50% 60%', alt: 'プリンスオープンの参加者の集合写真' } },
 ];
 
