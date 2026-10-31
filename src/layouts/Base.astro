@@ -74,15 +74,40 @@ const {
       document.documentElement.classList.add('is-links-arrive');
       if (location.hash !== '#lk-arrive') del(LINKS);
     }
+    /* メニューから移るときの協会ロゴ。黒地の写し（mn-sheet）は次のページのヘッダーごと覆うので、そのままだと
+       閉じ始めの一瞬ロゴが隠れる。ロゴにも写しの名前（site-logo）を付けて黒地より前に出し、
+       前のページの白いロゴ（old）を黒地と同じ動きで上から削り、下から次のページの黒いロゴ（new）を見せる（style.css）。
+       名前を付けたあいだはロゴの塗り分け（backdrop-filter）が効かないので、画像のロゴに差し替えておく（.is-vt-logo） */
+    var logoFor = function (on) {
+      var hd = document.querySelector('.site-header');
+      var lg = hd && hd.querySelector('.site-header__logo');
+      if (!lg) return null;
+      hd.classList.toggle('is-vt-logo', on);
+      lg.style.viewTransitionName = on ? 'site-logo' : '';
+      return lg;
+    };
     window.addEventListener('pageswap', function (e) {
       if (e.viewTransition && get(KEY) !== '1' && !get(COURT) && !document.documentElement.classList.contains('is-lk-leaving')) e.viewTransition.skipTransition();
+      else if (e.viewTransition && get(KEY) === '1' && document.querySelector('.site-header.is-menu')) logoFor(true);
     });
+    // 戻る（bfcache）で前のページに帰ってきたときは元に戻す
+    window.addEventListener('pageshow', function (e) { if (e.persisted) logoFor(false); });
     window.addEventListener('pagereveal', function (e) {
       if (!e.viewTransition) return;
       var court = get(COURT);
       if (get(KEY) === '1') {
         del(KEY);
         if (e.viewTransition.types) e.viewTransition.types.add('menu');
+        var lg = logoFor(true);
+        if (lg) {
+          // 白いロゴを削る位置を、黒地の上端と揃える（ロゴの上端から見た、黒地の上端の始まりと終わり）
+          var top = lg.getBoundingClientRect().top;
+          var root = document.documentElement.style;
+          root.setProperty('--vt-logo-from', (-top) + 'px');
+          root.setProperty('--vt-logo-to', (window.innerHeight - top) + 'px');
+          var off = function () { logoFor(false); };
+          e.viewTransition.finished.then(off, off);
+        }
       } else if (document.documentElement.classList.contains('is-links-arrive')) {
         // トップのリンク集から：並べ替えたバナーの上に重ねた同じ見た目のページから、そのまま切り替える（動きは足さない）
         if (e.viewTransition.types) e.viewTransition.types.add('links');
