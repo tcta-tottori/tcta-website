@@ -72,6 +72,8 @@ const isLight = isLightFeature;
             </div>
           </div>
 
+          {/* 写真の下を流れる説明。白い地ごと写真の下端に重なって消えていく（.cfac__flow。style.css） */}
+          <div class="cfac__flow">
           <div class="container container--result cfac__body">
           {c.desc && <p class="cfac__desc">{c.desc}</p>}
 
@@ -131,6 +133,7 @@ const isLight = isLightFeature;
               )}
               <a class="btn btn--outline" href={mapLink(c)} target="_blank" rel="noopener noreferrer">地図で見る <span class="aw">↗</span></a>
             </div>
+          </div>
           </div>
           </div>
         </article>

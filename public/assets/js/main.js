@@ -1078,12 +1078,10 @@
         var r = h.getBoundingClientRect();
         var top = parseFloat(getComputedStyle(h).top) || 0;
         h.classList.toggle('is-stuck', r.top <= top + 1 && r.top > -r.height && box.bottom > r.bottom + 1 && box.top < r.top - 1);
-        // 説明が写真の下端を越えた分（style.css の .cfac__body の --cut。写真に重なって消えていく位置）
-        var body = h.parentElement.querySelector('.cfac__body');
-        if (!body || box.bottom < 0 || box.top > window.innerHeight) return;
-        var cut = r.bottom - body.getBoundingClientRect().top;
-        body.style.setProperty('--cut', Math.round(cut) + 'px');
-        body.classList.toggle('is-over', cut > 0);
+        // 説明（白い地ごと）が写真の下端を越えた分（style.css の .cfac__flow の --cut。写真に重なって消えていく位置）
+        var flow = h.parentElement.querySelector('.cfac__flow');
+        if (!flow || box.bottom < 0 || box.top > window.innerHeight) return;
+        flow.style.setProperty('--cut', Math.round(r.bottom - flow.getBoundingClientRect().top) + 'px');
       });
     };
     var request = function () {
@@ -1459,24 +1457,43 @@
     var lists = document.querySelectorAll('.tl');
     var btns = sw.querySelectorAll('[data-view]');
     var current = 'rows';
-    /* 切り替えるたびに、出てきた方の一覧を順に出す（style.css の .tl.is-switching）。
-       縮小表示は行が左から、拡大表示はカードが下から、上から順に少しずつずらして（--si）出す */
-    var switchTimer = 0;
+    /* 切り替えるたびに、出てきた方の一覧を順に出す（style.css の .sw-wait → .sw-in）。
+       縮小表示は行が左から、拡大表示はカードが下から出る。画面に見えている分だけをまず順に（--si で少しずつずらして）出し、
+       画面の外の分は待たせておき、スクロールして見えてきたときにその場で出す（IntersectionObserver） */
+    var switchIO = null;
     var appear = function () {
-      if (reduceMotion) return;
-      clearTimeout(switchTimer);
+      if (reduceMotion || !('IntersectionObserver' in window)) return;
+      if (switchIO) switchIO.disconnect();
+      document.querySelectorAll('.sw-wait, .sw-in').forEach(function (el) { el.classList.remove('sw-wait', 'sw-in'); });
+      switchIO = new IntersectionObserver(function (entries) {
+        var k = 0;
+        entries.forEach(function (e) {
+          if (!e.isIntersecting) return;
+          var el = e.target;
+          switchIO.unobserve(el);
+          el.style.setProperty('--si', String(k++));
+          el.classList.remove('sw-wait');
+          el.classList.add('sw-in');
+          el.addEventListener('animationend', function done(ev) {
+            if (ev.target !== el) return;
+            el.classList.remove('sw-in');
+            el.removeEventListener('animationend', done);
+          });
+        });
+      }, { threshold: 0, rootMargin: '0px 0px -6% 0px' });
       lists.forEach(function (l) {
         var items = l.classList.contains('tl--rows')
           ? l.querySelectorAll('.tlx__body .tlx__row:not([hidden])')
           : l.querySelectorAll('.tl__card:not([hidden])');
-        Array.prototype.forEach.call(items, function (el, i) { el.style.setProperty('--si', String(i)); });
+        Array.prototype.forEach.call(items, function (el) {
+          el.classList.add('sw-wait');
+          switchIO.observe(el);
+        });
+        // 項目名の行（縮小表示）はすぐにふわっと出す
         l.classList.remove('is-switching');
-        void l.offsetWidth; // 付け直しで動きを最初からやり直す
+        void l.offsetWidth;
         l.classList.add('is-switching');
       });
-      switchTimer = setTimeout(function () {
-        lists.forEach(function (l) { l.classList.remove('is-switching'); });
-      }, 1600);
     };
     var set = function (view) {
       current = view;
