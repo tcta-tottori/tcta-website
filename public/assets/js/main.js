@@ -79,16 +79,42 @@
   }
 
   /* ---------- スクロール連動フェード（.rv） ---------- */
+  /* 縦に長いまとまりの中の1枚ずつ（結果表・写真・一覧の行など）。まとまり（.rv）が出たあとも、
+     画面の外にあった分はスクロールして見えてきたときに1枚ずつ出す（.rv-in。同じときに入った分は --rvi で少しずつずらす） */
+  var RV_ITEMS = 'main .sheet, main .gallery__item, main .rlist > li, main .rblock__cat, main .dl-item, main .qa__item, main .eform';
+  var RV_SKIP = '.pdfv, .marquee, .carousel, .tl, .gallery-peek, .news-all';
+  var revealIO = null;
+  /** 隠れていた部分（年度のタブを切り替えたときなど）の .rv-in を、もう一度出し直す */
+  function revealAgain(root) {
+    if (!revealIO || !root) return;
+    root.querySelectorAll('.rv-in').forEach(function (el) {
+      el.classList.remove('on');
+      revealIO.observe(el);
+    });
+  }
+
   function initReveal() {
     // .ghost（見出し右の大きな英字）も同じ仕組みで、右からスライドインさせる
     var targets = document.querySelectorAll('.rv, .ghost');
-    if (!targets.length) return;
+    var items = Array.prototype.filter.call(document.querySelectorAll(RV_ITEMS), function (el) {
+      return !el.classList.contains('rv') && !el.closest(RV_SKIP);
+    });
+    if (!targets.length && !items.length) return;
 
     if (!('IntersectionObserver' in window) || reduceMotion) return; // そのまま表示
 
     document.body.classList.add('jsrv');
-    var io = new IntersectionObserver(function (entries) {
+    items.forEach(function (el) { el.classList.add('rv-in'); });
+    var io = revealIO = new IntersectionObserver(function (entries) {
+      var k = 0;
       entries.forEach(function (e) {
+        if (e.isIntersecting && e.target.classList.contains('rv-in')) {
+          var it = e.target;
+          it.style.setProperty('--rvi', String(Math.min(k++, 8)));
+          it.classList.add('on');
+          io.unobserve(it);
+          return;
+        }
         if (e.isIntersecting) {
           var el = e.target;
           el.classList.add('on');
@@ -104,6 +130,7 @@
 
     requestAnimationFrame(function () {
       targets.forEach(function (el) { io.observe(el); });
+      items.forEach(function (el) { io.observe(el); });
     });
   }
 
@@ -1359,16 +1386,18 @@
       dist = Math.max(0, sw - track.clientWidth - x0);
       on = dist > 40;
       sec.classList.toggle('is-hpin', on);
-      if (!on) { wrap.style.height = ''; pin.style.top = ''; pin.style.height = ''; pin.style.paddingTop = ''; place(); return; }
+      if (!on) { wrap.style.height = ''; wrap.style.marginBottom = ''; pin.style.top = ''; pin.style.height = ''; pin.style.paddingTop = ''; place(); return; }
       pin.style.height = '';
       pin.style.paddingTop = '';
       var ph = pin.offsetHeight;
-      // ヘッダーの下の残り（画面の高さ − ヘッダー）いっぱいを灰色の地で覆って止め、中身はその中ほどに置く
+      // ヘッダーの下の残り（画面の高さ − ヘッダー）いっぱいを灰色の地で覆って止め、中身はその上寄り（--hpin-pad）に置く
       // （止まっているあいだ、見出し・背景の英字・灰色の地は動かず、カードだけが横に流れる）。
+      // 中身の下に余る灰色の分は、送り切って区画が外れるとき次の区画（お知らせ）が重なって隠す（.hpin-track の margin-bottom を負に）。
       // 区画が画面より高いときは、下端をそろえて止める
-      var hh = headerH(), room = window.innerHeight - hh, top, pad = 0;
+      var hh = headerH(), room = window.innerHeight - hh, top, pad = 0, rest = 0;
       if (ph <= room) {
-        pad = Math.floor((room - ph) / 2);
+        pad = Math.min(window.innerWidth >= 1024 ? 40 : 20, Math.floor((room - ph) / 2));
+        rest = room - ph - pad;
         pin.style.paddingTop = pad + 'px';
         pin.style.height = room + 'px';
         ph = room;
@@ -1376,6 +1405,7 @@
       } else {
         top = window.innerHeight - ph;
       }
+      wrap.style.marginBottom = rest > 0 ? (-rest) + 'px' : '';
       pin.style.setProperty('--hpin-pad', pad + 'px');
       pin.style.top = top + 'px';
       wrap.style.height = (ph + dist) + 'px';
@@ -1596,7 +1626,11 @@
           t.setAttribute('aria-selected', String(on));
           t.tabIndex = on ? 0 : -1;
           var panel = document.getElementById(t.getAttribute('aria-controls'));
-          if (panel) panel.hidden = !on;
+          if (panel) {
+            var was = panel.hidden;
+            panel.hidden = !on;
+            if (on && was) revealAgain(panel); // 新しく出したタブの中身を、1行ずつ出し直す
+          }
         });
       };
 
