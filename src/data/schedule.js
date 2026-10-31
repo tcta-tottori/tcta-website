@@ -21,6 +21,8 @@
 //   （荒天中止の大会は日を振り替えないので、予備会場も置かない）。
 //   室内の尾坂杯だけは体育館開催なので、この形に当てはめない。
 
+import { STATE_OVERRIDE } from './official-extra.js';
+
 /** 管理画面の文言 → コードで使うキー */
 export const STATE_KEY = { '終了': 'done', '受付終了': 'closed', '受付中': 'open', 'まもなく受付': 'soon', '未受付': 'soon', '本日開催': 'live' };
 export const REG_KEY = { '県登録': 'ken', '市登録': 'shi', '登録不要': 'free' };
@@ -105,6 +107,9 @@ const EXTERNAL_PAGES = [
 ];
 const externalUrl = (name) => EXTERNAL_PAGES.find((x) => x.match.test(String(name ?? '')))?.url ?? null;
 
+/** 受付状態。管理画面がまだ「まもなく受付／未受付」で、公式サイトでは受付を始めている大会は、そちらに合わせる（official-extra.js） */
+const stateOf = (t) => (STATE_OVERRIDE[t.slug] && /^(まもなく受付|未受付)?$/.test(t.state ?? '') ? STATE_OVERRIDE[t.slug] : t.state);
+
 /** EmDash の 1 行を、移行前の schedule.json の 1 行と同じ形にする。 */
 export function scheduleRow(t) {
   const date = String(t.date ?? '').slice(0, 10);
@@ -122,7 +127,7 @@ export function scheduleRow(t) {
     event: t.event || '',
     place: t.place || '',
     due: t.due || '',
-    status: autoStatus(STATE_KEY[t.state] ?? 'soon', t.due, date),
+    status: autoStatus(STATE_KEY[stateOf(t)] ?? 'soon', t.due, date),
     reg: REG_KEY[t.reg] ?? 'free',
     externalUrl: externalUrl(t.name),
   };

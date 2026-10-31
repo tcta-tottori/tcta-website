@@ -26,6 +26,7 @@
 //   （例：大会結果は大会のページに入れてから「結果を掲載しました」と書く。先に書かないこと）
 //   リンク先は必ずサイト内の実在するページにする（例：event-r8-enetopia.html）。
 
+import { EXTRA_NEWS } from './official-extra.js';
 /** トップページに出す件数。4件目は薄く重ねて「続きがある」ことだけ見せ、全部は VIEW ALL の中に出る。 */
 export const NEWS_VISIBLE = 3;
 
@@ -57,7 +58,10 @@ export const CATEGORY_KEY = { '大会': 'tournament', '結果': 'result', 'ジ�
  */
 export function buildNews(rows, now = new Date()) {
   const cutoff = newsCutoff(now);
-  const NEWS = rows
+  // 公式サイトに先に載ったお知らせ（official-extra.js）。同じ日付・同じ題名の行が管理画面にあれば足さない
+  const key = (n) => `${String(n.date).slice(0, 10)}|${n.title}`;
+  const known = new Set(rows.map(key));
+  const NEWS = [...rows, ...EXTRA_NEWS.filter((n) => !known.has(key(n)))]
     .filter((n) => n.title && n.date)
     .filter((n) => String(n.date).slice(0, 10) >= cutoff)
     .map((n) => ({

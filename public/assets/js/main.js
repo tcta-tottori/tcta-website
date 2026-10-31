@@ -320,27 +320,58 @@
       });
       requestAnimationFrame(function () { layer.classList.add('is-on'); });
 
-      // 並べる先へ動かす。targets：src → 画面上の位置と幅
+      /* 1段目：今の位置から、画面いっぱいの升目（全部が1画面に収まるいちばん大きな列数）へ並べ替える */
+      var srcs = order.filter(function (src) { return clones[src]; });
+      var N = srcs.length;
+      var gut = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--gutter')) || 20;
+      var headH = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--header-h')) || 76;
+      var gridGap = vw >= 1024 ? 18 : 12;
+      var availW = Math.min(vw - gut * 2, 1200), availH = vh - headH - 48;
+      var gcols = 1, gbw = 0;
+      for (var c = 1; c <= 5; c++) {
+        var bw1 = Math.min(380, (availW - gridGap * (c - 1)) / c);
+        var rows1 = Math.ceil(N / c);
+        var h1 = rows1 * bw1 * 168 / 1018 + (rows1 - 1) * gridGap;
+        var bw2 = h1 > availH ? bw1 * (availH - (rows1 - 1) * gridGap) / (h1 - (rows1 - 1) * gridGap) : bw1;
+        if (bw2 > gbw) { gbw = bw2; gcols = c; }
+      }
+      var gbh = gbw * 168 / 1018, grows = Math.ceil(N / gcols);
+      var gx0 = (vw - (gcols * gbw + (gcols - 1) * gridGap)) / 2;
+      var gy0 = headH + 24 + (availH - (grows * gbh + (grows - 1) * gridGap)) / 2;
+      var STAGE1 = 560, LAG1 = 18;
+      srcs.forEach(function (src, i) {
+        var c = clones[src];
+        c.g = { x: gx0 + (i % gcols) * (gbw + gridGap), y: gy0 + Math.floor(i / gcols) * (gbh + gridGap), w: gbw };
+        c.el.animate([
+          { transform: 'none', opacity: c.el.style.opacity === '0' ? 0 : 1 },
+          { transform: 'translate(' + (c.g.x - c.x) + 'px,' + (c.g.y - c.y) + 'px) scale(' + (c.g.w / c.w) + ')', opacity: 1 }
+        ], { duration: STAGE1, delay: i * LAG1, easing: 'cubic-bezier(.65, 0, .25, 1)', fill: 'both' });
+      });
+      // 並べ終えて、少し間を置いてから2段目へ
+      var stage2At = Date.now() + STAGE1 + N * LAG1 + 260;
+
+      /* 2段目：升目から、リンク集のページの実際の位置へ。1枚ずつ少し遅らせながら（ラグ）なめらかに広げる。targets：src → 画面上の位置と幅 */
       var started = false;
       var arrange = function (targets, withFrame) {
         if (started || !layer) return;
         started = true;
         clearTimeout(fallbackTimer);
+        var wait = Math.max(0, stage2At - Date.now());
         var i = 0;
-        order.forEach(function (src) {
+        srcs.forEach(function (src) {
           var c = clones[src], t = targets[src];
           if (!c || c.done) return;
           c.done = true;
           var el = c.el;
-          if (!t) { el.animate([{ opacity: el.style.opacity || 1 }, { opacity: 0 }], { duration: 300, fill: 'both' }); return; }
-          var s = t.w / c.w;
+          var from = 'translate(' + (c.g.x - c.x) + 'px,' + (c.g.y - c.y) + 'px) scale(' + (c.g.w / c.w) + ')';
+          if (!t) { el.animate([{ transform: from, opacity: 1 }, { transform: from, opacity: 0 }], { duration: 300, delay: wait, fill: 'both' }); return; }
           el.animate([
-            { transform: 'none', opacity: el.style.opacity === '0' ? 0 : 1 },
-            { transform: 'translate(' + (t.x - c.x) + 'px,' + (t.y - c.y) + 'px) scale(' + s + ')', opacity: 1 }
-          ], { duration: 760, delay: 80 + i * 32, easing: 'cubic-bezier(.7, 0, .2, 1)', fill: 'both' });
+            { transform: from, opacity: 1 },
+            { transform: 'translate(' + (t.x - c.x) + 'px,' + (t.y - c.y) + 'px) scale(' + (t.w / c.w) + ')', opacity: 1 }
+          ], { duration: 720, delay: wait + i * 55, easing: 'cubic-bezier(.55, 0, .15, 1)', fill: 'both' });
           i++;
         });
-        var total = 80 + i * 32 + 760;
+        var total = wait + Math.max(0, i - 1) * 55 + 720;
         timer = setTimeout(function () {
           var go = function () {
             try { sessionStorage.setItem('tcta-links-vt', '1'); } catch (x) {}
@@ -1605,20 +1636,39 @@
       var best = null;
       stops().forEach(function (sx) { if (best === null || Math.abs(sx - x) < Math.abs(best - x)) best = sx; });
       if (best === null || Math.abs(best - x) < 2) return;
-      settling = true;
-      window.scrollTo({ top: start + (best - x0), behavior: 'smooth' });
-      // なめらかな移動が終わるころに解除（scrollend が来ればそこで解除）
-      clearTimeout(settleTimer);
-      settleTimer = setTimeout(function () { settling = false; }, 700);
+      glide(start + (best - x0));
     };
+    /* 寄せる動き。ブラウザのなめらかなスクロール（遅く、端末でまちまち）は使わず、
+       距離に応じて 0.22〜0.38 秒で、出だしは速く最後はすっと止まる曲線で縦の位置を動かす。
+       途中で指・ホイール・キーで操作されたら、そこでやめる */
+    var glideRaf = 0;
+    var glide = function (to) {
+      cancelAnimationFrame(glideRaf);
+      var from = window.pageYOffset, d = to - from;
+      if (Math.abs(d) < 1) return;
+      var dur = Math.min(380, Math.max(220, Math.abs(d) * 1.1));
+      var t0 = 0;
+      settling = true;
+      var step = function (now) {
+        if (!t0) t0 = now;
+        var k = Math.min(1, (now - t0) / dur);
+        var e = 1 - Math.pow(1 - k, 3);
+        window.scrollTo({ top: from + d * e, behavior: 'instant' });
+        if (k < 1 && settling) glideRaf = requestAnimationFrame(step);
+        else settleTimer = setTimeout(function () { settling = false; }, 60);
+      };
+      glideRaf = requestAnimationFrame(step);
+    };
+    var stopGlide = function () { if (settling) { cancelAnimationFrame(glideRaf); settling = false; } };
+    ['wheel', 'touchstart', 'keydown'].forEach(function (ev) { window.addEventListener(ev, stopGlide, { passive: true }); });
     var settleSoon = function () {
       if (settling) return;
       clearTimeout(settleTimer);
-      settleTimer = setTimeout(settle, 160);
+      settleTimer = setTimeout(settle, 90);
     };
     if ('onscrollend' in window) {
       window.addEventListener('scrollend', function () {
-        if (settling) { settling = false; return; }
+        if (settling) return; // 寄せている最中の動き
         settle();
       });
       track.addEventListener('scrollend', function () { if (!settling) settleSoon(); });
