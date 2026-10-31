@@ -2639,27 +2639,22 @@ html.is-links-arrive .page-title, html.is-links-arrive .sub-head { animation: no
 .cfac + .cfac { margin-top: 72px; }
 @media (min-width: 1024px) { .cfac + .cfac { margin-top: 96px; } }
 .cfac__hero {
-  /* スクロールすると写真はヘッダーの下で止まり、その施設の説明が流れ終わるまでとどまる（次の施設に入ると一緒に上へ抜ける）。
-     止まる位置はヘッダーの下端。PC はヘッダーが引っ込んだら画面の上端。説明が読めるよう、写真の高さは画面の 55% まで */
+  /* スクロールすると写真は画面の上端（協会のロゴの裏）で止まり、その施設の説明が流れ終わるまでとどまる
+     （次の施設に入ると一緒に上へ抜ける）。ロゴは写真の上に重なる（白に変わる。main.js の initLogoInk）。
+     スマホは写真の上にロゴの分の高さを足す。説明が読めるよう、写真の高さは画面の 55%（＋ロゴの分）まで */
   position: sticky;
-  top: var(--header-h);
+  top: 0;
   z-index: 3;
   display: block;
   width: 100%;
-  height: clamp(260px, 62vw, 420px);
-  max-height: 55svh;
+  height: calc(clamp(260px, 62vw, 420px) + var(--header-h));
+  max-height: calc(55svh + var(--header-h));
   margin: 0;
   overflow: hidden;
   background: var(--ink);
 }
 @media (min-width: 1024px) {
-  .cfac__hero { height: clamp(420px, 42vw, 560px); transition: top .35s var(--ease); }
-  body:has(.site-header--hidden) .cfac__hero { top: 0; }
-}
-/* スマホ：止まっているあいだは、写真より上（ロゴとメニューのボタンの裏）を白で覆い、下を流れる説明が透けないようにする
-   （main.js の initStickyHero が .is-stuck を付ける） */
-@media (max-width: 1023px) {
-  .cfac__hero.is-stuck { box-shadow: 0 -30px 0 var(--white), 0 -60px 0 var(--white), 0 calc(-1 * var(--header-h)) 0 var(--white); }
+  .cfac__hero { height: clamp(420px, 42vw, 560px); max-height: 62svh; }
 }
 .cfac__hero--noimg { height: auto; min-height: 200px; }
 /* .gallery（写真の升目）の grid を打ち消す（写真の無い施設で、名前の帯が升目の1列ぶんの幅に縮んでいた） */
@@ -2674,17 +2669,20 @@ html.is-links-arrive .page-title, html.is-links-arrive .sub-head { animation: no
   transition: transform 1.2s var(--ease);
 }
 .cfac__hero:hover .cfac__hero-link img { transform: scale(1.04); }
-/* 写真の上の文字。写真の左上に置く。暗い帯はごく薄くにとどめ、文字の影で読ませる。押しても下の写真のリンクに通す */
+/* 写真の上の文字（施設名・サーフェス・面数など）。写真の右下に置く。下端からごく薄い暗い帯を敷き、文字の影で読ませる。
+   押しても下の写真のリンクに通す */
 .cfac__hero-cap {
   position: absolute;
-  inset: 0 0 auto;
-  padding: 20px 0 40px;
-  background: linear-gradient(180deg, rgba(26, 26, 26, .22) 0%, rgba(26, 26, 26, 0) 100%);
+  inset: auto 0 0;
+  padding: 48px 0 18px;
+  background: linear-gradient(0deg, rgba(26, 26, 26, .4) 0%, rgba(26, 26, 26, 0) 100%);
   color: var(--white);
-  text-align: left;
+  text-align: right;
   pointer-events: none;
 }
-@media (min-width: 1024px) { .cfac__hero-cap { padding: 32px 0 64px; } }
+@media (min-width: 1024px) { .cfac__hero-cap { padding: 72px 0 28px; } }
+.cfac__hero-cap .cfac__name { justify-content: flex-end; }
+.cfac__hero-cap .cfac__badges { justify-content: flex-end; }
 .cfac__hero--noimg .cfac__hero-cap { position: static; padding: 40px 0 28px; background: var(--ink); }
 .cfac__name {
   display: flex;
@@ -2725,24 +2723,6 @@ body.jsrv .cfac.rv.on.cfac--vt .cfac__name, body.jsrv .cfac.rv.on.cfac--vt .cfac
 .cfac__hero .badge--light { background: #D99A00; border-color: #D99A00; }
 .cfac__hero .badge--img { background: none; border: 0; backdrop-filter: none; -webkit-backdrop-filter: none; text-shadow: none; box-shadow: 0 1px 3px rgba(0, 0, 0, .35); }
 .cfac__body { padding-top: 28px; }
-/* 写真が止まっているあいだ、上へ流れる説明は、白い地ごと写真の下端を少し越えて写真の上に重なり（--hold のぶんはそのまま）、
-   そこから --band のあいだで文字と白い地がいっしょになめらかに透けて消える（写真に入り込んでいくように見せる）。
-   白い地は画面の幅いっぱい（.cfac__flow）。--cut はその上端から写真の下端までの距離（main.js の initStickyHero がスクロールのたびに入れる）。
-   写真より手前に重ねるので z-index を写真（3）より上にし、消えた所は mask で透かす */
-.cfac__flow {
-  position: relative;
-  z-index: 4;
-  background: var(--white);
-  --cut: -9999px;
-  --hold: 18px;
-  --band: 72px;
-  -webkit-mask-image: linear-gradient(180deg, transparent calc(var(--cut) - var(--hold) - var(--band)), #000 calc(var(--cut) - var(--hold)));
-  mask-image: linear-gradient(180deg, transparent calc(var(--cut) - var(--hold) - var(--band)), #000 calc(var(--cut) - var(--hold)));
-}
-@media (min-width: 1024px) { .cfac__flow { --hold: 28px; --band: 120px; } }
-@media (prefers-reduced-motion: reduce) {
-  .cfac__flow { -webkit-mask-image: none; mask-image: none; z-index: auto; }
-}
 .cfac__desc { margin: 0; font: 400 15px/1.9 var(--fjp); color: var(--gray-800); }
 .cfac .deflist { margin-top: 20px; }
 .cfac__tbd { color: var(--gray-500); }
