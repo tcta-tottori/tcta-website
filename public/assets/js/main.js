@@ -88,8 +88,12 @@
     var io = new IntersectionObserver(function (entries) {
       entries.forEach(function (e) {
         if (e.isIntersecting) {
-          e.target.classList.add('on');
-          io.unobserve(e.target);
+          var el = e.target;
+          el.classList.add('on');
+          io.unobserve(el);
+          // 出し遅れ（style の transition-delay。お知らせの行など）は、出終わったら外す（ホバーの色の変化まで遅れないように）
+          var d = parseFloat(el.style.transitionDelay);
+          if (d > 0) setTimeout(function () { el.style.transitionDelay = ''; }, (d + 0.8) * 1000);
         }
       });
       // 閾値は 0 にしておく。割合で判定すると、一覧表のように画面より背の高い要素が永久に表示されないことがある。
