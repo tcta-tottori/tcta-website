@@ -1674,8 +1674,8 @@
     var lists = document.querySelectorAll('.tl');
     var btns = sw.querySelectorAll('[data-view]');
     var current = 'rows';
-    /* 切り替えるたびに、出てきた方の一覧を順に出す（style.css の .sw-wait → .sw-in）。
-       縮小表示は行が左から、拡大表示はカードが下から出る。画面に見えている分だけをまず順に（--si で少しずつずらして）出し、
+    /* ページを開いたときと切り替えるたびに、出ている方の一覧を順に出す（style.css の .sw-wait → .sw-in）。
+       行もカードも、少し小さい状態から等倍へズームしながら出る。画面に見えている分だけをまず順に（--si で少しずつずらして）出し、
        画面の外の分は待たせておき、スクロールして見えてきたときにその場で出す（IntersectionObserver） */
     var switchIO = null;
     var appear = function () {
@@ -1724,6 +1724,8 @@
     var saved = null;
     try { saved = localStorage.getItem(KEY); } catch (e) {}
     if (saved === 'rows' || saved === 'cards') set(saved);
+    // ページを開いたときも、見えている行・カードから順にズームして出し、外の分はスクロールして見えてきたときに出す
+    appear();
     sw.addEventListener('click', function (e) {
       var b = e.target.closest('[data-view]');
       if (!b) return;
