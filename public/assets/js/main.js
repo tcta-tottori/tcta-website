@@ -6,6 +6,8 @@
   'use strict';
 
   var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  // トップのリンク集の VIEW ALL を押したあと、流れるバナーを止めておく（initLinksLeave）
+  var marqueeFrozen = false;
 
   /* ---------- オープニング（全画面の映像） ----------
      出すかどうかは Base.astro の <head> 内スクリプトが決め済み（html.splash-on）。
@@ -167,7 +169,7 @@
       var dt = (now - last) / 1000;
       last = now;
       // タブを離れていた等で間が空いたフレームは、飛ばさず捨てる
-      if (dt > 0 && dt < .1 && onScreen && !hovering && now >= holdUntil) {
+      if (dt > 0 && dt < .1 && onScreen && !hovering && !marqueeFrozen && now >= holdUntil) {
         view.scrollLeft += SPEED * dt * dir;
       }
       // 端に来たら半分ぶん入れ替える（見た目は同じなので継ぎ目が出ない）
@@ -178,6 +180,40 @@
       requestAnimationFrame(tick);
     };
     requestAnimationFrame(function (now) { last = now; requestAnimationFrame(tick); });
+  }
+
+  /* ---------- トップのリンク集の VIEW ALL ----------
+     押したら、流れているバナーをその場で止め、画面の中ほどへ向けて大きくしながら白くしてから、
+     リンク集のページへ移る（style.css の .marquee-rows.is-leaving と .leave-veil）。
+     戻るボタンで戻ってきたとき（ページが保存されていたとき）は元に戻して、また流す */
+  function initLinksLeave() {
+    var rows = document.querySelector('.marquee-rows');
+    var link = rows && rows.parentElement.querySelector('.sec-more a.view-all[href="links.html"]');
+    if (!rows || !link || reduceMotion) return;
+    var veil = null, timer = 0;
+    link.addEventListener('click', function (ev) {
+      if (ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.button > 0) return; // 新しいタブで開くときは任せる
+      ev.preventDefault();
+      marqueeFrozen = true;
+      // 画面に見えている帯の中ほど（縦）を中心に大きくする
+      var r = rows.getBoundingClientRect();
+      var cy = Math.min(Math.max(window.innerHeight / 2 - r.top, 0), r.height);
+      rows.style.transformOrigin = '50% ' + Math.round(cy) + 'px';
+      rows.classList.add('is-leaving');
+      veil = document.createElement('div');
+      veil.className = 'leave-veil';
+      document.body.appendChild(veil);
+      requestAnimationFrame(function () { requestAnimationFrame(function () { veil.classList.add('is-on'); }); });
+      timer = setTimeout(function () { location.href = link.href; }, 900);
+    });
+    window.addEventListener('pageshow', function () {
+      clearTimeout(timer);
+      if (veil && veil.parentNode) veil.parentNode.removeChild(veil);
+      veil = null;
+      rows.classList.remove('is-leaving');
+      rows.style.transformOrigin = '';
+      marqueeFrozen = false;
+    });
   }
 
   /* ---------- 押したときの波紋 ----------
@@ -342,6 +378,22 @@
   /* 横に 1 行で並べる列（.hscroll。大会結果の年度・地図の施設）。はみ出しの有無と位置を class で付け、
      CSS が端の透かしと「scroll →」の案内を出し分ける */
   function initHScroll() {
+    // 横にスクロールする表（.table-scroll。協会についての各委員会など）も、同じ「SCROLL →」の案内を付ける。
+    // 表の上の右端に出す（.hscroll--top）。表が収まっているあいだと、右端まで送ったあとは消える
+    document.querySelectorAll('.table-scroll').forEach(function (ts) {
+      if (ts.closest('[data-hscroll]')) return;
+      var box = document.createElement('div');
+      box.className = 'hscroll hscroll--top';
+      box.setAttribute('data-hscroll', '');
+      ts.parentNode.insertBefore(box, ts);
+      box.appendChild(ts);
+      ts.classList.add('hscroll__track');
+      var hint = document.createElement('span');
+      hint.className = 'hscroll__hint';
+      hint.setAttribute('aria-hidden', 'true');
+      hint.innerHTML = '<span class="hscroll__arrow"></span>SCROLL';
+      box.appendChild(hint);
+    });
     document.querySelectorAll('[data-hscroll]').forEach(function (box) {
       var track = box.querySelector('.hscroll__track');
       if (!track) return;
@@ -1631,8 +1683,7 @@
     var PDFJS = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/';
     var ICON = {
       dl: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>',
-      print: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 9V3h10v6M7 17H4v-7h16v7h-3M7 14h10v7H7z"/></svg>',
-      close: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>'
+      print: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 9V3h10v6M7 17H4v-7h16v7h-3M7 14h10v7H7z"/></svg>'
     };
 
     var box = document.createElement('div');
@@ -1646,7 +1697,7 @@
         '<div class="pdfv__actions">' +
           '<a class="pdfv__btn pdfv__btn--dl" href="#" download>' + ICON.dl + '<span>ダウンロード</span></a>' +
           '<button class="pdfv__btn pdfv__btn--print" type="button">' + ICON.print + '<span>印刷</span></button>' +
-          '<button class="pdfv__close" type="button" aria-label="閉じる">' + ICON.close + '</button>' +
+          '<button class="pdfv__close" type="button" aria-label="閉じる"><span></span><span></span><span></span></button>' +
         '</div>' +
       '</div>' +
       '<div class="pdfv__body"><p class="pdfv__status" aria-live="polite"></p><div class="pdfv__pages"></div></div>';
@@ -1764,7 +1815,7 @@
       document.documentElement.classList.add('is-pdfv');
       body.scrollTop = 0;
       opened = true;
-      requestAnimationFrame(function () { box.classList.add('is-open'); });
+      requestAnimationFrame(function () { requestAnimationFrame(function () { box.classList.add('is-open'); }); });
       try { history.pushState({ pdfv: 1 }, ''); pushed = true; } catch (x) { pushed = false; }
       render(src, a.getAttribute('data-type') || 'pdf');
       closeBtn.focus();
@@ -1775,7 +1826,7 @@
       job++;
       box.classList.remove('is-open');
       document.documentElement.classList.remove('is-pdfv');
-      setTimeout(function () { if (!opened) { box.hidden = true; clear(); } }, 300);
+      setTimeout(function () { if (!opened) { box.hidden = true; clear(); } }, 700); // 地が下がり終わってから（style.css の --pv-down-delay ＋ --pv-down）
       if (last) last.focus();
     };
     // 閉じる・Esc は履歴を1つ戻し（積んだ分を消す）、戻ったときに閉じる
@@ -1806,6 +1857,7 @@
     initReveal();
     initEventIcons();
     initMarquee();
+    initLinksLeave();
     initHeader();
     initRipple();
     initPressed();

@@ -3,6 +3,13 @@ import Base from '../layouts/Base.astro';
 
 const title = "入会案内｜鳥取市テニス協会";
 const description = "鳥取市テニス協会の入会案内。登録の種類、登録費、登録の流れ、よくある確認事項を掲載しています。";
+
+/** 登録の用紙。kind は札の塗り分け（both＝市・県どちらにも使う／shi＝市／ken＝県） */
+const REG_FORMS = [
+  { kind: 'both', title: '個人登録（市・県）', desc: '個人で登録する方（市登録・県登録とも同じ用紙）', file: '令和8年度 個人登録用紙（市・県）', src: 'assets/pdf/membership/r8-kojin-touroku.pdf', kb: 189 },
+  { kind: 'shi', title: '団体登録（市）', desc: 'クラブ・団体でまとめて市登録する場合', file: '令和8年度 市登録（団体）', src: 'assets/pdf/membership/r8-shi-dantai-touroku.pdf', kb: 61 },
+  { kind: 'ken', title: '団体登録（県）', desc: '県大会に出場するクラブ・団体', file: '令和8年度 県登録（団体）', src: 'assets/pdf/membership/r8-ken-dantai-touroku.pdf', kb: 62 },
+];
 ---
 
 <Base
@@ -10,6 +17,7 @@ const description = "鳥取市テニス協会の入会案内。登録の種類�
   description={description}
   navActive="membership"
   mobileNavActive="membership"
+  cta={false}
 >
   <!-- ============ ページヘッダー ============ -->
   <section class="page-head">
@@ -34,51 +42,35 @@ const description = "鳥取市テニス協会の入会案内。登録の種類�
 
       <div class="rv">
         <h2 class="sub-head">登録の種類</h2>
+        {/* 種類ごとに、大会情報の「登録区分」の札と同じ塗り分けにする（style.css の .regcard）。
+              市（団体）＝赤の塗り・白文字、県（団体）＝赤い線・赤文字、個人（市・県）＝両方（上が赤の塗り、まわりが赤い線）。
+              用紙を押すと別タブではなく、このページの中で全画面に開いて印刷・ダウンロードできる（main.js の initPdfViewer） */}
         <div class="card-grid card-grid--3">
-          <div class="panel">
-            <p style="margin:0;font:700 17px/1.5 var(--fjp);letter-spacing:.02em;color:var(--ink)">個人登録（市）</p>
-            <p style="margin:8px 0 20px;font:400 14px/1.8 var(--fjp);color:var(--gray-600)">個人で登録する方</p>
-            <a class="dl-item" style="border-bottom:0;padding:0" href="assets/pdf/membership/r8-kojin-touroku.pdf" target="_blank" rel="noopener noreferrer">
-              <span class="dl-item__type">PDF</span>
-              <span class="dl-item__text">
-                <span class="dl-item__title">令和8年度 個人登録用紙（市・県）</span>
-                <span class="dl-item__note">PDF / 189KB／別タブで開きます</span>
-              </span>
-              <span class="sqbtn" aria-hidden="true">→</span>
-            </a>
-          </div>
-          <div class="panel">
-            <p style="margin:0;font:700 17px/1.5 var(--fjp);letter-spacing:.02em;color:var(--ink)">団体登録（市）</p>
-            <p style="margin:8px 0 20px;font:400 14px/1.8 var(--fjp);color:var(--gray-600)">クラブ・団体でまとめて登録する場合</p>
-            <a class="dl-item" style="border-bottom:0;padding:0" href="assets/pdf/membership/r8-shi-dantai-touroku.pdf" target="_blank" rel="noopener noreferrer">
-              <span class="dl-item__type">PDF</span>
-              <span class="dl-item__text">
-                <span class="dl-item__title">令和8年度 市登録（団体）</span>
-                <span class="dl-item__note">PDF / 61KB／別タブで開きます</span>
-              </span>
-              <span class="sqbtn" aria-hidden="true">→</span>
-            </a>
-          </div>
-          <div class="panel">
-            <p style="margin:0;font:700 17px/1.5 var(--fjp);letter-spacing:.02em;color:var(--ink)">団体登録（県）</p>
-            <p style="margin:8px 0 20px;font:400 14px/1.8 var(--fjp);color:var(--gray-600)">県大会に出場するクラブ・団体</p>
-            <a class="dl-item" style="border-bottom:0;padding:0" href="assets/pdf/membership/r8-ken-dantai-touroku.pdf" target="_blank" rel="noopener noreferrer">
-              <span class="dl-item__type">PDF</span>
-              <span class="dl-item__text">
-                <span class="dl-item__title">令和8年度 県登録（団体）</span>
-                <span class="dl-item__note">PDF / 62KB／別タブで開きます</span>
-              </span>
-              <span class="sqbtn" aria-hidden="true">→</span>
-            </a>
-          </div>
+          {REG_FORMS.map((f) => (
+            <div class:list={['regcard', `regcard--${f.kind}`]}>
+              <div class="regcard__head">
+                <p class="regcard__title">{f.title}</p>
+                <p class="regcard__desc">{f.desc}</p>
+              </div>
+              <a class="regcard__file" href={f.src} data-pdf-viewer data-type="pdf" data-title={f.file} data-sub={f.title} data-filename={`${f.file.replace(/\s+/g, '_')}.pdf`}>
+                <span class="regcard__type" aria-hidden="true">PDF</span>
+                <span class="regcard__text">
+                  <span class="regcard__name">{f.file}</span>
+                  <span class="regcard__note">PDF・{f.kb}KB／印刷・ダウンロードできます</span>
+                </span>
+                <span class="regcard__go" aria-hidden="true">→</span>
+              </a>
+            </div>
+          ))}
         </div>
       </div>
 
       <div class="rv" style="margin-top:56px">
         <h2 class="sub-head">登録費</h2>
         <p class="prose" style="margin:0 0 20px">市登録（鳥取市テニス協会）と県登録（鳥取県テニス協会）では登録費が異なります。出場したい大会に必要な区分をご確認のうえ、お申し込みください。</p>
-        <div class="table-scroll">
-          <table class="fee-table">
+        {/* スマホでも横にずらさず読めるよう、幅に収める（.fee-table--fit） */}
+        <div>
+          <table class="fee-table fee-table--fit">
             <caption class="visually-hidden">区分ごとの登録費</caption>
             <thead>
               <tr>
@@ -99,7 +91,7 @@ const description = "鳥取市テニス協会の入会案内。登録の種類�
                 <td><span class="fee">1,400<span class="fee__yen">円</span></span></td>
               </tr>
               <tr>
-                <th scope="row">高校生以下（ジュニア）</th>
+                <th scope="row">高校生以下<span class="fee-table__sub">（ジュニア）</span></th>
                 <td><span class="fee">500<span class="fee__yen">円</span></span></td>
                 <td><span class="fee">700<span class="fee__yen">円</span></span></td>
               </tr>

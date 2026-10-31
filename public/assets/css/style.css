@@ -2406,6 +2406,10 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 }
 @media (min-width: 1024px) { .marquee-rows { gap: 20px; --mq-fade: 64px; } }
 .marquee-rows .marquee { margin-top: 0; }
+/* VIEW ALL を押したあと（main.js の initLinksLeave）：止めたバナーを大きくしながら、画面全体を白で覆ってからリンク集へ */
+.marquee-rows.is-leaving { transform: scale(1.5); filter: brightness(1.15) saturate(.8); transition: transform .8s cubic-bezier(.6, 0, .2, 1), filter .8s ease; }
+.leave-veil { position: fixed; inset: 0; z-index: 4000; background: var(--white); opacity: 0; pointer-events: none; transition: opacity .5s ease .35s; }
+.leave-veil.is-on { opacity: 1; }
 
 .marquee {
   margin-top: 32px;
@@ -3197,6 +3201,79 @@ body.jsrv .rv.on .ink-sweep {
 }
 .fee__yen { font: 700 13px/1 var(--fjp); margin-left: 3px; }
 .fee--free { font: 700 18px/1 var(--fjp); color: var(--red); }
+/* 入会案内の登録費：スマホでも横にずらさず幅に収める（余白と文字を詰め、区分名は折り返してよい） */
+.fee-table--fit { min-width: 0; table-layout: fixed; }
+.fee-table--fit tbody th { width: 34%; }
+.fee-table__sub { display: inline-block; }
+@media (max-width: 639px) {
+  .fee-table--fit th, .fee-table--fit td { padding: 12px 8px; }
+  .fee-table--fit thead th .reg { min-width: 0; width: 100%; padding: 0 6px; }
+  .fee-table--fit tbody th { font-size: 13px; }
+  .fee-table--fit .fee { font-size: 19px; }
+  .fee-table--fit .fee__yen { font-size: 12px; }
+  .fee-table--fit .fee--free { font-size: 16px; }
+}
+
+/* 入会案内の登録の種類。大会情報の「登録区分」の札（.reg--shi／.reg--ken）と同じ塗り分け。
+   市（団体）＝赤の塗り・白文字、県（団体）＝赤い線・赤文字、個人（市・県）＝上が赤の塗り（白文字）でまわりが赤い線 */
+.regcard {
+  display: flex;
+  flex-direction: column;
+  border: 2px solid var(--red);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--white);
+  color: var(--red);
+}
+.regcard__head { padding: 22px 22px 6px; }
+.regcard__title { margin: 0; font: 700 18px/1.5 var(--fjp); letter-spacing: .03em; color: inherit; }
+.regcard__desc { margin: 6px 0 0; font: 400 13px/1.8 var(--fjp); color: inherit; opacity: .85; }
+.regcard__file {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: auto;
+  padding: 16px 22px 22px;
+  color: inherit;
+  transition: background-color .25s ease;
+}
+.regcard__type {
+  flex: none;
+  padding: 5px 8px;
+  border-radius: 3px;
+  background: var(--red);
+  color: #fff;
+  font: 700 11px/1.3 var(--flt);
+  letter-spacing: .06em;
+}
+.regcard__text { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.regcard__name { font: 700 15px/1.5 var(--fjp); color: inherit; }
+.regcard__note { font: 400 11px/1.6 var(--fjp); color: inherit; opacity: .8; }
+.regcard__go {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border: 1px solid currentColor;
+  border-radius: var(--radius);
+  font: 700 15px/1 var(--flt);
+  transition: background-color .25s ease, color .25s ease;
+}
+/* 県（団体）：赤い線・赤文字 */
+.regcard--ken .regcard__file:hover { background: var(--red-tint); color: var(--red); }
+.regcard--ken .regcard__file:hover .regcard__go { background: var(--red); border-color: var(--red); color: #fff; }
+/* 市（団体）：赤の塗り・白文字 */
+.regcard--shi { background: var(--red); color: #fff; }
+.regcard--shi .regcard__type { background: #fff; color: var(--red); }
+.regcard--shi .regcard__file:hover { background: rgba(255, 255, 255, .12); color: #fff; }
+.regcard--shi .regcard__file:hover .regcard__go { background: #fff; color: var(--red); }
+/* 個人（市・県）：上の名前の帯は赤の塗り・白文字、下の用紙は白地に赤文字 */
+.regcard--both .regcard__head { padding-bottom: 18px; background: var(--red); color: #fff; }
+.regcard--both .regcard__file { margin-top: auto; padding-top: 18px; }
+.regcard--both .regcard__file:hover { background: var(--red-tint); color: var(--red); }
+.regcard--both .regcard__file:hover .regcard__go { background: var(--red); border-color: var(--red); color: #fff; }
 .panel__title {
   margin: 0 0 12px;
   font: 700 17px/1.5 var(--fjp);
@@ -3601,6 +3678,10 @@ body.jsrv .rv.on .ink-sweep {
   transition: opacity .3s ease;
 }
 .hscroll.is-overflow:not(.is-end) .hscroll__hint { opacity: 1; }
+/* 表の横スクロール（main.js が .table-scroll を包む）：案内は表の上の右端に出す */
+.hscroll--top.is-overflow { padding-bottom: 0; padding-top: 24px; }
+.hscroll--top .hscroll__hint { top: 0; margin-top: 0; }
+.hscroll__track.table-scroll { display: block; }
 .hscroll__arrow { animation: hs-nudge 1.8s ease-in-out infinite; }
 /* 線の矢印：細い横線の右端から、短い線を左上へ跳ね上げただけの矢印（——\ の形）。
    SCROLL の矢印（.hscroll__arrow）と、トップの大会情報の「終了した大会／今後の大会」に使う。
@@ -3678,26 +3759,32 @@ body.jsrv .rv.on .ink-sweep {
 @media (min-width: 1024px) { .steps { grid-template-columns: repeat(3, 1fr); gap: 24px; } }
 .step {
   position: relative;
+  /* 番号の右に見出しを並べ、説明は見出しの下（番号の列は空ける） */
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  column-gap: 14px;
+  align-items: center;
   background: var(--white);
   border: 1px solid var(--gray-200);
-  padding: 28px 24px 24px;
+  padding: 24px 24px 24px;
 }
 .step::before {
   counter-increment: step;
   content: "0" counter(step);
-  display: block;
-  margin-bottom: 12px;
+  grid-row: 1;
+  grid-column: 1;
   font: 700 28px/1 var(--flt);
   letter-spacing: .04em;
   color: var(--red);
 }
+.step__title { grid-row: 1; grid-column: 2; }
 .step__title {
-  margin: 0 0 8px;
+  margin: 0;
   font: 700 17px/1.5 var(--fjp);
   letter-spacing: .02em;
   color: var(--ink);
 }
-.step__text { margin: 0; font: 400 14px/1.8 var(--fjp); color: var(--gray-800); }
+.step__text { grid-column: 2; margin: 8px 0 0; font: 400 14px/1.8 var(--fjp); color: var(--gray-800); }
 
 /* Q&A */
 .qa { border-top: 1px solid var(--gray-200); }
@@ -4533,18 +4620,31 @@ button.dl-item { width: 100%; text-align: left; }
 }
 
 .pdfv {
+  /* スマホのメニュー（.mobile-nav）と同じ地の色・同じ開き方。地は少し透かして、後ろのページがうっすら見える。
+     開くときは下から黒地がせり上がり（clip-path）、閉じるときは少し待ってから下がる。時間と曲線もメニューと同じ */
+  --pv-up: .6s;
+  --pv-up-ease: cubic-bezier(.65, 0, .25, 1);
+  --pv-down: .5s;
+  --pv-down-delay: .12s;
+  --pv-down-ease: cubic-bezier(.25, .8, .3, 1);
   position: fixed;
   inset: 0;
   z-index: 3000;
   display: flex;
   flex-direction: column;
-  background: #3a3a3a;
-  opacity: 0;
-  transform: scale(.98);
-  transition: opacity .28s ease, transform .28s var(--ease);
+  background: rgba(38, 38, 38, .88);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  clip-path: inset(100% 0 0 0);
+  transition: clip-path var(--pv-down) var(--pv-down-ease) var(--pv-down-delay);
 }
 .pdfv[hidden] { display: none; }
-.pdfv.is-open { opacity: 1; transform: none; }
+.pdfv.is-open { clip-path: inset(0); transition: clip-path var(--pv-up) var(--pv-up-ease); }
+/* 中身（帯の文字・ボタン・紙面）は、地がせり上がってから出し、閉じるときは先に消す */
+.pdfv__title, .pdfv__btn, .pdfv__body { opacity: 0; transform: translateY(12px); transition: opacity .2s ease, transform .2s ease; }
+.pdfv.is-open .pdfv__title, .pdfv.is-open .pdfv__btn, .pdfv.is-open .pdfv__body { opacity: 1; transform: none; transition: opacity .4s ease .35s, transform .5s var(--ease) .35s; }
+.pdfv.is-open .pdfv__btn--print { transition-delay: .4s; }
+.pdfv.is-open .pdfv__body { transition-delay: .45s; }
 html.is-pdfv, html.is-pdfv body { overflow: hidden; }
 .pdfv__bar {
   flex: none;
@@ -4553,7 +4653,7 @@ html.is-pdfv, html.is-pdfv body { overflow: hidden; }
   gap: 12px;
   padding: 10px 12px 10px 16px;
   padding-top: max(10px, env(safe-area-inset-top));
-  background: var(--ink);
+  background: transparent;
   color: #fff;
 }
 .pdfv__title { flex: 1 1 auto; min-width: 0; margin: 0; display: flex; flex-direction: column; gap: 2px; }
@@ -4583,17 +4683,27 @@ html.is-pdfv, html.is-pdfv body { overflow: hidden; }
   .pdfv__btn span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 }
 .pdfv__close {
+  /* メニューのボタン（.hamburger）と同じ3本線。開くと ✕ に変わり、閉じると3本線に戻る */
   display: inline-flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
-  margin-left: 4px;
+  gap: 6px;
+  width: 44px;
+  height: 44px;
+  margin-left: 2px;
   border-radius: var(--radius);
-  color: #fff;
   transition: background-color .2s ease;
 }
+.pdfv__close span { display: block; width: 22px; height: 2px; background: #fff; transition: transform .3s var(--ease), opacity .2s ease; }
+.pdfv.is-open .pdfv__close span { transition: transform .35s var(--ease) .3s, opacity .2s ease .3s; }
+.pdfv.is-open .pdfv__close span:nth-child(1) { transform: translateY(8px) rotate(45deg); }
+.pdfv.is-open .pdfv__close span:nth-child(2) { opacity: 0; }
+.pdfv.is-open .pdfv__close span:nth-child(3) { transform: translateY(-8px) rotate(-45deg); }
 .pdfv__close:hover { background: rgba(255, 255, 255, .12); }
+@media (prefers-reduced-motion: reduce) {
+  .pdfv, .pdfv.is-open, .pdfv__close span, .pdfv__title, .pdfv__btn, .pdfv__body { transition: none !important; }
+}
 .pdfv__body {
   position: relative;
   flex: 1 1 auto;
@@ -4607,6 +4717,21 @@ html.is-pdfv, html.is-pdfv body { overflow: hidden; }
 .pdfv__status:empty { display: none; }
 .pdfv__pages { display: flex; flex-direction: column; align-items: center; gap: 16px; }
 .pdfv__page { margin: 0; width: 100%; max-width: 900px; box-shadow: 0 6px 24px rgba(0, 0, 0, .35); background: #fff; animation: pdfv-page .4s var(--ease) both; }
+/* 2ページ以上あるとき：スクロールで下から入ってくるページが、浮き上がりながら少し大きくなって現れる
+   （スクロールの位置そのものに合わせて動く。入りはじめから 360px 送るあいだで出きる）。
+   対応していないブラウザでは、読み込んだときにふわっと出るだけ */
+@supports (animation-timeline: view()) {
+  .pdfv__page + .pdfv__page, .pdfv__page:has(+ .pdfv__page) {
+    animation: pdfv-flow linear both;
+    animation-timeline: view();
+    animation-range: entry 0% cover 360px;
+  }
+  @keyframes pdfv-flow {
+    from { opacity: .15; transform: translateY(48px) scale(.92); box-shadow: 0 2px 8px rgba(0, 0, 0, .2); }
+    to   { opacity: 1; transform: none; box-shadow: 0 6px 24px rgba(0, 0, 0, .35); }
+  }
+}
+@media (prefers-reduced-motion: reduce) { .pdfv__page { animation: none !important; } }
 .pdfv__page img { display: block; width: 100%; height: auto; }
 @keyframes pdfv-page { from { opacity: 0; transform: translateY(12px); } }
 .pdfv.is-frame .pdfv__body { padding: 0; overflow: hidden; }
