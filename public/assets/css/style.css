@@ -494,7 +494,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 }
 .badge--open { background: var(--red); color: #fff; }          /* 受付中 */
 .badge--muted { background: var(--gray-600); color: #fff; }    /* 終了・まもなく受付 */
-.badge--closed { background: #D99A00; color: #fff; }           /* 受付終了（開催前の大会の黄色の枠と同じ色） */
+.badge--closed { background: var(--red-tint); color: var(--red); box-shadow: inset 0 0 0 1px rgba(216, 35, 42, .35); }  /* 受付終了（薄い赤。開催前の大会の枠と同じ系統） */
 .badge--outline { border: 1px solid var(--red); color: var(--red); }
 .badge--tint { background: var(--red-tint); color: var(--red-dark); }
 .badge--light { background: #D99A00; color: #fff; }           /* 夜間照明（濃いめの黄色に白文字） */
@@ -1499,9 +1499,9 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 .tcard__photo-label { font: 700 13px/1 var(--fjp); letter-spacing: .12em; color: var(--gray-400, #b0b0b0); }
 /* 終了した大会は大会名だけ少し薄く（写真は色のまま） */
 .tcard--past .tcard__title { color: var(--gray-600); }
-/* まだ開催前の大会（未受付・受付終了）はカード全体を黄色の枠で囲む（受付中・本日開催は赤い枠） */
+/* まだ開催前の大会（未受付・受付終了）はカード全体を薄い赤の枠で囲む（受付中・本日開催は濃い赤の枠） */
 .tcard.tcard--soon, .tcard.tcard--closed,
-.section--cards .tcard.tcard--soon, .section--cards .tcard.tcard--closed { border: 2px solid #D99A00; }
+.section--cards .tcard.tcard--soon, .section--cards .tcard.tcard--closed { border: 2px solid rgba(216, 35, 42, .3); }
 /* 受付中・本日開催はカード全体を赤い枠で囲む（ホバーやトップの灰色の区画でも赤のまま） */
 .tcard.tcard--open, .tcard.tcard--live,
 .section--cards .tcard.tcard--open, .section--cards .tcard.tcard--live { border: 2px solid var(--red); }
