@@ -1478,10 +1478,11 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   box-shadow: 0 2px 8px rgba(26, 26, 26, .18);
 }
 .tcard__photo-label { font: 700 13px/1 var(--fjp); letter-spacing: .12em; color: var(--gray-400, #b0b0b0); }
-/* 終了した大会は写真をモノクロに（ホバーで色を戻す） */
-.tcard--past .tcard__photo img { filter: grayscale(1); opacity: .75; }
-@media (hover: hover) { .tcard--past:hover .tcard__photo img { filter: none; opacity: 1; } }
+/* 終了した大会は大会名だけ少し薄く（写真は色のまま） */
 .tcard--past .tcard__title { color: var(--gray-600); }
+/* まだ開催前の大会（未受付・受付終了）はカード全体を黄色の枠で囲む（受付中・本日開催は赤い枠） */
+.tcard.tcard--soon, .tcard.tcard--closed,
+.section--cards .tcard.tcard--soon, .section--cards .tcard.tcard--closed { border: 2px solid #D99A00; }
 /* 受付中・本日開催はカード全体を赤い枠で囲む（ホバーやトップの灰色の区画でも赤のまま） */
 .tcard.tcard--open, .tcard.tcard--live,
 .section--cards .tcard.tcard--open, .section--cards .tcard.tcard--live { border: 2px solid var(--red); }
