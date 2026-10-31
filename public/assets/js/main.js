@@ -1510,7 +1510,52 @@
       if (Math.abs(ny - y) < 1) return;
       setY = ny;
       window.scrollTo({ top: ny, behavior: 'instant' });
+      settleSoon();
     }, { passive: true });
+
+    /* 止まっているあいだにスクロールが止まったら、いちばん近いカードが画面の中央に来る位置へ寄せる
+       （縦の位置をそのカードの横の位置に合わせてなめらかに動かす。横の位置は update が追いかける）。
+       区画の入口（TODAY）と出口（右端）も止まってよい位置に含める。寄せている最中の動きでは寄せ直さない */
+    var settleTimer = 0, settling = false;
+    var stops = function () {
+      var list = [x0, x0 + dist];
+      var cw = track.clientWidth;
+      Array.prototype.forEach.call(track.querySelectorAll('.tcard'), function (c) {
+        var x = c.offsetLeft + c.offsetWidth / 2 - cw / 2;
+        if (x > x0 + 4 && x < x0 + dist - 4) list.push(x);
+      });
+      return list;
+    };
+    var settle = function () {
+      if (!on || settling) return;
+      if (Date.now() < userUntil) { settleSoon(); return; } // 指で横に送っている最中は待つ
+      var y = window.pageYOffset;
+      if (y <= start + 1 || y >= start + dist - 1) return; // 区画の外・端ちょうどでは寄せない
+      var x = x0 + (y - start);
+      var best = null;
+      stops().forEach(function (sx) { if (best === null || Math.abs(sx - x) < Math.abs(best - x)) best = sx; });
+      if (best === null || Math.abs(best - x) < 2) return;
+      settling = true;
+      window.scrollTo({ top: start + (best - x0), behavior: 'smooth' });
+      // なめらかな移動が終わるころに解除（scrollend が来ればそこで解除）
+      clearTimeout(settleTimer);
+      settleTimer = setTimeout(function () { settling = false; }, 700);
+    };
+    var settleSoon = function () {
+      if (settling) return;
+      clearTimeout(settleTimer);
+      settleTimer = setTimeout(settle, 160);
+    };
+    if ('onscrollend' in window) {
+      window.addEventListener('scrollend', function () {
+        if (settling) { settling = false; return; }
+        settle();
+      });
+      track.addEventListener('scrollend', function () { if (!settling) settleSoon(); });
+    } else {
+      window.addEventListener('scroll', settleSoon, { passive: true });
+    }
+
     measure();
     window.addEventListener('load', measure);
     window.addEventListener('resize', measure);
