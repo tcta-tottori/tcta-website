@@ -121,3 +121,22 @@ export function eventResultLayout(e) {
   const restPhotos = photoImgs.filter((img) => !used.has(baseName(img.src)));
   return { blocks, restSheets, restPhotos };
 }
+
+/**
+ * 大会カードで順に見せる優勝者の写真（結果の出た大会だけ）。種目の順に、写真の説明が「優勝」で始まるもの、
+ * 無ければその種目の1枚目。どの種目にも付かなかった写真は使わない。最大 max 枚。無ければ []
+ */
+export function winnerPhotos(e, max = 8) {
+  if (!e?.hasResult) return [];
+  const layout = eventResultLayout(e);
+  if (!layout) return [];
+  const out = [];
+  for (const b of layout.blocks) {
+    if (!b.photos.length) continue;
+    const champ = b.photos.find((p) => /^(総合)?優勝/.test(p.caption ?? '')) ?? b.photos[0];
+    out.push({ src: champ.src, w: champ.w, h: champ.h, alt: `${e.name}${b.label ? ` ${b.label}` : ''} ${champ.caption ?? '入賞者'}の写真` });
+    if (out.length >= max) break;
+  }
+  return out;
+}
+

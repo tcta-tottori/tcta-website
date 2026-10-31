@@ -27,6 +27,7 @@
 //   例）ドロー未発表なら「要項を見る」、結果未掲載なら「結果は準備中」と出る。
 
 import { eventButtons } from './event-buttons.js';
+import { winnerPhotos } from './event-result.js';
 
 /** カルーセル中央の「TODAY」マーカーの日付。見た日の日本時間。 */
 export const today = () => new Intl.DateTimeFormat('ja-JP', {
@@ -133,6 +134,8 @@ export function buildCards(rows, { ROWS, eventBySlug }) {
       card.action = cardAction(card, e);
       // 要項・ドロー・結果の3つのボタン（大会情報ページの一覧と同じ。申込用紙は要項のページに載せる）
       card.buttons = eventButtons(e, { outline: card.outlineUrl ?? b.externalUrl, draw: card.drawUrl, result: card.resultUrl });
+      // 結果の出た大会は、写真の場所で優勝者の写真を順に見せる（TournamentCard.astro）
+      card.winners = winnerPhotos(e);
       return card;
     })
     .sort((a, b) => a.date.localeCompare(b.date));

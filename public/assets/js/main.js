@@ -1674,8 +1674,8 @@
     var lists = document.querySelectorAll('.tl');
     var btns = sw.querySelectorAll('[data-view]');
     var current = 'rows';
-    /* 切り替えるたびに、出てきた方の一覧を順に出す（style.css の .sw-wait → .sw-in）。
-       縮小表示は行が左から、拡大表示はカードが下から出る。画面に見えている分だけをまず順に（--si で少しずつずらして）出し、
+    /* ページを開いたときと切り替えるたびに、出ている方の一覧を順に出す（style.css の .sw-wait → .sw-in）。
+       行もカードも、少し小さい状態から等倍へズームしながら出る。画面に見えている分だけをまず順に（--si で少しずつずらして）出し、
        画面の外の分は待たせておき、スクロールして見えてきたときにその場で出す（IntersectionObserver） */
     var switchIO = null;
     var appear = function () {
@@ -1724,6 +1724,8 @@
     var saved = null;
     try { saved = localStorage.getItem(KEY); } catch (e) {}
     if (saved === 'rows' || saved === 'cards') set(saved);
+    // ページを開いたときも、見えている行・カードから順にズームして出し、外の分はスクロールして見えてきたときに出す
+    appear();
     sw.addEventListener('click', function (e) {
       var b = e.target.closest('[data-view]');
       if (!b) return;
@@ -2153,6 +2155,38 @@
     });
   }
 
+  /* ---------- 大会カードの優勝者の写真（結果の出た大会） ----------
+     カードの写真の場所に重ねた優勝者の写真（.tcard__slide）を、3秒ずつ順に入れ替える（重ねて透かすディゾルブ。style.css）。
+     カードが画面に見えているあいだだけ動かし、写真が1枚なら動かさない。動きを減らす設定の端末でも動かさない */
+  function initCardSlides() {
+    var boxes = document.querySelectorAll('[data-card-slides]');
+    if (!boxes.length || reduceMotion) return;
+    var INTERVAL = 3000;
+    boxes.forEach(function (box) {
+      var slides = box.querySelectorAll('.tcard__slide');
+      if (slides.length < 2) return;
+      var at = 0, timer = 0;
+      var next = function () {
+        slides[at].classList.remove('is-on');
+        at = (at + 1) % slides.length;
+        // 次の写真をまだ読んでいなければ、ここで読む（loading="lazy" のまま隠れているため）
+        if (slides[at].loading === 'lazy') slides[at].loading = 'eager';
+        slides[at].classList.add('is-on');
+      };
+      var run = function (on) {
+        clearInterval(timer);
+        if (on) timer = setInterval(next, INTERVAL);
+      };
+      if ('IntersectionObserver' in window) {
+        new IntersectionObserver(function (es) { run(es[0].isIntersecting); }, { threshold: .2 }).observe(box);
+      } else {
+        run(true);
+      }
+      // 2枚目は先に読んでおく
+      if (slides[1].loading === 'lazy') slides[1].loading = 'eager';
+    });
+  }
+
   function init() {
     initSplash();
     initReveal();
@@ -2169,6 +2203,7 @@
     initCourtMap();
     initCalendar();
     initPdfViewer();
+    initCardSlides();
     initFooterDeco();
     initLogoInk();
     initHeroVideo();

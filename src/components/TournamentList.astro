@@ -22,6 +22,7 @@ import TournamentCard from './TournamentCard.astro';
 import { siteData } from '../lib/cms.js';
 import { eventButtons } from '../data/event-buttons.js';
 import { CARD_STATUS } from '../data/tournaments.js';
+import { winnerPhotos } from '../data/event-result.js';
 
 const { items, id, caption } = Astro.props;
 const { eventForSchedule } = await siteData(Astro);
@@ -69,6 +70,7 @@ const rows = items.map((t) => {
     due: t.due && t.due !== '—' ? t.due : '',
     action: { href: e ? e.url : null },
     buttons,
+    winners: winnerPhotos(e),
   };
   return { t, e, date: dateText(t), buttons, badge: STATUS_LABEL[t.status], card };
 });
