@@ -1,6 +1,6 @@
 ---
 // 大会1件の「要項」のページ（大会情報ページ・トップの大会カードの「要項」ボタンの行き先）。
-// 紙面には要項だけを出し、領収証のついた申込用紙は「大会名 申込用紙」のボタンにする（EntryForms.astro）。
+// 紙面には要項だけを出し（要項の PDF のダウンロードは出さない）、領収証のついた申込用紙は要項の下に「大会名 申込用紙」のボタンで出す（EntryForms.astro）。
 // ボタンを押すと、このページの中で全画面に開いてダウンロード・印刷ができる（main.js の initPdfViewer）。
 // 要項がまだで申込用紙だけある大会も、このページで申込用紙のボタンを出す。
 import EventSection from '../components/EventSection.astro';
@@ -16,18 +16,20 @@ if (!e || (!outline && !entry)) return Astro.rewrite('/404');
 ---
 
 <EventSection e={e} label="要項" en="Outline">
-  {entry && (
+  {/* 要項は紙面（画像）だけ。要項の PDF のダウンロードは出さない（紙面の画像が無い大会だけ PDF を出す） */}
+  {outline && (
     <div class="rv">
+      {entry && <h2 class="sub-head">要項</h2>}
+      <p class="note" style="margin-bottom:0">{outline.lead}</p>
+      <SheetList images={outline.images} pdfs={outline.images.length ? [] : outline.pdfs} alt={`${e.name} 要項`} />
+    </div>
+  )}
+  {/* 申込用紙は要項の下に、ボタンで（押すとこのページの中で全画面に開き、印刷・ダウンロードできる） */}
+  {entry && (
+    <div class="rv" style={outline ? 'margin-top:56px' : undefined}>
       <h2 class="sub-head">申込用紙</h2>
       <p class="note" style="margin-bottom:0">{entry.lead}</p>
       <EntryForms e={e} section={entry} />
-    </div>
-  )}
-  {outline && (
-    <div class="rv" style={entry ? 'margin-top:56px' : undefined}>
-      {entry && <h2 class="sub-head">要項</h2>}
-      <p class="note" style="margin-bottom:0">{outline.lead}</p>
-      <SheetList images={outline.images} pdfs={outline.pdfs} alt={`${e.name} 要項`} />
     </div>
   )}
 </EventSection>

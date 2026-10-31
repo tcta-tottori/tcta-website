@@ -3464,6 +3464,18 @@ body.jsrv .rv.on .ink-sweep {
 /* ---- 大会一覧の切り替え（TournamentList.astro）----
    .tl--rows のときは縮小表示（.tlx）、外れているときは拡大表示（.tl__cards）だけを出す */
 .tl--rows .tl__cards, .tl:not(.tl--rows) .tlx { display: none; }
+/* 表示を切り替えたときの出方（main.js の initViewSwitch が .is-switching と --si を付ける）。
+   縮小表示：項目名の行がふわっと出て、大会の行が上から順に左から滑り込む。
+   拡大表示：カードが上から順に、下から浮き上がりながら少し大きくなって出る */
+.tl.is-switching .tlx__head { animation: tl-fade .4s ease both; }
+.tl.is-switching .tlx__body .tlx__row { animation: tl-row-in .5s var(--ease) both; animation-delay: calc(min(var(--si, 0), 14) * 40ms); }
+.tl.is-switching .tl__card { animation: tl-card-in .6s cubic-bezier(.2, .8, .2, 1) both; animation-delay: calc(min(var(--si, 0), 9) * 70ms); }
+@keyframes tl-fade { from { opacity: 0; } }
+@keyframes tl-row-in { from { opacity: 0; transform: translateX(-24px); } }
+@keyframes tl-card-in { from { opacity: 0; transform: translateY(28px) scale(.95); } }
+@media (prefers-reduced-motion: reduce) {
+  .tl.is-switching .tlx__head, .tl.is-switching .tlx__body .tlx__row, .tl.is-switching .tl__card { animation: none; }
+}
 
 /* ---- 縮小表示（.tlx）：1大会1行の表 ----
    列の幅は --tlx-cols（左から 大会名｜日程｜状態｜登録区分｜種目｜会場｜締切｜予備日｜要項｜ドロー｜結果）。
@@ -4692,8 +4704,15 @@ html.is-pdfv, html.is-pdfv body { overflow: hidden; }
   .pdfv__btn { width: 40px; padding: 0; justify-content: center; }
   .pdfv__btn span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 }
-.pdfv__close {
-  /* メニューのボタン（.hamburger）と同じ3本線。開くと ✕ に変わり、閉じると3本線に戻る */
+/* 閉じるボタン（main.js が body の直下に置く。黒地の clip-path の外なので、閉じる途中でも欠けない）。
+   メニューのボタン（.hamburger）と同じ大きさ・同じ3本線で、同じ位置に重ねる（位置は main.js が入れる。PC は帯の右端）。
+   開くと、線が黒 → 白に変わってから ✕ に。閉じると ✕ → 3本線、黒地が下がるのに合わせて白 → 黒に戻り、
+   下がりきったらメニューのボタンと入れ替わる */
+.pdfv-close {
+  position: fixed;
+  top: 8px;
+  right: 12px;
+  z-index: 3001;
   display: inline-flex;
   flex-direction: column;
   align-items: center;
@@ -4701,18 +4720,22 @@ html.is-pdfv, html.is-pdfv body { overflow: hidden; }
   gap: 6px;
   width: 44px;
   height: 44px;
-  margin-left: 2px;
   border-radius: var(--radius);
-  transition: background-color .2s ease;
 }
-.pdfv__close span { display: block; width: 22px; height: 2px; background: #fff; transition: transform .3s var(--ease), opacity .2s ease; }
-.pdfv.is-open .pdfv__close span { transition: transform .35s var(--ease) .3s, opacity .2s ease .3s; }
-.pdfv.is-open .pdfv__close span:nth-child(1) { transform: translateY(8px) rotate(45deg); }
-.pdfv.is-open .pdfv__close span:nth-child(2) { opacity: 0; }
-.pdfv.is-open .pdfv__close span:nth-child(3) { transform: translateY(-8px) rotate(-45deg); }
-.pdfv__close:hover { background: rgba(255, 255, 255, .12); }
+.pdfv-close[hidden] { display: none; }
+.pdfv-close span { display: block; width: 22px; height: 2px; background: var(--ink); transition: transform .3s var(--ease), opacity .2s ease, background-color .3s ease .25s; }
+.pdfv-close.is-open span { background: #fff; transition: transform .35s var(--ease) .35s, opacity .2s ease .35s, background-color .25s ease .15s; }
+.pdfv-close.is-open span:nth-child(1) { transform: translateY(8px) rotate(45deg); }
+.pdfv-close.is-open span:nth-child(2) { opacity: 0; }
+.pdfv-close.is-open span:nth-child(3) { transform: translateY(-8px) rotate(-45deg); }
+.pdfv-close:hover { background: rgba(255, 255, 255, .12); }
+/* 開いているあいだと閉じ終わるまでは、メニューのボタンを隠す（閉じるボタンがその場所に重なっている） */
+html.is-pdfv-menu .site-header .hamburger { visibility: hidden; }
+/* 帯の右端は閉じるボタンのぶん空ける */
+.pdfv__bar { padding-right: 64px; }
+@media (max-width: 1023px) { .pdfv__bar { min-height: var(--header-h); padding-top: 12px; } }
 @media (prefers-reduced-motion: reduce) {
-  .pdfv, .pdfv.is-open, .pdfv__close span, .pdfv__title, .pdfv__btn, .pdfv__body { transition: none !important; }
+  .pdfv, .pdfv.is-open, .pdfv-close span, .pdfv__title, .pdfv__btn, .pdfv__body { transition: none !important; }
 }
 .pdfv__body {
   position: relative;
@@ -4723,8 +4746,42 @@ html.is-pdfv, html.is-pdfv body { overflow: hidden; }
   padding: 16px 12px max(24px, env(safe-area-inset-bottom));
 }
 @media (min-width: 768px) { .pdfv__body { padding: 28px 24px 40px; } }
-.pdfv__status { margin: 40px 0 0; text-align: center; font: 500 13px/1.6 var(--fjp); color: rgba(255, 255, 255, .8); }
-.pdfv__status:empty { display: none; }
+/* 読み込み中（.pdfv.is-loading）。0.25 秒より早く描けたときは出さない（transition-delay）。
+   赤い弧が回り、LOADING の後ろの点が順に跳ねる */
+.pdfv__loading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity .25s ease, visibility 0s linear .25s;
+}
+.pdfv.is-loading .pdfv__loading { opacity: 1; visibility: visible; transition: opacity .3s ease .25s, visibility 0s linear .25s; }
+.pdfv__spin {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 3px solid rgba(255, 255, 255, .15);
+  border-top-color: var(--red);
+  border-right-color: var(--red);
+  animation: pdfv-spin .9s cubic-bezier(.5, .1, .5, .9) infinite;
+}
+@keyframes pdfv-spin { to { transform: rotate(360deg); } }
+.pdfv__ltext { font: 600 13px/1 var(--flt); letter-spacing: .32em; color: rgba(255, 255, 255, .85); }
+.pdfv__dots { display: inline-flex; margin-left: .1em; }
+.pdfv__dots i { font-style: normal; display: inline-block; animation: pdfv-dot 1.2s ease-in-out infinite; }
+.pdfv__dots i:nth-child(2) { animation-delay: .15s; }
+.pdfv__dots i:nth-child(3) { animation-delay: .3s; }
+@keyframes pdfv-dot { 0%, 60%, 100% { transform: none; opacity: .35; } 30% { transform: translateY(-5px); opacity: 1; } }
+/* 2ページ目以降を描いているあいだ、紙面の下に小さく点を出す */
+.pdfv__more { display: none; justify-content: center; padding: 18px 0 4px; font: 700 22px/1 var(--flt); color: rgba(255, 255, 255, .7); }
+.pdfv.is-more .pdfv__more { display: flex; }
+@media (prefers-reduced-motion: reduce) { .pdfv__spin, .pdfv__dots i { animation-duration: 2.4s; } }
 .pdfv__pages { display: flex; flex-direction: column; align-items: center; gap: 16px; }
 .pdfv__page { margin: 0; width: 100%; max-width: 900px; box-shadow: 0 6px 24px rgba(0, 0, 0, .35); background: #fff; animation: pdfv-page .4s var(--ease) both; }
 /* 2ページ以上あるとき：スクロールで下から入ってくるページが、浮き上がりながら少し大きくなって現れる
@@ -4753,7 +4810,7 @@ html.is-pdfv, html.is-pdfv body { overflow: hidden; }
   html.is-pdfv body > *:not(.pdfv) { display: none !important; }
   html.is-pdfv, html.is-pdfv body { overflow: visible; background: #fff; }
   html.is-pdfv .pdfv { position: static; display: block; background: #fff; opacity: 1; transform: none; }
-  html.is-pdfv .pdfv__bar, html.is-pdfv .pdfv__status { display: none; }
+  html.is-pdfv .pdfv__bar, html.is-pdfv .pdfv__loading, html.is-pdfv .pdfv__more { display: none; }
   html.is-pdfv .pdfv__body { overflow: visible; padding: 0; }
   html.is-pdfv .pdfv__pages { display: block; }
   html.is-pdfv .pdfv__page { max-width: none; box-shadow: none; animation: none; break-after: page; page-break-after: always; break-inside: avoid; }

@@ -37,7 +37,7 @@ const FIX = {
   'r8-enetopia': {
     hide: ['outline-02'],
     outline: [pdf('r8-enetopia', 'R8エネトピア杯要項（要項のみ）.pdf', 'R8エネトピア杯 要項', 185)],
-    forms: [pdf('r8-enetopia', 'R8エネトピア杯要項.pdf', '申込用紙（領収証つき）', 71)],
+    forms: [pdf('r8-enetopia', 'R8エネトピア杯要項.pdf', '申込用紙', 71)],
   },
   'r8-kaicho-autumn': {
     hide: ['outline-01'],
@@ -50,34 +50,34 @@ const FIX = {
   'r8-kensen-singles': {
     hide: ['outline-02'],
     outline: [pdf('r8-kensen-singles', '2026県選シングルス要項（要項のみ）.pdf', '2026県選シングルス 要項', 214)],
-    forms: [pdf('r8-kensen-singles', '2026県選シングルス要項.pdf', '申込用紙（領収証つき）', 49)],
+    forms: [pdf('r8-kensen-singles', '2026県選シングルス要項.pdf', '申込用紙', 49)],
   },
   'r8-ketaka': {
     outline: [pdf('r8-ketaka', 'R8気高カップ要項（要項のみ）.pdf', 'R8気高カップ 要項', 190)],
-    forms: [pdf('r8-ketaka', 'R8気高カップ要項.pdf', '要項・申込用紙（領収証つき）', 65)],
+    forms: [pdf('r8-ketaka', 'R8気高カップ要項.pdf', '要項・申込用紙', 65)],
   },
   'r8-sasaki': {
     hide: ['outline-02', 'outline-03'],
     outline: [pdf('r8-sasaki', 'R8佐々木杯要項（要項のみ）.pdf', 'R8佐々木杯 要項', 87)],
     forms: [
-      pdf('r8-sasaki', 'R8佐々木杯申込用紙.pdf', '申込用紙（領収証つき）', 151),
+      pdf('r8-sasaki', 'R8佐々木杯申込用紙.pdf', '申込用紙', 151),
       pdf('r8-sasaki', '個人登録者へのお願い・登録者カード.pdf', '個人登録者へのお願い・登録者カード', 59),
     ],
   },
   'r8-summer-mix': {
     hide: ['outline-02'],
     outline: [pdf('r8-summer-mix', 'R8サマーミックス要項（要項のみ）.pdf', 'R8サマーミックス 要項', 48)],
-    forms: [pdf('r8-summer-mix', 'R8サマーミックス申込用紙.pdf', '申込用紙（領収証つき）', 62)],
+    forms: [pdf('r8-summer-mix', 'R8サマーミックス申込用紙.pdf', '申込用紙', 62)],
   },
   'r8-tobu-doubles': {
     hide: ['outline-02'],
     outline: [pdf('r8-tobu-doubles', 'R8東部選手権ダブルス要項（要項のみ）.pdf', 'R8東部選手権ダブルス 要項', 203)],
-    forms: [pdf('r8-tobu-doubles', 'R8東部選手権要綱_page-0004.pdf', '申込用紙（領収証つき）', 176)],
+    forms: [pdf('r8-tobu-doubles', 'R8東部選手権要綱_page-0004.pdf', '申込用紙', 176)],
   },
   'r8-tobu-singles': {
     hide: ['outline-02'],
     outline: [pdf('r8-tobu-singles', 'R8東部選手権シングルス要項（要項のみ）.pdf', 'R8東部選手権シングルス 要項', 202)],
-    forms: [pdf('r8-tobu-singles', 'R8東部選手権シングルス要項.pdf', '申込用紙（領収証つき）', 169)],
+    forms: [pdf('r8-tobu-singles', 'R8東部選手権シングルス要項.pdf', '申込用紙', 169)],
   },
 };
 

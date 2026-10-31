@@ -157,7 +157,8 @@ const description = `${e.label}に${e.place}で行われる${e.name}（${e.event
               </div>
           )}
 
-          {s.key !== 'entry' && s.pdfs.length > 0 && (
+          {/* 要項は紙面（画像）があれば PDF のダウンロードは出さない */}
+          {s.key !== 'entry' && s.pdfs.length > 0 && !(s.key === 'outline' && s.images.length > 0) && (
             <ul class="mt-32">
               {s.pdfs.map((p) => (
                 <li><a class="dl-item" href={p.src} target="_blank" rel="noopener noreferrer">

@@ -10,6 +10,8 @@ const forms = [
   ...(section?.images ?? []).map((img) => ({ type: 'image', src: img.src, label: img.label ?? '', note: '画像' })),
 ];
 const title = `${e.name} 申込用紙`;
+// 中身の名前は、「申込用紙」だけ（見出しと同じ）なら出さない
+const showLabel = (f) => !!f.label && f.label !== '申込用紙';
 // ダウンロードしたときのファイル名（大会名＋申込用紙。2つ以上あるときは中身の名前も添える）。
 const ext = (src) => (String(src).match(/\.([a-z0-9]+)(?:[?#].*)?$/i)?.[1] ?? 'pdf').toLowerCase();
 // 中身の名前に「申込用紙」が入っているときは、大会名にそのまま続ける（「申込用紙_申込用紙…」と重ねない）
@@ -29,13 +31,13 @@ const fileName = (f) => {
           data-pdf-viewer
           data-type={f.type}
           data-title={title}
-          data-sub={f.label}
+          data-sub={showLabel(f) ? f.label : ''}
           data-filename={fileName(f)}
         >
           <span class="eform__type" aria-hidden="true">{f.type === 'pdf' ? 'PDF' : 'IMG'}</span>
           <span class="eform__text">
             <span class="eform__title">{e.name}<span class="eform__kind">申込用紙</span></span>
-            <span class="eform__note">{f.label && <>{f.label}／</>}{f.note}</span>
+            <span class="eform__note">{showLabel(f) && <>{f.label}／</>}{f.note}</span>
           </span>
           <span class="eform__open" aria-hidden="true">
             <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>

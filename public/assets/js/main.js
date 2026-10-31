@@ -1458,7 +1458,28 @@
     var KEY = 'tcta-tl-view';
     var lists = document.querySelectorAll('.tl');
     var btns = sw.querySelectorAll('[data-view]');
+    var current = 'rows';
+    /* 切り替えるたびに、出てきた方の一覧を順に出す（style.css の .tl.is-switching）。
+       縮小表示は行が左から、拡大表示はカードが下から、上から順に少しずつずらして（--si）出す */
+    var switchTimer = 0;
+    var appear = function () {
+      if (reduceMotion) return;
+      clearTimeout(switchTimer);
+      lists.forEach(function (l) {
+        var items = l.classList.contains('tl--rows')
+          ? l.querySelectorAll('.tlx__body .tlx__row:not([hidden])')
+          : l.querySelectorAll('.tl__card:not([hidden])');
+        Array.prototype.forEach.call(items, function (el, i) { el.style.setProperty('--si', String(i)); });
+        l.classList.remove('is-switching');
+        void l.offsetWidth; // 付け直しで動きを最初からやり直す
+        l.classList.add('is-switching');
+      });
+      switchTimer = setTimeout(function () {
+        lists.forEach(function (l) { l.classList.remove('is-switching'); });
+      }, 1600);
+    };
     var set = function (view) {
+      current = view;
       lists.forEach(function (l) { l.classList.toggle('tl--rows', view === 'rows'); });
       btns.forEach(function (b) {
         var on = b.getAttribute('data-view') === view;
@@ -1473,7 +1494,9 @@
       var b = e.target.closest('[data-view]');
       if (!b) return;
       var view = b.getAttribute('data-view');
+      if (view === current) return;
       set(view);
+      appear();
       try { localStorage.setItem(KEY, view); } catch (x) {}
       window.dispatchEvent(new Event('resize')); // 縮小表示に戻したとき、横に送れるかを測り直す（initTlx）
     });
@@ -1698,18 +1721,45 @@
         '<div class="pdfv__actions">' +
           '<a class="pdfv__btn pdfv__btn--dl" href="#" download>' + ICON.dl + '<span>ダウンロード</span></a>' +
           '<button class="pdfv__btn pdfv__btn--print" type="button">' + ICON.print + '<span>印刷</span></button>' +
-          '<button class="pdfv__close" type="button" aria-label="閉じる"><span></span><span></span><span></span></button>' +
         '</div>' +
       '</div>' +
-      '<div class="pdfv__body"><p class="pdfv__status" aria-live="polite"></p><div class="pdfv__pages"></div></div>';
+      // 読み込み中の表示（.pdfv.is-loading のあいだ。すぐ描けたときは出さない）と、2ページ目以降を描いているあいだの小さな表示
+      '<div class="pdfv__body">' + '<div class="pdfv__loading" role="status" aria-live="polite">' +
+          '<span class="pdfv__spin" aria-hidden="true"></span>' +
+          '<span class="pdfv__ltext">LOADING<span class="pdfv__dots" aria-hidden="true"><i>.</i><i>.</i><i>.</i></span></span>' +
+        '</div>' + '<div class="pdfv__pages"></div>' +
+        '<div class="pdfv__more" aria-hidden="true"><span class="pdfv__dots"><i>.</i><i>.</i><i>.</i></span></div>' +
+      '</div>';
     document.body.appendChild(box);
+    // 閉じるボタンは黒地（clip-path で下がっていく）の外に置き、メニューのボタン（.hamburger）とまったく同じ位置に重ねる。
+    // 開くとメニューのボタンを隠してこちらを出し、3本線 → ✕。閉じると ✕ → 3本線に戻り、黒地が下がりきってから
+    // メニューのボタンに戻す（同じ場所・同じ形なので、そのままメニューのボタンに戻ったように見える）
+    var closeBtn = document.createElement('button');
+    closeBtn.className = 'pdfv-close';
+    closeBtn.type = 'button';
+    closeBtn.hidden = true;
+    closeBtn.setAttribute('aria-label', '閉じる');
+    closeBtn.innerHTML = '<span></span><span></span><span></span>';
+    document.body.appendChild(closeBtn);
+    var placeClose = function () {
+      var hb = document.querySelector('.site-header .hamburger');
+      var r = hb && hb.offsetParent !== null ? hb.getBoundingClientRect() : null;
+      if (r && r.width > 0) {
+        closeBtn.style.left = r.left + 'px';
+        closeBtn.style.top = r.top + 'px';
+        closeBtn.style.right = '';
+      } else {
+        // PC（メニューのボタンが無い）は帯の右端
+        closeBtn.style.left = '';
+        closeBtn.style.top = '';
+        closeBtn.style.right = '';
+      }
+    };
     var nameEl = box.querySelector('.pdfv__name');
     var subEl = box.querySelector('.pdfv__sub');
     var dl = box.querySelector('.pdfv__btn--dl');
     var printBtn = box.querySelector('.pdfv__btn--print');
-    var closeBtn = box.querySelector('.pdfv__close');
     var pages = box.querySelector('.pdfv__pages');
-    var status = box.querySelector('.pdfv__status');
     var body = box.querySelector('.pdfv__body');
 
     var lib = null;
@@ -1733,7 +1783,7 @@
       return lib;
     };
 
-    var opened = false, pushed = false, last = null, job = 0, urls = [];
+    var opened = false, pushed = false, last = null, job = 0, urls = [], hideTimer = 0;
     var clear = function () {
       pages.innerHTML = '';
       urls.forEach(function (u) { URL.revokeObjectURL(u); });
@@ -1750,7 +1800,7 @@
     };
     var fallback = function (src) {
       clear();
-      status.textContent = '';
+      box.classList.remove('is-loading', 'is-more');
       var fr = document.createElement('iframe');
       fr.className = 'pdfv__frame';
       fr.src = src;
@@ -1761,9 +1811,9 @@
     var render = function (src, type) {
       var my = ++job;
       clear();
-      box.classList.remove('is-frame', 'is-ready');
+      box.classList.remove('is-frame', 'is-ready', 'is-more');
       if (type === 'image') { addPage(src, 1, 1); box.classList.add('is-ready'); return; }
-      status.textContent = '読み込んでいます…';
+      box.classList.add('is-loading');
       loadLib().then(function (pdfjs) {
         // 日本語の PDF の文字の対応表（CMap）も同じ所から読む
         return pdfjs.getDocument({ url: src, cMapUrl: PDFJS + 'cmaps/', cMapPacked: true }).promise;
@@ -1792,7 +1842,8 @@
                   var u = URL.createObjectURL(blob);
                   urls.push(u);
                   addPage(u, n, doc.numPages);
-                  if (n === 1) { status.textContent = ''; box.classList.add('is-ready'); }
+                  if (n === 1) { box.classList.remove('is-loading'); box.classList.add('is-ready'); }
+                  box.classList.toggle('is-more', n < doc.numPages);
                 });
               });
             });
@@ -1813,10 +1864,13 @@
       dl.href = src;
       dl.setAttribute('download', a.getAttribute('data-filename') || '');
       box.hidden = false;
-      document.documentElement.classList.add('is-pdfv');
+      placeClose();
+      closeBtn.hidden = false;
+      clearTimeout(hideTimer);
+      document.documentElement.classList.add('is-pdfv', 'is-pdfv-menu');
       body.scrollTop = 0;
       opened = true;
-      requestAnimationFrame(function () { requestAnimationFrame(function () { box.classList.add('is-open'); }); });
+      requestAnimationFrame(function () { requestAnimationFrame(function () { box.classList.add('is-open'); closeBtn.classList.add('is-open'); }); });
       try { history.pushState({ pdfv: 1 }, ''); pushed = true; } catch (x) { pushed = false; }
       render(src, a.getAttribute('data-type') || 'pdf');
       closeBtn.focus();
@@ -1826,8 +1880,16 @@
       opened = false;
       job++;
       box.classList.remove('is-open');
+      closeBtn.classList.remove('is-open');
       document.documentElement.classList.remove('is-pdfv');
-      setTimeout(function () { if (!opened) { box.hidden = true; clear(); } }, 700); // 地が下がり終わってから（style.css の --pv-down-delay ＋ --pv-down）
+      // 地が下がり終わってから（style.css の --pv-down-delay ＋ --pv-down）、閉じるボタンをメニューのボタンに戻す
+      hideTimer = setTimeout(function () {
+        if (opened) return;
+        box.hidden = true;
+        closeBtn.hidden = true;
+        document.documentElement.classList.remove('is-pdfv-menu');
+        clear();
+      }, 700);
       if (last) last.focus();
     };
     // 閉じる・Esc は履歴を1つ戻し（積んだ分を消す）、戻ったときに閉じる
