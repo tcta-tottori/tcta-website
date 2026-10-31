@@ -218,6 +218,27 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 @media (min-width: 1024px) { .hero + .section { padding-top: 64px; --sec-pt: 64px; } }
 
 .section--gray { background: var(--gray-050); }
+/* グレーの区画と白の区画の境目は、くっきり分けずにグラデーションでつなぐ。
+   次の区画の上端に、前の区画の地の色から透明へのぼかしを敷く（中身より後ろ。isolation で区画の地より前・中身より後ろに置く） */
+.section--gray + .section:not(.section--gray),
+.section:not(.section--gray) + .section--gray { isolation: isolate; }
+.section--gray + .section:not(.section--gray)::before,
+.section:not(.section--gray) + .section--gray::before {
+  content: "";
+  position: absolute;
+  left: 0; right: 0; top: 0;
+  height: 120px;
+  background: linear-gradient(var(--fade-from), rgba(255, 255, 255, 0));
+  z-index: -1;
+  pointer-events: none;
+}
+.section--gray + .section:not(.section--gray) { --fade-from: var(--gray-050); }
+.section--cards + .section:not(.section--gray) { --fade-from: var(--gray-100); }
+.section:not(.section--gray) + .section--gray { --fade-from: var(--white); }
+@media (min-width: 1024px) {
+  .section--gray + .section:not(.section--gray)::before,
+  .section:not(.section--gray) + .section--gray::before { height: 160px; }
+}
 /* お知らせは上を詰める。ただし見出しの中心に合わせた大きな英字が
    セクション上端からはみ出して切れない分だけは残しておく。 */
 .section--flush-top { padding-top: 8px; --sec-pt: 8px; }
