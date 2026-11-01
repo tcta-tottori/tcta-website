@@ -219,34 +219,25 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 
 .section--gray { background: var(--gray-050); }
 /* グレーの区画と白の区画の境目は、くっきり分けずにグラデーションでつなぐ。
-   次の区画の上端に、前の区画の地の色から透明へのぼかしを敷く（中身より後ろ。isolation で区画の地より前・中身より後ろに置く） */
-.section--gray + .section:not(.section--gray),
-.section:not(.section--gray) + .section--gray { isolation: isolate; }
-.section--gray + .section:not(.section--gray)::before,
-.section:not(.section--gray) + .section--gray::before {
-  content: "";
-  position: absolute;
-  left: 0; right: 0; top: 0;
-  height: 120px;
-  background: linear-gradient(var(--fade-from), rgba(255, 255, 255, 0));
-  z-index: -1;
-  pointer-events: none;
-}
+   次の区画の上端に、前の区画の地の色から透明へのぼかしを、区画の背景の画像として敷く。
+   （以前は ::before と isolation で敷いていたが、isolation が区画ごとの重なりの層を作るため、
+     区画の中にある全画面の一覧（#news-all など、position: fixed）が次の区画の下にもぐってしまった） */
 .section--gray + .section:not(.section--gray) { --fade-from: var(--gray-050); }
 .section--cards + .section:not(.section--gray) { --fade-from: var(--gray-100); }
-.section:not(.section--gray) + .section--gray { --fade-from: var(--white); }
-/* ヒーロー（下端は白）→ 大会情報（グレー）も同じくつなぐ。止める区画（.is-hpin）の .hpin の地は透明にして、区画の地とぼかしを見せる */
-.hero + .section--gray { isolation: isolate; --fade-from: var(--white); }
-.hero + .section--gray::before {
-  content: "";
-  position: absolute;
-  left: 0; right: 0; top: 0;
-  height: 120px;
-  background: linear-gradient(var(--fade-from), rgba(255, 255, 255, 0));
-  z-index: -1;
-  pointer-events: none;
+.section:not(.section--gray) + .section--gray,
+.hero + .section--gray { --fade-from: var(--white); }
+.section--gray + .section:not(.section--gray),
+.section:not(.section--gray) + .section--gray,
+.hero + .section--gray {
+  background-image: linear-gradient(var(--fade-from), rgba(255, 255, 255, 0));
+  background-repeat: no-repeat;
+  background-size: 100% 120px;
 }
-@media (min-width: 1024px) { .hero + .section--gray::before { height: 160px; } }
+@media (min-width: 1024px) {
+  .section--gray + .section:not(.section--gray),
+  .section:not(.section--gray) + .section--gray,
+  .hero + .section--gray { background-size: 100% 160px; }
+}
 @media (min-width: 1024px) {
   .section--gray + .section:not(.section--gray)::before,
   .section:not(.section--gray) + .section--gray::before { height: 160px; }
@@ -1764,7 +1755,7 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 .hero + .section--gray.is-hpin .hpin { background: transparent; }
 /* 区画の下の余白は詰める。止める区画の下に余る灰色は、次の区画（白い地）が重なって隠す（main.js の .hpin-track の margin-bottom） */
 .section.is-hpin { padding-bottom: 0; }
-.section.is-hpin + .section { background: var(--white); }
+.section.is-hpin + .section { background-color: var(--white); }
 /* 背景の英字は止める区画の見出しに合わせる（--hpin-pad は main.js が入れる、中身の上の余白） */
 .is-hpin .hpin > .ghost { top: calc(var(--hpin-pad, 0px) + var(--head-half)); }
 .is-hpin .carousel { scroll-snap-type: none; }
