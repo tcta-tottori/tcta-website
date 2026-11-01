@@ -2,6 +2,7 @@
 import { MOBILE_NAV } from '../config/nav.js';
 import DecoSquares from './DecoSquares.astro';
 import SnsLinks from './SnsLinks.astro';
+import LiteToggle from './LiteToggle.astro';
 
 interface Props {
   /** 現在地として強調するナビの key */
@@ -30,6 +31,8 @@ const ITEMS = [...MOBILE_NAV, { key: 'contact', label: 'お問い合わせ', hre
   </nav>
   {/* 下端に寄せる：SNS と著作権の表記（フッターと同じ） */}
   <div class="mobile-nav__foot">
+    {/* 軽量モードの切り替え（動きを最小限にする） */}
+    <div class="mobile-nav__lite"><LiteToggle dark /></div>
     <div class="mobile-nav__sns" style={`--i:${ITEMS.length}`}><SnsLinks /></div>
     {/* 著作権の表記の上に、キャッチコピー（トップのヒーローと同じ書体） */}
     <p class="mobile-nav__copy mobile-nav__tagline" style={`--i:${ITEMS.length + 1}`}><span class="tagline">PLAY BEYOND.</span></p>
