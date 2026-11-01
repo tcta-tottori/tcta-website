@@ -14,7 +14,7 @@
 
 import { nendoLabel, STATUS_LABEL, REG_LABEL, dateCell } from './schedule.js';
 import { splitEntryForms } from './entry-forms.js';
-import { EXTRA_MATERIALS } from './official-extra.js';
+import { EXTRA_MATERIALS, EXTRA_REVISIONS } from './official-extra.js';
 
 /** 令和8年度の大会日程（PDF）。年度はじめに差し替える。 */
 export const SCHEDULE_PDF = { src: 'assets/pdf/events/r8-schedule.pdf', kb: 86 };
@@ -68,6 +68,24 @@ function collectMaterials(t, mediaUrl) {
     }
   }
   return out;
+}
+
+/**
+ * 訂正の記録（管理画面の「訂正の記録」＋ official-extra.js の EXTRA_REVISIONS）。新しい順。
+ *   { date: '2026-11-02', day: '2026.11.02', section: '要項', key: 'outline', text }
+ *   key は節の key（要項→outline など）。「その他」は null（大会ページにだけ出る）
+ */
+export function collectRevisions(t) {
+  const rows = [...(Array.isArray(t.revisions) ? t.revisions : []), ...(EXTRA_REVISIONS[t.slug] ?? [])];
+  const seen = new Set();
+  return rows
+    .filter((r) => r?.text && r?.date)
+    .map((r) => {
+      const date = String(r.date).slice(0, 10);
+      return { date, day: date.replace(/-/g, '.'), section: r.section || '', key: SECTION_KEY[r.section] ?? null, text: String(r.text) };
+    })
+    .filter((r) => { const k = `${r.date}|${r.text}`; if (seen.has(k)) return false; seen.add(k); return true; })
+    .sort((a, b) => b.date.localeCompare(a.date));
 }
 
 /** 管理画面の「成績」の行（種目・順位・名前）を、種目ごとにまとめる。 */
@@ -133,6 +151,8 @@ export function buildEvents(rows, { ROWS }, mediaUrl = () => null) {
         regLabel: REG_LABEL[b.reg],
         hasResult,
         sections: order,
+        /** 訂正の記録（新しい順）。ページの上に日付付きで出す（RevisionNotice.astro） */
+        revisions: collectRevisions(t),
         /** ページ上部の写真。当日の写真の1枚目を使う。無ければ null。 */
         cover: sections.photo?.images[0]?.src ?? null,
       };

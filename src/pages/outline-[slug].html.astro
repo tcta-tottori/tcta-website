@@ -15,7 +15,7 @@ const entry = e?.sections.find((s) => s.key === 'entry');
 if (!e || (!outline && !entry)) return Astro.rewrite('/404');
 ---
 
-<EventSection e={e} label="要項" en="Outline">
+<EventSection e={e} label="要項" en="Outline" revisionKeys={['outline', 'entry']}>
   {/* 要項は紙面（画像）だけ。要項の PDF のダウンロードは出さない（紙面の画像が無い大会だけ PDF を出す） */}
   {outline && (
     <div class="rv">

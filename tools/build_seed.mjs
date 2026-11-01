@@ -135,6 +135,17 @@ const collections = [
           ],
         },
       },
+      {
+        // 要項・ドローなどを差し替えたときの訂正の記録。大会ページと、その種類のページ（要項・ドロー）の上に日付付きで出る
+        slug: 'revisions', label: '訂正の記録（要項・ドローなどを直したとき）', type: 'repeater',
+        validation: {
+          subFields: [
+            { slug: 'date', label: '日付（2026-11-02 の形）', type: 'string', required: true },
+            { slug: 'section', label: '種類', type: 'select', required: true, options: ['要項', '申込用紙', 'ドロー', '結果', 'その他'] },
+            { slug: 'text', label: '内容（例：種目を男女ダブルスから男女シングルスに訂正しました）', type: 'text', required: true },
+          ],
+        },
+      },
       { slug: 'legacy_materials', label: '取り込みずみの素材（移行前の画像・PDF。編集不要）', type: 'json' },
     ],
   },

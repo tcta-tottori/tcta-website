@@ -1,0 +1,24 @@
+---
+// 要項・ドローなどを直したときの訂正の記録。ページの本文の一番上に、日付付きで出す。
+// 内容は大会の revisions（src/data/events.js の collectRevisions。管理画面の「訂正の記録」＋ official-extra.js）。
+//   keys … 出す種類（['outline', 'entry'] など）。付けなければ全部（大会ページ）
+const { revisions = [], keys = null } = Astro.props;
+const items = keys ? revisions.filter((r) => keys.includes(r.key)) : revisions;
+---
+
+{items.length > 0 && (
+  <aside class="rev-notice rv" aria-label="訂正のお知らせ">
+    <p class="rev-notice__head">訂正のお知らせ</p>
+    <ul class="rev-notice__list">
+      {items.map((r) => (
+        <li class="rev-notice__item">
+          <time class="rev-notice__date" datetime={r.date}>{r.day}</time>
+          <span class="rev-notice__text">
+            {r.section && r.section !== 'その他' && <span class="rev-notice__sec">{r.section}</span>}
+            {r.text}
+          </span>
+        </li>
+      ))}
+    </ul>
+  </aside>
+)}
