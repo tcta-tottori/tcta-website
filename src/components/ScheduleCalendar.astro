@@ -7,10 +7,31 @@
 // 出すのは1か月ぶんだけ。前後のボタンで月を移す（main.js の initCalendar）。
 // 全月ぶんのマス目は最初から書き出しておき、表示の切り替えだけをJSが行うので、
 // JSが動かない環境でも先頭の月は読める。
+//
+// extras を付けると（トップページ）、大会のほかに次のものも載せる。
+//   イベント … 管理画面の「イベント情報」のうち、開催日の入ったもの（テニス祭りなど）。黒いマス
+//   水曜テニス … 水曜テニス教室（毎週水曜 18:00〜21:00・井原公園）。水曜のマスに緑の点。マスの下の一覧には月の頭に1行だけ
 import { siteData } from '../lib/cms.js';
 import { STATUS_LABEL, monthGrid, todayJST, dueDate, drawMeetingDate, DRAW_MEETING } from '../data/schedule.js';
 
-const { SCHEDULE } = await siteData(Astro);
+interface Props {
+  /** テニスイベントと水曜テニスも載せる（トップページ） */
+  extras?: boolean;
+}
+const { extras = false } = Astro.props;
+const { SCHEDULE, EVENT_INFO = [] } = await siteData(Astro);
+
+// 水曜テニス教室（lesson.html の開催概要と同じ）
+const LESSON = { name: '水曜テニス教室', when: '毎週水曜 18:00〜21:00', place: '井原公園テニスコート', href: 'lesson.html' };
+// イベント（開催日のあるもの）を日付ごとに
+const events = new Map();
+if (extras) {
+  for (const e of EVENT_INFO) {
+    if (!e.date || !/^\d{4}-\d{2}-\d{2}$/.test(e.date)) continue;
+    if (!events.has(e.date)) events.set(e.date, []);
+    events.get(e.date).push(e);
+  }
+}
 
 const DOW = ['日', '月', '火', '水', '木', '金', '土'];
 
@@ -27,19 +48,29 @@ for (const t of SCHEDULE) {
 }
 
 // 月は、大会・締切・ドロー会議のどれかがある月をすべて並べる
-const keys = [...new Set([...SCHEDULE.map((t) => t.date), ...dues.keys(), ...draws.keys()].map((iso) => iso.slice(0, 7)))].sort();
+const keys = [...new Set([...SCHEDULE.map((t) => t.date), ...dues.keys(), ...draws.keys(), ...events.keys()].map((iso) => iso.slice(0, 7)))].sort();
 const months = keys.map((key) => {
   const [year, month] = key.split('-').map(Number);
   const games = SCHEDULE.filter((t) => t.date.startsWith(key)).sort((a, b) => a.date.localeCompare(b.date));
   const grid = monthGrid({ year, month, items: games });
-  const cells = grid.cells.map((c) => c && { ...c, dues: dues.get(c.iso) ?? [], draws: draws.get(c.iso) ?? [] });
-  // マスの下の一覧。日付順で、同じ日はドロー会議 → 締切 → 大会の順
+  const cells = grid.cells.map((c) => c && {
+    ...c,
+    dues: dues.get(c.iso) ?? [],
+    draws: draws.get(c.iso) ?? [],
+    events: events.get(c.iso) ?? [],
+    lesson: extras && c.dow === 3,
+  });
+  // マスの下の一覧。日付順で、同じ日はドロー会議 → 締切 → イベント → 大会の順。水曜テニスは月の頭に1行だけ
+  const evs = [...events].filter(([iso]) => iso.startsWith(key));
   const entries = [
+    ...(extras ? [{ iso: '', kind: 'lesson', order: 0 }] : []),
     ...[...draws].filter(([iso]) => iso.startsWith(key)).map(([iso, list]) => ({ iso, kind: 'draw', order: 0, list })),
     ...[...dues].filter(([iso]) => iso.startsWith(key)).map(([iso, list]) => ({ iso, kind: 'due', order: 1, list })),
-    ...games.map((t) => ({ iso: t.date, kind: 'game', order: 2, t })),
+    ...evs.flatMap(([iso, list]) => list.map((e) => ({ iso, kind: 'event', order: 2, e }))),
+    ...games.map((t) => ({ iso: t.date, kind: 'game', order: 3, t })),
   ].sort((a, b) => a.iso.localeCompare(b.iso) || a.order - b.order);
-  return { key, year, month, en: grid.en, cells, entries, count: games.length };
+  const evCount = evs.reduce((n, [, list]) => n + list.length, 0);
+  return { key, year, month, en: grid.en, cells, entries, count: games.length, evCount };
 });
 // 最初に出す月は今月（日本時間）。今月に何も無ければその次の月、年度の最後より後なら最後の月。
 // 今日のマス（.is-today）は点滅させる。描いたページが残っていても合うよう、main.js の initCalendar が見た時点の日付で付け直す
@@ -54,10 +85,12 @@ const day = (iso) => String(Number(iso.slice(8))).padStart(2, '0');
 // マスに載せる説明（マウスを載せたときの小さな吹き出し）
 const cellTitle = (c) => [
   ...c.items.map((t) => t.name),
+  ...c.events.map((e) => e.title),
+  ...(c.lesson ? [`${LESSON.name}（${LESSON.when.replace('毎週水曜 ', '')}）`] : []),
   ...(c.dues.length ? [`締切：${names(c.dues)}`] : []),
   ...(c.draws.length ? [`ドロー会議 ${DRAW_MEETING.time}〜：${names(c.draws)}`] : []),
 ].join(' / ') || undefined;
-const countText = (m) => `${m.count}大会`;
+const countText = (m) => (m.evCount ? `${m.count}大会・${m.evCount}イベント` : `${m.count}大会`);
 ---
 
 {!first && <p class="note">大会が登録されるとカレンダーが表示されます。</p>}
@@ -80,6 +113,8 @@ const countText = (m) => `${m.count}大会`;
   {/* 凡例 */}
   <ul class="cal__legend">
     <li><span class="cal__key cal__key--game" aria-hidden="true"></span>大会</li>
+    {extras && <li><span class="cal__key cal__key--event" aria-hidden="true"></span>イベント</li>}
+    {extras && <li><span class="cal__mk cal__mk--lesson" aria-hidden="true"></span>水曜テニス</li>}
     <li><span class="cal__mk cal__mk--due" aria-hidden="true"></span>エントリー締切</li>
     <li><span class="cal__mk cal__mk--draw" aria-hidden="true"></span>ドロー会議（{DRAW_MEETING.time}〜 {DRAW_MEETING.place}）</li>
   </ul>
@@ -107,6 +142,7 @@ const countText = (m) => `${m.count}大会`;
                 class:list={[
                   'cal__cell',
                   c.items.length && 'is-on',
+                  !c.items.length && c.events.length && 'is-ev',
                   c.dow === 0 && 'is-sun',
                   c.dow === 6 && 'is-sat',
                   c.iso === today && 'is-today',
@@ -116,10 +152,12 @@ const countText = (m) => `${m.count}大会`;
                 aria-current={c.iso === today ? 'date' : undefined}
               >
                 {c.day}
-                {(c.dues.length > 0 || c.draws.length > 0) && (
+                {(c.dues.length > 0 || c.draws.length > 0 || c.lesson || (c.items.length > 0 && c.events.length > 0)) && (
                   <span class="cal__mks" aria-hidden="true">
                     {c.dues.length > 0 && <span class="cal__mk cal__mk--due"></span>}
                     {c.draws.length > 0 && <span class="cal__mk cal__mk--draw"></span>}
+                    {c.items.length > 0 && c.events.length > 0 && <span class="cal__mk cal__mk--event"></span>}
+                    {c.lesson && <span class="cal__mk cal__mk--lesson"></span>}
                   </span>
                 )}
               </span>
@@ -128,7 +166,23 @@ const countText = (m) => `${m.count}大会`;
 
       <ul class="cal__list">
         {m.entries.map((x) => (
-          x.kind === 'game'
+          x.kind === 'lesson'
+            ? <li class="cal__item cal__item--lesson">
+                <span class="cal__item-day cal__item-day--wk">毎週<br>水</span>
+                <span class="cal__item-body">
+                  <span class="cal__item-name"><span class="cal__tag cal__tag--lesson">水曜テニス</span><a class="cal__item-link" href={LESSON.href}>{LESSON.name}</a></span>
+                  <span class="cal__item-sub">{LESSON.when.replace('毎週水曜 ', '')}／{LESSON.place}</span>
+                </span>
+              </li>
+          : x.kind === 'event'
+            ? <li class="cal__item cal__item--event">
+                <span class="cal__item-day">{day(x.iso)}</span>
+                <span class="cal__item-body">
+                  <span class="cal__item-name"><span class="cal__tag cal__tag--event">イベント</span>{x.e.href ? <a class="cal__item-link" href={x.e.href}>{x.e.title}</a> : x.e.title}</span>
+                  {x.e.place && <span class="cal__item-sub">{x.e.place}</span>}
+                </span>
+              </li>
+          : x.kind === 'game'
             ? <li class="cal__item">
                 <span class="cal__item-day">{day(x.iso)}</span>
                 <span class="cal__item-body">

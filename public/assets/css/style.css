@@ -235,6 +235,18 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 .section--gray + .section:not(.section--gray) { --fade-from: var(--gray-050); }
 .section--cards + .section:not(.section--gray) { --fade-from: var(--gray-100); }
 .section:not(.section--gray) + .section--gray { --fade-from: var(--white); }
+/* ヒーロー（下端は白）→ 大会情報（グレー）も同じくつなぐ。止める区画（.is-hpin）の .hpin の地は透明にして、区画の地とぼかしを見せる */
+.hero + .section--gray { isolation: isolate; --fade-from: var(--white); }
+.hero + .section--gray::before {
+  content: "";
+  position: absolute;
+  left: 0; right: 0; top: 0;
+  height: 120px;
+  background: linear-gradient(var(--fade-from), rgba(255, 255, 255, 0));
+  z-index: -1;
+  pointer-events: none;
+}
+@media (min-width: 1024px) { .hero + .section--gray::before { height: 160px; } }
 @media (min-width: 1024px) {
   .section--gray + .section:not(.section--gray)::before,
   .section:not(.section--gray) + .section--gray::before { height: 160px; }
@@ -1744,6 +1756,7 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
    止まっている長さ（.hpin-track の高さ）は main.js が「区画の高さ＋横に送る幅」で入れる。
    止めているあいだは縦のスクロール量をそのまま横の位置にするので、吸い付き（scroll-snap）は切る */
 .is-hpin .hpin { position: sticky; background: var(--gray-100); }
+.hero + .section--gray.is-hpin .hpin { background: transparent; }
 /* 区画の下の余白は詰める。止める区画の下に余る灰色は、次の区画（白い地）が重なって隠す（main.js の .hpin-track の margin-bottom） */
 .section.is-hpin { padding-bottom: 0; }
 .section.is-hpin + .section { background: var(--white); }
@@ -2034,7 +2047,8 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 .cal__meta { display: flex; flex-direction: column; gap: 3px; }
 .cal__en { font: 700 11px/1 var(--flt); letter-spacing: .14em; color: var(--red); }
 .cal__year { font: 500 11px/1 var(--flt); letter-spacing: .08em; color: var(--gray-500); }
-.cal__count { margin-left: auto; font: 500 13px/1 var(--fjp); color: var(--gray-500); }
+.cal__count { margin-left: auto; font: 500 13px/1 var(--fjp); color: var(--gray-500); white-space: nowrap; }
+@media (max-width: 420px) { .cal__label { min-width: 0; } .cal__count { font-size: 12px; } }
 
 .cal__grid {
   display: grid;
@@ -2177,6 +2191,19 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 .cal__tag--draw { border: 1px solid var(--red); color: var(--red); background: var(--white); }
 .cal__item-when { font: 700 13px/1.5 var(--fjp); color: var(--ink); white-space: nowrap; }
 .cal__item--due .cal__item-sub, .cal__item--draw .cal__item-sub { color: var(--gray-600); }
+/* トップのカレンダー（ScheduleCalendar の extras）：イベントは黒いマス、水曜テニスは水曜のマスに緑の点 */
+.cal { --cal-lesson: #2E9D5B; }
+.cal__cell.is-ev { background: var(--ink); color: #fff; font-weight: 700; }
+.cal__key--event { display: inline-block; width: 12px; height: 12px; border-radius: 3px; background: var(--ink); }
+.cal__mk--lesson { background: var(--cal-lesson); }
+.cal__mk--event { background: var(--ink); box-shadow: 0 0 0 1.5px var(--white); }
+.cal__cell.is-on .cal__mk--lesson, .cal__cell.is-ev .cal__mk--lesson { box-shadow: 0 0 0 1.5px var(--white); }
+.cal__tag--event { background: var(--ink); color: #fff; }
+.cal__tag--lesson { background: var(--cal-lesson); color: #fff; }
+.cal__item--event .cal__item-day { color: var(--ink); }
+.cal__item-day--wk { font: 700 11px/1.15 var(--fjp); color: var(--cal-lesson); text-align: center; }
+.cal__item-link { color: inherit; text-decoration: underline; text-decoration-color: var(--gray-300); text-underline-offset: 3px; }
+.cal__item-link:hover { color: var(--red); text-decoration-color: currentColor; }
 
 /* ---- コート案内の地図 ----
    Leaflet で自前に描く（main.js の initCourtMap）。上のボタンで施設を切り替え、「すべて」で全施設、
