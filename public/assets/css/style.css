@@ -1463,7 +1463,8 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   /* 上下は受付中のカードの光（ネオン）が切れないだけ空ける */
   padding: 16px 4px 22px;
   overflow-x: auto;
-  scroll-snap-type: x mandatory;
+  /* 吸い付き（scroll-snap）は使わず、止めたらいちばん近いカードを中央へ寄せる（main.js の initCarousel） */
+  scroll-snap-type: none;
   scrollbar-width: none;
   /* 画面いっぱいに流す。1枚目だけ本文と同じ位置から始まるよう内側に余白を取る
      （100% は自分の幅＝画面幅。vw と違いスクロールバーぶんずれない）。 */
