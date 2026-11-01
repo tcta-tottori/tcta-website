@@ -12,6 +12,7 @@ import EventMeta from '../components/EventMeta.astro';
 import { siteData } from '../lib/cms.js';
 import { clubEventLayout } from '../data/club-event.js';
 import { eventResultLayout } from '../data/event-result.js';
+import { COURTS } from '../data/courts.js';
 
 const { eventBySlug } = await siteData(Astro);
 const e = eventBySlug(Astro.params.slug);
@@ -47,6 +48,31 @@ const facts = [
 // 横長の紙（リーグ表・スコア表）は1枚で横いっぱいに広げる
 const isWide = (img) => img.w / img.h > 1.5;
 
+// 構造化データ（Google の検索結果に大会として出るための SportsEvent）。会場の住所はコート案内の施設から引く
+const court = COURTS.find((c) => e.place && (e.place.includes(c.name) || (c.short && e.place.startsWith(c.short)))) ?? null;
+const eventLd = {
+  '@type': 'SportsEvent',
+  name: e.displayName,
+  sport: 'Tennis',
+  startDate: e.date,
+  endDate: e.date,
+  eventStatus: 'https://schema.org/EventScheduled',
+  eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
+  description: [e.event, e.note].filter(Boolean).join('。'),
+  url: new URL(`/event-${e.slug}.html`, Astro.site ?? Astro.url).href,
+  image: [new URL(e.cover ?? 'assets/img/ogp.jpg', Astro.site ?? Astro.url).href],
+  location: {
+    '@type': 'Place',
+    name: e.place || '鳥取県',
+    address: court?.address
+      ? { '@type': 'PostalAddress', streetAddress: court.address, addressRegion: '鳥取県', addressCountry: 'JP' }
+      : { '@type': 'PostalAddress', addressRegion: '鳥取県', addressCountry: 'JP' },
+  },
+  organizer: e.host
+    ? { '@type': 'Organization', name: e.host }
+    : { '@id': new URL('/#organization', Astro.site ?? Astro.url).href },
+};
+
 const title = `${e.displayName}｜大会情報｜鳥取市テニス協会`;
 const description = `${e.label}に${e.place}で行われる${e.name}（${e.event}）のページです。`
   + `${e.hasResult ? '結果・当日の写真・ドロー・要項' : '要項・申込用紙'}を掲載しています。`;
@@ -57,6 +83,8 @@ const description = `${e.label}に${e.place}で行われる${e.name}（${e.event
   description={description}
   navActive="tournaments"
   mobileNavActive="tournaments"
+  image={e.cover ?? undefined}
+  jsonLd={eventLd}
 >
   <!-- ============ ページヘッダー ============ -->
   <section class="page-head">
