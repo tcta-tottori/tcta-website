@@ -52,7 +52,7 @@ export const EXTRA_TOURNAMENTS = [
     host: '京丹後市テニス協会',
     note: '京丹後市テニス協会が主催するオープン大会です（ミックスダブルス。一般クラスと、ペアの年齢の合計が100歳以上の100歳クラス。各クラス4組以上で成立）。参加料は1ペア3,300円（保険料込み・当日会場で支払い。高校生以下は半額）。申込は京丹後市テニス協会のホームページにあるエントリーフォームから行ってください（100歳クラスは生年月日を必ず記入。本人以外の申込はできません）。ドローも同ホームページに掲載されます。',
     link_label: '京丹後市テニス協会のホームページで申し込む', link_url: 'https://kyotangotennis.sakura.ne.jp/',
-    card: false, materials: [], winners: [], legacy_materials: {},
+    card: true, materials: [], winners: [], legacy_materials: {},
   },
   // 鳥大オープンテニス大会（12月・シングルス）。要項・申込用紙は 2026.11.2 の訂正版（申込期限 11/27）
   {
@@ -76,6 +76,7 @@ export const STATE_OVERRIDE = {
 export const EXTRA_CARDS = [
   'r8-no18', // 鳥取県テニス選手権 ダブルス（受付中。11/13 締切）
   'r8-tottori-univ-winter', // 鳥大オープンテニス大会（12/6。受付中。11/27 締切）
+  'r8-kyotango-mixed', // 京丹後市オープンミックスダブルス（12/6。受付中。11/27 締切）
 ];
 
 export const EXTRA_NEWS = [
