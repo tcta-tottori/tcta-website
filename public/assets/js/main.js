@@ -1726,26 +1726,35 @@
       window.addEventListener('load', place);
     }
 
-    /* 指で横に送って止めたら、いちばん近いカードが画面の中央に来る位置へ寄せる（TODAY の位置も止まってよい位置に含める）。
+    /* 指で横に送って止めたら、近くのカードが画面の中央に来るよう少しだけ寄せる（TODAY の位置も止まってよい位置に含める）。
+       控えめにするため、慣性のスクロールが止まりきってから（scrollend）動かし、ずれがカード幅の3割以内のときだけ寄せる。
+       （指を離した時点で寄せ始めると、慣性で流れている途中の動きと引っ張り合って左右にぶれていた）
        吸い付き（scroll-snap）は使わない（TODAY の位置をぴったり保てないため） */
     var settle = function () {
-      if (gliding) return;
+      if (gliding || touching) return;
       var x = track.scrollLeft, cw = track.clientWidth, max = track.scrollWidth - cw, best = null;
       var list = marker ? [todayX()] : [];
+      var cardW = cards.length ? cards[0].offsetWidth : cw;
       Array.prototype.forEach.call(cards, function (c) {
         list.push(Math.min(max, Math.max(0, c.offsetLeft + c.offsetWidth / 2 - cw / 2)));
       });
       list.forEach(function (sx) { if (best === null || Math.abs(sx - x) < Math.abs(best - x)) best = sx; });
-      if (best !== null && Math.abs(best - x) >= 2) {
-        glideX(best, Math.min(380, Math.max(220, Math.abs(best - x) * 1.1)), function (k) { return 1 - Math.pow(1 - k, 3); });
-      }
+      if (best === null) return;
+      var gap = Math.abs(best - x);
+      if (gap < 2 || gap > cardW * 0.3) return;
+      glideX(best, Math.min(300, Math.max(180, gap * 2)), function (k) { return 1 - Math.pow(1 - k, 2); });
     };
     var settleTimer = 0, touching = false;
-    var settleSoon = function () { clearTimeout(settleTimer); settleTimer = setTimeout(function () { if (!touching) settle(); }, 140); };
-    track.addEventListener('touchstart', function () { touching = true; }, { passive: true });
-    track.addEventListener('touchend', function () { touching = false; settleSoon(); }, { passive: true });
-    if ('onscrollend' in window) track.addEventListener('scrollend', function () { if (!gliding) settleSoon(); });
-    else track.addEventListener('scroll', function () { if (!gliding) settleSoon(); }, { passive: true });
+    var settleSoon = function (wait) { clearTimeout(settleTimer); settleTimer = setTimeout(settle, wait); };
+    track.addEventListener('touchstart', function () { touching = true; clearTimeout(settleTimer); }, { passive: true });
+    track.addEventListener('touchend', function () { touching = false; }, { passive: true });
+    track.addEventListener('touchcancel', function () { touching = false; }, { passive: true });
+    if ('onscrollend' in window) {
+      track.addEventListener('scrollend', function () { if (!gliding) settleSoon(60); });
+    } else {
+      // scrollend が無い端末：スクロールが 250ms 止まったら止まりきったとみなす
+      track.addEventListener('scroll', function () { if (!gliding) settleSoon(250); }, { passive: true });
+    }
     // 画面の幅が変わったときだけ TODAY に置き直す（スマホのアドレスバーの出入りで高さだけ変わるときは動かさない）
     var lastW = window.innerWidth;
     window.addEventListener('resize', function () {
