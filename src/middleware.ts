@@ -21,7 +21,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
   if (context.url.hostname === `www.${CANONICAL_HOST}`) {
     const to = new URL(context.url);
     to.hostname = CANONICAL_HOST;
-    return new Response(null, { status: 301, headers: { location: to.href, 'cache-control': 'public, max-age=86400' } });
+    return new Response(null, { status: 301, headers: { location: to.href, 'cache-control': 'no-store' } });
   }
   const response = await next();
   if (response.status >= 400) context.cache?.set(false);
