@@ -1835,10 +1835,8 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   letter-spacing: 0;
   color: var(--gray-800);
   transition: color .3s ease;
-  /* 折り返さず1行に収める。入り切らないときだけ末尾を省略する。 */
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  /* 1行に入り切らないときは省略せずに折り返して全部出す（長い英数字も枠からはみ出さないように折る） */
+  overflow-wrap: anywhere;
   min-width: 0;
 }
 .news-row .sqbtn { display: none; }
