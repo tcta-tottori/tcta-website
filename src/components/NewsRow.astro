@@ -1,7 +1,7 @@
 ---
 // お知らせ1行。src/data/news.js の1件をそのまま受け取る。
 // 左に日付、その隣が NEW の枠（2週間以内のものだけ赤い NEW が入る）、
-// 右にタイトル。タイトルは折り返さず1行に収める。
+// 右にタイトル。タイトルは1行に入り切らないときは折り返す。
 import { newsDate, isNew } from '../data/news.js';
 
 // index … 全画面の一覧（#news-all）で何番目か。付けると li が .panel-item になり、見出しの下から順に滑り出す（style.css）。
