@@ -33,7 +33,16 @@ jobs:
 
       - run: npm ci
 
-      - run: npm run build
+      # ビルド中に Google フォントのファイルを取りに行く。通信が一時的に失敗すると止まる（2026-11-01 に発生）ので、
+      # 失敗したら少し待って最大3回までやり直す
+      - name: Build (最大3回までやり直す)
+        run: |
+          for i in 1 2 3; do
+            npm run build && exit 0
+            echo "build failed (attempt $i). retrying in $((i * 15))s..."
+            sleep $((i * 15))
+          done
+          exit 1
 
       - run: npx wrangler deploy
         env:
