@@ -116,7 +116,15 @@ const description = "鳥取市テニス協会へのお問い合わせフォー�
               <p class="field-error" data-error-for="agree" role="alert"></p>
             </div>
 
-            <button class="btn btn--primary" type="submit">お問い合わせを送信する <span class="ln-arrow" aria-hidden="true"></span></button>
+            {/* ボット避けの見えない欄（人には見えず、入力もしない。何か入っていたら /api/contact が捨てる） */}
+            <div class="form__hp" aria-hidden="true">
+              <label for="f-website">ウェブサイト（入力しないでください）</label>
+              <input type="text" id="f-website" name="website" tabindex="-1" autocomplete="off">
+            </div>
+
+            <button class="btn btn--primary" type="submit" data-form-submit>お問い合わせを送信する <span class="ln-arrow" aria-hidden="true"></span></button>
+            {/* 送れなかったときの案内（main.js の initForm が出す） */}
+            <p class="form__send-error" data-form-error role="alert" hidden></p>
           </form>
 
           <div class="form-done" data-form-done role="status">

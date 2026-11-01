@@ -6,6 +6,11 @@
 	"main": "./src/worker.ts",
 	"compatibility_date": "2026-02-24",
 	"compatibility_flags": ["nodejs_compat"],
+	// お問い合わせフォーム（src/pages/api/contact.ts）の送り先。メール送信の鍵 RESEND_API_KEY はここには書かず、
+	// Cloudflare の Worker の「シークレット」に入れる（docs/contact.md）
+	"vars": {
+		"CONTACT_TO": "t.c.t.a.r7@gmail.com"
+	},
 	"d1_databases": [
 		{
 			"binding": "DB",

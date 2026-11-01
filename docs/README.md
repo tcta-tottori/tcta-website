@@ -10,6 +10,7 @@
 | [`content.md`](./content.md) | 原稿仕様書 v2.0。各ページの実テキスト、情報構成、`【要確認】` 項目の一覧 |
 | [`design-chat-log.md`](./design-chat-log.md) | ファーストビュー3案の提案から採用案（3a）決定までの検討ログ。なぜこの構成になったかの経緯 |
 | [`cloudflare.md`](./cloudflare.md) | Cloudflare（Pages／Workers／Wrangler）導入の検討メモ。お問い合わせフォームを繋ぐ段階で移す判断 |
+| [`contact.md`](./contact.md) | お問い合わせフォームの送信（保存＋Resend でメール）。Resend の鍵の入れ方と、届いた内容の読み方 |
 | [`admin.md`](./admin.md) | （置き換え前の記録）自作のサイト更新アプリの構成と設置手順。2026-10-21 に EmDash へ置き換えた |
 | [`emdash.md`](./emdash.md) | CMS「EmDash」への移行。内容モデル、設置手順（Cloudflare Workers・D1・R2）、更新のしかた、AI からの更新、検討の経緯 |
 
