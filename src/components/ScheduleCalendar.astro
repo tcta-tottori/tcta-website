@@ -8,7 +8,8 @@
 // 全月ぶんのマス目は最初から書き出しておき、表示の切り替えだけをJSが行うので、
 // JSが動かない環境でも先頭の月は読める。
 //
-// extras を付けると（トップページ）、大会のほかに次のものも載せる。
+// extras を付けると（トップページ）、マスの下の一覧は出さない（.cal--compact。予定はマスを押したときの吹き出しで見る。
+// 吹き出しは一覧の行を写して作るので、一覧は書き出したまま CSS で隠す）。大会のほかに次のものも載せる。
 //   イベント … 管理画面の「イベント情報」のうち、開催日の入ったもの（テニス祭りなど）。黒いマス
 //   水曜テニス … 水曜テニス教室（毎週水曜 18:00〜21:00・井原公園）。水曜のマスに緑の点。マスの下の一覧には月の頭に1行だけ
 import { siteData } from '../lib/cms.js';
@@ -125,7 +126,7 @@ const countText = (m) => (m.evCount ? `${m.count}大会・${m.evCount}イベン�
 {!first && <p class="note">大会が登録されるとカレンダーが表示されます。</p>}
 {first && (
 
-<div class="cal" data-calendar data-cal-initial={initial} data-cal-from={extras ? 'prev' : undefined}>
+<div class:list={['cal', extras && 'cal--compact']} data-calendar data-cal-initial={initial} data-cal-from={extras ? 'prev' : undefined}>
   <div class="cal__bar">
     <button class="circle-btn" type="button" data-cal-prev aria-label="前の月へ" disabled>←</button>
     <p class="cal__label" data-cal-label aria-live="polite">
