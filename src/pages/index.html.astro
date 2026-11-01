@@ -185,13 +185,13 @@ const upcomingTournaments = TOURNAMENTS.filter((t) => t.status !== 'past');
       {/* 上から3件だけ出す（NEWS_VISIBLE）。4件目があるときは、続きがあることが分かるよう
           薄くフェードさせて見せる（VIEW ALL を押すと全件が開く）。 */}
       <ul class="news-list">
-        {/* ほかの区画より少し遅れて出す（見出しが出はじめてから 0.5 秒おいて、1行ずつ 0.12 秒ずらす） */}
-        {NEWS.slice(0, NEWS_VISIBLE).map((n, i) => <NewsRow item={n} delay={0.5 + i * 0.12} />)}
+        {/* 画面に入ったらすぐ出す（0.1 秒おいて、1行ずつ 0.08 秒ずらす。以前は 0.5 秒＋0.12 秒ずつで遅く感じた） */}
+        {NEWS.slice(0, NEWS_VISIBLE).map((n, i) => <NewsRow item={n} delay={0.1 + i * 0.08} />)}
       </ul>
       {NEWS.length > NEWS_VISIBLE && (
         <div class="news-peek">
           <ul class="news-list news-list--peek" aria-hidden="true">
-            <NewsRow item={NEWS[NEWS_VISIBLE]} delay={0.5 + NEWS_VISIBLE * 0.12} />
+            <NewsRow item={NEWS[NEWS_VISIBLE]} delay={0.1 + NEWS_VISIBLE * 0.08} />
           </ul>
           <div class="news-peek__more">
             <button class="view-all" type="button" data-news-open aria-expanded="false" aria-controls="news-all" aria-label={`お知らせをすべて見る（${NEWS.length}件）`}>
