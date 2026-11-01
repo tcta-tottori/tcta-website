@@ -10,10 +10,10 @@
 const img = (slug, file, label) => ({ src: `assets/img/events/${slug}/${file}`, label, w: 1241, h: 1754 });
 
 export const EXTRA_MATERIALS = {
-  // 鳥大オープンテニス大会（12月・ダブルス）：要項と申込用紙（1枚の紙に両方。2026.10.25）
+  // 鳥大オープンテニス大会（12月・シングルス）：要項と申込用紙（1枚の紙に両方。2026.11.2 の訂正版：種目をダブルス→シングルスに訂正）
   'r8-tottori-univ-winter': {
     outline: { images: [img('r8-tottori-univ-winter', 'outline-01.webp', '要項・申込用紙')], pdfs: [] },
-    entry: { images: [], pdfs: [{ src: 'assets/pdf/events/r8-tottori-univ-winter/R8鳥大オープンテニス大会_要項.pdf', label: '要項・申込用紙', kb: 216 }] },
+    entry: { images: [], pdfs: [{ src: 'assets/pdf/events/r8-tottori-univ-winter/R8鳥大オープンテニス大会_要項.pdf', label: '要項・申込用紙', kb: 222 }] },
   },
   // 鳥取県テニス選手権 シングルス：ドロー（2026.10.30。選手の所属を訂正した版）
   'r8-kensen-singles': {
@@ -34,16 +34,16 @@ export const EXTRA_MATERIALS = {
 };
 
 export const EXTRA_TOURNAMENTS = [
-  // 鳥大オープンテニス大会（12月・ダブルス）。要項・申込用紙は 2026.10.25 の版（申込期限 11/27）
+  // 鳥大オープンテニス大会（12月・シングルス）。要項・申込用紙は 2026.11.2 の訂正版（申込期限 11/27）
   {
     slug: 'r8-tottori-univ-winter',
     name: '鳥大オープンテニス大会', nendo: '2026', no: '', kind: '預かり',
-    event: '男女ダブルス', date: '2026-12-06', label: '12月6日（日）',
+    event: '男女シングルス', date: '2026-12-06', label: '12月6日（日）',
     place: '鳥取大学テニスコート',
     spare_date: '', spare_venue: '', spare_note: '',
     due: '11/27', state: '受付中', reg: '登録不要',
     host: '鳥取大学硬式庭球部',
-    note: '鳥取大学硬式庭球部が主催する大会です（男子ダブルス・女子ダブルス。1セットマッチ・セルフジャッジ、決勝のみ8ゲームズプロセット）。参加費は1人1,500円で、当日の受付で集めます。申込用紙は鳥取大学硬式庭球部の部室か、テニスショップ フラシーノへ届けてください（11/27 まで）。雨で中止のときは30分前までに連絡があります。協会は要項・ドロー・結果の掲載に協力しています。',
+    note: '鳥取大学硬式庭球部が主催する大会です（男子シングルス・女子シングルス。1セットマッチ・セルフジャッジ、決勝のみ8ゲームズプロセット）。参加費は1人1,500円で、当日の受付で集めます。申込用紙は鳥取大学硬式庭球部の部室か、テニスショップ フラシーノへ届けてください（11/27 まで）。雨で中止のときは30分前までに連絡があります。協会は要項・ドロー・結果の掲載に協力しています。',
     link_label: '', link_url: '',
     card: true, materials: [], winners: [], legacy_materials: {},
   },
@@ -59,7 +59,8 @@ export const EXTRA_CARDS = [
 ];
 
 export const EXTRA_NEWS = [
-  { slug: 'official-20261101-tottori-univ-outline', date: '2026-11-01', category: '大会', title: '鳥大オープンテニス大会（12/6・ダブルス）の要項・申込用紙を掲載しました（11/27締切）', href: 'outline-r8-tottori-univ-winter.html' },
+  { slug: 'official-20261102-tottori-univ-outline-fix', date: '2026-11-02', category: '大会', title: '鳥大オープンテニス大会（12/6）の要項を訂正しました（種目はダブルスではなくシングルスです）', href: 'outline-r8-tottori-univ-winter.html' },
+  { slug: 'official-20261101-tottori-univ-outline', date: '2026-11-01', category: '大会', title: '鳥大オープンテニス大会（12/6）の要項・申込用紙を掲載しました（11/27締切）', href: 'outline-r8-tottori-univ-winter.html' },
   { slug: 'official-20261030-kensen-s-draw', date: '2026-10-30', category: '大会', title: '鳥取県テニス選手権シングルスのドローを掲載しました（選手の所属を訂正）', href: 'draw-r8-kensen-singles.html' },
   { slug: 'official-20261026-kensen-d-outline', date: '2026-10-26', category: '大会', title: '鳥取県テニス選手権ダブルスの要項・申込用紙を掲載しました（11/13締切）', href: 'outline-r8-no18.html' },
 ];
