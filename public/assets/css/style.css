@@ -2362,6 +2362,16 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   background: rgba(255, 255, 255, .85);
 }
 .cmap__map .leaflet-control-attribution a { color: var(--gray-600); }
+/* 縮尺（右下。拡大縮小のボタンの下）。白い地に黒い目盛り。拡大縮小のボタンとの間は詰める */
+.cmap__map .leaflet-control-scale { margin: 0 14px 8px 0; }
+.cmap__map .leaflet-control-zoom { margin-bottom: 8px; }
+.cmap__map .leaflet-control-scale-line {
+  padding: 1px 6px 0;
+  border: 2px solid var(--ink); border-top: 0;
+  font: 600 11px/1.5 var(--flt); color: var(--ink);
+  background: rgba(255, 255, 255, .85);
+  text-shadow: none;
+}
 
 /* テニスコートの面。敷地は薄く、コート1面ずつは赤で塗る（タイルがグレーなので赤だけが立つ） */
 .cmap__map .carea { fill: var(--red); fill-opacity: .08; stroke: var(--red); stroke-width: 1; stroke-opacity: .35; }
