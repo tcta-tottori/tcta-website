@@ -4,6 +4,9 @@
 //   routeRules で公開ページを 1 日キャッシュしているので、これが無いと配備直後に出た
 //   一時的なエラー（404・500・移行中の 503 など）が 1 日残ってしまう。
 //
+// ■ www 付きのアドレスは www 無しへ移す
+//   www.tottori-city-tennis.com で開かれたら、同じパスの tottori-city-tennis.com へ恒久的に転送する（301。検索の評価を1つにまとめる）。
+//
 // ■ 位置情報を自サイトで使えるようにする
 //   EmDash は応答に Permissions-Policy（geolocation=() ＝ 位置情報を全面禁止）を「無ければ」付ける。
 //   トップのコート案内の地図に「現在地」ボタンがあるので、公開ページでは自サイト（self）だけ許可した値を先に付けておく。
@@ -12,7 +15,14 @@ import { defineMiddleware } from 'astro:middleware';
 
 const PERMISSIONS_POLICY = 'camera=(), microphone=(), geolocation=(self), payment=()';
 
+const CANONICAL_HOST = 'tottori-city-tennis.com';
+
 export const onRequest = defineMiddleware(async (context, next) => {
+  if (context.url.hostname === `www.${CANONICAL_HOST}`) {
+    const to = new URL(context.url);
+    to.hostname = CANONICAL_HOST;
+    return new Response(null, { status: 301, headers: { location: to.href, 'cache-control': 'public, max-age=86400' } });
+  }
   const response = await next();
   if (response.status >= 400) context.cache?.set(false);
   if (!context.url.pathname.startsWith('/_emdash')) {

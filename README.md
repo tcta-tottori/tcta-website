@@ -3,7 +3,8 @@
 鳥取市テニス協会（TOTTORI-CITY TENNIS ASSOCIATION）の公式サイトです。
 [Astro](https://astro.build/) に CMS の [EmDash](https://github.com/emdash-cms/emdash) を組み込み、
 Cloudflare Workers で公開しています（2026-10-21 に GitHub Pages から移行。[`docs/emdash.md`](./docs/emdash.md)）。
-公開 URL は https://tcta-site.tcta-admin-worker.workers.dev/ 。
+公開 URL は https://tottori-city-tennis.com/ （2026-11 にドメインを取得。www 付きは www 無しへ転送）。
+管理画面は https://tcta-site.tcta-admin-worker.workers.dev/_emdash/admin/ のまま使える。
 お知らせ・大会・イベント情報は管理画面（`/_emdash/admin/`）と AI（MCP）から更新でき、
 ページはリクエストごとに描いて Workers Cache が静的 HTML と同じ速さで返します。
 
@@ -100,7 +101,9 @@ npm run dev                                  # http://localhost:4321 を開く
 内容は D1 にあるので、配備しても消えません。
 
 ページ内のリンクはすべて相対パスなので、`*.workers.dev` でも独自ドメインでも設定を変えずに動きます。
-独自ドメインは `wrangler.jsonc` の `routes` で付けます。
+独自ドメイン（tottori-city-tennis.com と www.tottori-city-tennis.com）は、Cloudflare のダッシュボードで Worker（tcta-site）の
+「設定 → ドメインとルート → 追加 → カスタムドメイン」でつないでいます（配備用の API トークンにドメインの権限が無いため、`wrangler.jsonc` の `routes` には書いていない）。
+公開アドレスは `astro.config.mjs` の `site`（docs/seo.md）。
 
 ## 実装メモ
 

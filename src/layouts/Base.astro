@@ -5,6 +5,8 @@ import Cta from '../components/Cta.astro';
 import SiteFooter from '../components/SiteFooter.astro';
 import SiteSplash from '../components/SiteSplash.astro';
 import ImportantNotice from '../components/ImportantNotice.astro';
+import { siteData } from '../lib/cms.js';
+import { LINE_OFFICIAL } from '../data/links.js';
 /* CSS と JS の URL に中身のハッシュを付ける。
    ファイル名を変えずに更新しているので、これが無いと古い CSS が
    ブラウザのキャッシュから使われ、新しい HTML と噛み合わずに崩れる。
@@ -25,6 +27,14 @@ interface Props {
   navActive?: string;
   /** モバイルナビの現在地 */
   mobileNavActive?: string;
+  /** SNS で共有したときの画像（サイト内の相対パス）。無ければ共通の画像（assets/img/ogp.jpg） */
+  image?: string;
+  /** og:type。大会ページなどは article */
+  ogType?: string;
+  /** 検索に出さない（404 など） */
+  noindex?: boolean;
+  /** ページ固有の構造化データ（JSON-LD。schema.org のオブジェクト）。大会ページの SportsEvent など */
+  jsonLd?: Record<string, unknown> | Record<string, unknown>[];
 }
 
 const {
@@ -36,7 +46,55 @@ const {
   mobileNavActive,
   // 本文の末尾の入会への誘い（Cta）を出すか。入会案内のページ自身では出さない
   cta = true,
+  image,
+  ogType,
+  noindex = false,
+  jsonLd,
 } = Astro.props;
+
+/* ---- 検索エンジン・SNS 向け ----
+   公開アドレスは astro.config.mjs の site（本番のドメインに切り替えるときはそこだけ直す）。
+   代表アドレス（canonical）は、そのページの公開アドレス。トップは / にそろえる（/index.html と同じページのため）。 */
+const SITE_NAME = '鳥取市テニス協会';
+const site = Astro.site ?? new URL(Astro.url.origin);
+const path = Astro.url.pathname === '/index.html' ? '/' : Astro.url.pathname;
+const canonical = new URL(path, site).href;
+const ogImage = new URL(image ?? 'assets/img/ogp.jpg', site).href;
+const isHome = path === '/';
+// 公開アドレス以外（独自ドメインに移ったあとの workers.dev など）で見られたページは、検索に出さない（同じ内容が2つ並ばないように）
+const offSite = !!Astro.site && Astro.url.hostname !== Astro.site.hostname && !/^(localhost|127\.0\.0\.1)$/.test(Astro.url.hostname);
+// 協会の公式アカウント（構造化データの sameAs）。管理画面のサイト設定の SNS と LINE 公式アカウント
+let sameAs: string[] = [];
+try {
+  const { SOCIAL = [] } = await siteData(Astro);
+  sameAs = [...SOCIAL.map((x) => x.url), LINE_OFFICIAL.url].filter((u) => /^https?:\/\//.test(String(u)));
+} catch { /* 読めないときは無し */ }
+const orgLd = {
+  '@type': 'SportsOrganization',
+  '@id': new URL('/#organization', site).href,
+  name: SITE_NAME,
+  alternateName: ['TOTTORI-CITY TENNIS ASSOCIATION', 'TCTA'],
+  url: new URL('/', site).href,
+  logo: new URL('assets/img/logo.png', site).href,
+  sport: 'Tennis',
+  areaServed: { '@type': 'City', name: '鳥取市' },
+  address: { '@type': 'PostalAddress', addressRegion: '鳥取県', addressLocality: '鳥取市', addressCountry: 'JP' },
+  ...(sameAs.length ? { sameAs } : {}),
+};
+const graph = [
+  orgLd,
+  ...(isHome ? [{
+    '@type': 'WebSite',
+    '@id': new URL('/#website', site).href,
+    name: SITE_NAME,
+    alternateName: 'TOTTORI-CITY TENNIS ASSOCIATION',
+    url: new URL('/', site).href,
+    inLanguage: 'ja',
+    publisher: { '@id': orgLd['@id'] },
+  }] : []),
+  ...(jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : []),
+];
+const ldJson = JSON.stringify({ '@context': 'https://schema.org', '@graph': graph }).replace(/</g, '\\u003c');
 ---
 
 <!DOCTYPE html>
@@ -46,11 +104,31 @@ const {
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{title}</title>
 <meta name="description" content={description}>
-{/* 協会ロゴ（白地・黒文字）をそのままアイコンに使っている。
-    差し替えるときは public/assets/img/ の3枚をまとめて作り直すこと。 */}
+<link rel="canonical" href={canonical}>
+{(noindex || offSite) && <meta name="robots" content="noindex">}
+{/* SNS（LINE・X・Facebook など）で共有したときの表示 */}
+<meta property="og:site_name" content={SITE_NAME}>
+<meta property="og:type" content={ogType ?? (isHome ? 'website' : 'article')}>
+<meta property="og:title" content={title}>
+<meta property="og:description" content={description}>
+<meta property="og:url" content={canonical}>
+<meta property="og:image" content={ogImage}>
+{!image && <meta property="og:image:width" content="1200">}
+{!image && <meta property="og:image:height" content="630">}
+<meta property="og:image:alt" content={SITE_NAME}>
+<meta property="og:locale" content="ja_JP">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#ffffff">
+<meta name="format-detection" content="telephone=no">
+{/* アイコン。協会ロゴの頭（「T.T」と赤い四角）を正方形にしたもの。小さくても読めるよう、ロゴ全体ではなくこの部分だけにしている。
+    作り直すときは public/favicon.ico と public/assets/img/ の favicon-32/48/192・icon-512・apple-touch-icon をまとめて */}
+<link rel="icon" href="/favicon.ico" sizes="48x48">
 <link rel="icon" href="assets/img/favicon-32.png" sizes="32x32" type="image/png">
 <link rel="icon" href="assets/img/favicon-192.png" sizes="192x192" type="image/png">
 <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+<link rel="manifest" href="/site.webmanifest">
+{/* 構造化データ（Google が協会・サイト・大会を理解するための情報） */}
+<script type="application/ld+json" set:html={ldJson} />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&family=Jost:wght@500;600;700&display=swap" rel="stylesheet">
