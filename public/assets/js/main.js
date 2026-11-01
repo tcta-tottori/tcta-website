@@ -1696,17 +1696,20 @@
     var stopGlide = function () { if (gliding) { cancelAnimationFrame(raf); gliding = false; } };
     ['touchstart', 'wheel', 'pointerdown'].forEach(function (ev) { track.addEventListener(ev, stopGlide, { passive: true }); });
 
-    /* 初めて画面に入ったとき：いちばん端（最初）のカードから、TODAY の線が「終了した大会｜今後の大会」の赤い縦線と重なる位置まで、
+    /* 初めて画面に入ったとき：いちばん右（いちばん先の今後の大会）のカードから、TODAY の線が「終了した大会｜今後の大会」の赤い縦線と重なる位置まで、
        最初は速く・TODAY に近づくほどゆっくりの緩急で流して止める（1回だけ）。
        動きを減らす設定・軽量モードでは流さず、はじめから TODAY の位置に置く */
     var cards = track.querySelectorAll('.tcard');
     if (marker && !reduceMotion && 'IntersectionObserver' in window && cards.length) {
       var intro = true;
-      track.scrollLeft = 0;
+      var toEnd = function () { track.scrollLeft = track.scrollWidth - track.clientWidth; };
+      toEnd();
       var io = new IntersectionObserver(function (es) {
         es.forEach(function (e) {
           if (!e.isIntersecting) return;
           io.disconnect();
+          started = true;
+          toEnd(); // 画像の読み込みで幅が変わっていても、流す直前に右端へ合わせる
           var to = todayX();
           var dur = Math.min(2600, Math.max(1400, Math.abs(to - track.scrollLeft) * 0.9));
           // 出だしが速く、終わりに向かって長く減速する（ease-out の5乗）
@@ -1715,8 +1718,9 @@
         });
       }, { threshold: 0.35 });
       io.observe(track);
-      // 流し終わる前に画像などで幅が変わっても、まだ流していなければ先頭のまま、流し終えていれば TODAY に合わせる
-      window.addEventListener('load', function () { if (!intro && !gliding) place(); });
+      // 画像などで幅が変わったら、まだ流していなければ右端のまま、流し終えていれば TODAY に合わせる
+      var started = false;
+      window.addEventListener('load', function () { if (gliding) return; if (!intro) place(); else if (!started) toEnd(); });
     } else if (marker) {
       place();
       window.addEventListener('load', place);
