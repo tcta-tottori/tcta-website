@@ -1182,21 +1182,11 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 @media (min-width: 1024px) {
   .hero__media img.hero__photo { object-position: 50% 50%; }
 }
-/* PLAY BEYOND. が出ているあいだ、背景（動画・写真）を左から右へゆっくり動かし、合流し終わるころに止める。
-   動かす余白のぶん少し大きくしておく（scale）。スマホの位置合わせの transform とは別の translate / scale で動かす */
-.hero .hero__media .hero__photo {
-  scale: 1.08;
-  animation: hero-pan calc(var(--pb-settle) + 1.6s) cubic-bezier(.3, .15, .25, 1) both;
-}
-/* オープニング（.splash-on）のあいだは頭出しのまま止めておく（上の animation の指定より強くする） */
-.splash-on .hero .hero__media .hero__photo { animation-play-state: paused; }
-@keyframes hero-pan {
-  from { translate: -3.5% 0; }
-  to   { translate: 0 0; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .hero .hero__media .hero__photo { animation: none; scale: none; }
-}
+/* 背景（動画・写真とベール）は動かさず、真っ白な地から徐々に浮かび上がらせる（位置は固定。.phv の左からの払いの代わり）。
+   オープニングのあいだは .splash-on .phv が頭出しのまま止める */
+.hero__shot.phv { animation: hero-fade 2.4s cubic-bezier(.4, 0, .2, 1) .1s both; }
+@keyframes hero-fade { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .hero__shot.phv { animation: none; } }
 .hero__scrim {
   position: absolute;
   inset: 0;
