@@ -1098,8 +1098,9 @@
           if (Math.abs(e.touches[0].clientX - hx) + Math.abs(e.touches[0].clientY - hy) > 12) showHint();
         }, { passive: true });
       }
-      // 縮尺（右下。メートルだけ）。下から順に積むので、先に足した縮尺が拡大縮小のボタンの下にくる
-      L.control.scale({ position: 'bottomright', metric: true, imperial: false, maxWidth: 110 }).addTo(map);
+      // 縮尺（右下。メートルだけ）。下から順に積むので、先に足した縮尺が拡大縮小のボタンの下にくる。
+      // 幅の狭い地図では短くして、左下の「現在地・航空写真／地図」と重ならないようにする
+      L.control.scale({ position: 'bottomright', metric: true, imperial: false, maxWidth: el.clientWidth < 340 ? 64 : 110 }).addTo(map);
       L.control.zoom({ position: 'bottomright' }).addTo(map);
       /* 下地は2種類。標準は航空写真（国土地理院の全国最新写真。鍵なしで使え、コートの区画まで見える）。
          「地図」に切り替えると OpenStreetMap の標準版（色は CSS でグレーに落とす）。

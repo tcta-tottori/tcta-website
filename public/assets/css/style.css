@@ -2424,11 +2424,17 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 /* 地図タイルをサイトの地の色に寄せる。ピンとラベルは別レイヤーなので色が残る */
 /* 「地図」（OpenStreetMap）のときだけ色をグレーに落とす。航空写真はそのまま */
 .cmap__map .ctile-map { filter: grayscale(1) brightness(1.08) contrast(.82); opacity: .9; }
-/* 地図の種類の切り替え（航空写真／地図）。地図の右下、＋－の上（左上の写真カードと重ならない位置）。施設の切り替えボタンと同じ見た目 */
-.cmap__layers {
+/* 地図の左下のボタン（現在地・地図の種類）。現在地の右に地図の種類を並べる。現在地が隠れる環境では地図の種類だけが左下に来る */
+.cmap__ctrls {
   position: absolute;
-  right: 14px; bottom: 110px;
-  z-index: 500;
+  left: 14px; bottom: 14px;
+  z-index: 1000; /* Leaflet のコントロールと同じ高さ。地図のタイル・ピンより前 */
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+}
+/* 地図の種類の切り替え（航空写真／地図）。施設の切り替えボタンと同じ見た目 */
+.cmap__layers {
   display: flex;
   border: 1px solid var(--gray-300);
   border-radius: var(--radius);
@@ -2437,14 +2443,20 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   box-shadow: 0 1px 6px rgba(26, 26, 26, .12);
 }
 .cmap__layer {
-  padding: 8px 10px;
-  font: 700 11px/1 var(--fjp);
+  padding: 9px 10px;
+  font: 700 12px/1 var(--fjp);
   letter-spacing: .04em;
   color: var(--gray-800);
   background: var(--white);
   transition: background .3s ease, color .3s ease;
 }
 .cmap__layer + .cmap__layer { border-left: 1px solid var(--gray-300); }
+/* 狭い画面では詰めて、右下の縮尺と重ならないようにする */
+@media (max-width: 479px) {
+  .cmap__ctrls { left: 10px; bottom: 10px; gap: 6px; }
+  .cmap__ctrls .cmap__locate { padding: 8px 9px; gap: 5px; font-size: 11px; }
+  .cmap__ctrls .cmap__layer { padding: 8px 7px; font-size: 11px; letter-spacing: 0; }
+}
 .cmap__layer:hover { color: var(--red); }
 .cmap__layer.is-active { background: var(--ink); color: #fff; }
 .cmap__map .leaflet-control-zoom { border: 1px solid var(--gray-200); border-radius: 0; box-shadow: none; margin: 0 14px 14px 0; }
@@ -2525,10 +2537,6 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 .cmap__map .cloc-acc { fill: #1a73e8; fill-opacity: .12; stroke: #1a73e8; stroke-width: 1; stroke-opacity: .4; }
 /* 現在地ボタン。地図の左下に重ねる（右下の拡大縮小・帰属表示と重ならない位置）。形は施設タブと同じ */
 .cmap__locate {
-  position: absolute;
-  left: 14px;
-  bottom: 14px;
-  z-index: 1000; /* Leaflet のコントロールと同じ高さ。地図のタイル・ピンより前 */
   display: inline-flex;
   align-items: center;
   gap: 6px;

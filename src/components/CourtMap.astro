@@ -52,13 +52,16 @@ const single = courts.length === 1;
         <span class="view-all__label">VIEW ALL</span><span class="ln-arrow" aria-hidden="true"></span>
       </a>
     )}
-    <div class="cmap__layers" role="group" aria-label="地図の種類">
-      <button class="cmap__layer is-active" type="button" aria-pressed="true" data-cmap-layer="photo">航空写真</button>
-      <button class="cmap__layer" type="button" aria-pressed="false" data-cmap-layer="map">地図</button>
+    {/* 地図の左下に「現在地」と、その右に地図の種類の切り替えを並べる（右下の＋－・縮尺と重ならないように） */}
+    <div class="cmap__ctrls">
+      <button class="cmap__locate" type="button" aria-pressed="false" data-cmap-locate>
+        <span class="cmap__locate-dot" aria-hidden="true"></span>現在地
+      </button>
+      <div class="cmap__layers" role="group" aria-label="地図の種類">
+        <button class="cmap__layer is-active" type="button" aria-pressed="true" data-cmap-layer="photo">航空写真</button>
+        <button class="cmap__layer" type="button" aria-pressed="false" data-cmap-layer="map">地図</button>
+      </div>
     </div>
-    <button class="cmap__locate" type="button" aria-pressed="false" data-cmap-locate>
-      <span class="cmap__locate-dot" aria-hidden="true"></span>現在地
-    </button>
     {/* 地図が出せないときの下敷き。タイルが読めない環境ではこれが見える。 */}
     <div class="cmap__fallback" aria-hidden="true">
       <Icon name="pin" class="cmap__fallback-pin" />
