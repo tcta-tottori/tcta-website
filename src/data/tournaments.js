@@ -129,7 +129,7 @@ export function buildCards(rows, { ROWS, eventBySlug }) {
         liveUrl: t.live_url || null,
         outlineUrl: t.outline_url || null,
         drawUrl: t.draw_url || null,
-        resultUrl: t.result_url || null,
+        resultUrl: t.result_url || b.externalResultUrl || null,
         href: t.link_url || null,
       };
       card.action = cardAction(card, e);

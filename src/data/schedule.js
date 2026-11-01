@@ -100,12 +100,18 @@ export function autoStatus(status, due, date, now = Date.now()) {
 /**
  * 協会のサイトに大会ページを作らず、外部のページへ飛ばす大会（大会名で見分ける）。
  * 大会情報ページの一覧で、大会名と要項のボタンを押すとこの URL が別タブで開く（トップの大会カードの要項も同じ。大会ページがある大会はそちらが優先）。
+ * results … 年度ごとの結果の URL。結果のボタン（一覧・トップの大会カード）でこれを別タブで開く。
  */
 const EXTERNAL_PAGES = [
-  // 鳥取市市民体育祭（鳥取市のページ）
-  { match: /市民体育祭/, url: 'https://www.city.tottori.lg.jp/page/35046.html' },
+  // 鳥取市市民体育祭（鳥取市のページ）。結果は鳥取市が載せている PDF
+  {
+    match: /市民体育祭/, url: 'https://www.city.tottori.lg.jp/page/35046.html',
+    results: { '2026': 'https://www.city.tottori.lg.jp/uploaded/attachment/50402.pdf' },
+  },
 ];
-const externalUrl = (name) => EXTERNAL_PAGES.find((x) => x.match.test(String(name ?? '')))?.url ?? null;
+const externalOf = (name) => EXTERNAL_PAGES.find((x) => x.match.test(String(name ?? ''))) ?? null;
+const externalUrl = (name) => externalOf(name)?.url ?? null;
+const externalResultUrl = (name, nendo) => externalOf(name)?.results?.[String(nendo ?? '')] ?? null;
 
 /** 受付状態。管理画面がまだ「まもなく受付／未受付」で、公式サイトでは受付を始めている大会は、そちらに合わせる（official-extra.js） */
 const stateOf = (t) => (STATE_OVERRIDE[t.slug] && /^(まもなく受付|未受付)?$/.test(t.state ?? '') ? STATE_OVERRIDE[t.slug] : t.state);
@@ -130,6 +136,7 @@ export function scheduleRow(t) {
     status: autoStatus(STATE_KEY[stateOf(t)] ?? 'soon', t.due, date),
     reg: REG_KEY[t.reg] ?? 'free',
     externalUrl: externalUrl(t.name),
+    externalResultUrl: externalResultUrl(t.name, t.nendo),
   };
 }
 

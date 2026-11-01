@@ -42,7 +42,7 @@ const len = eventLabel.length > 10 ? 'long' : 'short';
   <div class="tcard__body">
     <div class="tcard__head">
       <h3 class="tcard__title">
-        {action.href ? <a class="tcard__link" href={action.href}>{title}</a> : title}
+        {action.href ? <a class="tcard__link" href={action.href} {.../^https?:/.test(action.href) ? { target: '_blank', rel: 'noopener noreferrer' } : {}}>{title}</a> : title}
       </h3>
     </div>
 
