@@ -988,6 +988,8 @@
           if (Math.abs(e.touches[0].clientX - hx) + Math.abs(e.touches[0].clientY - hy) > 12) showHint();
         }, { passive: true });
       }
+      // 縮尺（右下。メートルだけ）。下から順に積むので、先に足した縮尺が拡大縮小のボタンの下にくる
+      L.control.scale({ position: 'bottomright', metric: true, imperial: false, maxWidth: 110 }).addTo(map);
       L.control.zoom({ position: 'bottomright' }).addTo(map);
       /* 下地は2種類。標準は航空写真（国土地理院の全国最新写真。鍵なしで使え、コートの区画まで見える）。
          「地図」に切り替えると OpenStreetMap の標準版（色は CSS でグレーに落とす）。
@@ -1150,7 +1152,17 @@
         return { paddingTopLeft: [PAD, PAD + Math.round(ph * 0.6)], paddingBottomRight: [PAD, PAD] };
       }
 
-      // 施設を1つ選ぶ：そのコート全体が真ん中に入る範囲に寄る（タイルの最大 19 まで寄ってよい）
+      /* 施設を1つ選ぶ。最初の1回は、そのコート全体が真ん中に入る範囲に寄る（タイルの最大 19 まで寄ってよい）。
+         2回目からは縮尺（ズーム）を変えずに、選んだ施設が真ん中（左上の写真を除いた所）にくるよう動かすだけにする。
+         施設を見ているあいだに拡大・縮小したら、その縮尺を次の施設でも使う（courtZoom）。
+         現在地を出していて近いときだけは、現在地も入るように寄り直す */
+      var courtZoom = null;
+      map.on('moveend', function () { if (current >= 0) courtZoom = map.getZoom(); });
+      function centerAt(bounds, z) {
+        var pd = padding(), tl = pd.paddingTopLeft, br = pd.paddingBottomRight;
+        var pt = map.project(bounds.getCenter(), z).subtract([(tl[0] - br[0]) / 2, (tl[1] - br[1]) / 2]);
+        return map.unproject(pt, z);
+      }
       function select(i, animate) {
         current = i;
         setActive(i);
@@ -1159,7 +1171,15 @@
         if (link) link.href = tabs[i].getAttribute('data-link');
         showPhoto(c);
         showBadges(c);
-        go(withLocation(venues[i].bounds), Object.assign({ maxZoom: 19 }, padding()), animate);
+        var b = venues[i].bounds;
+        var near = located && b.getCenter().distanceTo(located.latlng) <= NEAR_M;
+        if (courtZoom === null || near) {
+          go(withLocation(b), Object.assign({ maxZoom: 19 }, padding()), animate);
+          return;
+        }
+        var target = centerAt(b, courtZoom);
+        if (animate === false) map.setView(target, courtZoom);
+        else map.flyTo(target, courtZoom, { duration: 0.9 });
       }
 
       // すべて：全施設が入る範囲を出す

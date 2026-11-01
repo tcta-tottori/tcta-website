@@ -10,6 +10,7 @@ import { LINK_ROWS, LINK_GROUPS } from '../data/links.js';
 import { NEWS_VISIBLE } from '../data/news.js';
 import { COURTS_HOME, CITY_RESERVE } from '../data/courts.js';
 import CourtMap from '../components/CourtMap.astro';
+import ScheduleCalendar from '../components/ScheduleCalendar.astro';
 
 // 大会カード・お知らせは EmDash から（1 リクエストに 1 回だけ読む）
 const { TOURNAMENTS, NEWS } = await siteData(Astro);
@@ -223,6 +224,24 @@ const upcomingTournaments = TOURNAMENTS.filter((t) => t.status !== 'past');
   </section>
 
   <!-- ============ コート案内 ============ -->
+  <!-- ============ イベントカレンダー（大会・テニスイベント・水曜テニス） ============ -->
+  <section class="section" id="calendar" aria-labelledby="calendar-title">
+    <span class="ghost" aria-hidden="true">CALENDAR</span>
+    <div class="container">
+      <div class="sec-head rv">
+        <div class="sec-head__row">
+          <span class="sec-head__mark" aria-hidden="true"></span>
+          <div>
+            <p class="sec-head__eyebrow">Calendar</p>
+            <h2 class="sec-head__title" id="calendar-title">イベントカレンダー</h2>
+          </div>
+        </div>
+      </div>
+      <p class="sec-head__lead rv">大会・テニスイベント・水曜テニス教室の日程を月ごとに並べています。大会のエントリー締切とドロー会議の日も載せています。</p>
+      <div class="rv"><ScheduleCalendar extras /></div>
+    </div>
+  </section>
+
   <section class="section section--gray" id="courts" aria-labelledby="courts-title">
     <span class="ghost" aria-hidden="true">COURT GUIDE</span>
     <div class="container">
