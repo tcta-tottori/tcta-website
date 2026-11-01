@@ -57,7 +57,7 @@ const COLS = ['大会名', '日程', '状態', '登録区分', '種目', '会場
 const rows = items.map((t) => {
   const e = eventForSchedule(t);
   // 外部のページへ飛ばす大会は、要項のボタンを「詳細」にしてそのページを開く
-  const buttons = eventButtons(e, { outline: t.externalUrl })
+  const buttons = eventButtons(e, { outline: t.externalUrl, result: t.externalResultUrl })
     .map((b) => (!e && t.externalUrl && b.key === 'outline' ? { ...b, label: '詳細' } : b));
   // 拡大表示のカード（トップの大会カードと同じ形。src/data/tournaments.js の buildCards を参照）
   const card = {
