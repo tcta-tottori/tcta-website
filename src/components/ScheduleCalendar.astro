@@ -23,6 +23,12 @@ const { SCHEDULE, EVENT_INFO = [] } = await siteData(Astro);
 
 // 水曜テニス教室（lesson.html の開催概要と同じ）
 const LESSON = { name: '水曜テニス教室', when: '毎週水曜 18:00〜21:00', place: '井原公園テニスコート', href: 'lesson.html' };
+// 水曜テニス教室を開く期間（この範囲の水曜にだけ印を付ける）。年度ごとに決まったら足す。
+// 令和8年度は 4月下旬〜10月で終了（開始日は lesson.html の「4月下旬〜」から 4/22 とした）。令和9年度はまだ決まっていないので入れない
+const LESSON_PERIODS = [
+  { from: '2026-04-22', to: '2026-10-31' },
+];
+const isLessonDay = (iso) => LESSON_PERIODS.some((p) => iso >= p.from && iso <= p.to);
 // イベント（開催日のあるもの）を日付ごとに
 const events = new Map();
 if (extras) {
@@ -58,12 +64,12 @@ const months = keys.map((key) => {
     dues: dues.get(c.iso) ?? [],
     draws: draws.get(c.iso) ?? [],
     events: events.get(c.iso) ?? [],
-    lesson: extras && c.dow === 3,
+    lesson: extras && c.dow === 3 && isLessonDay(c.iso),
   });
   // マスの下の一覧。日付順で、同じ日はドロー会議 → 締切 → イベント → 大会の順。水曜テニスは月の頭に1行だけ
   const evs = [...events].filter(([iso]) => iso.startsWith(key));
   const entries = [
-    ...(extras ? [{ iso: '', kind: 'lesson', order: 0 }] : []),
+    ...(cells.some((c) => c && c.lesson) ? [{ iso: '', kind: 'lesson', order: 0 }] : []),
     ...[...draws].filter(([iso]) => iso.startsWith(key)).map(([iso, list]) => ({ iso, kind: 'draw', order: 0, list })),
     ...[...dues].filter(([iso]) => iso.startsWith(key)).map(([iso, list]) => ({ iso, kind: 'due', order: 1, list })),
     ...evs.flatMap(([iso, list]) => list.map((e) => ({ iso, kind: 'event', order: 2, e }))),
