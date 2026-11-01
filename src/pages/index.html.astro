@@ -1,6 +1,7 @@
 ---
 import Base from '../layouts/Base.astro';
 import TournamentCard from '../components/TournamentCard.astro';
+import LiteToggle from '../components/LiteToggle.astro';
 import LinkCard from '../components/LinkCard.astro';
 import NewsRow from '../components/NewsRow.astro';
 import Icon from '../components/Icon.astro';
@@ -54,12 +55,6 @@ const upcomingTournaments = TOURNAMENTS.filter((t) => t.status !== 'past');
 
   <!-- ============ ヒーロー ============ -->
   <section class="hero">
-    {/* 軽量モードの切り替え（ヒーローの上部）。押すと端末に覚えて、ページを開き直す（main.js の initLite） */}
-    <button class="lite-toggle" type="button" data-lite-toggle aria-pressed="false">
-      <span class="lite-toggle__label">軽量モード</span>
-      <span class="lite-toggle__sw" aria-hidden="true"><span class="lite-toggle__knob"></span></span>
-      <span class="lite-toggle__state" data-lite-state>OFF</span>
-    </button>
     <div class="hero__media">
       {/* 写真とベールだけを左から右へ払う。キャッチコピーは払いの対象に含めない
           （含めると1文字ずつの登場が払いに隠れてしまう） */}
@@ -114,6 +109,8 @@ const upcomingTournaments = TOURNAMENTS.filter((t) => t.status !== 'past');
           </div>
         </div>
         <a class="btn btn--primary hero__cta fu" style="animation-delay:var(--rest-in)" href="about.html">協会について見る <span class="ln-arrow" aria-hidden="true"></span></a>
+        {/* 軽量モードの切り替え（「協会について見る」の下） */}
+        <div class="hero__lite fu" style="animation-delay:var(--rest-in)"><LiteToggle /></div>
       </div>
     </div>
     <div class="hero__square fu" style="animation-delay:var(--rest-in)" aria-hidden="true"></div>

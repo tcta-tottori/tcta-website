@@ -7,6 +7,7 @@
 // 表示の可否は Base.astro の <head> 内スクリプトが描画前に決め、
 // html に .splash-on が付いたときだけ表示される（JS 無効時は出ない）。
 // 再生完了・読み込み失敗・自動再生拒否のいずれでも main.js が必ず幕を上げる。
+import LiteToggle from './LiteToggle.astro';
 ---
 
 <div class="splash">
@@ -14,11 +15,8 @@
     <source data-src="assets/video/opening.webm" type="video/webm">
     <source data-src="assets/video/opening.mp4" type="video/mp4">
   </video>
-  {/* 軽量モード：動きを最小限にして見る（押すとオープニングを閉じ、軽量モードでページを開き直す。main.js の initLite） */}
-  <button class="splash__lite" type="button" data-lite-on>
-    <span class="splash__lite-ico" aria-hidden="true"></span>軽量モードで見る
-    <small>動きを少なくして、スマホへの負荷を軽くします</small>
-  </button>
+  {/* 軽量モードの切り替え（トップ・メニューと同じスイッチ。オンにするとオープニングを閉じて軽量モードで開き直す） */}
+  <LiteToggle dark class="splash__lite" />
   <button class="splash__skip" type="button">SKIP <span class="aw">→</span></button>
 </div>
 

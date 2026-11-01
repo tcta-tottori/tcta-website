@@ -81,25 +81,22 @@
   }
 
   /* ---------- 軽量モードの切り替え ----------
-     オープニングの「軽量モードで見る」（data-lite-on）と、トップのスイッチ（data-lite-toggle）。
+     スイッチ（data-lite-toggle。LiteToggle.astro）は、トップのヒーロー・メニュー・オープニングの3か所。
      設定は端末に覚え（localStorage の tcta-lite）、ページを開き直して反映する（動きの仕組みは読み込み時に決まるため）。 */
   function initLite() {
     var save = function (on) {
       try { if (on) localStorage.setItem('tcta-lite', '1'); else localStorage.removeItem('tcta-lite'); } catch (e) {}
     };
-    document.querySelectorAll('[data-lite-on]').forEach(function (b) {
-      b.addEventListener('click', function (e) {
-        e.stopPropagation(); // オープニングの「押したら閉じる」より先に処理する
-        save(true);
-        try { sessionStorage.setItem('tcta-splash', 'done'); } catch (x) {}
-        location.reload();
-      });
-    });
     document.querySelectorAll('[data-lite-toggle]').forEach(function (b) {
       b.setAttribute('aria-pressed', String(isLite));
       var st = b.querySelector('[data-lite-state]');
       if (st) st.textContent = isLite ? 'ON' : 'OFF';
-      b.addEventListener('click', function () {
+      b.addEventListener('click', function (e) {
+        // オープニングの上のスイッチは、オープニングの「押したら閉じる」より先に処理し、開き直したあとはオープニングを出さない
+        if (b.closest('.splash')) {
+          e.stopPropagation();
+          try { sessionStorage.setItem('tcta-splash', 'done'); } catch (x) {}
+        }
         save(!isLite);
         location.reload();
       });

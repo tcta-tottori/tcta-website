@@ -1,0 +1,13 @@
+---
+// 軽量モードの切り替えスイッチ（ページの動きを最小限にして、スマホなどに負荷をかけにくくする）。
+// トップのヒーロー（「協会について見る」の下）、メニュー、オープニングの黒い画面の3か所で同じものを使う。
+// 押すと端末に覚えてページを開き直す（main.js の initLite。オン・オフの表示も main.js が今の状態に合わせる）。
+//   dark … 黒い地の上に置くとき（メニュー・オープニング）
+interface Props { dark?: boolean; class?: string }
+const { dark = false, class: cls } = Astro.props;
+---
+<button class:list={['lite-toggle', dark && 'lite-toggle--dark', cls]} type="button" data-lite-toggle aria-pressed="false">
+  <span class="lite-toggle__label">軽量モード</span>
+  <span class="lite-toggle__sw" aria-hidden="true"><span class="lite-toggle__knob"></span></span>
+  <span class="lite-toggle__state" data-lite-state>OFF</span>
+</button>
