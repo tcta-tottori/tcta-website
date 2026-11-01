@@ -2740,6 +2740,12 @@ html.is-links-arrive .page-title, html.is-links-arrive .sub-head { animation: no
 }
 .link-card__ext { grid-area: ext; font: 400 12px/1 var(--flt); color: var(--gray-300); }
 
+/* 要項の紙面の下に置く主催団体のバナー（HostBanner.astro）。リンク集のカードを1枚、少し大きめに */
+.host-banner { margin-top: 32px; }
+.host-banner__label { margin: 0 0 10px; font: 700 13px/1.6 var(--fjp); color: var(--gray-800); }
+.host-banner .link-card { width: 100%; max-width: 480px; margin-right: 0; }
+.host-banner .link-card__desc { font-size: 12px; }
+
 /* トップページのマーキー用。白いカードの枠は出さず、バナーそのものを
    カードと同じ大きさで見せる。押している間だけ太い赤枠を出す。 */
 .link-card--compact {

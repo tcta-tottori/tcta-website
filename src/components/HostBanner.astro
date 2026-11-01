@@ -1,0 +1,17 @@
+---
+// 主催団体のバナー（リンク付き）。要項の紙面の下に置く。
+// 大会の「主催」（host）とリンク集（src/data/links.js）の団体名が同じときだけ出す
+// （京丹後市テニス協会の大会など、他の団体が主催する大会で、その団体のホームページへ案内するため）。
+import LinkCard from './LinkCard.astro';
+import { LINKS } from '../data/links.js';
+
+const { e } = Astro.props;
+const link = e?.host ? LINKS.find((l) => l.name === e.host && l.banner) : null;
+---
+
+{link && (
+  <div class="host-banner rv">
+    <p class="host-banner__label">主催：{link.name}（大会の申込・ドローなどはこちら）</p>
+    <LinkCard link={link} />
+  </div>
+)}

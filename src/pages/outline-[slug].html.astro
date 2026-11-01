@@ -6,6 +6,7 @@
 import EventSection from '../components/EventSection.astro';
 import SheetList from '../components/SheetList.astro';
 import EntryForms from '../components/EntryForms.astro';
+import HostBanner from '../components/HostBanner.astro';
 import { siteData } from '../lib/cms.js';
 
 const { eventBySlug } = await siteData(Astro);
@@ -22,6 +23,8 @@ if (!e || (!outline && !entry)) return Astro.rewrite('/404');
       {entry && <h2 class="sub-head">要項</h2>}
       <p class="note" style="margin-bottom:0">{outline.lead}</p>
       <SheetList images={outline.images} pdfs={outline.images.length ? [] : outline.pdfs} alt={`${e.name} 要項`} />
+      {/* 他の団体が主催する大会は、要項の紙面の下にその団体のバナー（リンク付き） */}
+      <HostBanner e={e} />
     </div>
   )}
   {/* 申込用紙は要項の下に、ボタンで（押すとこのページの中で全画面に開き、印刷・ダウンロードできる） */}
