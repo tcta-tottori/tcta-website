@@ -54,6 +54,12 @@ const upcomingTournaments = TOURNAMENTS.filter((t) => t.status !== 'past');
 
   <!-- ============ ヒーロー ============ -->
   <section class="hero">
+    {/* 軽量モードの切り替え（ヒーローの上部）。押すと端末に覚えて、ページを開き直す（main.js の initLite） */}
+    <button class="lite-toggle" type="button" data-lite-toggle aria-pressed="false">
+      <span class="lite-toggle__label">軽量モード</span>
+      <span class="lite-toggle__sw" aria-hidden="true"><span class="lite-toggle__knob"></span></span>
+      <span class="lite-toggle__state" data-lite-state>OFF</span>
+    </button>
     <div class="hero__media">
       {/* 写真とベールだけを左から右へ払う。キャッチコピーは払いの対象に含めない
           （含めると1文字ずつの登場が払いに隠れてしまう） */}
@@ -63,6 +69,17 @@ const upcomingTournaments = TOURNAMENTS.filter((t) => t.status !== 'past');
           aria-label="鳥取市テニス協会の横断幕の前で、大会の参加者がそろった集合の動画" width="1254" height="1254">
           <source src="assets/video/hero.mp4" type="video/mp4">
         </video>
+        {/* 軽量モードでは動画を読みに行かない（読み込みが始まる前に、ここで外して最初のコマ＝poster だけにする） */}
+        <script is:inline>
+          (function () {
+            if (!document.documentElement.classList.contains('is-lite')) return;
+            var v = document.querySelector('.hero__video');
+            if (!v) return;
+            v.removeAttribute('autoplay'); v.preload = 'none';
+            v.querySelectorAll('source').forEach(function (s) { s.parentNode.removeChild(s); });
+            v.load();
+          })();
+        </script>
         <div class="hero__scrim" aria-hidden="true"></div>
       </div>
     </div>

@@ -102,6 +102,12 @@ const ldJson = JSON.stringify({ '@context': 'https://schema.org', '@graph': grap
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<script is:inline>
+  /* 軽量モード（ページの動きを最小限にして、スマホなどに負荷をかけにくくする）。
+     オープニングの「軽量モードで見る」とトップのスイッチで切り替え、端末に覚えておく（localStorage の tcta-lite）。
+     描く前に html.is-lite を付ける（style.css・main.js がこれを見る）。 */
+  try { if (localStorage.getItem('tcta-lite') === '1') document.documentElement.classList.add('is-lite'); } catch (e) {}
+</script>
 <title>{title}</title>
 <meta name="description" content={description}>
 <link rel="canonical" href={canonical}>
@@ -165,6 +171,7 @@ const ldJson = JSON.stringify({ '@context': 'https://schema.org', '@graph': grap
       return lg;
     };
     window.addEventListener('pageswap', function (e) {
+      if (e.viewTransition && document.documentElement.classList.contains('is-lite')) { e.viewTransition.skipTransition(); return; } // 軽量モード
       if (e.viewTransition && get(KEY) !== '1' && !get(COURT) && !document.documentElement.classList.contains('is-lk-leaving')) e.viewTransition.skipTransition();
       else if (e.viewTransition && get(KEY) === '1' && document.querySelector('.site-header.is-menu')) logoFor(true);
     });
@@ -172,6 +179,7 @@ const ldJson = JSON.stringify({ '@context': 'https://schema.org', '@graph': grap
     window.addEventListener('pageshow', function (e) { if (e.persisted) logoFor(false); });
     window.addEventListener('pagereveal', function (e) {
       if (!e.viewTransition) return;
+      if (document.documentElement.classList.contains('is-lite')) { e.viewTransition.skipTransition(); return; } // 軽量モード
       var court = get(COURT);
       if (get(KEY) === '1') {
         del(KEY);
@@ -218,7 +226,8 @@ const ldJson = JSON.stringify({ '@context': 'https://schema.org', '@graph': grap
       var seen = false;
       try { seen = sessionStorage.getItem('tcta-splash') === 'done'; } catch (e) {}
       var calm = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      if (!seen && !calm) document.documentElement.classList.add('splash-on');
+      var lite = document.documentElement.classList.contains('is-lite');
+      if (!seen && !calm && !lite) document.documentElement.classList.add('splash-on');
     })();
   </script>
 )}

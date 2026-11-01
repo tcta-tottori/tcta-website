@@ -5,7 +5,9 @@
 (function () {
   'use strict';
 
-  var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  // 軽量モード（html.is-lite。Base.astro の <head> が端末に覚えた設定から付ける）は、動きを減らす設定と同じに扱う
+  var isLite = document.documentElement.classList.contains('is-lite');
+  var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches || isLite;
   // トップのリンク集の VIEW ALL を押したあと、流れるバナーを止めておく（initLinksLeave）
   var marqueeFrozen = false;
 
@@ -75,6 +77,32 @@
     splash.addEventListener('click', finish);
     document.addEventListener('keydown', function (e) {
       if (e.key === 'Escape' || e.key === 'Enter' || e.key === ' ') finish();
+    });
+  }
+
+  /* ---------- 軽量モードの切り替え ----------
+     オープニングの「軽量モードで見る」（data-lite-on）と、トップのスイッチ（data-lite-toggle）。
+     設定は端末に覚え（localStorage の tcta-lite）、ページを開き直して反映する（動きの仕組みは読み込み時に決まるため）。 */
+  function initLite() {
+    var save = function (on) {
+      try { if (on) localStorage.setItem('tcta-lite', '1'); else localStorage.removeItem('tcta-lite'); } catch (e) {}
+    };
+    document.querySelectorAll('[data-lite-on]').forEach(function (b) {
+      b.addEventListener('click', function (e) {
+        e.stopPropagation(); // オープニングの「押したら閉じる」より先に処理する
+        save(true);
+        try { sessionStorage.setItem('tcta-splash', 'done'); } catch (x) {}
+        location.reload();
+      });
+    });
+    document.querySelectorAll('[data-lite-toggle]').forEach(function (b) {
+      b.setAttribute('aria-pressed', String(isLite));
+      var st = b.querySelector('[data-lite-state]');
+      if (st) st.textContent = isLite ? 'ON' : 'OFF';
+      b.addEventListener('click', function () {
+        save(!isLite);
+        location.reload();
+      });
     });
   }
 
@@ -1476,7 +1504,12 @@
   function initHeroVideo() {
     var v = document.querySelector('.hero__video');
     if (!v) return;
-    if (reduceMotion) { v.removeAttribute('autoplay'); v.pause(); return; }
+    if (reduceMotion) {
+      v.removeAttribute('autoplay'); v.pause();
+      // 軽量モードでは動画を読まずに最初のコマ（poster）だけを出す
+      if (isLite) { v.querySelectorAll('source').forEach(function (s) { s.parentNode.removeChild(s); }); v.removeAttribute('src'); v.preload = 'none'; v.load(); }
+      return;
+    }
     if (!('IntersectionObserver' in window)) return;
     new IntersectionObserver(function (es) {
       es.forEach(function (e) {
@@ -2415,6 +2448,7 @@
   }
 
   function init() {
+    initLite();
     initSplash();
     initReveal();
     initEventIcons();
