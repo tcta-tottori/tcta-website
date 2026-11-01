@@ -19,7 +19,13 @@ interface Props {
   extras?: boolean;
 }
 const { extras = false } = Astro.props;
-const { SCHEDULE, EVENT_INFO = [], eventForSchedule } = await siteData(Astro);
+const { SCHEDULE: MAIN, ROWS = [], EVENT_INFO = [], eventForSchedule } = await siteData(Astro);
+// extras（トップ）は、協会主催の大会に加えて、同じ年度の預かりの大会（鳥大オープンなど）も載せる。
+// 預かりの大会には協会のドロー会議は付けない（締切は付ける）
+const nendo = MAIN[0]?.nendo;
+const SCHEDULE = extras
+  ? [...MAIN, ...ROWS.filter((t) => t.kind === 'extra' && t.nendo === nendo)].sort((a, b) => a.date.localeCompare(b.date))
+  : MAIN;
 // 大会の行き先：大会のページ（要項・ドロー・結果がまとまっている）。ページの無い大会は外のページ（市民体育祭など）
 const goOf = (t) => {
   const e = eventForSchedule?.(t);
@@ -57,7 +63,7 @@ for (const t of SCHEDULE) {
   const due = dueDate(t.due, t.date);
   if (!due) continue;
   push(dues, due, t);
-  const draw = drawMeetingDate(due, t.date);
+  const draw = t.kind === 'main' ? drawMeetingDate(due, t.date) : null;
   if (draw) push(draws, draw, t);
 }
 
