@@ -54,6 +54,12 @@ const upcomingTournaments = TOURNAMENTS.filter((t) => t.status !== 'past');
 
   <!-- ============ ヒーロー ============ -->
   <section class="hero">
+    {/* 軽量モードの切り替え（ヒーローの上部）。押すと端末に覚えて、ページを開き直す（main.js の initLite） */}
+    <button class="lite-toggle" type="button" data-lite-toggle aria-pressed="false">
+      <span class="lite-toggle__label">軽量モード</span>
+      <span class="lite-toggle__sw" aria-hidden="true"><span class="lite-toggle__knob"></span></span>
+      <span class="lite-toggle__state" data-lite-state>OFF</span>
+    </button>
     <div class="hero__media">
       {/* 写真とベールだけを左から右へ払う。キャッチコピーは払いの対象に含めない
           （含めると1文字ずつの登場が払いに隠れてしまう） */}
@@ -63,6 +69,17 @@ const upcomingTournaments = TOURNAMENTS.filter((t) => t.status !== 'past');
           aria-label="鳥取市テニス協会の横断幕の前で、大会の参加者がそろった集合の動画" width="1254" height="1254">
           <source src="assets/video/hero.mp4" type="video/mp4">
         </video>
+        {/* 軽量モードでは動画を読みに行かない（読み込みが始まる前に、ここで外して最初のコマ＝poster だけにする） */}
+        <script is:inline>
+          (function () {
+            if (!document.documentElement.classList.contains('is-lite')) return;
+            var v = document.querySelector('.hero__video');
+            if (!v) return;
+            v.removeAttribute('autoplay'); v.preload = 'none';
+            v.querySelectorAll('source').forEach(function (s) { s.parentNode.removeChild(s); });
+            v.load();
+          })();
+        </script>
         <div class="hero__scrim" aria-hidden="true"></div>
       </div>
     </div>
@@ -185,13 +202,13 @@ const upcomingTournaments = TOURNAMENTS.filter((t) => t.status !== 'past');
       {/* 上から3件だけ出す（NEWS_VISIBLE）。4件目があるときは、続きがあることが分かるよう
           薄くフェードさせて見せる（VIEW ALL を押すと全件が開く）。 */}
       <ul class="news-list">
-        {/* ほかの区画より少し遅れて出す（見出しが出はじめてから 0.5 秒おいて、1行ずつ 0.12 秒ずらす） */}
-        {NEWS.slice(0, NEWS_VISIBLE).map((n, i) => <NewsRow item={n} delay={0.5 + i * 0.12} />)}
+        {/* 画面に入ったらすぐ出す（0.1 秒おいて、1行ずつ 0.08 秒ずらす。以前は 0.5 秒＋0.12 秒ずつで遅く感じた） */}
+        {NEWS.slice(0, NEWS_VISIBLE).map((n, i) => <NewsRow item={n} delay={0.1 + i * 0.08} />)}
       </ul>
       {NEWS.length > NEWS_VISIBLE && (
         <div class="news-peek">
           <ul class="news-list news-list--peek" aria-hidden="true">
-            <NewsRow item={NEWS[NEWS_VISIBLE]} delay={0.5 + NEWS_VISIBLE * 0.12} />
+            <NewsRow item={NEWS[NEWS_VISIBLE]} delay={0.1 + NEWS_VISIBLE * 0.08} />
           </ul>
           <div class="news-peek__more">
             <button class="view-all" type="button" data-news-open aria-expanded="false" aria-controls="news-all" aria-label={`お知らせをすべて見る（${NEWS.length}件）`}>
