@@ -15,7 +15,8 @@ export default {
     const url = new URL(request.url);
     if (url.hostname === `www.${CANONICAL_HOST}`) {
       url.hostname = CANONICAL_HOST;
-      return new Response(null, { status: 301, headers: { location: url.href, 'cache-control': 'public, max-age=86400' } });
+      // 転送の応答は保存させない（保存されると、ホストを区別しない保存先から www 無しのページにまで転送が返り、同じページへの転送がくり返される）
+      return new Response(null, { status: 301, headers: { location: url.href, 'cache-control': 'no-store' } });
     }
     return handler.fetch!(request, env, ctx);
   },
