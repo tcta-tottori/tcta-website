@@ -2077,14 +2077,46 @@
         return;
       }
 
-      // 実サーバー接続前のプロトタイプ動作：送信完了画面を表示
-      form.hidden = true;
-      if (done) {
-        done.classList.add('is-shown');
-        done.setAttribute('tabindex', '-1');
-        done.focus();
-        done.scrollIntoView({ block: 'center', behavior: reduceMotion ? 'auto' : 'smooth' });
-      }
+      // 送信（POST /api/contact。src/pages/api/contact.ts が保存してメールで協会へ送る）。
+      // 送っているあいだはボタンを押せなくし、受け付けられたら完了の画面、だめなら理由と LINE への案内を出す
+      if (form.getAttribute('aria-busy') === 'true') return;
+      var submit = form.querySelector('[data-form-submit]');
+      var errBox = form.querySelector('[data-form-error]');
+      var label = submit ? submit.innerHTML : '';
+      var val = function (n) { var el = form.elements[n]; return el ? (el.type === 'checkbox' ? el.checked : String(el.value || '')) : ''; };
+      var data = { name: val('name'), kana: val('kana'), email: val('email'), type: val('type'), event: val('event'), body: val('body'), agree: val('agree'), website: val('website') };
+      form.setAttribute('aria-busy', 'true');
+      if (submit) { submit.disabled = true; submit.textContent = '送信しています…'; }
+      if (errBox) { errBox.hidden = true; errBox.textContent = ''; }
+      var fail = function (msg) {
+        form.removeAttribute('aria-busy');
+        if (submit) { submit.disabled = false; submit.innerHTML = label; }
+        if (errBox) {
+          errBox.textContent = '⚠ ' + msg;
+          errBox.hidden = false;
+          errBox.scrollIntoView({ block: 'center', behavior: reduceMotion ? 'auto' : 'smooth' });
+        }
+      };
+      fetch('api/contact', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(data) })
+        .then(function (res) { return res.json().catch(function () { return {}; }).then(function (j) { return { status: res.status, j: j }; }); })
+        .then(function (r) {
+          if (r.status === 200 && r.j && r.j.ok) {
+            form.hidden = true;
+            if (done) {
+              done.classList.add('is-shown');
+              done.setAttribute('tabindex', '-1');
+              done.focus();
+              done.scrollIntoView({ block: 'center', behavior: reduceMotion ? 'auto' : 'smooth' });
+            }
+            return;
+          }
+          if (r.status === 429) fail('短い時間に続けて送信されたため、受け付けられませんでした。しばらくしてからもう一度お試しください。');
+          else if (r.status === 400) fail('入力内容を確認して、もう一度送信してください。');
+          else fail('送信できませんでした。時間をおいてもう一度お試しいただくか、LINE公式アカウントからご連絡ください。');
+        })
+        .catch(function () {
+          fail('通信できませんでした。電波の良いところでもう一度お試しいただくか、LINE公式アカウントからご連絡ください。');
+        });
     });
   }
 

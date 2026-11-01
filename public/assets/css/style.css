@@ -4197,6 +4197,9 @@ button.dl-item { width: 100%; text-align: left; }
   border-left: 4px solid var(--red);
 }
 .form-done.is-shown { display: flex; }
+.form__hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+.form__send-error { margin: 16px 0 0; padding: 12px 14px; border-left: 3px solid var(--red); background: #FDF0F0; font: 500 14px/1.8 var(--fjp); color: var(--red); }
+.form [data-form-submit]:disabled { opacity: .6; cursor: progress; }
 .form-done__title {
   margin: 0;
   font: 700 20px/1.5 var(--fjp);

@@ -28,3 +28,6 @@ uploads/
 # Python のキャッシュ
 __pycache__/
 tools/.cache/
+
+# Worker の手元用の秘密（wrangler dev が読む。RESEND_API_KEY など）
+.dev.vars
