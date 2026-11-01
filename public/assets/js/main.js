@@ -1765,20 +1765,22 @@
   }
 
 
-  /* ---------- 一覧のフィルタチップ（大会情報ページ） ---------- */
+  /* ---------- 一覧のフィルタチップ（大会情報ページ） ----------
+     URL に ?filter=upcoming などが付いていれば、そのチップを選んだ状態で開く
+     （トップの大会カードの VIEW ALL からは「開催前」で開く） */
   function initFilters() {
     var groups = document.querySelectorAll('[data-filter-group]');
     if (!groups.length) return;
+
+    var initial = null;
+    try { initial = new URLSearchParams(location.search).get('filter'); } catch (e) {}
 
     groups.forEach(function (group) {
       var targetSel = group.getAttribute('data-filter-target');
       var rows = document.querySelectorAll(targetSel + ' [data-tags]');
       var empty = document.querySelector(targetSel + '-empty');
 
-      group.addEventListener('click', function (e) {
-        var chip = e.target.closest('.chip');
-        if (!chip) return;
-
+      var select = function (chip) {
         group.querySelectorAll('.chip').forEach(function (c) {
           var active = c === chip;
           c.classList.toggle('is-active', active);
@@ -1793,7 +1795,19 @@
           if (match) shown++;
         });
         if (empty) empty.hidden = shown !== 0;
+      };
+
+      group.addEventListener('click', function (e) {
+        var chip = e.target.closest('.chip');
+        if (chip) select(chip);
       });
+
+      if (initial) {
+        var start = Array.prototype.find.call(group.querySelectorAll('.chip[data-filter]'), function (c) {
+          return c.getAttribute('data-filter') === initial;
+        });
+        if (start) select(start);
+      }
     });
   }
 
