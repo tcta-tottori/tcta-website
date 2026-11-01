@@ -170,9 +170,9 @@ const upcomingTournaments = TOURNAMENTS.filter((t) => t.status !== 'past');
     </div>
 
     <div class="container">
-      {/* カードの下の右端に VIEW ALL（大会情報のページへ） */}
+      {/* カードの下の右端に VIEW ALL（大会情報のページへ。「開催前」で絞り込んだ状態で開く） */}
       <div class="sec-more rv">
-        <a class="view-all" href="tournaments.html">
+        <a class="view-all" href="tournaments.html?filter=upcoming">
           <span class="view-all__label">VIEW ALL</span><span class="ln-arrow" aria-hidden="true"></span>
         </a>
       </div>
