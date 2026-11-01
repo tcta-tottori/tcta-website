@@ -1832,14 +1832,58 @@
       clearTimeout(settleTimer);
       settleTimer = setTimeout(settle, 90);
     };
+    /* 指で横に送って止めたとき、縦の位置と結び付いていない所（TODAY より左の終了した大会、区画が止まっていないとき）では、
+       横の位置そのものを、いちばん近いカードが画面の中央に来る位置へ寄せる（TODAY の位置も止まってよい位置に含める） */
+    var glideXRaf = 0;
+    var glideX = function (to) {
+      cancelAnimationFrame(glideXRaf);
+      var from = track.scrollLeft, d = to - from;
+      if (Math.abs(d) < 1) return;
+      var dur = Math.min(380, Math.max(220, Math.abs(d) * 1.1));
+      var t0 = 0;
+      settling = true;
+      var step = function (now) {
+        if (!t0) t0 = now;
+        var k = Math.min(1, (now - t0) / dur);
+        var e = 1 - Math.pow(1 - k, 3);
+        setX = from + d * e; // 自分で動かした分（track の scroll で縦に合わせ直さない）
+        track.scrollLeft = setX;
+        if (k < 1 && settling) glideXRaf = requestAnimationFrame(step);
+        else settleTimer = setTimeout(function () { settling = false; }, 60);
+      };
+      glideXRaf = requestAnimationFrame(step);
+    };
+    var looseX = function () {
+      var y = window.pageYOffset, x = track.scrollLeft;
+      return x < x0 - 2 || y < start - 2 || y > start + dist + 2;
+    };
+    var settleX = function () {
+      if (!on || settling || !looseX()) return;
+      if (Date.now() < userUntil - 150) { settleXSoon(); return; }
+      var x = track.scrollLeft, cw = track.clientWidth, max = track.scrollWidth - cw, best = null;
+      var list = [x0];
+      Array.prototype.forEach.call(track.querySelectorAll('.tcard'), function (c) {
+        list.push(Math.min(max, Math.max(0, c.offsetLeft + c.offsetWidth / 2 - cw / 2)));
+      });
+      list.forEach(function (sx) { if (best === null || Math.abs(sx - x) < Math.abs(best - x)) best = sx; });
+      if (best !== null && Math.abs(best - x) >= 2) glideX(best);
+    };
+    var settleXTimer = 0;
+    var settleXSoon = function () { clearTimeout(settleXTimer); settleXTimer = setTimeout(settleX, 120); };
+    track.addEventListener('touchstart', function () { cancelAnimationFrame(glideXRaf); }, { passive: true });
+
     if ('onscrollend' in window) {
       window.addEventListener('scrollend', function () {
         if (settling) return; // 寄せている最中の動き
         settle();
       });
-      track.addEventListener('scrollend', function () { if (!settling) settleSoon(); });
+      track.addEventListener('scrollend', function () {
+        if (settling) return;
+        if (looseX()) settleXSoon(); else settleSoon();
+      });
     } else {
       window.addEventListener('scroll', settleSoon, { passive: true });
+      track.addEventListener('scroll', function () { if (!settling && looseX()) settleXSoon(); }, { passive: true });
     }
 
     measure();

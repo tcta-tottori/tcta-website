@@ -1473,6 +1473,8 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   --carousel-peek: 16px;
   padding-inline: var(--carousel-pad);
   scroll-padding-inline-start: calc(var(--carousel-pad) + var(--carousel-peek));
+  /* 右側にも同じ幅を取り、カードの吸い付き（中央）が画面の真ん中になるようにする（左だけだと中央が右へずれる） */
+  scroll-padding-inline-end: calc(var(--carousel-pad) + var(--carousel-peek));
 }
 .carousel::-webkit-scrollbar { display: none; }
 @media (min-width: 1024px) {
@@ -1492,8 +1494,9 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   /* 次の大会が右端で少し覗く幅にしてある（初期表示の見え方に効く） */
   width: 84vw;
   max-width: 420px;
-  /* 高さは中身なり。カルーセルの中では横に並ぶカードがいちばん高いものにそろう（.carousel が flex のため） */
-  scroll-snap-align: start;
+  /* 高さは中身なり。カルーセルの中では横に並ぶカードがいちばん高いものにそろう（.carousel が flex のため）。
+     指で横に送って止めたら、いちばん近いカードが画面の中央に来る（吸い付き。止める区画のときは main.js が同じように寄せる） */
+  scroll-snap-align: center;
   display: flex;
   flex-direction: column;
   border: 1px solid var(--gray-200);
