@@ -10,6 +10,7 @@ import Base from '../layouts/Base.astro';
 import EventResult from '../components/EventResult.astro';
 import EventMeta from '../components/EventMeta.astro';
 import RevisionNotice from '../components/RevisionNotice.astro';
+import HostBanner from '../components/HostBanner.astro';
 import { siteData } from '../lib/cms.js';
 import { clubEventLayout } from '../data/club-event.js';
 import { eventResultLayout } from '../data/event-result.js';
@@ -188,6 +189,9 @@ const description = `${e.label}に${e.place}で行われる${e.name}（${e.event
                 ))}
               </div>
           )}
+
+          {/* 他の団体が主催する大会は、要項の紙面の下にその団体のバナー（リンク付き） */}
+          {s.key === 'outline' && <HostBanner e={e} />}
 
           {/* 要項は紙面（画像）があれば PDF のダウンロードは出さない */}
           {s.key !== 'entry' && s.pdfs.length > 0 && !(s.key === 'outline' && s.images.length > 0) && (
