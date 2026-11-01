@@ -19,7 +19,15 @@ interface Props {
   extras?: boolean;
 }
 const { extras = false } = Astro.props;
-const { SCHEDULE, EVENT_INFO = [] } = await siteData(Astro);
+const { SCHEDULE, EVENT_INFO = [], eventForSchedule } = await siteData(Astro);
+// 大会の行き先：大会のページ（要項・ドロー・結果がまとまっている）。ページの無い大会は外のページ（市民体育祭など）
+const goOf = (t) => {
+  const e = eventForSchedule?.(t);
+  if (e) return { href: e.url, ext: false };
+  if (t.externalUrl) return { href: t.externalUrl, ext: true };
+  return null;
+};
+const extAttrs = (g) => (g?.ext ? { target: '_blank', rel: 'noopener noreferrer' } : {});
 
 // 水曜テニス教室（lesson.html の開催概要と同じ）
 const LESSON = { name: '水曜テニス教室', when: '毎週水曜 18:00〜21:00', place: '井原公園テニスコート', href: 'lesson.html' };
@@ -154,6 +162,8 @@ const countText = (m) => (m.evCount ? `${m.count}大会・${m.evCount}イベン�
                   c.iso === today && 'is-today',
                 ]}
                 data-date={c.iso}
+                data-has={(c.items.length || c.events.length || c.dues.length || c.draws.length || c.lesson) ? '' : undefined}
+                data-lesson={c.lesson ? '' : undefined}
                 title={cellTitle(c)}
                 aria-current={c.iso === today ? 'date' : undefined}
               >
@@ -170,44 +180,65 @@ const countText = (m) => (m.evCount ? `${m.count}大会・${m.evCount}イベン�
         ))}
       </div>
 
+      {/* 一覧の行は押すとその大会・イベントのページへ（行全体が押せる：.cal__item-link--go の ::after を行に広げる）。
+          締切・ドロー会議で大会が2つ以上のときは、大会名ごとに押せる。data-date はマスを押したときの吹き出し（main.js）が使う */}
       <ul class="cal__list">
-        {m.entries.map((x) => (
-          x.kind === 'lesson'
-            ? <li class="cal__item cal__item--lesson">
-                <span class="cal__item-day cal__item-day--wk">毎週<br>水</span>
-                <span class="cal__item-body">
-                  <span class="cal__item-name"><span class="cal__tag cal__tag--lesson">水曜テニス</span><a class="cal__item-link" href={LESSON.href}>{LESSON.name}</a></span>
-                  <span class="cal__item-sub">{LESSON.when.replace('毎週水曜 ', '')}／{LESSON.place}</span>
-                </span>
-              </li>
-          : x.kind === 'event'
-            ? <li class="cal__item cal__item--event">
+        {m.entries.map((x) => {
+          if (x.kind === 'lesson') return (
+            <li class="cal__item cal__item--lesson cal__item--go" data-lesson>
+              <span class="cal__item-day cal__item-day--wk">毎週<br>水</span>
+              <span class="cal__item-body">
+                <span class="cal__item-name"><span class="cal__tag cal__tag--lesson">水曜テニス</span><a class="cal__item-link cal__item-link--go" href={LESSON.href}>{LESSON.name}</a></span>
+                <span class="cal__item-sub">{LESSON.when.replace('毎週水曜 ', '')}／{LESSON.place}</span>
+              </span>
+              <span class="cal__item-arrow" aria-hidden="true">›</span>
+            </li>
+          );
+          if (x.kind === 'event') return (
+            <li class:list={['cal__item cal__item--event', x.e.href && 'cal__item--go']} data-date={x.iso}>
+              <span class="cal__item-day">{day(x.iso)}</span>
+              <span class="cal__item-body">
+                <span class="cal__item-name"><span class="cal__tag cal__tag--event">イベント</span>{x.e.href ? <a class="cal__item-link cal__item-link--go" href={x.e.href}>{x.e.title}</a> : x.e.title}</span>
+                {x.e.place && <span class="cal__item-sub">{x.e.place}</span>}
+              </span>
+              {x.e.href && <span class="cal__item-arrow" aria-hidden="true">›</span>}
+            </li>
+          );
+          if (x.kind === 'game') {
+            const g = goOf(x.t);
+            return (
+              <li class:list={['cal__item', g && 'cal__item--go']} data-date={x.iso}>
                 <span class="cal__item-day">{day(x.iso)}</span>
                 <span class="cal__item-body">
-                  <span class="cal__item-name"><span class="cal__tag cal__tag--event">イベント</span>{x.e.href ? <a class="cal__item-link" href={x.e.href}>{x.e.title}</a> : x.e.title}</span>
-                  {x.e.place && <span class="cal__item-sub">{x.e.place}</span>}
-                </span>
-              </li>
-          : x.kind === 'game'
-            ? <li class="cal__item">
-                <span class="cal__item-day">{day(x.iso)}</span>
-                <span class="cal__item-body">
-                  <span class="cal__item-name">{x.t.name}</span>
+                  <span class="cal__item-name">{g ? <a class="cal__item-link cal__item-link--go" href={g.href} {...extAttrs(g)}>{x.t.name}</a> : x.t.name}</span>
                   <span class="cal__item-sub">{x.t.event}／{x.t.place}</span>
                 </span>
                 <span class={`badge ${STATUS_LABEL[x.t.status].badge} cal__item-badge`}>{STATUS_LABEL[x.t.status].label}</span>
+                {g && <span class="cal__item-arrow" aria-hidden="true">›</span>}
               </li>
-            : <li class={`cal__item cal__item--${x.kind}`}>
-                <span class="cal__item-day">{day(x.iso)}</span>
-                <span class="cal__item-body">
-                  <span class="cal__item-name">
-                    <span class={`cal__tag cal__tag--${x.kind}`}>{x.kind === 'due' ? 'エントリー締切' : 'ドロー会議'}</span>
-                    {x.kind === 'draw' && <span class="cal__item-when">{DRAW_MEETING.time}〜　{DRAW_MEETING.short}</span>}
-                  </span>
-                  <span class="cal__item-sub">{names(x.list)}</span>
+            );
+          }
+          // 締切・ドロー会議。大会が1つなら行全体、2つ以上なら大会名ごとに押せる
+          const gos = x.list.map((t) => ({ t, g: goOf(t) }));
+          const one = gos.length === 1 && gos[0].g;
+          return (
+            <li class:list={[`cal__item cal__item--${x.kind}`, one && 'cal__item--go']} data-date={x.iso}>
+              <span class="cal__item-day">{day(x.iso)}</span>
+              <span class="cal__item-body">
+                <span class="cal__item-name">
+                  <span class={`cal__tag cal__tag--${x.kind}`}>{x.kind === 'due' ? 'エントリー締切' : 'ドロー会議'}</span>
+                  {x.kind === 'draw' && <span class="cal__item-when">{DRAW_MEETING.time}〜　{DRAW_MEETING.short}</span>}
                 </span>
-              </li>
-        ))}
+                <span class="cal__item-sub">
+                  {gos.map(({ t, g }, k) => (
+                    <>{k > 0 && '・'}{g ? <a class:list={['cal__item-link', one && 'cal__item-link--go']} href={g.href} {...extAttrs(g)}>{t.name}</a> : t.name}</>
+                  ))}
+                </span>
+              </span>
+              {one && <span class="cal__item-arrow" aria-hidden="true">›</span>}
+            </li>
+          );
+        })}
       </ul>
     </section>
   ))}

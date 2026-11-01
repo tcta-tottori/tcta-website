@@ -2204,6 +2204,62 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 .cal__item-day--wk { font: 700 11px/1.15 var(--fjp); color: var(--cal-lesson); text-align: center; }
 .cal__item-link { color: inherit; text-decoration: underline; text-decoration-color: var(--gray-300); text-underline-offset: 3px; }
 .cal__item-link:hover { color: var(--red); text-decoration-color: currentColor; }
+/* 一覧の行は全体を押せる（主のリンクの ::after を行いっぱいに広げる）。大会名ごとのリンクはその上に出す */
+.cal__item--go { position: relative; cursor: pointer; transition: background-color .2s ease; }
+.cal__item-link--go { text-decoration: none; }
+.cal__item-link--go::after { content: ""; position: absolute; inset: 0; z-index: 1; }
+.cal__item .cal__item-link:not(.cal__item-link--go) { position: relative; z-index: 2; }
+.cal__item-arrow { flex: none; margin-left: 4px; font: 400 20px/1 var(--flt); color: var(--gray-300); transition: transform .2s ease, color .2s ease; }
+.cal__item-badge + .cal__item-arrow { margin-left: 0; }
+.cal__item:not(:has(.cal__item-badge)) .cal__item-arrow { margin-left: auto; }
+@media (hover: hover) {
+  .cal__item--go:hover { background: var(--gray-050); }
+  .cal__item--go:hover .cal__item-arrow { color: var(--red); transform: translateX(3px); }
+  .cal__item--go:hover .cal__item-link--go { color: var(--red); }
+}
+.cal__item--go:active { background: var(--gray-100); }
+.cal__item-link--go:focus-visible { outline: none; }
+.cal__item-link--go:focus-visible::after { outline: 2px solid var(--red); outline-offset: -2px; }
+
+/* 予定のあるマスは押せる（その日の内容を吹き出しで出す。main.js の initCalendar） */
+.cal__grid { position: relative; }
+.cal__cell[data-has] { cursor: pointer; }
+@media (hover: hover) { .cal__cell[data-has]:not(.is-on):not(.is-ev):hover { background: var(--gray-100); } }
+.cal__cell[data-has]:focus-visible { outline: 2px solid var(--red); outline-offset: 2px; }
+.cal__cell.is-picked { box-shadow: 0 0 0 2px var(--white), 0 0 0 4px var(--ink); z-index: 1; }
+.cal__pop {
+  position: absolute;
+  left: -8px; right: -8px;
+  z-index: 5;
+  padding: 10px 14px 6px;
+  background: var(--white);
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius);
+  box-shadow: 0 10px 30px rgba(26, 26, 26, .18);
+  animation: cal-pop-in .22s var(--ease) both;
+}
+/* マスを指す三角（--ax は押したマスの真ん中。吹き出しは左に 8px はみ出しているぶんを足す） */
+.cal__pop::before {
+  content: "";
+  position: absolute;
+  top: -7px; left: calc(var(--ax, 50%) + 8px - 7px);
+  width: 14px; height: 14px;
+  background: var(--white);
+  border-left: 1px solid var(--gray-200); border-top: 1px solid var(--gray-200);
+  transform: rotate(45deg);
+}
+.cal__pop.is-above::before { top: auto; bottom: -7px; transform: rotate(225deg); }
+@keyframes cal-pop-in { from { opacity: 0; transform: translateY(-6px) scale(.98); } }
+.cal__pop.is-above { animation-name: cal-pop-in-up; }
+@keyframes cal-pop-in-up { from { opacity: 0; transform: translateY(6px) scale(.98); } }
+.cal__pop-head { display: flex; align-items: center; justify-content: space-between; padding-bottom: 6px; }
+.cal__pop-date { font: 700 18px/1 var(--flt); color: var(--ink); }
+.cal__pop-dow { font: 700 12px/1 var(--fjp); color: var(--gray-500); }
+.cal__pop-close { width: 32px; height: 32px; margin: -6px -8px 0 0; border: 0; background: none; font: 400 22px/1 var(--flt); color: var(--gray-500); cursor: pointer; }
+.cal__pop-close:hover { color: var(--red); }
+.cal__pop-list { display: flex; flex-direction: column; }
+.cal__pop-list .cal__item { padding: 9px 4px; animation: none !important; opacity: 1 !important; transform: none !important; }
+@media (prefers-reduced-motion: reduce) { .cal__pop { animation: none; } }
 
 /* ---- コート案内の地図 ----
    Leaflet で自前に描く（main.js の initCourtMap）。上のボタンで施設を切り替え、「すべて」で全施設、

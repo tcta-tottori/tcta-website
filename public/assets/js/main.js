@@ -488,6 +488,9 @@
       var host = e.target.closest(RIPPLE_SEL);
       if (!host || host.closest('[aria-hidden="true"]')) return;
       if (host.classList.contains('mobile-nav__link')) return; // メニューの行は波紋ではなく、文字が赤くなる（.is-tapped）
+      // カレンダーの一覧の行（リンクの ::after を行いっぱいに広げて押せるようにしている）は、波紋を行に出す
+      // （リンクに出すとリンクに position が付き、押せる範囲が文字だけに縮んでしまう）
+      if (host.classList.contains('cal__item-link--go')) host = host.closest('.cal__item') || host;
       clear();
 
       // マウスはなぞって画面を送らないので、そのまま出す
@@ -900,8 +903,78 @@
       next.disabled = at === months.length - 1;
     };
 
-    prev.addEventListener('click', function () { show(at - 1, true); });
-    next.addEventListener('click', function () { show(at + 1, true); });
+    prev.addEventListener('click', function () { closePop(); show(at - 1, true); });
+    next.addEventListener('click', function () { closePop(); show(at + 1, true); });
+
+    /* 予定のあるマス（data-has）を押すと、その日の内容を小さな吹き出しでカレンダーの中に出す。
+       中身はマスの下の一覧の同じ日の行（data-date）を写したもの（水曜テニスの日は水曜テニスの行も）。行はそのまま押してページへ飛べる。
+       吹き出しの外を押す・×・Esc・月を送る・同じマスをもう一度押すと閉じる */
+    var DOWJ = ['日', '月', '火', '水', '木', '金', '土'];
+    var pop = null, popCell = null;
+    function closePop() {
+      if (pop && pop.parentNode) pop.parentNode.removeChild(pop);
+      if (popCell) { popCell.classList.remove('is-picked'); popCell.setAttribute('aria-expanded', 'false'); }
+      pop = null; popCell = null;
+    }
+    function openPop(cell) {
+      if (popCell === cell) { closePop(); return; }
+      closePop();
+      var month = cell.closest('.cal__month');
+      var grid = cell.parentNode;
+      var iso = cell.getAttribute('data-date');
+      var rows = Array.prototype.slice.call(month.querySelectorAll('.cal__list > li[data-date="' + iso + '"]'));
+      if (cell.hasAttribute('data-lesson')) {
+        var ls = month.querySelector('.cal__list > li[data-lesson]');
+        if (ls) rows.unshift(ls);
+      }
+      if (!rows.length) return;
+      var d = new Date(iso + 'T00:00:00');
+      pop = document.createElement('div');
+      pop.className = 'cal__pop';
+      pop.setAttribute('role', 'dialog');
+      pop.setAttribute('aria-label', (d.getMonth() + 1) + '月' + d.getDate() + '日の予定');
+      var head = document.createElement('div');
+      head.className = 'cal__pop-head';
+      head.innerHTML = '<span class="cal__pop-date">' + (d.getMonth() + 1) + '/' + d.getDate() + '<span class="cal__pop-dow">（' + DOWJ[d.getDay()] + '）</span></span>';
+      var x = document.createElement('button');
+      x.type = 'button'; x.className = 'cal__pop-close'; x.setAttribute('aria-label', '閉じる'); x.textContent = '×';
+      x.addEventListener('click', function (e) { e.stopPropagation(); var c = popCell; closePop(); if (c) c.focus(); });
+      head.appendChild(x);
+      pop.appendChild(head);
+      var ul = document.createElement('ul');
+      ul.className = 'cal__pop-list';
+      rows.forEach(function (r) {
+        var li = r.cloneNode(true);
+        li.removeAttribute('style');
+        // 吹き出しの中では日付の列は要らない（見出しに出す）
+        var dayEl = li.querySelector('.cal__item-day'); if (dayEl) dayEl.parentNode.removeChild(dayEl);
+        ul.appendChild(li);
+      });
+      pop.appendChild(ul);
+      grid.appendChild(pop);
+      // 押したマスのすぐ下に出し、三角の向きをマスの真ん中に合わせる。下にはみ出すときはマスの上に出す
+      var top = cell.offsetTop + cell.offsetHeight + 8;
+      pop.style.top = top + 'px';
+      pop.style.setProperty('--ax', (cell.offsetLeft + cell.offsetWidth / 2) + 'px');
+      if (top + pop.offsetHeight > grid.offsetHeight + 120 && cell.offsetTop - pop.offsetHeight - 8 > -40) {
+        pop.style.top = (cell.offsetTop - pop.offsetHeight - 8) + 'px';
+        pop.classList.add('is-above');
+      }
+      popCell = cell;
+      cell.classList.add('is-picked');
+      cell.setAttribute('aria-expanded', 'true');
+    }
+    root.querySelectorAll('.cal__cell[data-has]').forEach(function (c) {
+      c.setAttribute('role', 'button');
+      c.setAttribute('tabindex', '0');
+      c.setAttribute('aria-expanded', 'false');
+      c.addEventListener('click', function (e) { e.stopPropagation(); openPop(c); });
+      c.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openPop(c); }
+      });
+    });
+    document.addEventListener('click', function (e) { if (pop && !pop.contains(e.target)) closePop(); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && pop) { var c = popCell; closePop(); if (c) c.focus(); } });
 
     // 今日（日本時間）のマスを点滅させ、今月（無ければその次の月）から出す。描いたページが残っていても合うように、見た時点で付け直す
     var today = null;
