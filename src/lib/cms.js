@@ -12,6 +12,7 @@ import { buildEvents } from '../data/events.js';
 import { buildCards } from '../data/tournaments.js';
 import { buildEventInfo } from '../data/eventinfo.js';
 import { buildSocial } from '../data/social.js';
+import { EXTRA_TOURNAMENTS } from '../data/official-extra.js';
 
 /** コレクションを全件読む（1 ページ 100 件までなので、続きがあれば読み足す）。 */
 async function readAll(collection, options = {}) {
@@ -38,6 +39,10 @@ async function load(locals) {
   // アップロードした PDF の URL は、保存先の鍵から EmDash に引いてもらう
   const mediaUrl = (key) => locals.emdash?.getPublicMediaUrl?.(key) ?? null;
 
+  // 管理画面にまだ無い大会（official-extra.js の EXTRA_TOURNAMENTS）を足す。同じ slug が管理画面にあればそちらを使う
+  const have = new Set(tournaments.rows.map((t) => t.slug));
+  tournaments.rows.push(...EXTRA_TOURNAMENTS.filter((t) => !have.has(t.slug)));
+  tournaments.rows.sort((a, b) => String(a.date ?? '').localeCompare(String(b.date ?? '')));
   const schedule = buildSchedule(tournaments.rows);
   const events = buildEvents(tournaments.rows, schedule, mediaUrl);
   const cards = buildCards(tournaments.rows, { ...schedule, ...events });
