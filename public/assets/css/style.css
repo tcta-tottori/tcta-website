@@ -2263,6 +2263,11 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 .cal__pop-close { width: 32px; height: 32px; margin: -6px -8px 0 0; border: 0; background: none; font: 400 22px/1 var(--flt); color: var(--gray-500); cursor: pointer; }
 .cal__pop-close:hover { color: var(--red); }
 .cal__pop-list { display: flex; flex-direction: column; }
+/* トップのカレンダー（.cal--compact）はマスの下の一覧を出さず、マス目だけにする（予定はマスを押して吹き出しで見る） */
+.cal--compact .cal__list { display: none; }
+@media (min-width: 768px) {
+  .cal--compact .cal__month { grid-template-columns: minmax(0, 560px); justify-content: center; }
+}
 .cal__pop-list .cal__item { padding: 9px 4px; animation: none !important; opacity: 1 !important; transform: none !important; }
 @media (prefers-reduced-motion: reduce) { .cal__pop { animation: none; } }
 
