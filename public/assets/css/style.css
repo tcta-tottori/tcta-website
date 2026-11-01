@@ -1182,6 +1182,21 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 @media (min-width: 1024px) {
   .hero__media img.hero__photo { object-position: 50% 50%; }
 }
+/* PLAY BEYOND. が出ているあいだ、背景（動画・写真）を左から右へゆっくり動かし、合流し終わるころに止める。
+   動かす余白のぶん少し大きくしておく（scale）。スマホの位置合わせの transform とは別の translate / scale で動かす */
+.hero .hero__media .hero__photo {
+  scale: 1.08;
+  animation: hero-pan calc(var(--pb-settle) + 1.6s) cubic-bezier(.3, .15, .25, 1) both;
+}
+/* オープニング（.splash-on）のあいだは頭出しのまま止めておく（上の animation の指定より強くする） */
+.splash-on .hero .hero__media .hero__photo { animation-play-state: paused; }
+@keyframes hero-pan {
+  from { translate: -3.5% 0; }
+  to   { translate: 0 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero .hero__media .hero__photo { animation: none; scale: none; }
+}
 .hero__scrim {
   position: absolute;
   inset: 0;

@@ -5,7 +5,10 @@ import TournamentList from '../components/TournamentList.astro';
 import { siteData } from '../lib/cms.js';
 import { SCHEDULE_PDF } from '../data/events.js';
 
-const { SCHEDULE, SCHEDULE_NEXT } = await siteData(Astro);
+const { SCHEDULE, SCHEDULE_NEXT, ROWS = [] } = await siteData(Astro);
+// 鳥取市テニス協会の主催ではない大会（区分「預かり」。鳥大オープンなど）。協会主催の一覧とは分けて、同じ年度の分を日付順に出す
+const NENDO = SCHEDULE[0]?.nendo;
+const PARTNER = ROWS.filter((t) => t.kind === 'extra' && t.nendo === NENDO).sort((a, b) => a.date.localeCompare(b.date));
 
 const title = "大会情報｜鳥取市テニス協会";
 const description = "令和8年度（2026年度）に鳥取市テニス協会が主催・主管する全19大会の一覧。エントリー締切・会場・登録区分を掲載しています。";
@@ -86,6 +89,14 @@ const count = {
       <div class="rv mt-40">
         <a class="btn btn--outline" href={SCHEDULE_PDF.src} target="_blank" rel="noopener noreferrer">令和8年度 大会日程をダウンロード（PDF / {SCHEDULE_PDF.kb.toLocaleString()}KB）<span aria-hidden="true" class="text-red">↓</span></a>
       </div>
+
+      {PARTNER.length > 0 && (
+        <div class="rv" style="margin-top:64px">
+          <h2 class="sub-head">令和8年度 その他の大会</h2>
+          <p class="note" style="margin:-8px 0 20px">鳥取市テニス協会の主催ではない大会です。協会は要項・ドロー・結果の掲載に協力しています。大会の内容は、要項にある各大会の問い合わせ先へお尋ねください。</p>
+          <TournamentList items={PARTNER} caption="令和8年度 その他の大会" />
+        </div>
+      )}
 
       <div class="rv" style="margin-top:64px">
         <h2 class="sub-head">令和9年度（先行案内）</h2>
