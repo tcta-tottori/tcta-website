@@ -2257,10 +2257,30 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 .cal__pop-close { width: 32px; height: 32px; margin: -6px -8px 0 0; border: 0; background: none; font: 400 22px/1 var(--flt); color: var(--gray-500); cursor: pointer; }
 .cal__pop-close:hover { color: var(--red); }
 .cal__pop-list { display: flex; flex-direction: column; }
-/* トップのカレンダー（.cal--compact）はマスの下の一覧を出さず、マス目だけにする（予定はマスを押して吹き出しで見る） */
+/* トップのカレンダー（.cal--compact）。スマホ・タブレットはマスの下の一覧を出さず、マス目だけにする（予定はマスを押して吹き出しで見る）。
+   PC は左にマス目、右にマス目と同じ幅の一覧を並べる。一覧の高さはマス目にそろえ、入り切らない分は一覧の中でスクロールする
+   （height: 0 ＋ min-height: 100% で、一覧の長さが行の高さを押し広げないようにしている） */
 .cal--compact .cal__list { display: none; }
 @media (min-width: 768px) {
   .cal--compact .cal__month { grid-template-columns: minmax(0, 560px); justify-content: center; }
+}
+@media (min-width: 1024px) {
+  .cal--compact .cal__month { grid-template-columns: repeat(2, minmax(0, 1fr)); justify-content: stretch; gap: 40px; align-items: stretch; }
+  .cal--compact .cal__list {
+    display: flex;
+    height: 0;
+    min-height: 100%;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding-right: 10px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--gray-300) transparent;
+    -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 28px), transparent);
+    mask-image: linear-gradient(to bottom, #000 calc(100% - 28px), transparent);
+  }
+  .cal--compact .cal__list::-webkit-scrollbar { width: 6px; }
+  .cal--compact .cal__list::-webkit-scrollbar-thumb { background: var(--gray-300); border-radius: 3px; }
+  .cal--compact .cal__list > li:last-child { margin-bottom: 24px; }
 }
 .cal__pop-list .cal__item { padding: 9px 4px; animation: none !important; opacity: 1 !important; transform: none !important; }
 @media (prefers-reduced-motion: reduce) { .cal__pop { animation: none; } }
