@@ -9,6 +9,7 @@
 //   日付が見た時点から3ヶ月以内のものだけを出す（VIEW ALL の中も、上部の赤い帯も同じ）。
 //   古いものは管理画面に残っていても表には出ないので、消して回らなくてよい。
 //   先の日付（予告として先に書いたもの）はそのまま出る。
+//   また、NEWS_FROM（2026-10-01）より前のものは出さない（2026年9月までのお知らせは表示しない）。
 //
 // ■ 分類（管理画面の選択肢）
 //   '大会'     … 要項公開、エントリー受付、ドロー発表
@@ -36,6 +37,9 @@ const NEW_DAYS = 14;
 /** お知らせを出す期間（ヶ月）。日付がこれより前のものは表に出ない */
 const NEWS_MONTHS = 3;
 
+/** これより前の日付のお知らせは、期間に関係なく出さない（新しいサイトの公開に合わせて、2026年9月までの分は出さないことにした） */
+const NEWS_FROM = '2026-10-01';
+
 /** 見た時点から NEWS_MONTHS ヶ月前の日付（'2026-07-22' の形）。これより前のお知らせは出さない */
 export function newsCutoff(now = new Date()) {
   const d = new Date(now.getFullYear(), now.getMonth() - NEWS_MONTHS, now.getDate());
@@ -57,7 +61,7 @@ export const CATEGORY_KEY = { '大会': 'tournament', '結果': 'result', 'ジ�
  *   IMPORTANT_NEWS … 全ページ上部の帯に出す重要なお知らせ（中止・延期など）
  */
 export function buildNews(rows, now = new Date()) {
-  const cutoff = newsCutoff(now);
+  const cutoff = [newsCutoff(now), NEWS_FROM].sort().pop(); // 3ヶ月前と NEWS_FROM の新しいほう
   // 公式サイトに先に載ったお知らせ（official-extra.js）。同じ日付・同じ題名の行が管理画面にあれば足さない
   const key = (n) => `${String(n.date).slice(0, 10)}|${n.title}`;
   const known = new Set(rows.map(key));
