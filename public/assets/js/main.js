@@ -861,6 +861,18 @@
     var root = document.querySelector('[data-calendar]');
     if (!root) return;
 
+    // トップ（data-cal-from="prev"）は、さかのぼれるのは先月まで。見た時点（日本時間）の先月より前の月は外す
+    if (root.getAttribute('data-cal-from') === 'prev') {
+      try {
+        var ymNow = new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Tokyo', year: 'numeric', month: '2-digit' }).format(new Date()).slice(0, 7);
+        var yy = +ymNow.slice(0, 4), mm = +ymNow.slice(5, 7);
+        var fromYm = mm === 1 ? (yy - 1) + '-12' : yy + '-' + String(mm - 1).padStart(2, '0');
+        var olds = root.querySelectorAll('[data-cal-month]');
+        for (var q = 0; q < olds.length; q++) {
+          if ((olds[q].getAttribute('data-key') || '') < fromYm && olds.length - q > 1) olds[q].parentNode.removeChild(olds[q]);
+        }
+      } catch (e) {}
+    }
     var months = root.querySelectorAll('[data-cal-month]');
     var prev = root.querySelector('[data-cal-prev]');
     var next = root.querySelector('[data-cal-next]');

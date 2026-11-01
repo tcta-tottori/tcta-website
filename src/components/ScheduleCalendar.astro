@@ -62,7 +62,16 @@ for (const t of SCHEDULE) {
 }
 
 // 月は、大会・締切・ドロー会議のどれかがある月をすべて並べる
-const keys = [...new Set([...SCHEDULE.map((t) => t.date), ...dues.keys(), ...draws.keys(), ...events.keys()].map((iso) => iso.slice(0, 7)))].sort();
+// extras（トップ）のときは、さかのぼれるのは先月まで（それより前の月は出さない）。
+// 描いたページが残っていても合うよう、main.js の initCalendar も見た時点の日付で先月より前の月を外す（data-cal-from）
+const prevMonthKey = (iso) => {
+  const [y, m] = iso.slice(0, 7).split('-').map(Number);
+  return m === 1 ? `${y - 1}-12` : `${y}-${String(m - 1).padStart(2, '0')}`;
+};
+const fromKey = extras ? prevMonthKey(todayJST()) : '';
+const keys = [...new Set([...SCHEDULE.map((t) => t.date), ...dues.keys(), ...draws.keys(), ...events.keys()].map((iso) => iso.slice(0, 7)))]
+  .filter((k) => k >= fromKey)
+  .sort();
 const months = keys.map((key) => {
   const [year, month] = key.split('-').map(Number);
   const games = SCHEDULE.filter((t) => t.date.startsWith(key)).sort((a, b) => a.date.localeCompare(b.date));
@@ -110,7 +119,7 @@ const countText = (m) => (m.evCount ? `${m.count}大会・${m.evCount}イベン�
 {!first && <p class="note">大会が登録されるとカレンダーが表示されます。</p>}
 {first && (
 
-<div class="cal" data-calendar data-cal-initial={initial}>
+<div class="cal" data-calendar data-cal-initial={initial} data-cal-from={extras ? 'prev' : undefined}>
   <div class="cal__bar">
     <button class="circle-btn" type="button" data-cal-prev aria-label="前の月へ" disabled>←</button>
     <p class="cal__label" data-cal-label aria-live="polite">

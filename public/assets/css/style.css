@@ -4784,6 +4784,13 @@ button.dl-item { width: 100%; text-align: left; }
 }
 
 /* まだ中身が無い節（結果待ちなど）の言い方 */
+.lesson-status {
+  display: flex; align-items: flex-start; gap: 12px;
+  margin: 24px 0 0; padding: 16px 18px;
+  background: var(--white); border: 1px solid var(--gray-200); border-left: 4px solid var(--ink);
+  font: 500 14px/1.8 var(--fjp); color: var(--ink);
+}
+.lesson-status__tag { flex: none; display: inline-flex; align-items: center; height: 24px; padding: 0 10px; border-radius: 3px; background: var(--ink); color: #fff; font: 700 12px/1 var(--fjp); letter-spacing: .06em; margin-top: 2px; }
 .esec__wait {
   margin: 24px 0 0;
   padding: 20px;

@@ -30,6 +30,11 @@ const description = "毎週水曜日、井原公園テニスコートで開催�
         </div>
       </div>
       <p class="page-lead fu" style="animation-delay:.15s">毎週水曜日の夜、井原公園テニスコートで開いている教室です。レベル別に4つのコートに分かれ、それぞれに専任コーチがつきます。ラケットの持ち方から教えるコートもありますので、はじめての方もどうぞ。</p>
+      {/* 今年度の開催の状況。年度が始まったら書き換える（イベントカレンダーの印は ScheduleCalendar.astro の LESSON_PERIODS） */}
+      <p class="lesson-status fu" style="animation-delay:.25s" role="status">
+        <span class="lesson-status__tag">終了</span>
+        <span>令和8年度の水曜テニス教室は終了しました。たくさんのご参加ありがとうございました。令和9年度の日程は、決まりしだいお知らせします。</span>
+      </p>
     </div>
   </section>
 
@@ -40,7 +45,7 @@ const description = "毎週水曜日、井原公園テニスコートで開催�
         <h2 class="sub-head">開催概要</h2>
         <dl class="deflist">
           <div class="deflist__row"><dt class="deflist__key">主催</dt><dd class="deflist__val" style="margin:0">鳥取市テニス協会</dd></div>
-          <div class="deflist__row"><dt class="deflist__key">期間</dt><dd class="deflist__val" style="margin:0">4月下旬〜（毎週水曜日）※令和8年度の開始日は<span class="todo-note">要確認</span></dd></div>
+          <div class="deflist__row"><dt class="deflist__key">期間</dt><dd class="deflist__val" style="margin:0">4月下旬〜10月（毎週水曜日）※令和8年度は終了しました。令和9年度の日程は未定です</dd></div>
           <div class="deflist__row"><dt class="deflist__key">時間</dt><dd class="deflist__val" style="margin:0">18:00〜21:00（レッスンは18:30スタート）</dd></div>
           <div class="deflist__row"><dt class="deflist__key">場所</dt><dd class="deflist__val" style="margin:0">井原公園テニスコート（4面使用）</dd></div>
           <div class="deflist__row"><dt class="deflist__key">対象</dt><dd class="deflist__val" style="margin:0">中学生以上（夜間開催のため）</dd></div>
