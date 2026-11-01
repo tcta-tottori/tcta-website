@@ -30,6 +30,8 @@ const BY_NAME = [
   { match: /クラブ対抗/, photo: { src: 'assets/img/event-photos/team.webp', w: 960, h: 640, pos: '55% 45%', alt: 'クラブ対抗戦の試合後、コートで礼をする選手たち' } },
   { match: /市民体育祭/, photo: { src: 'assets/img/event-photos/shimin-taiikusai.webp', w: 960, h: 540, pos: '55% 45%', alt: '市民体育祭のダブルスで、フォアハンドを打つ選手とそれを見守るパートナー' } },
   { match: /尾坂杯/, photo: { src: 'assets/img/event-photos/osaka.webp', w: 960, h: 697, pos: '62% 40%', alt: '室内コートでフォアハンドを打つジュニアの選手' } },
+  // 京丹後市テニス協会の大会（協会のロゴ風の黄色の画像。16:7 でカードの写真の場所にそのまま収まる）
+  { match: /京丹後/, photo: { src: 'assets/img/event-photos/kyotango.webp', w: 1280, h: 560, pos: '50% 50%', alt: '京丹後市テニス協会' } },
   { match: /鳥大オープン/, photo: { src: 'assets/img/event-photos/tottori-univ.webp', w: 960, h: 631, pos: '50% 30%', alt: 'ネット越しにバックハンドを打つ選手' } },
   { match: /プリンスオープン/, photo: { src: 'assets/img/event-photos/prince-open.webp', w: 729, h: 370, pos: '50% 60%', alt: 'プリンスオープンの参加者の集合写真' } },
 ];
