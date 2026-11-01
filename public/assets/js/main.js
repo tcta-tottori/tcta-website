@@ -1674,221 +1674,81 @@
       return Math.max(0, marker.offsetLeft - padStart());
     };
     var place = function () { track.scrollLeft = todayX(); };
-    if (marker) {
+
+    /* 横の位置を、出だしは速く・最後はゆっくりの曲線で動かす（ブラウザのなめらかなスクロールは遅く、端末でまちまちなので使わない）。
+       途中で指・ホイールで触られたらそこでやめる */
+    var raf = 0, gliding = false;
+    var glideX = function (to, dur, ease) {
+      cancelAnimationFrame(raf);
+      var from = track.scrollLeft, d = to - from;
+      if (Math.abs(d) < 1) { gliding = false; return; }
+      var t0 = 0;
+      gliding = true;
+      var step = function (now) {
+        if (!t0) t0 = now;
+        var k = Math.min(1, (now - t0) / dur);
+        track.scrollLeft = from + d * ease(k);
+        if (k < 1 && gliding) raf = requestAnimationFrame(step);
+        else gliding = false;
+      };
+      raf = requestAnimationFrame(step);
+    };
+    var stopGlide = function () { if (gliding) { cancelAnimationFrame(raf); gliding = false; } };
+    ['touchstart', 'wheel', 'pointerdown'].forEach(function (ev) { track.addEventListener(ev, stopGlide, { passive: true }); });
+
+    /* 初めて画面に入ったとき：いちばん端（最初）のカードから、TODAY の線が「終了した大会｜今後の大会」の赤い縦線と重なる位置まで、
+       最初は速く・TODAY に近づくほどゆっくりの緩急で流して止める（1回だけ）。
+       動きを減らす設定・軽量モードでは流さず、はじめから TODAY の位置に置く */
+    var cards = track.querySelectorAll('.tcard');
+    if (marker && !reduceMotion && 'IntersectionObserver' in window && cards.length) {
+      var intro = true;
+      track.scrollLeft = 0;
+      var io = new IntersectionObserver(function (es) {
+        es.forEach(function (e) {
+          if (!e.isIntersecting) return;
+          io.disconnect();
+          var to = todayX();
+          var dur = Math.min(2600, Math.max(1400, Math.abs(to - track.scrollLeft) * 0.9));
+          // 出だしが速く、終わりに向かって長く減速する（ease-out の5乗）
+          glideX(to, dur, function (k) { return 1 - Math.pow(1 - k, 5); });
+          setTimeout(function () { intro = false; }, dur + 50);
+        });
+      }, { threshold: 0.35 });
+      io.observe(track);
+      // 流し終わる前に画像などで幅が変わっても、まだ流していなければ先頭のまま、流し終えていれば TODAY に合わせる
+      window.addEventListener('load', function () { if (!intro && !gliding) place(); });
+    } else if (marker) {
       place();
       window.addEventListener('load', place);
     }
 
-    /* 入ってきたときの動き（style.css の .carousel.is-intro）。区画が画面に入ったら1度だけ、
-       TODAY の線が上から伸び → 日付が出て → 今後の大会のカードが右から順に入る */
-    var cards = track.querySelectorAll('.tcard');
-    var after = false, k = 0;
-    Array.prototype.forEach.call(track.children, function (el) {
-      if (el === marker) { after = true; return; }
-      if (el.classList.contains('tcard')) el.style.setProperty('--ci', String(after ? ++k : 0));
-    });
-    if (!reduceMotion && 'IntersectionObserver' in window && cards.length) {
-      track.classList.add('js-intro');
-      var io = new IntersectionObserver(function (es) {
-        es.forEach(function (e) {
-          if (!e.isIntersecting) return;
-          track.classList.add('is-intro');
-          io.disconnect();
-        });
-      }, { threshold: 0.2 });
-      io.observe(track);
-    }
-
-    /* ---- 縦スクロールで横に送る（トップの大会情報 [data-hpin]） ----
-       区画（.hpin）を画面に止め（position: sticky）、止まっているあいだの縦のスクロール量を
-       そのままカードの横の位置にする（TODAY → 今後の大会の右端）。送り切ったら区画が外れて次へ進む。
-       止めておく長さ（.hpin-track の高さ）＝区画の高さ＋横に送る幅。
-       指やトラックパッドで横に送ったときは、その位置に合わせて縦の位置も動かす（どちらで送っても続きから動く）。
-       上へ戻ると TODAY に戻ってから区画が外れ、ヒーローへ（終了した大会は横に送ったときだけ見える）。
-       動きを減らす設定の端末では止めない（ふつうの横スクロールのまま） */
-    var sec = track.closest('[data-hpin]');
-    var wrap = sec && sec.querySelector('.hpin-track');
-    var pin = sec && sec.querySelector('.hpin');
-    if (!sec || !wrap || !pin || !marker || reduceMotion) {
-      window.addEventListener('resize', place);
-      return;
-    }
-    var on = false, x0 = 0, dist = 0, start = 0, sw = 0;
-    var setX = -1, setY = -1, userUntil = 0, ticking = false;
-    var headerH = function () {
-      var v = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--header-h'));
-      return isNaN(v) ? 0 : v;
-    };
-    var measure = function () {
-      x0 = todayX();
-      sw = track.scrollWidth;
-      dist = Math.max(0, sw - track.clientWidth - x0);
-      on = dist > 40;
-      sec.classList.toggle('is-hpin', on);
-      if (!on) { wrap.style.height = ''; wrap.style.marginBottom = ''; pin.style.top = ''; pin.style.height = ''; pin.style.paddingTop = ''; place(); return; }
-      pin.style.height = '';
-      pin.style.paddingTop = '';
-      var ph = pin.offsetHeight;
-      // ヘッダーの下の残り（画面の高さ − ヘッダー）いっぱいを灰色の地で覆って止め、中身はその上寄り（--hpin-pad）に置く
-      // （止まっているあいだ、見出し・背景の英字・灰色の地は動かず、カードだけが横に流れる）。
-      // 中身の下に余る灰色の分は、送り切って区画が外れるとき次の区画（お知らせ）が重なって隠す（.hpin-track の margin-bottom を負に）。
-      // 区画が画面より高いときは、下端をそろえて止める
-      var hh = headerH(), room = window.innerHeight - hh, top, pad = 0, rest = 0;
-      if (ph <= room) {
-        pad = Math.min(window.innerWidth >= 1024 ? 40 : 20, Math.floor((room - ph) / 2));
-        rest = room - ph - pad;
-        pin.style.paddingTop = pad + 'px';
-        pin.style.height = room + 'px';
-        ph = room;
-        top = hh;
-      } else {
-        top = window.innerHeight - ph;
-      }
-      wrap.style.marginBottom = rest > 0 ? (-rest) + 'px' : '';
-      pin.style.setProperty('--hpin-pad', pad + 'px');
-      pin.style.top = top + 'px';
-      wrap.style.height = (ph + dist) + 'px';
-      start = wrap.getBoundingClientRect().top + window.pageYOffset - top;
-      update(true);
-    };
-    var update = function (force) {
-      if (!on) return;
-      if (track.scrollWidth !== sw) { measure(); return; } // 写真や文字の読み込みでカードの幅が変わったら測り直す
-      var y = window.pageYOffset;
-      if (!force && (Math.abs(y - setY) < 1 || Date.now() < userUntil)) return; // 自分で合わせた分・横に送っている最中は動かさない
-      var p = Math.min(1, Math.max(0, (y - start) / dist));
-      var x = x0 + p * dist;
-      if (Math.abs(track.scrollLeft - x) >= 0.5) { setX = x; track.scrollLeft = x; }
-    };
-    window.addEventListener('scroll', function () {
-      if (ticking) return;
-      ticking = true;
-      requestAnimationFrame(function () { ticking = false; update(false); });
-    }, { passive: true });
-    track.addEventListener('scroll', function () {
-      if (!on) return;
-      var x = track.scrollLeft;
-      if (Math.abs(x - setX) < 1.5) return; // 縦のスクロールから合わせた分
-      // 指・トラックパッドで横に送った：止まっている間だけ、縦の位置をその横の位置に合わせる
-      userUntil = Date.now() + 250;
-      var y = window.pageYOffset;
-      if (y < start - 2 || y > start + dist + 2) return;
-      var ny = start + Math.min(1, Math.max(0, (x - x0) / dist)) * dist;
-      if (Math.abs(ny - y) < 1) return;
-      setY = ny;
-      window.scrollTo({ top: ny, behavior: 'instant' });
-      settleSoon();
-    }, { passive: true });
-
-    /* 止まっているあいだにスクロールが止まったら、いちばん近いカードが画面の中央に来る位置へ寄せる
-       （縦の位置をそのカードの横の位置に合わせてなめらかに動かす。横の位置は update が追いかける）。
-       区画の入口（TODAY）と出口（右端）も止まってよい位置に含める。寄せている最中の動きでは寄せ直さない */
-    var settleTimer = 0, settling = false;
-    var stops = function () {
-      var list = [x0, x0 + dist];
-      var cw = track.clientWidth;
-      Array.prototype.forEach.call(track.querySelectorAll('.tcard'), function (c) {
-        var x = c.offsetLeft + c.offsetWidth / 2 - cw / 2;
-        if (x > x0 + 4 && x < x0 + dist - 4) list.push(x);
-      });
-      return list;
-    };
+    /* 指で横に送って止めたら、いちばん近いカードが画面の中央に来る位置へ寄せる（TODAY の位置も止まってよい位置に含める）。
+       吸い付き（scroll-snap）は使わない（TODAY の位置をぴったり保てないため） */
     var settle = function () {
-      if (!on || settling) return;
-      if (Date.now() < userUntil) { settleSoon(); return; } // 指で横に送っている最中は待つ
-      var y = window.pageYOffset;
-      if (y <= start + 1 || y >= start + dist - 1) return; // 区画の外・端ちょうどでは寄せない
-      var x = x0 + (y - start);
-      var best = null;
-      stops().forEach(function (sx) { if (best === null || Math.abs(sx - x) < Math.abs(best - x)) best = sx; });
-      if (best === null || Math.abs(best - x) < 2) return;
-      glide(start + (best - x0));
-    };
-    /* 寄せる動き。ブラウザのなめらかなスクロール（遅く、端末でまちまち）は使わず、
-       距離に応じて 0.22〜0.38 秒で、出だしは速く最後はすっと止まる曲線で縦の位置を動かす。
-       途中で指・ホイール・キーで操作されたら、そこでやめる */
-    var glideRaf = 0;
-    var glide = function (to) {
-      cancelAnimationFrame(glideRaf);
-      var from = window.pageYOffset, d = to - from;
-      if (Math.abs(d) < 1) return;
-      var dur = Math.min(380, Math.max(220, Math.abs(d) * 1.1));
-      var t0 = 0;
-      settling = true;
-      var step = function (now) {
-        if (!t0) t0 = now;
-        var k = Math.min(1, (now - t0) / dur);
-        var e = 1 - Math.pow(1 - k, 3);
-        window.scrollTo({ top: from + d * e, behavior: 'instant' });
-        if (k < 1 && settling) glideRaf = requestAnimationFrame(step);
-        else settleTimer = setTimeout(function () { settling = false; }, 60);
-      };
-      glideRaf = requestAnimationFrame(step);
-    };
-    var stopGlide = function () { if (settling) { cancelAnimationFrame(glideRaf); settling = false; } };
-    ['wheel', 'touchstart', 'keydown'].forEach(function (ev) { window.addEventListener(ev, stopGlide, { passive: true }); });
-    var settleSoon = function () {
-      if (settling) return;
-      clearTimeout(settleTimer);
-      settleTimer = setTimeout(settle, 90);
-    };
-    /* 指で横に送って止めたとき、縦の位置と結び付いていない所（TODAY より左の終了した大会、区画が止まっていないとき）では、
-       横の位置そのものを、いちばん近いカードが画面の中央に来る位置へ寄せる（TODAY の位置も止まってよい位置に含める） */
-    var glideXRaf = 0;
-    var glideX = function (to) {
-      cancelAnimationFrame(glideXRaf);
-      var from = track.scrollLeft, d = to - from;
-      if (Math.abs(d) < 1) return;
-      var dur = Math.min(380, Math.max(220, Math.abs(d) * 1.1));
-      var t0 = 0;
-      settling = true;
-      var step = function (now) {
-        if (!t0) t0 = now;
-        var k = Math.min(1, (now - t0) / dur);
-        var e = 1 - Math.pow(1 - k, 3);
-        setX = from + d * e; // 自分で動かした分（track の scroll で縦に合わせ直さない）
-        track.scrollLeft = setX;
-        if (k < 1 && settling) glideXRaf = requestAnimationFrame(step);
-        else settleTimer = setTimeout(function () { settling = false; }, 60);
-      };
-      glideXRaf = requestAnimationFrame(step);
-    };
-    var looseX = function () {
-      var y = window.pageYOffset, x = track.scrollLeft;
-      return x < x0 - 2 || y < start - 2 || y > start + dist + 2;
-    };
-    var settleX = function () {
-      if (!on || settling || !looseX()) return;
-      if (Date.now() < userUntil - 150) { settleXSoon(); return; }
+      if (gliding) return;
       var x = track.scrollLeft, cw = track.clientWidth, max = track.scrollWidth - cw, best = null;
-      var list = [x0];
-      Array.prototype.forEach.call(track.querySelectorAll('.tcard'), function (c) {
+      var list = marker ? [todayX()] : [];
+      Array.prototype.forEach.call(cards, function (c) {
         list.push(Math.min(max, Math.max(0, c.offsetLeft + c.offsetWidth / 2 - cw / 2)));
       });
       list.forEach(function (sx) { if (best === null || Math.abs(sx - x) < Math.abs(best - x)) best = sx; });
-      if (best !== null && Math.abs(best - x) >= 2) glideX(best);
+      if (best !== null && Math.abs(best - x) >= 2) {
+        glideX(best, Math.min(380, Math.max(220, Math.abs(best - x) * 1.1)), function (k) { return 1 - Math.pow(1 - k, 3); });
+      }
     };
-    var settleXTimer = 0;
-    var settleXSoon = function () { clearTimeout(settleXTimer); settleXTimer = setTimeout(settleX, 120); };
-    track.addEventListener('touchstart', function () { cancelAnimationFrame(glideXRaf); }, { passive: true });
-
-    if ('onscrollend' in window) {
-      window.addEventListener('scrollend', function () {
-        if (settling) return; // 寄せている最中の動き
-        settle();
-      });
-      track.addEventListener('scrollend', function () {
-        if (settling) return;
-        if (looseX()) settleXSoon(); else settleSoon();
-      });
-    } else {
-      window.addEventListener('scroll', settleSoon, { passive: true });
-      track.addEventListener('scroll', function () { if (!settling && looseX()) settleXSoon(); }, { passive: true });
-    }
-
-    measure();
-    window.addEventListener('load', measure);
-    window.addEventListener('resize', measure);
+    var settleTimer = 0, touching = false;
+    var settleSoon = function () { clearTimeout(settleTimer); settleTimer = setTimeout(function () { if (!touching) settle(); }, 140); };
+    track.addEventListener('touchstart', function () { touching = true; }, { passive: true });
+    track.addEventListener('touchend', function () { touching = false; settleSoon(); }, { passive: true });
+    if ('onscrollend' in window) track.addEventListener('scrollend', function () { if (!gliding) settleSoon(); });
+    else track.addEventListener('scroll', function () { if (!gliding) settleSoon(); }, { passive: true });
+    // 画面の幅が変わったときだけ TODAY に置き直す（スマホのアドレスバーの出入りで高さだけ変わるときは動かさない）
+    var lastW = window.innerWidth;
+    window.addEventListener('resize', function () {
+      if (window.innerWidth === lastW) return;
+      lastW = window.innerWidth;
+      if (!gliding) place();
+    });
   }
 
 
