@@ -10,6 +10,13 @@
 const img = (slug, file, label) => ({ src: `assets/img/events/${slug}/${file}`, label, w: 1241, h: 1754 });
 
 export const EXTRA_MATERIALS = {
+  // 第22回京丹後市オープンミックスダブルステニス大会：要項（京丹後市テニス協会から届いた Word を PDF にしたもの。2026.11.2）
+  'r8-kyotango-mixed': {
+    outline: {
+      images: [img('r8-kyotango-mixed', 'outline-01.webp', '要項')],
+      pdfs: [{ src: 'assets/pdf/events/r8-kyotango-mixed/第22回京丹後市オープンミックスダブルス大会_要項.pdf', label: '要項', kb: 59 }],
+    },
+  },
   // 鳥大オープンテニス大会（12月・シングルス）：要項と申込用紙（1枚の紙に両方。2026.11.2 の訂正版：種目をダブルス→シングルスに訂正）
   'r8-tottori-univ-winter': {
     outline: { images: [img('r8-tottori-univ-winter', 'outline-01.webp', '要項・申込用紙')], pdfs: [] },
@@ -34,6 +41,19 @@ export const EXTRA_MATERIALS = {
 };
 
 export const EXTRA_TOURNAMENTS = [
+  // 第22回京丹後市オープンミックスダブルステニス大会（12/6。京丹後市テニス協会の主催。申込は同協会のエントリーフォーム）
+  {
+    slug: 'r8-kyotango-mixed',
+    name: '第22回京丹後市オープンミックスダブルステニス大会', nendo: '2026', no: '', kind: '預かり',
+    event: 'ミックスダブルス（一般クラス／100歳クラス）', date: '2026-12-06', label: '12月6日（日）',
+    place: '峰山総合公園テニスコート（京都府京丹後市）',
+    spare_date: '', spare_venue: '', spare_note: '予備日なし',
+    due: '11/27（金）20:00', state: '受付中', reg: '登録不要',
+    host: '京丹後市テニス協会',
+    note: '京丹後市テニス協会が主催するオープン大会です（ミックスダブルス。一般クラスと、ペアの年齢の合計が100歳以上の100歳クラス。各クラス4組以上で成立）。参加料は1ペア3,300円（保険料込み・当日会場で支払い。高校生以下は半額）。申込は京丹後市テニス協会のホームページにあるエントリーフォームから行ってください（100歳クラスは生年月日を必ず記入。本人以外の申込はできません）。ドローも同ホームページに掲載されます。',
+    link_label: '京丹後市テニス協会のホームページで申し込む', link_url: 'https://kyotangotennis.sakura.ne.jp/',
+    card: false, materials: [], winners: [], legacy_materials: {},
+  },
   // 鳥大オープンテニス大会（12月・シングルス）。要項・申込用紙は 2026.11.2 の訂正版（申込期限 11/27）
   {
     slug: 'r8-tottori-univ-winter',
@@ -59,6 +79,7 @@ export const EXTRA_CARDS = [
 ];
 
 export const EXTRA_NEWS = [
+  { slug: 'official-20261102-kyotango-mixed-outline', date: '2026-11-02', category: '大会', title: '京丹後市オープンミックスダブルス大会（12/6）の要項を掲載しました（11/27締切）', href: 'outline-r8-kyotango-mixed.html' },
   { slug: 'official-20261102-tottori-univ-outline-fix', date: '2026-11-02', category: '大会', title: '鳥大オープンテニス大会（12/6）の要項を訂正しました（種目はダブルスではなくシングルスです）', href: 'outline-r8-tottori-univ-winter.html' },
   { slug: 'official-20261101-tottori-univ-outline', date: '2026-11-01', category: '大会', title: '鳥大オープンテニス大会（12/6）の要項・申込用紙を掲載しました（11/27締切）', href: 'outline-r8-tottori-univ-winter.html' },
   { slug: 'official-20261030-kensen-s-draw', date: '2026-10-30', category: '大会', title: '鳥取県テニス選手権シングルスのドローを掲載しました（選手の所属を訂正）', href: 'draw-r8-kensen-singles.html' },
