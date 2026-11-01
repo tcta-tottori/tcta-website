@@ -16,8 +16,9 @@
 
 ## 本番公開のときにすること
 
-1. **公開アドレスを本番のドメインにする**：`astro.config.mjs` の `site` を `https://（ドメイン）` に直して配備する。
-   ドメインを Worker につなぐのは `wrangler.jsonc` の `routes`（README）。
+1. **公開アドレスを本番のドメインにする**：`astro.config.mjs` の `site` は `https://tottori-city-tennis.com`（2026-11 に取得）。
+   ドメインは Cloudflare のダッシュボードで Worker（tcta-site）の「設定 → ドメインとルート → 追加 → カスタムドメイン」に
+   `tottori-city-tennis.com` と `www.tottori-city-tennis.com` を足してつなぐ。www 付きは `src/middleware.ts` が www 無しへ転送する。
 2. **Google Search Console に登録する**（https://search.google.com/search-console ）。
    - 「ドメイン」で登録し、表示される TXT レコードを DNS（Cloudflare）に足して確認するのがいちばん簡単。
    - 「サイトマップ」に `sitemap.xml` を送信する。

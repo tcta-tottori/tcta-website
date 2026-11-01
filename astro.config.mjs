@@ -18,7 +18,10 @@ const assetV = (path) =>
 const PAGE = { maxAge: 86_400, swr: 604_800, tags: ['news', 'tournaments', 'event_info', 'all'] };
 
 export default defineConfig({
-  site: 'https://tcta-site.tcta-admin-worker.workers.dev',
+  // 公開アドレス（本番のドメイン）。検索の代表アドレス・サイトマップ・SNS 共有のアドレスはここから作る（docs/seo.md）。
+  // ドメインは Cloudflare の Worker（tcta-site）の「ドメインとルート」でカスタムドメインとしてつないでいる。
+  // 管理画面は workers.dev のアドレス（/_emdash/admin/）のまま使える。workers.dev で見たページは検索に出さない（Base.astro）
+  site: 'https://tottori-city-tennis.com',
 
   // EmDash（管理画面・API・最新の内容）はリクエストごとに描くので server 出力。
   // 公開サイトは Cloudflare Workers で動く（docs/emdash.md）。
