@@ -10,7 +10,7 @@ const draw = e?.sections.find((s) => s.key === 'draw');
 if (!e || !draw) return Astro.rewrite('/404');
 ---
 
-<EventSection e={e} label="ドロー" en="Draw">
+<EventSection e={e} label="ドロー" en="Draw" revisionKeys={['draw']}>
   <p class="note rv" style="margin-bottom:0">{draw.lead}</p>
   <div class="rv"><SheetList images={draw.images} pdfs={draw.pdfs} alt={`${e.name} ドロー`} /></div>
 </EventSection>

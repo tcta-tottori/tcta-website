@@ -5,6 +5,7 @@
 //   STATE_OVERRIDE  … 管理画面の受付状態がまだ「まもなく受付／未受付」のときだけ、こちらの状態にする（schedule.js）
 //   EXTRA_CARDS     … 管理画面で「トップページの大会カードに出す」にチェックが無くても、トップの大会カードに出す大会（tournaments.js）
 //   EXTRA_TOURNAMENTS … 管理画面にまだ無い大会の行（管理画面の「大会」と同じ項目。cms.js が読み込んだ行に足す。同じ slug が管理画面にあればそちらを使う）
+//   EXTRA_REVISIONS … 大会ごとの訂正の記録（管理画面の「訂正の記録」と同じ形。events.js が管理画面の行に足す）
 //   EXTRA_NEWS      … お知らせに足す行（news.js。同じ日付・同じ題名の行が管理画面にあれば足さない）
 
 const img = (slug, file, label) => ({ src: `assets/img/events/${slug}/${file}`, label, w: 1241, h: 1754 });
@@ -68,6 +69,15 @@ export const EXTRA_TOURNAMENTS = [
     card: true, materials: [], winners: [], legacy_materials: {},
   },
 ];
+
+export const EXTRA_REVISIONS = {
+  'r8-tottori-univ-winter': [
+    { date: '2026-11-02', section: '要項', text: '種目を「男子ダブルス・女子ダブルス」から「男子シングルス・女子シングルス」に訂正しました。要項・申込用紙は訂正版に差し替えています。' },
+  ],
+  'r8-kensen-singles': [
+    { date: '2026-10-30', section: 'ドロー', text: '男子45歳以上・65歳以上／一般女子・女子45歳以上シングルスのドローで、選手の所属を訂正しました。' },
+  ],
+};
 
 export const STATE_OVERRIDE = {
   'r8-no18': '受付中',

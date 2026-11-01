@@ -1,10 +1,12 @@
 ---
 // 大会1件の「要項」「ドロー」「結果」それぞれの独立したページの土台。
-// 見出し（■ ENGLISH ／ 日本語）、パンくず、期日・会場、本文（slot）、大会ページへの戻り、の順。
+// 見出し（■ ENGLISH ／ 日本語）、パンくず、期日・会場、訂正のお知らせ、本文（slot）、大会ページへの戻り、の順。
 import Base from '../layouts/Base.astro';
 import EventMeta from './EventMeta.astro';
+import RevisionNotice from './RevisionNotice.astro';
 
-const { e, label, en, ghost = en.toUpperCase() } = Astro.props;
+// revisionKeys … 本文の上に出す訂正の種類（['draw'] など。RevisionNotice.astro）
+const { e, label, en, ghost = en.toUpperCase(), revisionKeys = [] } = Astro.props;
 const title = `${e.displayName} ${label}｜大会情報｜鳥取市テニス協会`;
 const description = `${e.label}に${e.place}で行われる${e.name}（${e.event}）の${label}です。`;
 ---
@@ -36,6 +38,7 @@ const description = `${e.label}に${e.place}で行われる${e.name}（${e.event
 
   <section class="section">
     <div class="container container--result">
+      <RevisionNotice revisions={e.revisions} keys={revisionKeys} />
       <slot />
       <nav class="page-nav rv" aria-label="大会のページへ">
         <a class="page-nav__link" href={e.url}><span class="page-nav__dir">← 大会のページ</span><span class="page-nav__title">{e.displayName}</span></a>
