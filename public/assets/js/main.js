@@ -2676,13 +2676,14 @@
      動きを減らす設定・軽量モードでは何もしない（1行にせず、折り返して全部出す）。
      幅が変わったとき・文字の書体やロゴの画像を読み終えたときに測り直す */
   function initEntryMarquee() {
-    var list = document.querySelector('.entry-list');
-    if (!list || reduceMotion) return;
+    // エントリー受付中の大会と、大会情報の一覧（どちらも .entry-list）
+    var lists = document.querySelectorAll('.entry-list');
+    if (!lists.length || reduceMotion) return;
     var mq = window.matchMedia('(max-width: 767px)');
     var GAP = 40, SPEED = 36; // 文字と写しの間（px。style.css の .mq__track の gap と同じ）、流れる速さ（px／秒）
     var setup = function () {
-      list.classList.toggle('mq-on', mq.matches);
-      list.querySelectorAll('.mq').forEach(function (el) {
+      lists.forEach(function (list) { list.classList.toggle('mq-on', mq.matches); });
+      document.querySelectorAll('.entry-list .mq').forEach(function (el) {
         var track = el.querySelector('.mq__track');
         var inner = el.querySelector('.mq__inner');
         if (!track || !inner) return;
@@ -2694,6 +2695,8 @@
         var clone = inner.cloneNode(true);
         clone.classList.add('mq__clone');
         clone.setAttribute('aria-hidden', 'true');
+        // 写しの中のリンク（大会名）は、キーボードで2回止まらないようにする
+        clone.querySelectorAll('a').forEach(function (a) { a.setAttribute('tabindex', '-1'); });
         track.appendChild(clone);
         var shift = w + GAP;
         el.style.setProperty('--mq-shift', shift + 'px');

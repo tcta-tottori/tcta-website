@@ -1,0 +1,83 @@
+---
+// トップ「大会情報」の一覧（index.html.astro の #tournaments）。
+// 以前は写真のカードを横スクロールで並べていたが、アンケートで「ドローなどの情報が分かりづらい」との声があったので、
+// 「エントリー受付中の大会」（EntryOpen.astro）と同じ行の型の一覧にし、1行ごとに 要項・ドロー・結果 の3つのボタンを付ける。
+//
+// 出す大会：トップの大会カードに出す大会（src/data/tournaments.js の buildCards。管理画面の「トップページの大会カードに出す」）のうち、
+//   開催日が今日以降のものと、開催日から HOME_KEEP_DAYS 日以内の終わった大会（結果を見られるように残す）。開催日の古い順。
+//   開催日（複数日の大会は初日）で決める（管理画面の受付状態を「終了」にし忘れていても、2週間で消える）。
+//
+// 1行：開催日（「11.15」＋曜日）｜大会名（押すと大会のページ）・種目・会場｜状態のバッジ｜要項・ドロー・結果
+//   スマホは 開催日｜状態 の段、その下に大会名、種目｜会場（中央で分けて左揃え）、いちばん下に3つのボタン。
+//   大会名・種目・会場が1行に収まらないスマホでは横に流す（main.js の initEntryMarquee。エントリー受付中と同じ）。
+//   ボタンの行き先は大会情報ページの一覧・大会カードと同じ（src/data/event-buttons.js。素材の無いものは灰色で押せない）。
+//   終わった大会は日付を灰色にする。
+import Icon from './Icon.astro';
+import Venue from './Venue.astro';
+import { STATUS, dateChip } from '../data/tournaments.js';
+
+const { items = [] } = Astro.props;
+
+/** 大会名の折り返してよい位置（EntryOpen.astro・TournamentList.astro と同じ） */
+const nameParts = (name) =>
+  String(name ?? '').split(/(?<=第\d+回)|(?<=年度)|(?<=協会)|(?=（)|(?<=.)(?=テニス|シングルス|ダブルス|ミックス)|(?<=\s)/u).filter(Boolean);
+/** 種目の折り返してよい位置。「／」「/」「・」の後ろと「（」の前 */
+const eventParts = (text) => String(text ?? '').split(/(?<=[／/・])|(?=（)/).filter(Boolean);
+const extAttrs = (href) => (/^https?:/.test(href ?? '') ? { target: '_blank', rel: 'noopener noreferrer' } : {});
+---
+
+{items.length > 0 ? (
+  <ul class="entry-list entry-list--tl" aria-label="開催前と終わったばかりの大会">
+    {items.map((t, i) => {
+      const chip = dateChip(t.date);
+      const badge = STATUS[t.status] ?? STATUS.soon;
+      const href = t.action?.href ?? null;
+      return (
+        <li>
+          <div class:list={['entry-row', 'entry-row--tl', 'rv', t.status === 'past' && 'entry-row--past']} style={`transition-delay:${0.1 + Math.min(i, 8) * 0.06}s`}>
+            <span class="entry-row__date">
+              <span class="entry-row__label">開催日</span>
+              <span class="entry-row__day">{chip.md}</span>
+              <span class="entry-row__dow">{chip.dow}</span>
+            </span>
+            <span class="entry-row__main">
+              <span class="entry-row__title">
+                <span class="mq entry-row__name"><span class="mq__track"><span class="mq__inner">
+                  {href ? <a class="entry-row__link" href={href} {...extAttrs(href)}>{nameParts(t.title).map((part, j, arr) => <>{part}{j < arr.length - 1 && <wbr />}</>)}</a> : nameParts(t.title).map((part, j, arr) => <>{part}{j < arr.length - 1 && <wbr />}</>)}
+                </span></span></span>
+              </span>
+              {(t.event || t.venue) && (
+                <span class="entry-row__meta">
+                  {t.event && (
+                    <span class="entry-row__event">
+                      <Icon name="list" class="entry-row__ico" />
+                      <span class="visually-hidden">種目：</span>
+                      <span class="mq"><span class="mq__track"><span class="mq__inner">{eventParts(t.event).map((part, j, arr) => <>{part}{j < arr.length - 1 && <wbr />}</>)}</span></span></span>
+                    </span>
+                  )}
+                  {t.venue && (
+                    <span class="entry-row__event entry-row__venue">
+                      <Icon name="pin" class="entry-row__ico" />
+                      <span class="visually-hidden">会場：</span>
+                      <span class="mq"><span class="mq__track"><span class="mq__inner"><Venue text={t.venue} breaks /></span></span></span>
+                    </span>
+                  )}
+                </span>
+              )}
+            </span>
+            <span class="entry-row__status"><span class="visually-hidden">状態：</span><span class={`badge ${badge.badge}`}>{badge.label}</span></span>
+            <span class="entry-row__btns">
+              {(t.buttons ?? []).map((b) =>
+                b.href
+                  ? <a class="btn btn--outline tl-btn entry-row__btn" href={b.href} {...(b.external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}>{b.label}</a>
+                  : <span class="btn tl-btn tl-btn--off entry-row__btn" aria-disabled="true" title="準備中">{b.label}</span>
+              )}
+            </span>
+          </div>
+        </li>
+      );
+    })}
+  </ul>
+) : (
+  <p class="note">開催前の大会はありません。</p>
+)}

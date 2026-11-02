@@ -1,14 +1,13 @@
 ---
 import Base from '../layouts/Base.astro';
-import TournamentCard from '../components/TournamentCard.astro';
-import TournamentList from '../components/TournamentList.astro';
+import HomeTournaments from '../components/HomeTournaments.astro';
 import EntryOpen from '../components/EntryOpen.astro';
 import LiteToggle from '../components/LiteToggle.astro';
 import LinkCard from '../components/LinkCard.astro';
 import NewsRow from '../components/NewsRow.astro';
 import Icon from '../components/Icon.astro';
 import { siteData } from '../lib/cms.js';
-import { today } from '../data/tournaments.js';
+import { todayJST } from '../data/schedule.js';
 import { LINK_ROWS, LINK_GROUPS } from '../data/links.js';
 import { NEWS_VISIBLE, NEWS_VISIBLE_PC } from '../data/news.js';
 import { COURTS_HOME, CITY_RESERVE } from '../data/courts.js';
@@ -16,8 +15,7 @@ import CourtMap from '../components/CourtMap.astro';
 import ScheduleCalendar from '../components/ScheduleCalendar.astro';
 
 // 大会カード・お知らせは EmDash から（1 リクエストに 1 回だけ読む）
-const { TOURNAMENTS, NEWS, ROWS = [] } = await siteData(Astro);
-const TODAY = today();
+const { TOURNAMENTS, NEWS } = await siteData(Astro);
 // エントリー受付中の大会（トップの大会カードのうち、状態が「受付中」のもの。ヒーローの直後の区画に出す）
 const ENTRY_OPEN = TOURNAMENTS.filter((t) => t.status === 'open');
 
@@ -43,13 +41,14 @@ const description = "鳥取市テニス協会の公式サイト。年間19の大
 const marqueeHalf = (items) =>
   Array.from({ length: Math.ceil(8 / items.length) }, () => items).flat();
 
-// TODAY マーカーを境に、終了した大会と今後の大会に分ける。
-const pastTournaments = TOURNAMENTS.filter((t) => t.status === 'past');
-const upcomingTournaments = TOURNAMENTS.filter((t) => t.status !== 'past');
-
-// 一覧表示（切り替えボタンで選ぶ）。カードと同じ大会を、主催の協会に関係なく、開催前のものだけ日付順に並べる
-const CARD_SLUGS = new Set(TOURNAMENTS.map((t) => t.slug));
-const LIST_ROWS = ROWS.filter((t) => CARD_SLUGS.has(t.slug) && t.status !== 'done').sort((a, b) => a.date.localeCompare(b.date));
+// 大会情報の一覧（HomeTournaments.astro）。トップの大会カードに出す大会のうち、開催日が今日以降のものと、
+// 開催日から HOME_KEEP_DAYS 日以内の終わった大会（結果を見られるように残す）。開催日の古い順（TOURNAMENTS がその順）
+const HOME_KEEP_DAYS = 14;
+const keepFrom = (() => {
+  const [y, m, d] = todayJST().split('-').map(Number);
+  return new Date(Date.UTC(y, m - 1, d - HOME_KEEP_DAYS)).toISOString().slice(0, 10).replace(/-/g, '.');
+})();
+const HOME_TOURNAMENTS = TOURNAMENTS.filter((t) => t.date >= keepFrom);
 ---
 
 <Base
@@ -148,72 +147,30 @@ const LIST_ROWS = ROWS.filter((t) => CARD_SLUGS.has(t.slug) && t.status !== 'don
     </div>
   </section>}
 
-  <!-- ============ 大会情報（カルーセル） ============ -->
-  {/* 表示は2通り。見出しの右の切り替えボタンで選ぶ（main.js の initHomeView。初めはカード表示）。
-      カード表示：大会カードを横スクロールで並べる（TODAY の線から始まり、左へ送ると終了した大会）。
-      一覧表示：カードと同じ大会のうち開催前のものだけを、大会情報ページの縮小表示と同じ表で出す（主催の協会は問わない） */}
-  <section class="section section--gray section--cards" id="tournaments" aria-labelledby="tournaments-title">
-    <div class="hpin-track"><div class="hpin">
-    {/* 背景の英字も止める区画の中に置く（止まっているあいだ一緒に止まる） */}
+  <!-- ============ 大会情報（一覧） ============ -->
+  {/* 開催前の大会と、開催日から2週間以内の終わった大会を、エントリー受付中の大会と同じ行の型で並べる
+      （1行ごとに 要項・ドロー・結果 のボタン。HomeTournaments.astro）。
+      以前の写真のカードの横スクロールとカード／一覧の切り替えは、アンケートで「ドローなどの情報が分かりづらい」との声があったのでやめた */}
+  <section class="section section--gray" id="tournaments" aria-labelledby="tournaments-title">
     <span class="ghost" aria-hidden="true">TOURNAMENT</span>
     <div class="container">
-      {/* 見出しの下の行の右端に表示の切り替え（カード／一覧。初めはカード。main.js の initHomeView） */}
-      <div class="sec-bar sec-bar--tools rv">
-        <div class="sec-head">
-          <div class="sec-head__row">
-            <span class="sec-head__mark" aria-hidden="true"></span>
-            <div>
-              <p class="sec-head__eyebrow">Tournament</p>
-              <h2 class="sec-head__title" id="tournaments-title">大会情報</h2>
-            </div>
+      <div class="sec-head rv">
+        <div class="sec-head__row">
+          <span class="sec-head__mark" aria-hidden="true"></span>
+          <div>
+            <p class="sec-head__eyebrow">Tournament</p>
+            <h2 class="sec-head__title" id="tournaments-title">大会情報</h2>
           </div>
         </div>
-        <div class="view-switch" role="group" aria-label="大会情報の表示の切り替え" data-home-view-switch>
-          <button class="view-switch__btn is-active" type="button" data-home-view="cards" aria-pressed="true" aria-label="カード表示" title="カード表示">
-            <span class="view-switch__ico view-switch__ico--cards" aria-hidden="true"></span>
-          </button>
-          <button class="view-switch__btn" type="button" data-home-view="rows" aria-pressed="false" aria-label="一覧表示（開催前の大会）" title="一覧表示">
-            <span class="view-switch__ico view-switch__ico--rows" aria-hidden="true"></span>
-          </button>
-        </div>
       </div>
-    </div>
-
-    {/* カルーセルは画面いっぱいに流す。コンテナの外に置き、1枚目だけ
-        本文と同じ位置から始まるよう内側に余白を取る。 */}
-    <div class="carousel" data-carousel tabindex="0" role="group" aria-label="大会カルーセル（横スクロール）">
-
-        <!-- 終了した大会 -->
-        {pastTournaments.map((t) => <TournamentCard tournament={t} />)}
-
-        <!-- TODAY -->
-        <div class="today-marker" data-carousel-today aria-hidden="true">
-          <span class="today-marker__label">TODAY</span>
-          <span class="today-marker__line"></span>
-          <span class="today-marker__date">{TODAY}</span>
-        </div>
-
-        <!-- 今後の大会 -->
-        {upcomingTournaments.map((t) => <TournamentCard tournament={t} />)}
-
-    </div>
-
-    {/* 一覧表示（開催前の大会だけ。大会情報ページの縮小表示と同じ表から、登録区分・会場・予備日を省く）。切り替えるまでは隠しておく */}
-    <div class="container home-tl" data-home-list hidden>
-      <TournamentList items={LIST_ROWS} caption="開催前の大会一覧" compact />
-      {LIST_ROWS.length === 0 && <p class="note">開催前の大会はありません。</p>}
-    </div>
-
-    <div class="container">
-      {/* カードの下の右端に VIEW ALL（大会情報のページへ。「開催前」で絞り込んだ状態で開く） */}
+      <HomeTournaments items={HOME_TOURNAMENTS} />
+      {/* 一覧の下の右端に VIEW ALL（大会情報のページへ。「開催前」で絞り込んだ状態で開く） */}
       <div class="sec-more rv">
         <a class="view-all" href="tournaments.html?filter=upcoming">
           <span class="view-all__label">VIEW ALL</span><span class="ln-arrow" aria-hidden="true"></span>
         </a>
       </div>
     </div>
-    </div></div>
-
   </section>
 
   <!-- ============ お知らせ ============ -->
