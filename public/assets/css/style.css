@@ -3812,6 +3812,18 @@ body.jsrv .rv.on .ink-sweep {
   /* 行の幅（後ろの .tlx__row の max-content）より強くするため .tlx から書く */
   .tlx .tlx__row { width: 100%; min-width: var(--tlx-min); }
 }
+/* 登録区分・会場・予備日を省いた表（トップの大会情報の一覧表示。TournamentList の compact）。
+   列は 大会名｜日程｜状態｜種目｜締切｜要項｜ドロー｜結果 */
+.tl--compact .tlx { --tlx-cols: 150px 64px 92px 150px 64px 68px 68px 68px; }
+@media (min-width: 768px) { .tl--compact .tlx { --tlx-cols: 220px 76px 100px 190px 76px 76px 76px 76px; } }
+@media (min-width: 1024px) {
+  .tl--compact .tlx {
+    --tlx-cols:
+      minmax(160px, 2.6fr) minmax(64px, .85fr) minmax(84px, 1fr) minmax(130px, 2fr)
+      minmax(64px, .85fr) minmax(56px, .8fr) minmax(56px, .8fr) minmax(56px, .8fr);
+    --tlx-min: 700px;
+  }
+}
 .tlx__row {
   display: grid;
   grid-template-columns: var(--tlx-cols);
