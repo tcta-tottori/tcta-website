@@ -29,7 +29,7 @@ const COMMITTEES = [
   { name: '渉外・規約改正委員会', chair: '漆原 和弘', vice: '麻木 政史', members: '' },
 ];
 
-// 協会規約の紙面（5ページ）。カードで並べ、ページごとに載っている章・条を添える
+// 協会規約の紙面（5ページ）。横スクロールの画像カードで並べる（章・条は読み上げ用のラベルに使う）
 const RULES = [
   { n: 1, title: '第1章 名称および事務所〜第4章 役員', arts: '第1条〜第7条' },
   { n: 2, title: '第4章 役員（続き）〜第5章 代議員会', arts: '第8条〜第13条' },
@@ -123,18 +123,13 @@ const RULES = [
       <div class="rv" style="margin-top:56px">
         <h2 class="sub-head">協会規約</h2>
         <p class="prose" style="max-width:46em">鳥取市テニス協会規約（令和5年4月1日施行）です。</p>
-        {/* 紙面はカードで並べる（ページの縮小＋載っている章・条）。押すと全画面で読める（main.js の initLightbox。前後に送れる） */}
-        <div class="sheets sheets--cards">
+        {/* 紙面はトップの大会カードのように横スクロールで並べる（画像だけのカード）。押すと全画面で読める（main.js の initLightbox。前後に送れる） */}
+        <div class="sheets sheets--rail" tabindex="0" role="group" aria-label="協会規約の紙面（横スクロール）">
           {RULES.map((r) => (
-            <a class="sheet sheet--card" href={`assets/img/about/rules-0${r.n}.webp`}>
+            <a class="sheet sheet--card" href={`assets/img/about/rules-0${r.n}.webp`} aria-label={`協会規約 ${r.n}ページ目（${r.title}・${r.arts}）を拡大して読む`}>
               <span class="sheet__thumb">
-                <img src={`assets/img/about/rules-0${r.n}.webp`} alt={`鳥取市テニス協会規約 ${r.n}ページ目`} width="850" height="1320" loading="lazy" decoding="async">
+                <img src={`assets/img/about/rules-0${r.n}.webp`} alt={`鳥取市テニス協会規約 ${r.n}ページ目（${r.arts}）`} width="850" height="1320" loading="lazy" decoding="async">
                 <span class="sheet__zoom" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></span>
-              </span>
-              <span class="sheet__body">
-                <span class="sheet__page">P.{r.n}</span>
-                <span class="sheet__title">{r.title}</span>
-                <span class="sheet__arts">{r.arts}</span>
               </span>
             </a>
           ))}
