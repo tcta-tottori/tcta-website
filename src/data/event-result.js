@@ -38,6 +38,15 @@ export function photoCaption(label, category) {
 /** 種目の成績（places）→ 写真の下の1行（「優勝 ○○　準優勝 ○○」の各要素） */
 const captionsOf = (places) => places.filter((p) => p.name).map((p) => `${p.award} ${p.name}`);
 
+/**
+ * 写真のラベルから拾った説明が順位だけ（「優勝ペアの写真」→「優勝」）のときは、同じ種目の成績から同じ順位の名前を補う。
+ * 例）「優勝」＋ 成績「優勝 河上・万道 ペア」→「優勝 河上・万道 ペア」。名前の分かる説明・成績に無い順位はそのまま
+ */
+const withName = (caption, captions) => {
+  if (!caption || /\s/.test(caption)) return caption;
+  return captions.find((c) => norm(c).startsWith(`${norm(caption)} `)) ?? caption;
+};
+
 /** ラベルの先頭が種目名か（「1位トーナメント 優勝 ○○」→ 1位トーナメント） */
 const startsWithCategory = (label, category) => {
   const l = norm(label);
@@ -110,7 +119,7 @@ export function eventResultLayout(e) {
   blocks = sortByCategory(blocks, (b) => b.label);
 
   // 写真1枚ごとの名前（ラベルの「優勝 ○○ペア」）
-  for (const b of blocks) b.photos = b.photos.map((img) => ({ ...img, caption: photoCaption(img.label, b.label) }));
+  for (const b of blocks) b.photos = b.photos.map((img) => ({ ...img, caption: withName(photoCaption(img.label, b.label), b.captions) }));
 
   // 種目が1つだけなら、どこにも付かなかった結果表もその種目のもの
   const main = blocks.filter((b) => b.label !== '予選リーグ');
