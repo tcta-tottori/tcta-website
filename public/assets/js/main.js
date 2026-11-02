@@ -1886,6 +1886,57 @@
     });
   }
 
+  /* ---------- 大会結果ページの表示の切り替え（縮小表示＝一覧 .rlist／拡大表示＝カード .rcards） ----------
+     年度の見出しごとに切り替えのボタンがあるが、どれを押してもすべての年度（.rl）がそろって切り替わる。
+     選んだ方は端末に覚えておく（大会情報ページとは別に覚える）。切り替えたときと年度を選んだときは、1件ずつ順に出す（.is-switching） */
+  function initResultView() {
+    var sws = document.querySelectorAll('[data-rl-switch]');
+    if (!sws.length) return;
+    var KEY = 'tcta-rl-view';
+    var lists = document.querySelectorAll('.rl');
+    var current = 'rows';
+    var replay = function (l) {
+      l.classList.remove('is-switching');
+      void l.offsetWidth;
+      l.classList.add('is-switching');
+    };
+    var set = function (view) {
+      current = view;
+      lists.forEach(function (l) { l.classList.toggle('rl--cards', view === 'cards'); });
+      sws.forEach(function (sw) {
+        sw.querySelectorAll('[data-view]').forEach(function (b) {
+          var on = b.getAttribute('data-view') === view;
+          b.classList.toggle('is-active', on);
+          b.setAttribute('aria-pressed', String(on));
+        });
+      });
+    };
+    var saved = null;
+    try { saved = localStorage.getItem(KEY); } catch (e) {}
+    if (saved === 'rows' || saved === 'cards') set(saved);
+    sws.forEach(function (sw) {
+      sw.addEventListener('click', function (e) {
+        var b = e.target.closest('[data-view]');
+        if (!b) return;
+        var view = b.getAttribute('data-view');
+        if (view === current) return;
+        set(view);
+        if (!reduceMotion) lists.forEach(replay);
+        try { localStorage.setItem(KEY, view); } catch (x) {}
+      });
+    });
+    // 年度を選んだとき（タブ）も、出てきた年度の一覧を順に出す
+    if (!reduceMotion) {
+      document.querySelectorAll('.year-tab[role="tab"]').forEach(function (t) {
+        t.addEventListener('click', function () {
+          var panel = document.getElementById(t.getAttribute('aria-controls'));
+          var l = panel && panel.querySelector('.rl');
+          if (l) requestAnimationFrame(function () { replay(l); });
+        });
+      });
+    }
+  }
+
   /* ---------- 大会一覧の縮小表示（.tlx） ----------
      本体（.tlx__body）の横スクロールに、項目名の行（.tlx__head。画面の上端に固定）をついていかせる。
        スクロール連動アニメーションが使えるブラウザ … .tlx--sda を付け、送れる最大の幅（--tlx-max）だけ測って入れる。
@@ -2403,6 +2454,7 @@
     initCarousel();
     initFilters();
     initViewSwitch();
+    initResultView();
     initTlx();
     initTabs();
     initForm();

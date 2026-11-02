@@ -4408,6 +4408,59 @@ button.dl-item { width: 100%; text-align: left; }
   .rlist__item .sqbtn { display: none; }
 }
 
+/* 縮小表示（一覧 .rlist）と拡大表示（カード .rcards）の切り替え。.rl--cards のときカード、外れているとき一覧だけを出す
+   （results.html の見出しの右のボタン。main.js の initResultView） */
+.year-head { align-items: center; }
+.year-head__switch { margin-left: auto; }
+.rl:not(.rl--cards) .rcards, .rl.rl--cards .rlist { display: none; }
+/* 切り替えたとき・年度を選んだときに、1件ずつ少し小さい状態から等倍へ出す（大会情報の一覧と同じ動き） */
+.rl.is-switching .rlist > li, .rl.is-switching .rcards__item { animation: tl-row-in .5s cubic-bezier(.2, .8, .2, 1) both; animation-delay: calc(min(var(--i, 0), 14) * 35ms); }
+@media (prefers-reduced-motion: reduce) { .rl.is-switching .rlist > li, .rl.is-switching .rcards__item { animation: none; } }
+/* PC の一覧は2列。上から下へ並べ、左の列が埋まったら右の列へ（開催順が縦に読める。行の数 --rows は results.html が入れる） */
+@media (min-width: 1024px) {
+  .rlist { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: repeat(var(--rows, 1), auto); grid-auto-flow: column; column-gap: 48px; }
+  .rlist > li { display: flex; }
+  .rlist > li > .rlist__item { flex: 1 1 auto; }
+}
+/* 拡大表示のカード。写真（優勝者・当日・種目の写真）の左上に日付、下に大会名・種目・「結果を見る」 */
+.rcards { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+@media (min-width: 640px) { .rcards { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; } }
+@media (min-width: 1024px) { .rcards { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; } }
+.rcards__item { display: flex; }
+.rcard {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--white);
+  color: var(--ink);
+  transition: box-shadow .3s ease, transform .3s ease, border-color .3s ease;
+}
+.rcard:hover { color: inherit; }
+@media (hover: hover) {
+  .rcard:hover { transform: translateY(-4px); box-shadow: var(--shadow-hover); border-color: var(--gray-300); }
+  .rcard:hover .rcard__title { color: var(--red); }
+  .rcard:hover .rcard__photo img { transform: scale(1.04); }
+  .rcard:hover .rcard__more .ln-arrow { transform: translateX(4px); }
+}
+.rcard__photo { position: relative; display: block; aspect-ratio: 16 / 9; overflow: hidden; background: var(--gray-100); }
+.rcard__photo img { display: block; width: 100%; height: 100%; object-fit: cover; transition: transform .6s var(--ease); }
+.rcard__photo--none { display: flex; align-items: center; justify-content: center; }
+.rcard__photo-label { font: 700 13px/1 var(--fjp); letter-spacing: .12em; color: var(--gray-500); }
+.rcard__photo .rcard__date {
+  position: absolute;
+  top: 10px; left: 10px;
+  background: rgba(255, 255, 255, .94);
+  box-shadow: 0 2px 8px rgba(26, 26, 26, .18);
+}
+.rcard__body { flex: 1 1 auto; display: flex; flex-direction: column; gap: 8px; padding: 16px 18px 18px; }
+.rcard__title { font: 700 16px/1.5 var(--fjp); color: var(--ink); transition: color .2s ease; }
+.rcard__what { display: inline-flex; align-items: center; gap: 8px; font: 400 13px/1.6 var(--fjp); color: var(--gray-600); }
+.rcard__more { display: inline-flex; align-items: center; gap: 12px; margin-top: auto; padding-top: 6px; font: 700 13px/1 var(--fjp); letter-spacing: .04em; color: var(--red); }
+.rcard__more .ln-arrow { transition: transform .3s ease; }
+
 /* 結果ページの1かたまり。スマホは 結果画像 → その下に優勝者の写真 の1列、
    PC（1024px〜）は 左に結果画像・右に優勝者の写真 の2列。 */
 .container--result { max-width: 1040px; }
