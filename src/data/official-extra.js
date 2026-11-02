@@ -11,6 +11,16 @@
 const img = (slug, file, label) => ({ src: `assets/img/events/${slug}/${file}`, label, w: 1241, h: 1754 });
 
 export const EXTRA_MATERIALS = {
+  // 第62回鳥取市テニス協会会長杯（秋季・ダブルス。11/15）：ドロー（プログラム。2026.11.2）
+  'r8-kaicho-autumn': {
+    draw: {
+      images: [
+        img('r8-kaicho-autumn', 'draw-01.webp', 'プログラム（日程・注意事項）'),
+        img('r8-kaicho-autumn', 'draw-02.webp', '男子B級・男子C級・女子B級ダブルス'),
+      ],
+      pdfs: [{ src: 'assets/pdf/events/r8-kaicho-autumn/R8会長杯秋の部ダブルスプログラム.pdf', label: 'R8会長杯 秋の部 ダブルス プログラム', kb: 110 }],
+    },
+  },
   // 第22回京丹後市オープンミックスダブルステニス大会：要項（京丹後市テニス協会から届いた Word を PDF にしたもの。2026.11.2）
   'r8-kyotango-mixed': {
     outline: {
@@ -90,6 +100,7 @@ export const EXTRA_CARDS = [
 ];
 
 export const EXTRA_NEWS = [
+  { slug: 'official-20261102-kaicho-autumn-draw', date: '2026-11-02', category: '大会', title: '第62回鳥取市テニス協会会長杯（秋季・11/15）のドローを掲載しました', href: 'draw-r8-kaicho-autumn.html' },
   // ホームページについてのアンケート（受付は src/data/survey.js の期間。11/9 まで）
   { slug: 'site-20261102-survey', date: '2026-11-02', category: 'お知らせ', title: 'ホームページについてのアンケートを実施しています。追加してほしいこと・ご意見・修正が必要な箇所をお寄せください（11/9まで）', href: 'survey.html' },
   { slug: 'official-20261102-kyotango-mixed-outline', date: '2026-11-02', category: '大会', title: '京丹後市オープンミックスダブルス大会（12/6）の要項を掲載しました（11/27締切）', href: 'outline-r8-kyotango-mixed.html' },
