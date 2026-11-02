@@ -2601,7 +2601,7 @@
   /* ---------- トップの「エントリー受付中の大会」の「残り○日」 ----------
      公開ページはキャッシュされる（最長1日）ので、サーバーで書いた日数は見た日とずれることがある。
      見た日（日本時間）から締切（data-due-left の 'YYYY-MM-DD'）までの日数を数え直す。
-     当日は「本日締切」、3日以内は赤く塗る（.is-urgent）、締切を過ぎていれば隠す。決まりは EntryOpen.astro と同じ */
+     当日は「本日締切」、締切を過ぎていれば隠す。3日以内には .is-urgent の印を付ける（見た目はいつも赤の塗りつぶし）。決まりは EntryOpen.astro と同じ */
   function initEntryLeft() {
     var tags = document.querySelectorAll('[data-due-left]');
     if (!tags.length) return;

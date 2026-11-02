@@ -1916,7 +1916,7 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 
 /* ============ トップの「エントリー受付中の大会」（ヒーローの直後の区画 #entry。EntryOpen.astro） ============
    お知らせの行（.news-row）と同じ型。開催日と締切は同じ形（小さな見出し＋「11.23」の大きな数字＋曜日）。
-   締切は見出しと数字を赤にして区別し、ゆっくり点滅させる（大会カードの締切 .tcard__due と同じ due-blink）。
+   締切は見出しと数字を赤にして区別し、赤い文字はそのままに、まわりの赤いネオンの光だけをゆっくり明滅させる（due-neon）。
    ■ スマホ（〜767px）は3段。左右の列は半分ずつで、1段目と3段目の左端をそろえる
        開催日（左揃え）  ｜ エントリー締切（右揃え）
        大会名 ………………………… [残り○日]（点滅）
@@ -1953,33 +1953,38 @@ a.entry-row:hover .sqbtn { background: var(--red); border-color: var(--red); col
 .entry-row__due .entry-row__label,
 .entry-row__due .entry-row__day { color: var(--red); }
 .entry-row__due-text { font: 700 15px/1.3 var(--fjp); color: var(--red); }
-/* 点滅は締切の見出しと日付、スマホの「残り○日」の札 */
+/* 締切の見出しと日付：赤い文字は消さずに、まわりの赤いネオンの光（text-shadow）だけを明滅させる。
+   スマホの「残り○日」のバッジも、受付中の大会カードの枠と同じ赤いネオン（card-neon）でまわりを光らせる。
+   動きを減らす設定の端末では、光らせたまま止める */
 .entry-row__due > .entry-row__label,
 .entry-row__due > .entry-row__day,
 .entry-row__due > .entry-row__dow,
-.entry-row__due > .entry-row__due-text,
-.entry-left--sp { animation: due-blink 1.6s ease-in-out infinite; }
+.entry-row__due > .entry-row__due-text { animation: due-neon 1.6s ease-in-out infinite; }
+.entry-left--sp { animation: card-neon 1.6s ease-in-out infinite; }
+@keyframes due-neon {
+  0%, 100% { text-shadow: 0 0 2px rgba(216, 35, 42, .9), 0 0 8px rgba(216, 35, 42, .75), 0 0 18px rgba(255, 60, 70, .55); }
+  50%      { text-shadow: 0 0 0 rgba(216, 35, 42, 0), 0 0 0 rgba(216, 35, 42, 0), 0 0 0 rgba(255, 60, 70, 0); }
+}
 @media (prefers-reduced-motion: reduce) {
   .entry-row__due > .entry-row__label,
   .entry-row__due > .entry-row__day,
   .entry-row__due > .entry-row__dow,
-  .entry-row__due > .entry-row__due-text,
-  .entry-left--sp { animation: none; }
+  .entry-row__due > .entry-row__due-text { animation: none; text-shadow: 0 0 2px rgba(216, 35, 42, .8), 0 0 8px rgba(216, 35, 42, .5); }
+  .entry-left--sp { animation: none; box-shadow: 0 0 0 1px rgba(216, 35, 42, .9), 0 0 10px 2px rgba(216, 35, 42, .45); }
 }
-/* 「残り○日」（当日は「本日締切」）。ふだんは薄い赤の札、3日以内（.is-urgent）は赤く塗る。
+/* 「残り○日」（当日は「本日締切」）。いつも赤で塗りつぶしたバッジに白い文字。
    日数はブラウザで見た日から数え直す（main.js の initEntryLeft）。
    スマホは大会名の右（.entry-left--sp）、タブレットは締切の日付の下（.entry-left--tb）、PC は締切の日付の左の枠（.entry-left--box。下に別の決まり） */
 .entry-left {
   flex: none;
   padding: 4px 8px;
   border-radius: var(--radius);
-  background: var(--red-tint);
-  color: var(--red);
+  background: var(--red);
+  color: #fff;
   font: 700 12px/1 var(--fjp);
   letter-spacing: .04em;
   white-space: nowrap;
 }
-.entry-left.is-urgent { background: var(--red); color: #fff; }
 .entry-left--tb, .entry-left--box { display: none; }
 .entry-left[hidden] { display: none !important; }
 .entry-row__main { grid-area: main; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
@@ -2032,7 +2037,7 @@ a.entry-row:hover .sqbtn { background: var(--red); border-color: var(--red); col
   .entry-left--tb { display: table; margin-top: 8px; }
 }
 /* PC：締切の日付の左に「残り○日」の枠。開催日・締切と同じく、小さな見出し（残り）＋大きな数字（4）＋単位（日）。
-   ふだんは赤い線の枠に赤い文字、3日以内（.is-urgent）は赤く塗って白い文字。当日は「締切｜本日」 */
+   赤で塗りつぶして白い文字（スマホ・タブレットのバッジと同じ）。当日は「締切｜本日」 */
 @media (min-width: 1024px) {
   .entry-row {
     grid-template-columns: 150px 1fr 88px 150px 44px;
@@ -2051,11 +2056,9 @@ a.entry-row:hover .sqbtn { background: var(--red); border-color: var(--red); col
     gap: 6px;
     min-height: 64px;
     padding: 8px 6px;
-    border: 1px solid var(--red);
-    background: var(--white);
-    color: var(--red);
+    background: var(--red);
+    color: #fff;
   }
-  .entry-left--box.is-urgent { background: var(--red); color: #fff; }
   .entry-left__label { font: 700 11px/1 var(--fjp); letter-spacing: .08em; }
   .entry-left__value { display: flex; align-items: baseline; gap: 2px; }
   .entry-left__num { font: 700 30px/1 var(--flt); letter-spacing: .02em; }
