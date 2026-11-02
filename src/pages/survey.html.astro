@@ -1,0 +1,152 @@
+---
+// ホームページについてのアンケート。質問・期間は src/data/survey.js、受付は /api/survey（D1 に保存）、
+// 読み出しと集計は /api/survey-results（鍵が要る）と tools/survey_report.mjs（docs/survey.md）。
+// 期間を過ぎるとフォームを出さず「受付終了」にする（ページが少し前のまま残っていても、main.js の initSurvey が
+// 見た時点の日時で切り替え、API も受け付けない）。
+import Base from '../layouts/Base.astro';
+import { SURVEY, ROLES, DEVICES, RATINGS, PAGES, KINDS, LIMITS, surveyOpen } from '../data/survey.js';
+
+const open = surveyOpen();
+const title = `${SURVEY.title}｜鳥取市テニス協会`;
+const description = '鳥取市テニス協会のホームページについてのアンケートです。追加してほしいこと、ご意見、修正が必要な箇所をお寄せください。';
+---
+
+<Base title={title} description={description} noindex>
+  <!-- ============ ページヘッダー ============ -->
+  <section class="page-head">
+    <span class="ghost" aria-hidden="true">SURVEY</span>
+    <div class="container">
+      <nav class="breadcrumb" aria-label="パンくず">
+        <a href="index.html">ホーム</a><span class="breadcrumb__sep" aria-hidden="true">›</span><span aria-current="page">アンケート</span>
+      </nav>
+      <div class="page-title-row fu">
+        <span class="sec-head__mark" aria-hidden="true"></span>
+        <div>
+          <p class="page-title__en">Survey</p>
+          <h1 class="page-title">{SURVEY.title}</h1>
+        </div>
+      </div>
+      <p class="page-lead fu" style="animation-delay:.15s">新しくなったホームページについて、追加してほしいこと・ご意見・修正が必要な箇所をお聞かせください。いただいた内容は、ホームページの改善に役立てます。</p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      {/* 受付期間・所要時間・名前は任意 */}
+      <dl class="survey-facts rv">
+        <div><dt>受付期間</dt><dd>{SURVEY.periodLabel}</dd></div>
+        <div><dt>所要時間</dt><dd>3分ほど</dd></div>
+        <div><dt>お名前</dt><dd>なくても回答できます</dd></div>
+      </dl>
+
+      <div class="survey" data-survey data-closes={SURVEY.closesAt} data-opens={SURVEY.opensAt}>
+        {/* 受付終了（期間外）の案内。期間中は隠しておき、main.js が見た時点の日時で出し分ける */}
+        <div class="form-done survey-closed" data-survey-closed hidden={open}>
+          <h2 class="form-done__title">アンケートの受付は終了しました。</h2>
+          <p class="form-done__text">ご協力ありがとうございました。ホームページについてのご意見は、お問い合わせからもお寄せいただけます。</p>
+          <a class="btn btn--outline" href="contact.html">お問い合わせへ <span class="ln-arrow" aria-hidden="true"></span></a>
+        </div>
+
+        <form class="form survey__form rv" data-survey-form novalidate hidden={!open}>
+          {/* Q1 立場 */}
+          <fieldset class="form__row survey-q">
+            <legend class="form__label">1. あなたの立場 <span class="form__opt">任意</span></legend>
+            <div class="choices" role="radiogroup">
+              {ROLES.map((v, i) => (
+                <label class="choice"><input type="radio" name="role" value={v}><span>{v}</span></label>
+              ))}
+            </div>
+          </fieldset>
+
+          {/* Q2 端末 */}
+          <fieldset class="form__row survey-q">
+            <legend class="form__label">2. ふだんホームページを見る端末 <span class="form__opt">任意</span></legend>
+            <div class="choices">
+              {DEVICES.map((v) => (
+                <label class="choice"><input type="radio" name="device" value={v}><span>{v}</span></label>
+              ))}
+            </div>
+          </fieldset>
+
+          {/* Q3 使いやすさ（5段階） */}
+          <fieldset class="form__row survey-q" data-required="rating" data-label="使いやすさ">
+            <legend class="form__label">3. ホームページの見やすさ・使いやすさ <span class="form__req">必須</span></legend>
+            <div class="rating">
+              {RATINGS.map((r) => (
+                <label class="rating__item">
+                  <input type="radio" name="rating" value={r.value}>
+                  <span class="rating__num">{r.value}</span>
+                  {/* 「やや」の後ろでだけ折り返す（狭い画面で「使いにく／い」と切れないように） */}
+                  <span class="rating__label">{r.label.startsWith('やや') ? <>やや<wbr />{r.label.slice(2)}</> : r.label}</span>
+                </label>
+              ))}
+            </div>
+            <p class="field-error" data-error-for="rating" role="alert"></p>
+          </fieldset>
+
+          {/* Q4 ページ */}
+          <fieldset class="form__row survey-q">
+            <legend class="form__label">4. ご意見のあるページ <span class="form__opt">任意・いくつでも</span></legend>
+            <div class="choices">
+              {PAGES.map((v) => (
+                <label class="choice"><input type="checkbox" name="pages" value={v}><span>{v}</span></label>
+              ))}
+            </div>
+          </fieldset>
+
+          {/* Q5 種類 */}
+          <fieldset class="form__row survey-q" data-required="kinds" data-label="ご意見の種類">
+            <legend class="form__label">5. ご意見の種類 <span class="form__req">必須・いくつでも</span></legend>
+            <div class="choices">
+              {KINDS.map((v) => (
+                <label class="choice"><input type="checkbox" name="kinds" value={v}><span>{v}</span></label>
+              ))}
+            </div>
+            <p class="field-error" data-error-for="kinds" role="alert"></p>
+          </fieldset>
+
+          {/* Q6 内容 */}
+          <div class="form__row survey-q">
+            <label class="form__label" for="s-body">6. ご意見の内容 <span class="form__req">必須</span></label>
+            <p class="form__hint">追加してほしいこと、使いにくいところ、気づいたことなど、自由にお書きください。</p>
+            <textarea class="textarea" id="s-body" name="body" data-label="ご意見の内容" maxlength={LIMITS.body} required></textarea>
+            <p class="field-error" data-error-for="body" role="alert"></p>
+          </div>
+
+          {/* Q7 場所 */}
+          <div class="form__row survey-q">
+            <label class="form__label" for="s-place">7. 修正が必要な箇所の場所 <span class="form__opt">任意</span></label>
+            <p class="form__hint">ページの名前やアドレス（URL）、大会名など、場所が分かるように書いていただけると助かります。</p>
+            <input class="input" type="text" id="s-place" name="place" maxlength={LIMITS.place} autocomplete="off" placeholder="例）大会情報のページの 第56回東部地区テニス選手権 の会場">
+          </div>
+
+          {/* Q8 名前 */}
+          <div class="form__row survey-q">
+            <label class="form__label" for="s-name">8. お名前・ご所属 <span class="form__opt">任意</span></label>
+            <p class="form__hint">内容について確認させていただくことがあります。書かなくても回答できます。</p>
+            <input class="input" type="text" id="s-name" name="name" maxlength={LIMITS.name} autocomplete="name">
+          </div>
+
+          {/* ボット避けの見えない欄（人には見えず、入力もしない。何か入っていたら /api/survey が捨てる） */}
+          <div class="form__hp" aria-hidden="true">
+            <label for="s-website">ウェブサイト（入力しないでください）</label>
+            <input type="text" id="s-website" name="website" tabindex="-1" autocomplete="off">
+          </div>
+
+          <p class="survey__deadline">受付は <strong>{SURVEY.closesLabel}</strong> までです。</p>
+          <button class="btn btn--primary" type="submit" data-form-submit>アンケートを送信する <span class="ln-arrow" aria-hidden="true"></span></button>
+          <p class="form__send-error" data-form-error role="alert" hidden></p>
+        </form>
+
+        <div class="form-done" data-form-done role="status">
+          <h2 class="form-done__title">ご回答ありがとうございました。</h2>
+          <p class="form-done__text">いただいたご意見は、ホームページの改善に役立てます。ほかにもお気づきの点があれば、もう一度お送りいただけます。</p>
+          <div class="survey__again">
+            <button class="btn btn--outline" type="button" data-survey-again>もう一度回答する</button>
+            <a class="btn btn--outline" href="index.html">ホームに戻る <span class="ln-arrow" aria-hidden="true"></span></a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</Base>

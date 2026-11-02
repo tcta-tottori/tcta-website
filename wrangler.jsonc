@@ -8,8 +8,10 @@
 	"compatibility_flags": ["nodejs_compat"],
 	// お問い合わせフォーム（src/pages/api/contact.ts）の送り先。メール送信の鍵 RESEND_API_KEY はここには書かず、
 	// Cloudflare の Worker の「シークレット」に入れる（docs/contact.md）
+	// アンケートの回答の読み出し（src/pages/api/survey-results.ts）に使う鍵の SHA-256。鍵そのものは置かない（docs/survey.md）
 	"vars": {
-		"CONTACT_TO": "t.c.t.a.r7@gmail.com"
+		"CONTACT_TO": "t.c.t.a.r7@gmail.com",
+		"SURVEY_KEY_SHA256": "41bd224a948865e0afadeb18eba3055ee3893fdbc1a6bc4e07487ad1dc55e213"
 	},
 	"d1_databases": [
 		{
