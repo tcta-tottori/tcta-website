@@ -1930,21 +1930,65 @@
     if (!carousel || !list) return;
     var btns = sw.querySelectorAll('[data-home-view]');
     var current = 'cards';
+    var timer = 0;
+    var OUT_MS = 180; // いま出ている側を消す時間（style.css の hv-out と同じ）
+
+    /* 切り替えたときの出方（style.css の .hv-out／.hv-in）。大会情報ページの切り替え（initViewSwitch）と同じ動き。
+       押したら、いま出ている側を短くふわっと消し（.hv-out）、次の側を出す。
+       カード表示：画面に見えているカード（と TODAY の線）だけを、左から順に少し小さい状態から等倍へズームしながら出す。
+       一覧表示：項目名の行をふわっと出し、大会の行を上から順にズームしながら出す。
+       動きを減らす設定・軽量モードでは動かさず、すぐ切り替える */
+    var animIn = function (view) {
+      var items;
+      if (view === 'rows') {
+        var tl = list.querySelector('.tl');
+        if (tl) { tl.classList.remove('is-switching'); void tl.offsetWidth; tl.classList.add('is-switching'); }
+        items = Array.prototype.slice.call(list.querySelectorAll('.tlx__body .tlx__row'));
+      } else {
+        var cr = carousel.getBoundingClientRect();
+        items = Array.prototype.filter.call(carousel.querySelectorAll('.tcard, .today-marker'), function (el) {
+          var r = el.getBoundingClientRect();
+          return r.right > cr.left && r.left < cr.right;
+        });
+      }
+      items.forEach(function (el, k) {
+        el.classList.remove('hv-in');
+        void el.offsetWidth;
+        el.style.setProperty('--si', String(k));
+        el.classList.add('hv-in');
+        el.addEventListener('animationend', function done(ev) {
+          if (ev.target !== el || !/^tl-(row|card)-in$/.test(ev.animationName)) return;
+          el.classList.remove('hv-in');
+          el.removeEventListener('animationend', done);
+        });
+      });
+    };
+    var show = function (view) {
+      carousel.classList.remove('hv-out');
+      list.classList.remove('hv-out');
+      carousel.hidden = view !== 'cards';
+      list.hidden = view !== 'rows';
+      if (view === 'cards') carousel.dispatchEvent(new Event('carousel:place'));
+      window.dispatchEvent(new Event('resize'));
+      if (!reduceMotion) animIn(view);
+    };
+
     sw.addEventListener('click', function (e) {
       var b = e.target.closest('[data-home-view]');
       if (!b) return;
       var view = b.getAttribute('data-home-view');
       if (view === current) return;
       current = view;
-      carousel.hidden = view !== 'cards';
-      list.hidden = view !== 'rows';
       btns.forEach(function (x) {
         var on = x === b;
         x.classList.toggle('is-active', on);
         x.setAttribute('aria-pressed', String(on));
       });
-      if (view === 'cards') carousel.dispatchEvent(new Event('carousel:place'));
-      window.dispatchEvent(new Event('resize'));
+      clearTimeout(timer);
+      if (reduceMotion) { show(view); return; }
+      // いま出ている側を消してから、次の側を出す（続けて押されたときは、最後に押した方を出す）
+      (view === 'cards' ? list : carousel).classList.add('hv-out');
+      timer = setTimeout(function () { show(current); }, OUT_MS);
     });
   }
 

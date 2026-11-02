@@ -415,6 +415,25 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 .home-tl { margin-top: 20px; }
 .home-tl[hidden], .carousel[hidden] { display: none; }
 @media (min-width: 1024px) { .home-tl { margin-top: 36px; } }
+/* トップの大会情報のカード表示／一覧表示を切り替えたときの動き（main.js の initHomeView）。大会情報ページの切り替えと同じ。
+   .hv-out … いま出ている側（カルーセル／一覧）を短くふわっと消す（下へ少し沈みながら）
+   .hv-in  … 次の側の、カード（と TODAY の線）／大会の行を、少し小さい状態から等倍へズームしながら順に出す（--si で少しずつずらす）
+   受付中のカードの赤い光（card-neon）は、出てくるあいだも止めずに重ねる。動きを減らす設定では動かさない */
+.home-tl.hv-out, .carousel.hv-out { animation: hv-out .18s ease both; }
+@keyframes hv-out { to { opacity: 0; transform: translateY(8px); } }
+#tournaments .tlx__body .tlx__row.hv-in { animation: tl-row-in .55s cubic-bezier(.2, .8, .2, 1) both; animation-delay: calc(min(var(--si, 0), 14) * 40ms); }
+#tournaments .carousel .tcard.hv-in,
+#tournaments .carousel .today-marker.hv-in { animation: tl-card-in .65s cubic-bezier(.2, .8, .2, 1) both; animation-delay: calc(min(var(--si, 0), 9) * 70ms); }
+#tournaments .carousel .tcard.tcard--open.hv-in {
+  animation: tl-card-in .65s cubic-bezier(.2, .8, .2, 1) both, card-neon 1.6s ease-in-out infinite;
+  animation-delay: calc(min(var(--si, 0), 9) * 70ms), 0s;
+}
+@media (prefers-reduced-motion: reduce) {
+  .home-tl.hv-out, .carousel.hv-out,
+  #tournaments .tlx__body .tlx__row.hv-in,
+  #tournaments .carousel .tcard.hv-in,
+  #tournaments .carousel .today-marker.hv-in { animation: none; }
+}
 
 /* 区画の下の右端に置く VIEW ALL（トップの大会情報：カードの下） */
 .sec-more { display: flex; justify-content: flex-end; margin-top: 20px; }
