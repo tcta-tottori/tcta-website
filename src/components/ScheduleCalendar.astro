@@ -211,7 +211,7 @@ const countText = (m) => (m.evCount ? `${m.count}大会・${m.evCount}イベン�
                 <span class="cal__item-name"><span class="cal__tag cal__tag--lesson">水曜テニス</span><a class="cal__item-link cal__item-link--go" href={LESSON.href}>{LESSON.name}</a></span>
                 <span class="cal__item-sub">{LESSON.when.replace('毎週水曜 ', '')}／{LESSON.place}</span>
               </span>
-              <span class="cal__item-arrow" aria-hidden="true">›</span>
+              <span class="cal__item-arrow" aria-hidden="true">→</span>
             </li>
           );
           if (x.kind === 'event') return (
@@ -221,7 +221,7 @@ const countText = (m) => (m.evCount ? `${m.count}大会・${m.evCount}イベン�
                 <span class="cal__item-name"><span class="cal__tag cal__tag--event">イベント</span>{x.e.href ? <a class="cal__item-link cal__item-link--go" href={x.e.href}>{x.e.title}</a> : x.e.title}</span>
                 {x.e.place && <span class="cal__item-sub">{x.e.place}</span>}
               </span>
-              {x.e.href && <span class="cal__item-arrow" aria-hidden="true">›</span>}
+              {x.e.href && <span class="cal__item-arrow" aria-hidden="true">→</span>}
             </li>
           );
           if (x.kind === 'game') {
@@ -234,7 +234,7 @@ const countText = (m) => (m.evCount ? `${m.count}大会・${m.evCount}イベン�
                   <span class="cal__item-sub">{x.t.event}／{x.t.place}</span>
                 </span>
                 <span class={`badge ${STATUS_LABEL[x.t.status].badge} cal__item-badge`}>{STATUS_LABEL[x.t.status].label}</span>
-                {g && <span class="cal__item-arrow" aria-hidden="true">›</span>}
+                {g && <span class="cal__item-arrow" aria-hidden="true">→</span>}
               </li>
             );
           }
@@ -255,7 +255,7 @@ const countText = (m) => (m.evCount ? `${m.count}大会・${m.evCount}イベン�
                   ))}
                 </span>
               </span>
-              {one && <span class="cal__item-arrow" aria-hidden="true">›</span>}
+              {one && <span class="cal__item-arrow" aria-hidden="true">→</span>}
             </li>
           );
         })}

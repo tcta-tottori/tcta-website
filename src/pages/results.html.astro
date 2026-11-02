@@ -117,11 +117,22 @@ const eras = ['令和', '平成'].map((era) => ({ era, years: years.filter((y) =
 
       {years.map((y, i) => (
         <div class="tabpanel" id={`panel-${y.nendo}`} role="tabpanel" aria-labelledby={`tab-${y.nendo}`} hidden={i !== 0}>
-          {/* 見出しの右に表示の切り替え（大会情報ページと同じ。縮小表示＝一覧／拡大表示＝カード）。
-              年度ごとに置いてあるが、どれを押してもすべての年度が切り替わる（main.js の initResultView。選んだ方を覚えておく） */}
-          <div class="year-head">
-            <h3 class="year-head__title">{y.label}<span class="year-head__en">{y.nendo}</span></h3>
-            <div class="view-switch year-head__switch" role="group" aria-label="表示の切り替え" data-rl-switch>
+          {/* 表示の切り替えは年度ごとに置いてあるが、どれを押してもすべての年度が切り替わる（main.js の initResultView。選んだ方を覚えておく） */}
+          {/* 年度の見出しはページ上部の見出しと同じ形：赤い四角の横に西暦、その下に「令和元年度」の太字、右に縞の入った大きな西暦。
+              年度を選ぶたびに、見出しの塗り替えと右の西暦のスライドインが流れる（.year-head.on。main.js の initResultView が付け直す） */}
+          <div class="year-head rv">
+            <span class="year-head__ghost" aria-hidden="true">{y.nendo}</span>
+            <div class="sec-head__row year-head__row">
+              <span class="sec-head__mark" aria-hidden="true"></span>
+              <div>
+                <p class="sec-head__eyebrow year-head__en">{y.nendo}</p>
+                <h3 class="sec-head__title year-head__title">{y.label}</h3>
+              </div>
+            </div>
+          </div>
+          {/* 表示の切り替え（大会情報ページと同じ。縮小表示＝一覧／拡大表示＝カード）は、見出しの下・一覧のすぐ上の右端 */}
+          <div class="rl-tools">
+            <div class="view-switch" role="group" aria-label="表示の切り替え" data-rl-switch>
               <button class="view-switch__btn is-active" type="button" data-view="rows" aria-pressed="true" aria-label="縮小表示（一覧）" title="縮小表示">
                 <span class="view-switch__ico view-switch__ico--rows" aria-hidden="true"></span>
               </button>
