@@ -4,7 +4,7 @@
 // その下の「大会情報」の区画（カード表示／一覧表示）はこれまでどおり。
 //
 // 見た目はお知らせの行（NewsRow.astro）と同じ型。1大会1行で、
-//   左：開催日（「11.23」を大きく＋曜日）／中：大会名（太字）とその下に種目・会場／右：エントリー締切（開催日と同じ「11.06 FRI」の形。見出しの頭の赤い点から波紋を広げる）／右端：→
+//   左：開催日（「11.23」を大きく＋曜日）／中：大会名（太字）とその下に種目・会場／右：エントリー締切（開催日と同じ「11.06 FRI」の形。日付の下の赤い線が伸びては消える）／右端：→
 // スマホ（〜767px）は3段：開催日｜締切（左右半分ずつ。開催日は左揃え、締切は右揃え）／大会名＋「残り○日」（赤の塗りつぶしのバッジ）／種目｜会場（中央で分けて左揃え）。
 //   大会名・種目・会場が枠に収まらないときは、横に流す（main.js の initEntryMarquee。.mq）。
 //   動きを減らす設定・軽量モードでは流さず、折り返して全部出す。
@@ -117,9 +117,12 @@ const rows = items
             </span>
             <span class="entry-row__date entry-row__due">
               <span class="entry-row__label">エントリー締切</span>
-              {due?.md
-                ? <><span class="entry-row__day">{due.md}</span><span class="entry-row__dow">{due.dow}</span></>
-                : <span class="entry-row__due-text">{due?.text || '要項をご覧ください'}</span>}
+              {/* 日付（と曜日）だけを囲み、そのすぐ下に赤い線を引く（タブレットの「残り○日」の札より上に来るように） */}
+              <span class="entry-row__due-line">
+                {due?.md
+                  ? <><span class="entry-row__day">{due.md}</span><span class="entry-row__dow">{due.dow}</span></>
+                  : <span class="entry-row__due-text">{due?.text || '要項をご覧ください'}</span>}
+              </span>
               {due?.iso && <span class:list={['entry-left', 'entry-left--tb', due.left <= 3 && 'is-urgent']} data-due-left={due.iso} hidden={due.left < 0 ? true : undefined}>{due.left >= 0 ? leftLabel(due.left) : ''}</span>}
             </span>
             {/* PC：締切の日付の左に、日付と同じくらいの大きさの枠で「残り○日」 */}
