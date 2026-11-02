@@ -4641,6 +4641,106 @@ button.dl-item { width: 100%; text-align: left; }
 .survey-closed:not([hidden]) { display: flex; }
 .survey .form-done { max-width: var(--container-narrow); }
 
+/* ============ アンケートを受けた改善の紹介（improvements.html） ============
+   改善1件ずつ：番号・ページ・日付・題名 → いただいたご意見（引用） → 改善前・改善後の見比べ（.compare）または文の比べ（.impv-text）
+   → 変えたところ → 実際のページへ。最後にアンケートへの呼びかけ（.impv-cta） */
+.impv-summary { display: flex; flex-wrap: wrap; align-items: center; gap: 16px 28px; margin-bottom: 56px; padding: 24px 28px; border: 1px solid var(--gray-200); border-left: 4px solid var(--red); border-radius: var(--radius); background: var(--gray-050); }
+.impv-summary__num { font: 700 15px/1 var(--fjp); color: var(--ink); white-space: nowrap; }
+.impv-summary__num span { margin-right: 4px; font: 700 44px/1 var(--flt); color: var(--red); vertical-align: -6px; }
+.impv-summary__text { flex: 1 1 280px; margin: 0; font: 400 14px/1.9 var(--fjp); color: var(--gray-800); }
+.impv-summary__text strong { color: var(--red); }
+.impv-summary__btn { width: auto; }
+.impv-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 72px; }
+@media (min-width: 1024px) { .impv-list { gap: 96px; } }
+.impv { scroll-margin-top: 96px; }
+.impv__head { display: grid; grid-template-columns: auto 1fr; column-gap: 18px; row-gap: 6px; align-items: end; margin-bottom: 20px; }
+.impv__no { grid-row: 1 / 3; font: 700 64px/.85 var(--flt); letter-spacing: -.02em; color: var(--red); }
+@media (min-width: 1024px) { .impv__no { font-size: 84px; } }
+.impv__meta { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.impv__page { display: inline-flex; align-items: center; height: 24px; padding: 0 10px; border-radius: var(--radius); background: var(--ink); color: #fff; font: 700 12px/1 var(--fjp); letter-spacing: .04em; }
+.impv__date { font: 500 13px/1 var(--fjp); color: var(--gray-500); }
+.impv__title { margin: 0; font: 700 20px/1.5 var(--fjp); letter-spacing: .02em; color: var(--ink); }
+@media (min-width: 1024px) { .impv__title { font-size: 26px; } }
+.impv__voice { position: relative; margin: 0 0 24px; padding: 18px 20px 18px 56px; border-radius: var(--radius); background: var(--red-tint); }
+.impv__voice::before { content: "“"; position: absolute; left: 16px; top: 6px; font: 700 52px/1 var(--flt); color: var(--red); }
+.impv__voice-label { display: block; margin-bottom: 4px; font: 700 12px/1.4 var(--fjp); letter-spacing: .08em; color: var(--red); }
+.impv__voice p { margin: 0; font: 500 15px/1.9 var(--fjp); color: var(--ink); }
+.impv__points { margin-top: 24px; }
+.impv__points-label { margin: 0 0 10px; font: 700 13px/1.4 var(--fjp); letter-spacing: .08em; color: var(--gray-600); }
+.impv__points-label::before { content: ""; display: inline-block; width: 8px; height: 8px; margin-right: 8px; background: var(--red); vertical-align: 1px; }
+.impv__points ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; }
+.impv__points li { position: relative; padding-left: 22px; font: 400 15px/1.9 var(--fjp); color: var(--gray-800); }
+.impv__points li::before { content: "✓"; position: absolute; left: 0; top: 0; font-weight: 700; color: var(--red); }
+.impv__link { margin-top: 20px; }
+
+/* 見比べ。下に改善後、上に改善前を重ねて --pos で切り抜く（main.js の initCompare） */
+.compare { margin: 0; }
+.compare__frame {
+  --pos: 50%;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius);
+  background: var(--white);
+  box-shadow: 0 10px 30px rgba(26, 26, 26, .08);
+  cursor: ew-resize;
+  touch-action: pan-y;
+  user-select: none;
+}
+@media (max-width: 639px) { .compare__frame { max-width: 360px; margin-inline: auto; } }
+.compare__img, .compare__img img { display: block; width: 100%; height: auto; }
+.compare__img img { pointer-events: none; -webkit-user-drag: none; }
+.compare__img--before { position: absolute; inset: 0; clip-path: inset(0 calc(100% - var(--pos)) 0 0); }
+.compare__img--before img { height: 100%; object-fit: cover; }
+.compare__tag { position: absolute; top: 12px; z-index: 2; padding: 6px 10px; border-radius: 3px; font: 700 12px/1 var(--flt); letter-spacing: .14em; pointer-events: none; }
+.compare__tag--before { left: 12px; background: rgba(26, 26, 26, .82); color: #fff; }
+.compare__tag--after { right: 12px; background: var(--red); color: #fff; }
+.compare__handle { position: absolute; top: 0; bottom: 0; left: var(--pos); z-index: 3; width: 2px; margin-left: -1px; background: #fff; box-shadow: 0 0 0 1px rgba(26, 26, 26, .25); pointer-events: none; }
+.compare__knob { position: absolute; top: 50%; left: 50%; display: inline-flex; align-items: center; justify-content: center; width: 52px; height: 52px; margin: -26px 0 0 -26px; border-radius: 50%; background: var(--red); color: #fff; font: 400 14px/1 var(--fjp); letter-spacing: -.05em; box-shadow: 0 4px 14px rgba(0, 0, 0, .3); }
+.compare__range { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+.compare__frame:has(.compare__range:focus-visible) { outline: 2px solid var(--red); outline-offset: 3px; }
+.compare__hint { margin: 10px 0 0; text-align: center; font: 400 12px/1.6 var(--fjp); color: var(--gray-500); }
+
+/* 文の比べ（画像の無い改善） */
+.impv-text { display: grid; gap: 12px; align-items: stretch; }
+@media (min-width: 768px) { .impv-text { grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); } }
+.impv-text__box { position: relative; padding: 36px 20px 20px; border-radius: var(--radius); border: 1px solid var(--gray-200); background: var(--white); }
+.impv-text__box p { margin: 0; font: 500 15px/1.9 var(--fjp); color: var(--ink); }
+.impv-text__box--before p { color: var(--gray-500); text-decoration: line-through; text-decoration-color: rgba(216, 35, 42, .6); }
+.impv-text__box--after { border-color: var(--red); background: var(--red-tint); }
+.impv-text__tag { position: absolute; top: 10px; left: 12px; padding: 4px 8px; border-radius: 3px; background: rgba(26, 26, 26, .82); color: #fff; font: 700 11px/1 var(--flt); letter-spacing: .14em; }
+.impv-text__box--after .impv-text__tag { background: var(--red); }
+.impv-text__arrow { align-self: center; justify-self: center; font: 400 24px/1 var(--fjp); color: var(--red); }
+@media (max-width: 767px) { .impv-text__arrow { transform: rotate(90deg); } }
+
+/* 検討しているご意見 */
+.impv-consider { margin-top: 96px; }
+.impv-consider__list { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.impv-consider__list li { display: flex; gap: 16px; align-items: flex-start; padding: 20px; border: 1px dashed var(--gray-300); border-radius: var(--radius); }
+.impv-consider__tag { flex: none; padding: 6px 10px; border-radius: 3px; background: var(--gray-100); color: var(--gray-600); font: 700 12px/1 var(--fjp); }
+.impv-consider__title { margin: 0 0 4px; font: 700 15px/1.6 var(--fjp); color: var(--ink); }
+.impv-consider__note { margin: 0; font: 400 14px/1.8 var(--fjp); color: var(--gray-600); }
+
+/* アンケートへの呼びかけ */
+.impv-cta { position: relative; max-width: 760px; margin-inline: auto; padding: 48px 28px; border-radius: var(--radius); background: var(--ink); color: #fff; text-align: center; overflow: hidden; }
+@media (min-width: 1024px) { .impv-cta { padding: 64px 56px; } }
+.impv-cta::before { content: ""; position: absolute; right: -40px; top: -40px; width: 160px; height: 160px; background: var(--red); transform: rotate(18deg); opacity: .9; }
+.impv-cta > * { position: relative; }
+.impv-cta__en { margin: 0 0 10px; font: 700 13px/1 var(--flt); letter-spacing: .3em; color: var(--red); }
+.impv-cta__title { margin: 0 0 16px; font: 700 24px/1.5 var(--fjp); letter-spacing: .03em; }
+@media (min-width: 1024px) { .impv-cta__title { font-size: 30px; } }
+.impv-cta__text { margin: 0 auto 16px; max-width: 34em; font: 400 15px/2 var(--fjp); color: rgba(255, 255, 255, .85); text-align: left; }
+.impv-cta__deadline { margin: 0 0 24px; font: 500 14px/1.6 var(--fjp); color: rgba(255, 255, 255, .8); }
+.impv-cta__deadline strong { color: #fff; font-size: 18px; }
+.impv-cta__btn { width: auto; min-width: 280px; }
+
+/* アンケートのページから改善の紹介へ */
+.survey-impv { display: flex; align-items: center; gap: 16px; max-width: var(--container-narrow); margin: -16px 0 40px; padding: 16px 20px; border: 1px solid var(--red); border-radius: var(--radius); background: var(--red-tint); color: var(--ink); transition: background-color .25s ease, color .25s ease; }
+.survey-impv__tag { flex: none; padding: 6px 10px; border-radius: 3px; background: var(--red); color: #fff; font: 700 11px/1 var(--flt); letter-spacing: .14em; }
+.survey-impv__text { flex: 1; font: 700 14px/1.7 var(--fjp); }
+.survey-impv .ln-arrow { color: var(--red); }
+@media (hover: hover) { .survey-impv:hover { background: var(--red); color: #fff; } .survey-impv:hover .ln-arrow { color: #fff; } .survey-impv:hover .survey-impv__tag { background: #fff; color: var(--red); } }
+
 /* ============ 15. 大会結果（一覧・詳細） ============ */
 /* 一覧の行の右端に付く「12件」「写真14」「PDF」の並び */
 .result-tags {

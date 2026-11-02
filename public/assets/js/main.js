@@ -2254,6 +2254,72 @@
     });
   }
 
+  /* ---------- 改善前・改善後の見比べ（improvements.html の .compare） ----------
+     改善後の画面の上に改善前の画面を重ね、--pos（0〜100%）の位置で切り抜く。つまみはその位置。
+     画面の上を左右になぞる（マウス・指）と動く。縦のスクロールは止めない（touch-action: pan-y）。
+     キーボードは中に置いた range（見えない）で ← → 。画面に入ったとき一度だけ、つまみを左右に振って見せる */
+  function initCompare() {
+    var boxes = document.querySelectorAll('[data-compare]');
+    if (!boxes.length) return;
+    boxes.forEach(function (box) {
+      var frame = box.querySelector('.compare__frame');
+      var range = box.querySelector('.compare__range');
+      if (!frame || !range) return;
+      var set = function (v) {
+        v = Math.max(0, Math.min(100, v));
+        frame.style.setProperty('--pos', v + '%');
+        range.value = String(Math.round(v));
+      };
+      range.addEventListener('input', function () { set(Number(range.value)); });
+      var dragging = false, sx = 0, sy = 0, decided = false, horizontal = false;
+      var fromX = function (x) { var r = frame.getBoundingClientRect(); return ((x - r.left) / r.width) * 100; };
+      frame.addEventListener('pointerdown', function (e) {
+        dragging = true; decided = e.pointerType === 'mouse'; horizontal = decided;
+        sx = e.clientX; sy = e.clientY;
+        if (decided) { set(fromX(e.clientX)); frame.setPointerCapture(e.pointerId); }
+      });
+      frame.addEventListener('pointermove', function (e) {
+        if (!dragging) return;
+        if (!decided) {
+          var dx = Math.abs(e.clientX - sx), dy = Math.abs(e.clientY - sy);
+          if (dx < 6 && dy < 6) return;
+          decided = true; horizontal = dx > dy;
+          if (horizontal) frame.setPointerCapture(e.pointerId);
+        }
+        if (horizontal) set(fromX(e.clientX));
+      });
+      var end = function () { dragging = false; };
+      frame.addEventListener('pointerup', end);
+      frame.addEventListener('pointercancel', end);
+      // 指でタップしたところへ動かす（なぞらずに触れただけのとき）
+      frame.addEventListener('click', function (e) { if (e.target !== range) set(fromX(e.clientX)); });
+      set(50);
+      if (reduceMotion || !('IntersectionObserver' in window)) return;
+      var io = new IntersectionObserver(function (es) {
+        if (!es[0].isIntersecting) return;
+        io.disconnect();
+        var t0 = null, keys = [[0, 50], [0.35, 82], [0.75, 18], [1.1, 50]];
+        var step = function (t) {
+          if (t0 === null) t0 = t;
+          var s = (t - t0) / 1000;
+          if (dragging) return;
+          for (var k = 1; k < keys.length; k++) {
+            if (s <= keys[k][0]) {
+              var a = keys[k - 1], b = keys[k], u = (s - a[0]) / (b[0] - a[0]);
+              u = u < .5 ? 2 * u * u : 1 - Math.pow(-2 * u + 2, 2) / 2;
+              set(a[1] + (b[1] - a[1]) * u);
+              requestAnimationFrame(step);
+              return;
+            }
+          }
+          set(50);
+        };
+        setTimeout(function () { requestAnimationFrame(step); }, 400);
+      }, { threshold: 0.5 });
+      io.observe(frame);
+    });
+  }
+
   /* ---------- ホームページについてのアンケート（survey.html） ----------
      送信先は POST /api/survey（src/pages/api/survey.ts が D1 に保存）。必須は 使いやすさ（5段階）・ご意見の種類・ご意見の内容。
      受付期間（data-opens〜data-closes）の外なら、ページが少し前のまま残っていても見た時点で「受付終了」に切り替える。
@@ -2773,6 +2839,7 @@
     initNewsFilter();
     initResultView();
     initSurvey();
+    initCompare();
     initTlx();
     initTabs();
     initForm();
