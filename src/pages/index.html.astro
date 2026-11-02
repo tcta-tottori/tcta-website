@@ -8,7 +8,7 @@ import Icon from '../components/Icon.astro';
 import { siteData } from '../lib/cms.js';
 import { today } from '../data/tournaments.js';
 import { LINK_ROWS, LINK_GROUPS } from '../data/links.js';
-import { NEWS_VISIBLE } from '../data/news.js';
+import { NEWS_VISIBLE, NEWS_VISIBLE_PC } from '../data/news.js';
 import { COURTS_HOME, CITY_RESERVE } from '../data/courts.js';
 import CourtMap from '../components/CourtMap.astro';
 import ScheduleCalendar from '../components/ScheduleCalendar.astro';
@@ -185,7 +185,7 @@ const upcomingTournaments = TOURNAMENTS.filter((t) => t.status !== 'past');
   <section class="section" id="news" aria-labelledby="news-title">
     <span class="ghost" aria-hidden="true">NEWS</span>
     <div class="container">
-      {/* 全件は4件目（薄くした行）の右端の VIEW ALL で開く（ヘッダーは残したまま、その下にお知らせの見出しと全件を出す）。 */}
+      {/* 全件は薄くした行（スマホ・タブレットは4件目、PC は6件目）の右端の VIEW ALL で開く（ヘッダーは残したまま、その下にお知らせの見出しと全件を出す）。 */}
       <div class="sec-head rv">
         <div class="sec-head__row">
           <span class="sec-head__mark" aria-hidden="true"></span>
@@ -196,16 +196,18 @@ const upcomingTournaments = TOURNAMENTS.filter((t) => t.status !== 'past');
         </div>
       </div>
 
-      {/* 上から3件だけ出す（NEWS_VISIBLE）。4件目があるときは、続きがあることが分かるよう
-          薄くフェードさせて見せる（VIEW ALL を押すと全件が開く）。 */}
+      {/* 上から3件（PC は5件。NEWS_VISIBLE / NEWS_VISIBLE_PC）だけ出す。続きがあるときは、続きがあることが分かるよう
+          次の1件を薄くフェードさせて見せる（VIEW ALL を押すと全件が開く）。
+          4件目・5件目は PC だけの行（.news-pc）。薄く見せる行は、スマホ・タブレットが4件目（.news-sp）、PC が6件目（.news-pc）。 */}
       <ul class="news-list">
         {/* 画面に入ったらすぐ出す（0.1 秒おいて、1行ずつ 0.08 秒ずらす。以前は 0.5 秒＋0.12 秒ずつで遅く感じた） */}
-        {NEWS.slice(0, NEWS_VISIBLE).map((n, i) => <NewsRow item={n} delay={0.1 + i * 0.08} />)}
+        {NEWS.slice(0, NEWS_VISIBLE_PC).map((n, i) => <NewsRow item={n} delay={0.1 + i * 0.08} class={i >= NEWS_VISIBLE ? 'news-pc' : undefined} />)}
       </ul>
       {NEWS.length > NEWS_VISIBLE && (
-        <div class="news-peek">
+        <div class:list={['news-peek', NEWS.length <= NEWS_VISIBLE_PC && 'news-sp']}>
           <ul class="news-list news-list--peek" aria-hidden="true">
-            <NewsRow item={NEWS[NEWS_VISIBLE]} delay={0.1 + NEWS_VISIBLE * 0.08} />
+            <NewsRow item={NEWS[NEWS_VISIBLE]} delay={0.1 + NEWS_VISIBLE * 0.08} class="news-sp" />
+            {NEWS.length > NEWS_VISIBLE_PC && <NewsRow item={NEWS[NEWS_VISIBLE_PC]} delay={0.1 + NEWS_VISIBLE_PC * 0.08} class="news-pc" />}
           </ul>
           <div class="news-peek__more">
             <button class="view-all" type="button" data-news-open aria-expanded="false" aria-controls="news-all" aria-label={`お知らせをすべて見る（${NEWS.length}件）`}>

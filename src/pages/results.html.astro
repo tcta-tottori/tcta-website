@@ -4,6 +4,8 @@ import Icon from '../components/Icon.astro';
 import { siteData } from '../lib/cms.js';
 import { GROUPS_BY_YEAR, legacyMeta } from '../data/results.js';
 import { dateCell } from '../data/schedule.js';
+import { winnerPhotos } from '../data/event-result.js';
+import { eventPhoto } from '../data/event-photos.js';
 
 // 令和7年度以降は EmDash の大会から、令和6年度までは旧サイトから引き継いだ results.json から
 const { EVENTS_BY_NENDO } = await siteData(Astro);
@@ -27,14 +29,31 @@ const when = (date, label) => {
   const c = dateCell({ date, label });
   return { ymd: `${String(date).slice(0, 4)}.${c.md}`, dow: c.dow, note: c.note };
 };
+// 拡大表示（カード）の写真。優勝者の写真 → 当日の写真 → 大会情報のカードと同じ種目の写真（src/data/event-photos.js）の順に探す。
+// どれも無いときは種目名だけの薄いグレーの面（photo: null）
+const stockPhoto = (event, title, reg) => {
+  const { photo, label } = eventPhoto(event, title, reg);
+  return { photo: photo ? { src: photo.src, w: photo.w, h: photo.h, alt: photo.alt, pos: photo.pos } : null, label };
+};
+const eventCardPhoto = (e) => {
+  const w = winnerPhotos(e, 1)[0];
+  if (w) return { photo: { ...w, pos: '50% 35%' }, label: '' };
+  if (e.cover) return { photo: { src: e.cover, alt: `${e.displayName}の当日の写真`, pos: '50% 40%' }, label: '' };
+  return stockPhoto(e.event, e.name, e.reg);
+};
+const legacyCardPhoto = (g, event) => {
+  const p = g.entries.flatMap((x) => x.t.photos).find((x) => x.kind !== 'sheet');
+  if (p) return { photo: { src: p.src, w: p.w, h: p.h, alt: `${g.title}の写真`, pos: '50% 35%' }, label: '' };
+  return stockPhoto(event, g.title, '');
+};
 const years = [
   ...EVENTS_BY_NENDO.map((y) => ({
     nendo: y.nendo, label: y.label,
-    rows: y.events.map((e) => ({ href: `result-${e.slug}.html`, title: e.displayName, when: when(e.date, e.label), event: e.event || null })),
+    rows: y.events.map((e) => ({ href: `result-${e.slug}.html`, title: e.displayName, when: when(e.date, e.label), event: e.event || null, card: eventCardPhoto(e) })),
   })),
   ...GROUPS_BY_YEAR.map((y) => ({
     nendo: y.nendo, label: y.label,
-    rows: y.groups.map((g) => { const m = legacyMeta(g); return { href: g.href, title: g.title, when: when(m.date, ''), event: m.event }; }),
+    rows: y.groups.map((g) => { const m = legacyMeta(g); return { href: g.href, title: g.title, when: when(m.date, ''), event: m.event, card: legacyCardPhoto(g, m.event) }; }),
   })),
 ].map((y) => ({ ...y, ...eraOf(y.nendo) }));
 
@@ -66,7 +85,8 @@ const eras = ['令和', '平成'].map((era) => ({ era, years: years.filter((y) =
   </section>
 
   <section class="section" aria-labelledby="results-title">
-    <div class="container container--narrow">
+    {/* PC は本文の幅いっぱい（.container）を使う。一覧は2列、カードは3列に並べる */}
+    <div class="container">
       <h2 class="visually-hidden" id="results-title">年度別の大会結果</h2>
 
       <!-- 年度の選択。令和・平成の2段に分け、年の数字だけを 1 行に並べる（収まらない分は横スクロール。端を透かして「scroll →」を出す：.hscroll） -->
@@ -97,12 +117,24 @@ const eras = ['令和', '平成'].map((era) => ({ era, years: years.filter((y) =
 
       {years.map((y, i) => (
         <div class="tabpanel" id={`panel-${y.nendo}`} role="tabpanel" aria-labelledby={`tab-${y.nendo}`} hidden={i !== 0}>
+          {/* 見出しの右に表示の切り替え（大会情報ページと同じ。縮小表示＝一覧／拡大表示＝カード）。
+              年度ごとに置いてあるが、どれを押してもすべての年度が切り替わる（main.js の initResultView。選んだ方を覚えておく） */}
           <div class="year-head">
             <h3 class="year-head__title">{y.label}<span class="year-head__en">{y.nendo}</span></h3>
+            <div class="view-switch year-head__switch" role="group" aria-label="表示の切り替え" data-rl-switch>
+              <button class="view-switch__btn is-active" type="button" data-view="rows" aria-pressed="true" aria-label="縮小表示（一覧）" title="縮小表示">
+                <span class="view-switch__ico view-switch__ico--rows" aria-hidden="true"></span>
+              </button>
+              <button class="view-switch__btn" type="button" data-view="cards" aria-pressed="false" aria-label="拡大表示（カード）" title="拡大表示">
+                <span class="view-switch__ico view-switch__ico--cards" aria-hidden="true"></span>
+              </button>
+            </div>
           </div>
-          <ol class="rlist">
+          <div class="rl">
+          {/* 縮小表示：1大会1行。PC は2列（上から下へ、左の列から右の列へ開催順に並ぶ） */}
+          <ol class="rlist" style={`--rows:${Math.ceil(y.rows.length / 2)}`}>
             {y.rows.map((r, n) => (
-              <li><a class="rlist__item" href={r.href}>
+              <li style={`--i:${n}`}><a class="rlist__item" href={r.href}>
                 <span class="rlist__mark" aria-hidden="true"></span>
                 <span class="rlist__body">
                   <span class="rlist__title">{r.title}</span>
@@ -117,6 +149,31 @@ const eras = ['令和', '平成'].map((era) => ({ era, years: years.filter((y) =
               </a></li>
             ))}
           </ol>
+          {/* 拡大表示：写真付きのカード。スマホは1列・タブレットは2列・PC は3列 */}
+          <ol class="rcards">
+            {y.rows.map((r, n) => (
+              <li class="rcards__item" style={`--i:${n}`}><a class="rcard" href={r.href}>
+                <span class:list={['rcard__photo', !r.card.photo && 'rcard__photo--none']}>
+                  {r.card.photo
+                    ? <img src={r.card.photo.src} alt={r.card.photo.alt} width={r.card.photo.w} height={r.card.photo.h} style={`object-position:${r.card.photo.pos}`} loading="lazy" decoding="async">
+                    : <span class="rcard__photo-label" aria-hidden="true">{r.card.label || '大会結果'}</span>}
+                  {r.when && (
+                    <span class="date-chip date-chip--card rcard__date">
+                      <span class="visually-hidden">{r.when.ymd.slice(0, 4)}年</span>
+                      <span class="date-chip__md">{r.when.ymd.slice(5)}</span>
+                      <span class="date-chip__dow">{r.when.dow}</span>
+                    </span>
+                  )}
+                </span>
+                <span class="rcard__body">
+                  <span class="rcard__title">{r.title}</span>
+                  {r.event && <span class="rcard__what"><Icon name="list" class="rlist__ico" /><span class="visually-hidden">種目</span>{r.event}</span>}
+                  <span class="rcard__more">結果を見る<span class="ln-arrow" aria-hidden="true"></span></span>
+                </span>
+              </a></li>
+            ))}
+          </ol>
+          </div>
         </div>
       ))}
 

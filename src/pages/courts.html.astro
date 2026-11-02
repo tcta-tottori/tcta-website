@@ -42,7 +42,7 @@ const telHref = (tel) => `tel:${String(tel).replace(/[^0-9+]/g, '')}`;
   <section class="section section--cfac">
       {COURTS.map((c, i) => (
         <article class="cfac rv" id={c.id}>
-          {/* 写真は画面の幅いっぱいに。その右下に施設名・バッジを重ねる。
+          {/* 写真は画面の幅いっぱいに（PC は左半分）。スマホ・タブレットはその右下に施設名・バッジを重ねる。
               写真の部分を押すと全画面（main.js の initLightbox は .gallery 内の .gallery__item を拾う） */}
           <div class:list={['cfac__hero gallery', !c.image && 'cfac__hero--noimg']}>
             {c.image && (
@@ -68,6 +68,17 @@ const telHref = (tel) => `tel:${String(tel).replace(/[^0-9+]/g, '')}`;
 
           <div class="cfac__flow">
           <div class="container container--result cfac__body">
+          {/* PC は写真を左半分、情報を右半分に分ける。施設名とコートの情報は写真の上ではなく、右の列の頭に出す
+              （写真の上の施設名は PC では隠す。どちらか一方しか出ないので、見出しは常に1つ） */}
+          <div class="cfac__head">
+            <div class="cfac__cap-top"><h2 class="cfac__name"><Icon name="pin" class="court-pin" />{c.name}</h2></div>
+            <div class="cfac__cap-bottom"><p class="cfac__badges cinfo">
+              {c.main && <span class="cinfo__main">主会場</span>}
+              {c.surface && <span>{c.surface}</span>}
+              {c.courts > 0 && <span>{c.courts}面</span>}
+              {c.features.map((f) => <span>{f}</span>)}
+            </p></div>
+          </div>
           {c.desc && <p class="cfac__desc">{c.desc}</p>}
 
           <div class="deflist">

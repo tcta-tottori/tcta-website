@@ -28,8 +28,10 @@
 //   リンク先は必ずサイト内の実在するページにする（例：event-r8-enetopia.html）。
 
 import { EXTRA_NEWS } from './official-extra.js';
-/** トップページに出す件数。4件目は薄く重ねて「続きがある」ことだけ見せ、全部は VIEW ALL の中に出る。 */
+/** トップページに出す件数（スマホ・タブレット）。次の1件は薄く重ねて「続きがある」ことだけ見せ、全部は VIEW ALL の中に出る。 */
 export const NEWS_VISIBLE = 3;
+/** PC（1024px 以上）でトップページに出す件数。4件目・5件目はスマホ・タブレットでは隠す（.news-pc） */
+export const NEWS_VISIBLE_PC = 5;
 
 /** NEW を付ける期間（日） */
 const NEW_DAYS = 14;

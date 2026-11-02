@@ -161,6 +161,8 @@ const countText = (m) => (m.evCount ? `${m.count}大会・${m.evCount}イベン�
       aria-label={`${m.year}年${m.month}月の大会`}
       hidden={i !== initial}
     >
+      {/* マス目と一覧はそれぞれ .cal__pane に入れる。トップの PC はこの2つを別々の枠で囲む（style.css の .cal--compact） */}
+      <div class="cal__pane cal__pane--grid">
       <div class="cal__grid" role="presentation">
         {DOW.map((d, j) => (
           <span class:list={['cal__dow', j === 0 && 'is-sun', j === 6 && 'is-sat']}>{d}</span>
@@ -195,9 +197,11 @@ const countText = (m) => (m.evCount ? `${m.count}大会・${m.evCount}イベン�
               </span>
         ))}
       </div>
+      </div>
 
       {/* 一覧の行は押すとその大会・イベントのページへ（行全体が押せる：.cal__item-link--go の ::after を行に広げる）。
           締切・ドロー会議で大会が2つ以上のときは、大会名ごとに押せる。data-date はマスを押したときの吹き出し（main.js）が使う */}
+      <div class="cal__pane cal__pane--list">
       <ul class="cal__list">
         {m.entries.map((x) => {
           if (x.kind === 'lesson') return (
@@ -256,6 +260,7 @@ const countText = (m) => (m.evCount ? `${m.count}大会・${m.evCount}イベン�
           );
         })}
       </ul>
+      </div>
     </section>
   ))}
 </div>

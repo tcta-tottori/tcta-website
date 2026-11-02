@@ -5,6 +5,7 @@
 // ■ 縮小表示（初め。.tl--rows のとき .tlx を出す）
 //   1大会1行の表。左端の「大会名」の列だけを固定し、右へ横スクロールすると
 //   日程・状態・登録区分・種目・会場・締切・予備日（予備会場は「千代」「ヤマタ」のように短く）・要項／ドロー／結果 が順に見える。
+//   日程・締切・予備日は年を出さず「11.22」＋「SUN」の2段で、列の幅に合わせてなるべく大きく出す（PC は表全体が画面に収まる）。
 //   項目名の行（.tlx__head）は下へスクロールしても画面の上端についてくる（横スクロールは本体と連動。main.js の initTlx）。
 //   大会名は「第56回｜東部地区｜テニス選手権」のように意味の切れ目でだけ折り返す（nameParts と <wbr>）。
 //
@@ -16,7 +17,7 @@
 // 要項の欄の「詳細」ボタンからだけそのページを別タブで開く。
 // ボタンの行き先：要項 → outline-<slug>.html（申込用紙もこのページに載せる）、ドロー → draw-<slug>.html、結果 → result-<slug>.html。
 // 素材の無い大会は3つとも押せない状態で出す（大会名から大会ページへは行ける）。
-import { REG_LABEL, STATUS_LABEL, dateCell } from '../data/schedule.js';
+import { REG_LABEL, STATUS_LABEL, dateCell, dueDate } from '../data/schedule.js';
 import Venue from './Venue.astro';
 import TournamentCard from './TournamentCard.astro';
 import { siteData } from '../lib/cms.js';
@@ -51,6 +52,31 @@ const shortVenue = (v) =>
 /** 予備日の欄（予備日＋短い予備会場、無ければ補足） */
 const spareText = (t) => (t.spareDate ? `${t.spareDate}${t.spareVenue ? `（${shortVenue(t.spareVenue)}）` : ''}` : t.spareNote || '');
 
+/**
+ * 縮小表示の日付の欄（日程・締切・予備日）は、年を出さずに「11.22」＋「SUN」の2段で出す（年は大会の日付から決める）。
+ * 'YYYY-MM-DD' → { md, dow }
+ */
+const DOW_EN = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+const pad2 = (n) => String(n).padStart(2, '0');
+const mdOf = (iso) => {
+  const [y, m, d] = iso.split('-').map(Number);
+  return { md: `${pad2(m)}.${pad2(d)}`, dow: DOW_EN[new Date(y, m - 1, d).getDay()] };
+};
+/** 締切（「11/6」の形のときだけ日付にする。締切は大会より前なので、大会の月より後の月は前の年） */
+const dueCell = (t) => {
+  const iso = dueDate(t.due, t.date);
+  return iso ? mdOf(iso) : null;
+};
+/** 予備日（「11/28」の形のときだけ日付にする。予備日は大会より後なので、大会の月より前の月は次の年） */
+const spareCell = (t) => {
+  const m = String(t.spareDate ?? '').trim().match(/^(\d{1,2})\/(\d{1,2})$/);
+  if (!m) return null;
+  const [y, em] = t.date.split('-').map(Number);
+  const month = Number(m[1]);
+  const year = month < em ? y + 1 : y;
+  return { ...mdOf(`${year}-${pad2(month)}-${pad2(m[2])}`), venue: t.spareVenue ? shortVenue(t.spareVenue) : '' };
+};
+
 /** 縮小表示の項目（左から）。幅は CSS の --tlx-cols と同じ順 */
 const COLS = ['大会名', '日程', '状態', '登録区分', '種目', '会場', '締切', '予備日', '要項', 'ドロー', '結果'];
 
@@ -72,7 +98,7 @@ const rows = items.map((t) => {
     buttons,
     winners: winnerPhotos(e),
   };
-  return { t, e, date: dateText(t), buttons, badge: STATUS_LABEL[t.status], card };
+  return { t, e, date: dateText(t), due: dueCell(t), spare: spareCell(t), buttons, badge: STATUS_LABEL[t.status], card };
 });
 // 会場名・種目名は文字の途中で折り返さない（CSS の word-break: keep-all）。
 // 「／」「/」「・」の区切りの後ろと「（」の前にだけ折り返してよい位置（<wbr>）を入れる。テンプレート側で parts を <wbr> でつなぐ。
@@ -87,11 +113,11 @@ const parts = (text) => String(text ?? '').split(/(?<=[／/・])|(?=（)/);
     <p class="tlx__hint" aria-hidden="true"><span class="ln-arrow"></span>SCROLL</p>
     <div class="tlx__head" aria-hidden="true">
       <div class="tlx__row tlx__row--head">
-        {COLS.map((c, i) => <span class:list={['tlx__cell', i === 0 && 'tlx__cell--name', i === 1 && 'tlx__cell--date']}>{c}</span>)}
+        {COLS.map((c, i) => <span class:list={['tlx__cell', i === 0 && 'tlx__cell--name']}>{c}</span>)}
       </div>
     </div>
     <div class="tlx__body" role="list" aria-label={caption}>
-      {rows.map(({ t, e, date, buttons, badge }) => (
+      {rows.map(({ t, e, date, due, spare, buttons, badge }) => (
         <div
           class:list={['tlx__row', t.status === 'done' && 'tlx__row--done']}
           data-tags={`${t.status} ${t.reg}${t.status !== 'done' ? ' upcoming' : ''}`}
@@ -104,8 +130,9 @@ const parts = (text) => String(text ?? '').split(/(?<=[／/・])|(?=（)/);
                 : nameParts(t.name).map((part, i, arr) => <>{part}{i < arr.length - 1 && <wbr />}</>)}
             </span>
           </div>
+          {/* 日程・締切・予備日は年を出さず、月日（大きく）と曜日の2段。字の大きさは列の幅に合わせる（style.css の .tlx__cell--date） */}
           <div class="tlx__cell tlx__cell--date">
-            <span class="tlx__y">{date.ymd.slice(0, 4)}</span>
+            <span class="visually-hidden">{date.ymd.slice(0, 4)}年</span>
             <span class="tlx__md">{date.ymd.slice(5)}</span>
             <span class="tlx__dow">{date.dow}</span>
           </div>
@@ -113,8 +140,12 @@ const parts = (text) => String(text ?? '').split(/(?<=[／/・])|(?=（)/);
           <div class="tlx__cell"><span class="visually-hidden">登録区分：</span><span class={`reg reg--${t.reg}`}>{REG_LABEL[t.reg]}</span></div>
           <div class="tlx__cell tlx__cell--text"><span class="visually-hidden">種目：</span>{parts(t.event).map((part, i, arr) => <>{part}{i < arr.length - 1 && <wbr />}</>)}</div>
           <div class="tlx__cell tlx__cell--text"><span class="visually-hidden">会場：</span><span><Venue text={t.place} breaks /></span></div>
-          <div class="tlx__cell tlx__cell--text"><span class="visually-hidden">締切：</span>{t.due && t.due !== '—' ? t.due : '—'}</div>
-          <div class="tlx__cell tlx__cell--text"><span class="visually-hidden">予備日：</span>{spareText(t) ? parts(spareText(t)).map((part, i, arr) => <>{part}{i < arr.length - 1 && <wbr />}</>) : '—'}</div>
+          {due
+            ? <div class="tlx__cell tlx__cell--date tlx__cell--sub"><span class="visually-hidden">締切：</span><span class="tlx__md">{due.md}</span><span class="tlx__dow">{due.dow}</span></div>
+            : <div class="tlx__cell tlx__cell--text"><span class="visually-hidden">締切：</span>{t.due && t.due !== '—' ? t.due : '—'}</div>}
+          {spare
+            ? <div class="tlx__cell tlx__cell--date tlx__cell--sub"><span class="visually-hidden">予備日：</span><span class="tlx__md">{spare.md}</span><span class="tlx__dow">{spare.dow}</span>{spare.venue && <span class="tlx__venue">{spare.venue}</span>}</div>
+            : <div class="tlx__cell tlx__cell--text"><span class="visually-hidden">予備日：</span>{spareText(t) ? parts(spareText(t)).map((part, i, arr) => <>{part}{i < arr.length - 1 && <wbr />}</>) : '—'}</div>}
           {buttons.map((b) => (
             <div class="tlx__cell">
               {b.href
