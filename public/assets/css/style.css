@@ -445,8 +445,8 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 .btn--primary { background: var(--red); color: #fff; border: 1px solid var(--red); }
 .btn--primary:hover { background: var(--red-dark); border-color: var(--red-dark); color: #fff; }
 .btn--primary:hover .aw { transform: translateX(4px); }
-/* ボタンの矢印は SCROLL と同じ線の矢印（.ln-arrow）。文字の下端（ベースライン）の高さにそろえ、ホバーで少し右へ */
-.btn .ln-arrow { position: relative; top: .32em; transition: transform .3s ease; }
+/* ボタンの矢印はサイト共通の「→」（.ln-arrow）。ホバーで少し右へ */
+.btn .ln-arrow { transition: transform .3s ease; }
 .btn:hover .ln-arrow { transform: translateX(4px); }
 
 .btn--outline { background: var(--white); color: var(--ink); border: 1px solid var(--gray-300); }
@@ -475,10 +475,10 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 .ghost-link:hover .sqbtn { background: var(--red); border-color: var(--red); color: #fff; }
 .ghost-link .aw { color: var(--red); }
 
-/* VIEW ALL：枠の中に「VIEW ALL ——\」を収めたバッジ。枠・文字・矢印は赤、矢印（.ln-arrow）は文字の下端にそろえる。ホバーで赤く塗る */
+/* VIEW ALL：枠の中に「VIEW ALL →」を収めたバッジ。枠・文字・矢印は赤。ホバーで赤く塗る */
 .view-all {
   display: inline-flex;
-  align-items: baseline;
+  align-items: center;
   gap: 10px;
   padding: 11px 14px;
   border: 1px solid var(--red);
@@ -492,7 +492,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   font: 700 12px/1 var(--flt);
   letter-spacing: .12em;
 }
-.view-all .ln-arrow { width: 22px; transition: transform .3s ease; }
+.view-all .ln-arrow { transition: transform .3s ease; }
 .view-all:hover { background: var(--red); border-color: var(--red); color: #fff; }
 .view-all:hover .ln-arrow { transform: translateX(3px); }
 
@@ -1480,7 +1480,10 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
     color: var(--ink);
     text-shadow: 0 0 6px rgba(255, 255, 255, .9);
   }
-  .hero__scroll .blink { width: 1px; height: 56px; background: var(--ink); }
+  /* 下向きの矢印（サイト共通のふつうの矢印の形）。ゆっくり下へ弾ませる */
+  .hero__scroll-arrow { font: 400 18px/1 var(--fjp); color: var(--ink); text-shadow: 0 0 6px rgba(255, 255, 255, .9); animation: hs-nudge-down 1.8s ease-in-out infinite; }
+  @keyframes hs-nudge-down { 50% { transform: translateY(5px); } }
+  @media (prefers-reduced-motion: reduce) { .hero__scroll-arrow { animation: none; } }
 }
 
 /* ============ 08. 大会カルーセル ============ */
@@ -2240,7 +2243,7 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 .cal__item-link--go { text-decoration: none; }
 .cal__item-link--go::after { content: ""; position: absolute; inset: 0; z-index: 1; }
 .cal__item .cal__item-link:not(.cal__item-link--go) { position: relative; z-index: 2; }
-.cal__item-arrow { flex: none; margin-left: 4px; font: 400 20px/1 var(--flt); color: var(--gray-300); transition: transform .2s ease, color .2s ease; }
+.cal__item-arrow { flex: none; margin-left: 4px; font: 400 16px/1 var(--fjp); color: var(--gray-300); transition: transform .2s ease, color .2s ease; }
 .cal__item-badge + .cal__item-arrow { margin-left: 0; }
 .cal__item:not(:has(.cal__item-badge)) .cal__item-arrow { margin-left: auto; }
 @media (hover: hover) {
@@ -3015,7 +3018,13 @@ body.jsrv .cfac.rv.on.cfac--vt .cfac__name, body.jsrv .cfac.rv.on.cfac--vt .cfac
 }
 .cta__body { background: var(--gray-050); display: flex; align-items: center; }
 .cta__inner { padding: 48px var(--gutter); max-width: 680px; }
-@media (min-width: 1024px) { .cta__inner { padding: 64px 72px; } }
+/* PC は画面の中央でちょうど半分に分ける（左に写真、右に文章）。文章の右端は本文の幅（.container）の右端にそろえる */
+@media (min-width: 1024px) {
+  .cta { grid-template-columns: 1fr 1fr; min-height: 420px; }
+  .cta__inner { max-width: none; padding: 72px max(var(--gutter), calc((100vw - var(--container-max)) / 2 + var(--gutter))) 72px 72px; }
+  /* 列が狭くなっても、行末に1〜2文字だけ残らないよう、文の区切り（文節）で折り返す */
+  .cta__text, .cta__title { word-break: auto-phrase; text-wrap: pretty; }
+}
 .cta__head { display: flex; gap: 14px; align-items: flex-start; }
 .cta__head .sec-head__mark { margin-top: 8px; }
 .cta__title {
@@ -4012,28 +4021,20 @@ body.jsrv .rv.on .ink-sweep {
 .hscroll--top .hscroll__hint { top: 0; margin-top: 0; }
 .hscroll__track.table-scroll { display: block; }
 .hscroll__arrow { animation: hs-nudge 1.8s ease-in-out infinite; }
-/* 線の矢印：細い横線の右端から、短い線を左上へ跳ね上げただけの矢印（——\ の形）。
-   SCROLL の矢印（.hscroll__arrow）と、トップの大会情報の「終了した大会／今後の大会」に使う。
-   --left は左向き（左右を反転） */
+/* 矢印はサイト全体で、お知らせの行の右端（.sqbtn）と同じふつうの「→」の文字にそろえる。
+   ボタン・VIEW ALL・SCROLL の案内・トップの大会情報の「終了した大会／今後の大会」など、.ln-arrow と .hscroll__arrow はここで文字を出す。
+   --left は左向き（「←」） */
 .ln-arrow, .hscroll__arrow {
   position: relative;
   flex: none;
   display: inline-block;
-  width: 26px;
-  height: 1px;
-  background: currentColor;
+  font-family: var(--fjp);
+  font-weight: 400;
+  font-size: 1.15em;
+  line-height: 1;
 }
-.ln-arrow::after, .hscroll__arrow::after {
-  content: '';
-  position: absolute;
-  right: 0; bottom: 0;
-  width: 8px;
-  height: 1px;
-  background: currentColor;
-  transform-origin: right center;
-  transform: rotate(35deg);
-}
-.ln-arrow--left { transform: scaleX(-1); }
+.ln-arrow::before, .hscroll__arrow::before { content: "→"; }
+.ln-arrow--left::before { content: "←"; }
 .hint--lr { display: inline-flex; align-items: stretch; gap: 14px; }
 /* 文字の下に矢印。終了した大会は右寄せ（左向きの矢印が縦線から離れていく）、今後の大会は左寄せ */
 .hint__item { display: inline-flex; flex-direction: column; gap: 6px; align-items: flex-start; }
@@ -4632,7 +4633,7 @@ button.dl-item { width: 100%; text-align: left; }
   height: 64px;
   border-radius: var(--radius);
   background: rgba(0, 0, 0, .35);
-  font-size: 40px;
+  font: 400 26px/1 var(--fjp);
 }
 /* 前後のボタンは白い紙面の上に重なることが多いので、ホバー・押したあとも暗いまま（白くしない） */
 @media (hover: hover) { .lightbox__nav:hover { background: rgba(0, 0, 0, .55); } }
@@ -4651,7 +4652,7 @@ button.dl-item { width: 100%; text-align: left; }
 }
 .lightbox.is-zoomed .lightbox__hint { visibility: hidden; }
 @media (max-width: 639px) {
-  .lightbox__nav { width: 36px; height: 52px; font-size: 32px; background: rgba(0, 0, 0, .25); }
+  .lightbox__nav { width: 36px; height: 52px; font-size: 22px; background: rgba(0, 0, 0, .25); }
 }
 
 /* 前後の大会への行き来 */
@@ -4962,40 +4963,39 @@ button.dl-item { width: 100%; text-align: left; }
   .hero { min-height: 100svh; }
 }
 
-/* ============ PDF のボタン（サイト共通）と、ページの中で開くビューア ============
-   ボタン（.pdfbtn。PdfButton.astro）は 申込用紙・要項・ドロー・結果・役員名簿・議案書・編成表・登録用紙・大会日程 のすべてで同じ形。
-   左に名前（＋赤い添え字）、その下に中身・大きさ。右端に文字の長さに合わせた横長の「PDF」の札。
+/* ============ PDF・リンクのボタン（サイト共通）と、ページの中で開くビューア ============
+   ボタン（.pdfbtn。PdfButton.astro）は 申込用紙・要項・ドロー・結果・役員名簿・議案書・編成表・登録用紙・大会日程、
+   外のサイトへのリンク（.pdfbtn--link）のすべてで同じ形。
+   左に文字に合わせた横長の札（PDF／LINK）、その右に名前（＋赤い添え字）と中身・大きさ、右端に開く印（リンクは外へ出る矢印）。
    ふだんはグレーの線の枠。PC でカーソルを合わせると全体が赤く塗られ、文字は白、札は白地に赤い文字に変わる。
-   押すと .pdfv（main.js の initPdfViewer）が画面いっぱいに開く。上の帯にダウンロード・印刷・閉じる */
-.pdfbtns { list-style: none; margin-left: 0; padding: 0; display: grid; gap: 12px; }
-.pdfbtns:not(.mt-32):not(.mt-40):not([style*="margin-top"]) { margin-top: 20px; }
-@media (min-width: 768px) { .pdfbtns { grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); } }
+   幅はスマホ・タブレットは横いっぱい、PC は2列（1本あたり 520px 以上）。
+   PDF のボタンを押すと .pdfv（main.js の initPdfViewer）が画面いっぱいに開く。上の帯にダウンロード・印刷・閉じる */
+.pdfbtns { list-style: none; margin-left: 0; padding: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
+.pdfbtns:not(.mt-24):not(.mt-32):not(.mt-40):not([style*="margin-top"]) { margin-top: 20px; }
+@media (min-width: 1024px) { .pdfbtns { grid-template-columns: repeat(auto-fill, minmax(520px, 1fr)); gap: 16px; } }
 .pdfbtns > li { display: flex; }
 .pdfbtn {
   flex: 1 1 auto;
   display: flex;
   align-items: center;
-  gap: 14px;
-  min-height: 76px;
-  padding: 14px 16px 14px 20px;
+  gap: 16px;
+  min-height: 84px;
+  padding: 16px 16px 16px 18px;
   border: 1px solid var(--gray-300);
   border-radius: var(--radius);
   background: var(--white);
   color: var(--ink);
   transition: background-color .25s ease, border-color .25s ease, color .25s ease, box-shadow .25s ease;
 }
+@media (min-width: 1024px) { .pdfbtn { min-height: 92px; padding: 18px 18px 18px 22px; gap: 18px; } }
 .pdfbtn:hover { color: var(--ink); }
-.pdfbtn__text { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
-.pdfbtn__title { font: 700 15px/1.5 var(--fjp); letter-spacing: .03em; overflow-wrap: anywhere; }
-.pdfbtn__kind { display: inline-block; margin-left: .5em; color: var(--red); transition: color .25s ease; }
-.pdfbtn__note { font: 400 12px/1.5 var(--fjp); color: var(--gray-600); transition: color .25s ease; }
-/* 右端の札。文字（PDF）の長さに合わせた横長。開く印（四隅のかぎ）を文字の右に小さく */
+/* 左の札。文字（PDF／LINK）の長さに合わせた横長 */
 .pdfbtn__badge {
   flex: none;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 10px 6px 12px;
+  justify-content: center;
+  padding: 7px 10px;
   border-radius: 3px;
   background: var(--red);
   color: #fff;
@@ -5004,12 +5004,31 @@ button.dl-item { width: 100%; text-align: left; }
   white-space: nowrap;
   transition: background-color .25s ease, color .25s ease;
 }
-.pdfbtn__badge svg { flex: none; }
+.pdfbtn--link .pdfbtn__badge { background: var(--ink); }
+.pdfbtn__text { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.pdfbtn__title { font: 700 15px/1.5 var(--fjp); letter-spacing: .03em; overflow-wrap: anywhere; }
+@media (min-width: 1024px) { .pdfbtn__title { font-size: 16px; } }
+.pdfbtn__kind { display: inline-block; margin-left: .5em; color: var(--red); transition: color .25s ease; }
+.pdfbtn__note { font: 400 12px/1.5 var(--fjp); color: var(--gray-600); transition: color .25s ease; }
+/* 右端の開く印（PDF は四隅のかぎ＝画面いっぱいに開く、リンクは外へ出る矢印） */
+.pdfbtn__icon {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius);
+  background: var(--gray-100);
+  color: var(--ink);
+  transition: background-color .25s ease, color .25s ease, transform .3s var(--ease);
+}
 .pdfbtn:focus-visible { outline: 2px solid var(--red); outline-offset: 2px; }
 @media (hover: hover) {
   .pdfbtn:hover { background: var(--red); border-color: var(--red); color: #fff; box-shadow: var(--shadow-hover); }
   .pdfbtn:hover .pdfbtn__kind, .pdfbtn:hover .pdfbtn__note { color: #fff; }
   .pdfbtn:hover .pdfbtn__badge { background: #fff; color: var(--red); }
+  .pdfbtn:hover .pdfbtn__icon { background: rgba(255, 255, 255, .2); color: #fff; transform: scale(1.08); }
 }
 
 .pdfv {

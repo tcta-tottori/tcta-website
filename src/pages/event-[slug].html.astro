@@ -144,7 +144,7 @@ const description = `${e.label}に${e.place}で行われる${e.name}（${e.event
           ))}
         </div>
         {e.note && <p class="note mt-24">{e.note}</p>}
-        {e.link && <a class="btn btn--outline mt-24" href={e.link.url} target="_blank" rel="noopener noreferrer">{e.link.label} <span class="aw">↗</span></a>}
+        {e.link && <div class="pdfbtns mt-24"><PdfButton link href={e.link.url} title={e.link.label} note="別タブで開きます" /></div>}
       </div>
 
       {/* 結果：種目（部）ごとに 結果表 → その下に入賞者の写真 → 入賞者の名前 */}

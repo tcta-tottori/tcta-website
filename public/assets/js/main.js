@@ -775,9 +775,9 @@
         '<span class="lightbox__cap" data-lb-cap></span>' +
         '<button type="button" class="lightbox__btn lightbox__close" data-lb-close aria-label="閉じる">×</button>' +
       '</div>' +
-      '<button type="button" class="lightbox__btn lightbox__nav lightbox__nav--prev" data-lb-prev aria-label="前の画像">‹</button>' +
+      '<button type="button" class="lightbox__btn lightbox__nav lightbox__nav--prev" data-lb-prev aria-label="前の画像">←</button>' +
       '<div class="lightbox__stage" data-lb-stage><img class="lightbox__img" alt="" data-lb-img></div>' +
-      '<button type="button" class="lightbox__btn lightbox__nav lightbox__nav--next" data-lb-next aria-label="次の画像">›</button>' +
+      '<button type="button" class="lightbox__btn lightbox__nav lightbox__nav--next" data-lb-next aria-label="次の画像">→</button>' +
       '<p class="lightbox__hint" data-lb-hint>画像をタップすると原寸で表示します</p>';
     document.body.appendChild(box);
 

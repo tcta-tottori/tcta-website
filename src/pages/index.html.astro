@@ -116,7 +116,7 @@ const upcomingTournaments = TOURNAMENTS.filter((t) => t.status !== 'past');
     <div class="hero__square fu" style="animation-delay:var(--rest-in)" aria-hidden="true"></div>
     <div class="hero__scroll" aria-hidden="true">
       <span>SCROLL</span>
-      <span class="blink"></span>
+      <span class="hero__scroll-arrow">↓</span>
     </div>
   </section>
 
@@ -140,7 +140,7 @@ const upcomingTournaments = TOURNAMENTS.filter((t) => t.status !== 'past');
           </div>
         </div>
       </div>
-      {/* 左右に送れることを、線の矢印（.ln-arrow）で示す。送るのは指（横スクロール）か下の点で */}
+      {/* 左右に送れることを、矢印（.ln-arrow。サイト共通の「←」「→」）で示す。送るのは指（横スクロール）か下の点で */}
       {/* 「終了した大会｜今後の大会」。矢印はそれぞれの文字の下。赤い縦線の延長上に TODAY の線がくるよう、カードの初めの位置を合わせる（main.js の initCarousel） */}
       <p class="hint hint--lr sec-hint rv">
         <span class="hint__item hint__item--past">終了した大会<span class="ln-arrow ln-arrow--left" aria-hidden="true"></span></span>
