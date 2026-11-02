@@ -4,20 +4,23 @@
 // その下の「大会情報」の区画（カード表示／一覧表示）はこれまでどおり。
 //
 // 見た目はお知らせの行（NewsRow.astro）と同じ型。1大会1行で、
-//   左：開催日（「11.23」を大きく＋曜日）／中：大会名（太字）とその下に種目／右：エントリー締切（赤の太字・曜日付き）／右端：→
+//   左：開催日（「11.23」を大きく＋曜日）／中：大会名（太字）とその下に種目／右：エントリー締切（開催日と同じ「11.06 FRI」の形。数字は赤）／右端：→
 // スマホは 開催日｜締切 の段、その下に大会名・種目。
 // 中身はトップの大会カードと同じ（src/data/tournaments.js の buildCards）。状態が「受付中」のものを締切の近い順に。
 // 締切は時刻を出さない（buildCards が dueText で省いてある）。
 // 行を押すと要項（outline-<slug>.html）へ。要項がまだ無い大会は大会のページ（action.href）へ、それも無ければ押せない行にする。
-// 受付中の大会が無いときは、その旨を1行だけ出す（「いまは無い」と分かることも目的のため）。
+// 受付中の大会が無いときは、区画ごと出さない（index.html.astro が ENTRY_OPEN の件数で決める）。
 import Icon from './Icon.astro';
 import { dateChip } from '../data/tournaments.js';
 import { dueDate } from '../data/schedule.js';
 
 const { items = [] } = Astro.props;
 
-const DOW_JA = ['日', '月', '火', '水', '木', '金', '土'];
-const isoOf = (t) => dueDate(t.due, t.date.replace(/\./g, '-'));
+/** 締切の日付（'YYYY-MM-DD'）。「11/27（金）」のように曜日などが付いていても、先頭の「月/日」だけを読む */
+const isoOf = (t) => {
+  const m = String(t.due ?? '').trim().match(/^(\d{1,2}\/\d{1,2})(?!\d)/);
+  return m ? dueDate(m[1], t.date.replace(/\./g, '-')) : null;
+};
 
 /**
  * 大会名の折り返してよい位置（大会情報ページの一覧 TournamentList.astro と同じ）。
@@ -29,12 +32,14 @@ const nameParts = (name) =>
 /** 種目の折り返してよい位置。「／」「/」「・」の後ろと「（」の前 */
 const eventParts = (text) => String(text ?? '').split(/(?<=[／/・])|(?=（)/).filter(Boolean);
 
-/** 締切の表記。'11/6' → '11/6（金）'。読めない形（「別記」「11/27（金）」など）はカードの文言（時刻は省いてある）のまま */
-function dueLabel(t) {
+/**
+ * 締切の表記。開催日と同じ形にする：'11/6' → { md: '11.06', dow: 'FRI' }。
+ * 読めない形（「別記」など）は { text } でカードの文言（時刻は省いてある）のまま出す
+ */
+function dueCell(t) {
   const iso = isoOf(t);
-  if (!iso) return t.due;
-  const [y, m, d] = iso.split('-').map(Number);
-  return `${m}/${d}（${DOW_JA[new Date(y, m - 1, d).getDay()]}）`;
+  if (!iso) return t.due ? { text: t.due } : null;
+  return dateChip(iso.replace(/-/g, '.'));
 }
 
 const rows = items
@@ -43,13 +48,13 @@ const rows = items
     const outline = (t.buttons ?? []).find((b) => b.key === 'outline' && b.href);
     const href = outline?.href ?? t.action?.href ?? null;
     const external = outline ? !!outline.external : /^https?:/.test(href ?? '');
-    return { t, chip: dateChip(t.date), href, external, due: dueLabel(t) };
+    return { t, chip: dateChip(t.date), href, external, due: dueCell(t) };
   })
   // 締切の近い順（読めない締切は後ろ）。同じ締切なら大会の日付順
   .sort((a, b) => (isoOf(a.t) ?? '9999').localeCompare(isoOf(b.t) ?? '9999') || a.t.date.localeCompare(b.t.date));
 ---
 
-{rows.length > 0 ? (
+{rows.length > 0 && (
   <ul class="entry-list" aria-label="エントリー受付中の大会">
     {rows.map(({ t, chip, href, external, due }, i) => {
       const Row = href ? 'a' : 'div';
@@ -72,9 +77,11 @@ const rows = items
                 </span>
               )}
             </span>
-            <span class="entry-row__due">
+            <span class="entry-row__date entry-row__due">
               <span class="entry-row__label">エントリー締切</span>
-              <span class="entry-row__due-date">{due || '要項をご覧ください'}</span>
+              {due?.md
+                ? <><span class="entry-row__day">{due.md}</span><span class="entry-row__dow">{due.dow}</span></>
+                : <span class="entry-row__due-text">{due?.text || '要項をご覧ください'}</span>}
             </span>
             {href && <span class="sqbtn" aria-hidden="true">→</span>}
           </Row>
@@ -82,6 +89,4 @@ const rows = items
       );
     })}
   </ul>
-) : (
-  <p class="entry-none rv">現在エントリーを受け付けている大会はありません。受付が始まると、ここに大会名と締切を出します。</p>
 )}

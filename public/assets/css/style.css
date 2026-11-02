@@ -1897,11 +1897,8 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 
 /* ============ トップの「エントリー受付中の大会」（ヒーローの直後の区画 #entry。EntryOpen.astro） ============
    お知らせの行（.news-row）と同じ型。1大会1行で 開催日｜大会名・種目｜エントリー締切｜→。
-   スマホは 開催日｜締切 の段の下に 大会名・種目。締切は赤の太字で、見出しの数字と同じくらい目に入る大きさにする */
-/* 件数は見出しの中に置くが、見出しの文字の塗り（左から黒に塗り替わる演出。background-clip: text）は受けず、赤で出す */
-.entry-count { margin-left: 10px; font: 700 15px/1 var(--fjp); color: var(--red); -webkit-text-fill-color: var(--red); white-space: nowrap; }
-.entry-count__num { font: 700 24px/1 var(--flt); letter-spacing: .02em; margin-right: 2px; }
-@media (min-width: 1024px) { .entry-count__num { font-size: 30px; } }
+   開催日と締切は同じ形（小さな見出し＋「11.23」の大きな数字＋曜日）。締切は見出しと数字を赤にして区別する。
+   スマホは 開催日｜締切 の段の下に 大会名・種目。受付中の大会が無いときは区画ごと出さない */
 .entry-list { list-style: none; margin: 24px 0 0; padding: 0; border-top: 2px solid var(--ink); }
 @media (min-width: 1024px) { .entry-list { margin-top: 36px; } }
 .entry-row {
@@ -1922,12 +1919,14 @@ a.entry-row:hover .entry-row__name { color: var(--red); }
 a.entry-row:hover .sqbtn { background: var(--red); border-color: var(--red); color: #fff; }
 .entry-row--nolink { cursor: default; }
 .entry-row__label { display: block; margin-bottom: 6px; font: 700 11px/1 var(--fjp); letter-spacing: .08em; color: var(--gray-500); }
-.entry-row__date { grid-area: date; }
+.entry-row__date { grid-area: date; white-space: nowrap; }
 .entry-row__day { font: 700 26px/1 var(--flt); letter-spacing: .02em; color: var(--ink); }
 .entry-row__dow { margin-left: 6px; font: 700 12px/1 var(--flt); letter-spacing: .1em; color: var(--red); }
-.entry-row__due { grid-area: due; justify-self: end; text-align: right; }
-.entry-row__due .entry-row__label { color: var(--red); }
-.entry-row__due-date { display: block; font: 700 18px/1.2 var(--fjp); letter-spacing: .02em; color: var(--red); white-space: nowrap; }
+/* 締切：開催日と同じ形。スマホは右寄せ、見出しと数字は赤 */
+.entry-row__date.entry-row__due { grid-area: due; justify-self: end; text-align: right; }
+.entry-row__due .entry-row__label,
+.entry-row__due .entry-row__day { color: var(--red); }
+.entry-row__due-text { font: 700 15px/1.3 var(--fjp); color: var(--red); }
 .entry-row__main { grid-area: main; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
 /* 大会名は意味の切れ目（EntryOpen.astro の nameParts が入れる <wbr>）でだけ折り返す */
 .entry-row__name { font: 700 16px/1.5 var(--fjp); letter-spacing: .02em; word-break: keep-all; transition: color .3s ease; }
@@ -1936,23 +1935,22 @@ a.entry-row:hover .sqbtn { background: var(--red); border-color: var(--red); col
 .entry-row .sqbtn { display: none; }
 @media (min-width: 768px) {
   .entry-row {
-    grid-template-columns: 130px 1fr auto 44px;
+    grid-template-columns: 130px 1fr 130px 44px;
     grid-template-areas: "date main due arrow";
     align-items: center;
     gap: 24px;
     padding: 24px 8px;
   }
+  /* PC・タブレットは締切も開催日と同じく左寄せ（列の幅も同じ） */
+  .entry-row__date.entry-row__due { justify-self: start; text-align: left; }
   .entry-row__day { font-size: 30px; }
-  .entry-row__due-date { font-size: 20px; }
   .entry-row .sqbtn { display: inline-flex; grid-area: arrow; }
 }
 @media (min-width: 1024px) {
-  .entry-row { grid-template-columns: 150px 1fr auto 44px; }
+  .entry-row { grid-template-columns: 150px 1fr 150px 44px; }
   .entry-row__name { font-size: 18px; }
   .entry-row__event { font-size: 14px; }
-  .entry-row__due-date { font-size: 22px; }
 }
-.entry-none { margin: 24px 0 0; padding: 20px 8px; border-top: 2px solid var(--ink); border-bottom: 1px solid var(--gray-200); font: 500 14px/1.8 var(--fjp); color: var(--gray-600); }
 
 /* 薄く見せる次の1件（NEWS_VISIBLE / NEWS_VISIBLE_PC の次）。まだ続きがあることだけ伝えたいので、薄くフェードさせて押せなくする。 */
 .news-peek { position: relative; }
