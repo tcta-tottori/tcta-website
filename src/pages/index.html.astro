@@ -2,6 +2,7 @@
 import Base from '../layouts/Base.astro';
 import TournamentCard from '../components/TournamentCard.astro';
 import TournamentList from '../components/TournamentList.astro';
+import EntryOpen from '../components/EntryOpen.astro';
 import LiteToggle from '../components/LiteToggle.astro';
 import LinkCard from '../components/LinkCard.astro';
 import NewsRow from '../components/NewsRow.astro';
@@ -126,7 +127,9 @@ const LIST_ROWS = ROWS.filter((t) => CARD_SLUGS.has(t.slug) && t.status !== 'don
   </section>
 
   <!-- ============ 大会情報（カルーセル） ============ -->
-  {/* 表示は2通り。見出しの右の切り替えボタンで選ぶ（main.js の initHomeView。初めはカード表示）。
+  {/* 見出しの直下に「エントリー受付中」の帯（EntryOpen.astro）。受付中の大会だけを締切と並べ、トップを開いてすぐ分かるようにする
+      （旧サイトの「大会エントリー受付中／○/○締切」の役割。カルーセル・一覧・VIEW ALL はそのまま）。
+      その下の表示は2通り。見出しの右の切り替えボタンで選ぶ（main.js の initHomeView。初めはカード表示）。
       カード表示：大会カードを横スクロールで並べる（TODAY の線から始まり、左へ送ると終了した大会）。
       一覧表示：カードと同じ大会のうち開催前のものだけを、大会情報ページの縮小表示と同じ表で出す（主催の協会は問わない） */}
   <section class="section section--gray section--cards" id="tournaments" aria-labelledby="tournaments-title">
@@ -154,6 +157,8 @@ const LIST_ROWS = ROWS.filter((t) => CARD_SLUGS.has(t.slug) && t.status !== 'don
           </button>
         </div>
       </div>
+      {/* エントリー受付中の大会（カードと同じ大会のうち、状態が「受付中」のもの）。無いときはその旨を1行 */}
+      <EntryOpen items={TOURNAMENTS} />
     </div>
 
     {/* カルーセルは画面いっぱいに流す。コンテナの外に置き、1枚目だけ

@@ -17,7 +17,7 @@
 // 要項の欄の「詳細」ボタンからだけそのページを別タブで開く。
 // ボタンの行き先：要項 → outline-<slug>.html（申込用紙もこのページに載せる）、ドロー → draw-<slug>.html、結果 → result-<slug>.html。
 // 素材の無い大会は3つとも押せない状態で出す（大会名から大会ページへは行ける）。
-import { REG_LABEL, STATUS_LABEL, dateCell, dueDate } from '../data/schedule.js';
+import { REG_LABEL, STATUS_LABEL, dateCell, dueDate, dueText } from '../data/schedule.js';
 import Venue from './Venue.astro';
 import TournamentCard from './TournamentCard.astro';
 import { siteData } from '../lib/cms.js';
@@ -63,7 +63,7 @@ const mdOf = (iso) => {
   const [y, m, d] = iso.split('-').map(Number);
   return { md: `${pad2(m)}.${pad2(d)}`, dow: DOW_EN[new Date(y, m - 1, d).getDay()] };
 };
-/** 締切（「11/6」の形のときだけ日付にする。締切は大会より前なので、大会の月より後の月は前の年） */
+/** 締切（「11/6」の形のときだけ日付にする。締切は大会より前なので、大会の月より後の月は前の年）。読めない形は文言から時刻を省いて出す（dueText） */
 const dueCell = (t) => {
   const iso = dueDate(t.due, t.date);
   return iso ? mdOf(iso) : null;
@@ -95,7 +95,7 @@ const rows = items.map((t) => {
     venue: t.place,
     status: CARD_STATUS[t.status] ?? 'soon',
     reg: t.reg,
-    due: t.due && t.due !== '—' ? t.due : '',
+    due: t.due && t.due !== '—' ? dueText(t.due) : '',
     action: { href: e ? e.url : null },
     buttons,
     winners: winnerPhotos(e),
@@ -144,7 +144,7 @@ const parts = (text) => String(text ?? '').split(/(?<=[／/・])|(?=（)/);
           {!compact && <div class="tlx__cell tlx__cell--text"><span class="visually-hidden">会場：</span><span><Venue text={t.place} breaks /></span></div>}
           {due
             ? <div class="tlx__cell tlx__cell--date tlx__cell--sub"><span class="visually-hidden">締切：</span><span class="tlx__md">{due.md}</span><span class="tlx__dow">{due.dow}</span></div>
-            : <div class="tlx__cell tlx__cell--text"><span class="visually-hidden">締切：</span>{t.due && t.due !== '—' ? t.due : '—'}</div>}
+            : <div class="tlx__cell tlx__cell--text"><span class="visually-hidden">締切：</span>{t.due && t.due !== '—' ? dueText(t.due) || '—' : '—'}</div>}
           {!compact && (spare
             ? <div class="tlx__cell tlx__cell--date tlx__cell--sub"><span class="visually-hidden">予備日：</span><span class="tlx__md">{spare.md}</span><span class="tlx__dow">{spare.dow}</span>{spare.venue && <span class="tlx__venue">{spare.venue}</span>}</div>
             : <div class="tlx__cell tlx__cell--text"><span class="visually-hidden">予備日：</span>{spareText(t) ? parts(spareText(t)).map((part, i, arr) => <>{part}{i < arr.length - 1 && <wbr />}</>) : '—'}</div>)}
