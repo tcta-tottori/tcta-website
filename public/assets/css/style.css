@@ -333,6 +333,25 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   font: 700 14px/1 var(--fjp);
   letter-spacing: .04em;
 }
+/* 水曜テニス教室の LINE グループへの誘導。LINE の色（緑）で塗りつぶした枠（ボタンは .line-badge__btn と同じ白地に緑） */
+.line-panel { margin-top: 32px; padding: 24px; border-radius: var(--radius); background: #06C755; color: #fff; }
+@media (min-width: 1024px) { .line-panel { padding: 32px; } }
+.line-panel__title { margin: 0 0 10px; font: 700 18px/1.5 var(--fjp); letter-spacing: .04em; color: #fff; }
+.line-panel__text { margin: 0; font: 400 14px/1.9 var(--fjp); color: #fff; }
+.line-panel__btn { margin-top: 20px; padding: 14px 24px; transition: background-color .25s ease, color .25s ease; }
+.line-panel__btn .aw { transition: transform .3s ease; }
+.line-panel__btn:hover { background: #F0FFF6; color: #05A847; }
+.line-panel__btn:hover .aw { transform: translate(2px, -2px); }
+/* 水曜テニス教室の「参加時の注意＋LINE」（左）と「会場」（右）。
+   PC は 5:7 の2列。左の列を縦に伸ばし、LINE の枠を下端に寄せて右の地図の下端とそろえる（左下に空白が残らないように） */
+.lesson-split { display: grid; grid-template-columns: minmax(0, 1fr); gap: 56px; margin-top: 56px; }
+@media (min-width: 1024px) {
+  .lesson-split { grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 56px; align-items: stretch; }
+  .lesson-split__main { display: flex; flex-direction: column; }
+  .lesson-split__main > .line-panel { margin-top: auto; }
+  .lesson-split__main > :first-child { margin-bottom: 40px; }
+}
+
 @media (min-width: 1024px) {
   .split { grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 48px; margin-top: 48px; }
   /* 本文が広い側（フォームなど）を左に置く場合 */

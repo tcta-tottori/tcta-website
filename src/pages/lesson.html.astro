@@ -80,23 +80,28 @@ const description = "毎週水曜日、井原公園テニスコートで開催�
         </div>
       </div>
 
-      <div class="rv" style="margin-top:56px">
-        <h2 class="sub-head">参加時の注意</h2>
-        <ul class="bullet-list">
-          <li>ラケットの貸出はありません。各自でご持参ください。</li>
-          <li>テニスのできる服装でお越しください。</li>
-          <li>井原コートはハードコートのため、雨天の場合は中止となります。</li>
-          <li>天候不良による急な予定変更・開催可否は、LINEグループでお知らせします。</li>
-        </ul>
-      </div>
-
-      <div class="split">
-        <div class="rv panel panel--tint">
-          <p class="panel__title">教室のご連絡について</p>
-          <p class="prose" style="margin:0">下のボタンからLINEグループにご参加ください。中止のご連絡はこちらで行っています。</p>
-          <a class="btn btn--primary" style="margin-top:24px" href="https://line.me/ti/g2/o2mVMo81uSGX1Cv44BhA0LdAk58tPmPAzHGGEQ?utm_source=invitation&utm_medium=QR_code&utm_campaign=default" target="_blank" rel="noopener noreferrer">LINEグループに参加する <span class="aw">↗</span></a>
+      {/* 参加時の注意＋LINE（左）と会場の地図（右）。PC は2列で、LINE の枠を左の列の下端に置き、右の地図の下端とそろえる。
+          スマホ・タブレットは 注意 → LINE → 会場 の順に縦に並ぶ */}
+      <div class="lesson-split">
+        <div class="lesson-split__main">
+          <div class="rv">
+            <h2 class="sub-head">参加時の注意</h2>
+            <ul class="bullet-list">
+              <li>ラケットをお持ちでない方は、事前に担当者へご相談ください。</li>
+              <li>テニスのできる服装でお越しください。</li>
+              <li>井原コートはハードコートのため、雨天の場合は中止となります。</li>
+              <li>天候不良による急な予定変更・開催可否は、LINEグループでお知らせします。</li>
+            </ul>
+          </div>
+          {/* LINE グループへの誘導。LINE の色（緑）で塗りつぶす（お問い合わせページの LINE の札 .line-badge と同じ色・ボタン） */}
+          <div class="rv line-panel">
+            <p class="line-panel__title">教室のご連絡はLINEグループで</p>
+            <p class="line-panel__text">下のボタンからLINEグループにご参加ください。中止のご連絡はこちらで行っています。</p>
+            <a class="line-badge__btn line-panel__btn" href="https://line.me/ti/g2/o2mVMo81uSGX1Cv44BhA0LdAk58tPmPAzHGGEQ?utm_source=invitation&utm_medium=QR_code&utm_campaign=default" target="_blank" rel="noopener noreferrer">LINEグループに参加する <span class="aw" aria-hidden="true">↗</span></a>
+          </div>
         </div>
         <div class="rv" style="transition-delay:.1s">
+          <h2 class="sub-head">会場</h2>
           {/* 会場の地図。トップのコート案内と同じ自前の地図（Leaflet）で、井原公園テニスコートだけを出す */}
           <CourtMap courts={IHARA} label="井原公園テニスコートの地図" />
           <p style="margin:16px 0 0;font:700 15px/1.7 var(--fjp);color:var(--ink)">井原公園テニスコート</p>
