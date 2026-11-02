@@ -1907,10 +1907,11 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 }
 @media (prefers-reduced-motion: reduce) { .news-new { animation: none; } }
 
+/* 題名の文字は読みやすさを優先して大きめに（スマホ 15px／タブレット 17px／PC 18px。以前は 12／15／16px で小さかった） */
 .news-row__title {
   grid-area: title;
-  font: 700 12px/1.6 var(--fjp);
-  letter-spacing: 0;
+  font: 700 15px/1.7 var(--fjp);
+  letter-spacing: .02em;
   color: var(--gray-800);
   transition: color .3s ease;
   /* 1行に入り切らないときは省略せずに折り返して全部出す（長い英数字も枠からはみ出さないように折る） */
@@ -1927,11 +1928,11 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
     padding: 26px 8px;
   }
   .news-row__day { font-size: 26px; }
-  .news-row__title { font-size: 15px; }
+  .news-row__title { font-size: 17px; }
   .news-row .sqbtn { display: inline-flex; grid-area: arrow; }
 }
 @media (min-width: 1024px) { .news-row { grid-template-columns: 150px 56px 1fr 44px; } }
-@media (min-width: 1024px) { .news-row__title { font-size: 16px; } }
+@media (min-width: 1024px) { .news-row__title { font-size: 18px; } }
 
 /* ============ トップの「エントリー受付中の大会」（ヒーローの直後の区画 #entry。EntryOpen.astro） ============
    お知らせの行（.news-row）と同じ型。開催日と締切は同じ形（小さな見出し＋「11.23」の大きな数字＋曜日）。
