@@ -1679,8 +1679,7 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   font: 400 12px/1.6 var(--fjp);
   color: var(--gray-600);
 }
-.tcard__ico { width: 14px; height: 14px; flex: none; color: var(--gray-500); }
-.tcard__venue .tcard__ico { color: var(--red); }  /* 会場の地図のピンは赤 */
+.tcard__ico { width: 14px; height: 14px; flex: none; color: var(--red); }  /* 種目のアイコン・会場の地図のピンとも赤 */
 /* ---- 種目のピクトグラム（components/EventIcon.astro） ----
    高さは外側が決め、幅は絵の縦横比（aspect-ratio）で決まる。中の img は枠いっぱいに重ねる。
    1つずつ、画面に入った瞬間（main.js の initEventIcons が .is-on を付ける）に一度だけ動く：
@@ -2044,8 +2043,7 @@ a.entry-row:hover .sqbtn { background: var(--red); border-color: var(--red); col
 .entry-row__meta { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 14px; row-gap: 4px; }
 .entry-row__event { display: flex; align-items: flex-start; gap: 6px; min-width: 0; font: 500 13px/1.6 var(--fjp); color: var(--gray-800); word-break: keep-all; }
 .entry-row__event > .mq { flex: 1; min-width: 0; }
-.entry-row__ico { flex: none; width: 14px; height: 14px; margin-top: 4px; color: var(--gray-500); }
-.entry-row__venue .entry-row__ico { color: var(--red); }  /* 会場の地図のピンは赤（大会カードと同じ） */
+.entry-row__ico { flex: none; width: 14px; height: 14px; margin-top: 4px; color: var(--red); }  /* 種目のアイコン・会場の地図のピンとも赤（大会カードと同じ） */
 .entry-row__venue .venue-logo { height: 1.25em; vertical-align: -.28em; }
 .entry-row .sqbtn { display: none; }
 
@@ -3967,7 +3965,7 @@ body.jsrv .rv.on .ink-sweep {
   letter-spacing: .03em;
   color: var(--ink);
 }
-.tl-item__event-text .tl-item__ico { flex: none; margin-top: 2px; color: var(--gray-600); }
+.tl-item__event-text .tl-item__ico { flex: none; margin-top: 2px; color: var(--red); }  /* 種目のアイコンは赤 */
 .tl-item__event-text { color: var(--gray-600); }
 
 .tl-item__row { display: flex; align-items: flex-start; gap: 10px; }
@@ -4743,7 +4741,7 @@ body.jsrv .year-head.rv.on .year-head__ghost { animation: yh-ghost 1.1s var(--ea
 .rlist__title { display: block; min-width: 0; font: 700 16px/1.5 var(--fjp); color: var(--ink); transition: color .2s ease; }
 .rlist__meta { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 18px; font: 400 13px/1.6 var(--fjp); letter-spacing: .02em; color: var(--gray-600); }
 .rlist__when, .rlist__what { display: inline-flex; align-items: center; gap: 8px; min-width: 0; }
-.rlist__ico { width: 16px; height: 16px; flex: none; color: var(--gray-500); }
+.rlist__ico { width: 16px; height: 16px; flex: none; color: var(--red); }  /* 種目のアイコンは赤 */
 .rlist__ymd { font: 700 15px/1 var(--flt); letter-spacing: .03em; color: var(--ink); }
 .rlist__dow { font: 700 11px/1 var(--flt); letter-spacing: .1em; color: var(--red); }
 .rlist__note { color: var(--gray-500); }
