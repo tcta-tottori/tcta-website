@@ -2598,6 +2598,77 @@
     if (window.visualViewport) window.visualViewport.addEventListener('resize', set);
   }
 
+  /* ---------- トップの「エントリー受付中の大会」の「残り○日」 ----------
+     公開ページはキャッシュされる（最長1日）ので、サーバーで書いた日数は見た日とずれることがある。
+     見た日（日本時間）から締切（data-due-left の 'YYYY-MM-DD'）までの日数を数え直す。
+     当日は「本日締切」、3日以内は赤く塗る（.is-urgent）、締切を過ぎていれば隠す。決まりは EntryOpen.astro と同じ */
+  function initEntryLeft() {
+    var tags = document.querySelectorAll('[data-due-left]');
+    if (!tags.length) return;
+    var jst = new Date(Date.now() + 9 * 60 * 60 * 1000);
+    var today = Date.UTC(jst.getUTCFullYear(), jst.getUTCMonth(), jst.getUTCDate());
+    tags.forEach(function (el) {
+      var p = el.getAttribute('data-due-left').split('-').map(Number);
+      var n = Math.round((Date.UTC(p[0], p[1] - 1, p[2]) - today) / 86400000);
+      if (isNaN(n) || n < 0) { el.hidden = true; return; }
+      el.hidden = false;
+      el.classList.toggle('is-urgent', n <= 3);
+      // PC の枠（.entry-left--box）は 見出し・数字・単位 に分けて入れる（当日は「締切｜本日」）
+      if (el.classList.contains('entry-left--box')) {
+        var set = function (sel, text) { var x = el.querySelector(sel); if (x) x.textContent = text; };
+        set('.entry-left__label', n === 0 ? '締切' : '残り');
+        set('.entry-left__num', n === 0 ? '本日' : String(n));
+        set('.entry-left__unit', n === 0 ? '' : '日');
+        el.classList.toggle('is-today', n === 0);
+        return;
+      }
+      el.textContent = n === 0 ? '本日締切' : '残り' + n + '日';
+    });
+  }
+
+  /* ---------- トップの「エントリー受付中の大会」の流れる表示（スマホ） ----------
+     大会名・種目・会場（.mq）が1行に収まらないときだけ、横に流す。スマホの幅（〜767px）のときだけ一覧に .mq-on を付けて1行にし、
+     収まらないものには文字の写し（.mq__clone。読み上げない）を後ろに足して、1周の長さと時間を入れる（style.css の .mq）。
+     動きを減らす設定・軽量モードでは何もしない（1行にせず、折り返して全部出す）。
+     幅が変わったとき・文字の書体やロゴの画像を読み終えたときに測り直す */
+  function initEntryMarquee() {
+    var list = document.querySelector('.entry-list');
+    if (!list || reduceMotion) return;
+    var mq = window.matchMedia('(max-width: 767px)');
+    var GAP = 40, SPEED = 36; // 文字と写しの間（px。style.css の .mq__track の gap と同じ）、流れる速さ（px／秒）
+    var setup = function () {
+      list.classList.toggle('mq-on', mq.matches);
+      list.querySelectorAll('.mq').forEach(function (el) {
+        var track = el.querySelector('.mq__track');
+        var inner = el.querySelector('.mq__inner');
+        if (!track || !inner) return;
+        track.querySelectorAll('.mq__clone').forEach(function (c) { c.parentNode.removeChild(c); });
+        el.classList.remove('is-scroll');
+        if (!mq.matches) return;
+        var w = inner.getBoundingClientRect().width;
+        if (w <= el.clientWidth + 1) return;
+        var clone = inner.cloneNode(true);
+        clone.classList.add('mq__clone');
+        clone.setAttribute('aria-hidden', 'true');
+        track.appendChild(clone);
+        var shift = w + GAP;
+        el.style.setProperty('--mq-shift', shift + 'px');
+        // 止まっている時間（18%）も含めた1周の時間
+        el.style.setProperty('--mq-dur', (shift / SPEED / 0.82).toFixed(2) + 's');
+        el.classList.add('is-scroll');
+      });
+    };
+    setup();
+    var lastW = window.innerWidth, t = 0;
+    window.addEventListener('resize', function () {
+      if (window.innerWidth === lastW) return;
+      lastW = window.innerWidth;
+      clearTimeout(t); t = setTimeout(setup, 150);
+    });
+    window.addEventListener('load', setup);
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(setup);
+  }
+
   function init() {
     initLite();
     initSplash();
@@ -2626,6 +2697,8 @@
     initFilters();
     initViewSwitch();
     initHomeView();
+    initEntryLeft();
+    initEntryMarquee();
     initResultView();
     initSurvey();
     initTlx();

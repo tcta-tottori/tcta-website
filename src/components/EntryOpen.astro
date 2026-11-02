@@ -5,6 +5,14 @@
 //
 // 見た目はお知らせの行（NewsRow.astro）と同じ型。1大会1行で、
 //   左：開催日（「11.23」を大きく＋曜日）／中：大会名（太字）とその下に種目・会場／右：エントリー締切（開催日と同じ「11.06 FRI」の形。赤でゆっくり点滅）／右端：→
+// スマホ（〜767px）は3段：開催日｜締切（左右半分ずつ。開催日は左揃え、締切は右揃え）／大会名＋「残り○日」（点滅）／種目｜会場（中央で分けて左揃え）。
+//   大会名・種目・会場が枠に収まらないときは、横に流す（main.js の initEntryMarquee。.mq）。
+//   動きを減らす設定・軽量モードでは流さず、折り返して全部出す。
+// 「残り○日」（当日は「本日締切」）は、スマホは大会名の右の札（--sp）、タブレットは締切の日付の下の札（--tb）、
+//   PC は締切の日付の左に、日付と同じくらいの大きさの枠（--box。「残り」＋大きな数字＋「日」）で出す。3日以内は赤く塗る。
+//   3つとも書いておき、画面の幅でどれか1つだけを見せる。
+//   公開ページはキャッシュされる（最長1日）ので、ここで書いた日数は見た日とずれることがある。
+//   ブラウザで見た日（日本時間）から main.js の initEntryLeft が数え直す（data-due-left に締切の日付を持たせる）。
 // 種目と会場は横に並べ、入り切らないとき（スマホで種目が長いときなど）だけ会場が次の行に下がる。
 // 会場は地図のピンと会場名。ヤマタスポーツパークはロゴで出す（Venue.astro。大会カードと同じ）。
 // スマホは 開催日｜締切 の段、その下に大会名・種目。
@@ -15,7 +23,7 @@
 import Icon from './Icon.astro';
 import Venue from './Venue.astro';
 import { dateChip } from '../data/tournaments.js';
-import { dueDate } from '../data/schedule.js';
+import { dueDate, todayJST } from '../data/schedule.js';
 
 const { items = [] } = Astro.props;
 
@@ -42,8 +50,19 @@ const eventParts = (text) => String(text ?? '').split(/(?<=[／/・])|(?=（)/).
 function dueCell(t) {
   const iso = isoOf(t);
   if (!iso) return t.due ? { text: t.due } : null;
-  return dateChip(iso.replace(/-/g, '.'));
+  return { ...dateChip(iso.replace(/-/g, '.')), iso, left: daysLeft(iso) };
 }
+
+/** 締切まで残り何日か（日本時間の今日から数える。当日は 0、過ぎていれば負） */
+function daysLeft(iso) {
+  const day = (s) => Date.UTC(...s.split('-').map((n, i) => Number(n) - (i === 1 ? 1 : 0)));
+  return Math.round((day(iso) - day(todayJST())) / 86400000);
+}
+/** 「残り○日」の札の文言と、3日以内か（main.js の initEntryLeft と同じ決まり） */
+const leftLabel = (n) => (n === 0 ? '本日締切' : `残り${n}日`);
+// 札の数字は main.js の initEntryLeft が見た日から数え直す（data-due-left）
+/** PC の枠の中身（main.js の initEntryLeft と同じ決まり）。当日は「締切｜本日」 */
+const leftBox = (n) => (n === 0 ? { label: '締切', num: '本日', unit: '' } : { label: '残り', num: String(n), unit: '日' });
 
 const rows = items
   .filter((t) => t.status === 'open')
@@ -55,6 +74,7 @@ const rows = items
   })
   // 締切の近い順（読めない締切は後ろ）。同じ締切なら大会の日付順
   .sort((a, b) => (isoOf(a.t) ?? '9999').localeCompare(isoOf(b.t) ?? '9999') || a.t.date.localeCompare(b.t.date));
+
 ---
 
 {rows.length > 0 && (
@@ -71,21 +91,25 @@ const rows = items
               <span class="entry-row__dow">{chip.dow}</span>
             </span>
             <span class="entry-row__main">
-              <span class="entry-row__name">{nameParts(t.title).map((part, i, arr) => <>{part}{i < arr.length - 1 && <wbr />}</>)}</span>
+              {/* 大会名（収まらないときは流す .mq）と、スマホだけ右に「残り○日」 */}
+              <span class="entry-row__title">
+                <span class="mq entry-row__name"><span class="mq__track"><span class="mq__inner">{nameParts(t.title).map((part, i, arr) => <>{part}{i < arr.length - 1 && <wbr />}</>)}</span></span></span>
+                {due?.iso && <span class:list={['entry-left', 'entry-left--sp', due.left <= 3 && 'is-urgent']} data-due-left={due.iso} hidden={due.left < 0 ? true : undefined}>{due.left >= 0 ? leftLabel(due.left) : ''}</span>}
+              </span>
               {(t.event || t.venue) && (
                 <span class="entry-row__meta">
                   {t.event && (
                     <span class="entry-row__event">
                       <Icon name="list" class="entry-row__ico" />
                       <span class="visually-hidden">種目：</span>
-                      <span>{eventParts(t.event).map((part, i, arr) => <>{part}{i < arr.length - 1 && <wbr />}</>)}</span>
+                      <span class="mq"><span class="mq__track"><span class="mq__inner">{eventParts(t.event).map((part, i, arr) => <>{part}{i < arr.length - 1 && <wbr />}</>)}</span></span></span>
                     </span>
                   )}
                   {t.venue && (
                     <span class="entry-row__event entry-row__venue">
                       <Icon name="pin" class="entry-row__ico" />
                       <span class="visually-hidden">会場：</span>
-                      <span><Venue text={t.venue} breaks /></span>
+                      <span class="mq"><span class="mq__track"><span class="mq__inner"><Venue text={t.venue} breaks /></span></span></span>
                     </span>
                   )}
                 </span>
@@ -96,7 +120,18 @@ const rows = items
               {due?.md
                 ? <><span class="entry-row__day">{due.md}</span><span class="entry-row__dow">{due.dow}</span></>
                 : <span class="entry-row__due-text">{due?.text || '要項をご覧ください'}</span>}
+              {due?.iso && <span class:list={['entry-left', 'entry-left--tb', due.left <= 3 && 'is-urgent']} data-due-left={due.iso} hidden={due.left < 0 ? true : undefined}>{due.left >= 0 ? leftLabel(due.left) : ''}</span>}
             </span>
+            {/* PC：締切の日付の左に、日付と同じくらいの大きさの枠で「残り○日」 */}
+            {due?.iso && (() => {
+              const b = leftBox(Math.max(0, due.left));
+              return (
+                <span class:list={['entry-left', 'entry-left--box', due.left <= 3 && 'is-urgent', b.num === '本日' && 'is-today']} data-due-left={due.iso} hidden={due.left < 0 ? true : undefined}>
+                  <span class="entry-left__label">{b.label}</span>
+                  <span class="entry-left__value"><span class="entry-left__num">{b.num}</span><span class="entry-left__unit">{b.unit}</span></span>
+                </span>
+              );
+            })()}
             {href && <span class="sqbtn" aria-hidden="true">→</span>}
           </Row>
         </li>
