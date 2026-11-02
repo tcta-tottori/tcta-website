@@ -77,10 +77,11 @@ export function buildNews(rows, now = new Date()) {
       title: n.title,
       href: n.href || 'index.html',
       important: !!n.important,
-      createdAt: n.createdAt instanceof Date ? n.createdAt.getTime() : 0,
+      // 作った時刻。管理画面の行は Date、official-extra.js の行は '2026-11-02T19:15:00+09:00' の形で書ける（無ければ 0）
+      createdAt: n.createdAt instanceof Date ? n.createdAt.getTime() : (Date.parse(n.createdAt ?? '') || 0),
     }))
     // 新しい日付が先。同じ日付は、移行時のもの（slug が 20261004-16 の形）は末尾の番号が大きいほど新しく、
-    // 管理画面で作ったものはあとから作ったものが先。
+    // 管理画面で作ったもの・official-extra.js で時刻（createdAt）を書いたものは、あとから作ったものが先。
     .sort((a, b) => b.date.localeCompare(a.date) || seedNo(b) - seedNo(a) || b.createdAt - a.createdAt || b.slug.localeCompare(a.slug));
   return { NEWS, IMPORTANT_NEWS: NEWS.filter((n) => n.important) };
 }
