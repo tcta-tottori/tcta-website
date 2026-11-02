@@ -1882,7 +1882,9 @@
       lists.forEach(function (l) {
         var items = l.classList.contains('tl--rows')
           ? l.querySelectorAll('.tlx__body .tlx__row:not([hidden])')
-          : l.querySelectorAll('.tl__card:not([hidden])');
+          : l.classList.contains('tl--list')
+            ? l.querySelectorAll('.tl__list li:not([hidden])')
+            : l.querySelectorAll('.tl__card:not([hidden])');
         Array.prototype.forEach.call(items, function (el) {
           el.classList.add('sw-wait');
           switchIO.observe(el);
@@ -1895,7 +1897,12 @@
     };
     var set = function (view) {
       current = view;
-      lists.forEach(function (l) { l.classList.toggle('tl--rows', view === 'rows'); });
+      lists.forEach(function (l) {
+        l.classList.toggle('tl--rows', view === 'rows');
+        l.classList.toggle('tl--list', view === 'list');
+      });
+      // 一覧表示に切り替えたら、流れる文字（大会名・種目・会場）を測り直す（initEntryMarquee）
+      document.dispatchEvent(new Event('entrylist:measure'));
       btns.forEach(function (b) {
         var on = b.getAttribute('data-view') === view;
         b.classList.toggle('is-active', on);
@@ -1904,7 +1911,7 @@
     };
     var saved = null;
     try { saved = localStorage.getItem(KEY); } catch (e) {}
-    if (saved === 'rows' || saved === 'cards') set(saved);
+    if (saved === 'rows' || saved === 'cards' || saved === 'list') set(saved);
     // ページを開いたときも、見えている行・カードから順にズームして出し、外の分はスクロールして見えてきたときに出す
     appear();
     sw.addEventListener('click', function (e) {
@@ -2714,6 +2721,8 @@
     });
     window.addEventListener('load', setup);
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(setup);
+    // 隠れていた一覧が出てきたとき（大会情報ページの表示の切り替え）にも測り直す
+    document.addEventListener('entrylist:measure', setup);
   }
 
   /* ---------- お知らせの全件表示の絞り込み（index.html.astro の data-news-filter） ----------

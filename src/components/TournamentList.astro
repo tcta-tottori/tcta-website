@@ -9,6 +9,9 @@
 //   項目名の行（.tlx__head）は下へスクロールしても画面の上端についてくる（横スクロールは本体と連動。main.js の initTlx）。
 //   大会名は「第56回｜東部地区｜テニス選手権」のように意味の切れ目でだけ折り返す（nameParts と <wbr>）。
 //
+// ■ 一覧表示（.tl--list のとき .tl__list を出す）
+//   トップの大会情報と同じ行の型（HomeTournaments.astro）。1行に 開催日｜大会名・種目・会場｜状態｜要項・ドロー・結果。
+//
 // ■ 拡大表示（.tl__cards）
 //   トップの大会カード（TournamentCard.astro）と同じカードを、スマホは1列・タブレットは2列・PCは3列で並べる。
 //   カードを押すとその大会のページへ（大会ページの無い大会は押せない）。
@@ -20,6 +23,7 @@
 import { REG_LABEL, STATUS_LABEL, dateCell, dueDate, dueText } from '../data/schedule.js';
 import Venue from './Venue.astro';
 import TournamentCard from './TournamentCard.astro';
+import HomeTournaments from './HomeTournaments.astro';
 import { siteData } from '../lib/cms.js';
 import { eventButtons } from '../data/event-buttons.js';
 import { CARD_STATUS } from '../data/tournaments.js';
@@ -100,7 +104,9 @@ const rows = items.map((t) => {
     buttons,
     winners: winnerPhotos(e),
   };
-  return { t, e, date: dateText(t), due: dueCell(t), spare: spareCell(t), buttons, badge: STATUS_LABEL[t.status], card };
+  // 絞り込み（main.js の initFilters）の印。3つの表示で同じもの
+  const tags = `${t.status} ${t.reg}${t.status !== 'done' ? ' upcoming' : ''}`;
+  return { t, e, date: dateText(t), due: dueCell(t), spare: spareCell(t), buttons, badge: STATUS_LABEL[t.status], card: { ...card, tags } };
 });
 // 会場名・種目名は文字の途中で折り返さない（CSS の word-break: keep-all）。
 // 「／」「/」「・」の区切りの後ろと「（」の前にだけ折り返してよい位置（<wbr>）を入れる。テンプレート側で parts を <wbr> でつなぐ。
@@ -158,6 +164,11 @@ const parts = (text) => String(text ?? '').split(/(?<=[／/・])|(?=（)/);
         </div>
       ))}
     </div>
+  </div>
+
+  {/* ===== 一覧表示（トップの大会情報と同じ行の型） ===== */}
+  <div class="tl__list">
+    <HomeTournaments items={rows.map((r) => r.card)} caption={caption} reveal={false} showEmpty={false} />
   </div>
 
   {/* ===== 拡大表示（トップの大会カードと同じカードを並べる） ===== */}
