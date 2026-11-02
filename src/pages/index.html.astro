@@ -1,6 +1,7 @@
 ---
 import Base from '../layouts/Base.astro';
 import TournamentCard from '../components/TournamentCard.astro';
+import TournamentList from '../components/TournamentList.astro';
 import LiteToggle from '../components/LiteToggle.astro';
 import LinkCard from '../components/LinkCard.astro';
 import NewsRow from '../components/NewsRow.astro';
@@ -14,7 +15,7 @@ import CourtMap from '../components/CourtMap.astro';
 import ScheduleCalendar from '../components/ScheduleCalendar.astro';
 
 // 大会カード・お知らせは EmDash から（1 リクエストに 1 回だけ読む）
-const { TOURNAMENTS, NEWS } = await siteData(Astro);
+const { TOURNAMENTS, NEWS, ROWS = [] } = await siteData(Astro);
 const TODAY = today();
 
 const CATCH = 'PLAY BEYOND.';
@@ -42,6 +43,10 @@ const marqueeHalf = (items) =>
 // TODAY マーカーを境に、終了した大会と今後の大会に分ける。
 const pastTournaments = TOURNAMENTS.filter((t) => t.status === 'past');
 const upcomingTournaments = TOURNAMENTS.filter((t) => t.status !== 'past');
+
+// 一覧表示（切り替えボタンで選ぶ）。カードと同じ大会を、主催の協会に関係なく、開催前のものだけ日付順に並べる
+const CARD_SLUGS = new Set(TOURNAMENTS.map((t) => t.slug));
+const LIST_ROWS = ROWS.filter((t) => CARD_SLUGS.has(t.slug) && t.status !== 'done').sort((a, b) => a.date.localeCompare(b.date));
 ---
 
 <Base
@@ -121,15 +126,16 @@ const upcomingTournaments = TOURNAMENTS.filter((t) => t.status !== 'past');
   </section>
 
   <!-- ============ 大会情報（カルーセル） ============ -->
-  {/* 縦にスクロールすると、この区画が画面に止まったまま大会カードが横に流れる（main.js の initCarouselPin）。
-      ヒーローから入ると TODAY の線が伸びて日付が出て、続けてカードが出る。カードを右端まで送ったら次の区画（お知らせ）へ。
-      カードは指・トラックパッドの横スクロールでも送れる。上へ戻ると TODAY まで戻ってヒーローへ（終了した大会へは横に送ったときだけ） */}
+  {/* 表示は2通り。見出しの右の切り替えボタンで選ぶ（main.js の initHomeView。初めはカード表示）。
+      カード表示：大会カードを横スクロールで並べる（TODAY の線から始まり、左へ送ると終了した大会）。
+      一覧表示：カードと同じ大会のうち開催前のものだけを、大会情報ページの縮小表示と同じ表で出す（主催の協会は問わない） */}
   <section class="section section--gray section--cards" id="tournaments" aria-labelledby="tournaments-title">
     <div class="hpin-track"><div class="hpin">
     {/* 背景の英字も止める区画の中に置く（止まっているあいだ一緒に止まる） */}
     <span class="ghost" aria-hidden="true">TOURNAMENT</span>
     <div class="container">
-      <div class="sec-bar rv">
+      {/* 見出しの右に表示の切り替え（カード／一覧。初めはカード。main.js の initHomeView） */}
+      <div class="sec-bar sec-bar--tools rv">
         <div class="sec-head">
           <div class="sec-head__row">
             <span class="sec-head__mark" aria-hidden="true"></span>
@@ -139,15 +145,15 @@ const upcomingTournaments = TOURNAMENTS.filter((t) => t.status !== 'past');
             </div>
           </div>
         </div>
+        <div class="view-switch" role="group" aria-label="大会情報の表示の切り替え" data-home-view-switch>
+          <button class="view-switch__btn is-active" type="button" data-home-view="cards" aria-pressed="true" aria-label="カード表示" title="カード表示">
+            <span class="view-switch__ico view-switch__ico--cards" aria-hidden="true"></span>
+          </button>
+          <button class="view-switch__btn" type="button" data-home-view="rows" aria-pressed="false" aria-label="一覧表示（開催前の大会）" title="一覧表示">
+            <span class="view-switch__ico view-switch__ico--rows" aria-hidden="true"></span>
+          </button>
+        </div>
       </div>
-      {/* 左右に送れることを、矢印（.ln-arrow。サイト共通の「←」「→」）で示す。送るのは指（横スクロール）か下の点で */}
-      {/* 「終了した大会｜今後の大会」。矢印はそれぞれの文字の下。赤い縦線の延長上に TODAY の線がくるよう、カードの初めの位置を合わせる（main.js の initCarousel） */}
-      <p class="hint hint--lr sec-hint rv">
-        <span class="hint__item hint__item--past">終了した大会<span class="ln-arrow ln-arrow--left" aria-hidden="true"></span></span>
-        <span class="hint__bar" data-today-anchor aria-hidden="true"></span>
-        <span class="hint__item">今後の大会<span class="ln-arrow" aria-hidden="true"></span></span>
-      </p>
-
     </div>
 
     {/* カルーセルは画面いっぱいに流す。コンテナの外に置き、1枚目だけ
@@ -167,6 +173,12 @@ const upcomingTournaments = TOURNAMENTS.filter((t) => t.status !== 'past');
         <!-- 今後の大会 -->
         {upcomingTournaments.map((t) => <TournamentCard tournament={t} />)}
 
+    </div>
+
+    {/* 一覧表示（開催前の大会だけ。大会情報ページの縮小表示と同じ表）。切り替えるまでは隠しておく */}
+    <div class="container home-tl" data-home-list hidden>
+      <TournamentList items={LIST_ROWS} caption="開催前の大会一覧" />
+      {LIST_ROWS.length === 0 && <p class="note">開催前の大会はありません。</p>}
     </div>
 
     <div class="container">

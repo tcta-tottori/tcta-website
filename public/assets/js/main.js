@@ -1787,6 +1787,8 @@
       // scrollend が無い端末：スクロールが 250ms 止まったら止まりきったとみなす
       track.addEventListener('scroll', function () { if (!gliding) settleSoon(250); }, { passive: true });
     }
+    // 一覧表示からカード表示に戻したとき（隠しているあいだに横の位置が消えるので）、TODAY の位置に置き直す（initHomeView）
+    track.addEventListener('carousel:place', function () { stopGlide(); place(); });
     // 画面の幅が変わったときだけ TODAY に置き直す（スマホのアドレスバーの出入りで高さだけ変わるときは動かさない）
     var lastW = window.innerWidth;
     window.addEventListener('resize', function () {
@@ -1914,6 +1916,35 @@
       appear();
       try { localStorage.setItem(KEY, view); } catch (x) {}
       window.dispatchEvent(new Event('resize')); // 縮小表示に戻したとき、横に送れるかを測り直す（initTlx）
+    });
+  }
+
+  /* ---------- トップの大会情報の表示の切り替え（カード表示＝横スクロールのカード／一覧表示＝開催前の大会の表） ----------
+     初めはいつもカード表示（選んだ方は覚えない）。一覧に切り替えたら、表の横に送れるかを測り直す（initTlx は resize で測る） */
+  function initHomeView() {
+    var sw = document.querySelector('[data-home-view-switch]');
+    if (!sw) return;
+    var section = sw.closest('section');
+    var carousel = section.querySelector('[data-carousel]');
+    var list = section.querySelector('[data-home-list]');
+    if (!carousel || !list) return;
+    var btns = sw.querySelectorAll('[data-home-view]');
+    var current = 'cards';
+    sw.addEventListener('click', function (e) {
+      var b = e.target.closest('[data-home-view]');
+      if (!b) return;
+      var view = b.getAttribute('data-home-view');
+      if (view === current) return;
+      current = view;
+      carousel.hidden = view !== 'cards';
+      list.hidden = view !== 'rows';
+      btns.forEach(function (x) {
+        var on = x === b;
+        x.classList.toggle('is-active', on);
+        x.setAttribute('aria-pressed', String(on));
+      });
+      if (view === 'cards') carousel.dispatchEvent(new Event('carousel:place'));
+      window.dispatchEvent(new Event('resize'));
     });
   }
 
@@ -2594,6 +2625,7 @@
     initCarousel();
     initFilters();
     initViewSwitch();
+    initHomeView();
     initResultView();
     initSurvey();
     initTlx();

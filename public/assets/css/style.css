@@ -389,6 +389,12 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 }
 @media (min-width: 1024px) { .sec-bar { gap: 20px; } }
 .sec-hint { margin: 14px 0 0; }
+/* 見出しの右に道具（表示の切り替えなど）を置く帯（トップの大会情報） */
+.sec-bar--tools { flex-direction: row; align-items: flex-end; justify-content: space-between; }
+/* トップの大会情報の一覧表示（main.js の initHomeView）。カード表示のときは隠す */
+.home-tl { margin-top: 20px; }
+.home-tl[hidden], .carousel[hidden] { display: none; }
+@media (min-width: 1024px) { .home-tl { margin-top: 36px; } }
 /* 区画の下の右端に置く VIEW ALL（トップの大会情報：カードの下） */
 .sec-more { display: flex; justify-content: flex-end; margin-top: 20px; }
 /* 地図の中の右上に置く VIEW ALL（トップのコート案内。CourtMap の viewAll） */
