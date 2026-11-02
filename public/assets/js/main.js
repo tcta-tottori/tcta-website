@@ -2612,8 +2612,17 @@
       var n = Math.round((Date.UTC(p[0], p[1] - 1, p[2]) - today) / 86400000);
       if (isNaN(n) || n < 0) { el.hidden = true; return; }
       el.hidden = false;
-      el.textContent = n === 0 ? '本日締切' : '残り' + n + '日';
       el.classList.toggle('is-urgent', n <= 3);
+      // PC の枠（.entry-left--box）は 見出し・数字・単位 に分けて入れる（当日は「締切｜本日」）
+      if (el.classList.contains('entry-left--box')) {
+        var set = function (sel, text) { var x = el.querySelector(sel); if (x) x.textContent = text; };
+        set('.entry-left__label', n === 0 ? '締切' : '残り');
+        set('.entry-left__num', n === 0 ? '本日' : String(n));
+        set('.entry-left__unit', n === 0 ? '' : '日');
+        el.classList.toggle('is-today', n === 0);
+        return;
+      }
+      el.textContent = n === 0 ? '本日締切' : '残り' + n + '日';
     });
   }
 

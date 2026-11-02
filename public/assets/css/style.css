@@ -1918,11 +1918,12 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
    お知らせの行（.news-row）と同じ型。開催日と締切は同じ形（小さな見出し＋「11.23」の大きな数字＋曜日）。
    締切は見出しと数字を赤にして区別し、ゆっくり点滅させる（大会カードの締切 .tcard__due と同じ due-blink）。
    ■ スマホ（〜767px）は3段。左右の列は半分ずつで、1段目と3段目の左端をそろえる
-       開催日            ｜ エントリー締切
+       開催日（左揃え）  ｜ エントリー締切（右揃え）
        大会名 ………………………… [残り○日]（点滅）
        ≡ 種目            ｜ ◎ 会場
      大会名・種目・会場は1行で出し、収まらないものは横に流す（.mq。main.js の initEntryMarquee が .mq-on を付けたときだけ）
-   ■ タブレット・PC は1行：開催日｜大会名・種目・会場｜締切（下に「残り○日」）｜→
+   ■ タブレットは1行：開催日｜大会名・種目・会場｜締切（下に「残り○日」の札）｜→
+   ■ PC は1行：開催日｜大会名・種目・会場｜「残り○日」の枠（日付と同じくらいの大きさ）｜締切｜→
    動きを減らす設定の端末では点滅も流れもさせない（流れない間は折り返して全部出す） */
 .entry-list { list-style: none; margin: 24px 0 0; padding: 0; border-top: 2px solid var(--ink); }
 @media (min-width: 1024px) { .entry-list { margin-top: 36px; } }
@@ -1947,8 +1948,8 @@ a.entry-row:hover .sqbtn { background: var(--red); border-color: var(--red); col
 .entry-row__date { grid-area: date; white-space: nowrap; }
 .entry-row__day { font: 700 26px/1 var(--flt); letter-spacing: .02em; color: var(--ink); }
 .entry-row__dow { margin-left: 6px; font: 700 12px/1 var(--flt); letter-spacing: .1em; color: var(--red); }
-/* 締切：開催日と同じ形・同じ左揃え。見出しと数字は赤 */
-.entry-row__date.entry-row__due { grid-area: due; }
+/* 締切：開催日と同じ形。見出しと数字は赤。スマホは右揃え（タブレット・PC は左揃え） */
+.entry-row__date.entry-row__due { grid-area: due; justify-self: end; text-align: right; }
 .entry-row__due .entry-row__label,
 .entry-row__due .entry-row__day { color: var(--red); }
 .entry-row__due-text { font: 700 15px/1.3 var(--fjp); color: var(--red); }
@@ -1967,7 +1968,7 @@ a.entry-row:hover .sqbtn { background: var(--red); border-color: var(--red); col
 }
 /* 「残り○日」（当日は「本日締切」）。ふだんは薄い赤の札、3日以内（.is-urgent）は赤く塗る。
    日数はブラウザで見た日から数え直す（main.js の initEntryLeft）。
-   スマホは大会名の右（.entry-left--sp）、タブレット・PC は締切の日付の下（.entry-left--pc） */
+   スマホは大会名の右（.entry-left--sp）、タブレットは締切の日付の下（.entry-left--tb）、PC は締切の日付の左の枠（.entry-left--box。下に別の決まり） */
 .entry-left {
   flex: none;
   padding: 4px 8px;
@@ -1979,7 +1980,7 @@ a.entry-row:hover .sqbtn { background: var(--red); border-color: var(--red); col
   white-space: nowrap;
 }
 .entry-left.is-urgent { background: var(--red); color: #fff; }
-.entry-left--pc { display: none; }
+.entry-left--tb, .entry-left--box { display: none; }
 .entry-left[hidden] { display: none !important; }
 .entry-row__main { grid-area: main; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
 .entry-row__title { display: flex; align-items: center; gap: 10px; min-width: 0; }
@@ -2026,13 +2027,40 @@ a.entry-row:hover .sqbtn { background: var(--red); border-color: var(--red); col
   /* 種目と会場は横に並べ、入り切らないときだけ会場が次の行に下がる */
   .entry-row__meta { display: flex; flex-wrap: wrap; gap: 4px 18px; }
   .entry-row__event > .mq { flex: initial; }
+  .entry-row__date.entry-row__due { justify-self: start; text-align: left; }
   .entry-left--sp { display: none; }
-  .entry-left--pc { display: table; margin-top: 8px; }
+  .entry-left--tb { display: table; margin-top: 8px; }
 }
+/* PC：締切の日付の左に「残り○日」の枠。開催日・締切と同じく、小さな見出し（残り）＋大きな数字（4）＋単位（日）。
+   ふだんは赤い線の枠に赤い文字、3日以内（.is-urgent）は赤く塗って白い文字。当日は「締切｜本日」 */
 @media (min-width: 1024px) {
-  .entry-row { grid-template-columns: 150px 1fr 150px 44px; }
+  .entry-row {
+    grid-template-columns: 150px 1fr 88px 150px 44px;
+    grid-template-areas: "date main left due arrow";
+  }
   .entry-row__name { font-size: 18px; }
   .entry-row__event { font-size: 14px; }
+  .entry-left--tb { display: none; }
+  .entry-left--box {
+    grid-area: left;
+    justify-self: stretch;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-height: 64px;
+    padding: 8px 6px;
+    border: 1px solid var(--red);
+    background: var(--white);
+    color: var(--red);
+  }
+  .entry-left--box.is-urgent { background: var(--red); color: #fff; }
+  .entry-left__label { font: 700 11px/1 var(--fjp); letter-spacing: .08em; }
+  .entry-left__value { display: flex; align-items: baseline; gap: 2px; }
+  .entry-left__num { font: 700 30px/1 var(--flt); letter-spacing: .02em; }
+  .entry-left__unit { font: 700 13px/1 var(--fjp); }
+  .entry-left--box.is-today .entry-left__num { font: 700 20px/1.2 var(--fjp); letter-spacing: .04em; }
 }
 
 /* 薄く見せる次の1件（NEWS_VISIBLE / NEWS_VISIBLE_PC の次）。まだ続きがあることだけ伝えたいので、薄くフェードさせて押せなくする。 */
