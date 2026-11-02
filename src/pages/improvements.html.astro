@@ -1,0 +1,143 @@
+---
+// アンケートでいただいたご意見をもとに改善した内容の紹介（ビフォー・アフター）。中身は src/data/improvements.js。
+// ビフォー・アフターの画像は、つまみを左右に動かして比べる（main.js の initCompare。JS が無いときは2枚を並べる）。
+// 最後に、アンケートへの回答を呼びかける（受付期間は src/data/survey.js。期間を過ぎるとお問い合わせへの案内に変わる）。
+import Base from '../layouts/Base.astro';
+import { IMPROVEMENTS, CONSIDERING } from '../data/improvements.js';
+import { SURVEY, surveyOpen } from '../data/survey.js';
+
+const open = surveyOpen();
+const title = 'アンケートを受けて改善しました｜鳥取市テニス協会';
+const description = 'ホームページについてのアンケートでいただいたご意見をもとに改善した内容を、改善前と改善後の画面でご紹介します。';
+const md = (iso) => { const [, m, d] = iso.split('-').map(Number); return `${m}月${d}日`; };
+const img = (key, when, size) => `assets/img/improvements/${key}-${when}-${size}.webp`;
+---
+
+<Base title={title} description={description}>
+  <!-- ============ ページヘッダー ============ -->
+  <section class="page-head">
+    <span class="ghost" aria-hidden="true">UPDATE</span>
+    <div class="container">
+      <nav class="breadcrumb" aria-label="パンくず">
+        <a href="index.html">ホーム</a><span class="breadcrumb__sep" aria-hidden="true">›</span><span aria-current="page">アンケートを受けて改善しました</span>
+      </nav>
+      <div class="page-title-row fu">
+        <span class="sec-head__mark" aria-hidden="true"></span>
+        <div>
+          <p class="page-title__en">Improvements</p>
+          <h1 class="page-title">いただいた声で、ここが変わりました</h1>
+        </div>
+      </div>
+      <p class="page-lead fu" style="animation-delay:.15s">ホームページについてのアンケートにご回答いただき、ありがとうございます。いただいたご意見をもとに、さっそく次のところを改善しました。改善前と改善後の画面でご紹介します。</p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      {/* 改善の件数と、アンケートへの入口 */}
+      <div class="impv-summary rv">
+        <div class="impv-summary__num"><span>{IMPROVEMENTS.length}</span>件を改善</div>
+        <p class="impv-summary__text">アンケートは <strong>{SURVEY.closesLabel}</strong> まで受け付けています。気づいたことがあれば、お気軽にお寄せください。</p>
+        {open && <a class="btn btn--primary impv-summary__btn" href="survey.html">アンケートに答える <span class="ln-arrow" aria-hidden="true"></span></a>}
+      </div>
+
+      <ol class="impv-list">
+        {IMPROVEMENTS.map((it, i) => (
+          <li class="impv rv" id={`impv-${it.key}`}>
+            <div class="impv__head">
+              <span class="impv__no">{String(i + 1).padStart(2, '0')}</span>
+              <div class="impv__meta">
+                <span class="impv__page">{it.page}</span>
+                <span class="impv__date">{md(it.date)} 改善</span>
+              </div>
+              <h2 class="impv__title">{it.title}</h2>
+            </div>
+
+            {/* いただいたご意見（要約） */}
+            <blockquote class="impv__voice">
+              <span class="impv__voice-label">いただいたご意見</span>
+              <p>{it.voice}</p>
+            </blockquote>
+
+            {it.images && (
+              <div class="compare" data-compare>
+                {/* 改善後の画面を下に敷き、改善前の画面を上に重ねて、つまみの位置で切り抜く */}
+                <div class="compare__frame">
+                  <picture class="compare__img compare__img--after">
+                    <source media="(max-width: 639px)" srcset={img(it.key, 'after', 'sp')} width="520" height="1125">
+                    <img src={img(it.key, 'after', 'pc')} alt={`改善後の画面：${it.title}`} width="1280" height="800" loading="lazy" decoding="async">
+                  </picture>
+                  <picture class="compare__img compare__img--before">
+                    <source media="(max-width: 639px)" srcset={img(it.key, 'before', 'sp')} width="520" height="1125">
+                    <img src={img(it.key, 'before', 'pc')} alt="改善前の画面" width="1280" height="800" loading="lazy" decoding="async">
+                  </picture>
+                  <span class="compare__tag compare__tag--before" aria-hidden="true">BEFORE</span>
+                  <span class="compare__tag compare__tag--after" aria-hidden="true">AFTER</span>
+                  <span class="compare__handle" aria-hidden="true"><span class="compare__knob">← →</span></span>
+                  <input class="compare__range" type="range" min="0" max="100" value="50" aria-label="改善前と改善後の画面を比べる（左右に動かす）">
+                </div>
+                <p class="compare__hint">つまみを左右に動かすと、改善前と改善後を見比べられます</p>
+              </div>
+            )}
+
+            {it.texts && (
+              <div class="impv-text">
+                <div class="impv-text__box impv-text__box--before">
+                  <span class="impv-text__tag">BEFORE</span>
+                  <p>{it.texts.before}</p>
+                </div>
+                <span class="impv-text__arrow" aria-hidden="true">→</span>
+                <div class="impv-text__box impv-text__box--after">
+                  <span class="impv-text__tag">AFTER</span>
+                  <p>{it.texts.after}</p>
+                </div>
+              </div>
+            )}
+
+            {it.points && (
+              <div class="impv__points">
+                <p class="impv__points-label">変えたところ</p>
+                <ul>{it.points.map((pt) => <li>{pt}</li>)}</ul>
+              </div>
+            )}
+            <a class="ghost-link impv__link" href={it.href}>{it.hrefLabel} <span class="aw">→</span></a>
+          </li>
+        ))}
+      </ol>
+
+      {CONSIDERING.length > 0 && (
+        <div class="impv-consider rv">
+          <h2 class="sub-head">検討しているご意見</h2>
+          <ul class="impv-consider__list">
+            {CONSIDERING.map((c) => (
+              <li><span class="impv-consider__tag">検討中</span><div><p class="impv-consider__title">{c.title}</p><p class="impv-consider__note">{c.note}</p></div></li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  </section>
+
+  {/* アンケートへの呼びかけ（期間を過ぎたらお問い合わせへ） */}
+  <section class="section section--gray impv-cta-wrap">
+    <div class="container">
+      <div class="impv-cta rv">
+        <p class="impv-cta__en">YOUR VOICE</p>
+        {open ? (
+          <>
+            <h2 class="impv-cta__title">あなたの声も、聞かせてください。</h2>
+            <p class="impv-cta__text">「ここが見づらい」「こんな情報がほしい」「ここが間違っている」など、どんなことでもかまいません。いただいたご意見は、ひとつずつ確認してホームページに反映していきます。お名前なしでも、3分ほどで回答できます。</p>
+            <p class="impv-cta__deadline">受付は <strong>{SURVEY.closesLabel}</strong> まで</p>
+            <a class="btn btn--primary impv-cta__btn" href="survey.html">アンケートに答える <span class="ln-arrow" aria-hidden="true"></span></a>
+          </>
+        ) : (
+          <>
+            <h2 class="impv-cta__title">ご協力ありがとうございました。</h2>
+            <p class="impv-cta__text">アンケートの受付は終了しました。ホームページについてお気づきの点は、お問い合わせからいつでもお寄せください。</p>
+            <a class="btn btn--primary impv-cta__btn" href="contact.html">お問い合わせへ <span class="ln-arrow" aria-hidden="true"></span></a>
+          </>
+        )}
+      </div>
+    </div>
+  </section>
+</Base>

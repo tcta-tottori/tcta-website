@@ -102,6 +102,8 @@ export const EXTRA_CARDS = [
 
 export const EXTRA_NEWS = [
   { slug: 'official-20261102-kaicho-autumn-draw', date: '2026-11-02', createdAt: '2026-11-02T19:15:00+09:00', category: '大会', title: '第62回鳥取市テニス協会会長杯（秋季・11/15）のドローを掲載しました', href: 'draw-r8-kaicho-autumn.html' },
+  // アンケートを受けた改善の紹介（improvements.html。中身は src/data/improvements.js）
+  { slug: 'site-20261103-improvements', date: '2026-11-03', category: 'お知らせ', title: 'アンケートでいただいたご意見をもとに、ホームページを改善しました（改善前・改善後をご紹介。アンケートは11/9まで受付中）', href: 'improvements.html' },
   // ホームページについてのアンケート（受付は src/data/survey.js の期間。11/9 まで）
   { slug: 'site-20261102-survey', date: '2026-11-02', category: 'お知らせ', title: 'ホームページについてのアンケートを実施しています。追加してほしいこと・ご意見・修正が必要な箇所をお寄せください（11/9まで）', href: 'survey.html' },
   { slug: 'official-20261102-kyotango-mixed-outline', date: '2026-11-02', category: '大会', title: '京丹後市オープンミックスダブルス大会（12/6）の要項を掲載しました（11/27締切）', href: 'outline-r8-kyotango-mixed.html' },

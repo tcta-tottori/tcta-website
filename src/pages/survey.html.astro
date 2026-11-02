@@ -39,6 +39,13 @@ const description = '鳥取市テニス協会のホームページについて�
         <div><dt>お名前</dt><dd>なくても回答できます</dd></div>
       </dl>
 
+      {/* いただいたご意見で改善したことの紹介へ（回答する気持ちを後押しする） */}
+      <a class="survey-impv rv" href="improvements.html">
+        <span class="survey-impv__tag">UPDATE</span>
+        <span class="survey-impv__text">いただいたご意見で、さっそくホームページを改善しました。改善前・改善後をご紹介しています</span>
+        <span class="ln-arrow" aria-hidden="true"></span>
+      </a>
+
       <div class="survey" data-survey data-closes={SURVEY.closesAt} data-opens={SURVEY.opensAt}>
         {/* 受付終了（期間外）の案内。期間中は隠しておき、main.js が見た時点の日時で出し分ける */}
         <div class="form-done survey-closed" data-survey-closed hidden={open}>
@@ -142,6 +149,7 @@ const description = '鳥取市テニス協会のホームページについて�
           <h2 class="form-done__title">ご回答ありがとうございました。</h2>
           <p class="form-done__text">いただいたご意見は、ホームページの改善に役立てます。ほかにもお気づきの点があれば、もう一度お送りいただけます。</p>
           <div class="survey__again">
+            <a class="btn btn--outline" href="improvements.html">改善したことを見る <span class="ln-arrow" aria-hidden="true"></span></a>
             <button class="btn btn--outline" type="button" data-survey-again>もう一度回答する</button>
             <a class="btn btn--outline" href="index.html">ホームに戻る <span class="ln-arrow" aria-hidden="true"></span></a>
           </div>
