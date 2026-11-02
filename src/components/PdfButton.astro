@@ -1,0 +1,48 @@
+---
+// PDF（と紙面の画像）を開くボタン。サイトの PDF はすべてこの形にそろえる
+// （申込用紙・要項・ドロー・結果・役員名簿・議案書・編成表・登録用紙・大会日程）。
+// 左に名前（＋赤い添え字）とその下に中身・大きさ、右端に文字に合わせた横長の「PDF」の札。
+// ふだんはグレーの線の枠、PC でカーソルを合わせると全体が赤い塗りのボタンに変わる（style.css の .pdfbtn）。
+// 押すと別タブではなく、このページの中で全画面に開く（main.js の initPdfViewer。ダウンロード・印刷のボタン付き）。
+// JS が動かない環境では、ふつうのリンクとして PDF そのものを開く。
+//   href     … PDF（または画像）の場所
+//   title    … ボタンの名前（太字）
+//   kind     … 名前の後ろに赤で添える言葉（「申込用紙」など。無くてよい）
+//   note     … 名前の下の小さな文字（中身の名前・大きさなど）
+//   type     … 'pdf'（既定）か 'image'
+//   viewTitle / sub … ビューアの上の帯に出す名前と副題（無ければ title ＋ kind）
+//   filename … ダウンロードしたときのファイル名（無ければ名前から作る）
+interface Props {
+  href: string;
+  title: string;
+  kind?: string;
+  note?: string;
+  type?: 'pdf' | 'image';
+  viewTitle?: string;
+  sub?: string;
+  filename?: string;
+}
+const { href, title, kind = '', note = '', type = 'pdf', viewTitle, sub = '', filename } = Astro.props;
+const full = kind ? `${title} ${kind}` : title;
+const ext = (String(href).match(/\.([a-z0-9]+)(?:[?#].*)?$/i)?.[1] ?? (type === 'pdf' ? 'pdf' : 'jpg')).toLowerCase();
+const file = filename ?? `${full}.${ext}`.replace(/[\\/:*?"<>|\s]+/g, '_');
+---
+
+<a
+  class="pdfbtn"
+  href={href}
+  data-pdf-viewer
+  data-type={type}
+  data-title={viewTitle ?? full}
+  data-sub={sub}
+  data-filename={file}
+>
+  <span class="pdfbtn__text">
+    <span class="pdfbtn__title">{title}{kind && <span class="pdfbtn__kind">{kind}</span>}</span>
+    {note && <span class="pdfbtn__note">{note}</span>}
+  </span>
+  <span class="pdfbtn__badge" aria-hidden="true">
+    {type === 'pdf' ? 'PDF' : '画像'}
+    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
+  </span>
+</a>

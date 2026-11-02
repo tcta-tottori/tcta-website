@@ -1,4 +1,5 @@
 ---
+import PdfButton from '../components/PdfButton.astro';
 import Base from '../layouts/Base.astro';
 
 const title = "入会案内｜鳥取市テニス協会";
@@ -52,14 +53,10 @@ const REG_FORMS = [
                 <p class="regcard__title">{f.title}</p>
                 <p class="regcard__desc">{f.desc}</p>
               </div>
-              <a class="regcard__file" href={f.src} data-pdf-viewer data-type="pdf" data-title={f.file} data-sub={f.title} data-filename={`${f.file.replace(/\s+/g, '_')}.pdf`}>
-                <span class="regcard__type" aria-hidden="true">PDF</span>
-                <span class="regcard__text">
-                  <span class="regcard__name">{f.file}</span>
-                  <span class="regcard__note">PDF・{f.kb}KB／印刷・ダウンロードできます</span>
-                </span>
-                <span class="regcard__go" aria-hidden="true">→</span>
-              </a>
+              {/* 用紙はサイト共通の PDF のボタン（PdfButton.astro） */}
+              <div class="regcard__file">
+                <PdfButton href={f.src} title={f.file} note={`PDF・${f.kb}KB／印刷・ダウンロードできます`} sub={f.title} filename={`${f.file.replace(/\s+/g, '_')}.pdf`} />
+              </div>
             </div>
           ))}
         </div>

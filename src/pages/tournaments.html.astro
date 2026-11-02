@@ -1,4 +1,5 @@
 ---
+import PdfButton from '../components/PdfButton.astro';
 import Base from '../layouts/Base.astro';
 import ScheduleCalendar from '../components/ScheduleCalendar.astro';
 import TournamentList from '../components/TournamentList.astro';
@@ -86,8 +87,8 @@ const count = {
       <p class="note" id="r8-list-empty" hidden>該当する大会はありません。</p>
 
 
-      <div class="rv mt-40">
-        <a class="btn btn--outline" href={SCHEDULE_PDF.src} target="_blank" rel="noopener noreferrer">令和8年度 大会日程をダウンロード（PDF / {SCHEDULE_PDF.kb.toLocaleString()}KB）<span aria-hidden="true" class="text-red">↓</span></a>
+      <div class="pdfbtns rv mt-40">
+        <PdfButton href={SCHEDULE_PDF.src} title="令和8年度" kind="大会日程" note={`年間の大会日程の一覧／PDF・${SCHEDULE_PDF.kb.toLocaleString()}KB`} />
       </div>
 
       {PARTNER.length > 0 && (
