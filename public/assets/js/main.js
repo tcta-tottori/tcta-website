@@ -2179,6 +2179,112 @@
     });
   }
 
+  /* ---------- ホームページについてのアンケート（survey.html） ----------
+     送信先は POST /api/survey（src/pages/api/survey.ts が D1 に保存）。必須は 使いやすさ（5段階）・ご意見の種類・ご意見の内容。
+     受付期間（data-opens〜data-closes）の外なら、ページが少し前のまま残っていても見た時点で「受付終了」に切り替える。
+     送れたら「ありがとうございました」を出し、「もう一度回答する」で空のフォームに戻す */
+  function initSurvey() {
+    var root = document.querySelector('[data-survey]');
+    if (!root) return;
+    var form = root.querySelector('[data-survey-form]');
+    var closed = root.querySelector('[data-survey-closed]');
+    var done = root.querySelector('[data-form-done]');
+    if (!form) return;
+    var now = Date.now();
+    var opens = Date.parse(root.getAttribute('data-opens') || '');
+    var closes = Date.parse(root.getAttribute('data-closes') || '');
+    var isOpen = function () { var t = Date.now(); return !(t < opens || t > closes); };
+    var showClosed = function () { form.hidden = true; if (done) done.classList.remove('is-shown'); if (closed) closed.hidden = false; };
+    if (!(now < opens || now > closes)) { form.hidden = false; if (closed) closed.hidden = true; } else { showClosed(); return; }
+
+    var errFor = function (name) { return form.querySelector('[data-error-for="' + name + '"]'); };
+    var setErr = function (name, msg) {
+      var box = errFor(name);
+      if (box) { box.textContent = msg ? '⚠ ' + msg : ''; box.classList.toggle('is-shown', !!msg); }
+      var group = form.querySelector('[data-required="' + name + '"]');
+      if (group) group.classList.toggle('is-invalid', !!msg);
+      var field = form.elements[name];
+      if (field && field.tagName === 'TEXTAREA') { if (msg) field.setAttribute('aria-invalid', 'true'); else field.removeAttribute('aria-invalid'); }
+    };
+    var checked = function (name) {
+      return Array.prototype.slice.call(form.querySelectorAll('input[name="' + name + '"]:checked')).map(function (el) { return el.value; });
+    };
+    var check = function (name) {
+      if (name === 'rating') { var ok1 = checked('rating').length > 0; setErr('rating', ok1 ? '' : '使いやすさを1つ選んでください。'); return ok1; }
+      if (name === 'kinds') { var ok2 = checked('kinds').length > 0; setErr('kinds', ok2 ? '' : 'ご意見の種類を1つ以上選んでください。'); return ok2; }
+      if (name === 'body') { var ok3 = !!String(form.elements.body.value || '').trim(); setErr('body', ok3 ? '' : 'ご意見の内容を入力してください。'); return ok3; }
+      return true;
+    };
+    form.addEventListener('change', function (e) { var n = e.target && e.target.name; if (n === 'rating' || n === 'kinds') check(n); });
+    form.elements.body.addEventListener('blur', function () { check('body'); });
+    form.elements.body.addEventListener('input', function () { if (form.elements.body.getAttribute('aria-invalid') === 'true') check('body'); });
+
+    var submit = form.querySelector('[data-form-submit]');
+    var errBox = form.querySelector('[data-form-error]');
+    var label = submit ? submit.innerHTML : '';
+    var fail = function (msg) {
+      form.removeAttribute('aria-busy');
+      if (submit) { submit.disabled = false; submit.innerHTML = label; }
+      if (errBox) {
+        errBox.textContent = '⚠ ' + msg;
+        errBox.hidden = false;
+        errBox.scrollIntoView({ block: 'center', behavior: reduceMotion ? 'auto' : 'smooth' });
+      }
+    };
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      if (!isOpen()) { showClosed(); return; }
+      var bad = ['rating', 'kinds', 'body'].filter(function (n) { return !check(n); });
+      if (bad.length) {
+        var first = form.querySelector('[data-required="' + bad[0] + '"]') || form.elements[bad[0]];
+        if (first && first.scrollIntoView) first.scrollIntoView({ block: 'center', behavior: reduceMotion ? 'auto' : 'smooth' });
+        if (bad[0] === 'body') form.elements.body.focus();
+        return;
+      }
+      if (form.getAttribute('aria-busy') === 'true') return;
+      var val = function (n) { var el = form.elements[n]; return el && el.value !== undefined ? String(el.value || '') : ''; };
+      var data = {
+        role: (checked('role')[0] || ''), device: (checked('device')[0] || ''), rating: checked('rating')[0] || '',
+        pages: checked('pages'), kinds: checked('kinds'),
+        body: val('body'), place: val('place'), name: val('name'), website: val('website')
+      };
+      form.setAttribute('aria-busy', 'true');
+      if (submit) { submit.disabled = true; submit.textContent = '送信しています…'; }
+      if (errBox) { errBox.hidden = true; errBox.textContent = ''; }
+      fetch('api/survey', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(data) })
+        .then(function (res) { return res.json().catch(function () { return {}; }).then(function (j) { return { status: res.status, j: j }; }); })
+        .then(function (r) {
+          if (r.status === 200 && r.j && r.j.ok) {
+            form.hidden = true;
+            form.removeAttribute('aria-busy');
+            if (submit) { submit.disabled = false; submit.innerHTML = label; }
+            if (done) {
+              done.classList.add('is-shown');
+              done.setAttribute('tabindex', '-1');
+              done.focus();
+              done.scrollIntoView({ block: 'center', behavior: reduceMotion ? 'auto' : 'smooth' });
+            }
+            return;
+          }
+          if (r.j && r.j.error === 'closed') { showClosed(); return; }
+          if (r.status === 429) fail('短い時間に続けて送信されたため、受け付けられませんでした。しばらくしてからもう一度お試しください。');
+          else if (r.status === 400) fail('入力内容を確認して、もう一度送信してください。');
+          else fail('送信できませんでした。時間をおいてもう一度お試しください。');
+        })
+        .catch(function () { fail('通信できませんでした。電波の良いところでもう一度お試しください。'); });
+    });
+
+    // 「もう一度回答する」：空のフォームに戻して、いちばん上へ
+    var again = root.querySelector('[data-survey-again]');
+    if (again) again.addEventListener('click', function () {
+      form.reset();
+      ['rating', 'kinds', 'body'].forEach(function (n) { setErr(n, ''); });
+      if (done) done.classList.remove('is-shown');
+      form.hidden = false;
+      root.scrollIntoView({ block: 'start', behavior: reduceMotion ? 'auto' : 'smooth' });
+    });
+  }
+
   /* ---------- 種目のピクトグラムの動き ----------
      カード1枚ずつ（.evicon ごと）に画面に入った瞬間を見て、そのとき一度だけ動かす（CSS の .evicon.is-on）。
      カルーセルを横に送って初めて見えたカードも、全件表示を開いて見えたカードも、そのときに動く。
@@ -2489,6 +2595,7 @@
     initFilters();
     initViewSwitch();
     initResultView();
+    initSurvey();
     initTlx();
     initTabs();
     initForm();

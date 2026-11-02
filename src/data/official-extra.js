@@ -90,6 +90,8 @@ export const EXTRA_CARDS = [
 ];
 
 export const EXTRA_NEWS = [
+  // ホームページについてのアンケート（受付は src/data/survey.js の期間。11/9 まで）
+  { slug: 'site-20261102-survey', date: '2026-11-02', category: 'お知らせ', title: 'ホームページについてのアンケートを実施しています。追加してほしいこと・ご意見・修正が必要な箇所をお寄せください（11/9まで）', href: 'survey.html' },
   { slug: 'official-20261102-kyotango-mixed-outline', date: '2026-11-02', category: '大会', title: '京丹後市オープンミックスダブルス大会（12/6）の要項を掲載しました（11/27締切）', href: 'outline-r8-kyotango-mixed.html' },
   { slug: 'official-20261102-tottori-univ-outline-fix', date: '2026-11-02', category: '大会', title: '鳥大オープンテニス大会（12/6）の要項を訂正しました（種目はダブルスではなくシングルスです）', href: 'outline-r8-tottori-univ-winter.html' },
   { slug: 'official-20261101-tottori-univ-outline', date: '2026-11-01', category: '大会', title: '鳥大オープンテニス大会（12/6）の要項・申込用紙を掲載しました（11/27締切）', href: 'outline-r8-tottori-univ-winter.html' },
