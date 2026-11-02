@@ -397,61 +397,6 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 .home-tl[hidden], .carousel[hidden] { display: none; }
 @media (min-width: 1024px) { .home-tl { margin-top: 36px; } }
 
-/* トップの大会情報：見出しの直下の「エントリー受付中」の帯（EntryOpen.astro）。
-   旧サイトのように、トップを開いてすぐ受付中の大会と締切が分かるようにする。白い面に左の赤い縦線、1大会1行。
-   スマホは 日程チップ｜大会名・種目／受付中・締切 の2段、タブレット以上は 日程チップ｜大会名・種目｜受付中・締切｜要項を見る の1行 */
-.entry-open {
-  position: relative; z-index: 1; /* 背景の大きな英字（.ghost）より前に */
-  margin-top: 20px;
-  padding: 16px 18px 6px;
-  background: var(--white);
-  border-left: 4px solid var(--red);
-  border-radius: var(--radius);
-  box-shadow: 0 2px 12px rgba(26, 26, 26, .07);
-}
-@media (min-width: 1024px) { .entry-open { margin-top: 28px; padding: 20px 24px 8px; } }
-.entry-open__head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
-.entry-open__eyebrow { margin: 0; font: 700 12px/1.2 var(--flt); letter-spacing: .12em; color: var(--red); text-transform: uppercase; }
-.entry-open__title { margin: 0; font: 700 16px/1.4 var(--fjp); letter-spacing: .04em; color: var(--ink); }
-@media (min-width: 1024px) { .entry-open__title { font-size: 18px; } }
-.entry-open__count { margin-left: 8px; font: 700 13px/1 var(--fjp); color: var(--red); }
-.entry-open__num { font: 700 18px/1 var(--flt); letter-spacing: .02em; margin-right: 1px; }
-.entry-open__list { list-style: none; margin: 8px 0 0; padding: 0; }
-.entry-open__item + .entry-open__item { border-top: 1px solid var(--gray-200); }
-.entry-open__row {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  column-gap: 14px;
-  row-gap: 8px;
-  align-items: center;
-  padding: 12px 0;
-  color: var(--ink);
-}
-.entry-open__row--nolink { cursor: default; }
-.entry-open__date { grid-row: 1 / span 2; align-self: start; }
-.entry-open__main { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-/* 大会名は意味の切れ目（EntryOpen.astro の nameParts が入れる <wbr>）でだけ折り返す */
-.entry-open__name { font: 700 15px/1.5 var(--fjp); letter-spacing: .02em; word-break: keep-all; transition: color .3s ease; }
-a.entry-open__row:hover .entry-open__name { color: var(--red); }
-.entry-open__event { font: 500 12px/1.5 var(--fjp); color: var(--gray-600); }
-.entry-open__due { display: inline-flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-.entry-open__due-date { font: 700 13px/1 var(--fjp); letter-spacing: .02em; color: var(--red); white-space: nowrap; }
-.entry-open__due-date small { font: 700 11px/1 var(--fjp); color: var(--red); margin-right: 4px; }
-.entry-open__go { display: none; }
-@media (min-width: 768px) {
-  .entry-open__row { grid-template-columns: auto 1fr auto auto; row-gap: 0; column-gap: 20px; padding: 14px 0; }
-  .entry-open__date { grid-row: auto; align-self: center; }
-  .entry-open__due { flex-wrap: nowrap; }
-  .entry-open__go { display: inline-flex; align-items: center; gap: 8px; font: 700 12px/1 var(--fjp); letter-spacing: .06em; color: var(--red); white-space: nowrap; }
-  .entry-open__go .ln-arrow { transition: transform .3s ease; }
-  a.entry-open__row:hover .entry-open__go .ln-arrow { transform: translateX(3px); }
-}
-/* PC は大会名と種目を1行に並べる（タブレットは幅が足りないので縦に積んだまま） */
-@media (min-width: 1024px) {
-  .entry-open__main { flex-direction: row; align-items: baseline; gap: 14px; }
-  .entry-open__name { font-size: 16px; }
-}
-.entry-open__none { margin: 10px 0 10px; font: 400 13px/1.7 var(--fjp); color: var(--gray-500); }
 /* 区画の下の右端に置く VIEW ALL（トップの大会情報：カードの下） */
 .sec-more { display: flex; justify-content: flex-end; margin-top: 20px; }
 /* 地図の中の右上に置く VIEW ALL（トップのコート案内。CourtMap の viewAll） */
@@ -1949,6 +1894,65 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 }
 @media (min-width: 1024px) { .news-row { grid-template-columns: 150px 56px 1fr 44px; } }
 @media (min-width: 1024px) { .news-row__title { font-size: 16px; } }
+
+/* ============ トップの「エントリー受付中の大会」（ヒーローの直後の区画 #entry。EntryOpen.astro） ============
+   お知らせの行（.news-row）と同じ型。1大会1行で 開催日｜大会名・種目｜エントリー締切｜→。
+   スマホは 開催日｜締切 の段の下に 大会名・種目。締切は赤の太字で、見出しの数字と同じくらい目に入る大きさにする */
+/* 件数は見出しの中に置くが、見出しの文字の塗り（左から黒に塗り替わる演出。background-clip: text）は受けず、赤で出す */
+.entry-count { margin-left: 10px; font: 700 15px/1 var(--fjp); color: var(--red); -webkit-text-fill-color: var(--red); white-space: nowrap; }
+.entry-count__num { font: 700 24px/1 var(--flt); letter-spacing: .02em; margin-right: 2px; }
+@media (min-width: 1024px) { .entry-count__num { font-size: 30px; } }
+.entry-list { list-style: none; margin: 24px 0 0; padding: 0; border-top: 2px solid var(--ink); }
+@media (min-width: 1024px) { .entry-list { margin-top: 36px; } }
+.entry-row {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-areas:
+    "date due"
+    "main main";
+  gap: 12px 14px;
+  align-items: end;
+  padding: 18px 8px;
+  border-bottom: 1px solid var(--gray-200);
+  color: var(--ink);
+  transition: background .3s ease;
+}
+a.entry-row:hover { background: var(--gray-050); color: var(--ink); }
+a.entry-row:hover .entry-row__name { color: var(--red); }
+a.entry-row:hover .sqbtn { background: var(--red); border-color: var(--red); color: #fff; }
+.entry-row--nolink { cursor: default; }
+.entry-row__label { display: block; margin-bottom: 6px; font: 700 11px/1 var(--fjp); letter-spacing: .08em; color: var(--gray-500); }
+.entry-row__date { grid-area: date; }
+.entry-row__day { font: 700 26px/1 var(--flt); letter-spacing: .02em; color: var(--ink); }
+.entry-row__dow { margin-left: 6px; font: 700 12px/1 var(--flt); letter-spacing: .1em; color: var(--red); }
+.entry-row__due { grid-area: due; justify-self: end; text-align: right; }
+.entry-row__due .entry-row__label { color: var(--red); }
+.entry-row__due-date { display: block; font: 700 18px/1.2 var(--fjp); letter-spacing: .02em; color: var(--red); white-space: nowrap; }
+.entry-row__main { grid-area: main; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+/* 大会名は意味の切れ目（EntryOpen.astro の nameParts が入れる <wbr>）でだけ折り返す */
+.entry-row__name { font: 700 16px/1.5 var(--fjp); letter-spacing: .02em; word-break: keep-all; transition: color .3s ease; }
+.entry-row__event { display: flex; align-items: flex-start; gap: 6px; font: 500 13px/1.6 var(--fjp); color: var(--gray-800); word-break: keep-all; }
+.entry-row__ico { flex: none; width: 14px; height: 14px; margin-top: 4px; color: var(--red); }
+.entry-row .sqbtn { display: none; }
+@media (min-width: 768px) {
+  .entry-row {
+    grid-template-columns: 130px 1fr auto 44px;
+    grid-template-areas: "date main due arrow";
+    align-items: center;
+    gap: 24px;
+    padding: 24px 8px;
+  }
+  .entry-row__day { font-size: 30px; }
+  .entry-row__due-date { font-size: 20px; }
+  .entry-row .sqbtn { display: inline-flex; grid-area: arrow; }
+}
+@media (min-width: 1024px) {
+  .entry-row { grid-template-columns: 150px 1fr auto 44px; }
+  .entry-row__name { font-size: 18px; }
+  .entry-row__event { font-size: 14px; }
+  .entry-row__due-date { font-size: 22px; }
+}
+.entry-none { margin: 24px 0 0; padding: 20px 8px; border-top: 2px solid var(--ink); border-bottom: 1px solid var(--gray-200); font: 500 14px/1.8 var(--fjp); color: var(--gray-600); }
 
 /* 薄く見せる次の1件（NEWS_VISIBLE / NEWS_VISIBLE_PC の次）。まだ続きがあることだけ伝えたいので、薄くフェードさせて押せなくする。 */
 .news-peek { position: relative; }

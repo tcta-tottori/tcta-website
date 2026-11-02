@@ -1,19 +1,23 @@
 ---
-// トップ「大会情報」の見出しの直下に出す「エントリー受付中」の帯。
-// 旧サイトはトップを開くとすぐ「大会エントリー受付中／○/○締切」が見えていた（docs/content.md §1.3）。
-// いまのトップはカードのバッジを横に送って探すか VIEW ALL を開かないと分からなかったので、
-// 受付中の大会だけをここに抜き出し、1大会1行で締切と並べる。カルーセル・一覧表示・VIEW ALL はそのまま。
+// トップの「エントリー受付中の大会」の一覧（ヒーローの直後の独立した区画 #entry の中身。index.html.astro）。
+// 旧サイトはトップを開くとすぐ「大会エントリー受付中／○/○締切」が見えていたので、その役割を受け持つ。
+// その下の「大会情報」の区画（カード表示／一覧表示）はこれまでどおり。
 //
+// 見た目はお知らせの行（NewsRow.astro）と同じ型。1大会1行で、
+//   左：開催日（「11.23」を大きく＋曜日）／中：大会名（太字）とその下に種目／右：エントリー締切（赤の太字・曜日付き）／右端：→
+// スマホは 開催日｜締切 の段、その下に大会名・種目。
 // 中身はトップの大会カードと同じ（src/data/tournaments.js の buildCards）。状態が「受付中」のものを締切の近い順に。
-// 1行：日程チップ ＋ 大会名・種目 ＋ 締切（曜日を添える。時刻は出さない）＋ 「要項を見る」。行のどこを押しても要項（outline-<slug>.html）へ。
-// 要項がまだ無い大会は大会のページ（action.href）へ、それも無ければ押せない行にする。
-// 受付中の大会が無いときも帯は消さず、その旨を1行だけ薄く出す（「いまは無い」と分かることも目的のため）。
-import { dateChip, shortEvent } from '../data/tournaments.js';
+// 締切は時刻を出さない（buildCards が dueText で省いてある）。
+// 行を押すと要項（outline-<slug>.html）へ。要項がまだ無い大会は大会のページ（action.href）へ、それも無ければ押せない行にする。
+// 受付中の大会が無いときは、その旨を1行だけ出す（「いまは無い」と分かることも目的のため）。
+import Icon from './Icon.astro';
+import { dateChip } from '../data/tournaments.js';
 import { dueDate } from '../data/schedule.js';
 
 const { items = [] } = Astro.props;
 
 const DOW_JA = ['日', '月', '火', '水', '木', '金', '土'];
+const isoOf = (t) => dueDate(t.due, t.date.replace(/\./g, '-'));
 
 /**
  * 大会名の折り返してよい位置（大会情報ページの一覧 TournamentList.astro と同じ）。
@@ -22,7 +26,8 @@ const DOW_JA = ['日', '月', '火', '水', '木', '金', '土'];
  */
 const nameParts = (name) =>
   String(name ?? '').split(/(?<=第\d+回)|(?<=年度)|(?<=協会)|(?=（)|(?<=.)(?=テニス|シングルス|ダブルス|ミックス)|(?<=\s)/u).filter(Boolean);
-const isoOf = (t) => dueDate(t.due, t.date.replace(/\./g, '-'));
+/** 種目の折り返してよい位置。「／」「/」「・」の後ろと「（」の前 */
+const eventParts = (text) => String(text ?? '').split(/(?<=[／/・])|(?=（)/).filter(Boolean);
 
 /** 締切の表記。'11/6' → '11/6（金）'。読めない形（「別記」「11/27（金）」など）はカードの文言（時刻は省いてある）のまま */
 function dueLabel(t) {
@@ -38,47 +43,45 @@ const rows = items
     const outline = (t.buttons ?? []).find((b) => b.key === 'outline' && b.href);
     const href = outline?.href ?? t.action?.href ?? null;
     const external = outline ? !!outline.external : /^https?:/.test(href ?? '');
-    return { t, chip: dateChip(t.date), href, external, due: dueLabel(t), event: shortEvent(t.event) };
+    return { t, chip: dateChip(t.date), href, external, due: dueLabel(t) };
   })
   // 締切の近い順（読めない締切は後ろ）。同じ締切なら大会の日付順
   .sort((a, b) => (isoOf(a.t) ?? '9999').localeCompare(isoOf(b.t) ?? '9999') || a.t.date.localeCompare(b.t.date));
 ---
 
-<div class="entry-open rv" role="region" aria-labelledby="entry-open-title">
-  <div class="entry-open__head">
-    <p class="entry-open__eyebrow">Entry Open</p>
-    <h3 class="entry-open__title" id="entry-open-title">
-      エントリー受付中の大会{rows.length > 0 && <span class="entry-open__count"><span class="entry-open__num">{rows.length}</span>件</span>}
-    </h3>
-  </div>
-
-  {rows.length > 0 ? (
-    <ul class="entry-open__list">
-      {rows.map(({ t, chip, href, external, due, event }) => {
-        const Row = href ? 'a' : 'div';
-        const attrs = href ? { href, ...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {}) } : {};
-        return (
-          <li class="entry-open__item">
-            <Row class:list={['entry-open__row', !href && 'entry-open__row--nolink']} {...attrs}>
-              <span class="date-chip date-chip--card entry-open__date">
-                <span class="date-chip__md">{chip.md}</span>
-                <span class="date-chip__dow">{chip.dow}</span>
-              </span>
-              <span class="entry-open__main">
-                <span class="entry-open__name">{nameParts(t.title).map((part, i, arr) => <>{part}{i < arr.length - 1 && <wbr />}</>)}</span>
-                {event && <span class="entry-open__event">{event}</span>}
-              </span>
-              <span class="entry-open__due">
-                <span class="badge badge--open">受付中</span>
-                {due && <span class="entry-open__due-date"><small>締切</small>{due}</span>}
-              </span>
-              {href && <span class="entry-open__go">要項を見る<span class="ln-arrow" aria-hidden="true"></span></span>}
-            </Row>
-          </li>
-        );
-      })}
-    </ul>
-  ) : (
-    <p class="entry-open__none">現在エントリーを受け付けている大会はありません。受付が始まると、ここに大会名と締切を出します。</p>
-  )}
-</div>
+{rows.length > 0 ? (
+  <ul class="entry-list" aria-label="エントリー受付中の大会">
+    {rows.map(({ t, chip, href, external, due }, i) => {
+      const Row = href ? 'a' : 'div';
+      const attrs = href ? { href, ...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {}) } : {};
+      return (
+        <li>
+          <Row class:list={['entry-row', 'rv', !href && 'entry-row--nolink']} style={`transition-delay:${0.1 + i * 0.08}s`} {...attrs}>
+            <span class="entry-row__date">
+              <span class="entry-row__label">開催日</span>
+              <span class="entry-row__day">{chip.md}</span>
+              <span class="entry-row__dow">{chip.dow}</span>
+            </span>
+            <span class="entry-row__main">
+              <span class="entry-row__name">{nameParts(t.title).map((part, i, arr) => <>{part}{i < arr.length - 1 && <wbr />}</>)}</span>
+              {t.event && (
+                <span class="entry-row__event">
+                  <Icon name="list" class="entry-row__ico" />
+                  <span class="visually-hidden">種目：</span>
+                  <span>{eventParts(t.event).map((part, i, arr) => <>{part}{i < arr.length - 1 && <wbr />}</>)}</span>
+                </span>
+              )}
+            </span>
+            <span class="entry-row__due">
+              <span class="entry-row__label">エントリー締切</span>
+              <span class="entry-row__due-date">{due || '要項をご覧ください'}</span>
+            </span>
+            {href && <span class="sqbtn" aria-hidden="true">→</span>}
+          </Row>
+        </li>
+      );
+    })}
+  </ul>
+) : (
+  <p class="entry-none rv">現在エントリーを受け付けている大会はありません。受付が始まると、ここに大会名と締切を出します。</p>
+)}

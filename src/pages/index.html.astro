@@ -18,6 +18,8 @@ import ScheduleCalendar from '../components/ScheduleCalendar.astro';
 // 大会カード・お知らせは EmDash から（1 リクエストに 1 回だけ読む）
 const { TOURNAMENTS, NEWS, ROWS = [] } = await siteData(Astro);
 const TODAY = today();
+// エントリー受付中の大会（トップの大会カードのうち、状態が「受付中」のもの。ヒーローの直後の区画に出す）
+const ENTRY_OPEN = TOURNAMENTS.filter((t) => t.status === 'open');
 
 const CATCH = 'PLAY BEYOND.';
 // 英字は左から1文字ずつ出すので、文字に分解しておく。
@@ -126,10 +128,28 @@ const LIST_ROWS = ROWS.filter((t) => CARD_SLUGS.has(t.slug) && t.status !== 'don
     </div>
   </section>
 
+  <!-- ============ エントリー受付中の大会 ============ -->
+  {/* ヒーローの直後の独立した区画。受付中の大会だけを、お知らせと同じ行の型で 開催日・大会名・種目・エントリー締切 を並べる
+      （旧サイトの「大会エントリー受付中／○/○締切」の役割。EntryOpen.astro）。受付中の大会が無いときはその旨を1行。
+      その下の「大会情報」（カード表示／一覧表示）はこれまでどおり */}
+  <section class="section section--tight-bottom" id="entry" aria-labelledby="entry-title">
+    <span class="ghost" aria-hidden="true">ENTRY</span>
+    <div class="container">
+      <div class="sec-head rv">
+        <div class="sec-head__row">
+          <span class="sec-head__mark" aria-hidden="true"></span>
+          <div>
+            <p class="sec-head__eyebrow">Entry Open</p>
+            <h2 class="sec-head__title" id="entry-title">エントリー受付中の大会{ENTRY_OPEN.length > 0 && <span class="entry-count"><span class="entry-count__num">{ENTRY_OPEN.length}</span>件</span>}</h2>
+          </div>
+        </div>
+      </div>
+      <EntryOpen items={ENTRY_OPEN} />
+    </div>
+  </section>
+
   <!-- ============ 大会情報（カルーセル） ============ -->
-  {/* 見出しの直下に「エントリー受付中」の帯（EntryOpen.astro）。受付中の大会だけを締切と並べ、トップを開いてすぐ分かるようにする
-      （旧サイトの「大会エントリー受付中／○/○締切」の役割。カルーセル・一覧・VIEW ALL はそのまま）。
-      その下の表示は2通り。見出しの右の切り替えボタンで選ぶ（main.js の initHomeView。初めはカード表示）。
+  {/* 表示は2通り。見出しの右の切り替えボタンで選ぶ（main.js の initHomeView。初めはカード表示）。
       カード表示：大会カードを横スクロールで並べる（TODAY の線から始まり、左へ送ると終了した大会）。
       一覧表示：カードと同じ大会のうち開催前のものだけを、大会情報ページの縮小表示と同じ表で出す（主催の協会は問わない） */}
   <section class="section section--gray section--cards" id="tournaments" aria-labelledby="tournaments-title">
@@ -157,8 +177,6 @@ const LIST_ROWS = ROWS.filter((t) => CARD_SLUGS.has(t.slug) && t.status !== 'don
           </button>
         </div>
       </div>
-      {/* エントリー受付中の大会（カードと同じ大会のうち、状態が「受付中」のもの）。無いときはその旨を1行 */}
-      <EntryOpen items={TOURNAMENTS} />
     </div>
 
     {/* カルーセルは画面いっぱいに流す。コンテナの外に置き、1枚目だけ
