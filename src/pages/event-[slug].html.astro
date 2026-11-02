@@ -5,6 +5,7 @@
 //
 // 中身は「概要」＋「節」で、節は大会の進み具合で並びが変わる（events.js を参照）。
 // 終わった大会なら結果が先、これからの大会なら要項が先に来る。
+import PdfButton from '../components/PdfButton.astro';
 import EntryForms from '../components/EntryForms.astro';
 import Base from '../layouts/Base.astro';
 import EventResult from '../components/EventResult.astro';
@@ -195,16 +196,9 @@ const description = `${e.label}に${e.place}で行われる${e.name}（${e.event
 
           {/* 要項は紙面（画像）があれば PDF のダウンロードは出さない */}
           {s.key !== 'entry' && s.pdfs.length > 0 && !(s.key === 'outline' && s.images.length > 0) && (
-            <ul class="mt-32">
+            <ul class="pdfbtns mt-32">
               {s.pdfs.map((p) => (
-                <li><a class="dl-item" href={p.src} target="_blank" rel="noopener noreferrer">
-                  <span class="dl-item__type">PDF</span>
-                  <span class="dl-item__text">
-                    <span class="dl-item__title">{p.label}</span>
-                    <span class="dl-item__note">{p.kb.toLocaleString()}KB／別タブで開きます</span>
-                  </span>
-                  <span class="sqbtn" aria-hidden="true">↓</span>
-                </a></li>
+                <li><PdfButton href={p.src} title={p.label} note={`PDF・${p.kb.toLocaleString()}KB`} viewTitle={`${e.name} ${p.label}`} /></li>
               ))}
             </ul>
           )}

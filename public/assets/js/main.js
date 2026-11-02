@@ -106,7 +106,7 @@
   /* ---------- スクロール連動フェード（.rv） ---------- */
   /* 縦に長いまとまりの中の1枚ずつ（結果表・写真・一覧の行など）。まとまり（.rv）が出たあとも、
      画面の外にあった分はスクロールして見えてきたときに1枚ずつ出す（.rv-in。同じときに入った分は --rvi で少しずつずらす） */
-  var RV_ITEMS = 'main .sheet, main .gallery__item, main .rlist > li, main .rblock__cat, main .dl-item, main .qa__item, main .eform';
+  var RV_ITEMS = 'main .sheet, main .gallery__item, main .rlist > li, main .rblock__cat, main .dl-item, main .qa__item, main .pdfbtn';
   var RV_SKIP = '.pdfv, .marquee, .carousel, .tl, .gallery-peek, .news-all';
   var revealIO = null;
   /** 隠れていた部分（年度のタブを切り替えたときなど）の .rv-in を、もう一度出し直す */
