@@ -1322,8 +1322,9 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
     --pbw-sc: 1.7;
     --pb-x0: max(var(--gutter), calc((100vw - var(--container-max)) / 2 + var(--gutter)));
     --beyond-x: calc(54vw - var(--pb-x0) - var(--pbw-gap));
-    --play-y: calc(15svh - 112px);
-    --beyond-y: calc(84svh - 172px);
+    /* 行の位置が上の余白（--hero-pt。最小 72px）の分だけ下がるので、その差を引く */
+    --play-y: calc(15svh - 112px - (var(--hero-pt, 72px) - 72px));
+    --beyond-y: calc(84svh - 172px - (var(--hero-pt, 72px) - 72px));
   }
 }
 
@@ -1432,16 +1433,24 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   .hero__media {
     grid-area: 1 / 2;
   }
+  /* 文字のかたまり（PLAY BEYOND. から軽量モードのスイッチまで）を、右の写真（＝ヒーローの高さ）の縦の中央に置く。
+     かたまりの高さ --hero-c は、キャッチコピーの1行（1.12 × 字の大きさ）＋その下（サブコピー〜スイッチ）の 397px。
+     上の余白 --hero-pt はそこから出し、画面が低いときも 72px より詰めない。
+     導入で PLAY / BEYOND. を置く位置（.pb の --play-y / --beyond-y）も、この余白から 72px を引いた分だけずらしている */
+  .hero {
+    --hero-c: calc(1.12 * clamp(46px, 4.9vw, 68px) + 397px);
+    --hero-pt: max(72px, calc((100svh - var(--header-h) - 1px - var(--hero-c)) / 2));
+  }
   .hero__body {
     grid-area: 1 / 1;
-    /* 文字は左上に置く（写真の高さに合わせて中央へ下げない） */
+    /* 文字は上から --hero-pt の位置に置く（align-self: center にしないのは、導入の位置を計算でそろえるため） */
     align-self: start;
     z-index: 1;
     /* .container の中央寄せをやめ、左の列いっぱいに使う */
     max-width: none;
     margin-inline: 0;
     padding-inline: max(var(--gutter), calc((100vw - var(--container-max)) / 2 + var(--gutter))) 24px;
-    padding-block: 72px 40px;
+    padding-block: var(--hero-pt) 40px;
   }
   .hero__inner { max-width: none; }
   .hero__en { margin-top: 22px; font-size: 14px; }
@@ -1875,7 +1884,7 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 @media (min-width: 1024px) { .news-row { grid-template-columns: 150px 56px 1fr 44px; } }
 @media (min-width: 1024px) { .news-row__title { font-size: 16px; } }
 
-/* 4件目（NEWS_VISIBLE の次）。まだ続きがあることだけ伝えたいので、薄くフェードさせて押せなくする。 */
+/* 薄く見せる次の1件（NEWS_VISIBLE / NEWS_VISIBLE_PC の次）。まだ続きがあることだけ伝えたいので、薄くフェードさせて押せなくする。 */
 .news-peek { position: relative; }
 /* VIEW ALL は4件目（薄くした行）の右端に、行の高さの中央にそろえて重ねる */
 .news-peek__more { position: absolute; inset: 0 0 0 auto; display: flex; align-items: center; }
@@ -1887,6 +1896,10 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   pointer-events: none;
 }
 .news-list--peek .news-row { border-bottom: 0; }
+/* トップのお知らせは、スマホ・タブレットが3件（＋薄い4件目）、PC が5件（＋薄い6件目）。
+   .news-pc は PC だけ、.news-sp はスマホ・タブレットだけに出す行（index.html.astro） */
+@media (max-width: 1023px) { #news .news-pc { display: none; } }
+@media (min-width: 1024px) { #news .news-sp { display: none; } }
 
 /* コート案内の施設一覧の4件目。お知らせの4件目（.news-list--peek）と同じ見せ方で、1件ぶんの高さに切る。
    全施設は「すべての施設を見る」で全画面のパネル（.news-all）に開く。 */
@@ -2277,18 +2290,30 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 .cal__pop-close:hover { color: var(--red); }
 .cal__pop-list { display: flex; flex-direction: column; }
 /* トップのカレンダー（.cal--compact）。スマホ・タブレットはマスの下の一覧を出さず、マス目だけにする（予定はマスを押して吹き出しで見る）。
-   PC は左にマス目、右にマス目と同じ幅の一覧を並べる。一覧の高さはマス目にそろえ、入り切らない分は一覧の中でスクロールする
-   （height: 0 ＋ min-height: 100% で、一覧の長さが行の高さを押し広げないようにしている） */
+   PC は左にマス目、右にマス目と同じ幅の一覧を、それぞれ別の枠に入れて並べる。一覧の高さはマス目の枠にそろえ、入り切らない分は一覧の中でスクロールする
+   （一覧は flex: 1 1 0 ＋ min-height: 0 で、一覧の長さが行の高さを押し広げないようにしている） */
 .cal--compact .cal__list { display: none; }
 @media (min-width: 768px) {
   .cal--compact .cal__month { grid-template-columns: minmax(0, 560px); justify-content: center; }
 }
 @media (min-width: 1024px) {
-  .cal--compact .cal__month { grid-template-columns: repeat(2, minmax(0, 1fr)); justify-content: stretch; gap: 40px; align-items: stretch; }
+  /* マス目と一覧は、それぞれ白い地の枠（.cal__pane）で囲んで分ける。外側の白い枠はやめ、灰色の地の上に2つの枠を並べる */
+  .cal--compact .cal__month {
+    grid-template-columns: repeat(2, minmax(0, 1fr)); justify-content: stretch; gap: 24px; align-items: stretch;
+    padding: 0; background: none; border: 0;
+  }
+  .cal--compact .cal__pane {
+    min-width: 0;
+    background: var(--white);
+    border: 1px solid var(--gray-200);
+    padding: 28px;
+  }
+  /* 一覧の枠は下の余白を取らず、スクロールの端の薄いぼかしを枠の下端まで届かせる */
+  .cal--compact .cal__pane--list { padding: 20px 18px 0 28px; display: flex; flex-direction: column; }
   .cal--compact .cal__list {
     display: flex;
-    height: 0;
-    min-height: 100%;
+    flex: 1 1 0;
+    min-height: 0;
     overflow-y: auto;
     overscroll-behavior: contain;
     padding-right: 10px;
@@ -2952,6 +2977,27 @@ body.jsrv .cfac.rv.on.cfac--vt .cfac__name, body.jsrv .cfac.rv.on.cfac--vt .cfac
 .cfac__actions-btns { display: flex; flex-wrap: wrap; gap: 10px; }
 .cfac__actions .btn { width: auto; min-height: 46px; padding: 12px 20px; font-size: 14px; }
 @media (max-width: 639px) { .cfac__actions .btn { width: 100%; } }
+/* 右の列の頭の施設名（PC だけ。スマホ・タブレットは写真の上に重ねる方を出す） */
+.cfac__head { display: none; }
+/* PC：画面の中央で分け、左半分に写真、右半分に施設名・説明・表・ボタンを並べる。
+   写真は左半分いっぱいの 3:2 で、説明を読み進めるあいだ画面の上端に止まる（position: sticky は .cfac__hero のまま） */
+@media (min-width: 1024px) {
+  .cfac { display: grid; grid-template-columns: 50% 50%; align-items: start; }
+  .cfac__hero { --cfac-h: auto; height: auto; aspect-ratio: 3 / 2; }
+  .cfac__hero:not(.cfac__hero--noimg) .cfac__hero-link { left: 0; right: 0; width: auto; transform: none; }
+  .cfac__hero--noimg { min-height: 0; }
+  .cfac__hero-cap { display: none; }
+  /* .container--result（後ろで max-width を決めている）より強くするため .cfac から書く */
+  .cfac .cfac__body {
+    max-width: none;
+    margin: 0;
+    padding: 8px max(var(--gutter), calc((100vw - var(--container-max)) / 2 + var(--gutter))) 0 56px;
+  }
+  .cfac__head { display: block; margin-bottom: 24px; }
+  .cfac__head .cfac__name { font-size: clamp(26px, 2.4vw, 34px); color: var(--ink); text-shadow: none; }
+  .cfac__head .cinfo { color: var(--gray-800); font-size: 14px; }
+  .cfac__head .cinfo__main { color: #fff; background: var(--red); padding: 1px 8px; border-radius: 3px; }
+}
 
 /* ============ 13. CTA / フッター ============ */
 .cta {
@@ -3753,6 +3799,7 @@ body.jsrv .rv.on .ink-sweep {
 
 /* ---- 縮小表示（.tlx）：1大会1行の表 ----
    列の幅は --tlx-cols（左から 大会名｜日程｜状態｜登録区分｜種目｜会場｜締切｜予備日｜要項｜ドロー｜結果）。
+   日程・締切・予備日の3列は同じ幅にして、月日の字の大きさをそろえる。
    状態・登録区分の列はバッジが欠けない幅にしてある。どの列も中身は中央にそろえる。
    左端の大会名の列だけは横スクロールしても固定（position: sticky; left: 0）。
    項目名の行（.tlx__head）は本体の外に置いて画面の上端に固定し（position: sticky; top）、横の位置は本体の横スクロールについていかせる：
@@ -3762,12 +3809,29 @@ body.jsrv .rv.on .ink-sweep {
    スマホでは上端にロゴとメニューのボタンが浮いているので、その下（--header-h）に止める。
    PC はヘッダーが出ているあいだはその下、下へ読み進めてヘッダーが引っ込んだら画面の上端に止める */
 .tlx {
-  --tlx-cols: 150px 60px 92px 96px 150px 172px 64px 120px 68px 68px 68px;
+  --tlx-cols: 150px 64px 92px 96px 150px 172px 64px 64px 68px 68px 68px;
   position: relative;
   margin-top: 8px;
   timeline-scope: --tlx-x;  /* 本体の横スクロールの進み具合（下の .tlx__body）を、項目名の行からも使えるようにする */
 }
-@media (min-width: 768px) { .tlx { --tlx-cols: 220px 72px 100px 104px 170px 190px 72px 130px 76px 76px 76px; } }
+@media (min-width: 768px) { .tlx { --tlx-cols: 220px 76px 100px 104px 170px 190px 76px 76px 76px 76px 76px; } }
+/* PC：横スクロールさせず、表全体が見えるようにする。
+   表だけ本文の幅（.container）より広げて画面の幅いっぱい（左右に --gutter、最大 1520px）を使い、真ん中にそろえる。
+   列は比率（fr）で画面の幅に合わせて伸び縮みさせ、中身が欠けない最小の幅（minmax の左）だけは守る。
+   最小の幅の合計（--tlx-min）より狭い画面では、これまでどおり横スクロールになる（main.js の initTlx が SCROLL の案内を出し分ける） */
+@media (min-width: 1024px) {
+  .tlx {
+    --tlx-cols:
+      minmax(140px, 2.2fr) minmax(64px, .85fr) minmax(84px, 1fr) minmax(92px, 1fr) minmax(110px, 1.7fr)
+      minmax(150px, 1.9fr) minmax(64px, .85fr) minmax(64px, .85fr) minmax(56px, .8fr) minmax(56px, .8fr) minmax(56px, .8fr);
+    --tlx-min: 936px;
+    --tlx-w: min(calc(100vw - var(--gutter) * 2), 1520px);
+    width: var(--tlx-w);
+    margin-left: calc((100% - var(--tlx-w)) / 2);
+  }
+  /* 行の幅（後ろの .tlx__row の max-content）より強くするため .tlx から書く */
+  .tlx .tlx__row { width: 100%; min-width: var(--tlx-min); }
+}
 .tlx__row {
   display: grid;
   grid-template-columns: var(--tlx-cols);
@@ -3831,10 +3895,13 @@ body.jsrv .rv.on .ink-sweep {
 .tlx__cell--date { padding-left: 4px; padding-right: 4px; gap: 0; }
 .tlx__cell--name { position: sticky; left: 0; z-index: 1; }
 .tlx.is-scrolled .tlx__cell--name { box-shadow: 6px 0 8px -6px rgba(26, 26, 26, .25); }
-/* 日程の列：年（小さく）／月日／曜日 の3段 */
-.tlx__y { font: 500 10px/1.3 var(--flt); letter-spacing: .04em; color: var(--gray-500); }
-.tlx__md { font: 700 15px/1.25 var(--flt); letter-spacing: .02em; color: var(--ink); }
-.tlx__dow { font: 700 10px/1.3 var(--flt); letter-spacing: .1em; color: var(--red); }
+/* 日程・締切・予備日の列：月日（大きく）／曜日 の2段（年は出さない）。
+   字の大きさは列の幅に合わせる（セルを container にして cqi で決める。「11.22」が列の幅いっぱいに近くなる大きさ） */
+.tlx__body .tlx__cell--date { container-type: inline-size; }
+.tlx__md { font: 700 clamp(15px, 34cqi, 30px)/1.15 var(--flt); letter-spacing: .02em; color: var(--ink); white-space: nowrap; }
+.tlx__dow { font: 700 clamp(10px, 13cqi, 13px)/1.3 var(--flt); letter-spacing: .1em; color: var(--red); }
+/* 予備会場（「千代」など）は曜日の下に小さく */
+.tlx__venue { margin-top: 2px; font: 500 11px/1.4 var(--fjp); color: var(--gray-600); white-space: nowrap; }
 /* 大会名：意味の切れ目（<wbr>）でだけ折り返す */
 .tlx__name { font: 700 14px/1.5 var(--fjp); letter-spacing: .02em; color: var(--ink); word-break: keep-all; overflow-wrap: anywhere; }
 @media (min-width: 768px) { .tlx__name { font-size: 15px; } }

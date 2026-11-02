@@ -6,12 +6,13 @@ import { newsDate, isNew } from '../data/news.js';
 
 // index … 全画面の一覧（#news-all）で何番目か。付けると li が .panel-item になり、見出しの下から順に滑り出す（style.css）。
 // reveal … スクロール連動のリビール（.rv）を付けるか。全画面の一覧では false にする（動きが二重になるため）。
-const { item, delay = 0, index = null, reveal = true } = Astro.props;
+// class … li に足すクラス（トップで PC だけ／スマホ・タブレットだけ出す行に .news-pc / .news-sp を付ける）。
+const { item, delay = 0, index = null, reveal = true, class: cls } = Astro.props;
 const { day, year } = newsDate(item.date);
 const fresh = isNew(item.date);
 ---
 
-<li class:list={[index != null && 'panel-item']} style={index != null ? `--i:${index}` : undefined}>
+<li class:list={[index != null && 'panel-item', cls]} style={index != null ? `--i:${index}` : undefined}>
   <a class:list={['news-row', reveal && 'rv']} style={delay ? `transition-delay:${delay}s` : undefined} href={item.href}>
     <span class="news-row__date">
       <span class="news-row__day">{day}</span>
