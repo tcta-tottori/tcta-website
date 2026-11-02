@@ -2617,6 +2617,49 @@
     });
   }
 
+  /* ---------- トップの「エントリー受付中の大会」の流れる表示（スマホ） ----------
+     大会名・種目・会場（.mq）が1行に収まらないときだけ、横に流す。スマホの幅（〜767px）のときだけ一覧に .mq-on を付けて1行にし、
+     収まらないものには文字の写し（.mq__clone。読み上げない）を後ろに足して、1周の長さと時間を入れる（style.css の .mq）。
+     動きを減らす設定・軽量モードでは何もしない（1行にせず、折り返して全部出す）。
+     幅が変わったとき・文字の書体やロゴの画像を読み終えたときに測り直す */
+  function initEntryMarquee() {
+    var list = document.querySelector('.entry-list');
+    if (!list || reduceMotion) return;
+    var mq = window.matchMedia('(max-width: 767px)');
+    var GAP = 40, SPEED = 36; // 文字と写しの間（px。style.css の .mq__track の gap と同じ）、流れる速さ（px／秒）
+    var setup = function () {
+      list.classList.toggle('mq-on', mq.matches);
+      list.querySelectorAll('.mq').forEach(function (el) {
+        var track = el.querySelector('.mq__track');
+        var inner = el.querySelector('.mq__inner');
+        if (!track || !inner) return;
+        track.querySelectorAll('.mq__clone').forEach(function (c) { c.parentNode.removeChild(c); });
+        el.classList.remove('is-scroll');
+        if (!mq.matches) return;
+        var w = inner.getBoundingClientRect().width;
+        if (w <= el.clientWidth + 1) return;
+        var clone = inner.cloneNode(true);
+        clone.classList.add('mq__clone');
+        clone.setAttribute('aria-hidden', 'true');
+        track.appendChild(clone);
+        var shift = w + GAP;
+        el.style.setProperty('--mq-shift', shift + 'px');
+        // 止まっている時間（18%）も含めた1周の時間
+        el.style.setProperty('--mq-dur', (shift / SPEED / 0.82).toFixed(2) + 's');
+        el.classList.add('is-scroll');
+      });
+    };
+    setup();
+    var lastW = window.innerWidth, t = 0;
+    window.addEventListener('resize', function () {
+      if (window.innerWidth === lastW) return;
+      lastW = window.innerWidth;
+      clearTimeout(t); t = setTimeout(setup, 150);
+    });
+    window.addEventListener('load', setup);
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(setup);
+  }
+
   function init() {
     initLite();
     initSplash();
@@ -2646,6 +2689,7 @@
     initViewSwitch();
     initHomeView();
     initEntryLeft();
+    initEntryMarquee();
     initResultView();
     initSurvey();
     initTlx();

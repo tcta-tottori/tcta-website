@@ -5,7 +5,11 @@
 //
 // 見た目はお知らせの行（NewsRow.astro）と同じ型。1大会1行で、
 //   左：開催日（「11.23」を大きく＋曜日）／中：大会名（太字）とその下に種目・会場／右：エントリー締切（開催日と同じ「11.06 FRI」の形。赤でゆっくり点滅）／右端：→
-// 締切の日付の下に「残り○日」（当日は「本日締切」）の札を出す。3日以内は赤く塗る。
+// スマホ（〜767px）は3段：開催日｜締切（左右半分ずつ・どちらも左揃え）／大会名＋「残り○日」（点滅）／種目｜会場（中央で分けて左揃え）。
+//   大会名・種目・会場が枠に収まらないときは、横に流す（main.js の initEntryMarquee。.mq）。
+//   動きを減らす設定・軽量モードでは流さず、折り返して全部出す。
+// 締切の日付の下（タブレット・PC）／大会名の右（スマホ）に「残り○日」（当日は「本日締切」）の札を出す。3日以内は赤く塗る。
+//   札は2つ書いておき、画面の幅でどちらかだけを見せる（.entry-left--pc／.entry-left--sp）。
 //   公開ページはキャッシュされる（最長1日）ので、ここで書いた日数は見た日とずれることがある。
 //   ブラウザで見た日（日本時間）から main.js の initEntryLeft が数え直す（data-due-left に締切の日付を持たせる）。
 // 種目と会場は横に並べ、入り切らないとき（スマホで種目が長いときなど）だけ会場が次の行に下がる。
@@ -55,6 +59,7 @@ function daysLeft(iso) {
 }
 /** 「残り○日」の札の文言と、3日以内か（main.js の initEntryLeft と同じ決まり） */
 const leftLabel = (n) => (n === 0 ? '本日締切' : `残り${n}日`);
+// 札の数字は main.js の initEntryLeft が見た日から数え直す（data-due-left）。スマホ用（--sp）と PC 用（--pc）の2つを書く
 
 const rows = items
   .filter((t) => t.status === 'open')
@@ -66,6 +71,7 @@ const rows = items
   })
   // 締切の近い順（読めない締切は後ろ）。同じ締切なら大会の日付順
   .sort((a, b) => (isoOf(a.t) ?? '9999').localeCompare(isoOf(b.t) ?? '9999') || a.t.date.localeCompare(b.t.date));
+
 ---
 
 {rows.length > 0 && (
@@ -82,21 +88,25 @@ const rows = items
               <span class="entry-row__dow">{chip.dow}</span>
             </span>
             <span class="entry-row__main">
-              <span class="entry-row__name">{nameParts(t.title).map((part, i, arr) => <>{part}{i < arr.length - 1 && <wbr />}</>)}</span>
+              {/* 大会名（収まらないときは流す .mq）と、スマホだけ右に「残り○日」 */}
+              <span class="entry-row__title">
+                <span class="mq entry-row__name"><span class="mq__track"><span class="mq__inner">{nameParts(t.title).map((part, i, arr) => <>{part}{i < arr.length - 1 && <wbr />}</>)}</span></span></span>
+                {due?.iso && <span class:list={['entry-left', 'entry-left--sp', due.left <= 3 && 'is-urgent']} data-due-left={due.iso} hidden={due.left < 0 ? true : undefined}>{due.left >= 0 ? leftLabel(due.left) : ''}</span>}
+              </span>
               {(t.event || t.venue) && (
                 <span class="entry-row__meta">
                   {t.event && (
                     <span class="entry-row__event">
                       <Icon name="list" class="entry-row__ico" />
                       <span class="visually-hidden">種目：</span>
-                      <span>{eventParts(t.event).map((part, i, arr) => <>{part}{i < arr.length - 1 && <wbr />}</>)}</span>
+                      <span class="mq"><span class="mq__track"><span class="mq__inner">{eventParts(t.event).map((part, i, arr) => <>{part}{i < arr.length - 1 && <wbr />}</>)}</span></span></span>
                     </span>
                   )}
                   {t.venue && (
                     <span class="entry-row__event entry-row__venue">
                       <Icon name="pin" class="entry-row__ico" />
                       <span class="visually-hidden">会場：</span>
-                      <span><Venue text={t.venue} breaks /></span>
+                      <span class="mq"><span class="mq__track"><span class="mq__inner"><Venue text={t.venue} breaks /></span></span></span>
                     </span>
                   )}
                 </span>
@@ -107,9 +117,7 @@ const rows = items
               {due?.md
                 ? <><span class="entry-row__day">{due.md}</span><span class="entry-row__dow">{due.dow}</span></>
                 : <span class="entry-row__due-text">{due?.text || '要項をご覧ください'}</span>}
-              {due?.iso && (
-                <span class:list={['entry-left', due.left <= 3 && 'is-urgent']} data-due-left={due.iso} hidden={due.left < 0 ? true : undefined}>{due.left >= 0 ? leftLabel(due.left) : ''}</span>
-              )}
+              {due?.iso && <span class:list={['entry-left', 'entry-left--pc', due.left <= 3 && 'is-urgent']} data-due-left={due.iso} hidden={due.left < 0 ? true : undefined}>{due.left >= 0 ? leftLabel(due.left) : ''}</span>}
             </span>
             {href && <span class="sqbtn" aria-hidden="true">→</span>}
           </Row>
