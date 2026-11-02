@@ -2598,6 +2598,25 @@
     if (window.visualViewport) window.visualViewport.addEventListener('resize', set);
   }
 
+  /* ---------- トップの「エントリー受付中の大会」の「残り○日」 ----------
+     公開ページはキャッシュされる（最長1日）ので、サーバーで書いた日数は見た日とずれることがある。
+     見た日（日本時間）から締切（data-due-left の 'YYYY-MM-DD'）までの日数を数え直す。
+     当日は「本日締切」、3日以内は赤く塗る（.is-urgent）、締切を過ぎていれば隠す。決まりは EntryOpen.astro と同じ */
+  function initEntryLeft() {
+    var tags = document.querySelectorAll('[data-due-left]');
+    if (!tags.length) return;
+    var jst = new Date(Date.now() + 9 * 60 * 60 * 1000);
+    var today = Date.UTC(jst.getUTCFullYear(), jst.getUTCMonth(), jst.getUTCDate());
+    tags.forEach(function (el) {
+      var p = el.getAttribute('data-due-left').split('-').map(Number);
+      var n = Math.round((Date.UTC(p[0], p[1] - 1, p[2]) - today) / 86400000);
+      if (isNaN(n) || n < 0) { el.hidden = true; return; }
+      el.hidden = false;
+      el.textContent = n === 0 ? '本日締切' : '残り' + n + '日';
+      el.classList.toggle('is-urgent', n <= 3);
+    });
+  }
+
   function init() {
     initLite();
     initSplash();
@@ -2626,6 +2645,7 @@
     initFilters();
     initViewSwitch();
     initHomeView();
+    initEntryLeft();
     initResultView();
     initSurvey();
     initTlx();

@@ -1948,8 +1948,35 @@ a.entry-row:hover .sqbtn { background: var(--red); border-color: var(--red); col
 .entry-row__due .entry-row__label,
 .entry-row__due .entry-row__day { color: var(--red); }
 .entry-row__due-text { font: 700 15px/1.3 var(--fjp); color: var(--red); }
-.entry-row__date.entry-row__due { animation: due-blink 1.6s ease-in-out infinite; }
-@media (prefers-reduced-motion: reduce) { .entry-row__date.entry-row__due { animation: none; } }
+/* 点滅は締切の見出しと日付だけ（下の「残り○日」の札は点滅させず、いつでも読めるように） */
+.entry-row__due > .entry-row__label,
+.entry-row__due > .entry-row__day,
+.entry-row__due > .entry-row__dow,
+.entry-row__due > .entry-row__due-text { animation: due-blink 1.6s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .entry-row__due > .entry-row__label,
+  .entry-row__due > .entry-row__day,
+  .entry-row__due > .entry-row__dow,
+  .entry-row__due > .entry-row__due-text { animation: none; }
+}
+/* 締切の日付の下の「残り○日」（当日は「本日締切」）。ふだんは薄い赤の札、3日以内（.is-urgent）は赤く塗る。
+   日数はブラウザで見た日から数え直す（main.js の initEntryLeft） */
+.entry-left {
+  display: table;
+  margin-top: 8px;
+  padding: 4px 8px;
+  border-radius: var(--radius);
+  background: var(--red-tint);
+  color: var(--red);
+  font: 700 12px/1 var(--fjp);
+  letter-spacing: .04em;
+  white-space: nowrap;
+}
+.entry-left[hidden] { display: none; }
+.entry-left.is-urgent { background: var(--red); color: #fff; }
+/* スマホは締切を右寄せにしているので、札も右に寄せる */
+.entry-row__due .entry-left { margin-left: auto; }
+@media (min-width: 768px) { .entry-row__due .entry-left { margin-left: 0; } }
 .entry-row__main { grid-area: main; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
 /* 大会名は意味の切れ目（EntryOpen.astro の nameParts が入れる <wbr>）でだけ折り返す */
 .entry-row__name { font: 700 16px/1.5 var(--fjp); letter-spacing: .02em; word-break: keep-all; transition: color .3s ease; }
