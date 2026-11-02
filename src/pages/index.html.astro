@@ -9,13 +9,15 @@ import Icon from '../components/Icon.astro';
 import { siteData } from '../lib/cms.js';
 import { todayJST } from '../data/schedule.js';
 import { LINK_ROWS, LINK_GROUPS } from '../data/links.js';
-import { NEWS_VISIBLE, NEWS_VISIBLE_PC } from '../data/news.js';
+import { NEWS_VISIBLE, NEWS_VISIBLE_PC, NEWS_KINDS } from '../data/news.js';
 import { COURTS_HOME, CITY_RESERVE } from '../data/courts.js';
 import CourtMap from '../components/CourtMap.astro';
 import ScheduleCalendar from '../components/ScheduleCalendar.astro';
 
 // 大会カード・お知らせは EmDash から（1 リクエストに 1 回だけ読む）
 const { TOURNAMENTS, NEWS } = await siteData(Astro);
+// お知らせの全件表示の絞り込み（main.js の initNewsFilter）。いまあるお知らせの種類だけを、NEWS_KINDS の順に件数付きで
+const NEWS_FILTERS = NEWS_KINDS.map((k) => ({ ...k, n: NEWS.filter((x) => x.kind === k.key).length })).filter((k) => k.n > 0);
 // エントリー受付中の大会（トップの大会カードのうち、状態が「受付中」のもの。ヒーローの直後の区画に出す）
 const ENTRY_OPEN = TOURNAMENTS.filter((t) => t.status === 'open');
 
@@ -221,6 +223,15 @@ const HOME_TOURNAMENTS = TOURNAMENTS.filter((t) => t.date >= keepFrom);
           <button class="close-x" type="button" data-news-close aria-label="お知らせを閉じる">
             <span aria-hidden="true"></span><span aria-hidden="true"></span><span aria-hidden="true"></span>
           </button>
+          {/* 種類で絞り込むボタン（見出しといっしょに上に残る。狭い画面は横に送る）。main.js の initNewsFilter */}
+          {NEWS_FILTERS.length > 1 && (
+            <div class="news-filter" role="group" aria-label="お知らせの種類で絞り込む" data-news-filter>
+              <button class="chip news-filter__btn is-active" type="button" data-kind="all" aria-pressed="true">すべて<span class="news-filter__n">{NEWS.length}</span></button>
+              {NEWS_FILTERS.map((k) => (
+                <button class="chip news-filter__btn" type="button" data-kind={k.key} aria-pressed="false"><span class={`news-filter__dot news-cat--${k.key}`} aria-hidden="true"></span>{k.label}<span class="news-filter__n">{k.n}</span></button>
+              ))}
+            </div>
+          )}
         </div>
         <div class="container news-all__body">
           <ul class="news-list">

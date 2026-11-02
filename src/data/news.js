@@ -58,6 +58,49 @@ const seedNo = (n) => (/^\d{8}-\d{2}$/.test(n.slug) ? Number(n.slug.slice(9)) : 
 export const CATEGORY_KEY = { '大会': 'tournament', '結果': 'result', 'ジュニア': 'junior', 'お知らせ': 'info' };
 
 /**
+ * お知らせの種類（行のバッジと、全件表示の絞り込みのボタン）。並びはボタンの順。
+ * 管理画面の分類（大会／結果／ジュニア／お知らせ）だけでは「要項かドローか」が分からないので、
+ * 行き先のページと題名から見分ける（newsKind）。上から順に当てはめ、最初に当たったもの。
+ */
+export const NEWS_KINDS = [
+  { key: 'outline', label: '要項' },
+  { key: 'draw', label: 'ドロー' },
+  { key: 'result', label: '結果' },
+  { key: 'entry', label: '受付' },
+  { key: 'survey', label: 'アンケート' },
+  { key: 'event', label: 'イベント' },
+  { key: 'cancel', label: '中止・延期' },
+  { key: 'junior', label: 'ジュニア' },
+  { key: 'tournament', label: '大会' },
+  { key: 'info', label: 'お知らせ' },
+];
+export const NEWS_KIND_LABEL = Object.fromEntries(NEWS_KINDS.map((k) => [k.key, k.label]));
+
+/**
+ * お知らせ1件の種類。
+ *   中止・延期 … 重要（目立たせる）のもの、題名に「中止」「延期」
+ *   アンケート … 行き先が survey.html、題名に「アンケート」
+ *   結果       … 行き先が result-…／#result、題名に「結果」
+ *   ドロー     … 行き先が draw-…、題名に「ドロー」
+ *   受付       … 題名に「受付を締め切」「受付終了」など（受付のお知らせ）
+ *   要項       … 行き先が outline-…／#entry、題名に「要項」「申込」「受付をはじめ」
+ *   イベント   … 行き先がテニス祭りなどイベントのページ（tennis-day…）
+ *   ジュニア・大会・お知らせ … 上のどれにも当たらないとき、管理画面の分類のまま
+ */
+export function newsKind({ title = '', href = '', category = 'info', important = false }) {
+  const t = String(title);
+  const h = String(href);
+  if (important || /中止|延期/.test(t)) return 'cancel';
+  if (/^survey/.test(h) || /アンケート/.test(t)) return 'survey';
+  if (/^result-|#result/.test(h) || /結果/.test(t)) return 'result';
+  if (/^draw-/.test(h) || /ドロー/.test(t)) return 'draw';
+  if (/受付を締め切|受付終了|締め切りました/.test(t)) return 'entry';
+  if (/^outline-|#entry/.test(h) || /要項|申込|受付をはじめ/.test(t)) return 'outline';
+  if (/^tennis-day/.test(h)) return 'event';
+  return ['junior', 'tournament'].includes(category) ? category : 'info';
+}
+
+/**
  * EmDash の行から、ページが使う形に組み立てる。
  *   NEWS           … 新しい順、見た時点から3ヶ月以内のもの。{ date: '2026.10.12', category, title, href, important }
  *   IMPORTANT_NEWS … 全ページ上部の帯に出す重要なお知らせ（中止・延期など）
@@ -77,12 +120,14 @@ export function buildNews(rows, now = new Date()) {
       title: n.title,
       href: n.href || 'index.html',
       important: !!n.important,
+      kind: '', // 下で newsKind が入れる
       // 作った時刻。管理画面の行は Date、official-extra.js の行は '2026-11-02T19:15:00+09:00' の形で書ける（無ければ 0）
       createdAt: n.createdAt instanceof Date ? n.createdAt.getTime() : (Date.parse(n.createdAt ?? '') || 0),
     }))
     // 新しい日付が先。同じ日付は、移行時のもの（slug が 20261004-16 の形）は末尾の番号が大きいほど新しく、
     // 管理画面で作ったもの・official-extra.js で時刻（createdAt）を書いたものは、あとから作ったものが先。
     .sort((a, b) => b.date.localeCompare(a.date) || seedNo(b) - seedNo(a) || b.createdAt - a.createdAt || b.slug.localeCompare(a.slug));
+  for (const n of NEWS) n.kind = newsKind(n);
   return { NEWS, IMPORTANT_NEWS: NEWS.filter((n) => n.important) };
 }
 

@@ -1,8 +1,9 @@
 ---
 // お知らせ1行。src/data/news.js の1件をそのまま受け取る。
-// 左に日付、その隣が NEW の枠（2週間以内のものだけ赤い NEW が入る）、
+// 左に日付、その隣が NEW の枠（2週間以内のものだけ赤い NEW が入る）、その隣に種類のバッジ（要項・ドロー・結果・アンケートなど。news.js の newsKind）、
 // 右にタイトル。タイトルは1行に入り切らないときは折り返す。
-import { newsDate, isNew } from '../data/news.js';
+// li の data-kind は、全件表示の絞り込み（main.js の initNewsFilter）に使う。
+import { newsDate, isNew, NEWS_KIND_LABEL, newsKind } from '../data/news.js';
 
 // index … 全画面の一覧（#news-all）で何番目か。付けると li が .panel-item になり、見出しの下から順に滑り出す（style.css）。
 // reveal … スクロール連動のリビール（.rv）を付けるか。全画面の一覧では false にする（動きが二重になるため）。
@@ -10,9 +11,10 @@ import { newsDate, isNew } from '../data/news.js';
 const { item, delay = 0, index = null, reveal = true, class: cls } = Astro.props;
 const { day, year } = newsDate(item.date);
 const fresh = isNew(item.date);
+const kind = item.kind || newsKind(item);
 ---
 
-<li class:list={[index != null && 'panel-item', cls]} style={index != null ? `--i:${index}` : undefined}>
+<li class:list={[index != null && 'panel-item', cls]} style={index != null ? `--i:${index}` : undefined} data-kind={kind}>
   <a class:list={['news-row', reveal && 'rv']} style={delay ? `transition-delay:${delay}s` : undefined} href={item.href}>
     <span class="news-row__date">
       <span class="news-row__day">{day}</span>
@@ -21,6 +23,7 @@ const fresh = isNew(item.date);
     <span class="news-row__flag">
       {fresh && <span class="news-new">NEW</span>}
     </span>
+    <span class="news-row__cat"><span class={`news-cat news-cat--${kind}`}>{NEWS_KIND_LABEL[kind]}</span></span>
     <span class="news-row__title">{item.title}</span>
     <span class="sqbtn" aria-hidden="true">→</span>
   </a>

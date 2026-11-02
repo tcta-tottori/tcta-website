@@ -2716,6 +2716,30 @@
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(setup);
   }
 
+  /* ---------- お知らせの全件表示の絞り込み（index.html.astro の data-news-filter） ----------
+     種類のボタン（data-kind）を押すと、その種類のお知らせ（li の data-kind）だけを出す。「すべて」で全部に戻す。
+     押したら一覧のいちばん上へ戻す（見出しとボタンは上に残っている） */
+  function initNewsFilter() {
+    var group = document.querySelector('[data-news-filter]');
+    if (!group) return;
+    var panel = group.closest('.news-all');
+    var items = panel ? panel.querySelectorAll('.news-all__body .news-list > li[data-kind]') : [];
+    group.addEventListener('click', function (e) {
+      var btn = e.target.closest('[data-kind]');
+      if (!btn) return;
+      var kind = btn.getAttribute('data-kind');
+      group.querySelectorAll('[data-kind]').forEach(function (b) {
+        var on = b === btn;
+        b.classList.toggle('is-active', on);
+        b.setAttribute('aria-pressed', String(on));
+      });
+      items.forEach(function (li) { li.hidden = kind !== 'all' && li.getAttribute('data-kind') !== kind; });
+      if (panel) panel.scrollTop = 0;
+      // 横に送るボタンの列は、押したボタンが見えるように
+      if (btn.scrollIntoView) btn.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+    });
+  }
+
   function init() {
     initLite();
     initSplash();
@@ -2746,6 +2770,7 @@
     initHomeView();
     initEntryLeft();
     initEntryMarquee();
+    initNewsFilter();
     initResultView();
     initSurvey();
     initTlx();

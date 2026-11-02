@@ -1867,10 +1867,10 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 
 .news-row {
   display: grid;
-  grid-template-columns: auto 1fr;
+  grid-template-columns: auto auto 1fr;
   grid-template-areas:
-    "date flag"
-    "title title";
+    "date flag cat"
+    "title title title";
   gap: 6px 14px;
   align-items: center;
   padding: 20px 8px;
@@ -1919,11 +1919,37 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   min-width: 0;
 }
 .news-row .sqbtn { display: none; }
+/* お知らせの種類のバッジ（NewsRow.astro。news.js の newsKind）。スマホは1段目の右端、タブレット・PC は NEW の右の列。
+   色は種類ごと：要項（灰）・ドロー（赤の薄色）・結果（黒）・受付（赤の線）・アンケート（緑の薄色）・イベント（青の薄色）・
+   中止・延期（赤の塗り）・大会／ジュニア／お知らせ（白地に灰の線） */
+.news-row__cat { grid-area: cat; justify-self: end; }
+@media (min-width: 768px) { .news-row__cat { justify-self: start; } }
+.news-cat {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 72px;
+  height: 24px;
+  padding: 0 8px;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  font: 700 12px/1 var(--fjp);
+  letter-spacing: .04em;
+  white-space: nowrap;
+}
+.news-cat--outline { background: var(--gray-100); color: var(--ink); border-color: var(--gray-300); }
+.news-cat--draw { background: var(--red-tint); color: var(--red-dark); border-color: rgba(216, 35, 42, .3); }
+.news-cat--result { background: var(--ink); color: #fff; }
+.news-cat--entry { background: var(--white); color: var(--red); border-color: var(--red); }
+.news-cat--survey { background: #E8F6EE; color: #1B6B3E; border-color: rgba(27, 107, 62, .3); }
+.news-cat--event { background: #EAF1FB; color: #1F4E8C; border-color: rgba(31, 78, 140, .3); }
+.news-cat--cancel { background: var(--red); color: #fff; }
+.news-cat--tournament, .news-cat--junior, .news-cat--info { background: var(--white); color: var(--gray-600); border-color: var(--gray-300); }
 
 @media (min-width: 768px) {
   .news-row {
-    grid-template-columns: 130px 52px 1fr 44px;
-    grid-template-areas: "date flag title arrow";
+    grid-template-columns: 130px 52px 92px 1fr 44px;
+    grid-template-areas: "date flag cat title arrow";
     gap: 20px;
     padding: 26px 8px;
   }
@@ -1931,7 +1957,7 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   .news-row__title { font-size: 17px; }
   .news-row .sqbtn { display: inline-flex; grid-area: arrow; }
 }
-@media (min-width: 1024px) { .news-row { grid-template-columns: 150px 56px 1fr 44px; } }
+@media (min-width: 1024px) { .news-row { grid-template-columns: 150px 56px 96px 1fr 44px; } }
 @media (min-width: 1024px) { .news-row__title { font-size: 18px; } }
 
 /* ============ トップの「エントリー受付中の大会」（ヒーローの直後の区画 #entry。EntryOpen.astro） ============
@@ -2161,6 +2187,7 @@ a.entry-row:hover .sqbtn { background: var(--red); border-color: var(--red); col
   top: 0;
   z-index: 1;
   display: flex;
+  flex-wrap: wrap;
   align-items: flex-start;
   justify-content: space-between;
   gap: 16px;
@@ -2168,6 +2195,27 @@ a.entry-row:hover .sqbtn { background: var(--red); border-color: var(--red); col
   background: var(--white);
   border-bottom: 1px solid var(--gray-200);
 }
+/* お知らせの全件表示の、種類で絞り込むボタン（index.html.astro の data-news-filter。main.js の initNewsFilter）。
+   見出しの下の段に置き、見出しといっしょに上に残る。狭い画面で入り切らないときは横に送る（折り返さない）。
+   ボタンの頭の小さな四角は、行のバッジと同じ色 */
+.news-filter {
+  flex: 1 0 100%;
+  display: flex;
+  gap: 6px;
+  margin: -2px -20px 0;
+  padding: 0 20px 2px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.news-filter::-webkit-scrollbar { display: none; }
+@media (min-width: 768px) { .news-filter { flex-wrap: wrap; overflow: visible; margin-inline: 0; padding-inline: 0; } }
+.news-filter__btn { flex: none; display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 7px 12px; white-space: nowrap; }
+.news-filter__dot { width: 10px; height: 10px; border-radius: 2px; border: 1px solid; flex: none; }
+.news-filter__btn.is-active .news-filter__dot { border-color: rgba(255, 255, 255, .8); }
+.news-filter__n { font: 600 11px/1 var(--flt); letter-spacing: .02em; opacity: .7; }
+.news-filter__btn.is-active .news-filter__n { opacity: .9; }
+
 /* 閉じるボタン。ハンバーガーが開いているときと同じ×にそろえている。 */
 .close-x {
   flex: none;
