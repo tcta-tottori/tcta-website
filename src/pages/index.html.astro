@@ -175,9 +175,9 @@ const LIST_ROWS = ROWS.filter((t) => CARD_SLUGS.has(t.slug) && t.status !== 'don
 
     </div>
 
-    {/* 一覧表示（開催前の大会だけ。大会情報ページの縮小表示と同じ表）。切り替えるまでは隠しておく */}
+    {/* 一覧表示（開催前の大会だけ。大会情報ページの縮小表示と同じ表から、登録区分・会場・予備日を省く）。切り替えるまでは隠しておく */}
     <div class="container home-tl" data-home-list hidden>
-      <TournamentList items={LIST_ROWS} caption="開催前の大会一覧" />
+      <TournamentList items={LIST_ROWS} caption="開催前の大会一覧" compact />
       {LIST_ROWS.length === 0 && <p class="note">開催前の大会はありません。</p>}
     </div>
 

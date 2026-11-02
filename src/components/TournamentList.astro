@@ -25,7 +25,8 @@ import { eventButtons } from '../data/event-buttons.js';
 import { CARD_STATUS } from '../data/tournaments.js';
 import { winnerPhotos } from '../data/event-result.js';
 
-const { items, id, caption } = Astro.props;
+// compact：登録区分・会場・予備日の列を省く（トップの大会情報の一覧表示）
+const { items, id, caption, compact = false } = Astro.props;
 const { eventForSchedule } = await siteData(Astro);
 
 /** 日程。トップの大会カード・個別ページと同じ「2026.10.18 ＋ SUN」。期間・祝日は一言添える。 */
@@ -78,7 +79,8 @@ const spareCell = (t) => {
 };
 
 /** 縮小表示の項目（左から）。幅は CSS の --tlx-cols と同じ順 */
-const COLS = ['大会名', '日程', '状態', '登録区分', '種目', '会場', '締切', '予備日', '要項', 'ドロー', '結果'];
+const COLS_ALL = ['大会名', '日程', '状態', '登録区分', '種目', '会場', '締切', '予備日', '要項', 'ドロー', '結果'];
+const COLS = compact ? COLS_ALL.filter((c) => !['登録区分', '会場', '予備日'].includes(c)) : COLS_ALL;
 
 const rows = items.map((t) => {
   const e = eventForSchedule(t);
@@ -107,7 +109,7 @@ const parts = (text) => String(text ?? '').split(/(?<=[／/・])|(?=（)/);
 
 ---
 
-<div class="tl tl--rows" id={id}>
+<div class:list={['tl', 'tl--rows', compact && 'tl--compact']} id={id}>
   {/* ===== 縮小表示 ===== */}
   <div class="tlx" data-tlx>
     <p class="tlx__hint" aria-hidden="true"><span class="ln-arrow"></span>SCROLL</p>
@@ -137,15 +139,15 @@ const parts = (text) => String(text ?? '').split(/(?<=[／/・])|(?=（)/);
             <span class="tlx__dow">{date.dow}</span>
           </div>
           <div class="tlx__cell"><span class="visually-hidden">状態：</span><span class={`badge ${badge.badge}`}>{badge.label}</span></div>
-          <div class="tlx__cell"><span class="visually-hidden">登録区分：</span><span class={`reg reg--${t.reg}`}>{REG_LABEL[t.reg]}</span></div>
+          {!compact && <div class="tlx__cell"><span class="visually-hidden">登録区分：</span><span class={`reg reg--${t.reg}`}>{REG_LABEL[t.reg]}</span></div>}
           <div class="tlx__cell tlx__cell--text"><span class="visually-hidden">種目：</span>{parts(t.event).map((part, i, arr) => <>{part}{i < arr.length - 1 && <wbr />}</>)}</div>
-          <div class="tlx__cell tlx__cell--text"><span class="visually-hidden">会場：</span><span><Venue text={t.place} breaks /></span></div>
+          {!compact && <div class="tlx__cell tlx__cell--text"><span class="visually-hidden">会場：</span><span><Venue text={t.place} breaks /></span></div>}
           {due
             ? <div class="tlx__cell tlx__cell--date tlx__cell--sub"><span class="visually-hidden">締切：</span><span class="tlx__md">{due.md}</span><span class="tlx__dow">{due.dow}</span></div>
             : <div class="tlx__cell tlx__cell--text"><span class="visually-hidden">締切：</span>{t.due && t.due !== '—' ? t.due : '—'}</div>}
-          {spare
+          {!compact && (spare
             ? <div class="tlx__cell tlx__cell--date tlx__cell--sub"><span class="visually-hidden">予備日：</span><span class="tlx__md">{spare.md}</span><span class="tlx__dow">{spare.dow}</span>{spare.venue && <span class="tlx__venue">{spare.venue}</span>}</div>
-            : <div class="tlx__cell tlx__cell--text"><span class="visually-hidden">予備日：</span>{spareText(t) ? parts(spareText(t)).map((part, i, arr) => <>{part}{i < arr.length - 1 && <wbr />}</>) : '—'}</div>}
+            : <div class="tlx__cell tlx__cell--text"><span class="visually-hidden">予備日：</span>{spareText(t) ? parts(spareText(t)).map((part, i, arr) => <>{part}{i < arr.length - 1 && <wbr />}</>) : '—'}</div>)}
           {buttons.map((b) => (
             <div class="tlx__cell">
               {b.href
