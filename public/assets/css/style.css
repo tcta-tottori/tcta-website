@@ -4339,10 +4339,47 @@ button.dl-item { width: 100%; text-align: left; }
 .year-tab.is-active { background: var(--red); border-color: var(--red); color: #fff; }
 .year-tab.is-active .year-tab__unit { color: rgba(255, 255, 255, .8); }
 
-/* 年度の見出し。「令和5年度 2023」（大会数は出さない） */
-.year-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 20px; margin-bottom: 24px; }
-.year-head__title { margin: 0; font: 700 24px/1.3 var(--fjp); color: var(--ink); }
-.year-head__en { margin-left: 10px; font: 500 14px/1 var(--flt); letter-spacing: .08em; color: var(--gray-500); }
+/* 年度の見出し。ページ上部の見出しと同じ形（赤い四角の横に西暦、その下に「令和元年度」の太字）。
+   右に縞の入った大きな西暦（.ghost と同じ色と縞）。大会数は出さない。
+   出るとき：見出しは他の見出しと同じ塗り替え（グレー → 白いスラッシュ → 黒）、西暦は右からスライドイン。
+   年度を選び直すたびに .on を付け直して、もう一度流す（main.js の initResultView） */
+.year-head { position: relative; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 20px; margin-bottom: 8px; padding: 16px 0; }
+.year-head__row { position: relative; z-index: 1; }
+.year-head__en { letter-spacing: .14em; }
+.year-head__title { font-size: 26px; }
+@media (min-width: 640px) { .year-head__title { font-size: 30px; } }
+.year-head__ghost {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  z-index: 0;
+  transform: translateY(-50%);
+  font: 700 clamp(72px, 16vw, 140px)/1 var(--flt);
+  letter-spacing: .02em;
+  color: var(--ghost);
+  white-space: nowrap;
+  user-select: none;
+  pointer-events: none;
+  -webkit-mask-image: repeating-linear-gradient(180deg, #000 0 7.6%, transparent 7.6% 9%);
+  mask-image: repeating-linear-gradient(180deg, #000 0 7.6%, transparent 7.6% 9%);
+}
+/* 表示の切り替えは見出しの下、一覧のすぐ上の右端 */
+.rl-tools { display: flex; justify-content: flex-end; margin: 0 0 16px; }
+@media (min-width: 1024px) { .year-head { margin-bottom: 28px; } }
+body.jsrv .year-head.rv { opacity: 1; transform: none; }
+body.jsrv .year-head.rv .sec-head__mark { transform: scale(0); }
+body.jsrv .year-head.rv .year-head__en { opacity: 0; transform: translateX(-12px); }
+body.jsrv .year-head.rv .year-head__ghost { opacity: 0; transform: translate(18%, -50%); }
+body.jsrv .year-head.rv.on .sec-head__mark { animation: yh-mark .5s var(--ease) both; }
+body.jsrv .year-head.rv.on .year-head__en { animation: yh-en .6s var(--ease) .1s both; }
+body.jsrv .year-head.rv.on .year-head__ghost { animation: yh-ghost 1.1s var(--ease) .25s both; }
+@keyframes yh-mark { from { transform: scale(0) rotate(-90deg); } to { transform: none; } }
+@keyframes yh-en { from { opacity: 0; transform: translateX(-12px); } to { opacity: 1; transform: none; } }
+@keyframes yh-ghost { from { opacity: 0; transform: translate(18%, -50%); } to { opacity: 1; transform: translateY(-50%); } }
+@media (prefers-reduced-motion: reduce) {
+  body.jsrv .year-head.rv .sec-head__mark, body.jsrv .year-head.rv .year-head__en { transform: none; opacity: 1; animation: none; }
+  body.jsrv .year-head.rv .year-head__ghost { opacity: 1; transform: translateY(-50%); animation: none; }
+}
 
 /* 年度の中の大会一覧。赤い四角・大会名、その下に日付（カレンダー印）と種目（一覧の印）。大会情報の一覧と同じ形 */
 .rlist { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--gray-200); }
@@ -4375,8 +4412,6 @@ button.dl-item { width: 100%; text-align: left; }
 
 /* 縮小表示（一覧 .rlist）と拡大表示（カード .rcards）の切り替え。.rl--cards のときカード、外れているとき一覧だけを出す
    （results.html の見出しの右のボタン。main.js の initResultView） */
-.year-head { align-items: center; }
-.year-head__switch { margin-left: auto; }
 .rl:not(.rl--cards) .rcards, .rl.rl--cards .rlist { display: none; }
 /* 切り替えたとき・年度を選んだときに、1件ずつ少し小さい状態から等倍へ出す（大会情報の一覧と同じ動き） */
 .rl.is-switching .rlist > li, .rl.is-switching .rcards__item { animation: tl-row-in .5s cubic-bezier(.2, .8, .2, 1) both; animation-delay: calc(min(var(--i, 0), 14) * 35ms); }
@@ -4580,27 +4615,46 @@ button.dl-item { width: 100%; text-align: left; }
   display: flex;
   align-items: center;
   gap: 12px;
-  min-height: 56px;
-  padding: 0 8px 0 16px;
+  min-height: 64px;
+  padding: 8px 8px 8px 16px;
   flex: none;
 }
-.lightbox__count { flex: none; font: 600 14px/1 var(--flt); letter-spacing: .08em; color: rgba(255, 255, 255, .7); }
+@media (min-width: 1024px) { .lightbox__bar { min-height: 80px; padding: 16px 20px 16px 24px; } }
+/* 何枚目か。「05」を大きく、「/ 05」を小さく（サイトの日付と同じ書体） */
+.lightbox__count { flex: none; display: inline-flex; align-items: baseline; gap: 6px; font-family: var(--flt); }
+.lightbox__count:empty { display: none; }
+.lightbox__now { font: 700 22px/1 var(--flt); letter-spacing: .04em; color: #fff; }
+.lightbox__all { font: 600 12px/1 var(--flt); letter-spacing: .1em; color: rgba(255, 255, 255, .55); }
 .lightbox__cap { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 500 13px/1.4 var(--fjp); color: rgba(255, 255, 255, .85); }
+.lightbox__count:not(:empty) + .lightbox__cap { padding-left: 14px; border-left: 1px solid rgba(255, 255, 255, .2); }
+/* ボタン（閉じる・前・次）。サイトのボタンと同じ角を少し丸めた四角に、白い細い線。
+   地は暗い半透明＋ぼかしで、白い紙面の上に重なっても読める。マウスを載せると赤く塗る */
 .lightbox__btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 44px;
-  height: 44px;
+  width: 48px;
+  height: 48px;
+  border: 1px solid rgba(255, 255, 255, .3);
   border-radius: var(--radius);
-  background: rgba(255, 255, 255, .08);
+  background: rgba(18, 18, 18, .55);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
   color: #fff;
-  font: 400 28px/1 var(--flt);
-  transition: background .2s ease;
+  font: 400 20px/1 var(--fjp);
+  cursor: pointer;
+  transition: background-color .25s ease, border-color .25s ease, opacity .25s ease, transform .25s var(--ease);
 }
-/* ホバーで明るくするのはマウスのときだけ（タッチでは押したあともホバーが残り、白い紙面の上で白くなって見えなくなる） */
-@media (hover: hover) { .lightbox__btn:hover { background: rgba(255, 255, 255, .2); } }
-.lightbox__close { flex: none; }
+.lightbox__btn:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+/* ホバーで赤くするのはマウスのときだけ（タッチでは押したあともホバーが残るため） */
+@media (hover: hover) { .lightbox__btn:not(:disabled):hover { background: var(--red); border-color: var(--red); } }
+.lightbox__btn:not(:disabled):active { transform: scale(.94); }
+/* 閉じる：2本の線を交差させた ✕（メニューのボタンと同じ線の太さ） */
+.lightbox__close { position: relative; flex: none; }
+.lightbox__close span { position: absolute; left: 50%; top: 50%; width: 20px; height: 2px; margin: -1px 0 0 -10px; background: currentColor; transition: transform .3s var(--ease); }
+.lightbox__close span:first-child { transform: rotate(45deg); }
+.lightbox__close span:last-child { transform: rotate(-45deg); }
+@media (hover: hover) { .lightbox__close:hover span:first-child { transform: rotate(135deg); } .lightbox__close:hover span:last-child { transform: rotate(45deg); } }
 .lightbox__stage {
   flex: 1;
   min-height: 0;
@@ -4611,6 +4665,7 @@ button.dl-item { width: 100%; text-align: left; }
   -webkit-overflow-scrolling: touch;
   padding: 0 8px;
 }
+@media (min-width: 1024px) { .lightbox__stage { padding: 0 96px; } }
 .lightbox__img {
   display: block;
   max-width: 100%;
@@ -4621,38 +4676,49 @@ button.dl-item { width: 100%; text-align: left; }
   cursor: zoom-in;
   user-select: none;
   -webkit-user-drag: none;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, .45);
 }
 /* 原寸表示。中央寄せをやめて、はみ出した分をスクロールで読む */
 .lightbox.is-zoomed .lightbox__stage { display: block; padding: 0; }
 .lightbox.is-zoomed .lightbox__img { max-width: none; max-height: none; cursor: zoom-out; }
+/* 前・次。画面の左右の中ほどに、少し大きめの四角で */
 .lightbox__nav {
   position: absolute;
   top: 50%;
-  transform: translateY(-50%);
-  width: 48px;
-  height: 64px;
-  border-radius: var(--radius);
-  background: rgba(0, 0, 0, .35);
-  font: 400 26px/1 var(--fjp);
+  width: 56px;
+  height: 56px;
+  margin-top: -28px;
+  font-size: 22px;
 }
-/* 前後のボタンは白い紙面の上に重なることが多いので、ホバー・押したあとも暗いまま（白くしない） */
-@media (hover: hover) { .lightbox__nav:hover { background: rgba(0, 0, 0, .55); } }
-.lightbox__nav:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
-.lightbox__nav--prev { left: 6px; }
-.lightbox__nav--next { right: 6px; }
+.lightbox__nav--prev { left: 20px; }
+.lightbox__nav--next { right: 20px; }
+@media (hover: hover) {
+  .lightbox__nav--prev:not(:disabled):hover { transform: translateX(-3px); }
+  .lightbox__nav--next:not(:disabled):hover { transform: translateX(3px); }
+}
+/* 最初・最後の1枚では押せない（一周しない）。薄くして残す */
+.lightbox__nav:disabled { opacity: .22; cursor: default; }
 .lightbox__nav[hidden] { display: none; }
 .lightbox.is-zoomed .lightbox__nav { display: none; }
+/* 下の帯：ページの点と案内 */
+.lightbox__foot { flex: none; display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 12px 16px 14px; }
+.lightbox__dots { display: flex; gap: 8px; }
+.lightbox__dots[hidden] { display: none; }
+.lightbox__dot { width: 8px; height: 8px; padding: 0; border: 0; border-radius: 4px; background: rgba(255, 255, 255, .3); cursor: pointer; transition: width .3s var(--ease), background-color .3s ease; }
+.lightbox__dot.is-on { width: 24px; background: var(--red); }
+@media (hover: hover) { .lightbox__dot:not(.is-on):hover { background: rgba(255, 255, 255, .6); } }
 .lightbox__hint {
-  flex: none;
   margin: 0;
-  padding: 10px 16px 14px;
   text-align: center;
   font: 400 12px/1.5 var(--fjp);
   color: rgba(255, 255, 255, .55);
 }
-.lightbox.is-zoomed .lightbox__hint { visibility: hidden; }
+.lightbox.is-zoomed .lightbox__foot { visibility: hidden; }
 @media (max-width: 639px) {
-  .lightbox__nav { width: 36px; height: 52px; font-size: 22px; background: rgba(0, 0, 0, .25); }
+  .lightbox__nav { width: 44px; height: 44px; margin-top: -22px; font-size: 18px; }
+  .lightbox__nav--prev { left: 8px; }
+  .lightbox__nav--next { right: 8px; }
+  .lightbox__btn.lightbox__close { width: 44px; height: 44px; }
 }
 
 /* 前後の大会への行き来 */
@@ -4923,6 +4989,46 @@ button.dl-item { width: 100%; text-align: left; }
   font: 700 13px/1.6 var(--fjp);
   letter-spacing: .03em;
   color: var(--gray-800);
+}
+
+/* 紙面をカードで並べる（協会規約）。ページの縮小を上に、下に「P.1」と載っている章・条。押すと全画面で読む。
+   スマホは2列・タブレットは3列・PC は5列 */
+.sheets--cards { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+@media (min-width: 640px) { .sheets--cards { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; } }
+@media (min-width: 1024px) { .sheets--cards { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 20px; } }
+.sheet--card {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--white);
+  transition: box-shadow .3s ease, transform .3s ease, border-color .3s ease;
+}
+.sheet__thumb { position: relative; display: block; overflow: hidden; border-bottom: 1px solid var(--gray-200); background: var(--white); }
+.sheet--card .sheet__thumb img { transition: transform .6s var(--ease); }
+/* 右上の拡大の印 */
+.sheet__zoom {
+  position: absolute;
+  top: 8px; right: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px; height: 32px;
+  border-radius: var(--radius);
+  background: rgba(26, 26, 26, .72);
+  color: #fff;
+  transition: background-color .25s ease;
+}
+.sheet__body { display: flex; flex-direction: column; gap: 4px; padding: 12px 14px 14px; }
+.sheet__page { font: 700 12px/1 var(--flt); letter-spacing: .1em; color: var(--red); }
+.sheet__title { font: 700 14px/1.5 var(--fjp); color: var(--ink); transition: color .2s ease; }
+.sheet__arts { font: 400 12px/1.5 var(--fjp); color: var(--gray-600); }
+@media (hover: hover) {
+  .sheet--card:hover { transform: translateY(-4px); box-shadow: var(--shadow-hover); border-color: var(--gray-300); }
+  .sheet--card:hover .sheet__thumb img { transform: scale(1.04); }
+  .sheet--card:hover .sheet__title { color: var(--red); }
+  .sheet--card:hover .sheet__zoom { background: var(--red); }
 }
 
 /* まだ中身が無い節（結果待ちなど）の言い方 */

@@ -755,7 +755,8 @@
 
   /* ---------- 画像の全画面表示（写真・要項・ドロー・結果・規約） ----------
      .gallery__item / .sheet の画像リンクを、別タブではなくその場で全画面に開く。
-     同じ升目（.gallery / .sheets）の中は ← → やスワイプで前後に送れる。
+     同じ升目（.gallery / .sheets）の中は ← → やスワイプで前後に送れる（最初と最後で止まる。一周はしない）。
+     下にページの点を並べ、押すとそのページへ飛ぶ。
      紙もの（ドロー表など）は画像をタップすると原寸に切り替わり、指で動かして読める。 */
   function initLightbox() {
     var links = Array.prototype.slice.call(
@@ -773,12 +774,15 @@
       '<div class="lightbox__bar">' +
         '<span class="lightbox__count" data-lb-count></span>' +
         '<span class="lightbox__cap" data-lb-cap></span>' +
-        '<button type="button" class="lightbox__btn lightbox__close" data-lb-close aria-label="閉じる">×</button>' +
+        '<button type="button" class="lightbox__btn lightbox__close" data-lb-close aria-label="閉じる"><span></span><span></span></button>' +
       '</div>' +
       '<button type="button" class="lightbox__btn lightbox__nav lightbox__nav--prev" data-lb-prev aria-label="前の画像">←</button>' +
       '<div class="lightbox__stage" data-lb-stage><img class="lightbox__img" alt="" data-lb-img></div>' +
       '<button type="button" class="lightbox__btn lightbox__nav lightbox__nav--next" data-lb-next aria-label="次の画像">→</button>' +
-      '<p class="lightbox__hint" data-lb-hint>画像をタップすると原寸で表示します</p>';
+      '<div class="lightbox__foot">' +
+        '<div class="lightbox__dots" data-lb-dots></div>' +
+        '<p class="lightbox__hint" data-lb-hint>画像をタップすると原寸で表示します</p>' +
+      '</div>';
     document.body.appendChild(box);
 
     var img = box.querySelector('[data-lb-img]');
@@ -787,6 +791,7 @@
     var cap = box.querySelector('[data-lb-cap]');
     var prevBtn = box.querySelector('[data-lb-prev]');
     var nextBtn = box.querySelector('[data-lb-next]');
+    var dots = box.querySelector('[data-lb-dots]');
     var group = [];
     var index = 0;
     var opener = null;
@@ -798,15 +803,40 @@
       return im ? im.getAttribute('alt') || '' : '';
     };
 
+    var pad2 = function (n) { return (n < 10 ? '0' : '') + n; };
+    // ページの点（12枚まで。多いときは出さない）。押すとそのページへ
+    var buildDots = function () {
+      dots.innerHTML = '';
+      dots.hidden = group.length < 2 || group.length > 12;
+      if (dots.hidden) return;
+      group.forEach(function (a, n) {
+        var d = document.createElement('button');
+        d.type = 'button';
+        d.className = 'lightbox__dot';
+        d.setAttribute('aria-label', (n + 1) + '枚目へ');
+        d.addEventListener('click', function () { show(n); });
+        dots.appendChild(d);
+      });
+    };
     var show = function (i) {
-      index = (i + group.length) % group.length;
+      // 最初と最後で止める（一周はしない）
+      if (i < 0 || i >= group.length) return;
+      index = i;
       var a = group[index];
       box.classList.remove('is-zoomed');
       img.src = a.getAttribute('href');
       img.alt = captionOf(a);
       cap.textContent = captionOf(a);
-      count.textContent = group.length > 1 ? (index + 1) + ' / ' + group.length : '';
+      count.innerHTML = group.length > 1
+        ? '<span class="lightbox__now">' + pad2(index + 1) + '</span><span class="lightbox__all">/ ' + pad2(group.length) + '</span>'
+        : '';
       prevBtn.hidden = nextBtn.hidden = group.length < 2;
+      prevBtn.disabled = index === 0;
+      nextBtn.disabled = index === group.length - 1;
+      Array.prototype.forEach.call(dots.children, function (d, n) {
+        d.classList.toggle('is-on', n === index);
+        if (n === index) d.setAttribute('aria-current', 'true'); else d.removeAttribute('aria-current');
+      });
       stage.scrollTop = 0;
       stage.scrollLeft = 0;
     };
@@ -817,6 +847,7 @@
       opener = a;
       box.hidden = false;
       document.body.classList.add('is-locked');
+      buildDots();
       show(group.indexOf(a));
       box.querySelector('[data-lb-close]').focus();
     };
@@ -1932,6 +1963,9 @@
           var panel = document.getElementById(t.getAttribute('aria-controls'));
           var l = panel && panel.querySelector('.rl');
           if (l) requestAnimationFrame(function () { replay(l); });
+          // 年度の見出し（塗り替え・西暦のスライドイン）も流し直す
+          var yh = panel && panel.querySelector('.year-head.rv');
+          if (yh) requestAnimationFrame(function () { yh.classList.remove('on'); void yh.offsetWidth; yh.classList.add('on'); });
         });
       });
     }
