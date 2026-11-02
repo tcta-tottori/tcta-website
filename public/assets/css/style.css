@@ -2023,6 +2023,34 @@ a.entry-row:hover .sqbtn { background: var(--red); border-color: var(--red); col
 .entry-row__venue .venue-logo { height: 1.25em; vertical-align: -.28em; }
 .entry-row .sqbtn { display: none; }
 
+/* ---- トップの大会情報の一覧（HomeTournaments.astro。.entry-row--tl）----
+   エントリー受付中の行と同じ型で、締切の代わりに状態のバッジ、右端に 要項・ドロー・結果 の3つのボタン。
+   スマホ：開催日｜状態 の段、その下に大会名、種目｜会場、いちばん下に3つのボタン。
+   タブレット：開催日｜大会名・種目・会場｜状態｜ボタン（PC は列を広げる。下の 1024px〜 の決まり）。
+   行全体はリンクにせず（ボタンを中に置くため）、大会名だけが大会のページへのリンク。終わった大会（--past）は日付を灰色に */
+.entry-row.entry-row--tl {
+  grid-template-areas:
+    "date status"
+    "main main"
+    "btns btns";
+}
+.entry-row--tl:hover { background: var(--white); }
+.entry-row--tl:hover .entry-row__name, .entry-row--tl .entry-row__link:hover { color: var(--red); }
+.entry-row__link { color: inherit; }
+.entry-row__status { grid-area: status; justify-self: end; }
+.entry-row__btns { grid-area: btns; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.entry-row__btns .entry-row__btn { min-height: 40px; padding: 8px 4px; gap: 0; justify-content: center; font-size: 12.5px; letter-spacing: .02em; white-space: nowrap; }
+.entry-row--past .entry-row__day, .entry-row--past .entry-row__dow { color: var(--gray-500); }
+/* 開催日の下の余白（エントリー受付中で締切の線と高さをそろえるためのもの）は、一覧の行では要らない */
+.entry-row--tl .entry-row__date { padding-bottom: 0; }
+@media (min-width: 768px) {
+  .entry-row.entry-row--tl {
+    grid-template-columns: 130px 1fr 88px 240px;
+    grid-template-areas: "date main status btns";
+  }
+  .entry-row__status { justify-self: center; }
+}
+
 /* 流れる表示（.mq）。main.js の initEntryMarquee がスマホの幅のときだけ一覧に .mq-on を付け、
    収まらないものに .is-scroll と --mq-shift（1周の長さ）・--mq-dur（1周の時間）を入れ、文字の写し（.mq__clone）を後ろに足す。
    はじめに少し止まってから左へ流れ、写しが元の位置に来たところで巻き戻す（継ぎ目なくくり返す） */
@@ -2065,6 +2093,10 @@ a.entry-row:hover .sqbtn { background: var(--red); border-color: var(--red); col
   .entry-row {
     grid-template-columns: 150px 1fr 88px 150px 44px;
     grid-template-areas: "date main left due arrow";
+  }
+  .entry-row.entry-row--tl {
+    grid-template-columns: 150px 1fr 96px 288px;
+    grid-template-areas: "date main status btns";
   }
   .entry-row__name { font-size: 18px; }
   .entry-row__event { font-size: 14px; }
