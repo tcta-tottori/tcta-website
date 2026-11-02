@@ -4,13 +4,16 @@
 // その下の「大会情報」の区画（カード表示／一覧表示）はこれまでどおり。
 //
 // 見た目はお知らせの行（NewsRow.astro）と同じ型。1大会1行で、
-//   左：開催日（「11.23」を大きく＋曜日）／中：大会名（太字）とその下に種目／右：エントリー締切（開催日と同じ「11.06 FRI」の形。数字は赤）／右端：→
+//   左：開催日（「11.23」を大きく＋曜日）／中：大会名（太字）とその下に種目・会場／右：エントリー締切（開催日と同じ「11.06 FRI」の形。赤でゆっくり点滅）／右端：→
+// 種目と会場は横に並べ、入り切らないとき（スマホで種目が長いときなど）だけ会場が次の行に下がる。
+// 会場は地図のピンと会場名。ヤマタスポーツパークはロゴで出す（Venue.astro。大会カードと同じ）。
 // スマホは 開催日｜締切 の段、その下に大会名・種目。
 // 中身はトップの大会カードと同じ（src/data/tournaments.js の buildCards）。状態が「受付中」のものを締切の近い順に。
 // 締切は時刻を出さない（buildCards が dueText で省いてある）。
 // 行を押すと要項（outline-<slug>.html）へ。要項がまだ無い大会は大会のページ（action.href）へ、それも無ければ押せない行にする。
 // 受付中の大会が無いときは、区画ごと出さない（index.html.astro が ENTRY_OPEN の件数で決める）。
 import Icon from './Icon.astro';
+import Venue from './Venue.astro';
 import { dateChip } from '../data/tournaments.js';
 import { dueDate } from '../data/schedule.js';
 
@@ -69,11 +72,22 @@ const rows = items
             </span>
             <span class="entry-row__main">
               <span class="entry-row__name">{nameParts(t.title).map((part, i, arr) => <>{part}{i < arr.length - 1 && <wbr />}</>)}</span>
-              {t.event && (
-                <span class="entry-row__event">
-                  <Icon name="list" class="entry-row__ico" />
-                  <span class="visually-hidden">種目：</span>
-                  <span>{eventParts(t.event).map((part, i, arr) => <>{part}{i < arr.length - 1 && <wbr />}</>)}</span>
+              {(t.event || t.venue) && (
+                <span class="entry-row__meta">
+                  {t.event && (
+                    <span class="entry-row__event">
+                      <Icon name="list" class="entry-row__ico" />
+                      <span class="visually-hidden">種目：</span>
+                      <span>{eventParts(t.event).map((part, i, arr) => <>{part}{i < arr.length - 1 && <wbr />}</>)}</span>
+                    </span>
+                  )}
+                  {t.venue && (
+                    <span class="entry-row__event entry-row__venue">
+                      <Icon name="pin" class="entry-row__ico" />
+                      <span class="visually-hidden">会場：</span>
+                      <span><Venue text={t.venue} breaks /></span>
+                    </span>
+                  )}
                 </span>
               )}
             </span>
