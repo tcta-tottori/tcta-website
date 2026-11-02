@@ -67,6 +67,16 @@ export function dueAt(due, date) {
   const year = month > em ? y - 1 : y;
   return Date.UTC(year, month - 1, day, 20, 0, 0) - JST_OFFSET;
 }
+/**
+ * 申込締切の表示用の文言（トップの大会カード・エントリー受付中の帯・大会一覧）。
+ * 管理画面に「11/27（金）20:00」「11/27 20時まで」のように時刻まで書かれていても、日付だけを出す（時刻は大会のページ・要項で）。
+ */
+export function dueText(due) {
+  return String(due ?? '')
+    .replace(/\s*(\d{1,2}[:：]\d{2}|\d{1,2}時(\d{1,2}分)?)\s*(まで)?/g, '')
+    .trim();
+}
+
 /** 申込締切の日付（'YYYY-MM-DD'）。年の当て方は dueAt と同じ。読めない形（「別記」「—」など）は null */
 export function dueDate(due, date) {
   const m = String(due ?? '').trim().match(/^(\d{1,2})\/(\d{1,2})$/);
