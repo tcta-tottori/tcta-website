@@ -19,7 +19,9 @@ const { TOURNAMENTS, NEWS } = await siteData(Astro);
 // お知らせの全件表示の絞り込み（main.js の initNewsFilter）。いまあるお知らせの種類だけを、NEWS_KINDS の順に件数付きで
 const NEWS_FILTERS = NEWS_KINDS.map((k) => ({ ...k, n: NEWS.filter((x) => x.kind === k.key).length })).filter((k) => k.n > 0);
 // エントリー受付中の大会（トップの大会カードのうち、状態が「受付中」のもの。ヒーローの直後の区画に出す）
-const ENTRY_OPEN = TOURNAMENTS.filter((t) => t.status === 'open');
+// 京丹後市テニス協会の大会（申込みは同協会のエントリーフォーム）は、受付中でもこの欄には出さない（大会情報の一覧には出す）
+const ENTRY_OPEN_EXCLUDE = /京丹後/;
+const ENTRY_OPEN = TOURNAMENTS.filter((t) => t.status === 'open' && !ENTRY_OPEN_EXCLUDE.test(t.title));
 
 const CATCH = 'PLAY BEYOND.';
 // 英字は左から1文字ずつ出すので、文字に分解しておく。
