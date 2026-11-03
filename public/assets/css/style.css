@@ -1679,8 +1679,7 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   font: 400 12px/1.6 var(--fjp);
   color: var(--gray-600);
 }
-.tcard__ico { width: 14px; height: 14px; flex: none; color: var(--gray-500); }
-.tcard__venue .tcard__ico { color: var(--red); }  /* 会場の地図のピンは赤 */
+.tcard__ico { width: 14px; height: 14px; flex: none; color: var(--red); }  /* 種目のアイコン・会場の地図のピンとも赤 */
 /* ---- 種目のピクトグラム（components/EventIcon.astro） ----
    高さは外側が決め、幅は絵の縦横比（aspect-ratio）で決まる。中の img は枠いっぱいに重ねる。
    1つずつ、画面に入った瞬間（main.js の initEventIcons が .is-on を付ける）に一度だけ動く：
@@ -2044,8 +2043,7 @@ a.entry-row:hover .sqbtn { background: var(--red); border-color: var(--red); col
 .entry-row__meta { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 14px; row-gap: 4px; }
 .entry-row__event { display: flex; align-items: flex-start; gap: 6px; min-width: 0; font: 500 13px/1.6 var(--fjp); color: var(--gray-800); word-break: keep-all; }
 .entry-row__event > .mq { flex: 1; min-width: 0; }
-.entry-row__ico { flex: none; width: 14px; height: 14px; margin-top: 4px; color: var(--gray-500); }
-.entry-row__venue .entry-row__ico { color: var(--red); }  /* 会場の地図のピンは赤（大会カードと同じ） */
+.entry-row__ico { flex: none; width: 14px; height: 14px; margin-top: 4px; color: var(--red); }  /* 種目のアイコン・会場の地図のピンとも赤（大会カードと同じ） */
 .entry-row__venue .venue-logo { height: 1.25em; vertical-align: -.28em; }
 .entry-row .sqbtn { display: none; }
 
@@ -3967,7 +3965,7 @@ body.jsrv .rv.on .ink-sweep {
   letter-spacing: .03em;
   color: var(--ink);
 }
-.tl-item__event-text .tl-item__ico { flex: none; margin-top: 2px; color: var(--gray-600); }
+.tl-item__event-text .tl-item__ico { flex: none; margin-top: 2px; color: var(--red); }  /* 種目のアイコンは赤 */
 .tl-item__event-text { color: var(--gray-600); }
 
 .tl-item__row { display: flex; align-items: flex-start; gap: 10px; }
@@ -4033,6 +4031,14 @@ body.jsrv .rv.on .ink-sweep {
 /* ---- 大会一覧の切り替え（TournamentList.astro）----
    .tl--rows のときは縮小表示（.tlx）、外れているときは拡大表示（.tl__cards）だけを出す */
 .tl--rows .tl__cards, .tl:not(.tl--rows) .tlx { display: none; }
+/* 一覧表示（.tl--list）のときは .tl__list だけを出す（トップの大会情報と同じ行の型。HomeTournaments.astro） */
+.tl--list .tl__cards { display: none; }
+.tl:not(.tl--list) .tl__list { display: none; }
+.tl__list .entry-list { margin-top: 0; }
+.tl__list .sw-wait { transform: scale(.94); }
+.tl__list li.sw-in { animation: tl-row-in .55s cubic-bezier(.2, .8, .2, 1) both; animation-delay: calc(min(var(--si, 0), 14) * 40ms); }
+/* 絞り込みで隠した行（initFilters が hidden を付ける） */
+.tl__list li[hidden] { display: none; }
 /* 表示を切り替えたときの出方（main.js の initViewSwitch が .is-switching・.sw-wait／.sw-in・--si を付ける）。
    ページを開いたときと、スクロールして見えてきたときも同じ。
    縮小表示：大会の行が少し小さい状態から等倍へズームしながら順に出る。
@@ -4048,7 +4054,7 @@ body.jsrv .rv.on .ink-sweep {
 @keyframes tl-row-in { from { opacity: 0; transform: scale(.94); } }
 @keyframes tl-card-in { from { opacity: 0; transform: scale(.86); } }
 @media (prefers-reduced-motion: reduce) {
-  .tl.is-switching .tlx__head, .tlx__body .tlx__row.sw-in, .tl__card.sw-in { animation: none; }
+  .tl.is-switching .tlx__head, .tlx__body .tlx__row.sw-in, .tl__card.sw-in, .tl__list li.sw-in { animation: none; }
   .tl .sw-wait { opacity: 1; transform: none; }
 }
 
@@ -4199,6 +4205,15 @@ body.jsrv .rv.on .ink-sweep {
 /* 絞り込み（左）と表示の切り替え（右）。スマホでも1行に収める */
 .tl-tools { display: flex; flex-wrap: nowrap; align-items: center; justify-content: space-between; gap: 10px; margin: 28px 0 24px; }
 .tl-tools .chips { margin: 0; }
+/* 表示の切り替えが3つになったので、スマホの幅（〜639px）では切り替えのボタンを少し細く、絞り込みのボタンの左右の余白を詰めて1行に収める
+   （〜419px は件数を省くので少し戻す。〜374px はさらに詰める） */
+@media (max-width: 639px) {
+  .tl-tools { gap: 8px; }
+  .tl-tools .view-switch__btn { width: 34px; }
+  .tl-tools .seg .seg__btn { padding-inline: 8px; }
+}
+@media (max-width: 419px) { .tl-tools .seg .seg__btn { padding-inline: 9px; } }
+@media (max-width: 374px) { .tl-tools .seg .seg__btn { padding-inline: 6px; } }
 /* 絞り込み：1つの枠の中に「すべて｜受付中｜終了」を並べた切り替え。選んだ所は赤。件数は名前の右に小さく */
 .seg { display: inline-flex; flex: 0 1 auto; min-width: 0; border: 1px solid var(--gray-300); border-radius: var(--radius); overflow: hidden; background: var(--white); }
 .seg .seg__btn {
@@ -4240,6 +4255,8 @@ body.jsrv .rv.on .ink-sweep {
 .view-switch__ico { position: relative; width: 14px; height: 12px; flex: none; }
 .view-switch__ico--cards { width: 14px; height: 14px; }
 .view-switch__ico--rows { background: linear-gradient(currentColor, currentColor) 0 0 / 100% 2px no-repeat, linear-gradient(currentColor, currentColor) 0 5px / 100% 2px no-repeat, linear-gradient(currentColor, currentColor) 0 10px / 100% 2px no-repeat; }
+/* 一覧表示：頭に小さな四角の付いた3本の線（トップと同じ行の型） */
+.view-switch__ico--list { background: linear-gradient(currentColor, currentColor) 0 0 / 3px 2px no-repeat, linear-gradient(currentColor, currentColor) 5px 0 / 9px 2px no-repeat, linear-gradient(currentColor, currentColor) 0 5px / 3px 2px no-repeat, linear-gradient(currentColor, currentColor) 5px 5px / 9px 2px no-repeat, linear-gradient(currentColor, currentColor) 0 10px / 3px 2px no-repeat, linear-gradient(currentColor, currentColor) 5px 10px / 9px 2px no-repeat; }
 .view-switch__ico--cards { background: linear-gradient(currentColor, currentColor) 0 0 / 6px 6px no-repeat, linear-gradient(currentColor, currentColor) 8px 0 / 6px 6px no-repeat, linear-gradient(currentColor, currentColor) 0 8px / 6px 6px no-repeat, linear-gradient(currentColor, currentColor) 8px 8px / 6px 6px no-repeat; }
 
 .tl-item__note { margin-top: 24px; }
@@ -4843,7 +4860,7 @@ body.jsrv .year-head.rv.on .year-head__ghost { animation: yh-ghost 1.1s var(--ea
 .rlist__title { display: block; min-width: 0; font: 700 16px/1.5 var(--fjp); color: var(--ink); transition: color .2s ease; }
 .rlist__meta { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 18px; font: 400 13px/1.6 var(--fjp); letter-spacing: .02em; color: var(--gray-600); }
 .rlist__when, .rlist__what { display: inline-flex; align-items: center; gap: 8px; min-width: 0; }
-.rlist__ico { width: 16px; height: 16px; flex: none; color: var(--gray-500); }
+.rlist__ico { width: 16px; height: 16px; flex: none; color: var(--red); }  /* 種目のアイコンは赤 */
 .rlist__ymd { font: 700 15px/1 var(--flt); letter-spacing: .03em; color: var(--ink); }
 .rlist__dow { font: 700 11px/1 var(--flt); letter-spacing: .1em; color: var(--red); }
 .rlist__note { color: var(--gray-500); }

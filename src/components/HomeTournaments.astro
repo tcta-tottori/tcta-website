@@ -12,11 +12,15 @@
 //   大会名・種目・会場が1行に収まらないスマホでは横に流す（main.js の initEntryMarquee。エントリー受付中と同じ）。
 //   ボタンの行き先は大会情報ページの一覧・大会カードと同じ（src/data/event-buttons.js。素材の無いものは灰色で押せない）。
 //   終わった大会は日付を灰色にする。
+//
+// 大会情報ページの「一覧表示」（TournamentList.astro の .tl__list）でも使う。そのときは
+//   caption … 一覧の読み上げ名、reveal={false} … スクロールで出る動き（.rv）を付けない、showEmpty={false} … 0件の文言を出さない、
+//   各大会の tags … 絞り込み（main.js の initFilters）の印。li の data-tags に入れる
 import Icon from './Icon.astro';
 import Venue from './Venue.astro';
 import { STATUS, dateChip } from '../data/tournaments.js';
 
-const { items = [] } = Astro.props;
+const { items = [], caption = '開催前と終わったばかりの大会', reveal = true, showEmpty = true } = Astro.props;
 
 /** 大会名の折り返してよい位置（EntryOpen.astro・TournamentList.astro と同じ） */
 const nameParts = (name) =>
@@ -27,14 +31,14 @@ const extAttrs = (href) => (/^https?:/.test(href ?? '') ? { target: '_blank', re
 ---
 
 {items.length > 0 ? (
-  <ul class="entry-list entry-list--tl" aria-label="開催前と終わったばかりの大会">
+  <ul class="entry-list entry-list--tl" aria-label={caption}>
     {items.map((t, i) => {
       const chip = dateChip(t.date);
       const badge = STATUS[t.status] ?? STATUS.soon;
       const href = t.action?.href ?? null;
       return (
-        <li>
-          <div class:list={['entry-row', 'entry-row--tl', 'rv', t.status === 'past' && 'entry-row--past']} style={`transition-delay:${0.1 + Math.min(i, 8) * 0.06}s`}>
+        <li data-tags={t.tags}>
+          <div class:list={['entry-row', 'entry-row--tl', reveal && 'rv', t.status === 'past' && 'entry-row--past']} style={reveal ? `transition-delay:${0.1 + Math.min(i, 8) * 0.06}s` : undefined}>
             <span class="entry-row__date">
               <span class="entry-row__label">開催日</span>
               <span class="entry-row__day">{chip.md}</span>
@@ -78,6 +82,6 @@ const extAttrs = (href) => (/^https?:/.test(href ?? '') ? { target: '_blank', re
       );
     })}
   </ul>
-) : (
+) : showEmpty && (
   <p class="note">開催前の大会はありません。</p>
 )}
