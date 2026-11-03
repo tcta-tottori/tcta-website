@@ -12,14 +12,15 @@
 const img = (slug, file, label) => ({ src: `assets/img/events/${slug}/${file}`, label, w: 1241, h: 1754 });
 
 export const EXTRA_MATERIALS = {
-  // 第62回鳥取市テニス協会会長杯（秋季・ダブルス。11/15）：ドロー（プログラム。2026.11.2）
+  // 第62回鳥取市テニス協会会長杯（秋季・ダブルス。11/15）：ドロー（プログラム。2026.11.2 掲載、11.3 訂正版に差し替え：
+  //   男子C級の決勝リーグの組み合わせ、試合方式を「6ゲームマッチ・ノーアド（6-6タイブレーク）」に。2ページ目の画像と PDF）
   'r8-kaicho-autumn': {
     draw: {
       images: [
         img('r8-kaicho-autumn', 'draw-01.webp', 'プログラム（日程・注意事項）'),
         img('r8-kaicho-autumn', 'draw-02.webp', '男子B級・男子C級・女子B級ダブルス'),
       ],
-      pdfs: [{ src: 'assets/pdf/events/r8-kaicho-autumn/R8会長杯秋の部ダブルスプログラム.pdf', label: 'R8会長杯 秋の部 ダブルス プログラム', kb: 110 }],
+      pdfs: [{ src: 'assets/pdf/events/r8-kaicho-autumn/R8会長杯秋の部ダブルスプログラム（訂正版）.pdf', label: 'R8会長杯 秋の部 ダブルス プログラム（訂正版）', kb: 653 }],
     },
   },
   // 第22回京丹後市オープンミックスダブルステニス大会：要項（京丹後市テニス協会から届いた Word を PDF にしたもの。2026.11.2）
@@ -82,6 +83,9 @@ export const EXTRA_TOURNAMENTS = [
 ];
 
 export const EXTRA_REVISIONS = {
+  'r8-kaicho-autumn': [
+    { date: '2026-11-03', section: 'ドロー', text: '男子C級ダブルスの決勝リーグの組み合わせを差し替え、試合方式を「6ゲームマッチ・ノーアド（6-6タイブレーク）」に訂正しました（注意事項の記載のとおりです）。' },
+  ],
   'r8-tottori-univ-winter': [
     { date: '2026-11-02', section: '要項', text: '種目を「男子ダブルス・女子ダブルス」から「男子シングルス・女子シングルス」に訂正しました。要項・申込用紙は訂正版に差し替えています。' },
   ],
@@ -101,6 +105,7 @@ export const EXTRA_CARDS = [
 ];
 
 export const EXTRA_NEWS = [
+  { slug: 'official-20261103-kaicho-autumn-draw-fix', date: '2026-11-03', createdAt: '2026-11-03T11:30:00+09:00', category: '大会', title: '第62回鳥取市テニス協会会長杯（秋季・11/15）のドローを訂正しました（男子C級の組み合わせ・試合方式は6ゲームマッチ）', href: 'draw-r8-kaicho-autumn.html' },
   { slug: 'official-20261102-kaicho-autumn-draw', date: '2026-11-02', createdAt: '2026-11-02T19:15:00+09:00', category: '大会', title: '第62回鳥取市テニス協会会長杯（秋季・11/15）のドローを掲載しました', href: 'draw-r8-kaicho-autumn.html' },
   // アンケートを受けた改善の紹介（improvements.html。中身は src/data/improvements.js）
   { slug: 'site-20261103-improvements', date: '2026-11-03', category: 'お知らせ', title: 'アンケートでいただいたご意見をもとに、ホームページを改善しました（改善前・改善後をご紹介。アンケートは11/9まで受付中）', href: 'improvements.html' },
