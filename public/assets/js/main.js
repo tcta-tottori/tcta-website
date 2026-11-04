@@ -212,10 +212,17 @@
       if (document.hidden) { release(); holdUntil = 0; }
     });
 
-    // 画面の外にあるあいだは動かさない
+    // 画面の外にあるあいだは動かさない（毎コマの処理そのものを止め、戻ってきたら再開する）
+    var running = false;
+    var run = function () {
+      if (running) return;
+      running = true;
+      requestAnimationFrame(function (now) { last = now; requestAnimationFrame(tick); });
+    };
     if ('IntersectionObserver' in window) {
       new IntersectionObserver(function (entries) {
         onScreen = entries[0].isIntersecting;
+        if (onScreen) run();
       }, { threshold: 0 }).observe(view);
     }
 
@@ -231,9 +238,10 @@
         if (view.scrollLeft >= half) view.scrollLeft -= half;
         else if (view.scrollLeft < 1) view.scrollLeft += half;
       }
+      if (!onScreen) { running = false; return; }
       requestAnimationFrame(tick);
     };
-    requestAnimationFrame(function (now) { last = now; requestAnimationFrame(tick); });
+    run();
   }
 
   /* ---------- トップのリンク集の VIEW ALL ----------
@@ -1420,6 +1428,11 @@
     // 手前の大きな四角はこの数値より大きく、奥の小さな四角は控えめに動く。
     var RANGE = 260;
     var ticking = false;
+    // フッターが画面に入っているあいだだけ測る（画面の外では毎回の位置の読み取りと書き込みを省く）。値が変わらなければ書き込まない
+    var near = true, lastSy = '';
+    if ('IntersectionObserver' in window) {
+      new IntersectionObserver(function (es) { near = es[0].isIntersecting; if (near) onScroll(); }, { rootMargin: '100px 0px' }).observe(deco);
+    }
 
     var place = function () {
       ticking = false;
@@ -1429,10 +1442,13 @@
       // 下から入ってくるとき 0、抜け切るとき 1
       var seen = (window.innerHeight - box.top) / span;
       seen = Math.min(Math.max(seen, 0), 1);
-      deco.style.setProperty('--sy', ((seen - .5) * RANGE).toFixed(1) + 'px');
+      var sy = ((seen - .5) * RANGE).toFixed(1) + 'px';
+      if (sy === lastSy) return;
+      lastSy = sy;
+      deco.style.setProperty('--sy', sy);
     };
     var onScroll = function () {
-      if (ticking) return;
+      if (ticking || !near) return;
       ticking = true;
       requestAnimationFrame(place);
     };
@@ -2706,6 +2722,20 @@
     });
   }
 
+  /* ---------- 繰り返す動き（点滅・ネオン・流れる文字など）を、画面の外では止める ----------
+     CSS の infinite の動きは、見えていなくても毎コマ計算が走り、スマホ（特に iPhone）ではスクロールが重くなる原因になる。
+     画面の外（上下 200px の余裕を残して）に出た要素には .anim-off を付けて動きを一時停止し（style.css）、戻ってきたら続きから動かす。
+     横に送る一覧（カルーセル）の中で枠の外にあるカードも止まる。動きを減らす設定・軽量モードでは、もともと動かない */
+  var IDLE_ANIM = '.tcard--open, .entry-row__due-line, .entry-left, .entry-list .mq, .news-new, .blink, .cal__cell.is-today, ' +
+    '.hero__scroll, .tlx__hint, .hscroll__arrow, .cmap__frame, .site-footer .footer-deco';
+  function initIdleAnims() {
+    if (reduceMotion || !('IntersectionObserver' in window)) return;
+    var io = new IntersectionObserver(function (es) {
+      es.forEach(function (e) { e.target.classList.toggle('anim-off', !e.isIntersecting); });
+    }, { rootMargin: '200px 0px' });
+    document.querySelectorAll(IDLE_ANIM).forEach(function (el) { io.observe(el); });
+  }
+
   /* フッターの高さの補い（dvh が使えないブラウザ）。今の画面の高さを --vp-h に入れる（style.css の .site-footer） */
   function initViewportHeight() {
     if (window.CSS && CSS.supports && CSS.supports('height', '100dvh')) return;
@@ -2833,6 +2863,7 @@
     initCalendar();
     initPdfViewer();
     initViewportHeight();
+    initIdleAnims();
     initCardSlides();
     initFooterDeco();
     initLogoInk();

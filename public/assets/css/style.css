@@ -5787,6 +5787,16 @@ html.is-pdfv-menu .site-header .hamburger { visibility: hidden; }
   html.is-pdfv .pdfv__page img { width: 100%; max-height: 100vh; object-fit: contain; }
 }
 
+/* ============ 画面の外の繰り返す動きを止める（main.js の initIdleAnims） ============
+   点滅・ネオン・流れる文字・漂う四角などの infinite の動きは、見えていないあいだも毎コマ計算が走り、
+   スマホのスクロールを重くする。画面の外に出た要素（.anim-off）とその中の動きを一時停止し、戻ったら続きから動かす */
+.anim-off, .anim-off::before, .anim-off::after,
+.anim-off *, .anim-off *::before, .anim-off *::after { animation-play-state: paused !important; }
+/* フッターの漂う四角は、画面の外では合成用の層（will-change）も外して、端末のメモリを空ける */
+.footer-deco.anim-off .footer-dot { will-change: auto; }
+/* メニューの漂う四角は、メニューを閉じているあいだは動かさない（開いたときに続きから漂う） */
+.mobile-nav:not(.is-open) .footer-dot { animation-play-state: paused; will-change: auto; }
+
 /* ============ 軽量モード（html.is-lite） ============
    オープニングの「軽量モードで見る」かトップのスイッチで入る（Base.astro・main.js の initLite）。
    動き（アニメーション・transition）を止めて最終の状態ですぐ出し、重い効果（backdrop-filter）も外す。
