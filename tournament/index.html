@@ -7,6 +7,10 @@
     <link rel="icon" type="image/png" href="/icon-192.png" sizes="192x192" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <!-- viewport-fit=cover: ステータスバーの下までヘッダーを敷き、境目をなくす -->
+    <script>
+      /* 軽量モード（協会サイトと同じ。動きを最小限にする）。描く前に html.is-lite を付ける */
+      try { if (localStorage.getItem('tcta-lite') === '1') document.documentElement.classList.add('is-lite'); } catch (e) {}
+    </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#ffffff" />
     <meta name="mobile-web-app-capable" content="yes" />

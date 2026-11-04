@@ -16,7 +16,7 @@ export default function OfficerGate({ children }: { children: ReactNode }) {
       case 'unconfigured':
         return (
           <>
-            <h2 className="officer-gate__title"><ShieldAlert className="w-5 h-5" />役員ログインが未設定です</h2>
+            <h2 className="app-panel__title"><ShieldAlert className="w-5 h-5" />役員ログインが未設定です</h2>
             <p>この大会運営システムは、役員だけが使えるようにしてあります。ただ、ログインのしくみ（Cloudflare Access）の設定がまだ入っていないため、いまは誰もログインできません。</p>
             <p className="note">システムの担当の方へ: tournament/README.md の「役員ログイン」の手順で設定してください。それまでのあいだも、観戦ページは使えます。</p>
           </>
@@ -24,7 +24,7 @@ export default function OfficerGate({ children }: { children: ReactNode }) {
       case 'offline':
         return (
           <>
-            <h2 className="officer-gate__title"><WifiOff className="w-5 h-5" />ログインを確かめられません</h2>
+            <h2 className="app-panel__title"><WifiOff className="w-5 h-5" />ログインを確かめられません</h2>
             <p>インターネットにつながっていないため、役員かどうかを確かめられません。この端末で一度ログインしておけば、会場で電波が無いときも続けて使えます。</p>
             <p className="note">つながる場所で、もう一度開いてください。</p>
           </>
@@ -32,7 +32,7 @@ export default function OfficerGate({ children }: { children: ReactNode }) {
       default:
         return (
           <>
-            <h2 className="officer-gate__title"><LogIn className="w-5 h-5" />役員の方はログインしてください</h2>
+            <h2 className="app-panel__title"><LogIn className="w-5 h-5" />役員の方はログインしてください</h2>
             <p>この画面（大会運営システム）は、協会の役員だけが使えます。登録したメールアドレスを入れると、6 桁の確認コードがメールで届きます。パスワードはいりません。</p>
             <p className="note">一度ログインした端末は 7 日間そのまま使えます。大会の結果やドローを見たい方は、観戦ページをご覧ください。</p>
           </>
@@ -53,12 +53,12 @@ export default function OfficerGate({ children }: { children: ReactNode }) {
         hideMenu
       />
       <main id="main" className="app-main">
-        <PageHead crumbs={[{ label: '協会サイト', href: SITE_URL }, { label: '大会運営' }]} en="OFFICERS ONLY" ghost="LOGIN" title="役員ログイン" />
+        <PageHead crumbs={[{ label: 'ホーム', href: SITE_URL }, { label: '大会運営' }]} en="OFFICERS ONLY" ghost="LOGIN" title="役員ログイン" />
         <div className="app-page app-page--gray app-page--pad min-h-[60vh]">
-          <div className="site-container">
-            <div className="panel officer-gate fu">
+          <div className="container">
+            <div className="panel app-panel fu">
               {body}
-              <div className="officer-gate__actions">
+              <div className="app-panel__actions">
                 {(officer.status === 'login' || officer.status === 'offline') && (
                   <a className="btn btn--primary" href={loginHref()}>役員としてログイン <span className="aw">→</span></a>
                 )}
@@ -68,7 +68,6 @@ export default function OfficerGate({ children }: { children: ReactNode }) {
           </div>
         </div>
         <SiteFooter
-          note={<>大会運営システム（役員用）</>}
           columns={<>
             <div><a className="fw fw--head" href="/view">観戦ページ</a></div>
             <div><a className="fw fw--head" href={SITE_URL} target="_blank" rel="noopener noreferrer">協会サイト ↗</a></div>
@@ -85,8 +84,10 @@ export function OfficerExpiredBar() {
   if (officer.status !== 'expired') return null;
   return (
     <div className="officer-expired" role="alert">
+      <div className="container officer-expired__inner">
       <span>役員ログインの期限が切れました。同期と音声コールを続けるには、ログインし直してください（入力した内容は端末に残っています）。</span>
       <a href={loginHref()}>ログインし直す →</a>
+      </div>
     </div>
   );
 }

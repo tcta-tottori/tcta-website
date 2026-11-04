@@ -4,8 +4,11 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "sync-site": "node scripts/sync-site.mjs",
+    "predev": "npm run sync-site",
     "dev": "vite",
     "typecheck": "tsc -p tsconfig.app.json --noEmit && tsc -p tsconfig.node.json --noEmit && tsc -p worker/tsconfig.json",
+    "prebuild": "npm run sync-site",
     "build": "vite build",
     "lint": "eslint .",
     "preview": "npm run build && wrangler dev",

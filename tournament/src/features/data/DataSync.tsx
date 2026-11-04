@@ -1181,7 +1181,7 @@ export default function DataSync({ onConnectionChange, onDataLoaded, onTournamen
       />
 
       {/* Header */}
-      <div className="bg-gradient-to-r from-[#e8f0fe] to-[#fce8e6] px-4 py-3 border-b border-border-main flex items-center justify-between">
+      <div className="bg-white px-4 py-3 border-b border-border-main flex items-center justify-between">
         <div className="flex items-center gap-2">
           <GoogleDriveIcon className="w-5 h-5" />
           <h2 className="font-semibold text-gray-800">Google ドライブ連携</h2>

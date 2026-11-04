@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { Trophy, Swords, Radio, Network, ClipboardList, RefreshCw, Activity, BarChart2, Calendar, MapPin } from 'lucide-react';
 import { useLiveQuery } from 'dexie-react-hooks';
@@ -38,6 +38,8 @@ export default function PublicLayout() {
   const currentTournamentId = useAppStore(s => s.currentTournamentId);
   const matchDuration = useAppStore(s => s.scheduleConfig.matchDuration);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const closeMenu = useCallback(() => setMenuOpen(false), []);
   const [now, setNow] = useState(Date.now());
   useEffect(() => {
     const t = setInterval(() => setNow(Date.now()), 15000);
@@ -193,6 +195,17 @@ export default function PublicLayout() {
   }));
   const live = sync.connectionState === 'connected';
 
+  const statusBar = (place: 'top' | 'main') => (
+    <StatusBar place={place} label={live ? 'LIVE' : 'WAIT'} live={live} lead={tournamentName || '観戦ページ'} items={tickerItems} />
+  );
+  // スマホのメニュー：サイトと同じく 2 列。観戦の画面のあとに協会サイトの主なページ
+  const mobileItems: NavLinkItem[] = [
+    ...navItems,
+    { key: 'site', label: '協会サイト', href: SITE_URL },
+    { key: 'tour', label: '大会情報', href: `${SITE_URL}tournaments.html` },
+    { key: 'results', label: '大会結果', href: `${SITE_URL}results.html` },
+  ];
+
   return (
     <div className="app-shell">
       <a className="skip-link" href="#main">本文へスキップ</a>
@@ -203,51 +216,42 @@ export default function PublicLayout() {
         tag="観戦"
         tagEm="LIVE"
         items={navItems}
-        contact={{ label: '協会サイト', href: SITE_URL }}
+        contact={{ label: '協会サイト', href: SITE_URL, external: true }}
         aux={sync.hasRoom ? <SyncBadge sync={sync} /> : null}
         menuOpen={menuOpen}
         onToggleMenu={() => setMenuOpen(v => !v)}
+        scrolled={scrolled}
       />
 
-      {/* 大会の状況（大会名・進捗・コート・時間超過） */}
-      <StatusBar
-        label={live ? 'LIVE' : 'WAIT'}
-        live={live}
-        lead={tournamentName || '観戦用ページ'}
-        items={tickerItems}
-      />
+      {/* 大会の状況（PC はヘッダーの直下に固定） */}
+      {statusBar('top')}
 
-      {/* スマホ: 黒地のメニュー */}
-      <MobileNav
-        open={menuOpen}
-        onClose={() => setMenuOpen(false)}
-        groups={[{ label: 'LIVE', items: navItems }]}
-        foot={
-          <div className="mobile-nav__foot-row">
-            <a className="mobile-nav__foot-link" href={SITE_URL} target="_blank" rel="noopener noreferrer">協会サイト ↗</a>
-            <a className="mobile-nav__foot-link" href={`${SITE_URL}tournaments.html`} target="_blank" rel="noopener noreferrer">大会情報 ↗</a>
-          </div>
-        }
-      />
+      {/* スマホ: 黒地のメニュー（サイトと同じ） */}
+      <MobileNav open={menuOpen} onClose={closeMenu} items={mobileItems} />
 
       {/* コンテンツ */}
-      <main id="main" className="app-main">
+      <main
+        id="main"
+        className="app-main"
+        onScroll={(e) => { const y = (e.currentTarget as HTMLElement).scrollTop > 100; if (y !== scrolled) setScrolled(y); }}
+      >
         <PageHead
           key={`head-${current.path}`}
-          crumbs={[{ label: '協会サイト', href: SITE_URL }, { label: '観戦', to: `/view${location.search}` }, { label: current.label }]}
+          crumbs={[{ label: 'ホーム', href: SITE_URL }, { label: '観戦', to: `/view${location.search}` }, { label: current.label }]}
           en={current.en}
           title={tournamentName || current.label}
           lead={info ? (
             <>
-              <span className="page-lead__item page-lead__name">{current.label}</span>
-              {info.date && <span className="page-lead__item"><Calendar className="w-3.5 h-3.5" />{info.date}</span>}
-              {info.venue && <span className="page-lead__item"><MapPin className="w-3.5 h-3.5" />{info.venue}</span>}
+              <span className="app-lead__item app-lead__name">{current.label}</span>
+              {info.date && <span className="app-lead__item"><Calendar className="w-3.5 h-3.5" />{info.date}</span>}
+              {info.venue && <span className="app-lead__item"><MapPin className="w-3.5 h-3.5" />{info.venue}</span>}
             </>
           ) : undefined}
         />
+        {statusBar('main')}
         <div className="app-page app-page--gray min-h-[60vh]">
           {!info ? (
-            <div className="site-container">
+            <div className="container app-page--pad">
               <WaitingCard sync={sync} />
             </div>
           ) : (
@@ -263,7 +267,6 @@ export default function PublicLayout() {
           )}
         </div>
         <SiteFooter
-          note={<>大会の進み具合を、会場の外からも。<br />結果は運営の入力と同時に反映されます。</>}
           columns={<>
             <div>
               {navItems.slice(0, 2).map(it => <Link key={it.key} className="fw fw--head" to={it.to!}>{it.label}</Link>)}
@@ -272,12 +275,13 @@ export default function PublicLayout() {
               {navItems.slice(2).map(it => <Link key={it.key} className="fw fw--head" to={it.to!}>{it.label}</Link>)}
             </div>
             <div>
-              <a className="fw fw--head fw--head-tight" href={SITE_URL} target="_blank" rel="noopener noreferrer">協会サイト ↗</a>
+              <a className="fw fw--head fw--head-tight" href={SITE_URL} target="_blank" rel="noopener noreferrer">協会サイト</a>
               <a className="fw fw--sub" href={`${SITE_URL}tournaments.html`} target="_blank" rel="noopener noreferrer">大会情報</a>
               <a className="fw fw--sub" href={`${SITE_URL}results.html`} target="_blank" rel="noopener noreferrer">大会結果</a>
             </div>
             <div>
-              <a className="fw fw--head" href={`${SITE_URL}membership.html`} target="_blank" rel="noopener noreferrer">入会案内 ↗</a>
+              <a className="fw fw--head" href={`${SITE_URL}membership.html`} target="_blank" rel="noopener noreferrer">入会案内</a>
+              <a className="fw fw--head" href={`${SITE_URL}contact.html`} target="_blank" rel="noopener noreferrer">お問い合わせ</a>
             </div>
           </>}
         />
@@ -302,8 +306,8 @@ function WaitingCard({ sync }: { sync: ReturnType<typeof usePublicSync> }) {
   // 観戦者には「待てば映る」と誤解させず、運営側の設定漏れだと分かる文言にする。
   if (!sync.serverConfigured) {
     return (
-      <div className="panel wait-panel">
-        <h2 className="wait-panel__title">観戦用の配信が有効になっていません。</h2>
+      <div className="panel app-panel">
+        <h2 className="app-panel__title">観戦用の配信が有効になっていません。</h2>
         <p>中継の接続先が見つからないため、運営端末の大会データを受信できません。</p>
         <p className="note">運営の方へ: この URL（Cloudflare 版）の Worker が配備されているか確認してください。</p>
       </div>
@@ -311,8 +315,8 @@ function WaitingCard({ sync }: { sync: ReturnType<typeof usePublicSync> }) {
   }
 
   return (
-    <div className="panel wait-panel">
-      <h2 className="wait-panel__title">
+    <div className="panel app-panel">
+      <h2 className="app-panel__title">
         {sync.connectionState === 'connected'
           ? '運営端末からのデータを待っています'
           : sync.connectionState === 'disconnected'

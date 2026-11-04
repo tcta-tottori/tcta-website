@@ -417,7 +417,7 @@ export default function ResultsPage() {
         const draw = draws.find(d => d.eventId === event.eventId);
         if (!draw) return (
           <section key={event.eventId} className="bg-white rounded-xl card-tottori overflow-hidden">
-            <div className="bg-primary-50 px-4 py-3 border-b border-border-main flex items-center gap-2">
+            <div className="bg-white px-4 py-3 border-b border-border-main flex items-center gap-2">
               <Trophy className="w-5 h-5 text-primary-500" />
               <h2 className="font-semibold text-gray-700">{event.name}</h2>
             </div>
@@ -461,7 +461,7 @@ function TournamentCard({ event, draw, matches, previewOpts, onExcel, onJpeg }: 
   return (
     <section className="bg-white rounded-xl card-tottori overflow-hidden">
       {/* header */}
-      <div className="bg-primary-50 px-4 py-3 border-b border-border-main flex items-center justify-between">
+      <div className="bg-white px-4 py-3 border-b border-border-main flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Trophy className="w-5 h-5 text-primary-500" />
           <h2 className="font-semibold text-gray-700">{event.name}</h2>
@@ -609,7 +609,7 @@ function RoundRobinCard({ event, draw, matches, entries, players, previewOpts, o
   return (
     <section className="bg-white rounded-xl card-tottori overflow-hidden">
       {/* header */}
-      <div className="bg-primary-50 px-4 py-3 border-b border-border-main flex items-center justify-between">
+      <div className="bg-white px-4 py-3 border-b border-border-main flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Trophy className="w-5 h-5 text-primary-500" />
           <h2 className="font-semibold text-gray-700">{event.name}</h2>

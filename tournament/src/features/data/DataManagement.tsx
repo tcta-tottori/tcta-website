@@ -543,7 +543,7 @@ export default function DataManagement() {
       <section className="bg-white rounded-xl shadow-sm border border-border-main overflow-hidden">
         <button
           onClick={() => setDataImportOpen(!dataImportOpen)}
-          className="w-full bg-primary-50 px-4 py-3 border-b border-border-main flex items-center justify-between hover:bg-primary-100/60 transition-colors"
+          className="w-full bg-white px-4 py-3 border-b border-border-main flex items-center justify-between hover:bg-gray-50 transition-colors"
         >
           <div className="flex items-center gap-2">
             {dataImportOpen ? <ChevronDown className="w-4 h-4 text-gray-500" /> : <ChevronRight className="w-4 h-4 text-gray-500" />}
@@ -567,7 +567,7 @@ export default function DataManagement() {
       <section className="bg-white rounded-xl shadow-sm border border-border-main overflow-hidden">
         <button
           onClick={() => setPlayerListOpen(!playerListOpen)}
-          className="w-full bg-primary-50 px-4 py-3 border-b border-border-main flex items-center justify-between hover:bg-primary-100/60 transition-colors"
+          className="w-full bg-white px-4 py-3 border-b border-border-main flex items-center justify-between hover:bg-gray-50 transition-colors"
         >
           <div className="flex items-center gap-2">
             {playerListOpen ? <ChevronDown className="w-4 h-4 text-gray-500" /> : <ChevronRight className="w-4 h-4 text-gray-500" />}

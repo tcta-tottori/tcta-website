@@ -50,7 +50,7 @@ const ALL_MAIN_TABS: MainTab[] = [
 
 /**
  * ヘッダーのナビ（サイトと同じく横一列）に出すまとまり。
- * 画面が13あってサイトのナビ（7項目）に収まらないため、作業の段階ごとに束ね、
+ * 画面が13あってサイトのナビ（7項目）に収まらないため、作業の段階ごとに 5 つに束ね、
  * まとまりの中の画面はページ見出しの下のタブで切り替える（会員ポータルの事務局画面と同じ作り）。
  */
 const NAV_GROUPS: { key: string; label: string; en: string; paths: string[] }[] = [
@@ -58,8 +58,8 @@ const NAV_GROUPS: { key: string; label: string; en: string; paths: string[] }[] 
   { key: 'run', label: '大会進行', en: 'OPERATION', paths: ['/referee', '/schedule-sheet', '/court-bracket', '/score'] },
   { key: 'live', label: '配信', en: 'LIVE', paths: ['/dashboard', '/broadcast'] },
   { key: 'print', label: '印刷', en: 'PRINT', paths: ['/print'] },
-  { key: 'manual', label: 'マニュアル', en: 'MANUAL', paths: ['/manual'] },
-  { key: 'settings', label: '設定', en: 'SETTINGS', paths: ['/settings'] },
+  // マニュアルは設定のまとまりに入れる（ロゴ横の札のぶん、ナビを 5 項目に収めるため）
+  { key: 'settings', label: '設定', en: 'SETTINGS', paths: ['/settings', '/manual'] },
 ];
 
 /**
@@ -89,6 +89,8 @@ export default function AppLayout() {
   const teamBrackets = useTeamStore((s) => s.brackets);
   const [versionModalOpen, setVersionModalOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  // 本文が少し下がったらヘッダーに影（サイトの .hsh）
+  const [scrolled, setScrolled] = useState(false);
   const syncState = useSyncStore((s) => s.connectionState);
   const syncRoom = useSyncStore((s) => s.roomCode);
   const officer = useOfficer();
@@ -309,10 +311,6 @@ export default function AppLayout() {
   const tabItems: NavLinkItem[] = (currentGroup?.tabs ?? []).map(t => ({
     key: t.id, label: t.label, to: t.path, icon: t.icon, active: t === currentTab,
   }));
-  const mobileGroups = visibleGroups.map(g => ({
-    label: g.en,
-    items: g.tabs.map(t => ({ key: t.id, label: t.label, to: t.path, active: t === currentTab })),
-  }));
 
   // 表示中の大会（個人戦・ミックス・団体戦）
   const displayName = isMixedImported && mixedTournamentInfo
@@ -349,6 +347,20 @@ export default function AppLayout() {
     </Link>
   ) : null;
 
+  // スマホのメニュー：サイトと同じく 2 列に並べる（画面の順。あとに観戦ページ・協会サイト・バージョン・ログアウト）
+  const mobileItems: NavLinkItem[] = [
+    ...visibleGroups.flatMap(g => g.tabs.map(t => ({ key: t.id, label: t.label, to: t.path, active: t === currentTab }))),
+    { key: 'view', label: '観戦ページ', href: '/view' },
+    { key: 'site', label: '協会サイト', href: SITE_URL },
+    { key: 'ver', label: `Ver 2.4`, onClick: () => setVersionModalOpen(true) },
+    ...(officer.email ? [{ key: 'logout', label: 'ログアウト', onClick: logout }] : []),
+  ];
+
+  const live = activeTickerItems.some(t => t.includes('進行中'));
+  const statusBar = (place: 'top' | 'main') => hasTournament ? (
+    <StatusBar place={place} label={live ? 'LIVE' : 'NOW'} live={live} lead={displayName || '大会運営システム'} items={activeTickerItems} />
+  ) : null;
+
   return (
     <div className="app-shell">
       <a className="skip-link" href="#main">本文へスキップ</a>
@@ -359,41 +371,27 @@ export default function AppLayout() {
         tag="大会運営"
         tagEm="SYSTEM"
         items={navItems}
-        contact={{ label: '観戦ページ', href: '/view' }}
+        contact={{ label: '観戦ページ', href: '/view', external: true }}
         aux={syncChip}
         menuOpen={menuOpen}
         onToggleMenu={() => setMenuOpen(v => !v)}
+        scrolled={scrolled}
       />
 
       {/* ===== 役員ログインの期限切れ（画面は止めずに知らせる） ===== */}
       <OfficerExpiredBar />
 
-      {/* ===== 大会の状況（大会名・進捗・コート・時間超過）。読み込み中だけ出す ===== */}
-      {hasTournament && (
-        <StatusBar
-          label={activeTickerItems.some(t => t.includes('進行中')) ? 'LIVE' : 'NOW'}
-          live={activeTickerItems.some(t => t.includes('進行中'))}
-          lead={displayName || '大会運営システム'}
-          items={activeTickerItems}
-        />
-      )}
+      {/* ===== 大会の状況（PC はヘッダーの直下に固定） ===== */}
+      {statusBar('top')}
 
-      {/* ===== スマホ: 黒地のメニュー ===== */}
-      <MobileNav
-        open={menuOpen}
-        onClose={closeMenu}
-        groups={mobileGroups}
-        foot={
-          <div className="mobile-nav__foot-row">
-            <a className="mobile-nav__foot-link" href="/view" target="_blank" rel="noopener noreferrer" onClick={closeMenu}>観戦ページ ↗</a>
-            <a className="mobile-nav__foot-link" href={SITE_URL} target="_blank" rel="noopener noreferrer" onClick={closeMenu}>協会サイト ↗</a>
-            <button className="mobile-nav__foot-link" onClick={() => { closeMenu(); setVersionModalOpen(true); }}>Ver 2.4 · {__BUILD_TIMESTAMP__}</button>
-            {officer.email && <button className="mobile-nav__foot-link" onClick={logout}>ログアウト（{officer.email}）</button>}
-          </div>
-        }
-      />
+      {/* ===== スマホ: 黒地のメニュー（サイトと同じ） ===== */}
+      <MobileNav open={menuOpen} onClose={closeMenu} items={mobileItems} />
 
-      <main id="main" className={`app-main ${fill ? 'app-main--fill' : ''}`}>
+      <main
+        id="main"
+        className={`app-main ${fill ? 'app-main--fill' : ''}`}
+        onScroll={(e) => { const y = (e.currentTarget as HTMLElement).scrollTop > 100; if (y !== scrolled) setScrolled(y); }}
+      >
         <PageHead
           key={`head-${currentTab?.path ?? location.pathname}`}
           crumbs={[
@@ -405,13 +403,15 @@ export default function AppLayout() {
           title={pageLabel}
           lead={displayName ? (
             <>
-              <span className="page-lead__item page-lead__name">{displayName}</span>
-              {meta?.date && <span className="page-lead__item"><Calendar className="w-3.5 h-3.5" />{meta.date}</span>}
-              {meta?.venue && <span className="page-lead__item"><MapPin className="w-3.5 h-3.5" />{meta.venue}</span>}
+              <span className="app-lead__item app-lead__name">{displayName}</span>
+              {meta?.date && <span className="app-lead__item"><Calendar className="w-3.5 h-3.5" />{meta.date}</span>}
+              {meta?.venue && <span className="app-lead__item"><MapPin className="w-3.5 h-3.5" />{meta.venue}</span>}
             </>
           ) : undefined}
         />
         <AppTabs items={tabItems} label={`${currentGroup?.label ?? ''}の画面`} />
+        {/* 大会の状況（スマホはタブの下。PC はヘッダーの直下） */}
+        {statusBar('main')}
 
         {/* ページの中身（ページ遷移アニメーション） */}
         <div key={location.pathname} className={`app-page app-page--gray page-enter ${fill ? '' : 'min-h-[60vh]'}`}>
@@ -420,7 +420,6 @@ export default function AppLayout() {
 
         {!fill && (
           <SiteFooter
-            note={<>大会運営システム<br />エントリー・ドロー・対戦順・スコア・観戦配信</>}
             columns={<>
               {visibleGroups.slice(0, 3).map(g => (
                 <div key={g.key}>
@@ -432,16 +431,16 @@ export default function AppLayout() {
                 {visibleGroups.slice(3).map(g => (
                   <Link key={g.key} className="fw fw--head" to={g.tabs[0].path}>{g.label}</Link>
                 ))}
-                <a className="fw fw--head" href={SITE_URL} target="_blank" rel="noopener noreferrer">協会サイト ↗</a>
+                <a className="fw fw--head" href={SITE_URL} target="_blank" rel="noopener noreferrer">協会サイト</a>
               </div>
             </>}
             utils={<>
-              <a className="fw" href="/view" target="_blank" rel="noopener noreferrer">観戦ページを開く ↗</a>
-              <button className="fw site-footer__ver" onClick={() => setVersionModalOpen(true)}>
+              <a className="fw" href="/view" target="_blank" rel="noopener noreferrer">観戦ページ</a>
+              <button className="fw app-ver" onClick={() => setVersionModalOpen(true)}>
                 Ver 2.4<small>{__BUILD_TIMESTAMP__}</small>
               </button>
               {officer.email && (
-                <button className="fw site-footer__ver" onClick={logout} title="役員ログインを終える">ログアウト<small>{officer.email}</small></button>
+                <button className="fw app-ver" onClick={logout} title="役員ログインを終える">ログアウト<small>{officer.email}</small></button>
               )}
             </>}
           />

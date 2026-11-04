@@ -1,6 +1,15 @@
+/* レイヤーの順番：協会サイトの CSS（site）は Tailwind の base のあと・utilities の前。
+   枠はサイトの CSS で描き、画面の中身は Tailwind の指定がサイトの CSS より優先される */
+@layer theme, base, site, components, utilities;
 @import "tailwindcss";
-/* 協会サイトと同じ枠（ヘッダー・メニュー・ページ見出し・タブ・フッター） */
-@import "./styles/site.css";
+/* 協会サイトの CSS そのもの（scripts/sync-site.mjs がビルドの前に ../public/assets/css/style.css から写す） */
+@import "./site/style.css" layer(site);
+/* 大会運営システムだけの見た目と、画面の中身をサイトに寄せる指定 */
+@import "./styles/app.css";
+
+/* Tailwind にも container があり、作られるとレイヤーの順でサイトの .container（とそれに重ねたヘッダーの余白など）より強くなる。
+   枠のマークアップはサイトと同じ container を使うので、Tailwind には作らせない */
+@source not inline("container");
 
 /* ===========================================================
    ベースカラー — 協会サイト（public/assets/css/style.css）と同じ値
@@ -33,6 +42,8 @@
   --font-sans: "Noto Sans JP", "Hiragino Sans", "Yu Gothic", sans-serif;
   --font-display: "Jost", "Barlow", system-ui, sans-serif;
   --font-num: "Barlow", system-ui, sans-serif;
+  /* 時刻・スコアなどの数字（font-mono）もサイトの英数字の書体にする（桁は app.css でそろえる） */
+  --font-mono: "Barlow", ui-monospace, SFMono-Regular, Menlo, monospace;
 
   /* 角 — サイトは直角が基本（ボタン 4px・バッジ 2px）。丸めすぎない */
   --radius-xs: 1px;

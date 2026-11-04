@@ -34,3 +34,7 @@ seed_draw_test.mjs
 # wrangler dev の手元の設定・状態
 .dev.vars
 .wrangler
+
+# 協会サイトから写す見た目（scripts/sync-site.mjs が dev / build の前に作る）
+src/site/
+public/site/

@@ -1,0 +1,227 @@
+/* ==========================================================================
+   大会運営システムだけの見た目
+   --------------------------------------------------------------------------
+   枠（ヘッダー・メニュー・ページ見出し・タブ・フッター・ボタン・バッジ）は、協会サイトの
+   style.css をそのまま使う（src/site/style.css。scripts/sync-site.mjs がビルドの前に写す）。
+   ここに書くのは、サイトに無いもの（運営画面の骨組み・状態の帯・タブの帯・同期の札・ログインの案内）と、
+   画面の中身（もとの大会運営アプリの部品）をサイトの決まりに寄せるための指定だけ。
+   この CSS はレイヤーに入れていないので、サイトの CSS と Tailwind の指定のどちらよりも強い。
+   ========================================================================== */
+
+/* ---------------------------------------------------------------------------
+   骨組み：ヘッダー（と PC の状態の帯）を上に置き、その下の main だけがスクロールする。
+   運営画面は画面の高さいっぱいを使う画面（ドロー・対戦順・印刷）があるため、サイトのように文書全体は動かさない。
+   スマホ・タブレットは、サイトと同じくヘッダーの帯を出さずにロゴとメニューのボタンだけを浮かせる
+   （サイトの CSS の .site-header の margin-bottom で、main がヘッダーの裏から始まる）。
+   --------------------------------------------------------------------------- */
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  overflow: hidden;
+  background: var(--white);
+}
+.app-main {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  /* 画面の中の「上に貼り付く」操作欄の位置。スマホはヘッダーが浮いているので、その下に貼り付ける */
+  --app-sticky-top: 0px;
+}
+@media (max-width: 1023px) { .app-main { --app-sticky-top: var(--header-h); } }
+.app-main .sticky.top-0 { top: var(--app-sticky-top); }
+/* 画面いっぱいを使うページ（印刷）：main はスクロールせず、ページの中身が残りの高さを埋める */
+.app-main--fill { display: flex; flex-direction: column; overflow: hidden; }
+.app-main--fill > :not(.app-page) { flex: none; }
+.app-page { position: relative; }
+.app-main--fill > .app-page { flex: 1; min-height: 0; overflow: auto; }
+/* 中身の地。サイトの灰色の区画（.section--gray）と同じ。白いカードを細い罫で浮かせる */
+.app-page--gray { background: var(--gray-050); }
+.app-page--pad { padding-block: 8px 64px; }
+
+/* ロゴの横の札（協会サイトには無い。このシステムだと分かる印。会員システムと同じ形） */
+.app-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-right: auto;
+  margin-left: 14px;
+  padding: 5px 8px;
+  border: 1px solid var(--ink);
+  border-radius: var(--radius);
+  font: 700 11px/1 var(--fjp);
+  letter-spacing: .12em;
+  color: var(--ink);
+  white-space: nowrap;
+  transition: color .2s ease .12s, border-color .2s ease .12s;
+}
+.app-tag em { font: 700 10px/1 var(--flt); font-style: normal; letter-spacing: .14em; color: var(--red); }
+.site-header.is-menu .app-tag { color: #fff; border-color: rgba(255, 255, 255, .7); transition: color .2s ease .4s, border-color .2s ease .4s; }
+@media (max-width: 1023px) {
+  .app-tag { pointer-events: none; background: rgba(255, 255, 255, .7); }
+  .site-header.is-menu .app-tag { background: transparent; }
+}
+@media (max-width: 400px) { .app-tag em { display: none; } }
+@media (min-width: 1024px) and (max-width: 1279px) { .app-tag em { display: none; } }
+/* PC のナビは 6 項目＋右上の赤いブロック。札のぶんだけ詰める */
+@media (min-width: 1024px) and (max-width: 1199px) { .site-header .nav { gap: 22px; } }
+
+/* ハンバーガーの手前の小さな表示（同期の状態） */
+.app-aux { display: flex; align-items: center; gap: 8px; margin-right: 8px; pointer-events: auto; }
+@media (min-width: 1024px) { .app-aux { margin-right: 0; margin-left: 24px; } }
+
+/* 同期の状態を示す小さな札 */
+.sync-chip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 10px;
+  border: 1px solid var(--gray-300);
+  border-radius: var(--radius);
+  background: var(--white);
+  font: 700 11px/1 var(--fjp);
+  letter-spacing: .04em;
+  color: var(--gray-600);
+  white-space: nowrap;
+}
+.sync-chip i { width: 7px; height: 7px; background: var(--gray-300); }
+.sync-chip--on { border-color: var(--red); color: var(--ink); }
+.sync-chip--on i { background: var(--red); animation: blink 2.4s ease-in-out infinite; }
+.sync-chip--wait i { background: #D99A00; }
+.site-header.is-menu .sync-chip { opacity: 0; transition: opacity .2s ease; }
+@media (max-width: 639px) {
+  .sync-chip { width: 28px; padding: 0; justify-content: center; }
+  .sync-chip span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+}
+
+/* ---------------------------------------------------------------------------
+   大会の状態の帯（大会名・進捗・コートの空き・時間超過を流す）。
+   サイトの「重要なお知らせ」の帯（.notice-bar）と同じ置き方。地は墨で、赤は時間超過だけ。
+   PC はヘッダーの直下に固定（.status-bar--top）、スマホはページ見出し（とタブ）のあと（.status-bar--main）
+   --------------------------------------------------------------------------- */
+.status-bar { flex: none; position: relative; z-index: 20; background: var(--ink); color: #fff; }
+.status-bar__inner { display: flex; align-items: center; gap: 14px; height: 38px; }
+.status-bar--top { display: none; }
+@media (min-width: 1024px) {
+  .status-bar--top { display: block; }
+  .status-bar--main { display: none; }
+}
+.status-bar__label {
+  flex: none;
+  padding: 3px 8px;
+  border: 1px solid rgba(255, 255, 255, .8);
+  font: 700 11px/1 var(--flt);
+  letter-spacing: .14em;
+}
+.status-bar__label--live { border-color: var(--red); background: var(--red); }
+.status-bar__area {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 3%, #000 97%, transparent 100%);
+  mask-image: linear-gradient(90deg, transparent 0%, #000 3%, #000 97%, transparent 100%);
+}
+.status-bar .info-ticker {
+  display: inline-flex;
+  align-items: center;
+  height: 100%;
+  width: max-content;
+  white-space: nowrap;
+  padding-left: 100%;
+  animation: app-ticker 28s linear infinite;
+}
+.status-bar .info-ticker:hover { animation-play-state: paused; }
+.status-bar .info-ticker-item { display: inline-flex; align-items: center; gap: 6px; font: 500 13px/1 var(--fjp); letter-spacing: .04em; color: rgba(255, 255, 255, .88); }
+.status-bar .info-ticker-lead { font-weight: 700; color: #fff; }
+.status-bar .info-ticker-alert { color: #FF8A8E; font-weight: 700; }
+.status-bar .info-ticker-dot { display: inline-block; width: 5px; height: 5px; margin: 0 16px; background: var(--red); }
+@keyframes app-ticker { from { transform: translateX(0); } to { transform: translateX(-100%); } }
+@media (prefers-reduced-motion: reduce) { .status-bar .info-ticker { animation: none; padding-left: 0; } }
+html.is-lite .status-bar .info-ticker { animation: none; padding-left: 0; }
+
+/* ---------------------------------------------------------------------------
+   ページ見出しの下の大会名・日程・会場（.page-lead の中）と、同じまとまりの画面のタブの帯（サイトの .tabs）
+   --------------------------------------------------------------------------- */
+.app-lead { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 18px; }
+.app-lead__item { display: inline-flex; align-items: center; gap: 6px; }
+.app-lead__item svg { color: var(--gray-500); }
+.app-lead__name { font-weight: 700; color: var(--ink); }
+
+.app-tabs { position: relative; z-index: 2; background: var(--white); border-bottom: 1px solid var(--gray-200); }
+.app-tabs .tabs { flex-wrap: nowrap; gap: 4px; margin-bottom: 0; border-bottom: 0; overflow-x: auto; scrollbar-width: none; }
+.app-tabs .tabs::-webkit-scrollbar { display: none; }
+.app-tabs .tab { display: inline-flex; flex: none; align-items: center; gap: 8px; white-space: nowrap; }
+.app-tabs__ico { width: 16px; height: 16px; color: var(--gray-300); transition: color .25s ease; }
+.app-tabs .tab.is-active .app-tabs__ico { color: var(--red); }
+
+/* ---------------------------------------------------------------------------
+   役員ログインの案内（OfficerGate.tsx）・期限切れの帯・観戦ページの待ち画面
+   --------------------------------------------------------------------------- */
+.app-panel { max-width: 720px; margin: 40px auto 0; }
+.app-panel__title { display: flex; align-items: center; gap: 10px; margin: 0 0 16px; font: 700 19px/1.5 var(--fjp); color: var(--ink); }
+.app-panel__title svg { color: var(--red); }
+.app-panel p { margin: 0 0 10px; font: 400 15px/1.9 var(--fjp); color: var(--gray-800); }
+.app-panel .note { font-size: 13px; color: var(--gray-500); }
+.app-panel code { font: 700 13px/1 var(--flt); letter-spacing: .08em; color: var(--ink); }
+.app-panel__actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 28px; }
+.officer-expired {
+  flex: none;
+  position: relative;
+  z-index: 30;
+  background: var(--red);
+  color: #fff;
+}
+.officer-expired__inner { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; padding-block: 10px; font: 700 13px/1.6 var(--fjp); }
+.officer-expired a { color: #fff; text-decoration: underline; text-underline-offset: 3px; white-space: nowrap; }
+@media (max-width: 1023px) { .officer-expired { padding-top: var(--header-h); } }
+
+/* フッターのバージョン・ログアウト */
+.app-ver { font: 600 12px/1 var(--flt); letter-spacing: .08em; }
+.app-ver small { margin-left: 8px; font-weight: 400; color: rgba(255, 255, 255, .55); }
+
+/* ===========================================================================
+   画面の中身をサイトの決まりに寄せる
+   もとの大会運営アプリは Tailwind で組まれている。色・書体・角・影はテーマの値（src/index.css の @theme）を
+   サイトの値に置き換えてある。ここではそれだけでは寄らないもの（グラデーション・丸いボタン・薄赤の塗りのボタン）を直す。
+   =========================================================================== */
+
+/* サイトはグラデーションを使わない。面の色が付いたグラデーションは、始まりの色の平らな面にする
+   （写真の上の暗がりや、端を薄くする「…から透明へ」のものはそのまま） */
+[class*="bg-gradient-to-"]:is([class*="from-primary-"], [class*="from-red-"], [class*="from-gray-"], [class*="from-secondary-"], [class*="from-white"]):not([class*="to-transparent"]) {
+  background-image: none;
+  background-color: var(--tw-gradient-from);
+}
+/* 見出しの帯（薄赤 → 白）は、サイトのパネルと同じ白い地にする（赤は見出しのアイコンだけ） */
+[class*="bg-gradient-to-"]:is([class*="from-primary-50 "], [class*="from-primary-50/"], [class$="from-primary-50"], [class*="from-red-50 "], [class$="from-red-50"]):not([class*="to-transparent"]) {
+  background-color: var(--white);
+}
+
+/* サイトは角を立てる（var(--radius) = 4px）。文字の入った丸いボタン・札は角を 4px にする。
+   中身の無い小さな丸（状態の点など）はそのまま */
+[class*="rounded-full"]:is([class*="px-"], [class*="py-"]) { border-radius: var(--radius); }
+
+/* 薄赤の地＋薄赤の枠のボタンは、サイトの白いボタン（.btn--outline）と同じにする。押せる所は赤くなる */
+:is(button, a, label)[class*="bg-primary-50"][class*="border-primary-2"] {
+  background-color: var(--white);
+  border-color: var(--gray-300);
+  color: var(--ink);
+  transition: border-color .3s ease, color .3s ease, background-color .3s ease;
+}
+:is(button, a, label)[class*="bg-primary-50"][class*="border-primary-2"]:hover:not(:disabled) {
+  background-color: var(--white);
+  border-color: var(--red);
+  color: var(--red);
+}
+
+/* 数字（時刻・スコア・件数）はサイトの英数字の書体（Barlow）で、桁をそろえる */
+.font-mono { font-variant-numeric: tabular-nums; }
+
+/* スマホのメニューの行のうち、ボタン（バージョン・ログアウト）もリンクと同じく左寄せ・幅いっぱいにする */
+button.mobile-nav__link { width: 100%; text-align: left; }
