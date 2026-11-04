@@ -59,10 +59,10 @@ const isWide = (img) => img.w / img.h > 1.5;
 const venue = venueOf(e.place);
 /**
  * 協会以外の主催者のホームページ（構造化データの organizer.url。Search Console で「項目 url がありません」と出たため）。
- * 管理画面の大会のリンクが無い主催者だけ。鳥取大学硬式庭球部は自前のページが見当たらないので、鳥取大学のホームページ
+ * 管理画面の大会のリンクが無い主催者だけ。鳥取大学硬式庭球部は部の Instagram（tottori_tennis）
  */
 const HOST_URLS = {
-  '鳥取大学硬式庭球部': 'https://www.tottori-u.ac.jp/',
+  '鳥取大学硬式庭球部': 'https://www.instagram.com/tottori_tennis/',
   '京丹後市テニス協会': 'https://kyotangotennis.sakura.ne.jp/',
 };
 const eventLd = {
