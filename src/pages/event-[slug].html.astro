@@ -16,6 +16,8 @@ import { siteData } from '../lib/cms.js';
 import { clubEventLayout } from '../data/club-event.js';
 import { eventResultLayout } from '../data/event-result.js';
 import { venueOf, postalAddress } from '../data/courts.js';
+import { eventOffer } from '../data/entry-fees.js';
+import { dueDate } from '../data/schedule.js';
 
 const { eventBySlug } = await siteData(Astro);
 const e = eventBySlug(Astro.params.slug);
@@ -76,6 +78,9 @@ const eventLd = {
   organizer: e.host
     ? { '@type': 'Organization', name: e.host }
     : { '@id': new URL('/#organization', Astro.site ?? Astro.url).href },
+  // 参加料と申込み（要項に書かれた金額。src/data/entry-fees.js）。金額の分からない大会は申込み先と受付状況だけ
+  // 締切は「11/27（金）20:00」のように曜日・時刻が付いていても、先頭の「月/日」だけを読む
+  offers: eventOffer(e, Astro.site ?? Astro.url, dueDate(String(e.due ?? '').match(/^\d{1,2}\/\d{1,2}(?!\d)/)?.[0], e.date)),
 };
 
 const title = `${e.displayName}｜大会情報｜鳥取市テニス協会`;
