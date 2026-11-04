@@ -242,6 +242,49 @@ export const COURTS = [
   },
 ];
 
+/**
+ * コート案内には出さない、協会以外の大会の会場（大会のページの構造化データの住所にだけ使う。venueOf）。
+ *   峰山総合公園テニスコート … 京丹後市テニス協会の要項に書かれた住所
+ *   鳥取大学テニスコート     … 鳥取大学（湖山キャンパス）の所在地。要項には番地が無いので大学の住所を使う
+ */
+export const OTHER_VENUES = [
+  { name: '鳥取大学テニスコート', address: '鳥取県鳥取市湖山町南4丁目101', postalCode: '680-8550' },
+  { name: '峰山総合公園テニスコート', address: '京都府京丹後市峰山町荒山248' },
+];
+
+/** 郵便番号の分かっている施設（構造化データに入れる。井原公園は水曜テニス教室のページと同じ）。分からないものは入れない */
+const POSTAL_CODES = { ihara: '680-0844' };
+
+/**
+ * 大会の会場の文言（「ヤマタスポーツパーク」「峰山総合公園テニスコート（京都府京丹後市）」など）から、住所の分かる施設を探す。
+ * コート案内の施設（名前か短い呼び方で始まるもの）→ OTHER_VENUES の順。見つからなければ null
+ */
+export function venueOf(place) {
+  const p = String(place ?? '');
+  if (!p) return null;
+  const c = COURTS.find((x) => p.includes(x.name) || (x.short && p.startsWith(x.short)));
+  if (c?.address) return { name: c.name, address: c.address, postalCode: POSTAL_CODES[c.id] ?? '' };
+  return OTHER_VENUES.find((v) => p.includes(v.name)) ?? null;
+}
+
+/**
+ * 住所の文字列を、構造化データ（schema.org の PostalAddress）の項目に分ける。
+ *   '鳥取県鳥取市布勢146-1'       → 鳥取県｜鳥取市｜布勢146-1
+ *   '鳥取県八頭郡八頭町下門尾180' → 鳥取県｜八頭郡八頭町｜下門尾180
+ *   '京都府京丹後市峰山町荒山248' → 京都府｜京丹後市｜峰山町荒山248
+ * 都道府県から分けられないときは、全体を streetAddress に入れる
+ */
+export function postalAddress(address, postalCode = '') {
+  const s = String(address ?? '').trim();
+  const m = s.match(/^(北海道|東京都|京都府|大阪府|.{2,3}県)(.+?郡.+?[町村]|.+?市|.+?区|.+?[町村])(.*)$/);
+  return {
+    '@type': 'PostalAddress',
+    ...(m ? { addressRegion: m[1], addressLocality: m[2], streetAddress: m[3] || undefined } : { streetAddress: s }),
+    ...(postalCode ? { postalCode } : {}),
+    addressCountry: 'JP',
+  };
+}
+
 /** トップの地図に出す施設（pageOnly の施設を除く） */
 export const COURTS_HOME = COURTS.filter((c) => !c.pageOnly);
 
