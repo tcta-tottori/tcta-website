@@ -15,7 +15,7 @@ import HostBanner from '../components/HostBanner.astro';
 import { siteData } from '../lib/cms.js';
 import { clubEventLayout } from '../data/club-event.js';
 import { eventResultLayout } from '../data/event-result.js';
-import { COURTS } from '../data/courts.js';
+import { venueOf, postalAddress } from '../data/courts.js';
 
 const { eventBySlug } = await siteData(Astro);
 const e = eventBySlug(Astro.params.slug);
@@ -51,8 +51,10 @@ const facts = [
 // 横長の紙（リーグ表・スコア表）は1枚で横いっぱいに広げる
 const isWide = (img) => img.w / img.h > 1.5;
 
-// 構造化データ（Google の検索結果に大会として出るための SportsEvent）。会場の住所はコート案内の施設から引く
-const court = COURTS.find((c) => e.place && (e.place.includes(c.name) || (c.short && e.place.startsWith(c.short)))) ?? null;
+// 構造化データ（Google の検索結果に大会として出るための SportsEvent）。
+// 会場の住所はコート案内の施設か、コート案内に出さない会場（courts.js の OTHER_VENUES）から引き、
+// 都道府県・市区町村・番地に分けて入れる（postalAddress）。住所の分からない会場は都道府県と国だけ
+const venue = venueOf(e.place);
 const eventLd = {
   '@type': 'SportsEvent',
   name: e.displayName,
@@ -67,8 +69,8 @@ const eventLd = {
   location: {
     '@type': 'Place',
     name: e.place || '鳥取県',
-    address: court?.address
-      ? { '@type': 'PostalAddress', streetAddress: court.address, addressRegion: '鳥取県', addressCountry: 'JP' }
+    address: venue
+      ? postalAddress(venue.address, venue.postalCode)
       : { '@type': 'PostalAddress', addressRegion: '鳥取県', addressCountry: 'JP' },
   },
   organizer: e.host
