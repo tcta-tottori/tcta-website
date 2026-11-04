@@ -16,6 +16,8 @@ import { siteData } from '../lib/cms.js';
 import { clubEventLayout } from '../data/club-event.js';
 import { eventResultLayout } from '../data/event-result.js';
 import { venueOf, postalAddress } from '../data/courts.js';
+import { eventOffer } from '../data/entry-fees.js';
+import { dueDate } from '../data/schedule.js';
 
 const { eventBySlug } = await siteData(Astro);
 const e = eventBySlug(Astro.params.slug);
@@ -55,6 +57,14 @@ const isWide = (img) => img.w / img.h > 1.5;
 // 会場の住所はコート案内の施設か、コート案内に出さない会場（courts.js の OTHER_VENUES）から引き、
 // 都道府県・市区町村・番地に分けて入れる（postalAddress）。住所の分からない会場は都道府県と国だけ
 const venue = venueOf(e.place);
+/**
+ * 協会以外の主催者のホームページ（構造化データの organizer.url。Search Console で「項目 url がありません」と出たため）。
+ * 管理画面の大会のリンクが無い主催者だけ。鳥取大学硬式庭球部は自前のページが見当たらないので、鳥取大学のホームページ
+ */
+const HOST_URLS = {
+  '鳥取大学硬式庭球部': 'https://www.tottori-u.ac.jp/',
+  '京丹後市テニス協会': 'https://kyotangotennis.sakura.ne.jp/',
+};
 const eventLd = {
   '@type': 'SportsEvent',
   name: e.displayName,
@@ -73,9 +83,16 @@ const eventLd = {
       ? postalAddress(venue.address, venue.postalCode)
       : { '@type': 'PostalAddress', addressRegion: '鳥取県', addressCountry: 'JP' },
   },
+  // 主催：協会以外の主催の大会は主催者の名前とホームページ（管理画面のリンク、無ければ HOST_URLS）、協会の大会はサイト全体の協会の情報を指す
   organizer: e.host
-    ? { '@type': 'Organization', name: e.host }
+    ? { '@type': 'Organization', name: e.host, ...((e.link?.url || HOST_URLS[e.host]) ? { url: e.link?.url || HOST_URLS[e.host] } : {}) }
     : { '@id': new URL('/#organization', Astro.site ?? Astro.url).href },
+  // 出場者（Search Console で「項目 performer がありません」と出たため）。選手の名前は大会前には決まらないので、
+  // 「出場選手（種目）」のまとまりとして入れる
+  performer: { '@type': 'PerformingGroup', name: `出場選手（${e.event || 'テニス'}）` },
+  // 参加料と申込み（要項に書かれた金額。src/data/entry-fees.js）。金額の分からない大会は申込み先と受付状況だけ
+  // 締切は「11/27（金）20:00」のように曜日・時刻が付いていても、先頭の「月/日」だけを読む
+  offers: eventOffer(e, Astro.site ?? Astro.url, dueDate(String(e.due ?? '').match(/^\d{1,2}\/\d{1,2}(?!\d)/)?.[0], e.date)),
 };
 
 const title = `${e.displayName}｜大会情報｜鳥取市テニス協会`;
