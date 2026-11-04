@@ -1484,64 +1484,36 @@
     request();
   }
 
-  /* ---------- ヘッダーのロゴの塗り分けを、写真の上では止める ----------
-     スマホのロゴは裏の色に合わせて黒／白に塗り分ける（style.css の .site-header__logo-ink）が、写真の上では塗り分けない。
-     ロゴの左・中・右の3点で、ヘッダーの下に重なっている要素を上から順に見て、
-     先に写真（img / video）に当たれば .is-over-image（黒いロゴのまま）、先に地の色のある要素に当たればそのまま塗り分ける。 */
-  function initLogoInk() {
+  /* ---------- ヘッダーのロゴを、フッターの上では消す ----------
+     スマホのヘッダーのロゴは黒なので、黒いフッターにかかったら消して（.is-over-footer。style.css）、フッターの白いロゴだけを見せる。
+     いちばん下までスクロールすると、フッターのロゴがちょうどヘッダーのロゴの位置に重なる。
+     測るのはフッターが画面に入っているあいだだけ（位置を1つ読むだけの軽い処理） */
+  function initLogoFooter() {
     var header = document.querySelector('.site-header');
     var logo = header && header.querySelector('.site-header__logo');
-    if (!logo || !document.elementsFromPoint || !window.matchMedia) return;
+    var footer = document.querySelector('.site-footer');
+    if (!logo || !footer || !window.matchMedia) return;
     var mobile = window.matchMedia('(max-width: 1023px)');
-    var overImage = function (x, y) {
-      var stack = document.elementsFromPoint(x, y);
-      for (var i = 0; i < stack.length; i++) {
-        var el = stack[i];
-        // ヘッダー自身と、オープニング（.splash。終わると消える）は見ない
-        if (header.contains(el) || (el.closest && el.closest('.splash'))) continue;
-        var tag = el.tagName;
-        if (tag === 'IMG' || tag === 'VIDEO' || tag === 'PICTURE' || tag === 'CANVAS') return true;
-        var bg = getComputedStyle(el).backgroundColor;
-        if (bg && bg !== 'transparent' && !/rgba\(.*,\s*0\)$/.test(bg)) return false;
-      }
-      return false;
-    };
-    var ticking = false;
+    var near = !('IntersectionObserver' in window), ticking = false;
     var check = function () {
       ticking = false;
-      if (!mobile.matches || header.classList.contains('is-menu')) { header.classList.remove('is-over-image', 'is-over-footer'); return; }
-      var r = logo.getBoundingClientRect();
-      var y = r.top + r.height / 2;
-      // フッターのロゴ（同じ形・同じ大きさ）に半分以上かかったら、ヘッダーのロゴは消してフッターのロゴだけを見せる
-      var fl = document.querySelector('.site-footer__logo');
-      var fr = fl && fl.getBoundingClientRect();
-      var overFooter = !!fr && fr.bottom > r.top && fr.top < r.bottom && Math.abs(fr.top - r.top) < r.height / 2;
-      header.classList.toggle('is-over-footer', overFooter);
-      var hit = !overFooter && (overImage(r.left + r.width * .15, y) || overImage(r.left + r.width / 2, y) || overImage(r.right - r.width * .15, y));
-      header.classList.toggle('is-over-image', hit);
+      var over = false;
+      if (near && mobile.matches) {
+        var r = logo.getBoundingClientRect();
+        over = footer.getBoundingClientRect().top < r.top + r.height / 2;
+      }
+      header.classList.toggle('is-over-footer', over);
     };
     var request = function () {
       if (ticking) return;
       ticking = true;
       requestAnimationFrame(check);
     };
-    window.addEventListener('scroll', request, { passive: true });
-    window.addEventListener('resize', request);
-    window.addEventListener('load', request);
-    // オープニングやトップの写真の出方（アニメーション）が終わったときにも測り直す
-    document.addEventListener('animationend', request, true);
-    document.addEventListener('transitionend', request, true);
-    request();
-
-    // トップの登場の動き（PLAY BEYOND. の文字が画面を横切る）のあいだは塗り分けず、黒いロゴのままにする
-    // （.is-hero-anim。CSS）。最後に出るボタン（.hero__cta）の動きが終わったら外す。動きを減らす設定ではすぐ外す
-    var cta = document.querySelector('.hero__cta');
-    if (cta && !reduceMotion) {
-      header.classList.add('is-hero-anim');
-      var done = function () { header.classList.remove('is-hero-anim'); request(); };
-      cta.addEventListener('animationend', done, { once: true });
-      setTimeout(done, 20000); // 念のため（オープニングを飛ばさずに見ても収まる長さ）
+    if (!near) {
+      new IntersectionObserver(function (es) { near = es[0].isIntersecting; request(); }).observe(footer);
     }
+    window.addEventListener('scroll', function () { if (near) request(); }, { passive: true });
+    window.addEventListener('resize', request);
   }
 
   /* ---------- トップの動画（.hero__video） ----------
@@ -1609,8 +1581,7 @@
 
     /* ページを移るときの切り替え（ページ間ビュートランジション）が使えるか。
        使えるときは、メニューを開いているあいだだけメニューに写しの名前（view-transition-name）を付けておく（style.css 参照）。
-       ヘッダーには付けない（名前の付いた要素は backdrop-filter の基準になり、中のロゴの塗り分け（.site-header__logo-ink）が
-       ヘッダーの中しか見られなくなって、メニューを開いた瞬間にロゴが消えてしまうため） */
+       ヘッダーには付けない（ロゴは Base.astro が site-logo として別に写す） */
     var VT_KEY = 'tcta-mn-vt';
     var canVT = !reduceMotion && ('onpageswap' in window) && window.CSS && CSS.supports && CSS.supports('view-transition-name', 'x');
     var nameFor = function (open) {
@@ -2866,7 +2837,7 @@
     initIdleAnims();
     initCardSlides();
     initFooterDeco();
-    initLogoInk();
+    initLogoFooter();
     initHeroVideo();
     initStickyHero();
     initToday();

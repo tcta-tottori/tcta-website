@@ -73,17 +73,28 @@ const HOME_TOURNAMENTS = TOURNAMENTS.filter((t) => t.date >= keepFrom);
         {/* 動画（横断幕の前の参加者の集合。正方形・12秒・音なしでくり返す。人は写真のまま止め、雲と木だけが動く）。読み込むまでと、動きを減らす設定では最初のコマ（poster）を出す */}
         <video class="hero__photo hero__video" autoplay muted loop playsinline preload="auto" poster="assets/img/hero-poster.webp"
           aria-label="鳥取市テニス協会の横断幕の前で、大会の参加者がそろった集合の動画" width="1254" height="1254">
-          <source src="assets/video/hero.mp4" type="video/mp4">
+          <source data-src="assets/video/hero.mp4" type="video/mp4">
         </video>
-        {/* 軽量モードでは動画を読みに行かない（読み込みが始まる前に、ここで外して最初のコマ＝poster だけにする） */}
+        {/* 動画（約1MB）は、ページの読み込み（文字・画像・スクリプト）が終わってから読みに行く。それまでは最初のコマ（poster）が
+            出ていて、見た目は変わらない。スマホの回線で、ページ本体の読み込みと取り合わないようにするため。
+            軽量モードと動きを減らす設定では読みに行かない（poster のまま） */}
         <script is:inline>
           (function () {
-            if (!document.documentElement.classList.contains('is-lite')) return;
             var v = document.querySelector('.hero__video');
             if (!v) return;
-            v.removeAttribute('autoplay'); v.preload = 'none';
-            v.querySelectorAll('source').forEach(function (s) { s.parentNode.removeChild(s); });
-            v.load();
+            var still = document.documentElement.classList.contains('is-lite') ||
+              (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+            if (still) {
+              v.removeAttribute('autoplay'); v.preload = 'none';
+              v.querySelectorAll('source').forEach(function (s) { s.parentNode.removeChild(s); });
+              return;
+            }
+            var start = function () {
+              v.querySelectorAll('source[data-src]').forEach(function (s) { s.src = s.getAttribute('data-src'); s.removeAttribute('data-src'); });
+              v.load();
+            };
+            if (document.readyState === 'complete') start();
+            else window.addEventListener('load', start, { once: true });
           })();
         </script>
         <div class="hero__scrim" aria-hidden="true"></div>

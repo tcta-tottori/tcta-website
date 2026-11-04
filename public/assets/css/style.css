@@ -1076,33 +1076,6 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   .site-header__logo img, .site-header .hamburger { transition: filter .2s ease .12s, opacity .2s ease .12s; }
   .site-header.is-menu .site-header__logo img, .site-header.is-menu .hamburger { filter: none; transition: filter .2s ease .4s, opacity .2s ease .4s; }
 }
-/* スマホ・タブレット：ロゴの文字を、裏の色に合わせて黒／白に塗り分ける（重なったところだけ、その瞬間だけ白くなる）。
-   文字の形（logo-cut-ink.png）で切り抜いた面に backdrop-filter を掛け、裏を白黒にしてから明暗をはっきり分け（contrast）、反転する：
-   明るい地 → 黒、暗い地（赤・黒・黒い文字）→ 白。赤い四角（logo-cut-red.png）は塗り分けずに上に重ねる。
-   切り抜いた面に裏をぼかす類の効果が効かないブラウザでは、これまでどおりの黒いロゴ（.site-header__logo-img）のまま */
-.site-header__logo-ink, .site-header__logo-red { display: none; }
-@media (max-width: 1023px) {
-  @supports ((backdrop-filter: invert(1)) or (-webkit-backdrop-filter: invert(1))) and ((mask-image: none) or (-webkit-mask-image: none)) {
-    .site-header__logo .site-header__logo-img { visibility: hidden; }
-    .site-header__logo-ink, .site-header__logo-red { display: block; position: absolute; inset: 0; }
-    .site-header__logo .site-header__logo-red { width: 100%; height: 100%; filter: none; }
-    .site-header__logo-ink {
-      -webkit-mask: url("../img/logo-cut-ink.png") center / 100% 100% no-repeat;
-      mask: url("../img/logo-cut-ink.png") center / 100% 100% no-repeat;
-      -webkit-backdrop-filter: grayscale(1) contrast(100) invert(1);
-      backdrop-filter: grayscale(1) contrast(100) invert(1);
-    }
-    /* メニューを開いたときも白抜きの画像（.site-header__logo-w）は重ねず、この塗り分けのまま。
-       せり上がる黒地の上端が通ったところから順に白へ変わる */
-    .site-header .site-header__logo-w { display: none; }
-    /* トップの登場の動き（PLAY BEYOND.）のあいだも塗り分けず黒いロゴのまま（main.js の initLogoInk が .is-hero-anim を付ける） */
-    .site-header.is-hero-anim:not(.is-menu) .site-header__logo-img { visibility: visible; }
-    .site-header.is-hero-anim:not(.is-menu) .site-header__logo-ink, .site-header.is-hero-anim:not(.is-menu) .site-header__logo-red { display: none; }
-    /* 写真の上では塗り分けず、黒いロゴのまま（main.js の initLogoInk が .is-over-image を付ける） */
-    .site-header.is-over-image:not(.is-menu) .site-header__logo-img { visibility: visible; }
-    .site-header.is-over-image:not(.is-menu) .site-header__logo-ink, .site-header.is-over-image:not(.is-menu) .site-header__logo-red { display: none; }
-  }
-}
 @media (prefers-reduced-motion: reduce) {
   .site-header__logo-w, .site-header.is-menu .site-header__logo-w,
   .site-header .hamburger span, .site-header.is-menu .hamburger span { transition: none; }
@@ -1115,7 +1088,7 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
    閉じる動き（黒地が下へ下がり、次のページが上から見えてくる）を流す。
    流すかどうかは Base.astro の pageswap / pagereveal が決める（メニューから移るときだけ。それ以外は省く）。
    写しの名前（view-transition-name）は main.js がメニューを開くときに付ける：
-     mn-sheet … メニュー（.mobile-nav）。ヘッダーには付けない（ロゴの塗り分けが効かなくなるため。main.js 参照）。
+     mn-sheet … メニュー（.mobile-nav）。ヘッダーには付けない（ロゴは site-logo として別に写す）。
      ヘッダーは次のページのものがそのまま下にあり、黒地が下がるにつれて見えてくる */
 @view-transition { navigation: auto; }
 /* 前のページ本体はすぐ消し、次のページをそのまま出す（黒地の裏に次のページが見えている状態） */
@@ -1142,11 +1115,9 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   from { opacity: 1; clip-path: inset(var(--vt-logo-from, 0px) 0 0 0); }
   to { opacity: 1; clip-path: inset(var(--vt-logo-to, 100vh) 0 0 0); }
 }
-/* 写しを撮るあいだのロゴは塗り分けをやめて画像にする：前のページは白抜き、次のページは黒（赤い四角入り） */
-.site-header.is-vt-logo .site-header__logo .site-header__logo-img { visibility: visible; }
+/* 写しを撮るあいだのロゴ：前のページは白抜き、次のページは黒（赤い四角入り） */
 /* 白いにじみ（drop-shadow）は黒地の上で白いロゴの縁ににじみ出るので、写しのあいだは消す（明るい地では見えない程度のもの） */
 .site-header.is-vt-logo .site-header__logo img { filter: none !important; transition: none !important; }
-.site-header.is-vt-logo .site-header__logo-ink, .site-header.is-vt-logo .site-header__logo-red { display: none !important; }
 .site-header.is-vt-logo.is-menu .site-header__logo-w { display: block !important; opacity: 1; transition: none; }
 .site-header.is-vt-logo:not(.is-menu) .site-header__logo-w { display: none !important; }
 @keyframes vt-fade { to { opacity: 0; } }
@@ -3151,7 +3122,7 @@ html.is-links-arrive .page-title, html.is-links-arrive .sub-head { animation: no
 @media (min-width: 1024px) { .cfac + .cfac { margin-top: 96px; } }
 .cfac__hero {
   /* スクロールすると写真は画面の上端（協会のロゴの裏）で止まり、その施設の説明が流れ終わるまでとどまる
-     （次の施設に入ると一緒に上へ抜ける）。ロゴは写真の上に重なる（白に変わる。main.js の initLogoInk）。
+     （次の施設に入ると一緒に上へ抜ける）。ロゴは写真の上に黒のまま重なる。
      スマホは写真の上にロゴの分の高さを足す。説明が読めるよう、写真の高さは画面の 55%（＋ロゴの分）まで */
   position: sticky;
   top: 0;
@@ -3482,7 +3453,7 @@ body.jsrv .rv.on .ink-sweep {
 @media (min-width: 1024px) { .site-footer__brand img { height: 56px; } }
 /* スマホ・タブレット：フッターを画面いっぱいの高さ（今の画面の高さ）にし、ロゴをヘッダーのロゴと同じ位置（上 12px＋帯の中ほど・左は余白）・
    同じ大きさに置く。いちばん下までスクロールすると、画面の上端に浮いているヘッダーのロゴにちょうど重なる
-   （重なるとヘッダーのロゴは消し、フッターのロゴだけを見せる。main.js の initLogoInk の .is-over-footer） */
+   （ヘッダーのロゴは黒なので、黒いフッターにかかったら消し、フッターの白いロゴだけを見せる。main.js の initLogoFooter の .is-over-footer） */
 @media (max-width: 1023px) {
   /* 高さは「今の」画面の高さ（dvh）。ブラウザのアドレスバーが出ている・引っ込んでいるどちらでも、いちばん下までスクロールすると
      フッターの上端が画面の上端にそろう（svh だとバーが引っ込んだときに足りず、ロゴがずれていた）。
@@ -5812,11 +5783,9 @@ html.is-lite *, html.is-lite *::before, html.is-lite *::after {
   backdrop-filter: none !important;
 }
 html.is-lite body.jsrv .rv, html.is-lite body.jsrv .rv-in { opacity: 1 !important; transform: none !important; }
-/* ロゴの塗り分け（裏の色を読む重い効果）をやめ、画像のロゴにする。メニューを開いたら白抜きのロゴ */
-html.is-lite .site-header__logo .site-header__logo-img { visibility: visible !important; }
-html.is-lite .site-header__logo-ink, html.is-lite .site-header__logo-red { display: none !important; }
+/* メニューを開いたら白抜きのロゴをすぐ出す */
 @media (max-width: 1023px) {
-  html.is-lite .site-header.is-menu .site-header__logo-w { display: block !important; opacity: 1; }
+  html.is-lite .site-header.is-menu .site-header__logo-w { opacity: 1; }
 }
 
 /* 軽量モードのスイッチ（LiteToggle.astro）。トップは「協会について見る」の下、メニューは SNS の上、オープニングは左下 */
