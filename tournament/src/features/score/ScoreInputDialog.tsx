@@ -56,6 +56,7 @@ export interface ScoreInputMatch {
 }
 
 import type { MatchFormatType } from '../../db/database';
+import { siteConfirm } from '../../components/site/siteConfirm';
 
 interface ScoreInputDialogProps {
   match: ScoreInputMatch | null;
@@ -569,7 +570,7 @@ export default function ScoreInputDialog({
 
   const handleResetMatch = async () => {
     if (isProcessing || !match) return;
-    if (!confirm('この試合をリセットしますか？')) return;
+    if (!(await siteConfirm('この試合をリセットしますか？'))) return;
     setIsProcessing(true);
     try {
       if (!isLeague) {

@@ -23,6 +23,7 @@ import CourtPickDialog from '../../components/ui/CourtPickDialog';
 import GameRulesDialog from '../../components/ui/GameRulesDialog';
 import CallStatusPopup from '../../components/ui/CallStatusPopup';
 import { fillTestScores } from '../score/testScoreFiller';
+import { siteConfirm } from '../../components/site/siteConfirm';
 
 /** 回戦に応じたゲームルール（試合方式）を解決する */
 function resolveRoundRule(evt: Event | undefined, round: number, totalRounds: number): RoundGameRule | null {
@@ -841,7 +842,7 @@ export default function MatchManager({ readOnly = false }: { readOnly?: boolean 
 
     if (assignments.length === 0) { alert('割り当てる試合がありません。'); return; }
 
-    const confirmed = confirm(
+    const confirmed = await siteConfirm(
       `${assignments.length}試合にコートを割り当てて試合開始にします。\n\n` +
       assignments.map(a => `${a.court.name}番コート: ${a.match.player1Name} vs ${a.match.player2Name}`).join('\n')
     );
@@ -926,7 +927,7 @@ export default function MatchManager({ readOnly = false }: { readOnly?: boolean 
   const [testScoreRunning, setTestScoreRunning] = useState(false);
   const handleFillTestScores = useCallback(async () => {
     if (!currentTournamentId) return;
-    const ok = confirm(
+    const ok = await siteConfirm(
       'テスト用に、全種目の全試合へ 8-4 / 6-4 のスコアを入れて決勝まで終了させます。\n'
       + '入力済みのスコアは上書きされます。よろしいですか？',
     );
@@ -985,7 +986,7 @@ export default function MatchManager({ readOnly = false }: { readOnly?: boolean 
       return numA - numB;
     });
 
-    const confirmed = confirm(
+    const confirmed = await siteConfirm(
       `${firstMatches.length}コートの初戦を順番にコールします。よろしいですか？\n\n` +
       firstMatches.map(fm => `${fm.court.name}番コート: ${fm.match.player1Name} vs ${fm.match.player2Name}`).join('\n')
     );

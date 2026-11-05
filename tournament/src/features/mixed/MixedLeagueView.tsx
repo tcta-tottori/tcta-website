@@ -8,6 +8,7 @@ import { calculateLeagueStandings } from './mixedLogic';
 import MixedScoreInput from './MixedScoreInput';
 import { GameRatioCell } from './GameRatioCell';
 import { exportLeagueResultJpeg } from './exportLeagueResultJpeg';
+import { siteConfirm } from '../../components/site/siteConfirm';
 
 /** コートオーバーライド: matchId -> courtName を localStorage に保存 */
 const COURT_OVERRIDE_KEY = 'mixed-court-overrides';
@@ -366,7 +367,7 @@ export default function MixedLeagueView() {
                 )}
                 {leagueMatches.some(m => m.status !== 'finished') && (
                   <button
-                    onClick={() => { if (confirm('テスト用：全ての予選リーグ未完了試合を6-4で入力しますか？')) fillAllScoresForTest(); }}
+                    onClick={async () => { if (await siteConfirm('テスト用：全ての予選リーグ未完了試合を6-4で入力しますか？')) fillAllScoresForTest(); }}
                     className="flex items-center gap-1 px-2.5 py-1.5 text-[10px] bg-white/15 rounded-lg hover:bg-white/25 transition-colors"
                   >
                     <FlaskConical size={12} />

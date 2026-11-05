@@ -24,6 +24,7 @@ import {
   Trophy,
   Calendar,
 } from 'lucide-react';
+import { siteConfirm } from '../../components/site/siteConfirm';
 
 /** 大会データの置き場（Cloudflare）のアイコン */
 const CloudLogo = ({ size = 20 }: { size?: number }) => <CloudflareLogo className="shrink-0" style={{ width: size, height: size }} />;
@@ -207,7 +208,7 @@ export default function BackupPage({ embedded = false }: BackupPageProps = {}) {
         return;
       }
 
-      const confirmed = confirm(
+      const confirmed = await siteConfirm(
         `このバックアップを復元しますか？\n\n` +
         `ファイル: ${file.name}\n` +
         (parsed.tournamentName ? `大会名: ${parsed.tournamentName}\n` : '') +
@@ -278,7 +279,7 @@ export default function BackupPage({ embedded = false }: BackupPageProps = {}) {
   }, []);
 
   const handleDriveRestore = useCallback(async (file: CloudDataFile) => {
-    const confirmed = confirm(
+    const confirmed = await siteConfirm(
       `このバックアップを復元しますか？\n\nファイル名: ${file.name}\n更新日時: ${new Date(file.modifiedTime).toLocaleString('ja-JP')}\n\n※ 既存データはすべて上書きされます。復元後ページがリロードされます。`
     );
     if (!confirmed) return;

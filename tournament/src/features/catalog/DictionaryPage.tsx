@@ -172,21 +172,32 @@ function DictRow({ name, furigana, sub, note, readOnly, editing: startEditing, o
     try { await onSave(v); setEditing(false); } catch (e) { setErr((e as Error).message); } finally { setBusy(false); }
   };
   return (
-    <li className={`dict-row ${note ? 'dict-row--note' : ''}`}>
-      <div className="dict-row__main">
-        <span className="dict-row__name">{name}</span>
-        {sub && <span className="dict-row__sub">{sub}</span>}
-      </div>
-      {editing ? (
+    <li className={`dict-row ${note ? 'dict-row--note' : ''} ${editing ? 'is-editing' : ''}`}>
+      {/* 漢字 → ふりがな → 所属 の順 */}
+      <span className="dict-row__name">{name}</span>
+      {!editing && <span className={`dict-row__kana ${furigana ? '' : 'is-empty'}`}>{furigana || 'ふりがな未登録'}</span>}
+      {sub ? <span className="dict-row__sub">{sub}</span> : <span className="dict-row__sub is-empty" aria-hidden="true" />}
+      {!readOnly && !editing && (
+        <button className="hub-icon-btn dict-row__pen" onClick={() => setEditing(true)} aria-label={`${name} のふりがなを直す`}><Pencil className="w-3.5 h-3.5" /></button>
+      )}
+      {editing && (
         <div className="dict-row__edit">
-          <input className="input" value={value} autoFocus={!startEditing} placeholder="ふりがな" onChange={(e) => setValue(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') void commit(); if (e.key === 'Escape' && !startEditing) setEditing(false); }} />
-          <button className="btn btn--primary dict-row__btn" onClick={commit} disabled={busy}>{busy ? <Loader2 className="w-4 h-4 animate-spin" /> : '保存'}</button>
-          {!startEditing && <button className="btn btn--outline dict-row__btn" onClick={() => { setEditing(false); setValue(furigana); setErr(''); }}>やめる</button>}
-        </div>
-      ) : (
-        <div className="dict-row__read">
-          <span className="dict-row__kana">{furigana}</span>
-          {!readOnly && <button className="hub-icon-btn" onClick={() => setEditing(true)} aria-label={`${name} のふりがなを直す`}><Pencil className="w-3.5 h-3.5" /></button>}
+          <label className="dict-row__label" htmlFor={`kana-${name}`}>ふりがな</label>
+          <input
+            id={`kana-${name}`}
+            className="input dict-row__input"
+            value={value}
+            autoFocus={!startEditing}
+            inputMode="text"
+            autoComplete="off"
+            placeholder="例 とっとり　たろう"
+            onChange={(e) => setValue(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') void commit(); if (e.key === 'Escape' && !startEditing) setEditing(false); }}
+          />
+          <div className="dict-row__btns">
+            {!startEditing && <button className="btn btn--outline dict-row__btn" onClick={() => { setEditing(false); setValue(furigana); setErr(''); }}>やめる</button>}
+            <button className="btn btn--primary dict-row__btn" onClick={commit} disabled={busy}>{busy ? <Loader2 className="w-4 h-4 animate-spin" /> : '保存'}</button>
+          </div>
         </div>
       )}
       {note && !editing && <p className="dict-row__note"><AlertTriangle className="w-3.5 h-3.5" />{note}</p>}

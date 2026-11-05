@@ -308,18 +308,47 @@ button.mobile-nav__link { width: 100%; text-align: left; }
 .dict-count { margin: 0 0 8px; font: 700 12px/1 var(--fjp); color: var(--gray-500); }
 .dict-list { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0; margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--gray-200); background: var(--white); }
 @media (min-width: 900px) { .dict-list { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 24px; border-top: 0; background: none; } }
-.dict-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 4px 12px; padding: 11px 14px; border-bottom: 1px solid var(--gray-200); background: var(--white); }
+/* 1 行＝漢字 → ふりがな → 所属（→ 直すボタン）。PC は横 1 列、スマホは 3 段（右に直すボタン） */
+.dict-row {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 32px;
+  grid-template-areas: "name pen" "kana pen" "sub pen" "edit edit" "note note" "err err";
+  align-items: center;
+  gap: 2px 12px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--gray-200);
+  background: var(--white);
+}
+@media (min-width: 640px) {
+  .dict-row {
+    grid-template-columns: minmax(6.5em, 9em) minmax(0, 1fr) minmax(0, 9em) 32px;
+    grid-template-areas: "name kana sub pen" "edit edit edit edit" "note note note note" "err err err err";
+    gap: 4px 14px;
+  }
+}
 .dict-row--note { background: #FFF8E6; }
-.dict-row__main { min-width: 0; display: flex; align-items: baseline; gap: 10px; }
-.dict-row__name { font: 700 15px/1.5 var(--fjp); color: var(--ink); white-space: nowrap; }
-.dict-row__sub { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 400 12px/1.5 var(--fjp); color: var(--gray-500); }
-.dict-row__read { display: flex; align-items: center; gap: 8px; }
-.dict-row__kana { font: 400 14px/1.5 var(--fjp); color: var(--gray-800); }
-.dict-row__edit { grid-column: 1 / -1; display: flex; gap: 6px; }
-.dict-row__edit .input { flex: 1; min-width: 0; }
-.dict-row__btn { flex: none; justify-content: center; min-width: 64px; }
-.dict-row__note, .dict-row__err { grid-column: 1 / -1; margin: 0; display: flex; align-items: center; gap: 6px; font: 400 12px/1.6 var(--fjp); color: #8A5A00; }
-.dict-row__err { color: var(--red); font-weight: 700; }
+.dict-row__name { grid-area: name; min-width: 0; font: 700 15px/1.5 var(--fjp); color: var(--ink); overflow-wrap: anywhere; }
+.dict-row__kana { grid-area: kana; min-width: 0; font: 400 14px/1.5 var(--fjp); color: var(--gray-800); letter-spacing: .02em; }
+.dict-row__kana.is-empty { color: var(--red); font-weight: 700; font-size: 12px; }
+.dict-row__sub { grid-area: sub; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 400 12px/1.5 var(--fjp); color: var(--gray-500); }
+.dict-row__pen { grid-area: pen; justify-self: end; }
+.dict-row.is-editing .dict-row__sub { grid-row: auto; }
+/* 直すとき：ふりがなの欄を幅いっぱいに、ボタンはその下（スマホでも押しやすい大きさ） */
+.dict-row__edit { grid-area: edit; display: flex; flex-direction: column; gap: 8px; margin-top: 8px; min-width: 0; }
+.dict-row__label { font: 700 11px/1 var(--fjp); letter-spacing: .08em; color: var(--red); }
+.app-main .dict-row__input { width: 100%; min-width: 0; height: 44px; min-height: 44px; padding: 0 12px; font-size: 16px; /* iOS の拡大を防ぐ */ }
+.dict-row__btns { display: flex; gap: 8px; }
+.app-main .dict-row__btn { flex: 1 1 0; width: auto; min-width: 0; min-height: 44px; justify-content: center; }
+@media (min-width: 640px) {
+  .dict-row__edit { flex-direction: row; align-items: center; }
+  .dict-row__label { flex: none; }
+  .dict-row__input { flex: 1; }
+  .dict-row__btns { flex: none; }
+  .app-main .dict-row__btn { flex: none; min-width: 84px; }
+}
+.dict-row__note, .dict-row__err { grid-area: note; margin: 4px 0 0; display: flex; align-items: center; gap: 6px; font: 400 12px/1.6 var(--fjp); color: #8A5A00; }
+.dict-row__err { grid-area: err; color: var(--red); font-weight: 700; }
 .dict-more { margin: 16px auto 0; display: flex; justify-content: center; }
 .hub-missing { margin: 0 0 24px; padding: 16px; border: 2px solid var(--red); background: var(--white); }
 .hub-missing__title { display: flex; align-items: center; gap: 8px; margin: 0 0 12px; font: 700 14px/1.5 var(--fjp); color: var(--red); }
@@ -330,3 +359,92 @@ button.mobile-nav__link { width: 100%; text-align: left; }
 /* Cloudflare に置いたものの印（ロゴはブランドのオレンジのまま。ほかの札の赤いアイコン色を上書きしない） */
 .hub-chip--cf svg { color: inherit; }
 .hub-chip--cf { gap: 7px; }
+
+/* ---------------------------------------------------------------------------
+   サイトと同じ出方（components/site/useSiteReveal.ts）。動き自体はサイトの CSS（.rv / .rv-in / .ghost）のまま。
+   浮き上がりが終わったら animation を外す（中のポップアップの位置がずれないように）
+   --------------------------------------------------------------------------- */
+body.jsrv .rv-in.on.rv-done { animation: none; }
+
+/* ---------------------------------------------------------------------------
+   ポップアップ（components/site/SiteDialog.tsx）。協会サイトの決まり：
+   墨の薄い幕、白いパネルの上端に赤い線、見出しは赤い四角＋英字＋日本語（.sec-head と同じ）、角は 4px、ボタンは .btn
+   --------------------------------------------------------------------------- */
+.sdlg { position: fixed; inset: 0; z-index: 400; display: flex; align-items: center; justify-content: center; padding: 16px; }
+.sdlg__backdrop { position: absolute; inset: 0; background: rgba(26, 26, 26, .55); animation: sdlg-fade .25s ease both; }
+.sdlg__panel {
+  position: relative;
+  width: 100%;
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+  background: var(--white);
+  border-top: 3px solid var(--red);
+  border-radius: var(--radius);
+  box-shadow: 0 24px 60px rgba(26, 26, 26, .28);
+  animation: sdlg-up .45s var(--ease) both;
+  outline: none;
+}
+.sdlg__panel--sm { max-width: 440px; }
+.sdlg__panel--md { max-width: 600px; }
+.sdlg__panel--lg { max-width: 880px; }
+.sdlg__head { display: flex; align-items: flex-start; gap: 12px; padding: 22px 22px 0; }
+.sdlg__mark { flex: none; margin-top: 4px; }
+.sdlg__heading { flex: 1; min-width: 0; }
+.sdlg__eyebrow { margin: 0 0 4px; font: 700 12px/1 var(--flt); letter-spacing: .14em; color: var(--red); text-transform: uppercase; }
+.sdlg__title { display: flex; align-items: center; gap: 8px; margin: 0; font: 700 18px/1.45 var(--fjp); letter-spacing: .02em; color: var(--ink); }
+.sdlg__warn { width: 18px; height: 18px; flex: none; color: var(--red); }
+.sdlg__close { flex: none; display: inline-flex; padding: 4px; margin: -4px -6px 0 0; border: 0; background: none; color: var(--gray-500); cursor: pointer; }
+@media (hover: hover) { .sdlg__close:hover { color: var(--red); } }
+.sdlg__body { padding: 14px 22px 0; }
+.sdlg__msg { margin: 0; white-space: pre-line; font: 400 14px/1.9 var(--fjp); color: var(--gray-800); }
+.sdlg__actions { display: flex; gap: 10px; padding: 22px; }
+.sdlg .sdlg__btn { flex: 1 1 0; width: auto; min-width: 0; min-height: 48px; padding: 12px 16px; justify-content: center; font-size: 14px; }
+@keyframes sdlg-fade { from { opacity: 0; } }
+@keyframes sdlg-up { from { opacity: 0; transform: translateY(24px); } }
+@media (prefers-reduced-motion: reduce) { .sdlg__backdrop, .sdlg__panel { animation: none; } }
+html.is-lite .sdlg__backdrop, html.is-lite .sdlg__panel { animation: none; }
+
+/* 読み込み中の表示（DriveLoadingModal） */
+.sdlg-steps { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+.sdlg-step { display: flex; align-items: flex-start; gap: 10px; font: 400 14px/1.6 var(--fjp); color: var(--gray-500); }
+.sdlg-step.is-loading { color: var(--ink); font-weight: 700; }
+.sdlg-step.is-done { color: var(--ink); }
+.sdlg-step.is-error { color: var(--red); font-weight: 700; }
+.sdlg-step__ico { flex: none; width: 18px; height: 18px; margin-top: 3px; display: inline-flex; align-items: center; justify-content: center; }
+.sdlg-step__ico .dot { width: 6px; height: 6px; background: var(--gray-300); }
+.sdlg-step__ico svg { width: 18px; height: 18px; }
+.sdlg-step.is-done .sdlg-step__ico svg { color: var(--red); }
+.sdlg-step__detail { margin-left: 6px; font-size: 12px; color: var(--gray-500); font-weight: 400; }
+.sdlg-spin { width: 16px; height: 16px; border: 2px solid var(--gray-200); border-top-color: var(--red); border-radius: 50%; animation: sdlg-rot .8s linear infinite; }
+@keyframes sdlg-rot { to { transform: rotate(360deg); } }
+.sdlg-progress { margin: 0 0 16px; }
+.sdlg-progress__head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; font: 700 12px/1 var(--fjp); color: var(--gray-500); }
+.sdlg-progress__num { font: 700 20px/1 var(--flt); color: var(--ink); }
+.sdlg-progress__bar { height: 4px; background: var(--gray-200); overflow: hidden; }
+.sdlg-progress__fill { height: 100%; background: var(--red); transition: width .5s var(--ease); }
+.sdlg-result { margin: 16px 0 0; padding: 12px 14px; border-left: 3px solid var(--ink); background: var(--gray-050); font: 700 14px/1.7 var(--fjp); color: var(--ink); }
+.sdlg-result.is-error { border-left-color: var(--red); background: var(--red-tint); color: var(--red-dark); }
+.sdlg-result ul { margin: 6px 0 0; padding-left: 1.2em; font-weight: 400; font-size: 12px; color: var(--gray-600); }
+
+/* ---------------------------------------------------------------------------
+   ほかの画面のポップアップ（もとのアプリの .fixed.inset-0 の作り）も、同じ決まりに寄せる。
+   幕は墨の薄い色に、パネル（白・影・最大幅のある箱）は上端に赤い線・角 4px・浮き上がって出る
+   --------------------------------------------------------------------------- */
+[class~="fixed"][class~="inset-0"]:is([class*="bg-black/"], [class*="bg-gray-900/"], [class*="bg-slate-900/"]) {
+  background-color: rgba(26, 26, 26, .55) !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+[class~="fixed"][class~="inset-0"] > [class*="bg-white"][class*="max-w-"]:is([class*="shadow-xl"], [class*="shadow-2xl"], [class*="shadow-lg"], [class*="rounded"]) {
+  border-radius: var(--radius) !important;
+  border-top: 3px solid var(--red);
+  box-shadow: 0 24px 60px rgba(26, 26, 26, .28) !important;
+  animation: sdlg-up .45s var(--ease) both;
+}
+[class~="fixed"][class~="inset-0"] > [class*="bg-white"][class*="max-w-"] :is([class*="rounded-xl"], [class*="rounded-2xl"], [class*="rounded-lg"]) { border-radius: var(--radius); }
+@media (prefers-reduced-motion: reduce) { [class~="fixed"][class~="inset-0"] > [class*="bg-white"][class*="max-w-"] { animation: none; } }
+html.is-lite [class~="fixed"][class~="inset-0"] > [class*="bg-white"][class*="max-w-"] { animation: none; }
+.sdlg-src { display: inline-flex; align-items: center; gap: 6px; margin: 0 0 14px; font: 700 11px/1 var(--flt); letter-spacing: .1em; color: var(--gray-500); }
+/* 直しているあいだも 漢字 → ふりがな（入力欄）→ 所属 の順 */
+.dict-row.is-editing { grid-template-columns: minmax(0, 1fr); grid-template-areas: "name" "edit" "sub" "note" "err"; }
+.dict-row.is-editing .dict-row__edit { margin: 6px 0 4px; }

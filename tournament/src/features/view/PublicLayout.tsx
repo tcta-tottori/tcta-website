@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { Trophy, Swords, Radio, Network, ClipboardList, RefreshCw, Activity, BarChart2, Calendar, MapPin } from 'lucide-react';
 import { useLiveQuery } from 'dexie-react-hooks';
@@ -7,6 +7,7 @@ import { useAppStore } from '../../stores/appStore';
 import { useMixedStore } from '../mixed/mixedStore';
 import { useTeamStore } from '../team/teamStore';
 import { usePublicSync } from './usePublicSync';
+import { useSiteReveal } from '../../components/site/useSiteReveal';
 import { SiteHeader, MobileNav, PageHead, StatusBar, SiteFooter, SITE_URL, type NavLinkItem } from '../../components/site/SiteChrome';
 
 /**
@@ -18,6 +19,8 @@ import { SiteHeader, MobileNav, PageHead, StatusBar, SiteFooter, SITE_URL, type 
  */
 export default function PublicLayout() {
   const location = useLocation();
+  const mainRef = useRef<HTMLElement>(null);
+  useSiteReveal(mainRef, location.pathname);
   const navigate = useNavigate();
   const sync = usePublicSync();
 
@@ -231,6 +234,7 @@ export default function PublicLayout() {
 
       {/* コンテンツ */}
       <main
+        ref={mainRef}
         id="main"
         className="app-main"
         onScroll={(e) => { const y = (e.currentTarget as HTMLElement).scrollTop > 100; if (y !== scrolled) setScrolled(y); }}

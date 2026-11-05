@@ -27,6 +27,7 @@ import { isEventComplete } from '../results/eventCompletion';
 import {
   getGameRuleText, getGameRulesText, getMatchFormat, getRoundName, getShortRoundName,
 } from '../score/roundRules';
+import { siteConfirm } from '../../components/site/siteConfirm';
 
 interface CourtBracketPageProps {
   /** スコア入力を有効にするか（公開ビューでは false で読み取り専用） */
@@ -392,7 +393,7 @@ export default function CourtBracketPage({ enableScoreInput = true }: CourtBrack
     if (lost.length > 0) {
       const names = lost.slice(0, 5).map(m => `・${m.player1Name} vs ${m.player2Name}（${m.score || '結果あり'}）`).join('\n');
       const more = lost.length > 5 ? `\n…ほか${lost.length - 5}試合` : '';
-      if (!confirm(`対戦の組み合わせが変わるため、次の試合の結果は取り消されます。\n\n${names}${more}\n\n保存してよろしいですか？`)) return;
+      if (!(await siteConfirm(`対戦の組み合わせが変わるため、次の試合の結果は取り消されます。\n\n${names}${more}\n\n保存してよろしいですか？`))) return;
     }
 
     setSavingDraw(true);
@@ -551,7 +552,7 @@ export default function CourtBracketPage({ enableScoreInput = true }: CourtBrack
     if (!next) {
       const third = matches.find(isThirdPlaceMatch);
       if (third && (third.score || third.winnerEntryId)) {
-        if (!confirm('3位決定戦の入力済みの結果も削除されます。よろしいですか？')) return;
+        if (!(await siteConfirm('3位決定戦の入力済みの結果も削除されます。よろしいですか？'))) return;
       }
     }
     await db.draws.update(drawData.id, { hasThirdPlace: next, updatedAt: Date.now() });

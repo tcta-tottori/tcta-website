@@ -32,6 +32,7 @@ import {
   collectIndividualCandidates, collectMixedCandidates, collectTeamCandidates,
   swapPairName, winnersOnly, type CertCandidate,
 } from './certificateCandidates';
+import { siteConfirm } from '../../components/site/siteConfirm';
 
 /** 賞位のよく使う選択肢（自由入力も可） */
 const RANK_PRESETS = ['優勝', '準優勝', '第3位', '第4位', '第5位', 'ベスト8', '敢闘賞', '3位'];
@@ -442,7 +443,7 @@ export default function PrintCenter() {
               </span>
               {entries.length > 0 && (
                 <button
-                  onClick={() => { if (window.confirm('印刷リストを全て削除しますか？')) { setEntries([]); setPreviewId(null); } }}
+                  onClick={async () => { if (await siteConfirm('印刷リストを全て削除しますか？')) { setEntries([]); setPreviewId(null); } }}
                   className="ml-auto text-[10px] text-gray-400 hover:text-red-500 transition-colors"
                 >すべて削除</button>
               )}

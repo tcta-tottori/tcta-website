@@ -13,6 +13,7 @@ import BracketTopBar from '../../components/ui/BracketTopBar';
 import { useVisualViewport } from '../../components/ui/useVisualViewport';
 import { autoBracketStartRound, startRoundLabel } from './bracketRounds';
 import { blackCircled, bracketMatchRoundLabel, isConsolation, resolveByePositions } from './consolation';
+import { siteConfirm } from '../../components/site/siteConfirm';
 
 /**
  * ゲームルールの表示用テキストを整形する。
@@ -300,13 +301,13 @@ export default function MixedBracketView() {
     setCourtAssignValue(bracketCourtAssignments[match.matchId]?.courtName || '');
   };
 
-  const handleCourtAssignConfirm = () => {
+  const handleCourtAssignConfirm = async () => {
     if (!courtAssignMatch || !courtAssignValue) return;
     const before = bracketCourtAssignments[courtAssignMatch.matchId]?.courtName;
     assignBracketMatchToCourt(courtAssignMatch.matchId, courtAssignValue);
     // コール確認: 新しくコートに入れたときだけ聞く（コートの修正では聞かない）
     if (!before) {
-      const doCalling = window.confirm(`${courtAssignValue}でコールしますか？`);
+      const doCalling = await siteConfirm(`${courtAssignValue}でコールしますか？`);
       if (doCalling) {
         setCallMatch(courtAssignMatch);
         setCallCourt(courtAssignValue);
@@ -486,10 +487,10 @@ export default function MixedBracketView() {
             {/* コンソレーション（敗者同士の試合）の有無 */}
             {currentBracket && (
               <button
-                onClick={() => {
+                onClick={async () => {
                   const next = !currentBracket.consolation;
                   const played = currentBracket.matches.some(m => isConsolation(m) && (m.status === 'finished' || m.status === 'playing'));
-                  if (!next && played && !window.confirm('コンソレの結果が消えます。コンソレなしにしますか？')) return;
+                  if (!next && played && !(await siteConfirm('コンソレの結果が消えます。コンソレなしにしますか？'))) return;
                   setBracketConsolation(currentBracket.category, next);
                 }}
                 className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold shadow-sm active:scale-95 transition-all whitespace-nowrap ${
@@ -977,8 +978,8 @@ function DrawEditPanel({ bracket }: { bracket: PlacementBracket }) {
         </h3>
         {!hasProgress && (
           <button
-            onClick={() => {
-              if (window.confirm('予選リーグの順位とドロー表の形から、順位別トーナメントを作り直します。\n（試合が始まっているクラスはそのまま残します。1位トーナメントの抽選はやり直しになります）')) {
+            onClick={async () => {
+              if (await siteConfirm('予選リーグの順位とドロー表の形から、順位別トーナメントを作り直します。\n（試合が始まっているクラスはそのまま残します。1位トーナメントの抽選はやり直しになります）')) {
                 regenerateBrackets();
               }
             }}

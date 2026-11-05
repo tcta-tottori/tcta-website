@@ -8,6 +8,7 @@ import { LeagueResultPreview } from './LeagueResultPreview';
 import type { LeagueMatchScore, LeagueStanding } from './types';
 import { GameRatioCell } from './GameRatioCell';
 import { leagueColor, leagueBadgeStyle } from './leagueColors';
+import { siteConfirm } from '../../components/site/siteConfirm';
 
 
 
@@ -48,7 +49,7 @@ export default function MixedDrawView() {
       {hasUnfinished && (
         <div className="flex justify-end">
           <button
-            onClick={() => { if (confirm('テスト用：全ての予選リーグ未完了試合を6-4で入力しますか？')) fillAllScoresForTest(); }}
+            onClick={async () => { if (await siteConfirm('テスト用：全ての予選リーグ未完了試合を6-4で入力しますか？')) fillAllScoresForTest(); }}
             className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-sm font-medium bg-white text-gray-600 border border-gray-200 hover:bg-gray-50 hover:border-gray-300 transition-all active:scale-95 shadow-sm"
           >
             <FlaskConical size={14} />

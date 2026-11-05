@@ -34,6 +34,7 @@ import { useMixedStore } from '../mixed/mixedStore';
 import MixedScoreView from '../mixed/MixedScoreView';
 import { useTeamStore } from '../team/teamStore';
 import TeamScoreView from '../team/TeamScoreView';
+import { siteConfirm } from '../../components/site/siteConfirm';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -567,7 +568,7 @@ function NormalScoreboard() {
     if (isProcessing) return;
     const match = matches.find(m => m.matchId === matchId);
     if (!match?.id) return;
-    if (!confirm('この試合を待機状態に戻しますか？')) return;
+    if (!(await siteConfirm('この試合を待機状態に戻しますか？'))) return;
     setIsProcessing(true);
     try {
       // 次ラウンドのクリア（リーグ戦では不要）

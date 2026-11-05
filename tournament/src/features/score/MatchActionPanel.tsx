@@ -18,6 +18,7 @@ import {
   Trophy,
   VolumeX,
 } from 'lucide-react';
+import { siteConfirm } from '../../components/site/siteConfirm';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -208,7 +209,7 @@ export default function MatchActionPanel({
 
   const handleResetMatch = async () => {
     if (isProcessing || !match) return;
-    if (!confirm('この試合を待機状態にリセットしますか？\nスコアと勝敗結果がクリアされます。')) return;
+    if (!(await siteConfirm('この試合を待機状態にリセットしますか？\nスコアと勝敗結果がクリアされます。'))) return;
     setIsProcessing(true);
     try {
       // Clear propagated winner from next round

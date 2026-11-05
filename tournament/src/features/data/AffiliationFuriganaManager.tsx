@@ -4,6 +4,7 @@ import * as XLSX from 'xlsx';
 import { db } from '../../db/database';
 import type { AffiliationFurigana } from '../../db/database';
 import { MapPin, Download, Upload, Search, Plus, Pencil, Trash2, CheckCircle2, AlertCircle, FolderSearch, FileSpreadsheet } from 'lucide-react';
+import { siteConfirm } from '../../components/site/siteConfirm';
 
 export default function AffiliationFuriganaManager() {
   const affiliationFurigana = useLiveQuery(() => db.affiliationFurigana.toArray()) || [];
@@ -108,7 +109,7 @@ export default function AffiliationFuriganaManager() {
 
   // --- 削除 ---
   const handleDelete = async (item: AffiliationFurigana) => {
-    if (!confirm(`「${item.name}」を削除しますか？`)) return;
+    if (!(await siteConfirm(`「${item.name}」を削除しますか？`))) return;
     try {
       await db.affiliationFurigana.delete(item.id!);
       setStatus({ message: `「${item.name}」を削除しました。`, isError: false });

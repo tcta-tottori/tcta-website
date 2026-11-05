@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react';
 import { Upload, FileSpreadsheet, CheckCircle2, AlertCircle, Users, Settings } from 'lucide-react';
 import { useTeamStore } from './teamStore';
 import { parseTeamExcel } from './teamExcelParser';
+import { siteConfirm } from '../../components/site/siteConfirm';
 
 export default function TeamImportView() {
   const {
@@ -51,8 +52,8 @@ export default function TeamImportView() {
     if (file) handleFile(file);
   }, [handleFile]);
 
-  const handleReset = useCallback(() => {
-    if (window.confirm('全てのデータをリセットしますか？')) {
+  const handleReset = useCallback(async () => {
+    if (await siteConfirm('全てのデータをリセットしますか？')) {
       resetAll();
       setError(null);
       setPreview(null);

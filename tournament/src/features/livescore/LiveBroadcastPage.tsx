@@ -23,6 +23,7 @@ import { resolveRequiredGames } from '../score/gameRules';
 import { getGameRuleText, getMatchFormat, getRoundName } from '../score/roundRules';
 import { useNow } from './useNow';
 import { formatCourtLabel } from './courtLabel';
+import { siteConfirm } from '../../components/site/siteConfirm';
 
 /** 終了後もこの時間だけ一覧に残す */
 const FINISHED_WINDOW_MS = 30 * 60 * 1000;
@@ -193,7 +194,7 @@ export default function LiveBroadcastPage() {
 
   /** 配信終了（記録を削除。試合結果は残る） */
   const handleStop = useCallback(async (live: LiveScore) => {
-    if (!confirm(`${live.player1Name} vs ${live.player2Name} の配信を終了しますか？\n（試合結果は残ります）`)) return;
+    if (!(await siteConfirm(`${live.player1Name} vs ${live.player2Name} の配信を終了しますか？\n（試合結果は残ります）`))) return;
     setBusyKey(`stop-${live.id}`);
     try {
       await deleteLiveScore(live);
@@ -226,7 +227,7 @@ export default function LiveBroadcastPage() {
   /** 全配信を終了 */
   const handleStopAll = useCallback(async () => {
     if (broadcasting.length === 0) return;
-    if (!confirm(`配信中の${broadcasting.length}試合をすべて終了しますか？\n（試合結果は残ります）`)) return;
+    if (!(await siteConfirm(`配信中の${broadcasting.length}試合をすべて終了しますか？\n（試合結果は残ります）`))) return;
     setBusyKey('stop-all');
     try {
       for (const l of broadcasting) await deleteLiveScore(l);

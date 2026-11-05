@@ -4,6 +4,7 @@ import MixedImportView from './MixedImportView';
 import { MapPin, Pencil, ArrowRightLeft, UserCheck, Users, CheckCircle, AlertTriangle, Search, X, Settings } from 'lucide-react';
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import type { MixedTeam, TournamentInfo } from './types';
+import { siteConfirm } from '../../components/site/siteConfirm';
 
 /** インライン編集セル */
 function EditableCell({ value, onSave, className = '' }: {
@@ -68,13 +69,16 @@ function MoveToLeagueSelect({ team, leagues, onMove }: {
       <select
         autoFocus
         className="text-xs border border-primary-400 rounded-lg px-1.5 py-0.5 focus:outline-none focus:ring-1 focus:ring-primary-500"
-        onChange={e => {
-          if (e.target.value) {
-            if (confirm(`${team.teamName} を ${e.target.value}リーグに移動しますか？\n（該当リーグの試合データはリセットされます）`)) {
-              onMove(team.teamId, e.target.value);
+        onChange={async e => {
+          // 確認ダイアログを待つ間にイベントの値が変わらないよう、先に取り出しておく
+          const leagueId = e.target.value;
+          // 確認ダイアログが出るとフォーカスが外れて閉じるので、先に閉じておく
+          setOpen(false);
+          if (leagueId) {
+            if (await siteConfirm(`${team.teamName} を ${leagueId}リーグに移動しますか？\n（該当リーグの試合データはリセットされます）`)) {
+              onMove(team.teamId, leagueId);
             }
           }
-          setOpen(false);
         }}
         onBlur={() => setOpen(false)}
         defaultValue=""

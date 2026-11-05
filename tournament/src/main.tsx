@@ -8,6 +8,10 @@ import DataManagement from './features/data/DataManagement'
 import TournamentHub from './features/catalog/TournamentHub'
 import DictionaryPage from './features/catalog/DictionaryPage'
 import { loadSeedDataIfNeeded } from './db/database'
+import { installSiteAlert } from './components/site/siteConfirm'
+
+// alert() を協会サイトの決まりのポップアップにする
+installSiteAlert();
 
 // 初期データ（ふりがな・所属ふりがな）をプリロード
 loadSeedDataIfNeeded();

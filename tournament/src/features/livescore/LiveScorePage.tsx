@@ -26,6 +26,7 @@ import {
 import { useNow } from './useNow';
 import { usePlayerNumbers } from './usePlayerNumbers';
 import { formatCourtLabel } from './courtLabel';
+import { siteConfirm } from '../../components/site/siteConfirm';
 
 /** 状態から ScoreState 部分だけを取り出す */
 function toState(live: LiveScore): ScoreState {
@@ -173,7 +174,7 @@ export default function LiveScorePage() {
 
   const handleFinalize = useCallback(async (winner: 1 | 2) => {
     if (!live) return;
-    if (!confirm(`${winner === 1 ? live.player1Name : live.player2Name} の勝利で結果を確定します。よろしいですか？`)) return;
+    if (!(await siteConfirm(`${winner === 1 ? live.player1Name : live.player2Name} の勝利で結果を確定します。よろしいですか？`))) return;
     setBusy(true);
     try {
       await finalizeLiveScore(live, winner);
@@ -184,7 +185,7 @@ export default function LiveScorePage() {
 
   const handleDelete = useCallback(async () => {
     if (!live) return;
-    if (!confirm('この試合のライブスコア配信を終了して記録を削除しますか？（試合結果は残ります）')) return;
+    if (!(await siteConfirm('この試合のライブスコア配信を終了して記録を削除しますか？（試合結果は残ります）'))) return;
     await deleteLiveScore(live);
     navigate(-1);
   }, [live, navigate]);

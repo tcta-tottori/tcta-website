@@ -16,6 +16,7 @@ import { importToDevice, switchToLocal } from './deviceImport';
 import { syncDictionary, useDictSync } from './dictSync';
 import { drawEntry } from './fromExcel';
 import CloudflareLogo from '../../components/ui/CloudflareLogo';
+import { siteConfirm } from '../../components/site/siteConfirm';
 
 type Filter = 'upcoming' | 'past' | 'all';
 
@@ -86,7 +87,7 @@ export default function TournamentHub() {
         setBusy({ id: t.id, label: '切り替えています' });
         await switchToLocal(local.tournamentId);
       } else {
-        if (local && !window.confirm(`この端末の「${t.name}」の運営データ（受付・試合結果）を消して、データベースの最新の内容で入れ直します。よろしいですか？`)) return;
+        if (local && !(await siteConfirm({ title: '大会を入れ直す', message: `この端末の「${t.name}」の運営データ（受付・試合結果）を消して、データベースの最新の内容で入れ直します。`, confirmLabel: '入れ直す', danger: true }))) return;
         setBusy({ id: t.id, label: '大会を読み込んでいます' });
         const full = await fetchTournament(t.id);
         await importToDevice(full, (p) => setBusy({ id: t.id, label: p.label }));
@@ -280,10 +281,13 @@ function ExcelUpload({ existing, onDone, disabled }: { existing: CatalogTourname
       const parsed = parseDrawExcel(await file.arrayBuffer(), file.name);
       if (parsed.events.length === 0) throw new Error('ドローの種目が読み取れませんでした。ミックス・団体戦は「データ管理」から取り込んでください。');
       const { id, body, matched } = drawEntry(parsed, existing, { sourceName: file.name });
-      const ok = window.confirm(
-        `${body.name}（${body.date || '日付不明'}）\n${body.draw!.events.map((e) => `${e.eventName} ${e.players.length}人`).join('\n')}\n\n` +
-        (matched ? `大会日程の「${matched.name}」に重ねて、運営できる大会にします。` : '大会日程に同じ日の大会が無いので、新しい大会として入れます。') + 'よろしいですか？',
-      );
+      const ok = await siteConfirm({
+        title: matched ? `「${matched.name}」に入れる` : '新しい大会として入れる',
+        message: `${body.name}（${body.date || '日付不明'}）\n${body.draw!.events.map((e) => `・${e.eventName} ${e.players.length}人`).join('\n')}\n\n` +
+          (matched ? '大会日程のこの大会に重ねて、運営できる大会にします。' : '大会日程に同じ日の大会が無いので、新しい大会として入れます。'),
+        confirmLabel: 'データベースに入れる',
+        danger: false,
+      });
       if (!ok) { setState({ kind: 'idle', message: '' }); return; }
       await putTournament(id, body);
       setState({ kind: 'ok', message: `${body.name} を入れました。上の一覧から「運営をはじめる」を押してください。` });

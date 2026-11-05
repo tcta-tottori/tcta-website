@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect, useCallback } from 'react';
+import { useMemo, useState, useEffect, useCallback, useRef } from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
 import {
   Database, Users, Dices, Trophy, Swords,
@@ -19,6 +19,7 @@ import {
   SiteHeader, MobileNav, PageHead, AppTabs, StatusBar, SiteFooter, SITE_URL, type NavLinkItem,
 } from '../site/SiteChrome';
 import { OfficerExpiredBar } from '../site/OfficerGate';
+import { useSiteReveal } from '../site/useSiteReveal';
 import { useOfficer, logout } from '../../features/auth/officer';
 import { syncDictionary } from '../../features/catalog/dictSync';
 
@@ -97,6 +98,9 @@ export default function AppLayout() {
   const syncState = useSyncStore((s) => s.connectionState);
   const syncRoom = useSyncStore((s) => s.roomCode);
   const officer = useOfficer();
+  // サイトと同じ「見えてきたら浮き上がって出る」動き（main の中がスクロールするので main を基準に）
+  const mainRef = useRef<HTMLElement>(null);
+  useSiteReveal(mainRef, location.pathname);
 
   // ログインした時点で、選手・所属のふりがな辞書をデータベースから取り込む（版が同じなら何もしない）
   useEffect(() => {
@@ -396,6 +400,7 @@ export default function AppLayout() {
       <MobileNav open={menuOpen} onClose={closeMenu} items={mobileItems} />
 
       <main
+        ref={mainRef}
         id="main"
         className={`app-main ${fill ? 'app-main--fill' : ''}`}
         onScroll={(e) => { const y = (e.currentTarget as HTMLElement).scrollTop > 100; if (y !== scrolled) setScrolled(y); }}

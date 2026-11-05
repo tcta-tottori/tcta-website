@@ -10,6 +10,7 @@ import { useTeamCallStore } from './teamCallStore';
 import { useCallTts } from '../broadcast/useCallTts';
 import { TeamBracketResultPreview } from './TeamBracketResultPreview';
 import { leagueBadgeStyle } from '../mixed/leagueColors';
+import { siteConfirm } from '../../components/site/siteConfirm';
 
 const CATEGORY_LABELS: Record<PlacementCategory, string> = {
   '1st': '1位トーナメント',
@@ -295,10 +296,10 @@ export default function TeamBracketView() {
       {/* テスト入力ボタン */}
       <div className="grid grid-cols-2 gap-2">
         <button
-          onClick={() => {
+          onClick={async () => {
             const target = showAllBrackets ? brackets : (currentBracket ? [currentBracket] : []);
             const label = showAllBrackets ? '全トーナメント' : getLabel(selectedBracketCategory);
-            if (!confirm(`${label}の全試合を 田中/山本 6-4 田中/山本 で埋めます。よろしいですか？`)) return;
+            if (!(await siteConfirm(`${label}の全試合を 田中/山本 6-4 田中/山本 で埋めます。よろしいですか？`))) return;
             for (const bracket of target) {
               const totalRounds = Math.log2(bracket.drawSize);
               for (let round = 1; round <= totalRounds; round++) {
@@ -324,8 +325,8 @@ export default function TeamBracketView() {
           TEST
         </button>
         <button
-          onClick={() => {
-            if (!confirm(`全トーナメント（${brackets.length}カテゴリ）の全試合を 田中/山本 6-4 田中/山本 で埋めます。よろしいですか？`)) return;
+          onClick={async () => {
+            if (!(await siteConfirm(`全トーナメント（${brackets.length}カテゴリ）の全試合を 田中/山本 6-4 田中/山本 で埋めます。よろしいですか？`))) return;
             for (const bracket of brackets) {
               const totalRounds = Math.log2(bracket.drawSize);
               for (let round = 1; round <= totalRounds; round++) {
@@ -1647,7 +1648,7 @@ function TeamBracketReorderPanel({ bracket, allBrackets, customLabels, onClose, 
     setImportedSources(new Map());
   };
 
-  const apply = () => {
+  const apply = async () => {
     const warnings: string[] = [];
     if (hasInProgress) warnings.push('● 対戦中の試合があります。');
     if (hasFinished) warnings.push('● 入力済みのスコアがあります。');
@@ -1658,7 +1659,7 @@ function TeamBracketReorderPanel({ bracket, allBrackets, customLabels, onClose, 
     }
     if (warnings.length > 0) {
       const msg = `以下の影響があります:\n${warnings.join('\n')}\n\n本当に並べ替えますか？`;
-      if (!confirm(msg)) return;
+      if (!(await siteConfirm(msg))) return;
     }
     onApply(bracket.category, slots, byes, effectiveImports);
     onClose();

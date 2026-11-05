@@ -9,6 +9,7 @@ import { findMembersByTeamName } from './clubExcelParser';
 import TeamScoreInput from './TeamScoreInput';
 import { TeamLeagueResultPreview } from './TeamLeagueResultPreview';
 import { createPortal } from 'react-dom';
+import { siteConfirm } from '../../components/site/siteConfirm';
 
 /** 判定ルール詳細 */
 const TIEBREAK_RULE_DETAILS: Record<TiebreakRuleId, {
@@ -902,8 +903,8 @@ export default function TeamLeagueView() {
       {/* テスト入力ボタン */}
       <div className="grid grid-cols-2 gap-2">
         <button
-          onClick={() => {
-            if (!confirm(`${selectedLeague.leagueId}リーグの全試合を、各チームのメンバーを使って 6-4 で埋めます。よろしいですか？`)) return;
+          onClick={async () => {
+            if (!(await siteConfirm(`${selectedLeague.leagueId}リーグの全試合を、各チームのメンバーを使って 6-4 で埋めます。よろしいですか？`))) return;
             for (const m of leagueMatchList) {
               const t1 = allTeams.find(t => t.teamId === m.team1Id);
               const t2 = allTeams.find(t => t.teamId === m.team2Id);
@@ -920,8 +921,8 @@ export default function TeamLeagueView() {
           TEST
         </button>
         <button
-          onClick={() => {
-            if (!confirm(`全リーグ（${leagues.length}ブロック）の全試合を、各チームのメンバーを使って 6-4 で埋めます。よろしいですか？`)) return;
+          onClick={async () => {
+            if (!(await siteConfirm(`全リーグ（${leagues.length}ブロック）の全試合を、各チームのメンバーを使って 6-4 で埋めます。よろしいですか？`))) return;
             for (const m of leagueMatches) {
               const t1 = allTeams.find(t => t.teamId === m.team1Id);
               const t2 = allTeams.find(t => t.teamId === m.team2Id);

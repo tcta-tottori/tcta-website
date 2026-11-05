@@ -3,6 +3,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../../db/database';
 import { useAppStore } from '../../stores/appStore';
 import { CalendarDays, Plus, Trash2, MapPin } from 'lucide-react';
+import { siteConfirm } from '../../components/site/siteConfirm';
 
 export default function CourtSchedule() {
   const currentTournamentId = useAppStore(state => state.currentTournamentId);
@@ -70,7 +71,7 @@ export default function CourtSchedule() {
   };
 
   const handleDeleteCourt = async (id: number) => {
-    if (!confirm('このコートを削除しますか？')) return;
+    if (!(await siteConfirm('このコートを削除しますか？'))) return;
     await db.courts.delete(id);
   };
 
