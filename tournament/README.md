@@ -152,6 +152,8 @@ Claude Code が Cloudflare を操作するための鍵（API トークン）を�
    1. 「**チーム名**」（team name）を決める（例 `tottori-city-tennis`。ログイン画面のアドレス `tottori-city-tennis.cloudflareaccess.com` になる）
    2. プランは「**Free**」（無料。50 人まで）を選ぶ
    3. 支払い方法の登録を求められたら登録する（Free プランのままなら請求は来ない）
+   チーム名を聞かれずに「Cloudflare One」の概要の画面（ユーザー 0 / 50 人中 など）まで進んだときは、それで開始できている
+   （チーム名は自動で付く）。名前は手順 4 で Claude Code が見せるので、変えたければそのとき「チーム名を tottori-city-tennis にして」と頼む
 4. **Claude Code に頼む** … 新しいセッションで「役員ログインを設定して。役員は（メールアドレスを並べる）」と書く
 5. **確かめる** … https://tcta-tournament.tcta-admin-worker.workers.dev/data を開き、**役員としてログイン** → メールアドレス →
    メールで届いた 6 桁のコード → 運営画面に戻れば完了。

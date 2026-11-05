@@ -3,7 +3,8 @@
 //
 //   node tournament/scripts/officers.mjs status                     今の設定（チーム・アプリケーション・役員・Worker の設定・公開先の状態）
 //   node tournament/scripts/officers.mjs setup --emails a@x.jp,b@y.jp [--team tottori-city-tennis]
-//                                                                    はじめの設定（足りないものを作り、Worker に入れる。何度走らせてもよい）
+//                                                                    はじめの設定（足りないものを作り、Worker に入れる。何度走らせてもよい）。
+//                                                                    --team を付けると、Zero Trust のチーム名（ログイン画面のアドレス）を付け替える
 //   node tournament/scripts/officers.mjs list                       役員の一覧
 //   node tournament/scripts/officers.mjs add a@x.jp [b@y.jp …]      役員を足す
 //   node tournament/scripts/officers.mjs remove a@x.jp [b@y.jp …]   役員を外す
@@ -190,7 +191,7 @@ async function status() {
   const acc = await account();
   console.log(`アカウント: ${acc}`);
   const org = await organization(acc, DEFAULT_TEAM, false);
-  console.log(`Zero Trust のチーム: ${org?.auth_domain ?? '（まだ無い）'}`);
+  console.log(`Zero Trust のチーム: ${org?.auth_domain ?? '（まだ無い）'}${org ? '（ログイン画面のアドレス。変えるときは setup --team 名前）' : ''}`);
   if (!org) return console.log('\n→ はじめの設定がまだです。setup を実行してください。');
   const otp = await otpProvider(acc, false);
   console.log(`ログインの方法（メールのコード）: ${otp ? 'あり' : '（まだ無い）'}`);
@@ -209,12 +210,23 @@ async function status() {
 
 async function setup(args) {
   const emails = normEmails(optValue(args, '--emails') ?? []);
-  const team = (optValue(args, '--team')?.[0] ?? DEFAULT_TEAM).replace(/\.cloudflareaccess\.com$/, '');
+  const teamArg = optValue(args, '--team')?.[0]?.replace(/\.cloudflareaccess\.com$/, '').toLowerCase();
+  if (teamArg && !/^[a-z0-9][a-z0-9-]{1,61}[a-z0-9]$/.test(teamArg)) fail(`チーム名に使えるのは英小文字・数字・ハイフンだけです: ${teamArg}`);
+  const team = teamArg ?? DEFAULT_TEAM;
   const bad = badEmails(emails);
   if (bad.length) fail(`メールアドレスの形が違います: ${bad.join(', ')}`);
   const acc = await account();
-  const org = await organization(acc, team, true);
-  console.log(`✓ Zero Trust のチーム: ${org.auth_domain}`);
+  let org = await organization(acc, team, true);
+  // チーム名（ログイン画面のアドレス）を指定されたら、今のものと違えば付け替える。指定が無ければ今のまま
+  if (teamArg && org.auth_domain !== `${teamArg}.cloudflareaccess.com`) {
+    try {
+      org = (await call('PUT', `/accounts/${acc}/access/organizations`, { name: org.name || '鳥取市テニス協会', auth_domain: `${teamArg}.cloudflareaccess.com` })).result;
+      console.log(`✓ チーム名を付け替えました（ログイン画面のアドレス）: ${org.auth_domain}`);
+    } catch (e) {
+      fail(`チーム名を ${teamArg} に付け替えられませんでした（${e.message}）。ほかで使われている名前かもしれません。別の名前で --team を指定してください。`);
+    }
+  }
+  console.log(`✓ Zero Trust のチーム: ${org.auth_domain}（ログイン画面のアドレス）`);
   const otp = await otpProvider(acc, true);
   let policy = await findPolicy(acc);
   if (emails.length) {
