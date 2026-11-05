@@ -807,3 +807,21 @@ html.is-lite [class~="fixed"][class~="inset-0"] > [class*="bg-white"][class*="ma
   .app-shell .site-header.hsh { background: #fff; box-shadow: 0 1px 10px rgba(26, 26, 26, .08); }
   .app-shell .site-header.hsh .site-header__logo img, .app-shell .site-header.hsh .hamburger { filter: none; }
 }
+
+/* 選手の行：漢字とふりがなは左に 2 段、所属は右の別の列に右揃え（スマホも PC も） */
+.dict-list--players .dict-row:not(.is-editing) {
+  grid-template-columns: minmax(0, 1fr) minmax(0, max-content) 32px;
+  grid-template-areas: "name sub pen" "kana sub pen" "note note note" "err err err";
+  column-gap: 12px;
+}
+.dict-list--players .dict-row__sub { justify-self: end; text-align: right; max-width: 11em; }
+.dict-list--players .dict-row.is-editing .dict-row__sub { justify-self: start; text-align: left; }
+@media (min-width: 640px) {
+  .dict-list--players .dict-row:not(.is-editing) {
+    grid-template-columns: minmax(6.5em, 11em) minmax(0, 1fr) minmax(0, 14em) 6em 32px;
+    grid-template-areas: "name kana sub flag pen" "note note note note note" "err err err err err";
+  }
+  .dict-list--players .dict-row__sub { max-width: none; font-size: 13px; }
+  .colf--players .colf__cell--aff .colf__btn { justify-content: flex-end; }
+  .colf--players .colf__cell--aff .colf__panel { left: auto; right: 0; }
+}
