@@ -77,6 +77,16 @@ ok(!(await connect('operator')), 'ログインしていなければ、運営端�
   const forged = await fetch(BASE + '/api/data/files', { headers: { Authorization: 'Bearer tcta_push_forged' } });
   ok(forged.status === 401, '偽の送信用の鍵では大会データを読めない');
 }
+
+// 大会運営のデータベース（大会・辞書。worker/catalog.ts）
+{
+  const sch = await fetch(BASE + '/api/schema');
+  ok(sch.ok && !!(await sch.json()).tournament, '/api/schema（AI 向けの形の説明）はログインなしで読める');
+  ok((await fetch(BASE + '/api/catalog')).status === 401, 'ログインしていなければ大会の一覧は読めない');
+  ok((await fetch(BASE + '/api/dict')).status === 401, 'ログインしていなければ辞書は読めない');
+  const put = await fetch(BASE + '/api/catalog/smoke-test', { method: 'PUT', headers: { Origin: BASE, 'Content-Type': 'application/json' }, body: '{"name":"x"}' });
+  ok(put.status === 401, 'ログインしていなければ大会は置けない');
+}
 {
   const refused = await new Promise((resolve) => {
     const ws = new WebSocket(`${WS}?room=bad%20room&role=viewer`);
@@ -139,6 +149,28 @@ if (cookie) {
   ok(late.inbox.some((m) => m.type === 'snapshot-response' && m.payload?.dexie?.[0]?.rows?.[0]?.name === 'スモーク大会'), '観戦端末は預かった大会データを書き換えられない');
 
   for (const c of [viewer, op2, sly, late]) c.ws.close();
+
+  // 大会運営のデータベース（手元のときだけ書く。配備先の本物のデータは触らない）
+  if (meBody.mode === 'dev') {
+    const H = { Cookie: cookie, Origin: BASE, 'Content-Type': 'application/json' };
+    const bad = await fetch(BASE + '/api/catalog/smoke-test', { method: 'PUT', headers: H, body: JSON.stringify({ name: 'スモーク', status: 'ready' }) });
+    ok(bad.status === 400, 'ドローの無い大会は「運営できる」にできない');
+    const body = { name: 'スモーク大会', date: '2026-11-08', venue: 'テスト', draw: { events: [{ eventName: '男子シングルス', type: 'Singles', drawSize: 4, players: [
+      { position: 1, name: '甲 太郎', affiliation: 'A', seed: 1 }, { position: 2, name: '乙 次郎', affiliation: 'B' }, { position: 4, name: '丙 三郎', affiliation: 'C' }] }] } };
+    const put = await fetch(BASE + '/api/catalog/smoke-test', { method: 'PUT', headers: H, body: JSON.stringify(body) });
+    const putBody = await put.json();
+    ok(put.ok && putBody.status === 'ready' && putBody.players === 3, '役員は大会を置ける（ドローがあれば「運営できる」）');
+    const one = await (await fetch(BASE + '/api/catalog/smoke-test', { headers: { Cookie: cookie } })).json();
+    ok(one.draw?.events?.[0]?.players?.length === 3, '置いた大会のドローを読める');
+    const list = await (await fetch(BASE + '/api/catalog', { headers: { Cookie: cookie } })).json();
+    ok(list.tournaments.some((t) => t.id === 'smoke-test' && !('draw' in t)), '一覧は軽い要約だけ（ドローは入れない）');
+    const d = await fetch(BASE + '/api/dict', { method: 'PUT', headers: H, body: JSON.stringify({ mode: 'merge', players: [{ name: 'スモーク 太郎', furigana: 'すもーく たろう' }] }) });
+    ok(d.ok, '辞書に足せる');
+    const dict = await (await fetch(BASE + '/api/dict', { headers: { Cookie: cookie } })).json();
+    ok(dict.players.some((p) => p.name === 'スモーク 太郎'), '足した人が辞書にいる');
+    await fetch(BASE + '/api/dict', { method: 'PUT', headers: H, body: JSON.stringify({ mode: 'merge', removePlayers: ['スモーク 太郎'] }) });
+    await fetch(BASE + '/api/catalog/smoke-test', { method: 'DELETE', headers: H });
+  }
 } else {
   console.log('  （役員としての確認は省略：OFFICER_COOKIE を渡すか、手元の AUTH_MODE=dev で試す）');
 }

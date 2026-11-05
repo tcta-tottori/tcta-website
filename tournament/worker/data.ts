@@ -62,7 +62,7 @@ function toListItem(r: FileRow) {
 }
 
 /** 誰が呼んだか。役員なら email、送信用の鍵なら 'push'。どちらでもなければ null */
-async function caller(request: Request, env: Env, url: URL, write: boolean): Promise<string | null> {
+export async function caller(request: Request, env: Env, url: URL, write: boolean): Promise<string | null> {
   const auth = request.headers.get('Authorization') ?? '';
   if (auth.startsWith('Bearer ')) {
     const want = (env.DATA_PUSH_TOKEN_SHA256 ?? '').trim().toLowerCase();

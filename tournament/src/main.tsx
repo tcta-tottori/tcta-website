@@ -5,6 +5,8 @@ import './index.css'
 import AppLayout from './components/layout/AppLayout'
 import ErrorBoundary from './components/ErrorBoundary'
 import DataManagement from './features/data/DataManagement'
+import TournamentHub from './features/catalog/TournamentHub'
+import DictionaryPage from './features/catalog/DictionaryPage'
 import { loadSeedDataIfNeeded } from './db/database'
 
 // 初期データ（ふりがな・所属ふりがな）をプリロード
@@ -102,7 +104,9 @@ createRoot(document.getElementById('root')!).render(
 
         <Route path="/" element={<OfficerGate><AppLayout /></OfficerGate>}>
           <Route index element={<Navigate to="/data" replace />} />
-          <Route path="data" element={<DataManagement />} />
+          <Route path="data" element={<TournamentHub />} />
+          <Route path="dict" element={<DictionaryPage />} />
+          <Route path="data-tools" element={<DataManagement />} />
           <Route path="entry" element={<EntryRegistration />} />
 
           <Route path="draw-lot" element={<DrawGenerator />} />

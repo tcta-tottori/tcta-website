@@ -16,6 +16,10 @@ export interface Tournament {
   drawStartTime?: string;
   /** ドロー表から検出した同時進行試合数（＝使用コート数の目安）。 */
   suggestedCourtCount?: number;
+  /** Cloudflare の大会データベースのどの大会から入れたか（worker/catalog.ts の id）。端末で直接取り込んだ大会には無い */
+  catalogId?: string;
+  /** 入れたときの、データベース側の更新日時（新しい版があるかの判定に使う） */
+  catalogUpdatedAt?: string;
 }
 
 // ---------------------------

@@ -1,13 +1,7 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { ListChecks, FileSpreadsheet, ChevronDown, ChevronRight, Trash2, AlertTriangle, Trophy, Calendar, MapPin, Pencil, Users, Eraser, FlaskConical } from 'lucide-react';
-import {
-  getSavedClientId,
-  isTokenValid as gdriveIsTokenValid,
-} from '../backup/cloudDataApi';
-import PlayerDataList from './PlayerDataList';
+import { FileSpreadsheet, ChevronDown, ChevronRight, Trash2, AlertTriangle, Trophy, Calendar, MapPin, Pencil, Users, Eraser, FlaskConical } from 'lucide-react';
 import DataImport from './DrawMeetingImport';
-import DataSync, { FuriganaAffiliationOps } from './DataSync';
 import { db } from '../../db/database';
 import { useAppStore } from '../../stores/appStore';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
@@ -334,23 +328,11 @@ function TeamTournamentInfoSection() {
 }
 
 export default function DataManagement() {
-  // Cloudflare の大会データへの接続状態（役員ログイン。再レンダリングトリガー用）
-  const [, setGdriveVersion] = useState(0);
-  const gdriveConnected = !!getSavedClientId() && gdriveIsTokenValid();
   const isMixedImported = useMixedStore(s => s.isImported);
   const isTeamImported = useTeamStore(s => s.isImported);
 
   // セクション開閉状態
-  const [dataImportOpen, setDataImportOpen] = useState(true);
-  const [playerListOpen, setPlayerListOpen] = useState(false);
-
-  // GDriveからダウンロードされたデータを DrawMeetingImport に渡すための state
-  const [externalTournamentExcel, setExternalTournamentExcel] = useState<{ arrayBuffer: ArrayBuffer; fileName: string } | null>(null);
-  const [externalScheduleExcel, setExternalScheduleExcel] = useState<{ arrayBuffer: ArrayBuffer; fileName: string } | null>(null);
-  // ウィザードからの自動インポート情報
-  const [wizardAutoImport, setWizardAutoImport] = useState<{ name: string; date: string; venue: string; reserveDate: string; courtNames?: string } | null>(null);
-  // ウィザード自動インポートでDBに書き込まれた大会ID（時間割自動生成に使用）
-  const [wizardImportedTournamentId, setWizardImportedTournamentId] = useState<string | null>(null);
+  const [dataImportOpen, setDataImportOpen] = useState(false);
 
   // 全データリセット用
   const [showResetConfirm, setShowResetConfirm] = useState(false);
@@ -447,42 +429,6 @@ export default function DataManagement() {
     },
   ].filter(Boolean) as { key: string; label: string; desc: string; message: string; run: () => void | Promise<void> }[];
 
-  // DataSync の接続/切断時に再評価をトリガー
-  const handleConnectionChange = useCallback(() => {
-    setGdriveVersion(v => v + 1);
-  }, []);
-
-  // データ読込成功時に所属・ふりがな一覧パネルを自動展開
-  const handleDataLoaded = useCallback(() => {
-    setPlayerListOpen(true);
-  }, []);
-
-  // GDriveから大会Excelがダウンロードされたとき
-  const handleTournamentExcelLoaded = useCallback((arrayBuffer: ArrayBuffer, fileName: string) => {
-    setExternalTournamentExcel({ arrayBuffer, fileName });
-    setWizardAutoImport(null);
-    setDataImportOpen(true);
-  }, []);
-
-  // ウィザードで大会確認後に自動インポート
-  const handleWizardTournamentConfirmed = useCallback((arrayBuffer: ArrayBuffer, fileName: string, info: { name: string; date: string; venue: string; reserveDate: string; courtNames?: string }) => {
-    setWizardImportedTournamentId(null);
-    setWizardAutoImport(info);
-    setExternalTournamentExcel({ arrayBuffer, fileName });
-    setDataImportOpen(true);
-  }, []);
-
-  // ウィザード自動インポートがDBへの書込を完了したとき（時間割自動生成用にIDを保持）
-  const handleAutoImportComplete = useCallback((tournamentId: string) => {
-    setWizardImportedTournamentId(tournamentId);
-  }, []);
-
-  // GDriveから時間割Excelがダウンロードされたとき
-  const handleScheduleExcelLoaded = useCallback((arrayBuffer: ArrayBuffer, fileName: string) => {
-    setExternalScheduleExcel({ arrayBuffer, fileName });
-    setDataImportOpen(true);
-  }, []);
-
   // 全データリセット
   const handleResetAll = useCallback(async () => {
     setShowResetConfirm(false);
@@ -513,10 +459,6 @@ export default function DataManagement() {
     }
   }, []);
 
-  // 初回マウント時にも接続状態を評価
-  useEffect(() => {
-    setGdriveVersion(v => v + 1);
-  }, []);
 
   return (
     <div className="p-4 md:p-6 max-w-5xl mx-auto space-y-6">
@@ -529,16 +471,6 @@ export default function DataManagement() {
       {/* 団体戦 大会情報 */}
       {isTeamImported && <TeamTournamentInfoSection />}
 
-      {/* 大会データ（Cloudflare）: 一括読込 + 大会/時間割読込 */}
-      <DataSync
-        onConnectionChange={handleConnectionChange}
-        onDataLoaded={handleDataLoaded}
-        onTournamentExcelLoaded={handleTournamentExcelLoaded}
-        onScheduleExcelLoaded={handleScheduleExcelLoaded}
-        onWizardTournamentConfirmed={handleWizardTournamentConfirmed}
-        wizardImportedTournamentId={wizardImportedTournamentId}
-      />
-
       {/* 大会データ読込パネル（Excelボタン方式） */}
       <section className="bg-white rounded-xl shadow-sm border border-border-main overflow-hidden">
         <button
@@ -548,39 +480,13 @@ export default function DataManagement() {
           <div className="flex items-center gap-2">
             {dataImportOpen ? <ChevronDown className="w-4 h-4 text-gray-500" /> : <ChevronRight className="w-4 h-4 text-gray-500" />}
             <FileSpreadsheet className="w-5 h-5 text-primary-500" />
-            <h2 className="font-semibold text-gray-700">大会データ読込</h2>
+            <h2 className="font-semibold text-gray-700">Excel から端末に直接取り込む</h2>
+            <span className="text-xs text-gray-500 hidden sm:inline">ミックスダブルス・団体戦・時間割の Excel など。ふつうの大会は「大会選択」から</span>
           </div>
         </button>
         {dataImportOpen && (
           <div className="p-4">
-            <DataImport
-              externalTournamentExcel={externalTournamentExcel}
-              externalScheduleExcel={externalScheduleExcel}
-              wizardAutoImport={wizardAutoImport}
-              onAutoImportComplete={handleAutoImportComplete}
-            />
-          </div>
-        )}
-      </section>
-
-      {/* 所属・ふりがな一覧パネル（ふりがな/所属操作 + 一覧） */}
-      <section className="bg-white rounded-xl shadow-sm border border-border-main overflow-hidden">
-        <button
-          onClick={() => setPlayerListOpen(!playerListOpen)}
-          className="w-full bg-white px-4 py-3 border-b border-border-main flex items-center justify-between hover:bg-gray-50 transition-colors"
-        >
-          <div className="flex items-center gap-2">
-            {playerListOpen ? <ChevronDown className="w-4 h-4 text-gray-500" /> : <ChevronRight className="w-4 h-4 text-gray-500" />}
-            <ListChecks className="w-5 h-5 text-primary-500" />
-            <h2 className="font-semibold text-gray-700">所属・ふりがな一覧</h2>
-          </div>
-        </button>
-        {playerListOpen && (
-          <div className="p-5 space-y-5">
-            {/* ふりがな・所属のGDrive読込/書込 + Excel読込 */}
-            <FuriganaAffiliationOps gdriveConnected={gdriveConnected} onDataLoaded={handleDataLoaded} />
-            {/* 一覧表示 */}
-            <PlayerDataList />
+            <DataImport externalTournamentExcel={null} externalScheduleExcel={null} wizardAutoImport={null} />
           </div>
         )}
       </section>

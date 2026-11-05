@@ -7,6 +7,7 @@
 //   /api/me                   … ログイン中の役員（運営画面が最初に確かめる）
 //   /api/gemini-status        … 音声コール（Gemini TTS）が使えるか
 //   /api/gemini-tts           … 音声コールの生成（役員だけ。API キーは Worker の secret。ブラウザには渡さない）
+//   /api/catalog・/api/dict  … 大会（ドロー込み）と選手・所属のふりがな辞書（D1。worker/catalog.ts）。/api/schema にその形の説明
 //   /api/data/files…          … 大会データの置き場（D1。worker/data.ts）。役員と、外からデータを送る仕組み（送信用の鍵）だけ
 //   /api/health               … 動作確認
 //   それ以外                  … アプリ本体（dist/ の静的ファイル。SPA なので未知の URL は index.html）
@@ -19,6 +20,7 @@
 
 import { handleAuth, handleMe, officerOf, sameOrigin } from './auth';
 import { handleData } from './data';
+import { handleCatalog } from './catalog';
 
 export { SyncRoom } from './sync-room';
 
@@ -73,6 +75,10 @@ export default {
 
     if (url.pathname === '/api/me') {
       return handleMe(request, env, url);
+    }
+
+    if (url.pathname === '/api/catalog' || url.pathname.startsWith('/api/catalog/') || url.pathname === '/api/dict' || url.pathname === '/api/schema') {
+      return handleCatalog(request, env, url);
     }
 
     if (url.pathname === '/api/data/files' || url.pathname.startsWith('/api/data/files/')) {

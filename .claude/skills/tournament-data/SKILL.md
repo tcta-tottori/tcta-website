@@ -1,43 +1,44 @@
 ---
 name: tournament-data
-description: 大会運営システム（tournament/、Cloudflare 版）の大会データ（D1 に置く Excel・バックアップ）を送る・一覧する・消す。「大会データを送ります」「この Excel を時間割として入れて」「プレイヤーデータ（ふりがな・所属）を入れて」「Cloudflare に何が入っているか見せて」「外から送る鍵を作って」と言われたら使う。
+description: 大会運営システム（tournament/、Cloudflare 版）のデータベースに、大会（ドロー）・大会日程・選手と所属のふりがな辞書を入れる・見る・直す・消す。「大会データを送ります」「このドローを入れて」「今週の大会を運営できるようにして」「ふりがなを直して／足して」「データベースに何が入っているか見せて」「外から送る鍵を作って」と言われたら使う。
 ---
 
-# 大会データ（Cloudflare）を送る・見る・消す
+# 大会運営のデータベースに入れる・直す
 
-運営画面は Google ドライブではなく、Cloudflare の D1（`tcta-tournament-data`）に置いたファイルを読む（`tournament/worker/data.ts`）。
-置き場は種類ごとに分かれ、運営画面の「大会データ（Cloudflare）」のボタンはそれぞれの種類を読む。しくみは `tournament/README.md` の「大会データ（Cloudflare）」。
-
-| 種類 | 置くもの | 画面のどこで読むか |
-| --- | --- | --- |
-| `tournament` | 大会日程表（ファイル名に「大会日程」）と、各大会のドロー Excel | 一括読込・大会・時間割 |
-| `schedule` | 時間割 Excel | 一括読込・大会・時間割、時間割の画面 |
-| `furigana` | ふりがな一覧 Excel（列: 氏名・ふりがな）。いちばん新しい 1 つを読む | ふりがな・所属 |
-| `affiliation` | 所属一覧 Excel（列: 所属名・ふりがな）。いちばん新しい 1 つを読む | ふりがな・所属 |
-| `backup` | 「設定 → バックアップ」の JSON | バックアップの復元 |
-| `result` | 大会結果 | — |
+運営画面はログインすると、データベース（Cloudflare D1。`tournament/worker/catalog.ts`）の大会を並べ、選ぶとそのまま端末に入ってエントリー受付に進む。
+ふりがな辞書もログイン時に自動で端末に取り込む。**ファイルを置くのではなく、JSON で直接書く**。形は `GET /api/schema`（ログイン不要）と README の「大会運営のデータベース」。
 
 ## コマンド（リポジトリの直下から。Node 22 以上）
 
 ```bash
-node tournament/scripts/data.mjs list [種類]
-node tournament/scripts/data.mjs push <種類> <ファイル…>     # 同じ種類・同じ名前があれば上書き
-node tournament/scripts/data.mjs remove <種類> <名前…>
-node tournament/scripts/data.mjs token                      # 外の仕組み用の送信用の鍵（1 度だけ表示。前の鍵は使えなくなる）
+C="node --experimental-strip-types --no-warnings tournament/scripts/catalog.mts"
+$C list                                        # 大会（日程だけ／運営できる／終了）と辞書の件数
+$C show <id>                                   # 大会 1 件の JSON
+$C season <大会日程.xlsx>                      # 年間日程を「日程だけ」で入れる（ドローの入った大会は触らない）
+$C draw <ドロー.xlsx> [--id <id>] [--name 正式名] [--courts 16]   # ドローを入れて「運営できる」に（同じ日の日程に重なる）
+$C put <大会.json> --id <id>                   # JSON をそのまま入れる（画像・PDF から起こしたドローなど）
+$C dict <ふりがな.xlsx> [所属.xlsx] [--merge]  # 辞書（列: 氏名・ふりがな・所属・確認メモ／所属名・ふりがな）。既定は置き換え
+$C status <id> <planned|ready|done>
+$C remove <id>
+node tournament/scripts/data.mjs token         # 外の仕組み用の送信用の鍵（1 度だけ表示）
 ```
 
-Cloudflare の API トークン（Workers Scripts: Edit）は役員ログインと同じもの（`officer-login` スキル）。届いていなければスクリプトがそう言って止まる。
+id は協会サイトの大会ページと同じ名前（`r8-kensen-singles` など。`src/features/catalog/fromExcel.ts` の SLUGS）。
+Cloudflare の API トークン（Workers Scripts: Edit）は役員ログインと同じもの（`officer-login` スキル）。
 
 ## 頼まれごとと、すること
 
 | 頼まれごと | すること |
 | --- | --- |
-| ファイルを渡されて「入れて」 | 中身（シート名・見出し行）を見て種類を決める。迷うときは聞く。`push` のあと `list` で入ったことを確かめて伝える |
-| プレイヤーデータ | 画面が読む形は「ふりがな一覧（氏名・ふりがな）」と「所属一覧（所属名・ふりがな）」。選手名簿そのものはドロー Excel から取り込まれる。別の形で届いたら、どの形にするかを確かめてから Excel に直して送る |
+| ドローの Excel を渡されて「入れて」 | `draw`。出力の種目・人数を伝える。同じ日の日程が無いと新しい大会になるので、そのときは id を確かめる |
+| ドローが画像・PDF しか無い（サイトに載っているものなど） | 画像を読み、枠番号（BYE の位置）・シード・試合時刻・試合形式を起こして tournament の JSON を作り `put`。BYE は書かず、枠番号 position で位置を表す。2回戦以降の時刻は roundMatchTimes（`R{回戦}-{何試合目}`）。入れたら `show` で人数・シードを画像と照らし合わせる |
+| 「今週の大会を運営できるようにして」 | `list` でその日の大会を見て、ドローを入れる。運営画面の「大会選択」に「運営できる」で出ることを伝える |
+| ふりがなの直し・追加 | `dict … --merge`、または `PUT /api/dict`（merge）で必要な人だけ。自信のない読みは note（確認メモ）に理由を書く（画面で「要確認」に出る） |
+| 年度の大会日程が来た | `season` |
 | 何が入っているか | `list` |
-| 外のシステムから送りたい | `token` で鍵を作り、README の curl の例と一緒に伝える。鍵はリポジトリ・コミットに書かない |
 
 ## 守ること
 
-- 個人情報を含むファイル（名簿など）をリポジトリに入れない。送るときは scratchpad などリポジトリの外に置いて `push` する
-- 結果はスクリプトの出力どおりに伝える。`list` で確かめていないことを「入った」と言わない
+- 名簿など個人情報を含むファイルはリポジトリに入れない（scratchpad などに置いて送る）
+- 結果はスクリプトの出力どおりに伝える。`list`・`show` で確かめていないことを「入った」と言わない
+- ドローの入った大会を `season` で上書きしない（スクリプトは自動で飛ばす）。入れ直すときは `draw` か `put`

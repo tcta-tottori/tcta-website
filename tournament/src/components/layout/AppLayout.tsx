@@ -3,7 +3,7 @@ import { Link, Outlet, useLocation } from 'react-router-dom';
 import {
   Database, Users, Dices, Trophy, Swords,
   ClipboardList, CalendarClock, BarChart2,
-  HelpCircle, Settings, Network, Radio, Printer, MapPin, Calendar,
+  HelpCircle, Settings, Network, Radio, Printer, MapPin, Calendar, BookOpen, Wrench
 } from 'lucide-react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../../db/database';
@@ -20,6 +20,7 @@ import {
 } from '../site/SiteChrome';
 import { OfficerExpiredBar } from '../site/OfficerGate';
 import { useOfficer, logout } from '../../features/auth/officer';
+import { syncDictionary } from '../../features/catalog/dictSync';
 
 interface MainTab {
   id: string;
@@ -31,7 +32,8 @@ interface MainTab {
 }
 
 const ALL_MAIN_TABS: MainTab[] = [
-  { id: 'S-01', path: '/data', label: 'データ', en: 'DATA', icon: Database },
+  { id: 'S-01', path: '/data', label: '大会選択', en: 'SELECT', icon: Database },
+  { id: 'S-01b', path: '/dict', label: '選手・所属', en: 'PLAYERS', icon: BookOpen },
   { id: 'S-02', path: '/entry', label: 'エントリー', en: 'ENTRY', icon: Users },
 
   { id: 'S-04', path: '/draw-lot', label: '抽選', en: 'DRAW LOT', icon: Dices },
@@ -46,6 +48,7 @@ const ALL_MAIN_TABS: MainTab[] = [
   { id: 'S-11', path: '/manual', label: 'マニュアル', en: 'MANUAL', icon: HelpCircle },
   // 同期・観戦用ページ・音声・バックアップは設定ページに集約している
   { id: 'S-12', path: '/settings', label: '設定', en: 'SETTINGS', icon: Settings },
+  { id: 'S-13', path: '/data-tools', label: 'データ管理', en: 'DATA TOOLS', icon: Wrench },
 ];
 
 /**
@@ -54,12 +57,12 @@ const ALL_MAIN_TABS: MainTab[] = [
  * まとまりの中の画面はページ見出しの下のタブで切り替える（会員ポータルの事務局画面と同じ作り）。
  */
 const NAV_GROUPS: { key: string; label: string; en: string; paths: string[] }[] = [
-  { key: 'prep', label: '大会準備', en: 'PREPARATION', paths: ['/data', '/entry', '/draw-lot', '/draw-table'] },
+  { key: 'prep', label: '大会準備', en: 'PREPARATION', paths: ['/data', '/dict', '/entry', '/draw-lot', '/draw-table'] },
   { key: 'run', label: '大会進行', en: 'OPERATION', paths: ['/referee', '/schedule-sheet', '/court-bracket', '/score'] },
   { key: 'live', label: '配信', en: 'LIVE', paths: ['/dashboard', '/broadcast'] },
   { key: 'print', label: '印刷', en: 'PRINT', paths: ['/print'] },
   // マニュアルは設定のまとまりに入れる（ロゴ横の札のぶん、ナビを 5 項目に収めるため）
-  { key: 'settings', label: '設定', en: 'SETTINGS', paths: ['/settings', '/manual'] },
+  { key: 'settings', label: '設定', en: 'SETTINGS', paths: ['/settings', '/data-tools', '/manual'] },
 ];
 
 /**
@@ -94,6 +97,11 @@ export default function AppLayout() {
   const syncState = useSyncStore((s) => s.connectionState);
   const syncRoom = useSyncStore((s) => s.roomCode);
   const officer = useOfficer();
+
+  // ログインした時点で、選手・所属のふりがな辞書をデータベースから取り込む（版が同じなら何もしない）
+  useEffect(() => {
+    if (officer.status === 'ok') void syncDictionary();
+  }, [officer.status]);
 
   // モバイルの自動再生制約対策: 最初のユーザー操作でオーディオをアンロックする
   useEffect(() => {
