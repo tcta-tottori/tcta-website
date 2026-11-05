@@ -13,14 +13,15 @@ const img = (slug, file, label) => ({ src: `assets/img/events/${slug}/${file}`, 
 
 export const EXTRA_MATERIALS = {
   // 第62回鳥取市テニス協会会長杯（秋季・ダブルス。11/15）：ドロー（プログラム。2026.11.2 掲載、11.3 訂正版に差し替え：
-  //   男子C級の決勝リーグの組み合わせ、試合方式を「6ゲームマッチ・ノーアド（6-6タイブレーク）」に。2ページ目の画像と PDF）
+  //   男子C級の決勝リーグの組み合わせ、試合方式を「6ゲームマッチ・ノーアド（6-6タイブレーク）」に。2ページ目の画像と PDF。
+  //   11.5 お問い合わせを受けて、男子B級Cリーグ10番の「西浦 陸」を「西垣 陸」に訂正）
   'r8-kaicho-autumn': {
     draw: {
       images: [
         img('r8-kaicho-autumn', 'draw-01.webp', 'プログラム（日程・注意事項）'),
         img('r8-kaicho-autumn', 'draw-02.webp', '男子B級・男子C級・女子B級ダブルス'),
       ],
-      pdfs: [{ src: 'assets/pdf/events/r8-kaicho-autumn/R8会長杯秋の部ダブルスプログラム（訂正版）.pdf', label: 'R8会長杯 秋の部 ダブルス プログラム（訂正版）', kb: 653 }],
+      pdfs: [{ src: 'assets/pdf/events/r8-kaicho-autumn/R8会長杯秋の部ダブルスプログラム（訂正版）.pdf', label: 'R8会長杯 秋の部 ダブルス プログラム（訂正版）', kb: 867 }],
     },
   },
   // 第22回京丹後市オープンミックスダブルステニス大会：要項（京丹後市テニス協会から届いた Word を PDF にしたもの。2026.11.2）
@@ -84,6 +85,7 @@ export const EXTRA_TOURNAMENTS = [
 
 export const EXTRA_REVISIONS = {
   'r8-kaicho-autumn': [
+    { date: '2026-11-05', section: 'ドロー', text: '男子B級ダブルス Cリーグ10番の選手名「西浦 陸」を「西垣 陸」に訂正しました。' },
     { date: '2026-11-03', section: 'ドロー', text: '男子C級ダブルスの決勝リーグの組み合わせを差し替え、試合方式を「6ゲームマッチ・ノーアド（6-6タイブレーク）」に訂正しました（注意事項の記載のとおりです）。' },
   ],
   'r8-tottori-univ-winter': [
