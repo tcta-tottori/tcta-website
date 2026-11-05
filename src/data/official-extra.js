@@ -14,7 +14,7 @@ const img = (slug, file, label) => ({ src: `assets/img/events/${slug}/${file}`, 
 export const EXTRA_MATERIALS = {
   // 第62回鳥取市テニス協会会長杯（秋季・ダブルス。11/15）：ドロー（プログラム。2026.11.2 掲載、11.3 訂正版に差し替え：
   //   男子C級の決勝リーグの組み合わせ、試合方式を「6ゲームマッチ・ノーアド（6-6タイブレーク）」に。2ページ目の画像と PDF。
-  //   11.5 お問い合わせを受けて、男子B級Cリーグ10番の「西浦 陸」を「西垣 陸」に訂正）
+  //   11.5 お問い合わせを受けて、男子B級Cリーグの選手名の誤りを訂正）
   'r8-kaicho-autumn': {
     draw: {
       images: [
@@ -85,7 +85,7 @@ export const EXTRA_TOURNAMENTS = [
 
 export const EXTRA_REVISIONS = {
   'r8-kaicho-autumn': [
-    { date: '2026-11-05', section: 'ドロー', text: '男子B級ダブルス Cリーグ10番の選手名「西浦 陸」を「西垣 陸」に訂正しました。' },
+    { date: '2026-11-05', section: 'ドロー', text: '男子B級ダブルス Cリーグの選手名の誤りを訂正しました。' },
     { date: '2026-11-03', section: 'ドロー', text: '男子C級ダブルスの決勝リーグの組み合わせを差し替え、試合方式を「6ゲームマッチ・ノーアド（6-6タイブレーク）」に訂正しました（注意事項の記載のとおりです）。' },
   ],
   'r8-tottori-univ-winter': [
