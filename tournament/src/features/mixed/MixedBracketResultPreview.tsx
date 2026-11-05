@@ -133,8 +133,8 @@ export default function MixedBracketResultPreview({ opts, size = 'sm', label = '
   };
 
   const btnClass = size === 'sm'
-    ? 'flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold text-gray-700 bg-gray-50 border border-gray-200 shadow-sm hover:bg-gray-100 active:scale-95 transition-all whitespace-nowrap'
-    : 'flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold text-gray-700 bg-gray-50 border border-gray-200 shadow-sm hover:shadow hover:bg-gray-100 hover:border-gray-300 transition-all active:scale-95 whitespace-nowrap';
+    ? 'flex items-center gap-1 px-2.5 py-1 rounded text-[10px] font-bold text-gray-700 bg-gray-50 border border-gray-200 hover:bg-gray-100 active:scale-95 transition-all whitespace-nowrap'
+    : 'flex items-center gap-1.5 px-3 py-1.5 rounded text-[11px] font-bold text-gray-700 bg-gray-50 border border-gray-200 hover:bg-gray-100 hover:border-gray-300 transition-all active:scale-95 whitespace-nowrap';
 
   return (
     <>
@@ -149,12 +149,12 @@ export default function MixedBracketResultPreview({ opts, size = 'sm', label = '
           onClick={() => setIsOpen(false)}
         >
           <div
-            className="bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col w-full max-w-6xl max-h-[92vh] border border-gray-100"
+            className="bg-white rounded-2xl overflow-hidden flex flex-col w-full max-w-6xl max-h-[92vh] border border-gray-100"
             onClick={e => e.stopPropagation()}
           >
-            <div className="px-4 py-3 bg-gradient-to-r from-gray-50 to-white border-b border-gray-100 flex items-center justify-between shrink-0">
+            <div className="px-4 py-3 bg-gray-50 border-b border-gray-100 flex items-center justify-between shrink-0">
               <h3 className="font-bold text-gray-900 text-sm flex items-center gap-2 min-w-0">
-                <span className="inline-flex items-center justify-center w-6 h-6 rounded-md bg-gradient-to-br from-primary-500 to-primary-700 text-white shadow-sm shrink-0">
+                <span className="inline-flex items-center justify-center w-6 h-6 rounded-md bg-primary-500 text-white shrink-0">
                   <ImageIcon size={13} />
                 </span>
                 <span className="truncate">{categoryLabel} 結果プレビュー</span>
@@ -167,7 +167,7 @@ export default function MixedBracketResultPreview({ opts, size = 'sm', label = '
                       key={value}
                       onClick={() => changeLayout(value)}
                       className={`px-2.5 py-1 rounded-md text-[11px] font-bold whitespace-nowrap transition-colors ${
-                        layout === value ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                        layout === value ? 'bg-white text-gray-900' : 'text-gray-500 hover:text-gray-700'
                       }`}
                       aria-pressed={layout === value}
                     >
@@ -187,7 +187,7 @@ export default function MixedBracketResultPreview({ opts, size = 'sm', label = '
                 {dataUrl && (
                   <button
                     onClick={handleDownload}
-                    className="flex items-center justify-center w-9 h-9 bg-gradient-to-r from-primary-500 to-primary-600 text-white rounded-lg shadow hover:from-primary-600 hover:to-primary-700 transition-colors active:scale-95"
+                    className="flex items-center justify-center w-9 h-9 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors active:scale-95"
                     title="JPEGで保存"
                     aria-label="JPEGで保存"
                   >
@@ -251,7 +251,7 @@ export default function MixedBracketResultPreview({ opts, size = 'sm', label = '
                 <img
                   src={dataUrl}
                   alt={`${categoryLabel}結果`}
-                  className="max-w-full h-auto object-contain shadow-sm border border-gray-100 bg-white rounded"
+                  className="max-w-full h-auto object-contain border border-gray-100 bg-white rounded"
                   style={{ maxHeight: '100%' }}
                 />
               )}

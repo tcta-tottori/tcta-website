@@ -61,7 +61,7 @@ export function TeamBracketResultPreview({ bracket, allTeams, tournamentName, cu
       {/* プレビュー呼び出しボタン */}
       <button
         onClick={(e) => { e.stopPropagation(); setIsOpen(true); }}
-        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold text-gray-700 bg-gray-50 border border-gray-200 shadow-sm hover:shadow hover:bg-gray-100 hover:border-gray-300 transition-all active:scale-95 whitespace-nowrap"
+        className="flex items-center gap-1.5 px-3 py-1.5 rounded text-[11px] font-bold text-gray-700 bg-gray-50 border border-gray-200 hover:bg-gray-100 hover:border-gray-300 transition-all active:scale-95 whitespace-nowrap"
       >
         <ImageIcon size={14} className="text-gray-600" />
         結果画像
@@ -74,13 +74,13 @@ export function TeamBracketResultPreview({ bracket, allTeams, tournamentName, cu
           onClick={() => setIsOpen(false)}
         >
           <div
-            className="bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col w-full max-w-6xl max-h-[92vh] border border-gray-100"
+            className="bg-white rounded-2xl overflow-hidden flex flex-col w-full max-w-6xl max-h-[92vh] border border-gray-100"
             onClick={e => e.stopPropagation()}
           >
             {/* モーダルヘッダー */}
-            <div className="px-4 py-3 bg-gradient-to-r from-gray-50 to-white border-b border-gray-100 flex items-center justify-between shrink-0">
+            <div className="px-4 py-3 bg-gray-50 border-b border-gray-100 flex items-center justify-between shrink-0">
               <h3 className="font-bold text-gray-900 text-sm flex items-center gap-2">
-                <span className="inline-flex items-center justify-center w-6 h-6 rounded-md bg-gradient-to-br from-primary-500 to-primary-700 text-white shadow-sm">
+                <span className="inline-flex items-center justify-center w-6 h-6 rounded-md bg-primary-500 text-white">
                   <ImageIcon size={13} />
                 </span>
                 {label} 結果プレビュー
@@ -89,7 +89,7 @@ export function TeamBracketResultPreview({ bracket, allTeams, tournamentName, cu
                 {dataUrl && (
                   <button
                     onClick={handleDownload}
-                    className="flex items-center justify-center w-9 h-9 bg-gradient-to-r from-primary-500 to-primary-600 text-white rounded-lg shadow hover:from-primary-600 hover:to-primary-700 transition-colors active:scale-95"
+                    className="flex items-center justify-center w-9 h-9 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors active:scale-95"
                     title="ダウンロード"
                     aria-label="ダウンロード"
                   >
@@ -119,7 +119,7 @@ export function TeamBracketResultPreview({ bracket, allTeams, tournamentName, cu
                 <img
                   src={dataUrl}
                   alt={`${label}結果`}
-                  className="max-w-full h-auto object-contain shadow-sm border border-gray-100 bg-white rounded"
+                  className="max-w-full h-auto object-contain border border-gray-100 bg-white rounded"
                   style={{ maxHeight: '100%' }}
                 />
               )}

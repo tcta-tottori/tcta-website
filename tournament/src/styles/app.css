@@ -32,7 +32,8 @@
   --app-sticky-top: 0px;
 }
 @media (max-width: 1023px) { .app-main { --app-sticky-top: var(--header-h); } }
-.app-main .sticky.top-0 { top: var(--app-sticky-top); }
+/* 表の見出しなど、横や縦に送れる箱の中で貼り付く物は箱の上端に付ける（ずらすと 1 行目に重なる） */
+.app-main .sticky.top-0:not(:is([class*="overflow-auto"], [class*="overflow-x-auto"], [class*="overflow-y-auto"], [class*="overflow-scroll"], .sk-table-wrap) *) { top: var(--app-sticky-top); }
 /* 画面いっぱいを使うページ（印刷）：main はスクロールせず、ページの中身が残りの高さを埋める */
 .app-main--fill { display: flex; flex-direction: column; overflow: hidden; }
 .app-main--fill > :not(.app-page) { flex: none; }

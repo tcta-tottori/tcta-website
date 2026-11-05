@@ -6,12 +6,12 @@ import { calculateTeamStandings } from './teamLogic';
 /** リーグカラーパレット（Blue先頭で全ページ統一） */
 const LEAGUE_COLORS = [
   { header: 'from-gray-500 to-gray-600', badge: 'bg-gray-100 text-gray-700' },
-  { header: 'from-primary-500 to-primary-600', badge: 'bg-primary-100 text-gray-800' },
+  { header: 'from-gray-700 to-gray-800', badge: 'bg-primary-100 text-gray-800' },
   { header: 'from-gray-500 to-gray-600', badge: 'bg-gray-100 text-gray-700' },
-  { header: 'from-primary-500 to-primary-600', badge: 'bg-primary-100 text-gray-800' },
-  { header: 'from-primary-500 to-primary-600', badge: 'bg-primary-100 text-gray-800' },
+  { header: 'from-gray-700 to-gray-800', badge: 'bg-primary-100 text-gray-800' },
+  { header: 'from-gray-700 to-gray-800', badge: 'bg-primary-100 text-gray-800' },
   { header: 'from-gray-500 to-gray-600', badge: 'bg-gray-100 text-gray-700' },
-  { header: 'from-primary-500 to-primary-600', badge: 'bg-primary-100 text-gray-800' },
+  { header: 'from-gray-700 to-gray-800', badge: 'bg-primary-100 text-gray-800' },
   { header: 'from-gray-500 to-gray-600', badge: 'bg-gray-100 text-gray-700' },
 ];
 
@@ -48,7 +48,7 @@ export default function TeamStandingsView() {
           disabled={!allComplete}
           className={`flex items-center gap-2 px-4 py-2 rounded-lg font-bold transition-all ${
             allComplete
-              ? 'bg-gradient-to-r from-gray-600 to-gray-700 text-white shadow-lg hover:shadow-xl hover:scale-105'
+              ? 'bg-gray-600 text-white hover:scale-105'
               : 'bg-gray-200 text-gray-400 cursor-not-allowed'
           }`}
         >
@@ -81,7 +81,7 @@ export default function TeamStandingsView() {
 
           return (
             <div key={league.leagueId} className="border rounded-xl overflow-hidden">
-              <div className={`bg-gradient-to-r ${colors.header} text-white px-4 py-2 flex items-center justify-between`}>
+              <div className={`tm-flat ${colors.header} text-white px-4 py-2 flex items-center justify-between`}>
                 <span className="font-bold">{league.leagueId}リーグ</span>
                 <span className="text-xs opacity-80">
                   {isComplete ? '完了' : `${finished}/${total}`}
@@ -101,7 +101,7 @@ export default function TeamStandingsView() {
                   {standings.map(s => (
                     <tr key={s.teamId} className="border-t hover:bg-gray-50">
                       <td className="px-3 py-1.5">
-                        <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-bold ${
+                        <span className={`inline-block px-2 py-0.5 rounded text-xs font-bold ${
                           s.rank === 1 ? 'bg-primary-100 text-primary-800' :
                           s.rank === 2 ? 'bg-gray-200 text-gray-700' :
                           s.rank === 3 ? 'bg-gray-100 text-gray-700' :

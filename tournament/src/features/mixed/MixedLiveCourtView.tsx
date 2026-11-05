@@ -136,7 +136,7 @@ export default function MixedLiveCourtView() {
         .court-playing-blink { animation: court-blink 2s ease-in-out infinite; }
       `}</style>
       {/* ===== HEADER ===== */}
-      <header className="bg-white p-5 rounded-2xl shadow-sm border border-gray-200">
+      <header className="bg-white p-5 rounded-2xl border border-gray-200">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-xl md:text-2xl font-bold text-gray-900 flex items-center gap-2">
@@ -158,7 +158,7 @@ export default function MixedLiveCourtView() {
 
       {/* ===== TOP ROW: Donut + Stats ===== */}
       <div className="grid grid-cols-1 md:grid-cols-[auto_1fr] gap-4 items-stretch">
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-5 flex flex-col items-center justify-center min-w-[180px]">
+        <div className="bg-white rounded-2xl border border-gray-200 p-5 flex flex-col items-center justify-center min-w-[180px]">
           <DonutChart percent={progressPct} finished={totalFinished} total={totalMatches} />
           <div className="flex gap-4 mt-3 text-[10px] font-medium">
             <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-gray-500" />終了</span>
@@ -183,7 +183,7 @@ export default function MixedLiveCourtView() {
       </div>
 
       {/* ===== コートマップ ===== */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-5">
+      <div className="bg-white rounded-2xl border border-gray-200 p-5">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-sm font-bold text-gray-900 flex items-center gap-2">
             <MapPin className="w-4 h-4 text-primary-500" />
@@ -202,7 +202,7 @@ export default function MixedLiveCourtView() {
             <div key={blockIdx} className="contents">
               <div className="bg-primary-50/60 rounded-xl border border-primary-200 p-3 w-full max-w-lg">
                 <div className="flex items-center gap-1.5 mb-2">
-                  <span className="text-[10px] font-bold text-gray-700 bg-primary-100 px-2 py-0.5 rounded-full">
+                  <span className="text-[10px] font-bold text-gray-700 bg-primary-100 px-2 py-0.5 rounded">
                     {block[0]}〜{block[block.length - 1]}
                   </span>
                 </div>
@@ -311,7 +311,7 @@ export default function MixedLiveCourtView() {
 
       {/* ===== 決勝トーナメント進捗 ===== */}
       {brackets.length > 0 && (
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-5">
+        <div className="bg-white rounded-2xl border border-gray-200 p-5">
           <h2 className="text-sm font-bold text-gray-900 flex items-center gap-2 mb-3">
             <Trophy className="w-4 h-4 text-primary-500" />
             決勝トーナメント進捗
@@ -461,7 +461,7 @@ export default function MixedLiveCourtView() {
 
         return (
           <div className="fixed inset-0 bg-black/40 z-50" onClick={() => setSelectedCourt(null)}>
-            <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-2xl shadow-2xl w-[360px] max-w-[92vw] p-5 z-50" onClick={e => e.stopPropagation()}>
+            <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-2xl w-[360px] max-w-[92vw] p-5 z-50" onClick={e => e.stopPropagation()}>
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-sm font-bold text-gray-800">{selectedCourt}コート</h3>
                 <button onClick={() => setSelectedCourt(null)} className="p-1 hover:bg-gray-100 rounded-lg">

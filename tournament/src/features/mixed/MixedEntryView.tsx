@@ -1,10 +1,11 @@
 import { useMixedStore } from './mixedStore';
 import { leagueBadgeStyle } from './leagueColors';
 import MixedImportView from './MixedImportView';
-import { MapPin, Pencil, ArrowRightLeft, UserCheck, Users, CheckCircle, AlertTriangle, Search, X, Settings } from 'lucide-react';
+import { MapPin, Pencil, ArrowRightLeft, UserCheck, Users, CheckCircle, AlertTriangle, Search, X } from 'lucide-react';
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import type { MixedTeam, TournamentInfo } from './types';
 import { siteConfirm } from '../../components/site/siteConfirm';
+import { SkSection } from '../../components/site/Kit';
 
 /** インライン編集セル */
 function EditableCell({ value, onSave, className = '' }: {
@@ -107,7 +108,7 @@ function EntryDefButtons({ status, onSetStatus, size = 'normal' }: {
         onClick={() => onSetStatus(status === 'entry' ? 'none' : 'entry')}
         className={`${base} rounded-lg font-bold transition-all active:scale-95 ${
           status === 'entry'
-            ? 'bg-gradient-to-r from-primary-500 to-primary-600 text-white shadow-md shadow-primary-200 hover:from-primary-600 hover:to-primary-700'
+            ? 'bg-primary-500 text-white hover:bg-primary-600'
             : 'bg-white text-gray-400 hover:bg-primary-50 hover:text-gray-700 border border-gray-200 hover:border-primary-300'
         }`}
       >
@@ -117,7 +118,7 @@ function EntryDefButtons({ status, onSetStatus, size = 'normal' }: {
         onClick={() => onSetStatus(status === 'def' ? 'none' : 'def')}
         className={`${base} rounded-lg font-bold transition-all active:scale-95 ${
           status === 'def'
-            ? 'bg-gradient-to-r from-gray-600 to-gray-700 text-white shadow-md shadow-gray-200 hover:from-gray-700 hover:to-gray-800'
+            ? 'bg-gray-600 text-white hover:bg-gray-700'
             : 'bg-white text-gray-400 hover:bg-gray-50 hover:text-gray-600 border border-gray-200 hover:border-gray-300'
         }`}
       >
@@ -129,8 +130,8 @@ function EntryDefButtons({ status, onSetStatus, size = 'normal' }: {
 
 /** チームセルの背景色（PC） */
 function cellBg(status: 'none' | 'entry' | 'def'): string {
-  if (status === 'entry') return 'bg-gradient-to-br from-primary-50/80 to-primary-50/60';
-  if (status === 'def') return 'bg-gradient-to-br from-gray-100/80 to-gray-50/40';
+  if (status === 'entry') return 'bg-primary-50/80';
+  if (status === 'def') return 'bg-gray-100/80';
   return 'bg-white';
 }
 
@@ -191,78 +192,68 @@ export default function MixedEntryView() {
   const totalDef = allTeams.filter(t => t.status === 'def').length;
 
   return (
-    <div className="p-2 sm:p-4 space-y-4">
+    <div className="tm-page">
       {/* ヘッダー統計バー (sticky) */}
-      <div className="sticky top-0 z-30 bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4">
-        <div className="flex items-center justify-between flex-wrap gap-3">
-          <div className="flex items-center gap-3 flex-wrap">
-            <button
-              onClick={() => setAllTeamsStatus(allEntry ? 'none' : 'entry')}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all active:scale-95 ${
-                allEntry
-                  ? 'bg-gradient-to-r from-primary-500 to-primary-600 text-white shadow-md shadow-primary-200 hover:from-primary-600 hover:to-primary-700'
-                  : 'bg-white text-gray-600 hover:bg-primary-50 hover:text-gray-800 border border-gray-200 hover:border-primary-300'
-              }`}
-            >
-              <Users size={15} />
-              {allEntry ? '全員Entry解除' : '全員Entry'}
+      <div className="tm-bar">
+        <button
+          onClick={() => setAllTeamsStatus(allEntry ? 'none' : 'entry')}
+          className={`btn sk-btn sk-btn--sm ${allEntry ? 'btn--primary' : 'btn--outline'}`}
+        >
+          <Users size={15} />
+          {allEntry ? '全員Entry解除' : '全員Entry'}
+        </button>
+        {/* 統計 */}
+        <div className="tm-bar__chips">
+          <span className="sk-chip">
+            <Users size={12} />
+            {allTeams.length}ペア / {leagues.length}リーグ
+          </span>
+          {totalEntry > 0 && (
+            <span className="sk-chip sk-chip--red">
+              <CheckCircle size={12} />
+              Entry {totalEntry}
+            </span>
+          )}
+          {totalDef > 0 && (
+            <span className="sk-chip sk-chip--ink">
+              <AlertTriangle size={12} />
+              DEF {totalDef}
+            </span>
+          )}
+        </div>
+        <span className="tm-bar__grow" />
+        {/* 検索 */}
+        {searchOpen ? (
+          <div className="tm-search">
+            <Search size={14} className="shrink-0" />
+            <input
+              ref={searchInputRef}
+              type="text"
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              placeholder="名前・所属・番号・リーグで検索..."
+              autoFocus
+            />
+            <button onClick={() => { setSearchQuery(''); setSearchOpen(false); }} className="p-0.5 text-gray-400 hover:text-gray-600" aria-label="検索を閉じる">
+              <X size={14} />
             </button>
           </div>
-          {/* 統計カプセル */}
-          <div className="flex items-center gap-2 text-xs">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gray-100 text-gray-600 font-medium">
-              <Users size={12} />
-              {allTeams.length}ペア / {leagues.length}リーグ
-            </span>
-            {totalEntry > 0 && (
-              <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-primary-100 text-gray-800 font-bold">
-                <CheckCircle size={12} />
-                Entry {totalEntry}
-              </span>
-            )}
-            {totalDef > 0 && (
-              <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-primary-100 text-gray-700 font-bold">
-                <AlertTriangle size={12} />
-                DEF {totalDef}
-              </span>
-            )}
-          </div>
-          {/* 検索 */}
-          <div className="flex items-center gap-2 mt-2">
-            {searchOpen ? (
-              <div className="flex-1 flex items-center gap-2 bg-gray-50 rounded-lg px-3 py-1.5 border border-gray-200">
-                <Search size={14} className="text-gray-400 shrink-0" />
-                <input
-                  ref={searchInputRef}
-                  type="text"
-                  value={searchQuery}
-                  onChange={e => setSearchQuery(e.target.value)}
-                  placeholder="名前・所属・番号・リーグで検索..."
-                  className="flex-1 bg-transparent text-sm outline-none placeholder-gray-400"
-                  autoFocus
-                />
-                <button onClick={() => { setSearchQuery(''); setSearchOpen(false); }} className="p-0.5 text-gray-400 hover:text-gray-600">
-                  <X size={14} />
-                </button>
-              </div>
-            ) : (
-              <button
-                onClick={() => { setSearchOpen(true); setTimeout(() => searchInputRef.current?.focus(), 100); }}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-gray-500 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors"
-              >
-                <Search size={12} />
-                検索
-              </button>
-            )}
-          </div>
-        </div>
+        ) : (
+          <button
+            onClick={() => { setSearchOpen(true); setTimeout(() => searchInputRef.current?.focus(), 100); }}
+            className="btn btn--outline sk-btn sk-btn--sm"
+          >
+            <Search size={12} />
+            検索
+          </button>
+        )}
       </div>
 
       {/* ゲームルール設定 */}
       <GameRuleConfig leagues={leagues} tournamentInfo={tournamentInfo} updateGameRule={updateGameRule} />
 
       {/* リーグ一覧 */}
-      <div className="space-y-4">
+      <div className="flex flex-col gap-3 sm:gap-4">
         {leagues.map((league, leagueIdx) => {
           const entryCount = league.teams.filter(t => t.status === 'entry').length;
           const defCount = league.teams.filter(t => t.status === 'def').length;
@@ -272,25 +263,23 @@ export default function MixedEntryView() {
           if (searchQuery && filteredTeams.length === 0) return null;
 
           return (
-            <div key={league.leagueId} className={`bg-white rounded-xl shadow-sm border overflow-hidden ${colors.border}`}>
+            <div key={league.leagueId} className="tm-league">
               {/* リーグヘッダー — スマホ用 */}
-              <div className={`sm:hidden flex items-center gap-2.5 px-3 py-3 bg-gradient-to-r ${colors.light} border-b ${colors.border}`}>
-                <span className="w-10 h-10 text-base font-bold rounded-xl flex items-center justify-center shadow-lg shrink-0" style={leagueBadgeStyle(league.leagueId, leagues.length)}>
+              <div className="flex sm:hidden tm-league__head">
+                <span className="tm-league__badge" style={leagueBadgeStyle(league.leagueId, leagues.length)}>
                   {league.leagueId.trim()}
                 </span>
                 <div className="min-w-0 flex-1">
-                  <h3 className="text-sm font-bold text-gray-800 flex items-center gap-2">
+                  <h3 className="tm-league__title">
                     {league.leagueId.trim()} リーグ
-                    <span className="text-[10px] font-normal text-gray-400 bg-white/70 px-1.5 py-0.5 rounded-full">
-                      {league.teams.length}ペア
-                    </span>
+                    <small>{league.teams.length}ペア</small>
                     {entryCount > 0 && (
-                      <span className="text-[10px] font-bold text-gray-700 bg-primary-100 px-1.5 py-0.5 rounded-full">
+                      <span className="sk-chip sk-chip--red">
                         {entryCount}
                       </span>
                     )}
                     {defCount > 0 && (
-                      <span className="text-[10px] font-bold text-gray-700 bg-primary-100 px-1.5 py-0.5 rounded-full">
+                      <span className="sk-chip sk-chip--ink">
                         DEF {defCount}
                       </span>
                     )}
@@ -324,11 +313,7 @@ export default function MixedEntryView() {
                 </div>
                 <button
                   onClick={() => setLeagueAllStatus(league.leagueId, leagueAllEntry ? 'none' : 'entry')}
-                  className={`flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-[11px] font-bold transition-all active:scale-95 shrink-0 ${
-                    leagueAllEntry
-                      ? 'bg-primary-500 text-white shadow-sm hover:bg-primary-600'
-                      : 'bg-white text-gray-500 hover:bg-primary-50 hover:text-gray-700 border border-gray-200'
-                  }`}
+                  className={`btn sk-btn sk-btn--sm shrink-0 ${leagueAllEntry ? 'btn--primary' : 'btn--outline'}`}
                 >
                   <UserCheck size={12} />
                   {leagueAllEntry ? '解除' : '全Entry'}
@@ -341,8 +326,8 @@ export default function MixedEntryView() {
                   <tbody>
                     <tr>
                       {/* リーグ名+コート列 */}
-                      <td className={`border border-gray-200 px-3 py-3 align-middle text-center bg-gradient-to-b ${colors.light}`} style={{ minWidth: 120 }}>
-                        <div className="w-12 h-12 mx-auto text-xl font-bold rounded-xl flex items-center justify-center shadow-lg mb-1.5" style={leagueBadgeStyle(league.leagueId, leagues.length)}>
+                      <td className="border border-gray-200 px-3 py-3 align-middle text-center bg-white" style={{ minWidth: 120 }}>
+                        <div className="tm-league__badge mx-auto mb-1.5" style={leagueBadgeStyle(league.leagueId, leagues.length)}>
                           {league.leagueId.trim()}
                         </div>
                         <div className="font-bold text-sm text-gray-700 mb-1">{league.leagueId.trim()} リーグ</div>
@@ -372,11 +357,7 @@ export default function MixedEntryView() {
                         )}
                         <button
                           onClick={() => setLeagueAllStatus(league.leagueId, leagueAllEntry ? 'none' : 'entry')}
-                          className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold transition-all active:scale-95 ${
-                            leagueAllEntry
-                              ? 'bg-primary-500 text-white shadow-sm hover:bg-primary-600'
-                              : 'bg-white text-gray-500 hover:bg-primary-50 border border-gray-200'
-                          }`}
+                          className={`btn sk-btn sk-btn--sm ${leagueAllEntry ? 'btn--primary' : 'btn--outline'}`}
                         >
                           <UserCheck size={10} />
                           {leagueAllEntry ? '解除' : '全Entry'}
@@ -395,7 +376,7 @@ export default function MixedEntryView() {
                             {/* 番号バッジ */}
                             <div className="flex items-start gap-2">
                               <div className="shrink-0 mt-0.5">
-                                <span className={`w-7 h-7 bg-gradient-to-br ${colors.from} ${colors.to} text-white text-xs font-bold rounded-full flex items-center justify-center shadow`}>
+                                <span className={`w-7 h-7 tm-flat ${colors.from} ${colors.to} text-white text-xs font-bold rounded-full flex items-center justify-center`}>
                                   {team.pairNumber}
                                 </span>
                               </div>
@@ -449,7 +430,7 @@ export default function MixedEntryView() {
                   return (
                     <div key={team.teamId} className={`flex items-center gap-2 px-2 py-2 ${rowBg(st)}`}>
                       {/* ペア番号 */}
-                      <span className={`w-6 h-6 bg-gradient-to-br ${colors.from} ${colors.to} text-white text-[10px] font-bold rounded-full flex items-center justify-center shadow shrink-0`}>
+                      <span className={`w-6 h-6 tm-flat ${colors.from} ${colors.to} text-white text-[10px] font-bold rounded-full flex items-center justify-center shrink-0`}>
                         {team.pairNumber}
                       </span>
                       {/* 名前+所属 */}
@@ -490,7 +471,6 @@ function GameRuleConfig({ leagues, tournamentInfo, updateGameRule }: {
   tournamentInfo: TournamentInfo | null;
   updateGameRule: (teamCount: number, rule: string) => void;
 }) {
-  const [open, setOpen] = useState(false);
 
   // リーグのチーム数別にグルーピング
   const teamCountGroups = useMemo(() => {
@@ -512,25 +492,14 @@ function GameRuleConfig({ leagues, tournamentInfo, updateGameRule }: {
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-      <button
-        onClick={() => setOpen(!open)}
-        className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors"
-      >
-        <div className="flex items-center gap-2 text-sm font-bold text-gray-700">
-          <Settings size={14} className="text-gray-500" />
-          ゲームルール設定
-          {teamCountGroups.length > 0 && (
-            <span className="text-[10px] font-normal text-gray-400">
-              ({teamCountGroups.map(([count, ids]) => `${count}チーム: ${ids.length}リーグ`).join('、')})
-            </span>
-          )}
-        </div>
-        <span className={`text-gray-400 text-xs transition-transform ${open ? 'rotate-180' : ''}`}>▼</span>
-      </button>
-
-      {open && (
-        <div className="px-4 pb-4 space-y-3 border-t border-gray-100 pt-3">
+    <SkSection
+      en="Game rules"
+      title="ゲームルール設定"
+      count={teamCountGroups.length > 0 ? teamCountGroups.map(([count, ids]) => `${count}チーム: ${ids.length}リーグ`).join('、') : undefined}
+      collapsible
+      defaultOpen={false}
+    >
+        <div className="space-y-3">
           <p className="text-[10px] text-gray-500">チーム数ごとにゲームルールを設定します。スコア入力画面に反映されます。</p>
 
           {teamCountGroups.map(([teamCount, leagueIds]) => (
@@ -574,7 +543,6 @@ function GameRuleConfig({ leagues, tournamentInfo, updateGameRule }: {
             </div>
           </div>
         </div>
-      )}
-    </div>
+    </SkSection>
   );
 }

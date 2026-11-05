@@ -145,10 +145,10 @@ export default function MixedLeagueView() {
   };
 
   const scoreMatrixTable = (
-    <div className={`bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden ${!allEntryDone ? 'opacity-50 pointer-events-none' : ''}`}>
+    <div className={`bg-white rounded-xl border border-gray-200 overflow-hidden ${!allEntryDone ? 'opacity-50 pointer-events-none' : ''}`}>
       <table className="w-full">
         <thead>
-          <tr className="bg-gradient-to-r from-gray-50 to-gray-100">
+          <tr className="bg-gray-50">
             <th className="px-3 py-2 text-left text-xs text-gray-500 w-8">#</th>
             <th className="px-3 py-2 text-left text-xs text-gray-500">ペア名 / 所属</th>
             {selectedLeague.teams.map((_, i) => (
@@ -264,7 +264,7 @@ export default function MixedLeagueView() {
       `}</style>
 
       {/* Left sidebar: league list */}
-      <div className="w-48 flex-shrink-0 bg-white rounded-xl shadow-sm border border-gray-200 overflow-y-auto">
+      <div className="w-48 flex-shrink-0 bg-white rounded-xl border border-gray-200 overflow-y-auto">
         <div className="p-3 border-b border-gray-100">
           <h3 className="text-sm font-bold text-gray-700">リーグ一覧</h3>
         </div>
@@ -284,7 +284,7 @@ export default function MixedLeagueView() {
                 className={`
                   w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm transition-all
                   ${isActive
-                    ? `bg-gradient-to-r ${colors.from} ${colors.to} text-white shadow-md`
+                    ? `tm-flat ${colors.from} ${colors.to} text-white`
                     : 'hover:bg-gray-100 text-gray-700'
                   }
                 `}
@@ -309,11 +309,11 @@ export default function MixedLeagueView() {
           const _lidx = Math.max(0, leagues.findIndex(l => l.leagueId === selectedLeague.leagueId));
           const _lc = LEAGUE_COLORS[_lidx % LEAGUE_COLORS.length];
           return (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-          <div className={`bg-gradient-to-r ${_lc.header} text-white px-4 py-3`}>
+        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+          <div className={`tm-flat ${_lc.header} text-white px-4 py-3`}>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center text-lg font-bold shadow" style={leagueBadgeStyle(selectedLeague.leagueId, leagues.length)}>
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center text-lg font-bold" style={leagueBadgeStyle(selectedLeague.leagueId, leagues.length)}>
                   {selectedLeague.leagueId.trim()}
                 </div>
                 <div>
@@ -409,7 +409,7 @@ export default function MixedLeagueView() {
         {scoreMatrixTable}
 
         {/* Match order */}
-        <div className={`bg-white rounded-xl shadow-sm border border-gray-200 p-4 ${!allEntryDone ? 'opacity-50 pointer-events-none' : ''}`}>
+        <div className={`bg-white rounded-xl border border-gray-200 p-4 ${!allEntryDone ? 'opacity-50 pointer-events-none' : ''}`}>
           <h3 className="text-sm font-bold text-gray-700 mb-3">対戦順</h3>
           <div className="flex flex-wrap gap-2">
             {selectedLeague.matchOrder.map(mo => {
@@ -488,7 +488,7 @@ export default function MixedLeagueView() {
 
         {/* Standings table */}
         {standings.length > 0 && finishedCount > 0 && (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+          <div className="bg-white rounded-xl border border-gray-200 p-4">
             <h3 className="text-sm font-bold text-gray-700 mb-3">{leagueComplete ? '確定順位' : '暫定順位'}</h3>
             <table className="w-full text-sm">
               <thead>
@@ -552,8 +552,8 @@ export default function MixedLeagueView() {
       {/* Court override popup */}
       {courtPopupMatchId && createPortal(
         <div className="fixed inset-0 bg-black/30 z-50 flex items-center justify-center" onClick={() => setCourtPopupMatchId(null)}>
-          <div className="bg-white rounded-xl shadow-2xl w-72 overflow-hidden" onClick={e => e.stopPropagation()}>
-            <div className="bg-gradient-to-r from-gray-500 to-gray-600 text-white px-4 py-2.5 flex items-center justify-between">
+          <div className="bg-white rounded-xl w-72 overflow-hidden" onClick={e => e.stopPropagation()}>
+            <div className="bg-gray-500 text-white px-4 py-2.5 flex items-center justify-between">
               <h4 className="text-sm font-bold flex items-center gap-1.5"><ArrowRightLeft size={14} />空きコートで実施</h4>
               <button onClick={() => setCourtPopupMatchId(null)} className="p-1 hover:bg-white/20 rounded-lg"><X size={16} /></button>
             </div>
@@ -600,8 +600,8 @@ export default function MixedLeagueView() {
       {/* Rules popup */}
       {showRules && tournamentInfo?.rules && createPortal(
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center" onClick={() => setShowRules(false)}>
-          <div className="bg-white rounded-2xl shadow-2xl w-[500px] max-w-[95vw] max-h-[80vh] overflow-hidden" onClick={e => e.stopPropagation()}>
-            <div className="bg-gradient-to-r from-primary-600 to-primary-700 text-white px-5 py-3 flex items-center justify-between">
+          <div className="bg-white rounded-2xl w-[500px] max-w-[95vw] max-h-[80vh] overflow-hidden" onClick={e => e.stopPropagation()}>
+            <div className="bg-primary-600 text-white px-5 py-3 flex items-center justify-between">
               <h3 className="font-bold text-sm flex items-center gap-2">
                 <BookOpen size={16} />
                 大会ルール
@@ -628,7 +628,7 @@ export default function MixedLeagueView() {
       {/* Fullscreen portal (mobile) */}
       {isFullscreen && createPortal(
         <div className="fixed inset-0 bg-white z-[100] flex flex-col">
-          <div className="bg-gradient-to-r from-primary-700 to-primary-800 text-white px-4 py-3 flex items-center justify-between flex-shrink-0">
+          <div className="bg-primary-700 text-white px-4 py-3 flex items-center justify-between flex-shrink-0">
             <h3 className="font-bold text-sm">
               {selectedLeague.leagueId.trim()}リーグ {selectedLeague.courtName && `(${selectedLeague.courtName})`}
             </h3>

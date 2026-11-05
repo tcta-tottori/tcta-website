@@ -54,7 +54,7 @@ export function LeagueResultPreview({ league, standings, matches, allTeams, tour
       {/* プレビュー呼び出しボタン */}
       <button
         onClick={(e) => { e.stopPropagation(); setIsOpen(true); }}
-        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold text-gray-800 bg-primary-50 border border-primary-200 shadow-sm hover:shadow hover:bg-primary-100 hover:border-primary-300 transition-all active:scale-95 whitespace-nowrap shrink-0"
+        className="flex items-center gap-1.5 px-3 py-1.5 rounded text-[11px] font-bold text-gray-800 bg-primary-50 border border-primary-200 hover:bg-primary-100 hover:border-primary-300 transition-all active:scale-95 whitespace-nowrap shrink-0"
       >
         <ImageIcon size={14} className="text-primary-600 shrink-0" />
         結果画像
@@ -64,7 +64,7 @@ export function LeagueResultPreview({ league, standings, matches, allTeams, tour
       {isOpen && createPortal(
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={() => setIsOpen(false)}>
           <div 
-            className="bg-white rounded-xl shadow-2xl overflow-hidden flex flex-col w-full max-w-5xl max-h-[90vh]"
+            className="bg-white rounded-xl overflow-hidden flex flex-col w-full max-w-5xl max-h-[90vh]"
             onClick={e => e.stopPropagation()}
           >
             {/* モーダルヘッダー */}
@@ -77,7 +77,7 @@ export function LeagueResultPreview({ league, standings, matches, allTeams, tour
                 {dataUrl && (
                   <button
                     onClick={handleDownload}
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-primary-500 to-primary-600 text-white text-xs font-bold rounded-lg shadow hover:opacity-90 transition-opacity active:scale-95 whitespace-nowrap shrink-0"
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-primary-500 text-white text-xs font-bold rounded-lg hover:opacity-90 transition-opacity active:scale-95 whitespace-nowrap shrink-0"
                   >
                     <Download size={14} className="shrink-0" />
                     ダウンロード
@@ -104,7 +104,7 @@ export function LeagueResultPreview({ league, standings, matches, allTeams, tour
                 <img
                   src={dataUrl}
                   alt={`${league.leagueId}リーグ結果`}
-                  className="max-w-full h-auto object-contain shadow-sm border border-gray-200 bg-white"
+                  className="max-w-full h-auto object-contain border border-gray-200 bg-white"
                   style={{ maxHeight: '100%' }}
                 />
               )}

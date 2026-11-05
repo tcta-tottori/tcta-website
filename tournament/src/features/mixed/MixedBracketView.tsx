@@ -481,7 +481,7 @@ export default function MixedBracketView() {
         maxStartRound={maxStartRound}
         startRoundLabel={startRoundLabelText}
         onStartRoundChange={setStartRound}
-        fullBleedClass="-mx-2 sm:-mx-4 -mt-2 sm:-mt-4"
+        fullBleedClass="-mx-2 sm:-mx-4 -mt-2 sm:-mt-4 tm-bt"
         right={(
           <div className="flex items-center gap-1.5">
             {/* コンソレーション（敗者同士の試合）の有無 */}
@@ -493,7 +493,7 @@ export default function MixedBracketView() {
                   if (!next && played && !(await siteConfirm('コンソレの結果が消えます。コンソレなしにしますか？'))) return;
                   setBracketConsolation(currentBracket.category, next);
                 }}
-                className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold shadow-sm active:scale-95 transition-all whitespace-nowrap ${
+                className={`flex items-center gap-1 px-2.5 py-1 rounded text-[10px] font-bold active:scale-95 transition-all whitespace-nowrap ${
                   currentBracket.consolation
                     ? 'bg-primary-500 text-white border border-primary-500'
                     : 'text-gray-600 bg-gray-50 border border-gray-200 hover:bg-gray-100'
@@ -506,7 +506,7 @@ export default function MixedBracketView() {
             {/* ドロー編集（クラスカード内に配置） */}
             <button
               onClick={() => setDrawEditMode(!drawEditMode)}
-              className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold shadow-sm active:scale-95 transition-all whitespace-nowrap ${
+              className={`flex items-center gap-1 px-2.5 py-1 rounded text-[10px] font-bold active:scale-95 transition-all whitespace-nowrap ${
                 drawEditMode
                   ? 'bg-gray-600 text-white border border-gray-600'
                   : 'text-gray-600 bg-gray-50 border border-gray-200 hover:bg-gray-100'
@@ -548,7 +548,7 @@ export default function MixedBracketView() {
       {/* ゲームルール設定ポップアップ */}
       {ruleDialogOpen && createPortal(
         <div className="fixed inset-0 bg-black/40 z-[100] flex items-center justify-center p-4" onClick={() => setRuleDialogOpen(false)}>
-          <div className="bg-white rounded-2xl shadow-2xl w-[440px] max-w-[92vw] max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+          <div className="bg-white rounded-2xl w-[440px] max-w-[92vw] max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
             <div className="px-4 py-3 bg-gray-50 border-b border-gray-200 flex items-center justify-between">
               <h3 className="text-sm font-bold text-gray-800 flex items-center gap-2">
                 <Settings2 size={15} className="text-gray-500" />
@@ -653,7 +653,7 @@ export default function MixedBracketView() {
         return createPortal(
           <div className="fixed inset-0 bg-black/40 z-[100]" onClick={() => setCourtAssignMatch(null)}>
             <div
-              className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-2xl shadow-2xl w-[380px] max-w-[92vw] max-h-[85vh] overflow-y-auto z-[110] p-5"
+              className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-2xl w-[380px] max-w-[92vw] max-h-[85vh] overflow-y-auto z-[110] p-5"
               onClick={e => e.stopPropagation()}
             >
               <h3 className="text-sm font-bold text-gray-800 mb-3">{currentCourt ? 'コートを変更' : 'コートを決定'}</h3>
@@ -724,7 +724,7 @@ export default function MixedBracketView() {
         >
           <div className="fixed inset-0 bg-black/40" />
           <div
-            className={`relative bg-white rounded-2xl shadow-2xl w-[420px] max-w-[92vw] max-h-full flex flex-col overflow-hidden z-[110] ${keyboardOpen ? 'h-full' : ''}`}
+            className={`relative bg-white rounded-2xl w-[420px] max-w-[92vw] max-h-full flex flex-col overflow-hidden z-[110] ${keyboardOpen ? 'h-full' : ''}`}
             onClick={e => e.stopPropagation()}
           >
             <h3 className={`shrink-0 text-sm font-bold text-gray-800 px-5 ${keyboardOpen ? 'pt-3 pb-1' : 'pt-5 pb-2'}`}>スコア入力</h3>
@@ -853,7 +853,7 @@ export default function MixedBracketView() {
             <div className={`shrink-0 border-t border-gray-100 bg-white px-5 ${keyboardOpen ? 'py-2 space-y-1.5' : 'py-3 space-y-2'}`}>
               <button
                 onClick={saveScore}
-                className={`w-full flex items-center justify-center gap-2 bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-xl hover:from-primary-700 hover:to-primary-800 text-sm font-bold active:scale-[0.98] transition-all shadow-md ${keyboardOpen ? 'py-2.5 min-h-[44px]' : 'py-3 min-h-[48px]'}`}
+                className={`w-full flex items-center justify-center gap-2 bg-primary-600 text-white rounded-xl hover:bg-primary-700 text-sm font-bold active:scale-[0.98] transition-all ${keyboardOpen ? 'py-2.5 min-h-[44px]' : 'py-3 min-h-[48px]'}`}
               >
                 <Save size={14} />保存
               </button>
@@ -969,8 +969,8 @@ function DrawEditPanel({ bracket }: { bracket: PlacementBracket }) {
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-      <div className="bg-gradient-to-r from-gray-50 to-white px-4 py-3 border-b border-gray-100">
+    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+      <div className="bg-gray-50 px-4 py-3 border-b border-gray-100">
         <h3 className="text-sm font-bold text-gray-800 flex items-center gap-2">
           <RotateCcw size={16} className="text-gray-600" />
           ドロー編集
@@ -1187,8 +1187,8 @@ function RouletteDrawPanel({ bracket, onRebuild }: {
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-primary-200 overflow-hidden">
-      <div className="bg-gradient-to-r from-primary-50 to-white px-4 py-2 border-b border-primary-100 flex items-center justify-between">
+    <div className="bg-white rounded-xl border border-primary-200 overflow-hidden">
+      <div className="bg-primary-50 px-4 py-2 border-b border-primary-100 flex items-center justify-between">
         <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2">
           <Shuffle size={14} className="text-primary-600" />
           1位トーナメント 抽選
@@ -1538,9 +1538,9 @@ function BracketDisplay({ bracket, onMatchClick, onCourtClick, getRoundLabel, al
       <div
         onClick={() => onMatchClick(match)}
         className={`rounded-lg border-2 overflow-hidden cursor-pointer transition-all
-          ${isPlaying ? 'border-primary-400 shadow-md bracket-playing-blink' :
-            match.status === 'finished' ? 'border-primary-300 shadow-sm' :
-            match.team1Id && match.team2Id ? 'border-gray-300 hover:shadow-md' :
+          ${isPlaying ? 'border-primary-400 bracket-playing-blink' :
+            match.status === 'finished' ? 'border-primary-300' :
+            match.team1Id && match.team2Id ? 'border-gray-300' :
             'border-gray-200 hover:border-gray-300'}
         `}
         style={{ height: MATCH_HEIGHT }}
@@ -1598,7 +1598,7 @@ function BracketDisplay({ bracket, onMatchClick, onCourtClick, getRoundLabel, al
   };
 
   return (
-    <div className={`bg-white shadow-sm border border-gray-200 p-2 sm:p-4 overflow-x-auto ${compact ? 'rounded-b-xl' : 'rounded-xl'}`}>
+    <div className={`bg-white border border-gray-200 p-2 sm:p-4 overflow-x-auto ${compact ? 'rounded-b-xl' : 'rounded-xl'}`}>
       <div className="relative" style={{ minWidth: boardWidth, height: svgHeight }}>
         {/* 接続線SVG */}
         <svg className="absolute inset-0 pointer-events-none" style={{ width: boardWidth, height: svgHeight }}>
@@ -1635,8 +1635,8 @@ function BracketDisplay({ bracket, onMatchClick, onCourtClick, getRoundLabel, al
               {/* ラウンドラベル */}
               <div className="absolute" style={{ left: colX, top: 4, width: MATCH_WIDTH }}>
                 <div className="text-center">
-                  <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold
-                    ${round === totalRounds ? 'bg-gradient-to-r from-primary-400 to-primary-500 text-white' :
+                  <span className={`inline-block px-3 py-1 rounded text-xs font-bold
+                    ${round === totalRounds ? 'bg-primary-400 text-white' :
                       round === totalRounds - 1 ? 'bg-primary-100 text-gray-800' : 'bg-gray-100 text-gray-600'}`}>
                     {getRoundLabel(round, totalRounds)}
                   </span>
@@ -1707,7 +1707,7 @@ function BracketDisplay({ bracket, onMatchClick, onCourtClick, getRoundLabel, al
       {consolationMatches.length > 0 && (
         <div className="mt-4 pt-3 border-t border-dashed border-gray-200">
           <div className="flex flex-wrap items-center gap-2 mb-2">
-            <span className="inline-block px-3 py-1 rounded-full text-xs font-bold bg-gray-100 text-gray-600">コンソレーション</span>
+            <span className="inline-block px-3 py-1 rounded text-xs font-bold bg-gray-100 text-gray-600">コンソレーション</span>
             <span className="text-[10px] text-gray-400">各山の敗者同士の試合（敗者復活戦ではありません）</span>
           </div>
           <div className="flex flex-wrap gap-x-4 gap-y-3">
@@ -1883,13 +1883,13 @@ function CertificatePrintButton({ brackets, allTeams, selectedCategory }: {
   return (
     <>
       <button onClick={openDialog}
-        className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold text-gray-800 bg-primary-50 border border-primary-200 shadow-sm hover:bg-primary-100 active:scale-95 transition-all whitespace-nowrap">
+        className="flex items-center gap-1 px-2.5 py-1 rounded text-[10px] font-bold text-gray-800 bg-primary-50 border border-primary-200 hover:bg-primary-100 active:scale-95 transition-all whitespace-nowrap">
         <Printer size={12} className="text-primary-600" /> 賞状印刷
       </button>
 
       {isOpen && createPortal(
         <div className="fixed inset-0 bg-black/50 z-[200]" onClick={() => setIsOpen(false)}>
-          <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-xl shadow-2xl w-[95vw] max-w-4xl max-h-[90vh] overflow-hidden flex flex-col z-[210]" onClick={e => e.stopPropagation()}>
+          <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-xl w-[95vw] max-w-4xl max-h-[90vh] overflow-hidden flex flex-col z-[210]" onClick={e => e.stopPropagation()}>
             {/* ヘッダー */}
             <div className="px-4 py-2.5 bg-primary-50 border-b border-primary-200 flex items-center justify-between shrink-0">
               <h3 className="font-bold text-gray-800 text-sm flex items-center gap-2">
@@ -1897,7 +1897,7 @@ function CertificatePrintButton({ brackets, allTeams, selectedCategory }: {
               </h3>
               <div className="flex items-center gap-2">
                 <button onClick={handlePrint} disabled={selectedEntries.length === 0}
-                  className="flex items-center gap-1.5 px-4 py-1.5 bg-primary-500 text-white text-xs font-bold rounded-lg shadow hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors active:scale-95">
+                  className="flex items-center gap-1.5 px-4 py-1.5 bg-primary-500 text-white text-xs font-bold rounded-lg hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors active:scale-95">
                   <Printer size={14} /> {selectedEntries.length}枚を印刷
                 </button>
                 <button onClick={() => setIsOpen(false)} className="p-1 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-white transition-colors">
@@ -1938,7 +1938,7 @@ function CertificatePrintButton({ brackets, allTeams, selectedCategory }: {
               {/* 右: A4プレビュー */}
               <div className="flex-1 bg-gray-100 overflow-auto flex items-center justify-center p-4">
                 {previewEntry ? (
-                  <div className="bg-white shadow-lg border border-gray-300" style={{ width: '280px', height: '396px', position: 'relative' }}>
+                  <div className="bg-white border border-gray-300" style={{ width: '280px', height: '396px', position: 'relative' }}>
                     {/* 賞状の外枠イメージ */}
                     <div className="absolute inset-2 border-2 border-primary-300/40 rounded" />
                     <div className="absolute inset-3 border border-primary-200/30 rounded" />

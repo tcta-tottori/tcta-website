@@ -116,7 +116,7 @@ export function TeamLeagueResultPreview({ league, standings, matches, allTeams, 
       {/* プレビュー呼び出しボタン（無彩色ベース） */}
       <button
         onClick={(e) => { e.stopPropagation(); setIsOpen(true); }}
-        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold text-gray-700 bg-gray-50 border border-gray-200 shadow-sm hover:shadow hover:bg-gray-100 hover:border-gray-300 transition-all active:scale-95 whitespace-nowrap"
+        className="flex items-center gap-1.5 px-3 py-1.5 rounded text-[11px] font-bold text-gray-700 bg-gray-50 border border-gray-200 hover:bg-gray-100 hover:border-gray-300 transition-all active:scale-95 whitespace-nowrap"
       >
         <ImageIcon size={14} className="text-gray-600" />
         結果画像
@@ -129,13 +129,13 @@ export function TeamLeagueResultPreview({ league, standings, matches, allTeams, 
           onClick={() => setIsOpen(false)}
         >
           <div
-            className="bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col w-full max-w-5xl max-h-[90vh] border border-gray-100"
+            className="bg-white rounded-2xl overflow-hidden flex flex-col w-full max-w-5xl max-h-[90vh] border border-gray-100"
             onClick={e => e.stopPropagation()}
           >
             {/* モーダルヘッダー（無彩色グラデ） */}
-            <div className="px-4 py-3 bg-gradient-to-r from-gray-50 to-white border-b border-gray-100 flex items-center justify-between shrink-0">
+            <div className="px-4 py-3 bg-gray-50 border-b border-gray-100 flex items-center justify-between shrink-0">
               <h3 className="font-bold text-gray-900 text-sm flex items-center gap-2">
-                <span className="inline-flex items-center justify-center w-6 h-6 rounded-md bg-gradient-to-br from-primary-500 to-primary-700 text-white shadow-sm">
+                <span className="inline-flex items-center justify-center w-6 h-6 rounded-md bg-primary-500 text-white">
                   <ImageIcon size={13} />
                 </span>
                 {leagueDivisionLabel(league.leagueId)} 予選結果プレビュー
@@ -145,7 +145,7 @@ export function TeamLeagueResultPreview({ league, standings, matches, allTeams, 
                 {view === 'detail' && (
                   <button
                     onClick={() => setShowEdit(v => !v)}
-                    className={`relative flex items-center justify-center w-9 h-9 rounded-lg shadow transition-colors active:scale-95 border ${
+                    className={`relative flex items-center justify-center w-9 h-9 rounded-lg transition-colors active:scale-95 border ${
                       showEdit
                         ? 'bg-primary-100 text-gray-900 border-primary-300 hover:bg-primary-200'
                         : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
@@ -164,7 +164,7 @@ export function TeamLeagueResultPreview({ league, standings, matches, allTeams, 
                 {currentUrl && (
                   <button
                     onClick={handleDownload}
-                    className="flex items-center justify-center w-9 h-9 bg-gradient-to-r from-primary-500 to-primary-600 text-white rounded-lg shadow hover:from-primary-600 hover:to-primary-700 transition-colors active:scale-95"
+                    className="flex items-center justify-center w-9 h-9 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors active:scale-95"
                     title={view === 'summary' ? '順位表を保存' : '総当たり表を保存'}
                     aria-label="表示中の画像を保存"
                   >
@@ -174,7 +174,7 @@ export function TeamLeagueResultPreview({ league, standings, matches, allTeams, 
                 {summaryUrl && detailUrl && (
                   <button
                     onClick={handleDownloadBoth}
-                    className="hidden sm:flex items-center gap-1 px-3 h-9 bg-white text-gray-700 border border-gray-200 rounded-lg shadow-sm hover:bg-gray-50 transition-colors active:scale-95 text-xs font-bold"
+                    className="hidden sm:flex items-center gap-1 px-3 h-9 bg-white text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors active:scale-95 text-xs font-bold"
                     title="順位表と総当たり表の両方を保存"
                   >
                     <Download size={14} />2枚保存
@@ -197,7 +197,7 @@ export function TeamLeagueResultPreview({ league, standings, matches, allTeams, 
                 <button
                   onClick={() => { setView('summary'); setShowEdit(false); }}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-all ${
-                    view === 'summary' ? 'bg-white text-gray-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                    view === 'summary' ? 'bg-[var(--ink)] text-white' : 'text-gray-500 hover:text-gray-700'
                   }`}
                 >
                   <ListOrdered size={14} />順位表
@@ -205,7 +205,7 @@ export function TeamLeagueResultPreview({ league, standings, matches, allTeams, 
                 <button
                   onClick={() => setView('detail')}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-all ${
-                    view === 'detail' ? 'bg-white text-gray-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                    view === 'detail' ? 'bg-[var(--ink)] text-white' : 'text-gray-500 hover:text-gray-700'
                   }`}
                 >
                   <LayoutGrid size={14} />総当たり表
@@ -276,7 +276,7 @@ export function TeamLeagueResultPreview({ league, standings, matches, allTeams, 
                 <img
                   src={currentUrl}
                   alt={`${league.leagueId}リーグ${view === 'summary' ? '順位表' : '結果'}`}
-                  className="max-w-full h-auto object-contain shadow-sm border border-gray-100 bg-white rounded"
+                  className="max-w-full h-auto object-contain border border-gray-100 bg-white rounded"
                   style={{ maxHeight: '100%' }}
                 />
               )}

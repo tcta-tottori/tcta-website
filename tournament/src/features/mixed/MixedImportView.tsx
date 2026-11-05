@@ -56,9 +56,9 @@ export default function MixedImportView() {
   return (
     <div className="max-w-4xl mx-auto">
       {/* タイトルカード */}
-      <div className="bg-gradient-to-br from-primary-50 to-white rounded-2xl p-8 mb-6 border border-primary-100">
+      <div className="bg-primary-50 rounded-2xl p-8 mb-6 border border-primary-100">
         <div className="flex items-center gap-4 mb-4">
-          <div className="w-14 h-14 bg-gradient-to-br from-primary-500 to-primary-600 rounded-xl flex items-center justify-center shadow-lg">
+          <div className="w-14 h-14 bg-primary-500 rounded-xl flex items-center justify-center">
             <Users size={28} className="text-white" />
           </div>
           <div>
@@ -67,15 +67,15 @@ export default function MixedImportView() {
           </div>
         </div>
         <div className="grid grid-cols-3 gap-4 mt-6">
-          <div className="bg-white rounded-xl p-4 shadow-sm border border-primary-100">
+          <div className="bg-white rounded-xl p-4 border border-primary-100">
             <div className="text-3xl font-bold text-gray-800">{isImported ? leagues.length : '—'}</div>
             <div className="text-sm text-gray-500">リーグ</div>
           </div>
-          <div className="bg-white rounded-xl p-4 shadow-sm border border-primary-100">
+          <div className="bg-white rounded-xl p-4 border border-primary-100">
             <div className="text-3xl font-bold text-gray-800">{isImported ? leagues.reduce((s, l) => s + l.teams.length, 0) : '—'}</div>
             <div className="text-sm text-gray-500">ペア参加</div>
           </div>
-          <div className="bg-white rounded-xl p-4 shadow-sm border border-primary-100">
+          <div className="bg-white rounded-xl p-4 border border-primary-100">
             <div className="text-3xl font-bold text-gray-700">{isImported ? leagueSizes.join('・') : '—'}</div>
             <div className="text-sm text-gray-500">リーグのペア数</div>
           </div>
@@ -90,7 +90,7 @@ export default function MixedImportView() {
         className={`
           relative border-2 border-dashed rounded-2xl p-12 text-center transition-all duration-300 cursor-pointer
           ${isDragging
-            ? 'border-primary-500 bg-primary-50 scale-[1.02] shadow-lg'
+            ? 'border-primary-500 bg-primary-50 scale-[1.02]'
             : isImported
               ? 'border-primary-300 bg-primary-50/50'
               : 'border-gray-300 bg-white hover:border-primary-400 hover:bg-primary-50/30'
@@ -115,11 +115,11 @@ export default function MixedImportView() {
               {importFileName}
             </div>
             <div className="flex justify-center gap-6 mt-4">
-              <div className="bg-white px-4 py-2 rounded-lg shadow-sm">
+              <div className="bg-white px-4 py-2 rounded-lg">
                 <span className="text-2xl font-bold text-gray-700">{leagues.length}</span>
                 <span className="text-sm text-gray-500 ml-1">リーグ</span>
               </div>
-              <div className="bg-white px-4 py-2 rounded-lg shadow-sm">
+              <div className="bg-white px-4 py-2 rounded-lg">
                 <span className="text-2xl font-bold text-gray-700">{leagues.reduce((s, l) => s + l.teams.length, 0)}</span>
                 <span className="text-sm text-gray-500 ml-1">ペア</span>
               </div>
@@ -137,7 +137,7 @@ export default function MixedImportView() {
             <div className="text-sm text-gray-400">
               またはクリックしてファイルを選択
             </div>
-            <div className="inline-flex items-center gap-1 text-xs text-gray-400 bg-gray-100 px-3 py-1 rounded-full">
+            <div className="inline-flex items-center gap-1 text-xs text-gray-400 bg-gray-100 px-3 py-1 rounded">
               <FileSpreadsheet size={12} />
               .xlsx形式
             </div>
@@ -155,7 +155,7 @@ export default function MixedImportView() {
 
       {/* 大会設定（読み込み後に表示） */}
       {isImported && tournamentInfo && (
-        <div className="mt-6 bg-white rounded-2xl shadow-sm border border-gray-200 p-5">
+        <div className="mt-6 bg-white rounded-2xl border border-gray-200 p-5">
           <h3 className="text-sm font-bold text-gray-800 flex items-center gap-2 mb-4">
             <Settings size={16} className="text-gray-500" />
             大会設定
@@ -228,12 +228,12 @@ export default function MixedImportView() {
           ].map(({ step, label }, i) => (
             <div key={step} className="flex items-center">
               <div className="flex-1 text-center">
-                <div className="w-10 h-10 mx-auto bg-gradient-to-br from-primary-100 to-white rounded-full flex items-center justify-center text-gray-800 font-bold text-sm border-2 border-primary-200">
+                <div className="w-10 h-10 mx-auto bg-primary-100 rounded-full flex items-center justify-center text-gray-800 font-bold text-sm border-2 border-primary-200">
                   {step}
                 </div>
                 <div className="text-xs text-gray-500 mt-1">{label}</div>
               </div>
-              {i < 4 && <div className="w-full h-0.5 bg-gradient-to-r from-primary-200 to-primary-300 mx-1" />}
+              {i < 4 && <div className="w-full h-0.5 bg-primary-200 mx-1" />}
             </div>
           ))}
         </div>

@@ -2,7 +2,7 @@ import { useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Check, X, Users, Sparkles, Plus, Trash2, Edit3, UserCircle2, Layers, Upload } from 'lucide-react';
 import { useTeamStore } from './teamStore';
-import { leagueTextColor } from '../mixed/leagueColors';
+import { leagueTextColor, leagueBadgeStyle } from '../mixed/leagueColors';
 import type { TeamEntry, TeamLeague, TeamMember } from './types';
 import { getDisplayName } from './teamLogic';
 import { parseClubExcel, normalizeTeamName } from './clubExcelParser';
@@ -95,9 +95,9 @@ function TeamEditModal({
 
   return createPortal(
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] flex items-center justify-center p-4" onClick={onClose}>
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-hidden flex flex-col" onClick={e => e.stopPropagation()}>
+      <div className="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-hidden flex flex-col" onClick={e => e.stopPropagation()}>
         {/* ヘッダー */}
-        <div className={`bg-gradient-to-br ${color.grad} px-5 py-4 text-white flex items-center gap-3 shrink-0`}>
+        <div className="bg-[var(--ink)] px-5 py-4 text-white flex items-center gap-3 shrink-0">
           <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-white/20 backdrop-blur-sm font-black text-base shrink-0">
             {team.teamNumber}
           </div>
@@ -173,13 +173,13 @@ function TeamEditModal({
         <div className="px-4 py-3 bg-gray-50 border-t border-gray-200 flex gap-2 shrink-0">
           <button
             onClick={onClose}
-            className="flex-1 py-2.5 rounded-xl text-sm font-bold bg-white border border-gray-200 text-gray-600 hover:bg-gray-100 transition-colors"
+            className="btn btn--outline sk-btn flex-1"
           >
             キャンセル
           </button>
           <button
             onClick={save}
-            className={`flex-1 py-2.5 rounded-xl text-sm font-bold bg-gradient-to-br ${color.grad} text-white shadow-md hover:shadow-lg transition-all`}
+            className="btn btn--primary sk-btn flex-1"
           >
             保存
           </button>
@@ -208,19 +208,19 @@ function CompactTeamCard({
 
   const statusStyles =
     team.status === 'entry'
-      ? 'bg-white border-primary-200 shadow-sm ring-1 ring-primary-500/10'
+      ? 'bg-white border-primary-200 ring-1 ring-primary-500/10'
       : team.status === 'def'
       ? 'bg-gray-50/60 border-gray-200 opacity-60'
       : 'bg-white border-gray-200';
 
   return (
-    <div className={`rounded-2xl border overflow-hidden transition-all ${statusStyles}`}>
+    <div className={`rounded border overflow-hidden transition-all ${statusStyles}`}>
       {/* ヘッダー（クリックで編集） */}
       <button
         onClick={onClick}
         className="w-full flex items-center gap-2 px-2.5 py-2 border-b border-gray-100 hover:bg-gray-50/80 active:bg-gray-100 transition-colors text-left group"
       >
-        <div className={`flex items-center justify-center w-7 h-7 rounded-full bg-gradient-to-br ${color.grad} text-white font-black text-xs shrink-0 shadow-sm`}>
+        <div className={`flex items-center justify-center w-7 h-7 rounded-full tm-flat ${color.grad} text-white font-black text-xs shrink-0`}>
           {team.teamNumber}
         </div>
         <div className="flex-1 min-w-0">
@@ -295,17 +295,18 @@ function CompactTeamCard({
 function LeagueSection({
   league,
   leagueIndex,
+  leagueCount,
   onSetTeamStatus,
   onSetLeagueAll,
   onEditTeam,
 }: {
   league: TeamLeague;
   leagueIndex: number;
+  leagueCount: number;
   onSetTeamStatus: (teamId: string, status: TeamEntry['status']) => void;
   onSetLeagueAll: (leagueId: string, status: TeamEntry['status']) => void;
   onEditTeam: (team: TeamEntry) => void;
 }) {
-  const color = getColor(leagueIndex);
   const entryCount = league.teams.filter(t => t.status === 'entry').length;
   const totalCount = league.teams.length;
   const allEntry = entryCount === totalCount;
@@ -313,33 +314,30 @@ function LeagueSection({
   const colsClass = totalCount >= 5 ? 'sm:grid-cols-3 lg:grid-cols-5' : 'sm:grid-cols-2 lg:grid-cols-4';
 
   return (
-    <div className={`rounded-2xl border ${color.border} bg-white overflow-hidden shadow-sm`}>
+    <div className="tm-league">
       {/* ヘッダー */}
-      <div className={`relative bg-gradient-to-br ${color.grad} px-4 py-2.5 text-white overflow-hidden`}>
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute -top-5 -right-5 w-20 h-20 rounded-full bg-white blur-2xl" />
+      <div className="flex tm-league__head">
+        <span className="tm-league__badge" style={leagueBadgeStyle(league.leagueId, leagueCount)}>{league.leagueId}</span>
+        <div className="flex-1 min-w-0">
+          <h3 className="tm-league__title">
+            {league.leagueId} リーグ
+            <small>{entryCount}/{totalCount}</small>
+          </h3>
+          {league.courtName && (
+            <p className="text-xs text-gray-500 truncate">{league.courtName}</p>
+          )}
         </div>
-        <div className="relative flex items-center justify-between gap-2">
-          <div className="flex items-baseline gap-2 min-w-0">
-            <span className="text-xl font-black tracking-tight">{league.leagueId}</span>
-            <span className="text-xs font-medium opacity-90">リーグ</span>
-            {league.courtName && (
-              <span className="text-[10px] opacity-75 truncate">・{league.courtName}</span>
-            )}
-            <span className="text-[10px] opacity-80 tabular-nums ml-1">{entryCount}/{totalCount}</span>
-          </div>
-          <button
-            onClick={() => onSetLeagueAll(league.leagueId, allEntry ? 'none' : 'entry')}
-            className="flex items-center gap-1 px-2.5 py-1 text-[10px] font-bold bg-white/20 hover:bg-white/30 active:bg-white/40 rounded-lg backdrop-blur-sm transition-colors shrink-0"
-          >
-            <Sparkles className="w-3 h-3" />
-            {allEntry ? '解除' : '一括Entry'}
-          </button>
-        </div>
+        <button
+          onClick={() => onSetLeagueAll(league.leagueId, allEntry ? 'none' : 'entry')}
+          className={`btn sk-btn sk-btn--sm shrink-0 ${allEntry ? 'btn--outline' : 'btn--primary'}`}
+        >
+          <Sparkles className="w-3 h-3" />
+          {allEntry ? '解除' : '一括Entry'}
+        </button>
       </div>
 
       {/* チームグリッド (1行に4または5) */}
-      <div className={`p-2.5 grid grid-cols-1 ${colsClass} gap-2 bg-gray-50/30`}>
+      <div className={`p-2.5 grid grid-cols-1 ${colsClass} gap-2 bg-[var(--gray-050)]`}>
         {league.teams.map(team => (
           <CompactTeamCard
             key={team.teamId}
@@ -409,9 +407,9 @@ export default function TeamEntryView() {
     : leagues.filter(l => l.leagueId === selectedTab);
 
   return (
-    <div className="space-y-3 pb-20">
+    <div className="tm-page">
       {/* Chrome風タブ（リッチカラー文字） */}
-      <div className="sticky top-0 z-20 -mx-2 px-2">
+      <div className="tm-tabs">
         <div className="chrome-tab-bar">
           {/* 全体タブ */}
           {(() => {
@@ -469,8 +467,8 @@ export default function TeamEntryView() {
       </div>
 
       {/* 全体一括エントリー */}
-      <div className="flex items-center gap-2 px-1">
-        <div className="flex-1 text-xs text-gray-500">
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="flex-1 min-w-[180px] text-xs text-gray-500">
           <span className="font-bold tabular-nums text-gray-700">{totalEntered}</span>
           <span className="text-gray-400"> / {totalTeams} チーム Entry</span>
           {teamsMissingMembers > 0 && (
@@ -487,18 +485,14 @@ export default function TeamEntryView() {
         <button
           onClick={() => relinkInputRef.current?.click()}
           title="Excelを選び直して、選手が空のチームだけ名簿を復元します（スコアは保持）"
-          className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold shadow-md transition-all active:scale-95 bg-white border border-primary-200 text-gray-800 hover:bg-primary-50"
+          className="btn btn--outline sk-btn sk-btn--sm"
         >
           <Upload className="w-3.5 h-3.5" />
           名簿を再取込
         </button>
         <button
           onClick={() => setAllTeamsStatus(allEntered ? 'none' : 'entry')}
-          className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold shadow-md transition-all active:scale-95 ${
-            allEntered
-              ? 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
-              : 'bg-gradient-to-br from-primary-500 to-primary-600 text-white hover:shadow-lg'
-          }`}
+          className={`btn sk-btn sk-btn--sm ${allEntered ? 'btn--outline' : 'btn--primary'}`}
         >
           <Sparkles className="w-3.5 h-3.5" />
           {allEntered ? '全て解除' : '全て一括Entry'}
@@ -513,6 +507,7 @@ export default function TeamEntryView() {
             key={league.leagueId}
             league={league}
             leagueIndex={index}
+            leagueCount={leagues.length}
             onSetTeamStatus={setTeamStatus}
             onSetLeagueAll={setLeagueAllStatus}
             onEditTeam={team => setEditingTeam({ team, colorIndex: index })}

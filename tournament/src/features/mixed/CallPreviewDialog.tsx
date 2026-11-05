@@ -238,7 +238,7 @@ export default function CallPreviewDialog({
   return createPortal(
     <div className="fixed inset-0 bg-black/50 z-[200]" onClick={onClose}>
       <div
-        className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-2xl shadow-2xl w-[92vw] max-w-lg max-h-[85vh] overflow-hidden flex flex-col z-[210]"
+        className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-2xl w-[92vw] max-w-lg max-h-[85vh] overflow-hidden flex flex-col z-[210]"
         onClick={e => e.stopPropagation()}
       >
         <div className="px-4 py-2.5 bg-gray-600 text-white flex items-center justify-between shrink-0">

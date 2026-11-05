@@ -1,1 +1,55 @@
 /* 団体戦・ミックス（features/team, features/mixed）の画面だけの指定 */
+
+/* 旧グラデーション（from-* to-* の色データ）を、始点の色 1 色のべた塗りにする */
+.tm-flat[class*="from-"] { background-color: var(--tw-gradient-from, transparent); background-image: none; }
+
+/* 画面の枠（SkPage の代わり。各画面の外側） */
+.tm-page { display: flex; flex-direction: column; gap: 16px; padding: 16px 16px 64px; }
+@media (max-width: 640px) { .tm-page { padding: 12px 12px 56px; gap: 12px; } }
+
+/* 上に貼り付ける操作バー（画面に 1 つまで） */
+.tm-bar {
+  position: sticky; top: var(--app-sticky-top); z-index: 20;
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px;
+  padding: 10px 12px; background: var(--white);
+  border: 1px solid var(--gray-200); border-radius: var(--radius);
+}
+.tm-bar__grow { flex: 1 1 auto; }
+.tm-bar__chips { display: flex; flex-wrap: wrap; gap: 6px; }
+
+/* 検索窓 */
+.tm-search { display: flex; align-items: center; gap: 6px; flex: 1 1 220px; min-width: 0; height: 34px; padding: 0 10px; border: 1px solid var(--gray-300); border-radius: var(--radius); background: var(--white); color: var(--gray-500); transition: border-color .2s var(--ease); }
+.tm-search:focus-within { border-color: var(--ink); }
+.tm-search input { flex: 1 1 auto; min-width: 0; border: 0; outline: 0; background: transparent; font: 400 14px/1 var(--fjp); color: var(--ink); }
+
+/* リーグのブロック（白いパネル＋見出し） */
+.tm-league { background: var(--white); border: 1px solid var(--gray-200); border-radius: var(--radius); overflow: hidden; }
+.tm-league__head { align-items: center; gap: 10px; padding: 10px 12px; border-bottom: 1px solid var(--gray-200); background: var(--white); }
+.tm-league__title { margin: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; font: 700 15px/1.4 var(--fjp); color: var(--ink); }
+.tm-league__title small { font: 700 11px/1 var(--flt); color: var(--gray-500); letter-spacing: .04em; }
+.tm-league__badge { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; border-radius: var(--radius); font: 700 17px/1 var(--flt); }
+
+/* 行の hover（操作の邪魔をしない程度） */
+.tm-row { transition: background-color .2s var(--ease); }
+@media (hover: hover) { .tm-row:hover { background-color: var(--gray-050); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .tm-row, .tm-search { transition: none; }
+}
+
+/* リーグ切替のタブ（Chrome 風 → サイトの下線タブ）。画面上部に貼り付ける */
+.tm-tabs { position: sticky; top: var(--app-sticky-top); z-index: 20; background: var(--gray-050); }
+.tm-tabs--static { position: static; }
+.tm-tabs .chrome-tab-bar { align-items: stretch; gap: 0; padding: 0; background: var(--white); border: 1px solid var(--gray-200); border-radius: var(--radius); }
+.tm-tabs .chrome-tab { align-items: center; padding: 10px 14px; border-radius: 0; border-bottom: 2px solid transparent; font-family: var(--fjp); transition: color .2s var(--ease), border-color .2s var(--ease), background-color .2s var(--ease); }
+.tm-tabs .chrome-tab:hover:not(.chrome-tab-active) { background: var(--gray-050); }
+.tm-tabs .chrome-tab-active { box-shadow: none; border-bottom-color: var(--red); background: var(--white); }
+.tm-tabs .chrome-tab-active::before, .tm-tabs .chrome-tab-active::after { display: none; }
+.tm-tabs .chrome-tab-progress { font-family: var(--flt); font-variant-numeric: tabular-nums; }
+
+/* 濃い灰色の見出し帯は、サイトの表の見出しと同じ墨色に */
+.tm-flat.from-gray-500, .tm-flat.from-gray-600, .tm-flat.from-gray-700, .tm-flat.from-gray-800 { background-color: var(--ink); }
+
+/* ミックスの決勝トーナメント上の帯：狭い幅では操作ボタンを次の行に送る */
+.dl-bar.tm-bt .dl-bar__row { flex-wrap: wrap; row-gap: 6px; }
+.dl-bar.tm-bt .dl-tools { flex-wrap: wrap; justify-content: flex-end; margin-left: auto; }
