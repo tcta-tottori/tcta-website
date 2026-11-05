@@ -59,25 +59,23 @@ export default function GameRulesDialog({ event, onClose }: Props) {
   };
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4" onClick={onClose}>
-      <div className="fixed inset-0 bg-black/25 backdrop-blur-[2px]" />
-      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden" onClick={e => e.stopPropagation()}>
-        <div className="bg-gradient-to-r from-primary-500 to-primary-600 text-white px-5 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <BookOpen className="w-5 h-5" />
-            <div>
-              <h3 className="text-sm font-bold">ゲームルール編集</h3>
-              <p className="text-[10px] text-white/70">{event.name}</p>
-            </div>
+    <div className="fixed inset-0 z-[200] flex items-center justify-center psd-overlay" onClick={onClose} role="dialog" aria-modal="true">
+      <div className="psd-panel psd-panel--sm psd-panel--flex" onClick={e => e.stopPropagation()}>
+        <div className="sdlg__head psd-head">
+          <span className="sec-head__mark sdlg__mark" aria-hidden="true" />
+          <div className="sdlg__heading">
+            <p className="sdlg__eyebrow">GAME RULES</p>
+            <h3 className="sdlg__title"><BookOpen className="w-5 h-5 text-primary-600" />ゲームルール編集</h3>
+            <p className="psd-lead">{event.name}</p>
           </div>
-          <button onClick={onClose} className="p-1 rounded-lg hover:bg-white/20">
+          <button onClick={onClose} className="sdlg__close" aria-label="閉じる">
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        <div className="p-5 space-y-3 max-h-[60vh] overflow-auto">
+        <div className="psd-body space-y-3 max-h-[60vh] overflow-auto">
           {rules.map((rule, i) => (
-            <div key={i} className="flex items-start gap-2 p-3 bg-gray-50 rounded-xl border border-gray-200">
+            <div key={i} className="flex items-start gap-2 p-3 bg-gray-50 rounded border border-gray-200">
               <div className="flex-1 space-y-2">
                 <div>
                   <label className="text-[10px] text-gray-500 font-medium">適用範囲</label>
@@ -86,7 +84,7 @@ export default function GameRulesDialog({ event, onClose }: Props) {
                     value={rule.roundLabel}
                     onChange={e => patch(i, { roundLabel: e.target.value })}
                     placeholder="例: 全回戦, 1～2回戦, 準決勝以降"
-                    className="w-full text-sm border border-gray-200 rounded-lg px-2.5 py-1.5 focus:border-primary-400 focus:ring-2 focus:ring-primary-200 outline-none"
+                    className="w-full text-sm border border-gray-200 rounded px-2.5 py-1.5 focus:border-primary-400 focus:ring-2 focus:ring-primary-200 outline-none"
                   />
                 </div>
                 <div>
@@ -99,7 +97,7 @@ export default function GameRulesDialog({ event, onClose }: Props) {
                       patch(i, { ruleText: text, games: gamesFromText(text) ?? rule.games });
                     }}
                     placeholder="例: 8ゲームマッチ（8-8タイブレーク）"
-                    className="w-full text-sm border border-gray-200 rounded-lg px-2.5 py-1.5 focus:border-primary-400 focus:ring-2 focus:ring-primary-200 outline-none"
+                    className="w-full text-sm border border-gray-200 rounded px-2.5 py-1.5 focus:border-primary-400 focus:ring-2 focus:ring-primary-200 outline-none"
                   />
                 </div>
                 <div className="flex items-center gap-3 flex-wrap">
@@ -111,7 +109,7 @@ export default function GameRulesDialog({ event, onClose }: Props) {
                       max={12}
                       value={rule.games}
                       onChange={e => patch(i, { games: parseInt(e.target.value) || 6 })}
-                      className="w-16 text-sm text-center border border-gray-200 rounded-lg px-2 py-1 focus:border-primary-400 outline-none"
+                      className="w-16 text-sm text-center border border-gray-200 rounded px-2 py-1 focus:border-primary-400 outline-none"
                     />
                   </div>
                   <div className="flex items-center gap-2">
@@ -119,7 +117,7 @@ export default function GameRulesDialog({ event, onClose }: Props) {
                     <select
                       value={rule.matchFormat || 'game'}
                       onChange={e => patch(i, { matchFormat: e.target.value as MatchFormatType })}
-                      className="text-xs border border-gray-200 rounded-lg px-2 py-1 focus:border-primary-400 outline-none"
+                      className="text-xs border border-gray-200 rounded px-2 py-1 focus:border-primary-400 outline-none"
                     >
                       <option value="game">ゲームマッチ</option>
                       <option value="twoSetsSuper10">2セット+STB</option>
@@ -139,7 +137,7 @@ export default function GameRulesDialog({ event, onClose }: Props) {
                       patch(i, { heatRuleText: text, heatGames: gamesFromText(text) ?? rule.heatGames });
                     }}
                     placeholder="例: 6ゲームマッチ（ノーアドバンテージ）"
-                    className="w-full text-sm border border-red-200 rounded-lg px-2.5 py-1.5 focus:border-red-400 focus:ring-2 focus:ring-red-200 outline-none"
+                    className="w-full text-sm border border-red-200 rounded px-2.5 py-1.5 focus:border-red-400 focus:ring-2 focus:ring-red-200 outline-none"
                   />
                   <div className="flex items-center gap-3 flex-wrap">
                     <div className="flex items-center gap-2">
@@ -154,7 +152,7 @@ export default function GameRulesDialog({ event, onClose }: Props) {
                           patch(i, { heatGames: v === '' ? undefined : (parseInt(v) || undefined) });
                         }}
                         placeholder="-"
-                        className="w-16 text-sm text-center border border-red-200 rounded-lg px-2 py-1 focus:border-red-400 outline-none"
+                        className="w-16 text-sm text-center border border-red-200 rounded px-2 py-1 focus:border-red-400 outline-none"
                       />
                     </div>
                     <div className="flex items-center gap-2">
@@ -162,7 +160,7 @@ export default function GameRulesDialog({ event, onClose }: Props) {
                       <select
                         value={rule.heatMatchFormat || 'game'}
                         onChange={e => patch(i, { heatMatchFormat: e.target.value as MatchFormatType })}
-                        className="text-xs border border-red-200 rounded-lg px-2 py-1 focus:border-red-400 outline-none"
+                        className="text-xs border border-red-200 rounded px-2 py-1 focus:border-red-400 outline-none"
                       >
                         <option value="game">ゲームマッチ</option>
                         <option value="twoSetsSuper10">2セット+STB</option>
@@ -182,7 +180,7 @@ export default function GameRulesDialog({ event, onClose }: Props) {
               {rules.length > 1 && (
                 <button
                   onClick={() => setRules(rules.filter((_, idx) => idx !== i))}
-                  className="p-1 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg"
+                  className="p-1 text-red-400 hover:text-red-600 hover:bg-red-50 rounded"
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>
@@ -192,7 +190,7 @@ export default function GameRulesDialog({ event, onClose }: Props) {
 
           <button
             onClick={() => setRules([...rules, { roundLabel: '', ruleText: '', games: 6 }])}
-            className="w-full flex items-center justify-center gap-1.5 py-2 text-xs font-bold text-gray-700 border border-dashed border-primary-300 rounded-xl hover:bg-primary-50 transition-colors"
+            className="w-full flex items-center justify-center gap-1.5 py-2 text-xs font-bold text-gray-700 border border-dashed border-primary-300 rounded hover:bg-primary-50 transition-colors"
           >
             <Plus className="w-3.5 h-3.5" />
             ルールを追加
@@ -204,17 +202,17 @@ export default function GameRulesDialog({ event, onClose }: Props) {
           </p>
         </div>
 
-        <div className="px-5 py-3 bg-gray-50 border-t border-gray-200 flex justify-end gap-2">
+        <div className="psd-actions psd-actions--line">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-xs font-bold text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50"
+            className="btn btn--outline psd-btn"
           >
             キャンセル
           </button>
           <button
             onClick={() => void handleSave()}
             disabled={saving}
-            className="px-4 py-2 text-xs font-bold text-white bg-primary-500 rounded-lg hover:bg-primary-600 shadow-sm disabled:opacity-50"
+            className="btn btn--primary psd-btn"
           >
             保存
           </button>

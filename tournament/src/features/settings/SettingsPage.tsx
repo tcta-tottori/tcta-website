@@ -19,13 +19,14 @@ import { useTeamStore } from '../team/teamStore';
 import { getVoiceSettings } from '../broadcast/voiceConfig';
 
 /**
- * セクションの共通枠（バックアップ画面と同じ体裁）。
+ * セクションの共通枠（サイトの区画：赤い四角＋英字＋見出し）。
  * 見出しをタップで開閉できる。既定はスマホ=閉じる／PC=開く。
  */
 function SectionCard({
-  icon, title, description, defaultOpen, children,
+  icon, en, title, description, defaultOpen, children,
 }: {
   icon: React.ReactNode;
+  en: string;
   title: string;
   description: string;
   defaultOpen: boolean;
@@ -35,24 +36,24 @@ function SectionCard({
   // 画面幅が変わって既定が変わったら、それに合わせ直す
   useEffect(() => { setOpen(defaultOpen); }, [defaultOpen]);
   return (
-    <section className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+    <section className="sk-sec ps-card">
       <button
         onClick={() => setOpen(v => !v)}
-        className="w-full px-5 py-4 flex items-center gap-3 text-left hover:bg-gray-50 transition-colors"
+        className="sk-sec__head ps-card__head"
         aria-expanded={open}
       >
-        <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-gray-100 to-white text-gray-600 shrink-0">
-          {icon}
-        </div>
-        <div className="flex-1 min-w-0">
-          <h2 className="font-bold text-gray-800">{title}</h2>
-          <p className="text-xs text-gray-500">{description}</p>
-        </div>
-        <ChevronDown
-          className={`w-5 h-5 shrink-0 text-gray-400 transition-transform ${open ? 'rotate-180' : ''}`}
-        />
+        <span className="sk-sec__mark" aria-hidden="true" />
+        <span className="sk-sec__titles">
+          <span className="sk-sec__en">{en}</span>
+          <span className="sk-sec__title">{title}</span>
+          <span className="sk-sec__lead">{description}</span>
+        </span>
+        <span className="ps-card__ico" aria-hidden="true">{icon}</span>
+        <ChevronDown className={`ps-card__chev ${open ? 'is-open' : ''}`} aria-hidden="true" />
       </button>
-      {open && <div className="px-5 pb-5 pt-1 space-y-3 border-t border-gray-100">{children}</div>}
+      <div className={`sk-collapse ${open ? 'is-open' : ''}`}>
+        <div><div className="sk-sec__body ps-card__body">{children}</div></div>
+      </div>
     </section>
   );
 }
@@ -74,12 +75,9 @@ function useIsWide(): boolean {
 /** 設定を開くボタン（セクション内の主ボタン） */
 function OpenButton({ label, onClick }: { label: string; onClick: () => void }) {
   return (
-    <button
-      onClick={onClick}
-      className="w-full flex items-center justify-between gap-2 px-4 py-3 rounded-xl font-semibold bg-gradient-to-br from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white shadow-md hover:shadow-lg transition-all active:scale-[0.98]"
-    >
+    <button onClick={onClick} className="btn btn--primary sk-btn sk-btn--lg ps-open">
       <span>{label}</span>
-      <ChevronRight className="w-4 h-4 shrink-0" />
+      <ChevronRight className="w-4 h-4 shrink-0 ln-arrow" />
     </button>
   );
 }
@@ -142,8 +140,8 @@ export default function SettingsPage() {
     : `Gemini 音声で読み上げます（${voice.voiceName || '既定の声'}）`;
 
   return (
-    <div className="min-h-full bg-gradient-to-b from-gray-50 via-white to-gray-50">
-      <div className="p-3 md:p-6 max-w-4xl mx-auto space-y-4">
+    <div className="ps-settings">
+      <div className="container sk-page ps-settings__page">
         {/* 同期 */}
         <SectionCard
           icon={
@@ -152,14 +150,15 @@ export default function SettingsPage() {
                 : isConnected ? <Wifi className="w-5 h-5 text-primary-500" />
                   : <WifiOff className="w-5 h-5" />
           }
+          en="SYNC"
           title="同期"
           description="複数の端末で同じ大会データを共有する"
           defaultOpen={sectionOpen}
         >
-          <div className="flex items-start gap-2.5 px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-sm text-gray-700">
-            <span className="flex-1">{syncText}</span>
+          <div className={`ps-status ${isDisconnectedWarn ? 'is-warn' : isConnected ? 'is-on' : ''}`}>
+            <span className="ps-status__text">{syncText}</span>
             {syncEnabled && roomCode && (
-              <span className="shrink-0 font-mono font-bold text-gray-900">{roomCode}</span>
+              <span className="ps-status__code">{roomCode}</span>
             )}
           </div>
           <OpenButton label="同期設定を開く" onClick={() => setSyncOpen(true)} />
@@ -168,34 +167,35 @@ export default function SettingsPage() {
         {/* 観戦用ページ */}
         <SectionCard
           icon={<Eye className="w-5 h-5" />}
+          en="PUBLIC VIEW"
           title="観戦用ページ"
           description="参加者・協会HP向けの読み取り専用ページ"
           defaultOpen={sectionOpen}
         >
-          <div className="px-4 py-3 rounded-xl border border-gray-200 bg-gray-50">
-            <div className="text-[10px] text-gray-400 font-medium uppercase tracking-wider mb-1">URL</div>
-            <div className="text-xs text-gray-700 break-all font-mono">{publicUrl}</div>
+          <div className="ps-status ps-status--url">
+            <span className="ps-status__label">URL</span>
+            <span className="ps-status__url">{publicUrl}</span>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="ps-btn2">
             <a
               href={publicUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-semibold bg-gradient-to-br from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white shadow-md hover:shadow-lg transition-all active:scale-[0.98]"
+              className="btn btn--primary sk-btn sk-btn--lg"
             >
               <ExternalLink className="w-4 h-4" />
               <span>観戦用ページを開く</span>
             </a>
             <button
               onClick={copyPublicUrl}
-              className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-semibold border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 transition-all active:scale-[0.98]"
+              className="btn btn--outline sk-btn sk-btn--lg"
             >
               {copied ? <Check className="w-4 h-4 text-primary-500" /> : <Copy className="w-4 h-4" />}
               <span>{copied ? 'コピーしました' : 'URLをコピー'}</span>
             </button>
           </div>
           {!syncEnabled && (
-            <p className="text-xs text-gray-500">
+            <p className="ps-hint">
               ほかの端末から見てもらうには、上の「同期」を開始してください。
             </p>
           )}
@@ -204,12 +204,13 @@ export default function SettingsPage() {
         {/* 音声 */}
         <SectionCard
           icon={<Volume2 className="w-5 h-5" />}
+          en="VOICE"
           title="音声（コール読み上げ）"
           description="呼び出しの声・読み上げ方法を選ぶ"
           defaultOpen={sectionOpen}
         >
-          <div className="px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-sm text-gray-700">
-            {voiceText}
+          <div className="ps-status">
+            <span className="ps-status__text">{voiceText}</span>
           </div>
           <OpenButton label="音声設定を開く" onClick={() => setVoiceOpen(true)} />
         </SectionCard>
@@ -217,6 +218,7 @@ export default function SettingsPage() {
         {/* バックアップ（バックアップ画面をそのまま取り込む） */}
         <SectionCard
           icon={<Shield className="w-5 h-5" />}
+          en="BACKUP"
           title="バックアップ"
           description="大会データをまとめて安全に保存・復元"
           defaultOpen={sectionOpen}

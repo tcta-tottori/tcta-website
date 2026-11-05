@@ -338,7 +338,7 @@ export default function CourtMap() {
       bg: 'bg-primary-100',
       border: 'border-primary-400',
       text: 'text-gray-900',
-      glow: 'shadow-[0_0_12px_rgba(216, 35, 42,0.3)]',
+      glow: '',
     },
     ready: {
       bg: 'bg-gray-50',
@@ -373,7 +373,7 @@ export default function CourtMap() {
     if (!cs) return null;
     const isOver = timeOverCourts.has(courtName);
     const style = isOver
-      ? { bg: 'bg-red-100', border: 'border-red-500', text: 'text-red-800', glow: 'shadow-[0_0_16px_rgba(216, 35, 42,0.4)]' }
+      ? { bg: 'bg-red-100', border: 'border-red-500', text: 'text-red-800', glow: '' }
       : statusStyles[cs.status];
     const isSelected = selectedCourt === courtName;
 
@@ -384,7 +384,7 @@ export default function CourtMap() {
         className={`
           relative rounded-lg border-2 transition-all cursor-pointer overflow-hidden
           ${style.bg} ${style.border} ${style.glow}
-          ${isSelected ? 'ring-2 ring-primary-500 ring-offset-1 scale-[1.03]' : 'hover:scale-[1.02] hover:shadow-md'}
+          ${isSelected ? 'ring-2 ring-primary-500 ring-offset-1 scale-[1.03]' : 'hover:scale-[1.02]'}
           ${cs.status === 'playing' && !isOver ? 'animate-pulse-slow' : ''}
         `}
         style={{ aspectRatio: '1 / 1.7' }}
@@ -427,7 +427,7 @@ export default function CourtMap() {
     if (!cs) return null;
     const isOver = timeOverCourts.has(courtName);
     const style = isOver
-      ? { bg: 'bg-red-100', border: 'border-red-500', text: 'text-red-800', glow: 'shadow-[0_0_16px_rgba(216, 35, 42,0.4)]' }
+      ? { bg: 'bg-red-100', border: 'border-red-500', text: 'text-red-800', glow: '' }
       : statusStyles[cs.status];
     const isSelected = selectedCourt === courtName;
 
@@ -438,7 +438,7 @@ export default function CourtMap() {
         className={`
           relative rounded-lg border-2 transition-all cursor-pointer overflow-hidden
           ${style.bg} ${style.border} ${style.glow}
-          ${isSelected ? 'ring-2 ring-primary-500 ring-offset-1 scale-[1.02]' : 'hover:scale-[1.01] hover:shadow-md'}
+          ${isSelected ? 'ring-2 ring-primary-500 ring-offset-1 scale-[1.02]' : 'hover:scale-[1.01]'}
           ${cs.status === 'playing' && !isOver ? 'animate-pulse-slow' : ''}
         `}
         style={{ aspectRatio: '1.6 / 1' }}
@@ -480,7 +480,7 @@ export default function CourtMap() {
   return (
     <div className="h-full flex flex-col p-4 md:p-6 max-w-7xl mx-auto space-y-4">
       {/* ヘッダー */}
-      <header className="bg-white p-4 rounded-xl shadow-sm border border-border-main">
+      <header className="bg-white p-4 rounded-sm border border-border-main">
         <div className="flex items-center justify-between flex-wrap gap-3">
           <div>
             <h1 className="text-xl md:text-2xl font-bold text-gray-900 flex items-center gap-2">
@@ -548,7 +548,7 @@ export default function CourtMap() {
 
       <div className="flex-1 flex flex-col lg:flex-row gap-4 min-h-0">
         {/* コートマップ */}
-        <div className="flex-1 bg-white rounded-xl shadow-sm border border-border-main p-4 md:p-6 overflow-auto">
+        <div className="flex-1 bg-white rounded-sm border border-border-main p-4 md:p-6 overflow-auto">
           <h2 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-4">
             {venue.name} - コート配置図
           </h2>
@@ -563,7 +563,7 @@ export default function CourtMap() {
                     const blockIdx = venue.blocks.length - 1 - ri;
                     return (
                       <div key={blockIdx}>
-                        <div className={`bg-primary-50/60 rounded-xl border border-primary-200 p-3 shadow-sm ${getBlockWarningClass(blockIdx)}`}>
+                        <div className={`bg-primary-50/60 rounded-sm border border-primary-200 p-3 ${getBlockWarningClass(blockIdx)}`}>
                           <BlockHeader
                             label={`${block.courts[0]}〜${block.courts[block.courts.length - 1]}番`}
                             endTime={currentVenueBlockEndTimes[String(blockIdx)]}
@@ -585,7 +585,7 @@ export default function CourtMap() {
                   })}
                 </div>
                 <div className="flex items-center">
-                  <div className="flex flex-col items-center gap-1 bg-primary-50 border border-primary-300 rounded-lg px-3 py-4 shadow-sm h-full justify-center">
+                  <div className="flex flex-col items-center gap-1 bg-primary-50 border border-primary-300 rounded-lg px-3 py-4 h-full justify-center">
                     <span className="text-lg">🏠</span>
                     <span className="text-sm font-bold text-gray-900 [writing-mode:vertical-rl]">本部</span>
                   </div>
@@ -597,7 +597,7 @@ export default function CourtMap() {
                 {venue.blocks.map((block, blockIdx) => (
                   <div key={blockIdx} className="flex items-start">
                     {/* ブロック: コートを縦に並べる（番号降順：上が大きい） */}
-                    <div className={`bg-primary-50/60 rounded-xl border border-primary-200 p-2.5 shadow-sm ${getBlockWarningClass(blockIdx)}`}>
+                    <div className={`bg-primary-50/60 rounded-sm border border-primary-200 p-2.5 ${getBlockWarningClass(blockIdx)}`}>
                       <BlockHeader
                         label={`${block.courts[0]}〜${block.courts[block.courts.length - 1]}番`}
                         endTime={currentVenueBlockEndTimes[String(blockIdx)]}
@@ -612,7 +612,7 @@ export default function CourtMap() {
                     {/* 本部表示（指定ブロックの後 = 5と9の間） */}
                     {blockIdx === venue.hqPosition && (
                       <div className="flex flex-col items-center justify-end mx-2 self-end pb-3">
-                        <div className="flex flex-col items-center gap-1 bg-primary-50 border border-primary-300 rounded-lg px-3 py-4 shadow-sm">
+                        <div className="flex flex-col items-center gap-1 bg-primary-50 border border-primary-300 rounded-lg px-3 py-4">
                           <span className="text-base">🏠</span>
                           <span className="text-sm font-bold text-gray-900 [writing-mode:vertical-rl]">本部</span>
                         </div>
@@ -643,7 +643,7 @@ export default function CourtMap() {
                     const gridCols = cols <= 4 ? 'grid-cols-4' : 'grid-cols-6';
                     return (
                       <div key={blockIdx} className="w-full">
-                        <div className={`bg-primary-50/60 rounded-xl border border-primary-200 p-3 shadow-sm ${getBlockWarningClass(blockIdx)}`}>
+                        <div className={`bg-primary-50/60 rounded-sm border border-primary-200 p-3 ${getBlockWarningClass(blockIdx)}`}>
                           <BlockHeader
                             label={`${block.courts[0]}〜${block.courts[block.courts.length - 1]}番`}
                             endTime={currentVenueBlockEndTimes[String(blockIdx)]}
@@ -665,7 +665,7 @@ export default function CourtMap() {
                   })}
                 </div>
                 <div className="flex items-center">
-                  <div className="flex flex-col items-center gap-1 bg-primary-50 border border-primary-300 rounded-lg px-3 py-4 shadow-sm h-full justify-center">
+                  <div className="flex flex-col items-center gap-1 bg-primary-50 border border-primary-300 rounded-lg px-3 py-4 h-full justify-center">
                     <span className="text-lg">🏠</span>
                     <span className="text-sm font-bold text-gray-900 [writing-mode:vertical-rl]">本部</span>
                   </div>
@@ -677,7 +677,7 @@ export default function CourtMap() {
                 const gridCols = cols <= 4 ? 'grid-cols-4' : 'grid-cols-6';
                 return (
                   <div key={blockIdx} className="w-full">
-                    <div className={`bg-primary-50/60 rounded-xl border border-primary-200 p-3 shadow-sm ${getBlockWarningClass(blockIdx)}`}>
+                    <div className={`bg-primary-50/60 rounded-sm border border-primary-200 p-3 ${getBlockWarningClass(blockIdx)}`}>
                       <BlockHeader
                         label={`${block.courts[0]}〜${block.courts[block.courts.length - 1]}番`}
                         endTime={currentVenueBlockEndTimes[String(blockIdx)]}
@@ -689,7 +689,7 @@ export default function CourtMap() {
                     </div>
                     {blockIdx === venue.hqPosition && (
                       <div className="flex items-center gap-3 my-3">
-                        <div className="flex items-center gap-2 bg-primary-50 border border-primary-300 rounded-lg px-4 py-2 shadow-sm">
+                        <div className="flex items-center gap-2 bg-primary-50 border border-primary-300 rounded-lg px-4 py-2">
                           <span className="text-base">🏠</span>
                           <span className="text-sm font-bold text-gray-900">本部</span>
                         </div>
@@ -719,7 +719,7 @@ export default function CourtMap() {
 
         {/* 全体進捗 */}
         <div className="lg:w-64 shrink-0 overflow-auto">
-          <div className="bg-white rounded-xl shadow-sm border border-border-main p-4">
+          <div className="bg-white rounded-sm border border-border-main p-4">
             <h4 className="text-sm font-bold text-gray-900 mb-2 flex items-center gap-1.5">
               <CheckCircle className="w-4 h-4 text-primary-500" />
               試合進捗
@@ -738,7 +738,7 @@ export default function CourtMap() {
                   <div className="w-full bg-gray-200 rounded-full h-2.5">
                     <div
                       className="h-2.5 rounded-full transition-all duration-500"
-                      style={{ width: `${pct}%`, background: 'linear-gradient(135deg, #2e7d32, #1b5e20)' }}
+                      style={{ width: `${pct}%`, background: 'var(--red)' }}
                     />
                   </div>
                   <div className="flex gap-3 mt-2 text-xs text-gray-500">
@@ -762,12 +762,12 @@ export default function CourtMap() {
           className="fixed inset-0 z-[110] flex items-center justify-center p-4"
           onClick={() => setBlockTimeEditorOpen(false)}
         >
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+          <div className="absolute inset-0 bg-black/40" />
           <div
-            className="relative bg-white rounded-2xl shadow-2xl border border-border-main w-full max-w-md max-h-[85vh] overflow-auto"
+            className="relative bg-white rounded-sm border border-border-main w-full max-w-md max-h-[85vh] overflow-auto"
             onClick={e => e.stopPropagation()}
           >
-            <div className="sticky top-0 bg-gradient-to-br from-primary-50 to-primary-100 border-b border-primary-200 px-5 py-4 flex items-center justify-between">
+            <div className="sticky top-0 bg-white border-b border-primary-200 px-5 py-4 flex items-center justify-between">
               <div>
                 <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
                   <Clock className="w-4 h-4" />
@@ -792,7 +792,7 @@ export default function CourtMap() {
                 return (
                   <div
                     key={blockIdx}
-                    className={`flex items-center justify-between gap-3 p-3 rounded-xl border ${
+                    className={`flex items-center justify-between gap-3 p-3 rounded-sm border ${
                       warning === 'red'
                         ? 'bg-red-50 border-red-300'
                         : warning === 'yellow'
@@ -844,7 +844,7 @@ export default function CourtMap() {
           onClick={() => setSelectedCourt(null)}
         >
           {/* Backdrop */}
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm court-detail-fade-in" />
+          <div className="absolute inset-0 bg-black/40 court-detail-fade-in" />
 
           {/* Content */}
           <div
@@ -854,16 +854,16 @@ export default function CourtMap() {
             {/* ヘッダー: コート番号 + ステータス */}
             <div className={`shrink-0 px-5 pt-5 pb-4 ${
               selectedCourtDetail.status === 'playing'
-                ? 'bg-gradient-to-br from-primary-600 via-primary-700 to-primary-800'
+                ? 'bg-[var(--red)]'
                 : selectedCourtDetail.status === 'ready'
-                  ? 'bg-gradient-to-br from-gray-600 via-gray-700 to-gray-800'
-                  : 'bg-gradient-to-br from-gray-600 via-gray-700 to-gray-800'
+                  ? 'bg-[var(--ink)]'
+                  : 'bg-[var(--ink)]'
             } text-white`}>
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-4">
                   {/* コート番号 大表示 */}
                   <div className="relative">
-                    <div className="w-16 h-16 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center border border-white/30 shadow-lg">
+                    <div className="w-16 h-16 rounded-sm bg-white/20 flex items-center justify-center border border-white/30">
                       <span className="text-3xl font-black">{selectedCourt}</span>
                     </div>
                     {selectedCourtDetail.status === 'playing' && (
@@ -894,7 +894,7 @@ export default function CourtMap() {
                 </div>
                 <button
                   onClick={() => setSelectedCourt(null)}
-                  className="p-2 rounded-xl bg-white/10 hover:bg-white/20 transition-colors border border-white/20"
+                  className="p-2 rounded-sm bg-white/10 hover:bg-white/20 transition-colors border border-white/20"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -912,7 +912,7 @@ export default function CourtMap() {
                   : `${m}:${String(s).padStart(2, '0')}`;
                 const isOver = timeOverCourts.has(selectedCourt!);
                 return (
-                  <div className="mt-4 bg-white/10 rounded-2xl p-4 border border-white/20 backdrop-blur-sm">
+                  <div className="mt-4 bg-white/10 rounded-sm p-4 border border-white/20">
                     <div className="flex items-center gap-2 mb-3">
                       <span className="text-xs font-bold text-white/80 bg-white/15 px-2 py-0.5 rounded">
                         {getEventName(cm.eventId)}
@@ -958,7 +958,7 @@ export default function CourtMap() {
 
               {/* 空きコート/準備中 */}
               {!selectedCourtDetail.currentMatch && selectedCourtDetail.nextMatch && (
-                <div className="mt-4 bg-white/10 rounded-2xl p-4 border border-white/20 backdrop-blur-sm">
+                <div className="mt-4 bg-white/10 rounded-sm p-4 border border-white/20">
                   <div className="flex items-center gap-2 mb-2">
                     <Clock className="w-4 h-4 text-white/60" />
                     <span className="text-sm font-bold text-white/80">次の試合</span>
@@ -1010,9 +1010,9 @@ export default function CourtMap() {
                       return (
                         <div
                           key={m.matchId}
-                          className={`rounded-xl p-3 border transition-all court-detail-item ${
+                          className={`rounded-sm p-3 border transition-all court-detail-item ${
                             isPlaying
-                              ? 'bg-primary-50 border-primary-300 shadow-sm shadow-primary-100'
+                              ? 'bg-primary-50 border-primary-300'
                               : isFinished
                                 ? 'bg-gray-50 border-gray-200'
                                 : 'bg-gray-50 border-gray-200'
@@ -1078,7 +1078,7 @@ export default function CourtMap() {
             <div className="shrink-0 bg-white border-t border-gray-200 px-5 py-3">
               <button
                 onClick={() => setSelectedCourt(null)}
-                className="w-full py-3 text-sm font-bold text-white bg-primary-600 rounded-xl hover:bg-primary-700 transition-colors shadow-sm"
+                className="w-full py-3 text-sm font-bold text-white bg-primary-600 rounded-sm hover:bg-primary-700 transition-colors"
               >
                 コートマップに戻る
               </button>

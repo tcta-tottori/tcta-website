@@ -136,25 +136,24 @@ export default function CallSettingsModal({
   if (!open) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-[400] flex items-center justify-center p-4 overflow-y-auto">
-      <div className="fixed inset-0 bg-black/30 backdrop-blur-[2px]" onClick={onClose} />
-      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm my-auto overflow-hidden animate-[confirmSlideUp_0.2s_ease-out]">
+    <div className="fixed inset-0 z-[400] flex items-center justify-center psd-overlay" role="dialog" aria-modal="true">
+      <div className="fixed inset-0" onClick={onClose} />
+      <div className="psd-panel psd-panel--sm">
         {/* ヘッダー */}
-        <div className="bg-gradient-to-r from-primary-500 to-primary-600 px-5 py-3.5 flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-white/15 flex items-center justify-center shrink-0">
-            <Volume2 className="w-5 h-5 text-white" />
+        <div className="sdlg__head psd-head">
+          <span className="sec-head__mark sdlg__mark" aria-hidden="true" />
+          <div className="sdlg__heading">
+            <p className="sdlg__eyebrow">CALL</p>
+            <h3 className="sdlg__title"><Volume2 className="w-5 h-5 text-primary-600" />コール設定</h3>
+            <p className="psd-lead truncate">{eventName || ''}</p>
           </div>
-          <div className="min-w-0">
-            <h3 className="text-sm font-bold text-white">コール設定</h3>
-            <p className="text-[11px] text-white/70 truncate">{eventName || ''}</p>
-          </div>
-          <button onClick={onClose} className="ml-auto shrink-0 w-8 h-8 rounded-full bg-white/15 hover:bg-white/25 flex items-center justify-center transition-colors">
-            <X className="w-4 h-4 text-white" />
+          <button onClick={onClose} className="sdlg__close" aria-label="閉じる">
+            <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* 本体 */}
-        <div className="px-5 py-4 space-y-4">
+        <div className="psd-body space-y-4">
           {/* 対戦カード（番号・フルネーム・所属を横並びで表示。級・部はヘッダーの種目名） */}
           <div className="flex items-center justify-center gap-2 py-1">
             <div className="flex-1 min-w-0 text-center">
@@ -176,7 +175,7 @@ export default function CallSettingsModal({
                   {courtAssigned && <span className="text-gray-700 font-medium">（修正可）</span>}
                 </label>
                 <select value={courtNumber} onChange={e => onCourtChange?.(e.target.value)}
-                  className="w-full border border-gray-200 rounded-lg px-2 py-2 text-sm bg-gray-50/50 focus:bg-white focus:border-primary-400 outline-none transition-all">
+                  className="w-full border border-gray-200 rounded px-2 py-2 text-sm bg-gray-50/50 focus:bg-white focus:border-primary-400 outline-none transition-all">
                   <option value="">選択</option>
                   {courtOptions.length > 0
                     ? courtOptions.map(c => <option key={c.value} value={c.value}>{c.label}</option>)
@@ -191,7 +190,7 @@ export default function CallSettingsModal({
                   <span className="text-gray-400 font-medium">（任意）</span>
                 </label>
                 <input type="time" value={startTime} onChange={e => onStartTimeChange?.(e.target.value)}
-                  className="w-full border border-gray-200 rounded-lg px-2 py-2 text-sm bg-gray-50/50 focus:bg-white focus:border-primary-400 outline-none transition-all" />
+                  className="w-full border border-gray-200 rounded px-2 py-2 text-sm bg-gray-50/50 focus:bg-white focus:border-primary-400 outline-none transition-all" />
               </div>
             </div>
           )}
@@ -213,7 +212,7 @@ export default function CallSettingsModal({
                           value={it.reading}
                           onChange={e => onNameReadingChange?.(it.key, e.target.value)}
                           placeholder="ふりがな"
-                          className="w-full min-w-0 border border-gray-200 rounded-lg px-3 py-1.5 text-sm bg-gray-50/50 focus:bg-white focus:border-primary-400 outline-none transition-all"
+                          className="w-full min-w-0 border border-gray-200 rounded px-3 py-1.5 text-sm bg-gray-50/50 focus:bg-white focus:border-primary-400 outline-none transition-all"
                         />
                       </div>
                     ))}
@@ -234,7 +233,7 @@ export default function CallSettingsModal({
                           value={it.reading}
                           onChange={e => onAffReadingChange?.(it.key, e.target.value)}
                           placeholder="ふりがな"
-                          className="w-full min-w-0 border border-gray-200 rounded-lg px-3 py-1.5 text-sm bg-gray-50/50 focus:bg-white focus:border-primary-400 outline-none transition-all"
+                          className="w-full min-w-0 border border-gray-200 rounded px-3 py-1.5 text-sm bg-gray-50/50 focus:bg-white focus:border-primary-400 outline-none transition-all"
                         />
                       </div>
                     ))}
@@ -252,22 +251,22 @@ export default function CallSettingsModal({
               <textarea value={callText ?? ''} onChange={e => onCallTextChange?.(e.target.value)}
                 rows={5}
                 placeholder={showCourtAndTime && !courtNumber ? 'コートを選択すると読み上げ内容が表示されます。' : ''}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm leading-relaxed bg-gray-50/50 focus:bg-white focus:border-primary-400 outline-none transition-all resize-y" />
+                className="w-full border border-gray-200 rounded px-3 py-2 text-sm leading-relaxed bg-gray-50/50 focus:bg-white focus:border-primary-400 outline-none transition-all resize-y" />
               <p className="text-[10px] text-gray-400 mt-1">この内容（ひらがな）でコールします。読みが違う場合は修正してください。</p>
             </div>
           )}
         </div>
 
         {/* アクション */}
-        <div className="px-5 pb-4 flex items-center gap-2.5">
+        <div className="psd-actions">
           <button onClick={onClose}
-            className="flex-shrink-0 px-4 py-2.5 text-sm font-semibold text-gray-500 bg-gray-50 border border-gray-200 rounded-xl hover:bg-gray-100 transition-all">
+            className="btn btn--outline psd-btn psd-btn--fit">
             キャンセル
           </button>
           <button
             onClick={() => { if (canCall) onCall(); }}
             disabled={!canCall}
-            className="flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-bold text-white bg-gradient-to-r from-primary-500 to-primary-600 rounded-xl hover:from-primary-600 hover:to-primary-700 disabled:opacity-40 disabled:cursor-not-allowed shadow-sm transition-all">
+            className="btn btn--primary psd-btn">
             <Volume2 className="w-4 h-4" />コール
           </button>
         </div>

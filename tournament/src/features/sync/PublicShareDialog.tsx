@@ -76,33 +76,29 @@ export default function PublicShareDialog({ open, onClose, roomCode, serverUrl }
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[210] flex items-center justify-center bg-black/40 backdrop-blur-[2px] px-3"
+      className="fixed inset-0 z-[210] flex items-center justify-center psd-overlay"
+      role="dialog"
+      aria-modal="true"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="relative w-[min(94vw,460px)] max-h-[85vh] flex flex-col bg-white rounded-2xl shadow-2xl overflow-hidden">
-        <div className="flex items-center justify-between px-5 py-4 bg-gradient-to-r from-primary-600 to-primary-700 text-white">
-          <div className="flex items-center gap-2.5">
-            <Share2 className="w-5 h-5" />
-            <div>
-              <h2 className="text-base font-bold">観戦用URLを発行</h2>
-              <p className="text-[10px] text-white/80 mt-0.5">
-                参加者・HP掲載向けのURLを共有します
-              </p>
-            </div>
+      <div className="psd-panel psd-panel--sm psd-panel--flex">
+        <div className="sdlg__head psd-head">
+          <span className="sec-head__mark sdlg__mark" aria-hidden="true" />
+          <div className="sdlg__heading">
+            <p className="sdlg__eyebrow">SHARE</p>
+            <h2 className="sdlg__title"><Share2 className="w-5 h-5 text-primary-600" />観戦用URLを発行</h2>
+            <p className="psd-lead">参加者・HP掲載向けのURLを共有します</p>
           </div>
-          <button
-            onClick={onClose}
-            className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 transition-colors"
-          >
-            <X className="w-4 h-4" />
+          <button onClick={onClose} className="sdlg__close" aria-label="閉じる">
+            <X className="w-5 h-5" />
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-5 space-y-4">
+        <div className="flex-1 overflow-y-auto psd-body space-y-4">
           {noServerWarning && (
-            <div className="flex items-start gap-2 px-3 py-2.5 rounded-lg bg-primary-50 border border-primary-200">
+            <div className="flex items-start gap-2 sk-note sk-note--red">
               <Info className="w-4 h-4 text-primary-500 shrink-0 mt-0.5" />
               <div className="text-[11px] text-gray-800 leading-relaxed">
                 <p className="font-bold mb-0.5">中継サーバー未設定</p>
@@ -115,10 +111,10 @@ export default function PublicShareDialog({ open, onClose, roomCode, serverUrl }
           )}
 
           <div>
-            <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">
+            <p className="psd-label mb-2">
               ルームコード
             </p>
-            <div className="flex items-center gap-2 bg-gray-50 rounded-xl px-4 py-3 border border-gray-200">
+            <div className="flex items-center gap-2 psd-box">
               <span className="flex-1 text-xl font-mono font-bold text-gray-800 tracking-[0.3em]">
                 {roomCode || '未接続'}
               </span>
@@ -127,16 +123,16 @@ export default function PublicShareDialog({ open, onClose, roomCode, serverUrl }
 
           <div>
             <div className="flex items-center gap-2 mb-2">
-              <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
+              <p className="psd-label">
                 観戦用URL
               </p>
               {isFixedUrl && (
-                <span className="text-[9px] font-bold text-gray-800 bg-primary-100 border border-primary-200 rounded-full px-2 py-0.5">
+                <span className="sk-chip sk-chip--red">
                   固定URL・HP貼りっぱなしOK
                 </span>
               )}
             </div>
-            <div className="bg-gray-50 rounded-xl p-3 border border-gray-200">
+            <div className="psd-box">
               <p className="text-xs font-mono text-gray-800 break-all leading-relaxed">
                 {url}
               </p>
@@ -145,7 +141,7 @@ export default function PublicShareDialog({ open, onClose, roomCode, serverUrl }
               <button
                 onClick={copy}
                 disabled={!roomCode}
-                className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg font-bold text-sm bg-gradient-to-br from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white shadow-sm transition-all disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.98]"
+                className="btn btn--primary psd-btn psd-btn--sm psd-btn--grow"
               >
                 {copied ? (
                   <>
@@ -163,7 +159,7 @@ export default function PublicShareDialog({ open, onClose, roomCode, serverUrl }
                 <button
                   onClick={share}
                   disabled={!roomCode}
-                  className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg font-medium text-sm bg-white border border-gray-200 hover:border-primary-300 hover:text-gray-700 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="btn btn--outline psd-btn psd-btn--sm"
                 >
                   <Share2 className="w-4 h-4" />
                   <span>共有</span>
@@ -173,7 +169,7 @@ export default function PublicShareDialog({ open, onClose, roomCode, serverUrl }
                 href={roomCode ? url : undefined}
                 target="_blank"
                 rel="noopener noreferrer"
-                className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg font-medium text-sm bg-white border border-gray-200 hover:border-primary-300 hover:text-gray-700 transition-all ${
+                className={`btn btn--outline psd-btn psd-btn--sm ${
                   !roomCode ? 'pointer-events-none opacity-40' : ''
                 }`}
               >
@@ -183,7 +179,7 @@ export default function PublicShareDialog({ open, onClose, roomCode, serverUrl }
             </div>
           </div>
 
-          <div className="flex items-start gap-2 px-3 py-2.5 rounded-lg bg-primary-50 border border-primary-100">
+          <div className="flex items-start gap-2 sk-note">
             <Info className="w-3.5 h-3.5 text-primary-500 shrink-0 mt-0.5" />
             <div className="text-[11px] text-gray-800 leading-relaxed">
               <p className="font-bold mb-0.5">使い方</p>

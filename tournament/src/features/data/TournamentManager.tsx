@@ -63,14 +63,14 @@ export default function TournamentManager() {
       </div>
 
       {isAdding && (
-        <form onSubmit={handleAdd} className="mb-4 bg-gray-50 p-3 rounded-lg border border-gray-200">
+        <form onSubmit={handleAdd} className="mb-4 bg-gray-50 p-3 rounded border border-gray-200">
           <div className="space-y-3">
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1">大会名</label>
               <input 
                 type="text" 
                 required
-                className="w-full border-gray-300 rounded-md text-sm p-2 outline-none focus:ring-2 focus:ring-primary-500 border"
+                className="w-full border-gray-300 rounded text-sm p-2 outline-none focus:ring-2 focus:ring-primary-500 border"
                 value={formData.name}
                 onChange={e => setFormData({...formData, name: e.target.value})}
                 placeholder="例: 第56回 〇〇選手権" 
@@ -81,7 +81,7 @@ export default function TournamentManager() {
                 <label className="block text-xs font-medium text-gray-600 mb-1">日程</label>
                 <input 
                   type="date" 
-                  className="w-full border-gray-300 rounded-md text-sm p-2 outline-none focus:ring-2 focus:ring-primary-500 border"
+                  className="w-full border-gray-300 rounded text-sm p-2 outline-none focus:ring-2 focus:ring-primary-500 border"
                   value={formData.date}
                   onChange={e => setFormData({...formData, date: e.target.value})}
                 />
@@ -90,7 +90,7 @@ export default function TournamentManager() {
                 <label className="block text-xs font-medium text-gray-600 mb-1">会場</label>
                 <input 
                   type="text" 
-                  className="w-full border-gray-300 rounded-md text-sm p-2 outline-none focus:ring-2 focus:ring-primary-500 border"
+                  className="w-full border-gray-300 rounded text-sm p-2 outline-none focus:ring-2 focus:ring-primary-500 border"
                   value={formData.venue}
                   onChange={e => setFormData({...formData, venue: e.target.value})}
                   placeholder="フューズ・アスレティック..." 
@@ -101,13 +101,13 @@ export default function TournamentManager() {
               <button 
                 type="button" 
                 onClick={() => setIsAdding(false)}
-                className="px-3 py-2 text-xs text-gray-600 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+                className="px-3 py-2 text-xs text-gray-600 bg-white border border-gray-300 rounded hover:bg-gray-50"
               >
                 キャンセル
               </button>
               <button 
                 type="submit"
-                className="px-3 py-2 text-xs text-white bg-primary-600 rounded-md hover:bg-primary-700"
+                className="px-3 py-2 text-xs text-white bg-primary-600 rounded hover:bg-primary-700"
               >
                 保存
               </button>
@@ -128,9 +128,9 @@ export default function TournamentManager() {
             {tournaments.map(t => (
               <li 
                 key={t.id} 
-                className={`p-3 rounded-lg border transition-all ${
+                className={`p-3 rounded border transition-all ${
                   currentTournamentId === t.tournamentId 
-                    ? 'border-primary-400 bg-primary-50/50 shadow-sm' 
+                    ? 'border-primary-400 bg-primary-50/50' 
                     : 'border-gray-200 bg-white hover:border-gray-300'
                 }`}
               >

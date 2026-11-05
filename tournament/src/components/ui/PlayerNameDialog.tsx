@@ -57,27 +57,25 @@ export default function PlayerNameDialog({ target, onClose, onSaved }: Props) {
   };
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4" onClick={onClose}>
-      <div className="fixed inset-0 bg-black/25 backdrop-blur-[2px]" />
-      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden" onClick={e => e.stopPropagation()}>
-        <div className="bg-gradient-to-r from-primary-600 to-primary-500 text-white px-5 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <UserPen className="w-5 h-5" />
-            <div>
-              <h3 className="text-sm font-bold">選手名の修正</h3>
-              <p className="text-[10px] text-white/70">
-                {target.drawNumber ? `ドロー番号 ${target.drawNumber}` : 'エントリー確定後でも修正できます'}
-              </p>
-            </div>
+    <div className="fixed inset-0 z-[200] flex items-center justify-center psd-overlay" onClick={onClose} role="dialog" aria-modal="true">
+      <div className="psd-panel psd-panel--sm psd-panel--flex" onClick={e => e.stopPropagation()}>
+        <div className="sdlg__head psd-head">
+          <span className="sec-head__mark sdlg__mark" aria-hidden="true" />
+          <div className="sdlg__heading">
+            <p className="sdlg__eyebrow">PLAYER</p>
+            <h3 className="sdlg__title"><UserPen className="w-5 h-5 text-primary-600" />選手名の修正</h3>
+            <p className="psd-lead">
+              {target.drawNumber ? `ドロー番号 ${target.drawNumber}` : 'エントリー確定後でも修正できます'}
+            </p>
           </div>
-          <button onClick={onClose} className="p-1 rounded-lg hover:bg-white/20">
+          <button onClick={onClose} className="sdlg__close" aria-label="閉じる">
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        <div className="p-5 space-y-3 max-h-[60vh] overflow-auto">
+        <div className="psd-body space-y-3 max-h-[60vh] overflow-auto">
           {forms.map((f, i) => (
-            <div key={f.playerId} className="p-3 bg-gray-50 rounded-xl border border-gray-200 space-y-2">
+            <div key={f.playerId} className="psd-box space-y-2">
               {forms.length > 1 && (
                 <div className="text-[10px] font-bold text-gray-500">{i === 0 ? '選手1' : '選手2（ペア）'}</div>
               )}
@@ -88,7 +86,7 @@ export default function PlayerNameDialog({ target, onClose, onSaved }: Props) {
                   value={f.name}
                   onChange={e => patch(i, { name: e.target.value })}
                   placeholder="山田 太郎"
-                  className="w-full text-sm border border-gray-200 rounded-lg px-2.5 py-1.5 focus:border-primary-400 focus:ring-2 focus:ring-primary-200 outline-none"
+                  className="w-full text-sm px-2.5 py-1.5 psd-input"
                 />
               </div>
               <div className="grid grid-cols-2 gap-2">
@@ -99,7 +97,7 @@ export default function PlayerNameDialog({ target, onClose, onSaved }: Props) {
                     value={f.furigana}
                     onChange={e => patch(i, { furigana: e.target.value })}
                     placeholder="やまだ たろう"
-                    className="w-full text-sm border border-gray-200 rounded-lg px-2.5 py-1.5 focus:border-primary-400 focus:ring-2 focus:ring-primary-200 outline-none"
+                    className="w-full text-sm px-2.5 py-1.5 psd-input"
                   />
                 </div>
                 <div>
@@ -109,7 +107,7 @@ export default function PlayerNameDialog({ target, onClose, onSaved }: Props) {
                     value={f.affiliation}
                     onChange={e => patch(i, { affiliation: e.target.value })}
                     placeholder="◯◯テニスクラブ"
-                    className="w-full text-sm border border-gray-200 rounded-lg px-2.5 py-1.5 focus:border-primary-400 focus:ring-2 focus:ring-primary-200 outline-none"
+                    className="w-full text-sm px-2.5 py-1.5 psd-input"
                   />
                 </div>
               </div>
@@ -121,17 +119,17 @@ export default function PlayerNameDialog({ target, onClose, onSaved }: Props) {
           </p>
         </div>
 
-        <div className="px-5 py-3 bg-gray-50 border-t border-gray-200 flex justify-end gap-2">
+        <div className="psd-actions psd-actions--line">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-xs font-bold text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50"
+            className="btn btn--outline psd-btn"
           >
             キャンセル
           </button>
           <button
             onClick={() => void handleSave()}
             disabled={saving}
-            className="px-4 py-2 text-xs font-bold text-white bg-primary-600 rounded-lg hover:bg-primary-700 shadow-sm disabled:opacity-50"
+            className="btn btn--primary psd-btn"
           >
             保存
           </button>

@@ -4,6 +4,7 @@ import { db } from '../../db/database';
 import { useAppStore } from '../../stores/appStore';
 import { CalendarDays, Plus, Trash2, MapPin } from 'lucide-react';
 import { siteConfirm } from '../../components/site/siteConfirm';
+import { SkPage, SkSection, SkEmpty } from '../../components/site/Kit';
 
 export default function CourtSchedule() {
   const currentTournamentId = useAppStore(state => state.currentTournamentId);
@@ -92,83 +93,78 @@ export default function CourtSchedule() {
   };
 
   const statusColor: Record<string, string> = {
-    waiting: 'bg-gray-100 text-gray-500',
-    ready: 'bg-primary-50 text-primary-500',
-    playing: 'bg-primary-100 text-gray-700',
-    finished: 'bg-primary-50 text-gray-700',
-    walkover: 'bg-primary-100 text-warning',
+    waiting: 'op-st--waiting',
+    ready: 'op-st--ready',
+    playing: 'op-st--playing',
+    finished: 'op-st--finished',
+    walkover: 'op-st--walkover',
   };
 
   return (
-    <div className="h-full flex flex-col p-4 md:p-6 max-w-7xl mx-auto space-y-6">
-      <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-4 rounded-xl shadow-sm border border-border-main">
-        <div>
-          <h1 className="text-xl md:text-2xl font-bold text-gray-900 flex items-center gap-2">
-            <CalendarDays className="w-6 h-6 text-primary-500" />
-            コート・時間割
-          </h1>
-          <p className="text-sm text-gray-500 mt-1">
-            コートの登録と試合のコート割り当て・時間管理を行います。
-            {hasImportedSchedule && (
-              <span className="ml-2 text-xs text-primary-500 font-medium">（インポート済みスケジュールあり）</span>
-            )}
-          </p>
-        </div>
-        <div className="w-full sm:w-auto">
+    <SkPage wide className="op-cs">
+      <SkSection
+        en="COURTS & SCHEDULE"
+        title={<><CalendarDays className="w-5 h-5 op-cs__ico" />コート・時間割</>}
+        lead={<>
+          コートの登録と試合のコート割り当て・時間管理を行います。
+          {hasImportedSchedule && (
+            <span className="op-cs__imported">（インポート済みスケジュールあり）</span>
+          )}
+        </>}
+        actions={
           <select
             value={selectedEventId}
             onChange={e => setSelectedEventId(e.target.value)}
-            className="w-full sm:w-64 border-border-main rounded-lg shadow-sm focus:border-primary-500 focus:ring-[3px] focus:ring-primary-500/15 text-sm px-3 py-2 bg-white border outline-none font-medium"
+            className="input sk-input op-cs__select"
+            aria-label="種目"
           >
             <option value="">-- 種目を選択 --</option>
             {events.map(e => (
               <option key={e.eventId} value={e.eventId}>{e.name}</option>
             ))}
           </select>
-        </div>
-      </header>
+        }
+      />
 
-      <div className="flex-1 flex flex-col lg:flex-row gap-6 min-h-0">
+      <div className="op-cs__layout">
         {/* 左: コート管理 */}
-        <div className="lg:w-80 flex flex-col gap-4 shrink-0">
-          <div className="bg-white rounded-xl shadow-sm border border-border-main p-4">
-            <h2 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
-              <MapPin className="w-4 h-4 text-primary-500" />
-              コート管理
-            </h2>
-            <div className="flex gap-2 mb-3">
+        <div className="op-cs__side">
+          <SkSection en="COURTS" title={<><MapPin className="w-4 h-4 op-cs__ico" />コート管理</>} count={sortedCourts.length ? `${sortedCourts.length}面` : undefined}>
+            <div className="op-cs__add">
               <input
                 type="text"
                 placeholder="コート名 (例: A-1)"
                 value={newCourtName}
                 onChange={e => setNewCourtName(e.target.value)}
-                className="flex-1 border border-border-main rounded-lg px-2 py-1.5 text-sm focus:border-primary-500 focus:ring-[3px] focus:ring-primary-500/15 outline-none"
+                className="input sk-input"
                 onKeyDown={e => e.key === 'Enter' && handleAddCourt()}
               />
               <button
                 onClick={handleAddCourt}
                 disabled={!newCourtName.trim() || !currentTournamentId}
-                className="bg-primary-500 text-white px-3 py-1.5 rounded-md text-sm font-medium hover:bg-primary-600 disabled:opacity-50"
+                className="btn btn--primary sk-btn op-cs__addbtn"
+                aria-label="コートを追加"
               >
                 <Plus className="w-4 h-4" />
               </button>
             </div>
 
             {sortedCourts.length > 0 ? (
-              <ul className="space-y-2">
+              <ul className="sk-list op-cs__courts">
                 {sortedCourts.map(c => (
-                  <li key={c.courtId} className="flex items-center justify-between bg-primary-50 rounded-md px-3 py-2">
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => c.id && handleToggleAvailable(c.id, c.isAvailable)}
-                        className={`w-8 h-8 rounded-full ${c.isAvailable ? 'bg-primary-600' : 'bg-danger'}`}
-                        title={c.isAvailable ? '利用可能' : '使用不可'}
-                      />
-                      <span className="font-medium text-sm">{c.name}</span>
-                    </div>
+                  <li key={c.courtId}>
+                    <button
+                      onClick={() => c.id && handleToggleAvailable(c.id, c.isAvailable)}
+                      className={`op-cs__toggle ${c.isAvailable ? 'is-on' : 'is-off'}`}
+                      title={c.isAvailable ? '利用可能' : '使用不可'}
+                      aria-label={`${c.name}：${c.isAvailable ? '利用可能' : '使用不可'}`}
+                    />
+                    <span className="op-cs__cname">{c.name}</span>
+                    <span className="op-cs__cstate">{c.isAvailable ? '利用可能' : '使用不可'}</span>
                     <button
                       onClick={() => c.id && handleDeleteCourt(c.id)}
-                      className="p-2 text-gray-500 hover:text-red-600"
+                      className="op-ibtn op-cs__del"
+                      aria-label={`${c.name}を削除`}
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
@@ -176,94 +172,87 @@ export default function CourtSchedule() {
                 ))}
               </ul>
             ) : (
-              <p className="text-sm text-gray-500 text-center py-4">コートが未登録です</p>
+              <p className="op-cs__none">コートが未登録です</p>
             )}
-          </div>
+          </SkSection>
 
           {/* 未割当試合 */}
           {selectedEventId && unassignedMatches.length > 0 && (
-            <div className="bg-white rounded-xl shadow-sm border border-border-main p-4">
-              <h3 className="font-bold text-gray-900 text-sm mb-2">未割当の試合 ({unassignedMatches.length})</h3>
-              <ul className="space-y-2 max-h-60 overflow-auto">
+            <SkSection en="UNASSIGNED" title="未割当の試合" count={unassignedMatches.length} flush>
+              <ul className="sk-list op-cs__unassigned">
                 {unassignedMatches.map(m => (
-                  <li key={m.matchId} className="text-xs bg-primary-50 border border-primary-200 rounded-md px-2 py-1.5">
-                    <div className="flex justify-between items-center">
-                      <span className="font-mono text-gray-500">#{m.matchOrder}</span>
-                      <select
-                        value={m.courtId || ''}
-                        onChange={e => handleAssignMatch(m.matchId, e.target.value)}
-                        className="border border-border-main rounded-lg px-1 py-0.5 text-xs bg-white"
-                      >
-                        <option value="">割当</option>
-                        {sortedCourts.filter(c => c.isAvailable).map(c => (
-                          <option key={c.courtId} value={c.courtId}>{c.name}</option>
-                        ))}
-                      </select>
-                    </div>
-                    <p className="mt-1 truncate">{m.player1Name} vs {m.player2Name}</p>
+                  <li key={m.matchId}>
+                    <span className="op-cs__no">#{m.matchOrder}</span>
+                    <p className="op-cs__vs">{m.player1Name} vs {m.player2Name}</p>
+                    <select
+                      value={m.courtId || ''}
+                      onChange={e => handleAssignMatch(m.matchId, e.target.value)}
+                      className="input op-cs__mini"
+                      aria-label="コートを割り当てる"
+                    >
+                      <option value="">割当</option>
+                      {sortedCourts.filter(c => c.isAvailable).map(c => (
+                        <option key={c.courtId} value={c.courtId}>{c.name}</option>
+                      ))}
+                    </select>
                   </li>
                 ))}
               </ul>
-            </div>
+            </SkSection>
           )}
         </div>
 
         {/* 右: コート別スケジュール */}
-        <div className="flex-1 overflow-auto">
+        <div className="op-cs__main">
           {sortedCourts.length > 0 && selectedEventId ? (
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            <div className="op-cs__grid">
               {sortedCourts.map(c => {
                 const courtMatches = courtMatchMap[c.courtId] || [];
                 return (
-                  <div key={c.courtId} className={`bg-white rounded-xl shadow-sm border-2 ${c.isAvailable ? 'border-border-main' : 'border-red-200 opacity-60'} flex flex-col`}>
-                    <div className="px-4 py-3 border-b border-border-main flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <div className={`w-2.5 h-2.5 rounded-full ${c.isAvailable ? 'bg-primary-600' : 'bg-danger'}`} />
-                        <h3 className="font-bold text-gray-900">{c.name}</h3>
-                      </div>
-                      <span className="text-xs text-gray-500">{courtMatches.length}試合</span>
+                  <section key={c.courtId} className={`sk-sec op-cs__court ${c.isAvailable ? '' : 'is-off'}`}>
+                    <div className="op-cs__court-head">
+                      <span className={`op-cs__dot ${c.isAvailable ? 'is-on' : 'is-off'}`} />
+                      <h3>{c.name}</h3>
+                      <span className="op-cs__count">{courtMatches.length}試合</span>
                     </div>
-                    <div className="p-3 space-y-2 flex-1">
-                      {courtMatches.length > 0 ? courtMatches.map(m => (
-                        <div key={m.matchId} className="bg-primary-50 rounded-md px-3 py-2 text-sm">
-                          <div className="flex justify-between items-center mb-1">
-                            <span className="font-mono text-xs text-gray-500">#{m.matchOrder}</span>
-                            <div className="flex items-center gap-2">
-                              <input
-                                type="time"
-                                value={m.scheduledTime || ''}
-                                onChange={e => handleSetTime(m.matchId, e.target.value)}
-                                className="border border-border-main rounded-lg px-1 py-0.5 text-xs w-20"
-                              />
-                              <span className={`px-1.5 py-0.5 rounded text-xs font-medium ${statusColor[m.status] || ''}`}>
-                                {m.status === 'playing' ? '試合中' : m.status === 'finished' ? '終了' : m.status === 'ready' ? '準備完了' : '待機'}
-                              </span>
-                            </div>
+                    <div className="op-cs__court-body">
+                      {courtMatches.length > 0 ? <ul className="sk-list">{courtMatches.map(m => (
+                        <li key={m.matchId} className="op-cs__m">
+                          <div className="op-cs__m-top">
+                            <span className="op-cs__no">#{m.matchOrder}</span>
+                            <input
+                              type="time"
+                              value={m.scheduledTime || ''}
+                              onChange={e => handleSetTime(m.matchId, e.target.value)}
+                              className="input op-cs__mini op-cs__time"
+                              aria-label="開始時刻"
+                            />
+                            <span className={`op-st ${statusColor[m.status] || ''}`}>
+                              {m.status === 'playing' ? '試合中' : m.status === 'finished' ? '終了' : m.status === 'ready' ? '準備完了' : '待機'}
+                            </span>
                           </div>
-                          <p className="truncate"><span className="font-medium">{m.player1Name}</span> <span className="text-gray-500">vs</span> <span className="font-medium">{m.player2Name}</span></p>
-                          {m.score && <p className="text-xs text-primary-500 font-mono mt-0.5">{m.score}</p>}
-                        </div>
-                      )) : (
-                        <p className="text-xs text-gray-500 text-center py-4">割り当てなし</p>
+                          <p className="op-cs__vs"><b>{m.player1Name}</b> <span>vs</span> <b>{m.player2Name}</b></p>
+                          {m.score && <p className="op-cs__score">{m.score}</p>}
+                        </li>
+                      ))}</ul> : (
+                        <p className="op-cs__none">割り当てなし</p>
                       )}
                     </div>
-                  </div>
+                  </section>
                 );
               })}
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center h-full p-8 text-center bg-white rounded-xl border border-dashed border-border-main">
-              <CalendarDays className="w-16 h-16 text-gray-300 mb-4" />
-              <p className="text-gray-500">
-                {sortedCourts.length === 0
-                  ? '左パネルからコートを登録してください'
-                  : '種目を選択すると試合のスケジュール管理ができます'
-                }
-              </p>
-            </div>
+            <SkEmpty
+              icon={CalendarDays}
+              title={sortedCourts.length === 0
+                ? '左パネルからコートを登録してください'
+                : '種目を選択すると試合のスケジュール管理ができます'
+              }
+            />
           )}
         </div>
       </div>
-    </div>
+    </SkPage>
   );
 }

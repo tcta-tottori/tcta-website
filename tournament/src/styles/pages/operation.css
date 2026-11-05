@@ -1,1 +1,392 @@
-/* operation の画面の見た目（app.css の「サイトの部品」を使い、足りない所だけここに書く） */
+/* operation の画面の見た目（app.css の「サイトの部品」を使い、足りない所だけここに書く）
+   大会進行：対戦順（/referee）・タイムテーブル（/schedule-sheet）・コート（/schedule）・スコア（/score）
+   ・スコア入力のポップアップ */
+
+/* ---------------------------------------------------------------------------
+   共通の小物
+   --------------------------------------------------------------------------- */
+/* 切替（hub-filter を幅いっぱい・押しやすい高さに） */
+.op-seg { display: flex; width: 100%; }
+.op-seg .hub-filter__btn { flex: 1 1 0; display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 40px; padding: 8px 10px; }
+.op-seg .hub-filter__btn.is-red { background: var(--red); }
+.op-seg--inline { width: auto; display: inline-flex; }
+.op-seg--inline .hub-filter__btn { flex: none; min-height: 36px; padding: 6px 12px; }
+
+/* 四角い小さなボタン（印刷・ルール・コール） */
+.op-ibtn { display: inline-flex; align-items: center; justify-content: center; flex: none; width: 36px; height: 36px; padding: 0; border: 1px solid var(--gray-300); border-radius: var(--radius); background: var(--white); color: var(--gray-600); cursor: pointer; transition: color .2s, border-color .2s, background .2s; }
+@media (hover: hover) { .op-ibtn:hover { color: var(--red); border-color: var(--red); } }
+.op-ibtn--red { color: var(--red); border-color: color-mix(in srgb, var(--red) 45%, var(--white)); }
+.op-ibtn--red.is-on { background: var(--red-tint); border-color: var(--red); }
+.op-ibtn--fill { background: var(--red); border-color: var(--red); color: #fff; }
+@media (hover: hover) { .op-ibtn--fill:hover { background: var(--red-dark); border-color: var(--red-dark); color: #fff; } }
+.op-ibtn:disabled { opacity: .35; cursor: not-allowed; }
+@media (max-width: 639px) { .op-ibtn { width: 40px; height: 40px; } }
+
+/* 状態の札 */
+.op-st { display: inline-flex; align-items: center; height: 22px; padding: 0 7px; border: 1px solid var(--gray-300); border-radius: var(--radius); background: var(--white); font: 700 11px/1 var(--fjp); color: var(--gray-500); white-space: nowrap; }
+.op-st--ready { border-color: var(--ink); color: var(--ink); }
+.op-st--playing { border-color: var(--red); background: var(--red); color: #fff; }
+.op-st--finished { border-color: var(--gray-200); background: var(--gray-100); color: var(--gray-600); }
+.op-st--walkover { border-color: var(--red); color: var(--red); background: var(--red-tint); }
+.op-st--tbd { border-style: dashed; color: var(--gray-500); }
+
+/* コート・控えの札 */
+.op-badge { display: inline-flex; align-items: center; height: 26px; padding: 0 10px; border-radius: var(--radius); font: 700 12px/1 var(--fjp); letter-spacing: .02em; white-space: nowrap; }
+.op-badge--court { background: var(--red); color: #fff; }
+.op-badge--done { background: var(--gray-200); color: var(--gray-600); }
+.op-badge--next { background: var(--red); color: #fff; }
+.op-badge--standby { background: var(--ink); color: #fff; }
+
+/* 進み具合の細い棒 */
+.op-bar { position: relative; width: 64px; height: 4px; background: var(--gray-200); overflow: hidden; }
+.op-bar__fill { height: 100%; background: var(--red); transition: width .5s var(--ease); }
+
+/* ---------------------------------------------------------------------------
+   対戦順（MatchManager）
+   --------------------------------------------------------------------------- */
+.op-mm { display: flex; flex-direction: column; gap: 14px; padding: 16px 16px 0; padding-bottom: calc(7rem + env(safe-area-inset-bottom)); }
+@media (min-width: 1024px) {
+  .op-mm { flex-direction: row; align-items: flex-start; gap: 20px; padding: 24px 24px 0; padding-bottom: calc(7rem + env(safe-area-inset-bottom)); }
+  .op-mm__side { flex: none; width: 280px; position: sticky; top: calc(var(--app-sticky-top, 0px) + 16px); }
+}
+.op-mm--readonly { padding-top: 12px; }
+.op-mm__main { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+
+/* 操作の区画（見出しを押すと開閉） */
+.op-mm__ctrl-head { width: 100%; border: 0; border-bottom: 1px solid var(--gray-100); background: none; text-align: left; cursor: pointer; flex-wrap: nowrap; }
+.op-mm__ctrl-head .sk-sec__en, .op-mm__ctrl-head .sk-sec__title { display: flex; }
+.op-mm__ctrl-head[aria-expanded="false"] { border-bottom-color: transparent; }
+.op-mm__ctrl-body { display: flex; flex-direction: column; gap: 10px; padding: 14px 16px 16px; }
+.app-main .op-mm__cta { white-space: normal; line-height: 1.45; text-align: center; }
+.app-main .op-mm__test { border-style: dashed; border-color: var(--gray-300); color: var(--gray-600); font-weight: 700; }
+
+/* 進行中 / 終了（いちばん上に貼り付くのはこれだけ） */
+.op-mm__global { display: flex; flex-direction: column; gap: 8px; }
+.op-mm__tabbar { position: sticky; top: var(--app-sticky-top, 0px); z-index: 12; padding: 8px 0; margin-top: -8px; background: var(--gray-050); }
+.op-mm__tabbar .hub-filter__btn small { font-size: 12px; }
+
+/* 試合のカード（細い罫の白い行） */
+.op-mc-list { display: flex; flex-direction: column; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.op-mc { display: flex; flex-direction: column; gap: 6px; padding: 10px 12px; border: 1px solid var(--gray-200); border-radius: var(--radius); background: var(--white); transition: border-color .2s, background .2s; }
+.op-mc.is-clickable { cursor: pointer; }
+@media (hover: hover) { .op-mc.is-clickable:not(.is-playing):not(.is-enter):not(.is-standby):hover { border-color: var(--gray-500); } }
+.op-mc.is-playing { border: 2px solid var(--red); padding: 9px 11px; background: var(--red-tint); }
+.op-mc.is-enter { border: 2px solid var(--ink); padding: 9px 11px; background: var(--gray-050); }
+.op-mc.is-standby { border: 2px solid var(--gray-300); padding: 9px 11px; }
+.op-mc.is-finished { background: var(--gray-050); opacity: .7; }
+.op-mc.is-tbd { opacity: .55; }
+@media (prefers-reduced-motion: reduce) { .op-mc.bracket-card-blink, .op-mc.enter-court-blink, .op-mc.enter-card-blink { animation: none; } }
+
+.op-mc__row--head { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 8px; min-height: 26px; }
+.op-mc__ev { display: inline-flex; align-items: center; gap: 6px; min-width: 0; font: 700 12px/1.2 var(--fjp); color: var(--ink); }
+.op-mc__sw { flex: none; width: 8px; height: 8px; background: currentColor; }
+.op-mc__evtext { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.op-mc__badge { display: inline-flex; justify-content: center; }
+.op-mc__state { display: inline-flex; align-items: center; justify-content: flex-end; gap: 6px; min-width: 0; }
+.op-mc__elapsed { display: inline-flex; align-items: center; gap: 3px; font: 700 12px/1 var(--flt); color: var(--red-dark); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.app-main .op-mc__enter, .op-mc__enter { width: auto; min-height: 32px; padding: 6px 14px; font-size: 12.5px; white-space: nowrap; }
+
+.op-mc__row--players { display: grid; grid-template-columns: minmax(0, 1fr) 44px minmax(0, 1fr); align-items: center; gap: 6px; }
+.op-mc__p { min-width: 0; text-align: center; }
+.op-mc__name { display: flex; align-items: baseline; justify-content: center; gap: 5px; min-width: 0; }
+.op-mc__num { flex: none; font: 700 13px/1 var(--flt); color: var(--gray-500); font-variant-numeric: tabular-nums; }
+.op-mc__nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 700 15px/1.35 var(--fjp); color: var(--ink); }
+.op-mc__aff { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 2px; font: 400 11px/1.3 var(--fjp); color: var(--gray-500); }
+.op-mc__p.is-win .op-mc__nm { color: var(--red); }
+.op-mc__p.is-dim .op-mc__nm { color: var(--gray-500); font-weight: 500; }
+.op-mc__vs { display: flex; flex-direction: column; align-items: center; gap: 2px; font: 600 13px/1 var(--flt); color: var(--gray-300); letter-spacing: .04em; }
+.op-mc__score { font: 700 12px/1 var(--flt); color: var(--ink); white-space: nowrap; font-variant-numeric: tabular-nums; }
+
+.op-mc__row--foot { display: flex; align-items: center; gap: 8px; min-height: 36px; }
+.op-mc__time { flex: 1 1 auto; font: 600 12px/1 var(--flt); color: var(--gray-500); letter-spacing: .04em; font-variant-numeric: tabular-nums; }
+.op-mc__acts { display: flex; align-items: center; gap: 6px; }
+
+/* PC：1 試合 2 行の横長の行にまとめる */
+@media (min-width: 1024px) {
+  .op-mc { display: grid; grid-template-columns: 150px minmax(0, 1fr) 52px minmax(0, 1fr) 150px auto; grid-template-areas: "ev p1 vs p2 badge acts" "time p1 vs p2 state acts"; align-items: center; column-gap: 12px; row-gap: 4px; padding: 8px 12px; }
+  .op-mc.is-playing, .op-mc.is-enter, .op-mc.is-standby { padding: 7px 11px; }
+  .op-mc__row { display: contents; }
+  .op-mc__ev { grid-area: ev; }
+  .op-mc__badge { grid-area: badge; justify-content: flex-end; }
+  .op-mc__state { grid-area: state; }
+  .op-mc__p--1 { grid-area: p1; }
+  .op-mc__vs { grid-area: vs; }
+  .op-mc__p--2 { grid-area: p2; }
+  .op-mc__time { grid-area: time; }
+  .op-mc__acts { grid-area: acts; }
+  .op-mm--readonly .op-mc { grid-template-columns: 150px minmax(0, 1fr) 52px minmax(0, 1fr) 150px; grid-template-areas: "ev p1 vs p2 badge" "time p1 vs p2 state"; }
+}
+
+/* 種目別 */
+.op-ev__head { cursor: pointer; transition: background .2s; }
+@media (hover: hover) { .op-ev__head:hover { background: var(--gray-050); } }
+.op-ev.is-active .op-ev__head .sk-sec__mark { background: var(--red); }
+.op-ev:not(.is-active) .op-ev__head .sk-sec__mark { background: var(--gray-300); }
+.op-ev__table { width: 100%; min-width: 520px; table-layout: fixed; border-collapse: collapse; font: 400 13.5px/1.5 var(--fjp); color: var(--ink); text-align: left; }
+.op-ev__roundcell { padding: 0; }
+.op-ev__round { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 16px; background: var(--gray-100); border-block: 1px solid var(--gray-200); }
+.op-ev__round-l { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; min-width: 0; }
+.op-ev__round-no { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; background: var(--ink); color: #fff; font: 700 11px/1 var(--flt); }
+.op-ev__round-name { font: 700 13px/1.3 var(--fjp); letter-spacing: .04em; }
+.op-ev__rule { padding: 2px 6px; border: 1px solid var(--gray-300); background: var(--white); font: 400 11px/1.4 var(--fjp); color: var(--gray-600); }
+.op-ev__prog { display: flex; align-items: center; gap: 6px; flex: none; }
+.op-ev__prog-n { font: 700 12px/1 var(--flt); color: var(--gray-500); font-variant-numeric: tabular-nums; }
+.op-ev__tr { border-bottom: 1px solid var(--gray-200); transition: background .2s; }
+.op-ev__tr > td { padding: 8px 8px; vertical-align: middle; }
+.op-ev__tr > td:first-child, .op-ev__tr > td:nth-child(5), .op-ev__tr > td:nth-child(6), .op-ev__tr > td:nth-child(7) { text-align: center; }
+.op-ev__tr.is-odd { background: var(--gray-050); }
+.op-ev__tr.is-playing { background: var(--red-tint); }
+.op-ev__tr.is-finished { color: var(--gray-600); }
+.op-ev__tr.is-speaking { background: var(--red-tint); box-shadow: inset 3px 0 0 var(--red); }
+.op-ev__tr.is-editing { background: var(--gray-050); }
+@media (hover: hover) { .op-ev__tr:not(.is-editing):hover { background: var(--red-tint); } }
+.op-ev__order { display: inline-flex; align-items: center; justify-content: center; min-width: 24px; height: 24px; padding: 0 4px; background: var(--gray-100); color: var(--gray-600); font: 700 12px/1 var(--flt); }
+.op-ev__order.is-playing { background: var(--red); color: #fff; }
+.op-ev__order.is-finished { background: var(--gray-200); color: var(--gray-500); }
+.op-ev__no { font: 700 12px/1 var(--flt); color: var(--gray-500); }
+.op-ev__pl { overflow: hidden; }
+.op-ev__who { display: flex; align-items: center; gap: 4px; min-width: 0; }
+.op-ev__who .text-primary-800 { color: var(--red); }
+.op-ev__aff { flex: none; font-size: 11px; color: var(--gray-500); }
+@media (max-width: 639px) { .op-ev__aff { display: none; } }
+.op-ev__vs { text-align: center; font: 600 11px/1 var(--flt); color: var(--gray-300); }
+.op-ev__score { font: 600 12.5px/1 var(--flt); color: var(--gray-500); font-variant-numeric: tabular-nums; }
+.op-ev__score.is-done { color: var(--ink); font-weight: 700; }
+.op-ev__acts { display: flex; align-items: center; justify-content: center; gap: 4px; }
+.op-ev__acts .op-ibtn { width: 34px; height: 34px; }
+.op-ev__in { width: 46px; height: 34px; padding: 0 4px; border: 1px solid var(--gray-300); border-radius: var(--radius); background: var(--white); font: 600 16px/1 var(--flt); text-align: center; color: var(--ink); outline: none; transition: border-color .2s; }
+.op-ev__in:focus { border-color: var(--red); }
+.op-ev__in--tb { width: 38px; height: 28px; font-size: 14px; background: var(--red-tint); }
+
+/* ---------------------------------------------------------------------------
+   タイムテーブル（ScheduleSheet）
+   --------------------------------------------------------------------------- */
+.op-live { display: inline-flex; align-items: center; gap: 5px; height: 22px; padding: 0 8px; border: 1px solid var(--red); background: var(--red-tint); font: 700 11px/1 var(--flt); letter-spacing: .12em; color: var(--red); }
+.op-live i { width: 6px; height: 6px; background: var(--red); animation: blink 1.6s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .op-live i { animation: none; } }
+.op-tt__msgs { padding-top: 0; }
+.op-tt__head .sk-sec__head + .op-tt__msgs { padding-top: 12px; }
+.op-tt__swap { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; }
+.op-tt__swap-text { display: flex; align-items: flex-start; gap: 6px; flex: 1 1 260px; }
+.op-tt__swap-text svg { margin-top: 3px; color: var(--red); }
+
+.op-tt__grid { overflow: hidden; }
+/* 表は自分の中で縦横に送る（見出しの行・コートの列が貼り付く） */
+.op-tt__scroll { overflow: auto; max-height: calc(100dvh - var(--app-sticky-top, 0px) - 40px); -webkit-overflow-scrolling: touch; }
+.op-tt__table { min-width: 100%; border-collapse: separate; border-spacing: 0; font-family: var(--fjp); }
+.op-tt__thead th { position: sticky; top: 0; z-index: 20; }
+.op-tt__corner, .op-tt__th { padding: 9px 10px; background: var(--ink); color: #fff; font: 700 12px/1 var(--flt); letter-spacing: .06em; white-space: nowrap; border-right: 1px solid rgba(255, 255, 255, .14); }
+.op-tt__corner { left: 0; z-index: 30 !important; font-family: var(--fjp); }
+.op-tt__th.is-now { background: var(--red); }
+.op-tt__th.is-past { background: var(--gray-600); color: rgba(255, 255, 255, .7); }
+.op-tt__court { position: sticky; left: 0; z-index: 10; padding: 0 12px; background: var(--gray-100); border-right: 1px solid var(--gray-300); border-bottom: 1px solid var(--gray-200); font: 700 15px/1 var(--flt); color: var(--ink); text-align: center; white-space: nowrap; }
+.op-tt__td { min-width: 84px; height: 48px; padding: 2px 3px; border-right: 1px solid var(--gray-200); border-bottom: 1px solid var(--gray-200); }
+.op-tt__td--empty.is-now { background: color-mix(in srgb, var(--red-tint) 60%, transparent); }
+.op-tt__td--empty.is-past { background: var(--gray-050); }
+.op-tt__td--empty.is-droppable { cursor: pointer; background: var(--red-tint); }
+@media (hover: hover) { .op-tt__td--empty.is-droppable:hover { box-shadow: inset 0 0 0 2px var(--red); } }
+.op-tt__cell { cursor: pointer; text-align: center; transition: filter .2s; }
+@media (hover: hover) { .op-tt__cell:hover { filter: brightness(.94); } }
+.op-tt__cell.is-swap-src { box-shadow: inset 0 0 0 2px var(--red); position: relative; z-index: 3; }
+.op-tt__cell.is-swap-target { box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--red) 45%, var(--white)); }
+
+.op-tt__empty { gap: 10px; }
+.op-tt__gen { width: 100%; max-width: 620px; margin-top: 10px; padding: 18px 18px 20px; text-align: left; }
+.op-tt__gen-head { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; color: var(--red); }
+.op-tt__gen-head h4 { margin: 0; font: 700 15px/1.4 var(--fjp); color: var(--ink); }
+.op-tt__gen-lead { margin: 0 0 14px; font: 400 12.5px/1.8 var(--fjp); color: var(--gray-600); }
+.op-tt__gen-det { display: block; margin-top: 4px; color: var(--ink); font-weight: 700; }
+.op-tt__gen-grid { display: grid; grid-template-columns: 1fr; gap: 12px; margin-bottom: 16px; }
+.op-tt__gen-grid > div:first-child { grid-column: 1 / -1; }
+@media (min-width: 640px) { .op-tt__gen-grid { grid-template-columns: 1fr 1fr; } }
+.op-label { margin-bottom: 6px; }
+
+/* ポップアップの中身（SiteDialog の中） */
+.op-dlg-sum { padding: 12px 14px; border-left: 3px solid var(--ink); background: var(--gray-050); font: 400 13px/1.7 var(--fjp); color: var(--gray-800); }
+.op-dlg-sum__ev { font-weight: 700; color: var(--ink); }
+.op-dlg-sum__rd { margin-left: 8px; color: var(--gray-500); }
+.op-dlg-sum__sub { font-size: 12px; color: var(--gray-500); }
+.op-dlg-sum__vs { font-weight: 700; font-size: 14.5px; color: var(--ink); }
+.op-dlg-sum__vs span { margin: 0 4px; font: 600 12px/1 var(--flt); color: var(--gray-500); }
+.op-dlg-btns { display: grid; gap: 8px; margin-top: 14px; }
+.op-dlg-note { margin: 10px 0 0; font: 400 12px/1.6 var(--fjp); color: var(--gray-500); text-align: center; }
+.op-dlg-pad { height: 22px; }
+.op-dlg-form { display: flex; flex-direction: column; gap: 14px; }
+.sdlg .op-dlg-btns .btn, .sdlg .op-dlg-form .input { width: 100%; }
+.sdlg .op-dlg-btns .sk-btn { min-height: 48px; gap: 8px; justify-content: center; font-size: 14px; }
+.sdlg .op-dlg-form .sk-input { min-height: 44px; height: 44px; padding: 0 12px; font-size: 16px; }
+.op-tt__cell span { white-space: nowrap; }
+
+/* ---------------------------------------------------------------------------
+   コート・時間割（CourtSchedule /schedule）
+   --------------------------------------------------------------------------- */
+.op-cs__ico { color: var(--red); }
+.op-cs__imported { margin-left: 6px; color: var(--red); font-weight: 700; }
+.app-main .op-cs__select { width: 100%; min-width: 220px; }
+@media (min-width: 640px) { .app-main .op-cs__select { width: 260px; } }
+.op-cs .sk-sec__actions { flex: 1 1 220px; justify-content: flex-end; }
+.op-cs__layout { display: flex; flex-direction: column; gap: 18px; }
+@media (min-width: 1024px) { .op-cs__layout { flex-direction: row; align-items: flex-start; gap: 22px; } .op-cs__side { flex: none; width: 320px; } }
+.op-cs__side { display: flex; flex-direction: column; gap: 18px; }
+.op-cs__main { flex: 1 1 auto; min-width: 0; }
+.op-cs__add { display: flex; gap: 8px; margin-bottom: 12px; }
+.app-main .op-cs__addbtn { flex: none; width: 44px; padding: 0; }
+.op-cs__courts { max-height: 520px; overflow: auto; border-top: 1px solid var(--gray-200); }
+.op-cs__courts > li { padding: 8px 4px; gap: 10px; }
+.op-cs__toggle { flex: none; width: 40px; height: 24px; padding: 0; border: 0; border-radius: var(--radius); background: var(--gray-300); position: relative; cursor: pointer; transition: background .2s; }
+.op-cs__toggle::after { content: ''; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 2px; background: #fff; transition: transform .25s var(--ease); }
+.op-cs__toggle.is-on { background: var(--red); }
+.op-cs__toggle.is-on::after { transform: translateX(16px); }
+.op-cs__cname { font: 700 15px/1 var(--flt); color: var(--ink); min-width: 28px; }
+.op-cs__cstate { flex: 1; font: 400 12px/1 var(--fjp); color: var(--gray-500); }
+.op-cs__del { width: 32px; height: 32px; }
+.op-cs__none { margin: 0; padding: 16px; text-align: center; font: 400 13px/1.6 var(--fjp); color: var(--gray-500); }
+.op-cs__unassigned { max-height: 320px; overflow: auto; }
+.op-cs__unassigned > li { padding: 8px 14px; }
+.op-cs__no { flex: none; font: 700 12px/1 var(--flt); color: var(--gray-500); }
+.op-cs__vs { flex: 1; min-width: 0; margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 400 13px/1.5 var(--fjp); color: var(--ink); }
+.op-cs__vs span { color: var(--gray-500); font: 600 11px/1 var(--flt); margin: 0 3px; }
+.app-main .op-cs__mini { width: auto; min-height: 32px; height: 32px; padding: 0 8px; font-size: 14px; }
+.op-cs__grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; }
+@media (min-width: 760px) { .op-cs__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 1280px) { .op-cs__grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.op-cs__court.is-off { opacity: .6; border-top: 3px solid var(--gray-500); }
+.op-cs__court-head { display: flex; align-items: center; gap: 8px; padding: 12px 14px; border-bottom: 1px solid var(--gray-200); }
+.op-cs__court-head h3 { flex: 1; margin: 0; font: 700 16px/1 var(--flt); color: var(--ink); }
+.op-cs__dot { width: 10px; height: 10px; background: var(--red); }
+.op-cs__dot.is-off { background: var(--gray-500); }
+.op-cs__count { font: 700 12px/1 var(--fjp); color: var(--gray-500); }
+.op-cs__m { flex-direction: column; align-items: stretch !important; gap: 4px !important; padding: 9px 14px !important; }
+.op-cs__m-top { display: flex; align-items: center; gap: 8px; }
+.op-cs__time { margin-left: auto; }
+.op-cs__score { margin: 0; font: 700 12px/1 var(--flt); color: var(--red); }
+
+/* ---------------------------------------------------------------------------
+   スコア（Scoreboard /score）
+   --------------------------------------------------------------------------- */
+.op-sb__reveal { position: fixed; right: 12px; bottom: 80px; z-index: 50; display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; border: 0; border-radius: var(--radius); background: var(--ink); color: #fff; cursor: pointer; transition: background .2s; }
+@media (hover: hover) { .op-sb__reveal:hover { background: var(--red); } }
+.op-sb__head .sk-sec__actions .hub-filter__btn { display: inline-flex; align-items: center; gap: 5px; }
+.op-sb__headbody { display: flex; flex-direction: column; gap: 10px; }
+.op-sb__headbody:empty { display: none; }
+.op-sb__nav { display: flex; align-items: center; gap: 8px; }
+.app-main .op-sb__select { flex: 1 1 auto; width: auto; min-width: 0; }
+.op-ibtn--lg { width: 40px; height: 40px; }
+.op-sb__prog { display: flex; align-items: center; gap: 12px; }
+.op-bar--grow { flex: 1 1 auto; width: auto; }
+.op-sb__prog-n { font: 700 12px/1 var(--fjp); color: var(--gray-600); white-space: nowrap; }
+.op-sb__playing { margin-left: 4px; color: var(--red); }
+
+/* コートの状況（横に送れる札の列） */
+.op-sb__courts { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px; -webkit-overflow-scrolling: touch; }
+.op-sb__court { flex: none; display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 10px; border: 1px solid var(--gray-300); border-radius: var(--radius); background: var(--white); font: 400 12px/1 var(--fjp); color: var(--gray-600); white-space: nowrap; }
+.op-sb__court svg { color: var(--gray-500); }
+.op-sb__court-n { font: 700 13px/1 var(--flt); color: var(--ink); }
+.op-sb__court-ev { max-width: 80px; overflow: hidden; text-overflow: ellipsis; font-size: 11px; color: var(--red); }
+.op-sb__court-m { max-width: 120px; overflow: hidden; text-overflow: ellipsis; color: var(--ink); }
+.op-sb__court-t { font: 700 11px/1 var(--flt); color: var(--red); }
+.op-sb__court.is-busy { border-color: var(--ink); }
+.op-sb__court.is-over { border-color: var(--red); background: var(--red-tint); }
+.op-sb__court.is-over svg { color: var(--red); }
+.op-sb__court.is-off { background: var(--gray-100); color: var(--gray-500); }
+
+/* 種目ごとの区画 */
+.op-sb__list { display: flex; flex-direction: column; gap: 18px; }
+.op-sb__ev { overflow: visible; }
+.op-sb__evhead { position: sticky; top: var(--app-sticky-top, 0px); z-index: 5; padding: 12px 16px; background: var(--white); border-bottom: 1px solid var(--gray-200); }
+.op-sb__evrow { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 12px; }
+.op-sb__evtitle { display: flex; align-items: center; gap: 8px; margin: 0; font: 700 15px/1.4 var(--fjp); color: var(--ink); }
+.op-sb__evtitle svg { color: var(--red); }
+.op-sb__evtitle small { font: 400 12px/1 var(--fjp); color: var(--gray-500); }
+.op-sb__evbar { margin-top: 8px; }
+.op-sb__evbody { min-height: 200px; }
+.op-sb__single { display: flex; gap: 16px; min-height: 0; }
+.op-sb__single > .op-sb__ev { flex: 1 1 auto; min-width: 0; }
+.op-sb__none { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; min-height: 200px; padding: 32px 16px; text-align: center; color: var(--gray-300); }
+.op-sb__none p { margin: 0; font: 400 13px/1.7 var(--fjp); color: var(--gray-600); }
+
+/* テーブル表示 */
+.op-sb__h { display: flex; align-items: center; gap: 8px; margin: 0 0 10px; font: 700 14px/1.4 var(--fjp); color: var(--ink); }
+.op-sb__h::before { content: ''; width: 10px; height: 10px; background: var(--red); }
+.op-sb__h svg { display: none; }
+.op-sb__cards { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
+@media (min-width: 760px) { .op-sb__cards { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 1100px) { .op-sb__cards { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.op-sb__card { padding: 14px 16px; border: 2px solid var(--red); border-radius: var(--radius); background: var(--white); }
+.sk-table tbody tr.is-odd td { background: var(--gray-050); }
+
+/* 大会ルール（SiteDialog の中） */
+.op-rules { display: flex; flex-direction: column; gap: 16px; }
+.op-rules__ev { display: flex; align-items: baseline; gap: 8px; margin: 0 0 8px; padding-bottom: 6px; border-bottom: 1px solid var(--gray-200); font: 700 14px/1.4 var(--fjp); color: var(--ink); }
+.op-rules__ev small { font: 400 12px/1 var(--fjp); color: var(--gray-500); }
+.op-rules__rd { flex: none; padding: 2px 8px; background: var(--ink); color: #fff; font: 700 11px/1.5 var(--fjp); }
+.op-rules__tx { font: 400 13.5px/1.6 var(--fjp); color: var(--gray-800); }
+
+/* ---------------------------------------------------------------------------
+   スコア入力のポップアップ（ScoreInputDialog）— SiteDialog と同じ見た目
+   白いパネル・上端に赤い線・見出しの左に赤い四角・サイトのボタン
+   --------------------------------------------------------------------------- */
+.op-sid__backdrop { position: fixed; inset: 0; background: rgba(26, 26, 26, .55); animation: sdlg-fade .25s ease both; }
+.op-sid__panel { position: relative; display: flex; flex-direction: column; width: 100%; max-width: calc(100vw - 1rem); max-height: 100%; overflow: hidden; background: var(--white); border-top: 3px solid var(--red); border-radius: var(--radius); box-shadow: 0 24px 60px rgba(26, 26, 26, .28); animation: sdlg-up .45s var(--ease) both; }
+@media (min-width: 640px) { .op-sid__panel { max-width: 32rem; } }
+@media (prefers-reduced-motion: reduce) { .op-sid__backdrop, .op-sid__panel { animation: none; } }
+html.is-lite .op-sid__backdrop, html.is-lite .op-sid__panel { animation: none; }
+
+.op-sid__head { flex: none; padding: 18px 20px 12px; border-bottom: 1px solid var(--gray-100); }
+.op-sid__head.is-compact { padding: 8px 16px; }
+.op-sid__headrow { display: flex; align-items: flex-start; gap: 12px; }
+.op-sid__mark { flex: none; margin-top: 4px; }
+.op-sid__heading { flex: 1; min-width: 0; }
+.op-sid__crumbs { display: flex; align-items: center; gap: 6px; margin: 0 0 4px; font: 700 12px/1.3 var(--fjp); color: var(--red); letter-spacing: .04em; }
+.op-sid__crumbs svg { color: var(--gray-300); flex: none; }
+.op-sid__crumbs span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.op-sid__no { font-family: var(--flt); letter-spacing: .08em; }
+.op-sid__title { margin: 0; font: 700 18px/1.4 var(--fjp); letter-spacing: .02em; color: var(--ink); }
+.op-sid__head.is-compact .op-sid__title { font-size: 15px; }
+.op-sid__meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; margin-top: 10px; padding-left: 24px; }
+.op-sid__meta.is-compact { margin-top: 4px; }
+.op-sid__elapsed { display: inline-flex; align-items: center; gap: 4px; font: 700 13px/1 var(--flt); color: var(--red); font-variant-numeric: tabular-nums; }
+.op-sid__sched { font: 400 12px/1 var(--fjp); color: var(--gray-500); }
+
+.op-sid__rule { display: flex; align-items: center; gap: 8px; padding: 9px 12px; border-left: 3px solid var(--ink); background: var(--gray-050); }
+.op-sid__rule svg { color: var(--red); }
+.op-sid__rule-tx { flex: 1; min-width: 0; font: 700 12.5px/1.5 var(--fjp); color: var(--ink); }
+.op-sid__rule-btn { flex: none; display: inline-flex; align-items: center; gap: 4px; height: 28px; padding: 0 10px; border: 1px solid var(--gray-300); border-radius: var(--radius); background: var(--white); font: 700 11px/1 var(--fjp); color: var(--gray-800); cursor: pointer; transition: color .2s, border-color .2s; }
+@media (hover: hover) { .op-sid__rule-btn:hover { color: var(--red); border-color: var(--red); } }
+.op-sid__vs { font: 600 13px/1 var(--flt); letter-spacing: .1em; color: var(--gray-300); }
+
+.op-sid__box { border: 1px solid var(--gray-200); background: var(--gray-050); }
+.op-sid__select { flex: 1; min-width: 0; height: 40px; min-height: 40px; padding: 0 10px; font-size: 16px; }
+.op-sid__in { width: 52px; height: 46px; padding: 0; border: 1px solid var(--gray-300); border-radius: var(--radius); background: var(--white); font: 700 22px/1 var(--flt); text-align: center; color: var(--ink); outline: none; transition: border-color .2s, box-shadow .2s; }
+.op-sid__in:focus { border-color: var(--red); box-shadow: 0 0 0 3px color-mix(in srgb, var(--red) 15%, transparent); }
+.op-sid__in:disabled { background: var(--gray-100); color: var(--gray-500); }
+.op-sid__in--tb { width: 42px; height: 36px; font-size: 16px; background: var(--red-tint); border-color: color-mix(in srgb, var(--red) 40%, var(--white)); }
+.op-sid__in--stb { border-width: 2px; border-color: var(--ink); }
+.op-sid__err { padding: 8px 10px; }
+.op-sid__err p { color: var(--red-dark) !important; }
+.op-sid__winner { font: 700 13px/1.5 var(--fjp); color: var(--red); }
+
+.op-sid__label { display: flex; align-items: center; gap: 6px; font: 700 12px/1.3 var(--fjp); color: var(--gray-600); }
+.op-sid__label svg { color: var(--red); }
+.op-sid__label--red { color: var(--red); }
+
+/* サイトの .btn をポップアップの大きさに */
+.op-sid .op-sid__btn { width: auto; min-height: 44px; padding: 10px 14px; gap: 6px; justify-content: center; font-size: 14px; }
+.op-sid .op-sid__btn--block { width: 100%; min-height: 50px; }
+.op-sid .op-sid__btn--grow { flex: 1 1 0; min-height: 50px; }
+.op-sid .op-sid__btn--gray { background: var(--gray-600); border: 1px solid var(--gray-600); color: #fff; }
+@media (hover: hover) { .op-sid .op-sid__btn--gray:hover { background: var(--gray-800); border-color: var(--gray-800); } }
+.op-sid .op-sid__btn--red { color: var(--red); border-color: var(--red); }
+.op-sid .op-sid__btn--finish { min-height: 56px; font-size: 15px; }
+.op-sid .op-sid__btn--finish.is-compact { min-height: 48px; }
+.op-sid .op-sid__btn:disabled { opacity: .45; cursor: not-allowed; }
+.op-sid__tag { padding: 3px 7px; border: 1px solid currentColor; border-radius: var(--radius); font: 700 10px/1 var(--fjp); }
+.op-sid__def { display: flex; align-items: center; justify-content: center; gap: 8px; min-width: 0; min-height: 52px; padding: 0 10px; border: 1px solid var(--gray-300); border-radius: var(--radius); background: var(--white); font: 700 14px/1.3 var(--fjp); color: var(--gray-600); cursor: pointer; transition: color .2s, border-color .2s, background .2s; }
+.op-sid__def span:first-of-type { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (hover: hover) { .op-sid__def:hover { color: var(--red); border-color: var(--red); } }
+.op-sid__def.is-on { border: 2px solid var(--red); background: var(--red-tint); color: var(--red-dark); }
+.op-sid__foot { flex: none; padding-inline: 16px; border-top: 1px solid var(--gray-200); background: var(--white); }
+@media (min-width: 640px) { .op-sid__foot { padding-inline: 24px; } }
+.op-sid__hint { width: 100%; border: 1px dashed var(--gray-300); border-radius: var(--radius); background: var(--gray-050); text-align: center; font: 400 12px/1.6 var(--fjp); color: var(--gray-500); }
+@media (min-width: 1024px) { .op-mm--readonly .op-mm__tabbar { top: 0; } }
+.op-mm--readonly .op-mc__row--foot { min-height: 0; }

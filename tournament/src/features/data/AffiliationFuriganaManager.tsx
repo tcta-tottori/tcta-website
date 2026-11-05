@@ -239,7 +239,7 @@ export default function AffiliationFuriganaManager() {
 
       {status && (
         <div
-          className={`mb-4 p-3 rounded-md text-sm flex items-start gap-2 ${
+          className={`mb-4 p-3 rounded text-sm flex items-start gap-2 ${
             status.isError
               ? 'bg-red-50 text-red-700 border border-red-200'
               : 'bg-primary-50 text-gray-800 border border-primary-200'
@@ -259,7 +259,7 @@ export default function AffiliationFuriganaManager() {
         <button
           onClick={handleAutoCollect}
           disabled={isProcessing}
-          className="flex flex-col items-center justify-center p-3 gap-2 bg-gradient-to-br from-gray-50 to-white hover:from-gray-100 hover:to-white border border-gray-100 rounded-lg transition-colors disabled:opacity-50"
+          className="flex flex-col items-center justify-center p-3 gap-2 bg-gray-50 hover:bg-gray-100 border border-gray-100 rounded transition-colors disabled:opacity-50"
         >
           <FolderSearch className="w-6 h-6 text-gray-600" />
           <span className="text-sm font-semibold text-gray-900">一括収集</span>
@@ -269,7 +269,7 @@ export default function AffiliationFuriganaManager() {
         <button
           onClick={() => fileInputRef.current?.click()}
           disabled={isProcessing}
-          className="flex flex-col items-center justify-center p-3 gap-2 bg-gradient-to-br from-primary-50 to-white hover:from-primary-100 hover:to-white border border-primary-100 rounded-lg transition-colors disabled:opacity-50 relative"
+          className="flex flex-col items-center justify-center p-3 gap-2 bg-primary-50 hover:bg-primary-100 border border-primary-100 rounded transition-colors disabled:opacity-50 relative"
         >
           <div className="flex items-center gap-1">
             <FileSpreadsheet className="w-6 h-6 text-primary-600" />
@@ -289,7 +289,7 @@ export default function AffiliationFuriganaManager() {
         <button
           onClick={handleExport}
           disabled={isProcessing}
-          className="flex flex-col items-center justify-center p-3 gap-2 bg-gradient-to-br from-primary-50 to-white hover:from-primary-100 hover:to-white border border-primary-100 rounded-lg transition-colors disabled:opacity-50"
+          className="flex flex-col items-center justify-center p-3 gap-2 bg-primary-50 hover:bg-primary-100 border border-primary-100 rounded transition-colors disabled:opacity-50"
         >
           <div className="flex items-center gap-1">
             <FileSpreadsheet className="w-6 h-6 text-primary-600" />
@@ -301,7 +301,7 @@ export default function AffiliationFuriganaManager() {
       </div>
 
       {/* 新規追加フォーム */}
-      <div className="mb-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
+      <div className="mb-4 p-3 bg-gray-50 rounded border border-gray-200">
         <div className="flex items-center gap-2 mb-2">
           <Plus className="w-4 h-4 text-gray-500" />
           <span className="text-sm font-medium text-gray-700">新規追加</span>
@@ -312,19 +312,19 @@ export default function AffiliationFuriganaManager() {
             value={newName}
             onChange={e => setNewName(e.target.value)}
             placeholder="所属名（例: 鳥取グリーンTC）"
-            className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary-300 focus:border-primary-400"
+            className="flex-1 px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-primary-300 focus:border-primary-400"
           />
           <input
             type="text"
             value={newFurigana}
             onChange={e => setNewFurigana(e.target.value)}
             placeholder="ふりがな（例: とっとりグリーンティーシー）"
-            className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary-300 focus:border-primary-400"
+            className="flex-1 px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-primary-300 focus:border-primary-400"
             onKeyDown={e => { if (e.key === 'Enter') handleAdd(); }}
           />
           <button
             onClick={handleAdd}
-            className="px-4 py-2 bg-primary-500 text-white rounded-md text-sm font-medium hover:bg-primary-600 transition-colors"
+            className="px-4 py-2 bg-primary-500 text-white rounded text-sm font-medium hover:bg-primary-600 transition-colors"
           >
             追加
           </button>
@@ -339,12 +339,12 @@ export default function AffiliationFuriganaManager() {
           value={searchQuery}
           onChange={e => setSearchQuery(e.target.value)}
           placeholder="所属名・ふりがなで検索..."
-          className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary-300 focus:border-primary-400"
+          className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-primary-300 focus:border-primary-400"
         />
       </div>
 
       {/* テーブル */}
-      <div className="flex-1 border rounded-lg overflow-hidden flex flex-col">
+      <div className="flex-1 border rounded overflow-hidden flex flex-col">
         <div className="bg-gray-50 border-b px-4 py-2 flex items-center text-xs font-medium text-gray-500">
           <div className="w-5/12">所属名</div>
           <div className="w-5/12">ふりがな</div>

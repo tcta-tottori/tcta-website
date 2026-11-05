@@ -296,11 +296,11 @@ export default function PlayerDataList() {
   return (
     <div className="flex flex-col">
       {/* タブ切替 */}
-      <div className="flex items-center gap-1 mb-4 bg-gray-100 rounded-lg p-1">
+      <div className="flex items-center gap-1 mb-4 bg-gray-100 rounded p-1">
         <button
           onClick={() => { setTab('affiliation'); setSearchQuery(''); setEditingAff(null); setEditingPlayerId(null); }}
-          className={`flex items-center gap-1.5 px-4 py-2 rounded-md text-sm font-medium transition-colors flex-1 justify-center ${
-            tab === 'affiliation' ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+          className={`flex items-center gap-1.5 px-4 py-2 rounded text-sm font-medium transition-colors flex-1 justify-center ${
+            tab === 'affiliation' ? 'bg-white text-gray-800' : 'text-gray-500 hover:text-gray-700'
           }`}
         >
           <Building2 className="w-4 h-4" />
@@ -309,8 +309,8 @@ export default function PlayerDataList() {
         </button>
         <button
           onClick={() => { setTab('furigana'); setSearchQuery(''); setEditingAff(null); setEditingPlayerId(null); }}
-          className={`flex items-center gap-1.5 px-4 py-2 rounded-md text-sm font-medium transition-colors flex-1 justify-center ${
-            tab === 'furigana' ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+          className={`flex items-center gap-1.5 px-4 py-2 rounded text-sm font-medium transition-colors flex-1 justify-center ${
+            tab === 'furigana' ? 'bg-white text-gray-800' : 'text-gray-500 hover:text-gray-700'
           }`}
         >
           <Users className="w-4 h-4" />
@@ -321,7 +321,7 @@ export default function PlayerDataList() {
 
       {/* ステータス */}
       {status && (
-        <div className={`mb-3 p-2.5 rounded-md text-sm flex items-center gap-2 ${
+        <div className={`mb-3 p-2.5 rounded text-sm flex items-center gap-2 ${
           status.isError ? 'bg-red-50 text-red-700 border border-red-200' : 'bg-primary-50 text-gray-800 border border-primary-200'
         }`}>
           {status.isError ? <AlertCircle className="w-4 h-4 shrink-0" /> : <CheckCircle2 className="w-4 h-4 shrink-0" />}
@@ -338,12 +338,12 @@ export default function PlayerDataList() {
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
             placeholder={tab === 'affiliation' ? '所属名・ふりがなで検索...' : '選手名・ふりがな・所属で検索...'}
-            className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-300 focus:border-primary-400"
+            className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-primary-300 focus:border-primary-400"
           />
         </div>
         <button
           onClick={() => fileInputRef.current?.click()}
-          className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 shadow-sm transition-colors"
+          className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-white bg-primary-600 rounded hover:bg-primary-700 transition-colors"
           title="Excelインポート"
         >
           <FileSpreadsheet className="w-4 h-4" />
@@ -352,7 +352,7 @@ export default function PlayerDataList() {
         </button>
         <button
           onClick={handleExport}
-          className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 shadow-sm transition-colors"
+          className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-white bg-primary-600 rounded hover:bg-primary-700 transition-colors"
           title="Excelエクスポート"
         >
           <FileSpreadsheet className="w-4 h-4" />
@@ -370,7 +370,7 @@ export default function PlayerDataList() {
 
       {/* === 所属一覧テーブル === */}
       {tab === 'affiliation' && (
-        <div className="border rounded-lg overflow-hidden">
+        <div className="border rounded overflow-hidden">
           <div className="bg-gray-50 border-b px-4 py-2 flex items-center text-xs font-medium text-gray-500">
             <div className="w-4/12">所属名</div>
             <div className="w-4/12">ふりがな</div>
@@ -460,7 +460,7 @@ export default function PlayerDataList() {
 
       {/* === ふりがな一覧テーブル === */}
       {tab === 'furigana' && (
-        <div className="border rounded-lg overflow-hidden">
+        <div className="border rounded overflow-hidden">
           <div className="bg-gray-50 border-b px-4 py-2 flex items-center text-xs font-medium text-gray-500">
             <div className="w-4/12">選手名</div>
             <div className="w-4/12">ふりがな</div>

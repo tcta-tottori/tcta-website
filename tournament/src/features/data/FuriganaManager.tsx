@@ -247,7 +247,7 @@ export default function FuriganaManager() {
       </div>
 
       {status && (
-        <div className={`mb-4 p-3 rounded-md text-sm flex items-start gap-2 ${
+        <div className={`mb-4 p-3 rounded text-sm flex items-start gap-2 ${
           status.isError ? 'bg-red-50 text-red-700 border border-red-200' : 'bg-primary-50 text-gray-800 border border-primary-200'
         }`}>
           {status.isError ? <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" /> : <CheckCircle2 className="w-4 h-4 mt-0.5 shrink-0" />}
@@ -266,7 +266,7 @@ export default function FuriganaManager() {
         <button
           onClick={handleAIAssign}
           disabled={isProcessing}
-          className="flex flex-col items-center justify-center p-3 gap-2 bg-gradient-to-br from-gray-50 to-white hover:from-gray-100 hover:to-white border border-gray-100 rounded-lg transition-colors disabled:opacity-50"
+          className="flex flex-col items-center justify-center p-3 gap-2 bg-gray-50 hover:bg-gray-100 border border-gray-100 rounded transition-colors disabled:opacity-50"
         >
           <Cpu className="w-6 h-6 text-gray-600" />
           <span className="text-sm font-semibold text-gray-900">AI自動付与</span>
@@ -276,7 +276,7 @@ export default function FuriganaManager() {
         <button
           onClick={() => fileInputRef.current?.click()}
           disabled={isProcessing}
-          className="flex flex-col items-center justify-center p-3 gap-2 bg-gradient-to-br from-primary-50 to-white hover:from-primary-100 hover:to-white border border-primary-100 rounded-lg transition-colors disabled:opacity-50 relative"
+          className="flex flex-col items-center justify-center p-3 gap-2 bg-primary-50 hover:bg-primary-100 border border-primary-100 rounded transition-colors disabled:opacity-50 relative"
         >
           <div className="flex items-center gap-1">
             <FileSpreadsheet className="w-6 h-6 text-primary-600" />
@@ -296,7 +296,7 @@ export default function FuriganaManager() {
         <button
           onClick={handleExportMissing}
           disabled={isProcessing}
-          className="flex flex-col items-center justify-center p-3 gap-2 bg-gradient-to-br from-primary-50 to-white hover:from-primary-100 hover:to-white border border-primary-100 rounded-lg transition-colors disabled:opacity-50"
+          className="flex flex-col items-center justify-center p-3 gap-2 bg-primary-50 hover:bg-primary-100 border border-primary-100 rounded transition-colors disabled:opacity-50"
         >
           <div className="flex items-center gap-1">
             <FileSpreadsheet className="w-6 h-6 text-primary-600" />
@@ -307,7 +307,7 @@ export default function FuriganaManager() {
         </button>
       </div>
 
-      <div className="flex-1 border rounded-lg overflow-hidden flex flex-col">
+      <div className="flex-1 border rounded overflow-hidden flex flex-col">
         <div className="bg-gray-50 border-b px-4 py-2 flex items-center justify-between text-xs font-medium text-gray-500">
           <div className="w-1/2">漢字 (PlayerID)</div>
           <div className="w-1/2">ふりがな</div>

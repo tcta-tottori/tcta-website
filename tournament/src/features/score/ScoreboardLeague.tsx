@@ -389,7 +389,7 @@ export default function ScoreboardLeague({
       </div>
       {allMatchesDone && (
         <div className="text-center">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-primary-100 text-gray-800 rounded-full text-xs font-bold">
+          <span className="sk-chip sk-chip--red">
             🏆 全試合完了
           </span>
         </div>
@@ -429,7 +429,7 @@ export default function ScoreboardLeague({
         <div className="flex items-center justify-end mb-2 sm:hidden">
           <button
             onClick={handleFullscreen}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold bg-primary-600 text-white rounded-lg hover:bg-primary-700 active:scale-95 transition-all shadow-sm"
+            className="btn btn--primary sk-btn sk-btn--sm"
           >
             <Maximize2 className="w-3.5 h-3.5" />
             全試合モード
@@ -448,7 +448,7 @@ export default function ScoreboardLeague({
         createPortal(
           <div className="fixed inset-0 z-[90] bg-white flex flex-col">
             {/* ヘッダー */}
-            <div className="flex items-center justify-between px-4 py-2 bg-gradient-to-r from-primary-600 to-primary-700 text-white shrink-0">
+            <div className="flex items-center justify-between px-4 py-2 bg-[var(--ink)] text-white border-t-[3px] border-[var(--red)] shrink-0">
               <h2 className="text-sm font-bold flex items-center gap-2">
                 <Maximize2 className="w-4 h-4" />
                 {leagueName} - 全試合モード
@@ -460,7 +460,7 @@ export default function ScoreboardLeague({
               )}
               <button
                 onClick={handleExitFullscreen}
-                className="p-1.5 rounded-lg hover:bg-white/20 transition-colors"
+                className="p-1.5 hover:text-[var(--red)] transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>

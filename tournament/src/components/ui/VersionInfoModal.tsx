@@ -633,59 +633,41 @@ export default function VersionInfoModal({ open, onClose }: Props) {
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[200] flex items-center justify-center bg-black/30 backdrop-blur-[2px] animate-[fadeIn_0.2s_ease-out]"
+      className="fixed inset-0 z-[200] flex items-center justify-center psd-overlay"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+      role="dialog"
+      aria-modal="true"
     >
-      <div className="relative w-[min(92vw,480px)] max-h-[85vh] flex flex-col bg-white rounded-2xl shadow-2xl overflow-hidden animate-[slideUp_0.3s_ease-out]">
+      <div className="psd-panel psd-panel--sm psd-panel--flex">
 
         {/* ヘッダー */}
-        <div className="relative overflow-hidden shrink-0">
-          <div className="absolute inset-0 bg-gradient-to-br from-primary-600 via-primary-700 to-primary-800" />
-          <div className="absolute inset-0 opacity-20"
-            style={{ background: 'radial-gradient(circle at 30% 40%, rgba(216, 35, 42,0.4) 0%, transparent 50%), radial-gradient(circle at 80% 70%, rgba(118,118,118,0.3) 0%, transparent 50%)' }} />
-          <div className="absolute -top-6 -right-6 w-28 h-28 border border-white/[0.08] rounded-full" />
-          <div className="absolute -bottom-4 -left-4 w-20 h-20 border border-white/[0.06] rounded-full" />
-
-          <div className="relative px-5 pt-5 pb-4">
-            <div className="flex items-start justify-between">
-              <div>
-                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 mb-2 rounded-full bg-white/15 border border-white/25">
-                  <Sparkles className="w-3 h-3 text-white" />
-                  <span className="text-[11px] font-bold text-white tracking-wide">大会運営システム</span>
-                </div>
-                <div className="flex items-baseline gap-2">
-                  <h2 className="text-2xl font-bold text-white">Ver 2.4</h2>
-                  <span className="text-xs text-white/50">Latest</span>
-                </div>
-                <p className="text-[11px] text-white/60 mt-1">
-                  ビルド: {__BUILD_TIMESTAMP__}
-                </p>
-              </div>
-              <button
-                onClick={onClose}
-                className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white/70 hover:text-white transition-colors"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
+        <div className="sdlg__head psd-head">
+          <span className="sec-head__mark sdlg__mark" aria-hidden="true" />
+          <div className="sdlg__heading">
+            <p className="sdlg__eyebrow"><Sparkles className="inline w-3 h-3 -mt-0.5 mr-1" />大会運営システム</p>
+            <h2 className="sdlg__title psd-ver">Ver 2.4 <small>Latest</small></h2>
+            <p className="psd-lead">ビルド: {__BUILD_TIMESTAMP__}</p>
           </div>
+          <button onClick={onClose} className="sdlg__close" aria-label="閉じる">
+            <X className="w-5 h-5" />
+          </button>
         </div>
 
         {/* 更新履歴 */}
         <div className="flex-1 overflow-y-auto px-4 py-4 space-y-2">
-          <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider px-1 mb-1">更新履歴</h3>
+          <h3 className="psd-label px-1 mb-1">更新履歴</h3>
 
           {CHANGELOG.map((entry) => {
             const isExpanded = expandedVersion === entry.version;
             const total = countChanges(entry);
 
             return (
-              <div key={entry.version} className="rounded-xl border border-gray-100 overflow-hidden">
+              <div key={entry.version} className="rounded border border-gray-200 overflow-hidden">
                 {/* バージョンヘッダー — タップで展開 */}
                 <button
                   onClick={() => toggleVersion(entry.version)}
                   className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors ${
-                    isExpanded ? 'bg-primary-50' : 'bg-white hover:bg-gray-50'
+                    isExpanded ? 'bg-primary-50 psd-ver__open' : 'bg-white hover:bg-gray-50'
                   }`}
                 >
                   <div className="flex-1 min-w-0">
@@ -693,7 +675,7 @@ export default function VersionInfoModal({ open, onClose }: Props) {
                       <span className="text-sm font-bold text-gray-800">{entry.version}</span>
                       <span className="text-[11px] text-gray-400">{entry.date}</span>
                       {entry === CHANGELOG[0] && (
-                        <span className="px-1.5 py-0.5 text-[9px] font-bold text-white bg-primary-500 rounded-full uppercase tracking-wider">New</span>
+                        <span className="badge badge--open psd-new">NEW</span>
                       )}
                     </div>
                     {entry.highlights && (

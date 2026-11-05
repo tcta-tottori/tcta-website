@@ -324,27 +324,27 @@ export default function PrintCenter() {
   return (
     // 左=設定と氏名の選択、右=常時表示のプレビュー。
     // main が position:relative なので、absolute inset-0 で表示領域いっぱいに広げる。
-    <div className="absolute inset-0 flex flex-col lg:flex-row">
+    <div className="absolute inset-0 flex flex-col lg:flex-row pc-root">
       {/* ===== 左: 設定・選択・印刷リスト ===== */}
-      <div className="flex-1 min-h-0 min-w-0 overflow-y-auto p-2 sm:p-3 space-y-3 pb-24">
+      <div className="flex-1 min-h-0 min-w-0 overflow-y-auto pc-left">
         {/* ===== ヘッダー ===== */}
-        <div className="bg-white rounded-2xl border border-primary-200/70 shadow-sm overflow-hidden">
-          <div className="px-4 py-3 bg-gradient-to-r from-primary-500 to-primary-600 text-white flex items-center justify-between gap-2 flex-wrap">
-            <div className="flex items-center gap-2">
-              <Award className="w-5 h-5" />
-              <div>
-                <h1 className="text-base font-black leading-tight">賞状印刷</h1>
-                <p className="text-[10px] opacity-90 leading-tight">試合が決まっていなくても、選んで／手で入れて印刷できます</p>
-              </div>
+        <div className="sk-sec sk-sec--accent pc-sec">
+          <div className="sk-sec__head pc-head">
+            <span className="sk-sec__mark" aria-hidden="true" />
+            <div className="sk-sec__titles">
+              <p className="sk-sec__en">CERTIFICATE</p>
+              <h2 className="sk-sec__title"><Award className="pc-head__ico" aria-hidden="true" />賞状印刷</h2>
+              <p className="sk-sec__lead">試合が決まっていなくても、選んで／手で入れて印刷できます</p>
             </div>
-            <button
-              onClick={() => setShowSettings(v => !v)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${
-                showSettings ? 'bg-white text-gray-800' : 'bg-white/20 text-white hover:bg-white/30'
-              }`}
-            >
-              <Settings2 className="w-3.5 h-3.5" />書式設定
-            </button>
+            <div className="sk-sec__actions">
+              <button
+                onClick={() => setShowSettings(v => !v)}
+                aria-expanded={showSettings}
+                className={`btn sk-btn ${showSettings ? 'btn--primary' : 'btn--outline'}`}
+              >
+                <Settings2 className="w-4 h-4" />書式設定
+              </button>
+            </div>
           </div>
 
           {/* 書式設定パネル */}
@@ -363,69 +363,65 @@ export default function PrintCenter() {
 
         <div className="space-y-3 min-w-0">
           {/* ===== 選択式：大会データから追加 ===== */}
-          <section className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-            <div className="px-3 py-2 border-b border-gray-100 flex items-center gap-2 flex-wrap">
-              <Users className="w-4 h-4 text-gray-400" />
-              <span className="text-xs font-bold text-gray-700">選択式で入れる</span>
+          <section className="sk-sec pc-sec">
+            <div className="pc-bar">
+              <Users className="pc-bar__ico" />
+              <span className="pc-bar__title">選択式で入れる</span>
               {availableSources.length > 1 && (
-                <div className="flex items-center gap-1 ml-1">
+                <div className="pc-seg">
                   {availableSources.map(s => (
                     <button
                       key={s.id}
                       onClick={() => setSourcePref(s.id)}
-                      className={`px-2 py-0.5 rounded-full text-[10px] font-bold border transition-colors ${
-                        source === s.id
-                          ? 'bg-gray-800 text-white border-gray-800'
-                          : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-50'
-                      }`}
+                      className={`pc-seg__btn ${source === s.id ? 'is-on' : ''}`}
                     >{s.label}</button>
                   ))}
                 </div>
               )}
-              <span className="ml-auto text-[10px] text-gray-400">{filteredCandidates.length}件</span>
+              <span className="pc-bar__count">{filteredCandidates.length}件</span>
             </div>
 
             {availableSources.length === 0 ? (
-              <p className="px-4 py-6 text-center text-xs text-gray-400">
+              <p className="pc-empty">
                 大会データが読み込まれていません。下の「手動で入れる」から直接入力してください。
               </p>
             ) : (
               <>
-                <div className="px-3 py-2 flex items-center gap-2 flex-wrap">
-                  <div className="relative flex-1 min-w-[160px]">
-                    <Search className="w-3.5 h-3.5 text-gray-300 absolute left-2 top-1/2 -translate-y-1/2" />
+                <div className="pc-filter">
+                  <div className="pc-filter__q">
+                    <Search className="pc-filter__ico" />
                     <input
                       value={query}
                       onChange={e => setQuery(e.target.value)}
                       placeholder="氏名・チーム名・クラスで絞り込み"
-                      className="w-full pl-7 pr-2 py-1.5 text-xs border border-gray-200 rounded-lg focus:border-primary-400 focus:ring-2 focus:ring-primary-400/20 outline-none"
+                      className="input pc-filter__input"
                     />
                   </div>
                   <button
                     onClick={addAllWinners}
                     disabled={winnersOnly(candidates).length === 0}
-                    className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-bold text-gray-800 bg-primary-50 border border-primary-200 hover:bg-primary-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                    className="btn btn--outline sk-btn"
                     title="決勝が終わったクラスの優勝・準優勝・第3位をまとめて追加します"
                   >
-                    <ListChecks className="w-3.5 h-3.5" />入賞者を一括追加
+                    <ListChecks className="w-4 h-4" />入賞者を一括追加
                   </button>
                 </div>
-                <div className="max-h-[280px] overflow-y-auto divide-y divide-gray-50">
+                <div className="pc-cands">
                   {filteredCandidates.length === 0 ? (
-                    <p className="px-4 py-6 text-center text-xs text-gray-400">該当する候補がありません</p>
+                    <p className="pc-empty">該当する候補がありません</p>
                   ) : filteredCandidates.map(c => (
                     <button
                       key={c.key}
                       onClick={() => addFromCandidate(c)}
-                      className="w-full px-3 py-2 flex items-center gap-2 text-left hover:bg-primary-50/60 transition-colors"
+                      className="pc-cand"
                     >
-                      <span className="shrink-0 text-[9px] font-bold text-gray-400 bg-gray-100 rounded px-1.5 py-0.5">{c.group}</span>
-                      <span className="flex-1 min-w-0 truncate text-xs font-bold text-gray-800">{c.name}</span>
-                      {c.affiliation && <span className="shrink-0 text-[10px] text-gray-400 truncate max-w-[120px]">{c.affiliation}</span>}
+                      <span className="pc-cand__group">{c.group}</span>
+                      <span className="pc-cand__name">{c.name}</span>
+                      {c.affiliation && <span className="pc-cand__aff">{c.affiliation}</span>}
                       {c.rankHint && (
-                        <span className="shrink-0 text-[9px] font-black text-gray-800 bg-primary-100 rounded-full px-1.5 py-0.5">{c.rankHint}</span>
+                        <span className="sk-chip sk-chip--red pc-cand__rank">{c.rankHint}</span>
                       )}
-                      <Plus className="w-3.5 h-3.5 text-gray-300 shrink-0" />
+                      <Plus className="pc-cand__add" />
                     </button>
                   ))}
                 </div>
@@ -434,24 +430,24 @@ export default function PrintCenter() {
           </section>
 
           {/* ===== 印刷リスト ===== */}
-          <section className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-            <div className="px-3 py-2 border-b border-gray-100 flex items-center gap-2">
-              <Printer className="w-4 h-4 text-gray-400" />
-              <span className="text-xs font-bold text-gray-700">印刷リスト</span>
-              <span className="text-[10px] text-gray-400">
+          <section className="sk-sec pc-sec">
+            <div className="pc-bar">
+              <Printer className="pc-bar__ico" />
+              <span className="pc-bar__title">印刷リスト</span>
+              <span className="pc-bar__sub">
                 （チェックした{selectedEntries.length}件 → {printPages.length}枚を印刷）
               </span>
               {entries.length > 0 && (
                 <button
                   onClick={async () => { if (await siteConfirm('印刷リストを全て削除しますか？')) { setEntries([]); setPreviewId(null); } }}
-                  className="ml-auto text-[10px] text-gray-400 hover:text-red-500 transition-colors"
+                  className="btn sk-btn sk-btn--ghost sk-btn--sm pc-bar__end"
                 >すべて削除</button>
               )}
             </div>
 
-            <div className="divide-y divide-gray-100">
+            <div className="pc-entries">
               {entries.length === 0 && (
-                <p className="px-4 py-8 text-center text-xs text-gray-400">
+                <p className="pc-empty">
                   上の一覧から選ぶか、「手動で追加」で賞状を作ってください。
                 </p>
               )}
@@ -471,19 +467,19 @@ export default function PrintCenter() {
               ))}
             </div>
 
-            <div className="p-2.5 flex gap-2">
+            <div className="pc-adds">
               <button
                 onClick={() => addEntry({ category: entries[entries.length - 1]?.category || '' })}
-                className="flex-1 py-2 border-2 border-dashed border-gray-300 rounded-xl text-[11px] font-bold text-gray-500 hover:border-primary-400 hover:text-gray-700 transition-colors"
+                className="pc-add"
               >
-                <Plus className="w-3.5 h-3.5 inline -mt-0.5 mr-1" />手動で追加
+                <Plus className="w-4 h-4" />手動で追加
               </button>
               <button
                 onClick={addBlankSet}
-                className="flex-1 py-2 border-2 border-dashed border-gray-300 rounded-xl text-[11px] font-bold text-gray-500 hover:border-primary-400 hover:text-gray-700 transition-colors"
+                className="pc-add"
                 title="優勝・準優勝・第3位の3枚を空欄で追加します"
               >
-                <Plus className="w-3.5 h-3.5 inline -mt-0.5 mr-1" />優勝〜第3位のひな形
+                <Plus className="w-4 h-4" />優勝〜第3位のひな形
               </button>
             </div>
           </section>
@@ -491,18 +487,19 @@ export default function PrintCenter() {
       </div>
 
       {/* ===== 右: プレビュー（常に表示） ===== */}
-      <aside className="order-first lg:order-none shrink-0 w-full lg:w-[360px] xl:w-[420px] h-[38vh] lg:h-auto flex flex-col border-b lg:border-b-0 lg:border-l border-gray-200 bg-white">
-        <div className="px-3 py-2 border-b border-gray-100 flex items-center gap-2 shrink-0">
-          <Eye className="w-4 h-4 text-gray-400" />
-          <span className="text-xs font-bold text-gray-700">プレビュー</span>
-          <span className="ml-auto text-[10px] text-gray-400">
+      <aside className="order-first lg:order-none shrink-0 w-full lg:w-[360px] xl:w-[420px] h-[38vh] lg:h-auto flex flex-col pc-preview sticky">
+        <div className="pc-bar shrink-0">
+          <span className="sk-sec__mark pc-bar__mark" aria-hidden="true" />
+          <Eye className="pc-bar__ico" />
+          <span className="pc-bar__title">プレビュー</span>
+          <span className="pc-bar__count">
             {PAPER_SIZE[layout.paper].label}／{layout.overlay ? '文字のみ' : '枠つき'}
           </span>
         </div>
         <div className="flex-1 min-h-0 overflow-auto">
           <CertificatePreview entry={previewEntry} layout={layout} paperImage={paperImage} />
         </div>
-        <p className="px-3 py-2 text-[10px] leading-relaxed text-gray-400 border-t border-gray-100 shrink-0 pb-16">
+        <p className="pc-preview__note shrink-0">
           濃い文字が実際に印刷される部分、薄い文字は賞状用紙にすでに刷り込まれている部分の目安です。
           赤い点線の範囲に文字が入ります。
         </p>
@@ -512,9 +509,9 @@ export default function PrintCenter() {
       <button
         onClick={handlePrint}
         disabled={printPages.length === 0}
-        className="fixed bottom-5 right-5 z-30 flex items-center gap-2 px-5 py-3 rounded-full bg-primary-600 text-white text-sm font-black shadow-lg shadow-primary-600/30 hover:bg-primary-700 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+        className="fixed btn btn--primary pc-print"
       >
-        <Printer className="w-4 h-4" />{printPages.length}枚を印刷
+        <Printer className="w-5 h-5" />{printPages.length}枚を印刷
       </button>
     </div>
   );
@@ -541,18 +538,16 @@ function EntryRow({
   return (
     <div
       onClick={onSelect}
-      className={`px-3 py-2 cursor-pointer transition-colors ${
-        isPreview ? 'bg-primary-50/70 ring-1 ring-inset ring-primary-300' : entry.selected ? 'hover:bg-gray-50' : 'bg-gray-50/70 opacity-60 hover:opacity-80'
-      }`}
+      className={`pc-entry ${isPreview ? 'is-preview' : ''} ${entry.selected ? '' : 'is-off'}`}
     >
-      <div className="flex items-center gap-1.5 mb-1.5">
-        <span className="text-[10px] font-black text-gray-300 w-4 text-center shrink-0">{index + 1}</span>
+      <div className="pc-entry__row">
+        <span className="pc-entry__no">{index + 1}</span>
         <input
           type="checkbox"
           checked={entry.selected}
           onClick={e => e.stopPropagation()}
           onChange={e => onChange({ selected: e.target.checked })}
-          className="accent-primary-500 shrink-0"
+          className="pc-check"
           title="印刷対象にする"
         />
         <input
@@ -561,47 +556,47 @@ function EntryRow({
           onClick={e => e.stopPropagation()}
           onChange={e => onChange({ rank: e.target.value })}
           placeholder="賞位"
-          className="w-[86px] shrink-0 text-[11px] font-bold border border-gray-200 rounded px-1.5 py-1 bg-white focus:border-primary-400 outline-none"
+          className="pc-in pc-in--rank"
         />
         <input
           value={entry.category}
           onClick={e => e.stopPropagation()}
           onChange={e => onChange({ category: e.target.value })}
           placeholder="クラス・種目名"
-          className="flex-1 min-w-0 text-[11px] border border-gray-200 rounded px-1.5 py-1 focus:border-primary-400 outline-none"
+          className="pc-in pc-in--grow"
         />
-        <div className="flex items-center shrink-0">
+        <div className="pc-entry__tools">
           {swapped && (
             <button
               onClick={e => { e.stopPropagation(); onChange({ names: swapped }); }}
-              className="p-1 text-gray-300 hover:text-gray-700"
+              className="pc-tool"
               title="ペアの氏名の順番を入れ替える"
             ><ArrowLeftRight className="w-3.5 h-3.5" /></button>
           )}
-          <button onClick={e => { e.stopPropagation(); onMove(-1); }} className="p-1 text-gray-300 hover:text-gray-600" title="上へ"><ChevronUp className="w-3.5 h-3.5" /></button>
-          <button onClick={e => { e.stopPropagation(); onMove(1); }} className="p-1 text-gray-300 hover:text-gray-600" title="下へ"><ChevronDown className="w-3.5 h-3.5" /></button>
-          <button onClick={e => { e.stopPropagation(); onDuplicate(); }} className="p-1 text-gray-300 hover:text-gray-500" title="複製"><Copy className="w-3.5 h-3.5" /></button>
-          <button onClick={e => { e.stopPropagation(); onRemove(); }} className="p-1 text-gray-300 hover:text-red-500" title="削除"><Trash2 className="w-3.5 h-3.5" /></button>
+          <button onClick={e => { e.stopPropagation(); onMove(-1); }} className="pc-tool" title="上へ"><ChevronUp className="w-3.5 h-3.5" /></button>
+          <button onClick={e => { e.stopPropagation(); onMove(1); }} className="pc-tool" title="下へ"><ChevronDown className="w-3.5 h-3.5" /></button>
+          <button onClick={e => { e.stopPropagation(); onDuplicate(); }} className="pc-tool" title="複製"><Copy className="w-3.5 h-3.5" /></button>
+          <button onClick={e => { e.stopPropagation(); onRemove(); }} className="pc-tool" title="削除"><Trash2 className="w-3.5 h-3.5" /></button>
         </div>
       </div>
-      <div className="flex items-center gap-1.5 pl-[26px]">
+      <div className="pc-entry__row pc-entry__row--names">
         <input
           value={entry.affiliation}
           onClick={e => e.stopPropagation()}
           onChange={e => onChange({ affiliation: e.target.value })}
           placeholder="所属・チーム名（任意）"
-          className="w-[38%] text-[11px] border border-gray-200 rounded px-1.5 py-1 focus:border-primary-400 outline-none"
+          className="pc-in pc-in--aff"
         />
         <input
           value={entry.names}
           onClick={e => e.stopPropagation()}
           onChange={e => onChange({ names: e.target.value })}
           placeholder="氏名（ダブルスは間を全角スペースで。例: 岸本 健悟　安田 彰汰）"
-          className="flex-1 min-w-0 text-xs font-bold border border-gray-200 rounded px-2 py-1 focus:border-primary-400 outline-none"
+          className="pc-in pc-in--grow pc-in--name"
         />
         {swapDoubles && swapped && entry.selected && (
           <span
-            className="shrink-0 text-[9px] font-black text-gray-800 bg-primary-100 rounded-full px-1.5 py-0.5"
+            className="sk-chip sk-chip--red shrink-0"
             title={`入れ替えた「${swapped}」も印刷されます`}
           >×2</span>
         )}
@@ -635,7 +630,7 @@ function LayoutPanel({
   const selectedFont = CERT_FONTS.find(f => f.id === layout.fontId);
 
   return (
-    <div className="p-3 space-y-3 bg-primary-50/40 border-t border-primary-100">
+    <div className="pc-layout">
       {/* フォント */}
       <div>
         <div className="flex items-center justify-between mb-1.5">
@@ -656,11 +651,7 @@ function LayoutPanel({
                     onFocus={() => loadCertificateFont(f.id)}
                     onClick={() => onChange({ fontId: f.id })}
                     title={f.note}
-                    className={`px-2.5 py-1 rounded-lg border text-[11px] transition-colors ${
-                      layout.fontId === f.id
-                        ? 'bg-primary-500 text-white border-primary-500 font-bold'
-                        : 'bg-white text-gray-600 border-gray-200 hover:border-primary-300'
-                    }`}
+                    className={`pc-font ${layout.fontId === f.id ? 'is-on' : ''}`}
                     style={{ fontFamily: buildFontStack(f, layout.customFont), fontWeight: layout.fontWeight }}
                   >{f.label}</button>
                 ))}
@@ -685,7 +676,7 @@ function LayoutPanel({
               value={layout.customFont}
               onChange={e => onChange({ customFont: e.target.value })}
               placeholder="例: 衡山毛筆フォント行書（PCに入れたフォント名をそのまま入力）"
-              className="w-full text-[11px] border border-gray-200 rounded-lg px-2 py-1.5 bg-white focus:border-primary-400 focus:ring-2 focus:ring-primary-400/20 outline-none"
+              className="pc-in pc-in--full"
               style={layout.customFont.trim()
                 ? { fontFamily: buildFontStack(getCertFont(layout.fontId), layout.customFont) }
                 : undefined}
@@ -709,7 +700,7 @@ function LayoutPanel({
           <select
             value={layout.paper}
             onChange={e => onChange({ paper: e.target.value as CertPaper })}
-            className="text-[11px] font-normal border border-gray-200 rounded px-2 py-1 bg-white"
+            className="pc-in pc-in--select"
           >
             {(Object.keys(PAPER_SIZE) as CertPaper[]).map(p => (
               <option key={p} value={p}>{PAPER_SIZE[p].label}</option>
@@ -717,15 +708,15 @@ function LayoutPanel({
           </select>
         </label>
         <label className="flex items-center gap-1.5 text-[11px] text-gray-600">
-          <input type="checkbox" checked={layout.overlay} onChange={e => onChange({ overlay: e.target.checked })} className="accent-primary-500" />
+          <input type="checkbox" checked={layout.overlay} onChange={e => onChange({ overlay: e.target.checked })} className="pc-check" />
           文字のみ印刷（賞状用紙に重ねる）
         </label>
         <label className="flex items-center gap-1.5 text-[11px] text-gray-600" title="賞状用紙に縦書きで重ねたいときに使います">
-          <input type="checkbox" checked={layout.vertical} onChange={e => onChange({ vertical: e.target.checked })} className="accent-primary-500" />
+          <input type="checkbox" checked={layout.vertical} onChange={e => onChange({ vertical: e.target.checked })} className="pc-check" />
           縦書き
         </label>
         <label className="flex items-center gap-1.5 text-[11px] text-gray-600" title="賞状用紙にすでに刷り込まれている部分を、プレビューだけに薄く表示します（印刷はされません）">
-          <input type="checkbox" checked={layout.showPaperMock} onChange={e => onChange({ showPaperMock: e.target.checked })} className="accent-primary-500" />
+          <input type="checkbox" checked={layout.showPaperMock} onChange={e => onChange({ showPaperMock: e.target.checked })} className="pc-check" />
           プレビューに用紙の下地を表示
         </label>
       </div>
@@ -733,7 +724,7 @@ function LayoutPanel({
       {/* 実物の賞状用紙をプレビューの下地にする */}
       <div className="flex items-center gap-2 flex-wrap">
         <span className="text-[11px] font-bold text-gray-600">用紙の写真</span>
-        <label className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold text-primary-700 bg-primary-50 border border-primary-200 hover:bg-primary-100 cursor-pointer transition-colors">
+        <label className="btn btn--outline sk-btn sk-btn--sm pc-file">
           <ImagePlus className="w-3.5 h-3.5" />
           {paperImage ? '写真を選び直す' : '写真を選ぶ'}
           <input
@@ -759,22 +750,22 @@ function LayoutPanel({
         <span className="text-[11px] font-bold text-gray-600">印刷する項目</span>
         <span className="text-[11px] text-gray-400">氏名（常に印刷・位置は固定）</span>
         <label className="flex items-center gap-1.5 text-[11px] text-gray-600">
-          <input type="checkbox" checked={layout.showRank} onChange={e => onChange({ showRank: e.target.checked })} className="accent-primary-500" />
+          <input type="checkbox" checked={layout.showRank} onChange={e => onChange({ showRank: e.target.checked })} className="pc-check" />
           賞位
         </label>
         <label className="flex items-center gap-1.5 text-[11px] text-gray-600">
-          <input type="checkbox" checked={layout.showCategory} onChange={e => onChange({ showCategory: e.target.checked })} className="accent-primary-500" />
+          <input type="checkbox" checked={layout.showCategory} onChange={e => onChange({ showCategory: e.target.checked })} className="pc-check" />
           クラス名
         </label>
         <label className="flex items-center gap-1.5 text-[11px] text-gray-600">
-          <input type="checkbox" checked={layout.showAffiliation} onChange={e => onChange({ showAffiliation: e.target.checked })} className="accent-primary-500" />
+          <input type="checkbox" checked={layout.showAffiliation} onChange={e => onChange({ showAffiliation: e.target.checked })} className="pc-check" />
           所属
         </label>
       </div>
 
       {/* ダブルスの2枚出し */}
       <label className="flex items-center gap-1.5 text-[11px] text-gray-600" title="ペアの2人それぞれに、自分の名前が先に来た賞状を渡すための設定です">
-        <input type="checkbox" checked={layout.swapDoubles} onChange={e => onChange({ swapDoubles: e.target.checked })} className="accent-primary-500" />
+        <input type="checkbox" checked={layout.swapDoubles} onChange={e => onChange({ swapDoubles: e.target.checked })} className="pc-check" />
         ダブルスは氏名を入れ替えてもう1枚印刷する（1組 → 2枚）
       </label>
 
@@ -801,7 +792,7 @@ function LayoutPanel({
 
       {/* 枠つき印刷の内容。文字のみ印刷でも、プレビューの下地に使うので編集できる */}
       {(!layout.overlay || layout.showPaperMock) && (
-        <div className="space-y-2 pt-2 border-t border-primary-100">
+        <div className="space-y-2 pt-3 pc-layout__sep">
           <p className="text-[10px] text-gray-500">
             {layout.overlay
               ? '賞状用紙に刷り込まれている内容（プレビューの下地に使います。印刷はされません）'
@@ -825,7 +816,7 @@ function LayoutPanel({
               value={layout.bodyText}
               onChange={e => onChange({ bodyText: e.target.value })}
               rows={3}
-              className="mt-0.5 w-full text-[11px] border border-gray-200 rounded-lg px-2 py-1.5 focus:border-primary-400 outline-none"
+              className="pc-in pc-in--full pc-in--area"
             />
           </label>
         </div>
@@ -848,7 +839,7 @@ function RangeField({ label, value, min, max, step, unit, onChange }: {
         type="range"
         min={min} max={max} step={step} value={value}
         onChange={e => onChange(parseFloat(e.target.value))}
-        className="w-full accent-primary-500"
+        className="pc-range"
       />
     </label>
   );
@@ -864,7 +855,7 @@ function TextField({ label, value, placeholder, onChange }: {
         value={value}
         placeholder={placeholder}
         onChange={e => onChange(e.target.value)}
-        className="mt-0.5 w-full text-[11px] border border-gray-200 rounded-lg px-2 py-1.5 focus:border-primary-400 outline-none"
+        className="pc-in pc-in--full"
       />
     </label>
   );
@@ -906,7 +897,7 @@ function CertificatePreview({ entry, layout, paperImage }: {
   );
 
   return (
-    <div ref={boxRef} className="h-full min-h-[220px] p-2 bg-gray-100 flex items-start justify-center">
+    <div ref={boxRef} className="h-full min-h-[220px] p-2 pc-stage flex items-start justify-center">
       {entry ? (
         <div className="mx-auto overflow-hidden" style={{ width: pageW * scale, height: pageH * scale }}>
           <iframe
@@ -920,7 +911,7 @@ function CertificatePreview({ entry, layout, paperImage }: {
           />
         </div>
       ) : (
-        <p className="py-16 text-center text-xs text-gray-400">印刷リストに賞状を追加するとここに表示されます</p>
+        <p className="pc-empty pc-empty--stage">印刷リストに賞状を追加するとここに表示されます</p>
       )}
     </div>
   );

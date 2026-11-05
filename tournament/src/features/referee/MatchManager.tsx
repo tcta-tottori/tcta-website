@@ -24,6 +24,7 @@ import GameRulesDialog from '../../components/ui/GameRulesDialog';
 import CallStatusPopup from '../../components/ui/CallStatusPopup';
 import { fillTestScores } from '../score/testScoreFiller';
 import { siteConfirm } from '../../components/site/siteConfirm';
+import { SkEmpty } from '../../components/site/Kit';
 
 /** 回戦に応じたゲームルール（試合方式）を解決する */
 function resolveRoundRule(evt: Event | undefined, round: number, totalRounds: number): RoundGameRule | null {
@@ -1743,98 +1744,110 @@ ${printableMatches.map(m => {
     return () => clearInterval(timer);
   }, []);
 
+  // 状態の札（見た目は styles/pages/operation.css の .op-st--*）
   const statusLabels: Record<string, { text: string; color: string }> = {
-    waiting: { text: '待機', color: 'bg-gray-100 text-gray-500' },
-    ready: { text: '準備完了', color: 'bg-primary-50 text-primary-500' },
-    playing: { text: '試合中', color: 'bg-primary-100 text-primary-500' },
-    finished: { text: '終了', color: 'bg-primary-50 text-gray-700' },
-    walkover: { text: '不戦勝', color: 'bg-primary-100 text-warning' },
+    waiting: { text: '待機', color: 'op-st--waiting' },
+    ready: { text: '準備完了', color: 'op-st--ready' },
+    playing: { text: '試合中', color: 'op-st--playing' },
+    finished: { text: '終了', color: 'op-st--finished' },
+    walkover: { text: '不戦勝', color: 'op-st--walkover' },
   };
 
+  const activeCount = globalSortedMatches.filter(m => m.status !== 'finished').length;
+  const finishedTabCount = globalSortedMatches.filter(m => m.status === 'finished').length;
+
   return (
-    <div className="max-w-full mx-auto lg:h-full flex flex-col lg:flex-row lg:gap-4 p-4">
+    <div className={`op-mm ${readOnly ? 'op-mm--readonly lg:h-full' : ''}`}>
       {/* LEFT: コントロールパネル（観戦用は非表示） */}
       {!readOnly && (
-      <div className="lg:w-[280px] shrink-0 order-1 lg:order-1 mb-3 lg:mb-0 sticky top-0 z-20 lg:self-start bg-bg-main pb-1">
-        <button
-          onClick={() => setControlsOpen(prev => !prev)}
-          className="w-full flex items-center justify-between bg-white px-4 py-2.5 rounded-xl shadow-sm border border-border-main hover:bg-gray-50 transition-colors"
-        >
-          <div className="flex items-center gap-2">
-            <ClipboardList className="w-5 h-5 text-primary-500" />
-            <span className="font-bold text-gray-900">対戦順・審判用紙</span>
-            <span className="text-xs text-gray-500 ml-1">
-              {eventsWithMatches.length} 種目
+      <aside className="op-mm__side">
+        <section className="sk-sec op-mm__ctrl">
+          <button
+            type="button"
+            onClick={() => setControlsOpen(prev => !prev)}
+            className="sk-sec__head op-mm__ctrl-head"
+            aria-expanded={controlsOpen}
+          >
+            <span className="sk-sec__mark" aria-hidden="true" />
+            <span className="sk-sec__titles">
+              <span className="sk-sec__en">CONTROL</span>
+              <span className="sk-sec__title">対戦順・審判用紙<small>{eventsWithMatches.length} 種目</small></span>
             </span>
-          </div>
-          {controlsOpen ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
-        </button>
+            <span className="sk-sec__toggle" aria-hidden="true">
+              {controlsOpen ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+            </span>
+          </button>
 
-        <div className={`transition-all duration-300 overflow-hidden ${controlsOpen ? 'max-h-[600px] opacity-100 mt-2' : 'max-h-0 opacity-0'}`}>
-          <div className="bg-white p-4 rounded-xl shadow-sm border border-border-main space-y-3">
-            {/* 表示切替 */}
-            <div className="flex rounded-lg border border-border-main overflow-hidden text-sm w-full">
-              <button onClick={() => setViewMode('global')}
-                className={`flex-1 px-3 py-1.5 flex items-center justify-center gap-1 font-medium transition-colors ${viewMode === 'global' ? 'bg-primary-500 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}>
-                <ListOrdered className="w-3.5 h-3.5" />対戦順
-              </button>
-              <button onClick={() => setViewMode('event')}
-                className={`flex-1 px-3 py-1.5 flex items-center justify-center gap-1 font-medium transition-colors ${viewMode === 'event' ? 'bg-primary-500 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}>
-                <ClipboardList className="w-3.5 h-3.5" />種目別
-              </button>
+          <div className={`sk-collapse ${controlsOpen ? 'is-open' : ''}`}>
+            <div>
+              <div className="op-mm__ctrl-body">
+                {/* 表示切替 */}
+                <div className="hub-filter op-seg" role="tablist" aria-label="表示">
+                  <button role="tab" aria-selected={viewMode === 'global'} onClick={() => setViewMode('global')}
+                    className={`hub-filter__btn ${viewMode === 'global' ? 'is-on' : ''}`}>
+                    <ListOrdered className="w-4 h-4" />対戦順
+                  </button>
+                  <button role="tab" aria-selected={viewMode === 'event'} onClick={() => setViewMode('event')}
+                    className={`hub-filter__btn ${viewMode === 'event' ? 'is-on' : ''}`}>
+                    <ClipboardList className="w-4 h-4" />種目別
+                  </button>
+                </div>
+                {/* 試合順インポート */}
+                {/* 初回コート確定 */}
+                {!hasPlayingMatches && globalSortedMatches.some(m => (m.status === 'waiting' || m.status === 'ready') && !!m.player1Name && !!m.player2Name && m.player1Name !== 'BYE' && m.player2Name !== 'BYE') && (
+                  <button
+                    onClick={handleAssignInitialCourts}
+                    className="btn sk-btn sk-btn--lg sk-btn--block sk-btn--gray op-mm__cta"
+                  >
+                    <Play className="w-4 h-4" />
+                    初回コート確定（{courts.filter(c => c.isAvailable).length}コートに割り当て）
+                  </button>
+                )}
+                {/* 全コート初戦一斉コール */}
+                {hasWaitingMatchesWithCourts && (
+                  <button
+                    onClick={handleBulkFirstCall}
+                    className="btn btn--primary sk-btn sk-btn--lg sk-btn--block op-mm__cta"
+                  >
+                    <Megaphone className="w-4 h-4" />
+                    全コート初戦一斉コール
+                  </button>
+                )}
+                {/* テスト用: 全試合を 8-4 / 6-4 で終了（動作確認用） */}
+                <button
+                  onClick={handleFillTestScores}
+                  disabled={testScoreRunning}
+                  className="btn btn--outline sk-btn sk-btn--sm sk-btn--block op-mm__test"
+                >
+                  <Check className="w-3.5 h-3.5" />
+                  {testScoreRunning ? '入力中...' : 'テスト: 全試合を8-4/6-4で終了'}
+                </button>
+                {/* コール中の停止操作は画面下部の固定ポップアップから行う */}
+              </div>
             </div>
-            {/* 試合順インポート */}
-            {/* 初回コート確定 */}
-            {!hasPlayingMatches && globalSortedMatches.some(m => (m.status === 'waiting' || m.status === 'ready') && !!m.player1Name && !!m.player2Name && m.player1Name !== 'BYE' && m.player2Name !== 'BYE') && (
-              <button
-                onClick={handleAssignInitialCourts}
-                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-bold text-white bg-gradient-to-r from-gray-600 to-gray-700 rounded-lg hover:from-gray-700 hover:to-gray-800 shadow-md transition-all"
-              >
-                <Play className="w-4 h-4" />
-                初回コート確定（{courts.filter(c => c.isAvailable).length}コートに割り当て）
-              </button>
-            )}
-            {/* 全コート初戦一斉コール */}
-            {hasWaitingMatchesWithCourts && (
-              <button
-                onClick={handleBulkFirstCall}
-                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-bold text-white bg-gradient-to-r from-primary-600 to-primary-700 rounded-lg hover:from-primary-700 hover:to-primary-800 shadow-md transition-all"
-              >
-                <Megaphone className="w-4 h-4" />
-                全コート初戦一斉コール
-              </button>
-            )}
-            {/* テスト用: 全試合を 8-4 / 6-4 で終了（動作確認用） */}
-            <button
-              onClick={handleFillTestScores}
-              disabled={testScoreRunning}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2 text-xs font-bold text-gray-600 bg-white border border-dashed border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 transition-all"
-            >
-              <Check className="w-3.5 h-3.5" />
-              {testScoreRunning ? '入力中...' : 'テスト: 全試合を8-4/6-4で終了'}
-            </button>
-            {/* コール中の停止操作は画面下部の固定ポップアップから行う */}
           </div>
-        </div>
-      </div>
+        </section>
+      </aside>
       )}
 
       {/* RIGHT: メインコンテンツ */}
-      <div ref={matchContentRef} className="flex-1 min-w-0 order-2 lg:order-2 overflow-auto space-y-3 lg:h-full pb-28 [padding-bottom:calc(7rem_+_env(safe-area-inset-bottom))]">
+      <div ref={matchContentRef} className={`op-mm__main ${readOnly ? 'lg:h-full lg:overflow-auto' : ''}`}>
         {/* === 対戦順（グローバル）表示 === */}
         {viewMode === 'global' && (
           globalSortedMatches.length > 0 ? (
-            <div className="space-y-2">
+            <div className="op-mm__global">
                 {/* 進行中 / 終了 タブ（終了した試合は別タブで管理） */}
-                <div className="flex rounded-lg border border-border-main overflow-hidden text-sm w-full sticky top-0 z-10">
-                  <button onClick={() => setGlobalTab('active')}
-                    className={`flex-1 px-3 py-1.5 font-bold transition-colors ${globalTab === 'active' ? 'bg-primary-500 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}>
-                    進行中（{globalSortedMatches.filter(m => m.status !== 'finished').length}）
-                  </button>
-                  <button onClick={() => setGlobalTab('finished')}
-                    className={`flex-1 px-3 py-1.5 font-bold transition-colors ${globalTab === 'finished' ? 'bg-gray-500 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}>
-                    終了（{globalSortedMatches.filter(m => m.status === 'finished').length}）
-                  </button>
+                <div className="op-mm__tabbar">
+                  <div className="hub-filter op-seg op-seg--fill" role="tablist" aria-label="試合の状態">
+                    <button role="tab" aria-selected={globalTab === 'active'} onClick={() => setGlobalTab('active')}
+                      className={`hub-filter__btn ${globalTab === 'active' ? 'is-on is-red' : ''}`}>
+                      進行中<small>{activeCount}</small>
+                    </button>
+                    <button role="tab" aria-selected={globalTab === 'finished'} onClick={() => setGlobalTab('finished')}
+                      className={`hub-filter__btn ${globalTab === 'finished' ? 'is-on' : ''}`}>
+                      終了<small>{finishedTabCount}</small>
+                    </button>
+                  </div>
                 </div>
                 {(() => {
                   const activeMatches = globalSortedMatches.filter(m => m.status !== 'finished');
@@ -1844,27 +1857,26 @@ ${printableMatches.map(m => {
 
                   if (shown.length === 0) {
                     return (
-                      <div className="text-center text-sm text-gray-400 py-10">
-                        {globalTab === 'finished' ? '終了した試合はまだありません。' : '進行中・待機中の試合はありません。'}
-                      </div>
+                      <SkEmpty
+                        icon={ClipboardList}
+                        title={globalTab === 'finished' ? '終了した試合はまだありません。' : '進行中・待機中の試合はありません。'}
+                      />
                     );
                   }
 
-                  const renderPlayer = (num: number, name: string, affiliation: string, isWinner: boolean, dim: boolean) => (
-                    <div className="min-w-0 flex-1 text-center">
-                      <div className="flex items-baseline justify-center gap-1 min-w-0">
-                        {num > 0 && <span className="text-sm font-mono font-bold text-gray-400 shrink-0">{num}</span>}
-                        <span className={`text-sm leading-tight truncate ${isWinner ? 'font-bold text-primary-700' : dim ? 'font-medium text-gray-500' : 'font-semibold text-gray-900'}`} title={name}>
-                          {name || '-'}
-                        </span>
+                  const renderPlayer = (side: 1 | 2, num: number, name: string, affiliation: string, isWinner: boolean, dim: boolean) => (
+                    <div className={`op-mc__p op-mc__p--${side} ${isWinner ? 'is-win' : dim ? 'is-dim' : ''}`}>
+                      <div className="op-mc__name">
+                        {num > 0 && <span className="op-mc__num">{num}</span>}
+                        <span className="op-mc__nm" title={name}>{name || '-'}</span>
                       </div>
                       {affiliation && affiliation !== 'BYE' && (
-                        <div className="text-[10px] leading-tight text-gray-500 truncate" title={affiliation}>{affiliation}</div>
+                        <div className="op-mc__aff" title={affiliation}>{affiliation}</div>
                       )}
                     </div>
                   );
 
-                  return shown.map((m) => {
+                  return <ol className="op-mc-list">{shown.map((m) => {
                     const st = statusLabels[m.status] || statusLabels.waiting;
                     const courtObj = m.courtId ? courts.find(c => c.courtId === m.courtId) : null;
                     const eventDraw = allDraws.get(m.eventId);
@@ -1884,11 +1896,11 @@ ${printableMatches.map(m => {
 
                     let statusDisplay: { text: string; color: string };
                     if (isPlaying) {
-                      statusDisplay = { text: '試合中', color: 'bg-primary-100 text-gray-800' };
+                      statusDisplay = { text: '試合中', color: 'op-st--playing' };
                     } else if (isFinished) {
                       statusDisplay = st;
                     } else if (!hasPlayers) {
-                      statusDisplay = { text: '未定', color: 'bg-gray-50 text-gray-400' };
+                      statusDisplay = { text: '未定', color: 'op-st--tbd' };
                     } else {
                       statusDisplay = st;
                     }
@@ -1900,15 +1912,15 @@ ${printableMatches.map(m => {
                     // - それ以外の待機 → 大会全体で対戦順の上から「控え1〜5」（グレー）
                     let centerBadge: { text: string; color: string } | null = null;
                     if ((isPlaying || isFinished) && courtObj?.name) {
-                      centerBadge = { text: `${courtObj.name}番コート`, color: isPlaying ? 'bg-primary-600 text-white' : 'bg-gray-200 text-gray-600' };
+                      centerBadge = { text: `${courtObj.name}番コート`, color: isPlaying ? 'op-badge--court' : 'op-badge--done' };
                     } else if (hasPlayers && enterCourtName) {
                       // 空きコートに入れる。運営はタップでコートを選ぶ赤ボタン、
                       // 観戦用（読み取り専用）はコートが未確定なので番号を出さない。
                       centerBadge = readOnly
-                        ? { text: '次に入ります', color: 'bg-primary-500 text-white' }
-                        : { text: '▶ コートを選ぶ', color: 'bg-primary-600 text-white' };
+                        ? { text: '次に入ります', color: 'op-badge--next' }
+                        : { text: '▶ コートを選ぶ', color: 'op-badge--enter' };
                     } else if (hasPlayers && sb?.standbyLabel) {
-                      centerBadge = { text: sb.standbyLabel, color: 'bg-gray-500 text-white' };
+                      centerBadge = { text: sb.standbyLabel, color: 'op-badge--standby' };
                     }
 
                     // カード枠の配色:
@@ -1917,16 +1929,16 @@ ${printableMatches.map(m => {
                     // - 控え1〜5: 背景は白のまま、淡いグレーの枠のみ点滅（まだ入れない＝順番待ち）
                     // - それ以外の待機: 通常カード
                     const cardClass = isFinished
-                      ? 'bg-gray-50 border-gray-200 opacity-60'
+                      ? 'is-finished'
                       : isPlaying
-                        ? 'bg-primary-50 border-2 border-primary-500 bracket-card-blink'
+                        ? 'is-playing bracket-card-blink'
                         : !hasPlayers
-                          ? 'bg-white border-gray-200 opacity-50'
+                          ? 'is-tbd'
                           : enterCourtName
-                            ? 'bg-gray-50 border-2 border-gray-700 enter-court-blink'
+                            ? 'is-enter enter-court-blink'
                             : sb?.standbyLabel
-                              ? 'bg-white border-2 border-gray-400 enter-card-blink'
-                              : `${evColor.bg} border-gray-200`;
+                              ? 'is-standby enter-card-blink'
+                              : '';
 
                     const w1 = isFinished && !!m.winnerEntryId && m.winnerEntryId === m.player1EntryId;
                     const w2 = isFinished && !!m.winnerEntryId && m.winnerEntryId === m.player2EntryId;
@@ -1957,65 +1969,72 @@ ${printableMatches.map(m => {
                     const clickable = !readOnly && ((isPlaying || isFinished) ? canEditResult : isWaitingEnterable);
 
                     return (
-                      <React.Fragment key={matchKey(m)}>
-                        <div
-                          onClick={onCardClick}
-                          className={`rounded-lg border p-2 transition-all ${cardClass} ${clickable ? 'cursor-pointer' : ''}`}
-                        >
+                      <li
+                        key={matchKey(m)}
+                        onClick={onCardClick}
+                        className={`op-mc ${cardClass} ${clickable ? 'is-clickable' : ''}`}
+                      >
                           {/* ヘッダー行: クラス(左)・コート(中央)・状態(右) */}
-                          <div className="relative flex items-center gap-1.5 mb-1.5 min-h-[20px]">
-                            <span className={`text-[11px] font-bold truncate ${evColor.text}`} title={evLabel}>{evLabel}</span>
-                            <div className="flex-1" />
-                            {centerBadge && (
-                              // 入れる状態の赤バッジはボタン（タップでコート選択ダイアログを開く）
-                              enterCourtName && isWaitingEnterable ? (
-                                <button
-                                  onClick={(e) => { e.stopPropagation(); setCourtPickMatchId(matchKey(m)); }}
-                                  className={`absolute left-1/2 -translate-x-1/2 inline-flex items-center px-3 py-1 rounded-full text-[11px] font-bold whitespace-nowrap shadow-sm transition-colors hover:bg-primary-700 ${centerBadge.color}`}
-                                >
-                                  {centerBadge.text}
-                                </button>
-                              ) : (
-                                <span className={`absolute left-1/2 -translate-x-1/2 inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold whitespace-nowrap shadow-sm ${centerBadge.color}`}>
-                                  {centerBadge.text}
+                          <div className="op-mc__row op-mc__row--head">
+                            <span className="op-mc__ev" title={evLabel}>
+                              <i className={`op-mc__sw ${evColor.text}`} aria-hidden="true" />
+                              <span className="op-mc__evtext">{evLabel}</span>
+                            </span>
+                            <span className="op-mc__badge">
+                              {centerBadge && (
+                                // 入れる状態の赤バッジはボタン（タップでコート選択ダイアログを開く）
+                                enterCourtName && isWaitingEnterable ? (
+                                  <button
+                                    onClick={(e) => { e.stopPropagation(); setCourtPickMatchId(matchKey(m)); }}
+                                    className="btn btn--primary op-mc__enter"
+                                  >
+                                    {centerBadge.text}
+                                  </button>
+                                ) : (
+                                  <span className={`op-badge ${centerBadge.color}`}>
+                                    {centerBadge.text}
+                                  </span>
+                                )
+                              )}
+                            </span>
+                            <span className="op-mc__state">
+                              {elapsedLabel && (
+                                <span className="op-mc__elapsed">
+                                  <Clock className="w-3 h-3" />
+                                  {elapsedLabel}
                                 </span>
-                              )
-                            )}
-                            <span className={`inline-block px-1.5 py-0.5 rounded text-[9px] font-bold whitespace-nowrap shrink-0 ${statusDisplay.color}`}>{statusDisplay.text}</span>
+                              )}
+                              <span className={`op-st ${statusDisplay.color}`}>{statusDisplay.text}</span>
+                            </span>
                           </div>
                           {/* 選手（横並び・各エリア中央寄せ） */}
-                          <div className="flex items-start gap-2">
-                            {renderPlayer(num1, m.player1Name, m.player1Affiliation, w1, isFinished)}
-                            <div className="flex flex-col items-center justify-center shrink-0 pt-0.5 min-w-[32px]">
-                              <span className="text-base font-bold text-gray-300 leading-none">vs</span>
-                              {isFinished && m.score && <span className="text-[9px] font-mono font-bold text-gray-500 leading-tight mt-0.5">{m.score}</span>}
+                          <div className="op-mc__row op-mc__row--players">
+                            {renderPlayer(1, num1, m.player1Name, m.player1Affiliation, w1, isFinished)}
+                            <div className="op-mc__vs">
+                              <span>vs</span>
+                              {isFinished && m.score && <span className="op-mc__score">{m.score}</span>}
                             </div>
-                            {renderPlayer(num2, m.player2Name, m.player2Affiliation, w2, isFinished)}
+                            {renderPlayer(2, num2, m.player2Name, m.player2Affiliation, w2, isFinished)}
                           </div>
-                          {/* フッター行: 開始時刻(左)・経過時間(中央)・操作ボタン(右) */}
-                          <div className="relative flex items-center gap-2 mt-1.5 pl-1 min-h-[36px]">
-                            {schedTime && <span className="text-[10px] text-gray-400 font-mono">{schedTime}</span>}
-                            <div className="flex-1" />
-                            {elapsedLabel && (
-                              <span className="absolute left-1/2 -translate-x-1/2 inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-primary-100 text-gray-800 text-[11px] font-bold font-mono">
-                                <Clock className="w-3 h-3" />
-                                {elapsedLabel}
-                              </span>
-                            )}
+                          {/* フッター行: 開始時刻(左)・操作ボタン(右) */}
+                          <div className="op-mc__row op-mc__row--foot">
+                            <span className="op-mc__time">{schedTime}</span>
                             {!readOnly && (
-                            <div className="flex items-center gap-1" onClick={e => e.stopPropagation()}>
+                            <div className="op-mc__acts" onClick={e => e.stopPropagation()}>
                               <button
                                 onClick={() => handlePrintMatch(m)}
-                                className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-lg border border-gray-200 transition-all"
+                                className="op-ibtn"
                                 title="印刷"
+                                aria-label="印刷"
                               >
                                 <Printer className="w-4 h-4" />
                               </button>
                               {evt && (
                                 <button
                                   onClick={() => openRuleEditor(evt)}
-                                  className="p-1.5 text-primary-500 hover:text-gray-700 hover:bg-primary-50 rounded-lg border border-primary-200 transition-all"
+                                  className="op-ibtn"
                                   title="試合ルール"
+                                  aria-label="試合ルール"
                                 >
                                   <BookOpen className="w-4 h-4" />
                                 </button>
@@ -2023,12 +2042,9 @@ ${printableMatches.map(m => {
                               {hasPlayers && m.status !== 'walkover' && (
                                 <button
                                   onClick={() => openCallModal(m)}
-                                  className={`p-1.5 rounded-lg border transition-all ${
-                                    callTargetMatchId === matchKey(m)
-                                      ? 'text-gray-700 bg-primary-50 border-primary-300'
-                                      : 'text-primary-400 border-primary-200 hover:text-gray-700 hover:bg-primary-50'
-                                  }`}
+                                  className={`op-ibtn op-ibtn--red ${callTargetMatchId === matchKey(m) ? 'is-on' : ''}`}
                                   title="音声コール"
+                                  aria-label="音声コール"
                                 >
                                   <Volume2 className="w-4 h-4" />
                                 </button>
@@ -2036,20 +2052,13 @@ ${printableMatches.map(m => {
                             </div>
                             )}
                           </div>
-                        </div>
-                      </React.Fragment>
+                      </li>
                     );
-                  });
+                  })}</ol>;
                 })()}
             </div>
           ) : (
-            <div className="flex-1 flex flex-col items-center justify-center p-8 text-center bg-white rounded-xl border border-dashed border-border-main shadow-sm">
-              <ClipboardList className="w-16 h-16 text-gray-300 mb-4" />
-              <h3 className="text-lg font-bold text-gray-900 mb-2">試合データがありません</h3>
-              <p className="text-gray-500 max-w-md">
-                エントリー画面で種目を確定すると、時間割順で対戦順が表示されます。
-              </p>
-            </div>
+            <SkEmpty icon={ClipboardList} title="試合データがありません" text="エントリー画面で種目を確定すると、時間割順で対戦順が表示されます。" />
           )
         )}
 
@@ -2076,62 +2085,44 @@ ${printableMatches.map(m => {
             }
 
             return (
-              <div key={evt.eventId} className="bg-white rounded-xl shadow-sm border border-border-main overflow-hidden">
+              <section key={evt.eventId} className={`sk-sec op-ev ${isActive ? 'sk-sec--accent is-active' : ''}`}>
                 {/* 種目ヘッダー */}
                 <div
-                  className={`px-4 py-3 flex items-center justify-between cursor-pointer transition-colors ${
-                    isActive ? 'bg-primary-500 text-white' : 'bg-gradient-to-r from-gray-50 to-white hover:from-primary-50'
-                  }`}
+                  className="sk-sec__head op-ev__head"
                   onClick={() => setSelectedEventId(isActive ? '' : evt.eventId)}
                 >
-                  <div className="flex items-center gap-3">
-                    <div className={`flex items-center justify-center w-8 h-8 rounded-lg text-xs font-bold ${
-                      isActive ? 'bg-white/20 text-white' : 'bg-primary-100 text-gray-700'
-                    }`}>
-                      <ListOrdered className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <h3 className={`text-sm font-bold ${isActive ? 'text-white' : 'text-gray-900'}`}>
-                        {evt.name}
-                      </h3>
-                      <p className={`text-[10px] ${isActive ? 'text-white/70' : 'text-gray-400'}`}>
-                        {playableMatches.length}試合 / {finishedCount}完了
-                      </p>
-                    </div>
+                  <span className="sk-sec__mark" aria-hidden="true" />
+                  <div className="sk-sec__titles">
+                    <h3 className="sk-sec__title">{evt.name}</h3>
+                    <p className="sk-sec__lead">
+                      {playableMatches.length}試合 / {finishedCount}完了
+                    </p>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="sk-sec__actions">
                     <button
                       onClick={(e) => { e.stopPropagation(); openRuleEditor(evt); }}
-                      className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all shadow-sm ${
-                        isActive
-                          ? 'bg-white/20 text-white hover:bg-white/30 backdrop-blur-sm'
-                          : 'bg-primary-500 text-white hover:bg-primary-600'
-                      }`}
+                      className="op-ibtn"
                       title="ゲームルール"
+                      aria-label="ゲームルール"
                     >
-                      <BookOpen className="w-3.5 h-3.5" />
+                      <BookOpen className="w-4 h-4" />
                     </button>
                     <button
                       onClick={(e) => { e.stopPropagation(); handlePrintEvent(evt.eventId); }}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all shadow-sm ${
-                        isActive
-                          ? 'bg-white/20 text-white hover:bg-white/30 backdrop-blur-sm'
-                          : 'bg-primary-500 text-white hover:bg-primary-600'
-                      }`}
+                      className="btn btn--outline sk-btn sk-btn--sm"
                     >
                       <Printer className="w-3.5 h-3.5" />
                       印刷
                     </button>
-                    {isActive
-                      ? <ChevronUp className="w-4 h-4 text-white/60" />
-                      : <ChevronDown className="w-4 h-4 text-gray-300" />
-                    }
+                    <span className={`sk-sec__toggle`} aria-expanded={isActive} aria-hidden="true">
+                      <ChevronDown className="w-5 h-5" />
+                    </span>
                   </div>
                 </div>
 
                 {/* 試合リスト - 固定列幅テーブル */}
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left border-collapse text-xs sm:text-sm" style={{ tableLayout: 'fixed', minWidth: '480px' }}>
+                <div className="sk-table-wrap">
+                  <table className="op-ev__table" style={{ tableLayout: 'fixed', minWidth: '480px' }}>
                     <colgroup>
                       <col style={{ width: '36px' }} />    {/* # */}
                       <col />                              {/* Player 1 */}
@@ -2141,7 +2132,7 @@ ${printableMatches.map(m => {
                       <col style={{ width: '56px' }} />    {/* Status */}
                       <col style={{ width: '130px' }} />   {/* Actions */}
                     </colgroup>
-                    <tbody className="text-sm">
+                    <tbody>
                   {Array.from(roundGroups.entries()).map(([round, roundMatches]) => {
                     const roundLabel = isLeagueEvent ? 'リーグ戦' : getRoundName(round, evTotalRounds);
                     const rFinished = roundMatches.filter(m => m.status === 'finished').length;
@@ -2149,13 +2140,13 @@ ${printableMatches.map(m => {
                       <React.Fragment key={round}>
                         {/* ラウンドヘッダー */}
                         <tr>
-                          <td colSpan={7} className="px-0 py-0">
-                            <div className="flex items-center justify-between px-4 py-2 bg-gradient-to-r from-gray-100 to-gray-50 border-b border-t border-gray-200">
-                              <div className="flex items-center gap-2">
-                                <span className="inline-flex items-center justify-center w-5 h-5 rounded bg-gray-700 text-white text-[10px] font-bold">{round}</span>
-                                <span className="text-xs font-bold text-gray-700 tracking-wide">{roundLabel}</span>
+                          <td colSpan={7} className="op-ev__roundcell">
+                            <div className="op-ev__round">
+                              <div className="op-ev__round-l">
+                                <span className="op-ev__round-no">{round}</span>
+                                <span className="op-ev__round-name">{roundLabel}</span>
                                 {evt.roundGameRules && evt.roundGameRules.length > 0 && (
-                                  <span className="text-[10px] text-gray-700 font-medium bg-primary-50 px-1.5 py-0.5 rounded">
+                                  <span className="op-ev__rule">
                                     {(() => {
                                       const rules = evt.roundGameRules;
                                       if (rules.length === 1) return rules[0].ruleText;
@@ -2180,14 +2171,14 @@ ${printableMatches.map(m => {
                                   </span>
                                 )}
                               </div>
-                              <div className="flex items-center gap-1.5">
-                                <div className="h-1.5 w-16 bg-gray-200 rounded-full overflow-hidden">
+                              <div className="op-ev__prog">
+                                <div className="op-bar">
                                   <div
-                                    className="h-full bg-primary-500 rounded-full transition-all duration-500"
+                                    className="op-bar__fill"
                                     style={{ width: roundMatches.length > 0 ? `${(rFinished / roundMatches.length) * 100}%` : '0%' }}
                                   />
                                 </div>
-                                <span className="text-[10px] font-mono text-gray-400">{rFinished}/{roundMatches.length}</span>
+                                <span className="op-ev__prog-n">{rFinished}/{roundMatches.length}</span>
                               </div>
                             </div>
                           </td>
@@ -2202,8 +2193,8 @@ ${printableMatches.map(m => {
 
                               if (isEditing) {
                                 return (
-                                  <tr key={matchKey(m)} className="border-b border-gray-200 bg-gradient-to-r from-gray-50 to-white">
-                                    <td className="py-2.5 px-2 text-center font-mono text-gray-400 text-xs font-bold">{m.matchOrder}</td>
+                                  <tr key={matchKey(m)} className="op-ev__tr is-editing">
+                                    <td className="op-ev__c op-ev__no">{m.matchOrder}</td>
                                     <td className="py-2.5 px-2">
                                       <div className="flex items-center gap-1">
                                         {autoWinner === 1 && <Trophy className="w-3.5 h-3.5 text-primary-500 shrink-0" />}
@@ -2212,7 +2203,7 @@ ${printableMatches.map(m => {
                                         </span>
                                       </div>
                                     </td>
-                                    <td className="py-2.5 px-1 text-center text-gray-300 text-xs font-bold">vs</td>
+                                    <td className="op-ev__c op-ev__vs">vs</td>
                                     <td className="py-2.5 px-2">
                                       <div className="flex items-center gap-1">
                                         {autoWinner === 2 && <Trophy className="w-3.5 h-3.5 text-primary-500 shrink-0" />}
@@ -2231,7 +2222,7 @@ ${printableMatches.map(m => {
                                             value={editScore1}
                                             onChange={e => { setEditScore1(e.target.value); setEditTiebreak(''); }}
                                             placeholder="0"
-                                            className="w-11 border border-gray-300 rounded-md px-1 py-1 text-sm text-center font-mono bg-white focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 outline-none"
+                                            className="op-ev__in"
                                             onKeyDown={e => {
                                               if (e.key === 'Enter') saveResult(m);
                                               if (e.key === 'Escape') cancelEdit();
@@ -2246,7 +2237,7 @@ ${printableMatches.map(m => {
                                             value={editScore2}
                                             onChange={e => { setEditScore2(e.target.value); setEditTiebreak(''); }}
                                             placeholder="0"
-                                            className="w-11 border border-gray-300 rounded-md px-1 py-1 text-sm text-center font-mono bg-white focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 outline-none"
+                                            className="op-ev__in"
                                             onKeyDown={e => {
                                               if (e.key === 'Enter') saveResult(m);
                                               if (e.key === 'Escape') cancelEdit();
@@ -2265,7 +2256,7 @@ ${printableMatches.map(m => {
                                                   value={editTiebreak}
                                                   onChange={e => setEditTiebreak(e.target.value)}
                                                   placeholder="0"
-                                                  className="w-9 border border-primary-300 rounded-md px-1 py-0.5 text-xs text-center font-mono bg-primary-50 focus:border-primary-500 focus:ring-1 focus:ring-primary-400 outline-none"
+                                                  className="op-ev__in op-ev__in--tb"
                                                   onKeyDown={e => {
                                                     if (e.key === 'Enter') saveResult(m);
                                                     if (e.key === 'Escape') cancelEdit();
@@ -2286,7 +2277,7 @@ ${printableMatches.map(m => {
                                                   value={editTiebreak}
                                                   onChange={e => setEditTiebreak(e.target.value)}
                                                   placeholder="0"
-                                                  className="w-9 border border-primary-300 rounded-md px-1 py-0.5 text-xs text-center font-mono bg-primary-50 focus:border-primary-500 focus:ring-1 focus:ring-primary-400 outline-none"
+                                                  className="op-ev__in op-ev__in--tb"
                                                   onKeyDown={e => {
                                                     if (e.key === 'Enter') saveResult(m);
                                                     if (e.key === 'Escape') cancelEdit();
@@ -2300,7 +2291,7 @@ ${printableMatches.map(m => {
                                     </td>
                                     <td className="py-2.5 px-2 text-center">
                                       {autoWinner ? (
-                                        <span className="text-[10px] text-gray-700 font-bold bg-primary-100 px-1.5 py-0.5 rounded-full">
+                                        <span className="op-st op-st--playing">
                                           {autoWinner === 1 ? 'P1' : 'P2'}勝
                                         </span>
                                       ) : (
@@ -2308,16 +2299,16 @@ ${printableMatches.map(m => {
                                       )}
                                     </td>
                                     <td className="py-2.5 px-2 text-center">
-                                      <div className="flex items-center gap-1 justify-center">
+                                      <div className="op-ev__acts">
                                         <button
                                           onClick={() => saveResult(m)}
                                           disabled={!autoWinner}
-                                          className="p-1.5 text-white bg-primary-500 hover:bg-primary-600 rounded-md disabled:opacity-30 disabled:cursor-not-allowed transition-colors shadow-sm"
+                                          className="op-ibtn op-ibtn--fill"
                                           title="保存"
                                         >
                                           <Check className="w-3.5 h-3.5" />
                                         </button>
-                                        <button onClick={cancelEdit} className="p-1.5 text-gray-500 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors" title="キャンセル">
+                                        <button onClick={cancelEdit} className="op-ibtn" title="キャンセル">
                                           <X className="w-3.5 h-3.5" />
                                         </button>
                                       </div>
@@ -2331,65 +2322,65 @@ ${printableMatches.map(m => {
 
                               return (
                                 <React.Fragment key={matchKey(m)}>
-                                  <tr className={`border-b border-gray-100 transition-colors group ${
+                                  <tr className={`op-ev__tr ${
                                     isThisSpeaking
-                                      ? 'bg-gradient-to-r from-primary-50 to-white'
+                                      ? 'is-speaking'
                                       : m.status === 'finished'
-                                        ? 'bg-gray-50/50'
+                                        ? 'is-finished'
                                         : m.status === 'playing'
-                                          ? 'bg-gradient-to-r from-primary-50/50 to-transparent'
-                                          : idx % 2 === 1 ? 'bg-gray-50/30' : 'bg-white'
-                                  } hover:bg-primary-50/40`}>
+                                          ? 'is-playing'
+                                          : idx % 2 === 1 ? 'is-odd' : ''
+                                  }`}>
                                     <td className="py-2.5 px-2 text-center">
-                                      <span className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-[10px] font-bold ${
+                                      <span className={`op-ev__order ${
                                         m.status === 'finished'
-                                          ? 'bg-gray-200 text-gray-500'
+                                          ? 'is-finished'
                                           : m.status === 'playing'
-                                            ? 'bg-primary-100 text-gray-800'
-                                            : 'bg-gray-100 text-gray-500'
+                                            ? 'is-playing'
+                                            : ''
                                       }`}>
                                         {m.matchOrder}
                                       </span>
                                     </td>
-                                    <td className="py-2.5 px-2 overflow-hidden">
-                                      <div className="flex items-center gap-1 min-w-0">
+                                    <td className="op-ev__c op-ev__pl">
+                                      <div className="op-ev__who">
                                         {isWinner1 && <Trophy className="w-3.5 h-3.5 text-primary-500 shrink-0" />}
                                         <span className={`truncate ${isWinner1 ? 'font-bold text-primary-800' : isWinner2 ? 'text-gray-400' : 'font-medium text-gray-800'}`}>
                                           {m.player1Name || '(未定)'}
                                         </span>
                                         {m.player1Affiliation && (
-                                          <span className="text-[10px] text-gray-400 shrink-0 hidden sm:inline">({m.player1Affiliation})</span>
+                                          <span className="op-ev__aff">({m.player1Affiliation})</span>
                                         )}
                                       </div>
                                     </td>
-                                    <td className="py-2.5 px-0 text-center">
-                                      <span className="text-[10px] text-gray-300 font-bold">vs</span>
+                                    <td className="op-ev__c op-ev__vs">
+                                      <span>vs</span>
                                     </td>
-                                    <td className="py-2.5 px-2 overflow-hidden">
-                                      <div className="flex items-center gap-1 min-w-0">
+                                    <td className="op-ev__c op-ev__pl">
+                                      <div className="op-ev__who">
                                         {isWinner2 && <Trophy className="w-3.5 h-3.5 text-primary-500 shrink-0" />}
                                         <span className={`truncate ${isWinner2 ? 'font-bold text-primary-800' : isWinner1 ? 'text-gray-400' : 'font-medium text-gray-800'}`}>
                                           {m.player2Name || '(未定)'}
                                         </span>
                                         {m.player2Affiliation && (
-                                          <span className="text-[10px] text-gray-400 shrink-0 hidden sm:inline">({m.player2Affiliation})</span>
+                                          <span className="op-ev__aff">({m.player2Affiliation})</span>
                                         )}
                                       </div>
                                     </td>
                                     <td className="py-2.5 px-2 text-center">
-                                      <span className={`font-mono text-xs ${m.status === 'finished' ? 'text-gray-700 font-semibold' : 'text-gray-400'}`}>
+                                      <span className={`op-ev__score ${m.status === 'finished' ? 'is-done' : ''}`}>
                                         {m.score || (isWalkover ? 'W.O' : '-')}
                                       </span>
                                     </td>
                                     <td className="py-2.5 px-2 text-center">
-                                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold ${st.color}`}>{st.text}</span>
+                                      <span className={`op-st ${st.color}`}>{st.text}</span>
                                     </td>
                                     <td className="py-1.5 px-2 text-center">
-                                      <div className="flex items-center gap-1 justify-center">
+                                      <div className="op-ev__acts">
                                         {/* 対戦票印刷 */}
                                         <button
                                           onClick={() => handlePrintMatch(m)}
-                                          className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-lg border border-gray-200 hover:border-gray-300 transition-all shadow-sm hover:shadow"
+                                          className="op-ibtn"
                                           title="対戦票印刷"
                                         >
                                           <Printer className="w-4 h-4" />
@@ -2401,11 +2392,7 @@ ${printableMatches.map(m => {
                                               if (!isActive) setSelectedEventId(m.eventId);
                                               startEdit(m);
                                             }}
-                                            className={`p-1.5 rounded-lg border transition-all shadow-sm hover:shadow ${
-                                              m.status === 'finished'
-                                                ? 'text-primary-400 border-primary-200 hover:text-gray-700 hover:bg-primary-50 hover:border-primary-300'
-                                                : 'text-primary-400 border-primary-200 hover:text-gray-700 hover:bg-primary-50 hover:border-primary-300'
-                                            }`}
+                                            className="op-ibtn op-ibtn--red"
                                             title={m.status === 'finished' ? 'スコア修正' : 'スコア入力'}
                                           >
                                             <Edit3 className="w-4 h-4" />
@@ -2416,7 +2403,7 @@ ${printableMatches.map(m => {
                                           isThisSpeaking ? (
                                             <button
                                               onClick={handleVoiceStop}
-                                              className="p-1.5 text-red-500 bg-red-50 hover:bg-red-100 rounded-lg border border-red-300 transition-all shadow-sm animate-pulse"
+                                              className="op-ibtn op-ibtn--red is-on animate-pulse"
                                               title="停止"
                                             >
                                               <Square className="w-4 h-4" />
@@ -2427,11 +2414,7 @@ ${printableMatches.map(m => {
                                                 if (!isActive) setSelectedEventId(m.eventId);
                                                 openCallModal(m);
                                               }}
-                                              className={`p-1.5 rounded-lg border transition-all shadow-sm hover:shadow ${
-                                                isCallTarget
-                                                  ? 'text-gray-700 bg-primary-50 border-primary-300'
-                                                  : 'text-primary-400 border-primary-200 hover:text-gray-700 hover:bg-primary-50 hover:border-primary-300'
-                                              }`}
+                                              className={`op-ibtn op-ibtn--red ${isCallTarget ? 'is-on' : ''}`}
                                               title="音声コール"
                                             >
                                               <Volume2 className="w-4 h-4" />
@@ -2450,17 +2433,11 @@ ${printableMatches.map(m => {
                     </tbody>
                   </table>
                 </div>
-              </div>
+              </section>
             );
           })
         ) : (
-          <div className="flex-1 flex flex-col items-center justify-center p-8 text-center bg-white rounded-xl border border-dashed border-border-main shadow-sm">
-            <ClipboardList className="w-16 h-16 text-gray-300 mb-4" />
-            <h3 className="text-lg font-bold text-gray-900 mb-2">試合データがありません</h3>
-            <p className="text-gray-500 max-w-md">
-              ドロー画面で試合を生成すると、ここに全種目の対戦順が表示されます。
-            </p>
-          </div>
+          <SkEmpty icon={ClipboardList} title="試合データがありません" text="ドロー画面で試合を生成すると、ここに全種目の対戦順が表示されます。" />
         ))}
       </div>
 

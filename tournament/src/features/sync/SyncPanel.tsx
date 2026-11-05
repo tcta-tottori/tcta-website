@@ -107,36 +107,41 @@ export default function SyncPanel({ open, onClose }: Props) {
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[200] flex items-center justify-center bg-black/30 backdrop-blur-[2px]"
+      className="fixed inset-0 z-[200] flex items-center justify-center psd-overlay"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+      role="dialog"
+      aria-modal="true"
     >
-      <div className="relative w-[min(92vw,440px)] max-h-[85vh] flex flex-col bg-white rounded-2xl shadow-2xl overflow-hidden animate-[slideUp_0.3s_ease-out]">
+      <div className="psd-panel psd-panel--sm psd-panel--flex">
 
         {/* ヘッダー */}
-        <div className="flex items-center justify-between px-5 py-4 bg-gradient-to-r from-gray-600 to-gray-700 text-white">
-          <div className="flex items-center gap-2.5">
-            {isConnected ? <Wifi className="w-5 h-5" /> : <WifiOff className="w-5 h-5 opacity-60" />}
-            <div>
-              <h2 className="text-base font-bold">マルチデバイス同期</h2>
-              <p className="text-[10px] text-white/70 mt-0.5">複数端末でリアルタイム編集</p>
-            </div>
+        <div className="sdlg__head psd-head">
+          <span className="sec-head__mark sdlg__mark" aria-hidden="true" />
+          <div className="sdlg__heading">
+            <p className="sdlg__eyebrow">SYNC</p>
+            <h2 className="sdlg__title">
+              {isConnected ? <Wifi className="w-5 h-5 text-primary-600" /> : <WifiOff className="w-5 h-5 text-gray-400" />}
+              マルチデバイス同期
+            </h2>
+            <p className="psd-lead">複数端末でリアルタイム編集</p>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 transition-colors"
+            className="sdlg__close"
+            aria-label="閉じる"
           >
-            <X className="w-4 h-4" />
+            <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* スクロール可能なコンテンツ */}
-        <div className="flex-1 overflow-y-auto p-5 space-y-4">
+        <div className="flex-1 overflow-y-auto psd-body space-y-4">
 
           {/* 接続中の場合 */}
           {syncEnabled ? (
             <>
               {/* 接続ステータス */}
-              <div className={`flex items-center gap-3 px-4 py-3 rounded-xl border ${
+              <div className={`flex items-center gap-3 px-4 py-3 rounded border ${
                 isConnected
                   ? 'bg-gray-50 border-gray-300'
                   : isConnecting
@@ -162,7 +167,7 @@ export default function SyncPanel({ open, onClose }: Props) {
 
               {/* 切断/未送信の警告バナー */}
               {(isUnsynced || hasPending) && (
-                <div className={`flex items-start gap-2 px-4 py-3 rounded-xl border ${
+                <div className={`flex items-start gap-2 px-4 py-3 rounded border ${
                   isUnsynced ? 'bg-red-50 border-red-200' : 'bg-gray-50 border-gray-200'
                 }`}>
                   <AlertTriangle className={`w-4 h-4 shrink-0 mt-0.5 ${isUnsynced ? 'text-red-500' : 'text-gray-500'}`} />
@@ -186,15 +191,15 @@ export default function SyncPanel({ open, onClose }: Props) {
               )}
 
               {/* ルームコード */}
-              <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
-                <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">ルームコード</p>
+              <div className="psd-box">
+                <p className="psd-label mb-2">ルームコード</p>
                 <div className="flex items-center gap-2">
                   <span className="flex-1 text-2xl font-mono font-bold text-gray-800 tracking-[0.3em]">
                     {roomCode}
                   </span>
                   <button
                     onClick={handleCopyCode}
-                    className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-lg bg-white border border-gray-200 hover:border-gray-300 hover:text-gray-600 transition-all"
+                    className="btn btn--outline psd-btn psd-btn--sm"
                   >
                     {copied ? <Check className="w-3.5 h-3.5 text-primary-500" /> : <Copy className="w-3.5 h-3.5" />}
                     <span>{copied ? 'コピー済' : 'コピー'}</span>
@@ -208,14 +213,14 @@ export default function SyncPanel({ open, onClose }: Props) {
               {/* 観戦用URL発行 */}
               <button
                 onClick={() => setShareOpen(true)}
-                className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-bold text-sm bg-gradient-to-br from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white shadow-md transition-all active:scale-[0.98]"
+                className="btn btn--primary psd-btn psd-btn--block"
               >
                 <Share2 className="w-4 h-4" />
                 <span>観戦用URLを発行</span>
               </button>
 
               {/* 接続中の端末一覧 */}
-              <div className="border border-gray-200 rounded-xl overflow-hidden">
+              <div className="border border-gray-200 rounded overflow-hidden">
                 <div className="px-4 py-2.5 bg-gray-50 border-b border-gray-200 flex items-center gap-2">
                   <Users className="w-3.5 h-3.5 text-gray-500" />
                   <span className="text-xs font-bold text-gray-600">
@@ -255,7 +260,7 @@ export default function SyncPanel({ open, onClose }: Props) {
               </div>
 
               {/* 手動再同期（切断復帰後などの整合用） */}
-              <div className="border border-gray-200 rounded-xl p-3 space-y-2">
+              <div className="border border-gray-200 rounded p-3 space-y-2">
                 <div className="flex items-center gap-1.5">
                   <RefreshCw className="w-3.5 h-3.5 text-gray-500" />
                   <span className="text-[11px] font-bold text-gray-600">手動で同期をそろえる</span>
@@ -265,14 +270,14 @@ export default function SyncPanel({ open, onClose }: Props) {
                 </p>
                 <button
                   onClick={() => setResyncConfirm('push')}
-                  className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg font-bold text-xs bg-gray-50 border border-gray-200 text-gray-700 hover:bg-gray-100 transition-all"
+                  className="btn btn--outline psd-btn psd-btn--sm psd-btn--block"
                 >
                   <UploadCloud className="w-3.5 h-3.5" />
                   <span>この端末を最新として全員に反映</span>
                 </button>
                 <button
                   onClick={() => setResyncConfirm('pull')}
-                  className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg font-bold text-xs bg-gray-50 border border-gray-200 text-gray-700 hover:bg-gray-100 transition-all"
+                  className="btn btn--outline psd-btn psd-btn--sm psd-btn--block"
                 >
                   <DownloadCloud className="w-3.5 h-3.5" />
                   <span>他端末の最新を取り込む</span>
@@ -281,7 +286,7 @@ export default function SyncPanel({ open, onClose }: Props) {
 
               {/* エラー表示 */}
               {error && (
-                <div className="flex items-start gap-2 px-4 py-3 rounded-xl text-sm border bg-red-50 text-red-700 border-red-200">
+                <div className="flex items-start gap-2 px-4 py-3 rounded text-sm border bg-red-50 text-red-700 border-red-200">
                   <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
                   <span className="flex-1 text-xs">{error}</span>
                 </div>
@@ -290,7 +295,7 @@ export default function SyncPanel({ open, onClose }: Props) {
               {/* 切断ボタン */}
               <button
                 onClick={handleDisconnect}
-                className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-bold text-sm bg-white border-2 border-red-200 text-red-600 hover:bg-red-50 transition-all active:scale-[0.98]"
+                className="btn btn--outline psd-btn psd-btn--block psd-btn--danger"
               >
                 <Square className="w-4 h-4" />
                 <span>同期を停止</span>
@@ -302,7 +307,7 @@ export default function SyncPanel({ open, onClose }: Props) {
 
               {/* インターネット公開（HP掲載向け・ワンタップ） */}
               {PUBLIC_PUBLISH_ENABLED && (
-                <div className="bg-gradient-to-br from-primary-50 to-white rounded-xl p-4 border border-primary-200">
+                <div className="psd-box psd-box--red">
                   <div className="flex items-center gap-2 mb-1.5">
                     <Globe className="w-4 h-4 text-primary-600" />
                     <h3 className="text-xs font-bold text-gray-900">インターネット公開</h3>
@@ -314,7 +319,7 @@ export default function SyncPanel({ open, onClose }: Props) {
                   </p>
                   <button
                     onClick={handlePublish}
-                    className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg font-bold text-sm bg-gradient-to-br from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white shadow-md transition-all active:scale-[0.98]"
+                    className="btn btn--primary psd-btn psd-btn--block"
                   >
                     <Globe className="w-4 h-4" />
                     <span>インターネット公開を開始</span>
@@ -324,27 +329,27 @@ export default function SyncPanel({ open, onClose }: Props) {
 
               {/* 端末名 */}
               <div>
-                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1.5">
+                <label className="block psd-label mb-1.5">
                   この端末の名前
                 </label>
                 <input
                   type="text"
                   value={editingDeviceName}
                   onChange={(e) => setEditingDeviceName(e.target.value)}
-                  className="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 bg-white focus:border-gray-400 focus:ring-1 focus:ring-gray-400 outline-none transition-all"
+                  className="w-full px-3 py-2 text-sm psd-input"
                   placeholder="例: 受付iPad"
                 />
               </div>
 
               {/* ルーム作成 */}
-              <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
+              <div className="psd-box">
                 <h3 className="text-xs font-bold text-gray-800 mb-2">新しいルームを作成</h3>
                 <p className="text-[10px] text-gray-600 mb-3">
                   最初の端末でルームを作成し、他の端末にルームコードを共有します
                 </p>
                 <button
                   onClick={handleCreateRoom}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg font-bold text-sm bg-gradient-to-br from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700 text-white shadow-md transition-all active:scale-[0.98]"
+                  className="btn btn--primary psd-btn psd-btn--block"
                 >
                   <Play className="w-4 h-4" />
                   <span>ルームを作成</span>
@@ -352,21 +357,21 @@ export default function SyncPanel({ open, onClose }: Props) {
               </div>
 
               {/* ルーム参加 */}
-              <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
+              <div className="psd-box">
                 <h3 className="text-xs font-bold text-gray-700 mb-2">既存のルームに参加</h3>
                 <div className="flex gap-2">
                   <input
                     type="text"
                     value={joinCode}
                     onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
-                    className="flex-1 px-3 py-2 text-sm font-mono tracking-wider rounded-lg border border-gray-200 bg-white focus:border-gray-400 focus:ring-1 focus:ring-gray-400 outline-none transition-all uppercase"
+                    className="flex-1 px-3 py-2 text-sm font-mono tracking-wider psd-input uppercase"
                     placeholder="コードを入力"
                     maxLength={8}
                   />
                   <button
                     onClick={handleJoinRoom}
                     disabled={joinCode.trim().length < 4}
-                    className="px-4 py-2 rounded-lg font-bold text-sm bg-gray-700 hover:bg-gray-800 text-white shadow-sm transition-all disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.98]"
+                    className="btn psd-btn psd-btn--sm psd-btn--ink"
                   >
                     参加
                   </button>
@@ -377,7 +382,7 @@ export default function SyncPanel({ open, onClose }: Props) {
               {lastRoomCode && (
                 <button
                   onClick={handleRejoin}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium bg-white border border-gray-200 hover:border-gray-300 hover:text-gray-600 transition-all"
+                  className="btn btn--outline psd-btn psd-btn--sm psd-btn--block"
                 >
                   <RefreshCw className="w-3.5 h-3.5" />
                   <span>前回のルーム ({lastRoomCode}) に再接続</span>
@@ -396,14 +401,14 @@ export default function SyncPanel({ open, onClose }: Props) {
               {showAdvanced && (
                 <div className="space-y-3 pt-1">
                   <div>
-                    <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1.5">
+                    <label className="block psd-label mb-1.5">
                       中継サーバーURL (別端末同期用)
                     </label>
                     <input
                       type="text"
                       value={editingServerUrl}
                       onChange={(e) => setEditingServerUrl(e.target.value)}
-                      className="w-full px-3 py-2 text-xs font-mono rounded-lg border border-gray-200 bg-white focus:border-gray-400 focus:ring-1 focus:ring-gray-400 outline-none transition-all"
+                      className="w-full px-3 py-2 text-xs font-mono psd-input"
                       placeholder="ws://192.168.1.100:8787"
                     />
                     <p className="text-[10px] text-gray-400 mt-1">
@@ -414,7 +419,7 @@ export default function SyncPanel({ open, onClose }: Props) {
               )}
 
               {/* 説明 */}
-              <div className="flex items-start gap-2 px-3 py-2.5 rounded-lg bg-primary-50 border border-primary-100">
+              <div className="flex items-start gap-2 sk-note">
                 <Info className="w-3.5 h-3.5 text-primary-500 shrink-0 mt-0.5" />
                 <div className="text-[10px] text-gray-800 leading-relaxed">
                   <p className="font-bold mb-0.5">マルチデバイス同期について</p>

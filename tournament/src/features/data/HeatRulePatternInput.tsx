@@ -45,7 +45,7 @@ interface Props {
 /** 熱中症警戒時の試合形式を指定する入力UI（一括読込・エントリー確定で共用） */
 export default function HeatRulePatternInput({ value, onChange }: Props) {
   return (
-    <div className="rounded-xl border border-red-200 bg-red-50/50 p-3 space-y-2.5">
+    <div className="rounded border border-red-200 bg-red-50/50 p-3 space-y-2.5">
       <label className="flex items-center gap-2 cursor-pointer select-none">
         <input
           type="checkbox"
@@ -71,7 +71,7 @@ export default function HeatRulePatternInput({ value, onChange }: Props) {
                 onChange(gMatch ? { ruleText: text, games: parseInt(gMatch[1]) } : { ruleText: text });
               }}
               placeholder="例: 6ゲームマッチ（ノーアドバンテージ）"
-              className="w-full text-sm border border-red-200 rounded-lg px-2.5 py-1.5 bg-white focus:border-red-400 focus:ring-2 focus:ring-red-200 outline-none"
+              className="w-full text-sm border border-red-200 rounded px-2.5 py-1.5 bg-white focus:border-red-400 focus:ring-2 focus:ring-red-200 outline-none"
             />
           </div>
           <div className="flex items-center gap-3 flex-wrap">
@@ -83,7 +83,7 @@ export default function HeatRulePatternInput({ value, onChange }: Props) {
                 max={12}
                 value={value.games}
                 onChange={e => onChange({ games: parseInt(e.target.value) || 6 })}
-                className="w-16 text-sm text-center border border-red-200 rounded-lg px-2 py-1 bg-white focus:border-red-400 outline-none"
+                className="w-16 text-sm text-center border border-red-200 rounded px-2 py-1 bg-white focus:border-red-400 outline-none"
               />
             </div>
             <div className="flex items-center gap-2">
@@ -91,7 +91,7 @@ export default function HeatRulePatternInput({ value, onChange }: Props) {
               <select
                 value={value.matchFormat}
                 onChange={e => onChange({ matchFormat: e.target.value as 'game' | 'twoSetsSuper10' })}
-                className="text-xs border border-red-200 rounded-lg px-2 py-1 bg-white focus:border-red-400 outline-none"
+                className="text-xs border border-red-200 rounded px-2 py-1 bg-white focus:border-red-400 outline-none"
               >
                 <option value="game">ゲームマッチ</option>
                 <option value="twoSetsSuper10">2セット+STB</option>
