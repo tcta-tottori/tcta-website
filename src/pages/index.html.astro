@@ -53,6 +53,9 @@ const keepFrom = (() => {
   return new Date(Date.UTC(y, m - 1, d - HOME_KEEP_DAYS)).toISOString().slice(0, 10).replace(/-/g, '.');
 })();
 const HOME_TOURNAMENTS = TOURNAMENTS.filter((t) => t.date >= keepFrom);
+// トップに出すのは上から HOME_TOURNAMENTS_VISIBLE 件まで。続きがあるときは、お知らせと同じく次の1件を薄く見せ、
+// その右端の VIEW ALL から大会情報のページへ飛ばす
+const HOME_TOURNAMENTS_VISIBLE = 3;
 ---
 
 <Base
@@ -163,7 +166,7 @@ const HOME_TOURNAMENTS = TOURNAMENTS.filter((t) => t.date >= keepFrom);
   </section>}
 
   <!-- ============ 大会情報（一覧） ============ -->
-  {/* 開催前の大会と、開催日から2週間以内の終わった大会を、エントリー受付中の大会と同じ行の型で並べる
+  {/* 開催前の大会と、開催日から2週間以内の終わった大会を、エントリー受付中の大会と同じ行の型で並べる（3件まで＋薄い4件目）
       （1行ごとに 要項・ドロー・結果 のボタン。HomeTournaments.astro）。
       以前の写真のカードの横スクロールとカード／一覧の切り替えは、アンケートで「ドローなどの情報が分かりづらい」との声があったのでやめた */}
   <section class="section section--gray" id="tournaments" aria-labelledby="tournaments-title">
@@ -174,17 +177,31 @@ const HOME_TOURNAMENTS = TOURNAMENTS.filter((t) => t.date >= keepFrom);
           <span class="sec-head__mark" aria-hidden="true"></span>
           <div>
             <p class="sec-head__eyebrow">Tournament</p>
-            <h2 class="sec-head__title" id="tournaments-title">大会情報</h2>
+            <h2 class="sec-head__title" id="tournaments-title">直近大会情報</h2>
           </div>
         </div>
       </div>
-      <HomeTournaments items={HOME_TOURNAMENTS} />
-      {/* 一覧の下の右端に VIEW ALL（大会情報のページへ。「開催前」で絞り込んだ状態で開く） */}
-      <div class="sec-more rv">
-        <a class="view-all" href="tournaments.html?filter=upcoming">
-          <span class="view-all__label">VIEW ALL</span><span class="ln-arrow" aria-hidden="true"></span>
-        </a>
-      </div>
+      {/* 上から3件（HOME_TOURNAMENTS_VISIBLE）だけ出す。4件目以降があるときは、お知らせと同じく次の1件を薄くフェードさせ、
+          その右端の VIEW ALL で大会情報のページへ（「開催前」で絞り込んだ状態で開く）。続きが無いときは一覧の下の右端に VIEW ALL */}
+      <HomeTournaments items={HOME_TOURNAMENTS.slice(0, HOME_TOURNAMENTS_VISIBLE)} />
+      {HOME_TOURNAMENTS.length > HOME_TOURNAMENTS_VISIBLE ? (
+        <div class="news-peek tl-peek rv">
+          <div class="tl-peek__rows" aria-hidden="true" inert>
+            <HomeTournaments items={[HOME_TOURNAMENTS[HOME_TOURNAMENTS_VISIBLE]]} reveal={false} showEmpty={false} />
+          </div>
+          <div class="news-peek__more">
+            <a class="view-all" href="tournaments.html?filter=upcoming" aria-label={`大会情報をすべて見る（ほか${HOME_TOURNAMENTS.length - HOME_TOURNAMENTS_VISIBLE}件）`}>
+              <span class="view-all__label">VIEW ALL</span><span class="ln-arrow" aria-hidden="true"></span>
+            </a>
+          </div>
+        </div>
+      ) : (
+        <div class="sec-more rv">
+          <a class="view-all" href="tournaments.html?filter=upcoming">
+            <span class="view-all__label">VIEW ALL</span><span class="ln-arrow" aria-hidden="true"></span>
+          </a>
+        </div>
+      )}
     </div>
   </section>
 

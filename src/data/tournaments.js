@@ -7,7 +7,7 @@
 //
 // ■ 状態（受付状態から決まる）
 //   'past'   終了（モノクロ表示・TODAY より前に並ぶ）
-//   'live'   開催当日
+//   'live'   開催中（開催日の 9:00〜18:00 は自動。schedule.js の liveStatus）
 //   'closed' 受付終了
 //   'soon'   未受付（管理画面の受付状態は「まもなく受付」。表示は「未受付」）
 //   'open'   受付中（赤バッジ）
@@ -38,7 +38,7 @@ export const today = () => new Intl.DateTimeFormat('ja-JP', {
 
 export const STATUS = {
   past: { label: '終了', badge: 'badge--muted' },
-  live: { label: '本日開催', badge: 'badge--open' },
+  live: { label: '開催中', badge: 'badge--open' },
   closed: { label: '受付終了', badge: 'badge--closed' },
   soon: { label: '未受付', badge: 'badge--muted' },
   open: { label: '受付中', badge: 'badge--open' },

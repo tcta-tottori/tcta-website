@@ -7,7 +7,7 @@
 // と受け取る。
 import { getEmDashCollection, getSiteSettingsWithCacheHint } from 'emdash';
 import { buildNews } from '../data/news.js';
-import { buildSchedule } from '../data/schedule.js';
+import { buildSchedule, secondsToNextSwitch } from '../data/schedule.js';
 import { buildEvents } from '../data/events.js';
 import { buildCards } from '../data/tournaments.js';
 import { buildEventInfo } from '../data/eventinfo.js';
@@ -53,6 +53,9 @@ async function load(locals) {
     ...cards,
     ...buildEventInfo(eventInfo.rows),
     ...buildSocial(settings.data?.social),
+    // 大会の状態（開催中・終了・受付終了）が次に切り替わるまでの秒数。ページの保存をその時刻で切らす（siteData）
+    switchIn: secondsToNextSwitch(tournaments.rows),
+    loadedAt: Date.now(),
     hints: [...news.hints, ...tournaments.hints, ...eventInfo.hints, ...(settings.cacheHint ? [settings.cacheHint] : [])],
   };
 }
@@ -65,6 +68,13 @@ export async function siteData(Astro) {
   const locals = Astro.locals;
   if (!locals.__tcta) locals.__tcta = load(locals);
   const data = await locals.__tcta;
-  if (Astro.cache?.enabled) for (const h of data.hints) Astro.cache.set(h);
+  if (Astro.cache?.enabled) {
+    for (const h of data.hints) Astro.cache.set(h);
+    // 公開ページは1日保存する（astro.config.mjs の routeRules）。そのままだと開催日の 9:00 に「開催中」、18:00 に「終了」へ
+    // 変わったことが最大1日出ないので、次に状態が切り替わる時刻（読んだ時点から数えた秒数）で保存を切らし、古いものも返さない（swr 0）
+    const left = data.switchIn === null ? null : data.switchIn - Math.floor((Date.now() - data.loadedAt) / 1000);
+    const maxAge = Astro.cache.options.maxAge;
+    if (left !== null && maxAge !== undefined && left < maxAge) Astro.cache.set({ maxAge: Math.max(30, left), swr: 0 });
+  }
   return data;
 }
