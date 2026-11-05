@@ -140,24 +140,24 @@ export default function RoundRobinRenderer({ slots, matchResults = [], onCellSel
           <table className="border-collapse text-sm w-full">
             <thead>
               <tr className="bg-gray-50 border-b-2 border-red-500">
-                <th className="px-4 py-2.5 text-center text-[12px] font-bold text-gray-800 min-w-[220px]">
+                <th className="px-2 py-1.5 text-center text-[12px] font-bold text-gray-800 min-w-[132px] sm:min-w-[170px]">
                   決勝リーグ
                 </th>
                 {players.map((p, i) => (
                   <th
                     key={`col-${i}`}
-                    className="border-l border-gray-200 px-3 py-2.5 text-center text-[12px] font-bold text-gray-800 whitespace-nowrap min-w-[96px]"
+                    className="border-l border-gray-200 px-1.5 py-1.5 text-center text-[12px] font-bold text-gray-800 whitespace-nowrap min-w-[58px] sm:min-w-[72px]"
                   >
                     {surnameLabel(p.name)}
                   </th>
                 ))}
-                <th className="border-l border-gray-200 px-3 py-2.5 text-center text-[12px] font-bold text-gray-800 min-w-[84px]">
+                <th className="border-l border-gray-200 px-1.5 py-1.5 text-center text-[12px] font-bold text-gray-800 min-w-[52px] sm:min-w-[64px]">
                   勝敗
                 </th>
-                <th className="border-l border-gray-200 px-2 py-2.5 text-center text-[12px] font-bold text-gray-800 min-w-[72px]">
+                <th className="border-l border-gray-200 px-1.5 py-1.5 text-center text-[12px] font-bold text-gray-800 min-w-[44px] sm:min-w-[56px]">
                   勝率
                 </th>
-                <th className="border-l border-gray-200 px-3 py-2.5 text-center text-[12px] font-bold text-gray-800 min-w-[72px]">
+                <th className="border-l border-gray-200 px-1.5 py-1.5 text-center text-[12px] font-bold text-gray-800 min-w-[44px] sm:min-w-[56px]">
                   順位
                 </th>
               </tr>
@@ -172,7 +172,7 @@ export default function RoundRobinRenderer({ slots, matchResults = [], onCellSel
                     {/* 選手名セル（名前修正モードではタップで修正） */}
                     <td
                       onClick={onPlayerSelect && player.entryId ? () => onPlayerSelect(player.entryId!) : undefined}
-                      className={`border-t border-gray-200 px-3 py-2.5 whitespace-nowrap ${
+                      className={`border-t border-gray-200 px-1.5 py-1.5 whitespace-nowrap ${
                         onPlayerSelect && player.entryId ? 'cursor-pointer hover:bg-primary-50' : ''
                       }`}
                     >
@@ -201,7 +201,7 @@ export default function RoundRobinRenderer({ slots, matchResults = [], onCellSel
                           key={`cell-${rowIdx}-${colIdx}`}
                           onClick={clickable ? () => onCellSelect!(cell.match!.round, cell.match!.position) : undefined}
                           // 結果画像と同じ体裁：勝った側は淡い赤地、負けた側は白地
-                          className={`border-t border-l border-gray-200 px-2 py-2.5 text-center relative ${
+                          className={`border-t border-l border-gray-200 px-1.5 py-1.5 text-center relative ${
                             isSelf ? 'bg-gray-100' : cell.text ? (cell.isWin ? 'bg-red-50' : 'bg-white') : ''
                           } ${clickable ? 'cursor-pointer hover:bg-primary-50' : ''}`}
                         >
@@ -212,7 +212,7 @@ export default function RoundRobinRenderer({ slots, matchResults = [], onCellSel
                             </svg>
                           ) : cell.text ? (
                             // バッジにはせず、勝者=赤・敗者=グレーの文字だけで見せる
-                            <span className={`text-[14px] font-bold ${cell.isWin ? 'text-red-600' : 'text-gray-500'}`}>
+                            <span className={`text-[13px] font-bold ${cell.isWin ? 'text-red-600' : 'text-gray-500'}`}>
                               {cell.text}
                             </span>
                           ) : clickable ? (
@@ -224,20 +224,20 @@ export default function RoundRobinRenderer({ slots, matchResults = [], onCellSel
                       );
                     })}
                     {/* 勝敗 */}
-                    <td className="border-t border-l border-gray-200 px-2 py-2.5 text-center font-bold text-gray-700 tabular-nums whitespace-nowrap">
+                    <td className="border-t border-l border-gray-200 px-1.5 py-1.5 text-center font-bold text-gray-700 tabular-nums whitespace-nowrap">
                       {stats[rowIdx].played > 0
                         ? `${stats[rowIdx].wins}-${stats[rowIdx].losses}`
                         : ''}
                     </td>
                     {/* 勝率（取得ゲーム率） */}
-                    <td className="border-t border-l border-gray-200 px-2 py-2.5 text-center text-[12px] text-gray-500 tabular-nums whitespace-nowrap">
+                    <td className="border-t border-l border-gray-200 px-1.5 py-1.5 text-center text-[12px] text-gray-500 tabular-nums whitespace-nowrap">
                       {stats[rowIdx].gamesWon + stats[rowIdx].gamesLost > 0
                         ? stats[rowIdx].gameRate.toFixed(3)
                         : ''}
                     </td>
                     {/* 順位（全結果が揃うまで非表示。1位は赤字） */}
-                    <td className={`border-t border-l border-gray-200 px-2 py-2.5 text-center font-bold whitespace-nowrap ${
-                      rank === 1 ? 'text-red-600 text-[15px]' : 'text-gray-600 text-[14px]'
+                    <td className={`border-t border-l border-gray-200 px-1.5 py-1.5 text-center font-bold whitespace-nowrap ${
+                      rank === 1 ? 'text-red-600 text-[14px]' : 'text-gray-600 text-[14px]'
                     }`}>
                       {allFinished && rank ? `${rank}位` : ''}
                     </td>

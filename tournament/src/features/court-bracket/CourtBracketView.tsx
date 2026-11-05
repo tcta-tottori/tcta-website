@@ -59,21 +59,26 @@ const LINE_GRAY = '#a6a6a6';
 /** 敗者スコア・注記のグレー */
 const SCORE_GRAY = '#767676';
 
-const SLOT_HEIGHT = 36;
+// 1 試合ずつが大きすぎないよう、詰めつつ読める大きさにしてある（スマホでも広い範囲が見えるように）
+const SLOT_HEIGHT = 28;
 // ダブルスはペアを1人ずつ2行（氏名＋所属）で表示するので枠を高くする。
-const SLOT_HEIGHT_DOUBLES = 52;
+const SLOT_HEIGHT_DOUBLES = 42;
 /**
  * 先頭列に並べる枠どうしの余白。
  * 全回戦表示でも回戦を隠したときでも同じ余白で並ぶよう、
  * 「枠の高さ＋この値」を共通の行ピッチとして使う。
  */
-const LEAF_GAP = 16;
-const OFFSET_Y = 40;
+const LEAF_GAP = 6;
+const OFFSET_Y = 26;
 // vs表示（両者確定）のカードは氏名＋所属を上下2段で表示するため背が高い。
 // コート番号を左側に大きく表示し、氏名・所属も読みやすい大きさにするため背を高くする。
-const CARD_H_VS = 66;
+const CARD_H_VS = 50;
 // ダブルスは1組が2行になるので、vsカードは合計4行ぶんの高さが要る。
-const CARD_H_VS_DOUBLES = 96;
+const CARD_H_VS_DOUBLES = 78;
+
+/** 全体表示で縮める下限（これより小さいと字が読めず、押しにくい）。スマホは字が小さくなりすぎないよう高めにする */
+const MIN_FIT_PC = 0.6;
+const MIN_FIT_MOBILE = 0.72;
 
 function useIsMobile() {
   const [isMobile, setIsMobile] = React.useState(
@@ -102,6 +107,17 @@ export default function CourtBracketView({
   nameEditMode = false,
 }: CourtBracketViewProps) {
   const isMobile = useIsMobile();
+  // 全体表示（画面の幅に合わせて縮める）。既定は全体
+  const [fit, setFit] = React.useState(true);
+  const boxRef = React.useRef<HTMLDivElement>(null);
+  const [boxW, setBoxW] = React.useState(0);
+  React.useEffect(() => {
+    const el = boxRef.current;
+    if (!el || typeof ResizeObserver === 'undefined') return;
+    const ro = new ResizeObserver(() => setBoxW(el.clientWidth));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
   const isDoubles = eventType === 'Doubles';
   // ダブルスはペアを1人ずつ2行で書くため、枠・カード高さを1段大きくする。
   const slotH = isDoubles ? SLOT_HEIGHT_DOUBLES : SLOT_HEIGHT;
@@ -109,9 +125,9 @@ export default function CourtBracketView({
   // 選手の枠が等間隔で並ぶ行ピッチ（全回戦表示・回戦を隠したときで共通）
   const ySpacing = slotH + LEAF_GAP;
   // 所属を省略せず表示しつつ、幅は最適化（広すぎない）
-  const slotW = isDoubles ? (isMobile ? 220 : 285) : (isMobile ? 185 : 205);
-  const xSpacing = isMobile ? 56 : 78;
-  const offsetX = isMobile ? 10 : 20;
+  const slotW = isDoubles ? (isMobile ? 196 : 250) : (isMobile ? 150 : 178);
+  const xSpacing = isMobile ? 18 : 34;
+  const offsetX = isMobile ? 6 : 12;
   const roundsCount = Math.log2(drawSize);
   const halfSize = drawSize / 2;
 
@@ -280,15 +296,16 @@ export default function CourtBracketView({
         )}
         <div className="flex-1 min-w-0 leading-tight self-center">
           {names.map((n, i) => (
-            <div key={i} className={`truncate ${opt.nameCls}`} title={n}>{n}</div>
+            <div key={i} className={`truncate min-w-[3.5em] ${opt.nameCls}`} title={n}>{n}</div>
           ))}
         </div>
         {affiliations.length > 0 && (
-          <div className={`leading-tight text-right self-center ${multi ? 'shrink min-w-0 max-w-[46%]' : 'shrink-0'}`}>
+          // 枠が狭いときは所属のほうを先に省略して、氏名を残す
+          <div className={`leading-tight text-right self-center shrink min-w-0 ${multi ? 'max-w-[46%]' : 'max-w-[42%]'}`}>
             {affiliations.map((a, i) => (
               <div
                 key={i}
-                className={`${multi ? 'truncate' : 'whitespace-nowrap'} ${opt.affCls}`}
+                className={`truncate ${opt.affCls}`}
                 title={a}
               >
                 {a}
@@ -312,7 +329,7 @@ export default function CourtBracketView({
       <div
         key={`rh-${r}`}
         className="absolute text-[10px] font-bold text-gray-500 text-center"
-        style={{ left: x, top: 8, width: slotW }}
+        style={{ left: x, top: 6, width: slotW }}
       >
         {displayLabel}
       </div>
@@ -498,14 +515,14 @@ export default function CourtBracketView({
             <div className="w-5 text-[10px] font-mono font-bold text-gray-600 border-r border-gray-300 pr-1 text-center shrink-0">
               {editMode ? slot.position : visibleIndex}
             </div>
-            <div className="flex-1 truncate text-[13px] text-gray-400 pl-1">
+            <div className="flex-1 truncate text-[11px] text-gray-400 pl-1">
               {isEmpty ? '空き' : 'BYE'}
             </div>
           </>
         ) : (
           nameBlock(slot.name, slot.affiliation, {
-            nameCls: 'font-semibold text-gray-900 text-[13px]',
-            affCls: 'text-[10px] text-gray-500',
+            nameCls: 'font-semibold text-gray-900 text-[12px]',
+            affCls: 'text-[9px] text-gray-500',
             number: editMode ? slot.position : visibleIndex,
           })
         )}
@@ -519,12 +536,12 @@ export default function CourtBracketView({
     const full = fullNameOf(entryId, name);
     const aff = affiliationOf(entryId);
     const num = numberOf(entryId);
-    const nameCls = `text-[13px] font-bold ${dim ? 'text-gray-600' : 'text-gray-900'}`;
+    const nameCls = `text-[12px] font-bold ${dim ? 'text-gray-600' : 'text-gray-900'}`;
     return (
       <div key={key} className="flex min-w-0">
         {nameBlock(full || '—', aff, {
           nameCls,
-          affCls: 'text-[10px] text-gray-500',
+          affCls: 'text-[9px] text-gray-500',
           number: num,
         })}
       </div>
@@ -536,9 +553,9 @@ export default function CourtBracketView({
     if (!num) return null;
     const bg = tone === 'playing' ? 'bg-primary-600' : tone === 'ready' ? 'bg-gray-600' : 'bg-gray-400';
     return (
-      <div className={`flex flex-col items-center justify-center shrink-0 text-white ${bg}`} style={{ width: 42 }}>
+      <div className={`flex flex-col items-center justify-center shrink-0 text-white ${bg}`} style={{ width: 34 }}>
         <span className="text-[8px] font-bold leading-none opacity-85">コート</span>
-        <span className="text-2xl font-black leading-none mt-0.5">{num}</span>
+        <span className="text-lg font-black leading-none mt-0.5">{num}</span>
       </div>
     );
   };
@@ -547,9 +564,9 @@ export default function CourtBracketView({
   const standbyColumn = (label: string) => {
     const num = label.match(/(\d+)/)?.[1] ?? '';
     return (
-      <div className="flex flex-col items-center justify-center shrink-0 text-white bg-gray-400" style={{ width: 42 }}>
+      <div className="flex flex-col items-center justify-center shrink-0 text-white bg-gray-400" style={{ width: 34 }}>
         <span className="text-[8px] font-bold leading-none opacity-85">控え</span>
-        <span className="text-xl font-black leading-none mt-0.5">{num}</span>
+        <span className="text-base font-black leading-none mt-0.5">{num}</span>
       </div>
     );
   };
@@ -559,7 +576,7 @@ export default function CourtBracketView({
   const enterColumn = (interactive: boolean) => (
     <div
       className={`flex flex-col items-center justify-center shrink-0 text-white ${interactive ? 'bg-primary-600' : 'bg-gray-600'}`}
-      style={{ width: 42 }}
+      style={{ width: 34 }}
     >
       {interactive ? (
         <>
@@ -649,7 +666,7 @@ export default function CourtBracketView({
               nameCls: isFinal
                 ? 'text-[13px] font-bold text-primary-700'
                 : 'text-[12px] font-semibold text-gray-800',
-              affCls: 'text-[10px] text-gray-500',
+              affCls: 'text-[9px] text-gray-500',
             })}
           </div>
         );
@@ -748,9 +765,28 @@ export default function CourtBracketView({
     ? Math.max(baseHeight, thirdPlaceTop + cardHVs + OFFSET_Y)
     : baseHeight;
 
+  // 画面の幅に収まるよう縮めて全体を見せる（字が読めるよう PC は 60%、スマホは 72% まで。収まらない分は横に送る）。「100%」で元の大きさに戻す
+  const scale = fit && boxW > 0 ? Math.max(isMobile ? MIN_FIT_MOBILE : MIN_FIT_PC, Math.min(1, (boxW - 4) / containerWidth)) : 1;
+  const canFit = boxW > 0 && containerWidth > boxW;
+
   return (
-    <div className="relative overflow-auto" style={{ width: '100%', height: '100%' }}>
-      <div className="relative" style={{ width: containerWidth, height: containerHeight, minHeight: '100%' }}>
+    <div ref={boxRef} className="relative overflow-auto court-bracket-scroll" style={{ width: '100%', height: '100%' }}>
+      {canFit && (
+        // 横に送っても右上に残るよう、見えている幅の帯（高さ 0）に置く
+        <div className="cbv-fit-bar" style={{ width: boxW }}>
+        <button
+          type="button"
+          className="cbv-fit"
+          onClick={() => setFit((v) => !v)}
+          aria-pressed={fit}
+          title={fit ? '元の大きさで見る' : '画面の幅に合わせて全体を見る'}
+        >
+          {fit ? '100%' : '全体'}
+        </button>
+        </div>
+      )}
+      <div style={{ width: containerWidth * scale, height: containerHeight * scale, position: 'relative' }}>
+      <div className="relative" style={{ width: containerWidth, height: containerHeight, transform: scale < 1 ? `scale(${scale})` : undefined, transformOrigin: '0 0' }}>
         {/* 回戦ヘッダー */}
         {roundHeaders}
 
@@ -764,6 +800,7 @@ export default function CourtBracketView({
 
         {/* 対戦ノード */}
         {matchElements}
+      </div>
       </div>
     </div>
   );
