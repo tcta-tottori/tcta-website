@@ -88,12 +88,14 @@ async function issueToken() {
   } catch (e) {
     fail(`Worker（${WORKER}）に送信用の鍵を入れられません（${e.message}）。API トークンに Workers Scripts (Edit) の権限があるか確かめてください。`);
   }
-  // 秘密の反映には数秒かかる
-  for (let i = 0; i < 30; i++) {
+  // 秘密の反映には数秒かかり、Cloudflare の拠点ごとに少しずれる。続けて 5 回通ったら使う
+  let streak = 0;
+  for (let i = 0; i < 60; i++) {
     const res = await fetch(`${APP_URL}/api/data/files`, { headers: { Authorization: `Bearer ${token}` } });
-    if (res.ok) return token;
     if (res.status === 503) fail('Worker にデータベース（DATA）がまだありません。配備（GitHub Actions の Deploy tournament app）が終わってから試してください。');
-    await new Promise((r) => setTimeout(r, 2000));
+    streak = res.ok ? streak + 1 : 0;
+    if (streak >= 5) return token;
+    await new Promise((r) => setTimeout(r, res.ok ? 300 : 2000));
   }
   fail('送信用の鍵を入れましたが、公開先がまだ受け付けません。少し待ってからもう一度試してください。');
 }
@@ -107,7 +109,13 @@ function pushToken() {
 async function app(method, path, { body, type } = {}) {
   const headers = { Authorization: `Bearer ${await pushToken()}` };
   if (type) headers['Content-Type'] = type;
-  const res = await fetch(`${APP_URL}${path}`, { method, headers, body });
+  // 鍵を入れ替えた直後は、拠点によってまだ古い鍵で断られることがあるので、少し待って送り直す
+  let res;
+  for (let i = 0; i < 5; i++) {
+    res = await fetch(`${APP_URL}${path}`, { method, headers, body });
+    if (res.status !== 401) break;
+    await new Promise((r) => setTimeout(r, 3000));
+  }
   const json = await res.json().catch(() => null);
   if (!res.ok) fail(`${method} ${path} が失敗しました（${res.status} ${json?.error ?? ''}）`);
   return json;

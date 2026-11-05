@@ -506,12 +506,26 @@ function extractLaterRoundMatchTimes(
         if (t != null) feederMax = Math.max(feederMax, t);
       }
     }
-    // 種目内の全下位ラウンド時刻より後（階段状の単調増加）
+    // 種目内の全下位ラウンド時刻より後（階段状の単調増加）。
+    // ただし両側とも不戦勝で上がってくる試合（直前の試合がどちらも実在しない）は、
+    // 1回戦と同じ時刻（例: 9:00）に始まるのがふつうなので、この条件をかけない。
+    const feederIsRealMatch = (id: string): boolean => {
+      const fm = byId.get(id);
+      if (!fm) return false;
+      if (fm.round === 1) {
+        const lo = 2 * fm.mnr - 1;
+        return rowByPos.has(lo) && rowByPos.has(lo + 1);
+      }
+      return fm.feeders.some(feederIsRealMatch);
+    };
+    const byeOnly = m.feeders.length > 0 && !m.feeders.some(feederIsRealMatch);
     let lowerMax = 0;
-    for (const mm of matches) {
-      if (mm.time && mm.round < m.round) {
-        const t = hmToMinutes(mm.time);
-        if (t != null) lowerMax = Math.max(lowerMax, t);
+    if (!byeOnly) {
+      for (const mm of matches) {
+        if (mm.time && mm.round < m.round) {
+          const t = hmToMinutes(mm.time);
+          if (t != null) lowerMax = Math.max(lowerMax, t);
+        }
       }
     }
     if (candMin > feederMax && candMin > lowerMax) {
