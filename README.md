@@ -14,7 +14,7 @@ Cloudflare Workers で公開しています（2026-10-21 に GitHub Pages から
 .
 ├── src/
 │   ├── pages/            各ページ。URLはファイル名そのまま（about.astro → /about.html）
-│   │   ├── index.astro          トップ（ヒーロー／エントリー受付中の大会／大会情報の一覧（開催前＋終了2週間）／お知らせ／
+│   │   ├── index.astro          トップ（ヒーロー／エントリー受付中の大会／直近大会情報（開催前＋終了2週間。3件＋薄い4件目→VIEW ALL）／お知らせ／
 │   │   │                         リンク集／コート案内）
 │   │   ├── tournaments.astro    大会情報（月ごとのカレンダー・全19大会・状態フィルタ）
 │   │   ├── results.astro        大会結果（年度の選択 → 大会名の一覧）

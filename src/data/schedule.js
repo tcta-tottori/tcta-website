@@ -12,6 +12,10 @@
 //   spare_note  … 予備日ではない補足（'荒天中止' など）
 //
 // ■ 受付状態（管理画面の選択肢）  終了／受付終了／受付中／まもなく受付／本日開催（「まもなく受付」は「未受付」と表示する）
+//   開催日の 9:00〜18:00（日本時間）は、管理画面を直さなくても自動で「開催中」にする（liveStatus）。
+//   18:00 を過ぎたら自動で「終了」にする。ただし管理画面で「本日開催」を選んでいるときは、その日のうちは「開催中」のまま
+//   （試合が延びたときなどの指示。翌日には「終了」になる）。管理画面で「終了」を選べば 18:00 より前でも「終了」。
+//   期間の大会（表記が「1/12〜2/23」のように1日でないもの）は自動にせず、管理画面の受付状態のまま。
 // ■ 登録区分（管理画面の選択肢）  県登録／市登録／登録不要
 // ■ 区分                          協会主催（一覧に出る）／預かり（一覧の下に別立て）／その他（トップのカードだけ）
 //
@@ -33,7 +37,7 @@ export const STATUS_LABEL = {
   closed: { label: '受付終了', badge: 'badge--closed' },
   open: { label: '受付中', badge: 'badge--open' },
   soon: { label: '未受付', badge: 'badge--muted' },
-  live: { label: '本日開催', badge: 'badge--open' },
+  live: { label: '開催中', badge: 'badge--open' },
 };
 
 export const REG_LABEL = {
@@ -107,6 +111,46 @@ export function autoStatus(status, due, date, now = Date.now()) {
   return at !== null && now >= at ? 'closed' : status;
 }
 
+/** 開催日に自動で「開催中」にする時間（日本時間の時。LIVE_FROM 時から LIVE_UNTIL 時の手前まで） */
+export const LIVE_FROM = 9;
+export const LIVE_UNTIL = 18;
+/** 1日で終わる大会か（表記が無いか「11月15日（日）」の形）。期間の大会は自動で開催中にしない */
+export const isSingleDay = (label) => !label || /^\d+月\d+日（.）$/.test(label);
+/** その日の H 時（日本時間）を UTC のミリ秒で。date は 'YYYY-MM-DD' */
+const jstAt = (date, hour) => {
+  const [y, m, d] = String(date).split('-').map(Number);
+  return Date.UTC(y, m - 1, d, hour, 0, 0) - JST_OFFSET;
+};
+/**
+ * 開催日の自動の状態。
+ *   開催日の 9:00 より前 … 管理画面の状態のまま
+ *   9:00〜18:00         … 開催中（管理画面で「終了」にしてあれば終了）
+ *   18:00 以降          … 終了（管理画面で「本日開催」を選んであれば、その日のうちは開催中のまま）
+ *   開催日の翌日以降     … 終了
+ */
+export function liveStatus(status, date, label, now = Date.now()) {
+  if (!date || !isSingleDay(label) || status === 'done') return status;
+  if (now < jstAt(date, LIVE_FROM)) return status;
+  if (now < jstAt(date, LIVE_UNTIL)) return 'live';
+  if (now < jstAt(date, 24) && status === 'live') return 'live';
+  return 'done';
+}
+/**
+ * 表示の状態が次に切り替わるまでの秒数（無ければ null）。ページの保存（1日）を、その時刻で切らすのに使う（src/lib/cms.js）。
+ * 切り替わる時刻は、1日の大会の開催日の 9:00・18:00・24:00 と、受付中の大会の締切（20:00）
+ */
+export function secondsToNextSwitch(rows, now = Date.now()) {
+  let next = Infinity;
+  for (const t of rows) {
+    const date = String(t.date ?? '').slice(0, 10);
+    if (!date) continue;
+    const at = [dueAt(t.due, date)];
+    if (isSingleDay(t.label)) at.push(jstAt(date, LIVE_FROM), jstAt(date, LIVE_UNTIL), jstAt(date, 24));
+    for (const x of at) if (x !== null && x > now && x < next) next = x;
+  }
+  return Number.isFinite(next) ? Math.ceil((next - now) / 1000) : null;
+}
+
 /**
  * 協会のサイトに大会ページを作らず、外部のページへ飛ばす大会（大会名で見分ける）。
  * 大会情報ページの一覧で、大会名と要項のボタンを押すとこの URL が別タブで開く（トップの大会カードの要項も同じ。大会ページがある大会はそちらが優先）。
@@ -143,7 +187,7 @@ export function scheduleRow(t) {
     event: t.event || '',
     place: t.place || '',
     due: t.due || '',
-    status: autoStatus(STATE_KEY[stateOf(t)] ?? 'soon', t.due, date),
+    status: liveStatus(autoStatus(STATE_KEY[stateOf(t)] ?? 'soon', t.due, date), date, t.label || ''),
     reg: REG_KEY[t.reg] ?? 'free',
     externalUrl: externalUrl(t.name),
     externalResultUrl: externalResultUrl(t.name, t.nendo),

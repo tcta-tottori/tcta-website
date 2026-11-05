@@ -2131,6 +2131,20 @@ a.entry-row:hover .sqbtn { background: var(--red); border-color: var(--red); col
   pointer-events: none;
 }
 .news-list--peek .news-row { border-bottom: 0; }
+/* トップの大会情報の4件目（index.html.astro の .tl-peek）。お知らせの4件目と同じく薄くフェードさせ、右端に VIEW ALL を重ねる。
+   スマホは1行が高い（開催日｜状態 → 大会名 → 種目｜会場 → ボタン）ので、上の方だけを見せる */
+.tl-peek__rows {
+  opacity: .34;
+  -webkit-mask-image: linear-gradient(180deg, #000 0%, transparent 92%);
+  mask-image: linear-gradient(180deg, #000 0%, transparent 92%);
+  pointer-events: none;
+  max-height: 120px;
+  overflow: hidden;
+}
+.tl-peek__rows .entry-list { margin-top: 0; border-top: 0; }
+.tl-peek__rows .entry-row { border-bottom: 0; }
+.tl-peek .news-peek__more { z-index: 1; }
+
 /* トップのお知らせは、スマホ・タブレットが3件（＋薄い4件目）、PC が5件（＋薄い6件目）。
    .news-pc は PC だけ、.news-sp はスマホ・タブレットだけに出す行（index.html.astro） */
 @media (max-width: 1023px) { #news .news-pc { display: none; } }
