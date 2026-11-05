@@ -64,7 +64,7 @@ export default function EntryImport({ onClose }: EntryImportProps) {
       const wb = XLSX.read(buffer, { type: 'array' });
       const sheetName = wb.SheetNames[0];
       const sheet = wb.Sheets[sheetName];
-      const rows = XLSX.utils.sheet_to_json<any[]>(sheet, { header: 1 });
+      const rows = XLSX.utils.sheet_to_json<unknown[]>(sheet, { header: 1 });
 
       let startIndex = 0;
       if (rows.length > 0 && Array.isArray(rows[0])) {
@@ -244,81 +244,67 @@ export default function EntryImport({ onClose }: EntryImportProps) {
 
   const renderStatusBadge = (row: ImportRow) => {
     if (row.status === 'matched' && row.matchedEventId) {
-      return (
-        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-primary-100 text-gray-900">
-          一致
-        </span>
-      );
+      return <span className="sk-chip ent-imp__chip">一致</span>;
     }
     if (row.status === 'partial') {
       return (
-        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-primary-100 text-gray-900">
+        <span className="sk-chip ent-imp__chip">
           {row.matchedPlayerId && row.isDoubles && !row.matchedPartnerId ? 'パートナー未一致' : '種目不一致'}
         </span>
       );
     }
-    return (
-      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">
-        未登録選手
-      </span>
-    );
+    return <span className="sk-chip sk-chip--red ent-imp__chip">未登録選手</span>;
   };
 
   const renderPartnerStatusBadge = (row: ImportRow) => {
     if (!row.isDoubles || !row.rawPartnerName) return null;
     if (row.matchedPartnerId) {
-      return (
-        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-primary-100 text-gray-900">
-          一致
-        </span>
-      );
+      return <span className="sk-chip ent-imp__chip">一致</span>;
     }
-    return (
-      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">
-        未登録
-      </span>
-    );
+    return <span className="sk-chip sk-chip--red ent-imp__chip">未登録</span>;
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/50 backdrop-blur-sm">
-      <div className="bg-white rounded-xl shadow-2xl w-full max-w-6xl h-[85vh] flex flex-col overflow-hidden">
+    <div className="ent-imp" data-no-reveal role="dialog" aria-modal="true" aria-label="エントリーデータの一括インポート">
+      <div className="ent-imp__panel">
 
         {/* Header */}
-        <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-          <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
-            <FileSpreadsheet className="w-5 h-5 text-gray-600" />
-            エントリーデータの一括インポート
-          </h2>
-          <button onClick={onClose} className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+        <div className="sk-sec__head ent-imp__head">
+          <span className="sk-sec__mark" aria-hidden="true" />
+          <div className="sk-sec__titles">
+            <p className="sk-sec__en">Import</p>
+            <h2 className="sk-sec__title">
+              <FileSpreadsheet className="w-5 h-5" />
+              エントリーデータの一括インポート
+            </h2>
+          </div>
+          <button onClick={onClose} className="hub-icon-btn" aria-label="閉じる">
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-auto p-6 flex flex-col gap-6">
+        <div className="ent-imp__body">
           {!summary ? (
              <div
-               className={`border-2 border-dashed rounded-xl p-12 text-center transition-all ${
-                 isDragOver ? 'border-gray-500 bg-gray-50' : 'border-gray-300 hover:bg-gray-50'
-               }`}
+               className={`ent-imp__drop ${isDragOver ? 'is-over' : ''}`}
                onDragOver={e => { e.preventDefault(); setIsDragOver(true); }}
                onDragLeave={() => setIsDragOver(false)}
                onDrop={handleDrop}
              >
                <input type="file" ref={fileInputRef} className="hidden" accept=".xlsx,.xls,.csv" onChange={handleFileUpload} />
-               <Upload className={`w-12 h-12 mx-auto mb-4 ${isDragOver ? 'text-gray-500' : 'text-gray-400'}`} />
-               <h3 className="text-lg font-bold text-gray-700 mb-2">Excel/CSVファイルをアップロード</h3>
-               <p className="text-sm text-gray-500 mb-6">ここへファイルをドラッグ＆ドロップ、または下のボタンから選択</p>
+               <Upload className="ent-imp__ico" />
+               <h3 className="ent-imp__title">Excel/CSVファイルをアップロード</h3>
+               <p className="ent-imp__text">ここへファイルをドラッグ＆ドロップ、または下のボタンから選択</p>
                <button
                  onClick={() => fileInputRef.current?.click()}
-                 className="px-6 py-2.5 bg-gray-600 text-white font-semibold rounded-lg shadow-sm hover:bg-gray-700 transition-colors"
+                 className="btn btn--primary sk-btn sk-btn--lg"
                >
                  ファイルを選択
                </button>
-               <div className="mt-8 text-xs text-gray-400 text-left max-w-lg mx-auto bg-gray-50 p-4 rounded-lg">
-                 <p className="font-semibold mb-1 text-gray-500">【推奨フォーマット】</p>
-                 <ul className="list-disc list-inside space-y-1">
+               <div className="ent-imp__fmt">
+                 <p className="ent-imp__fmt-title">【推奨フォーマット】</p>
+                 <ul>
                    <li>1列目: 選手名 (必須)</li>
                    <li>2列目: 所属 (任意)</li>
                    <li>3列目: 種目名 (部分一致可, 例: "一般男子S")</li>
@@ -328,44 +314,43 @@ export default function EntryImport({ onClose }: EntryImportProps) {
                </div>
              </div>
           ) : (
-            <div className="flex flex-col h-full gap-4">
+            <div className="ent-imp__result">
                {/* Summary Alert */}
-               <div className="bg-gray-50 border border-gray-100 p-4 rounded-lg flex items-start gap-3">
-                 <CheckCircle2 className="w-5 h-5 text-gray-600 shrink-0 mt-0.5" />
+               <div className="sk-note ent-imp__summary">
+                 <CheckCircle2 className="w-5 h-5 shrink-0" />
                  <div>
-                   <h4 className="font-bold text-gray-900">ファイルの読み込みが完了しました</h4>
-                   <p className="text-sm text-gray-700 mt-1">
+                   <h4 className="ent-imp__sum-title">ファイルの読み込みが完了しました</h4>
+                   <p>
                      全 {summary.total} 件中、
-                     <strong className="font-bold">{summary.matched} 件</strong> が完全一致、
-                     <strong className="font-bold">{summary.partial} 件</strong> が部分一致です。
+                     <strong>{summary.matched} 件</strong> が完全一致、
+                     <strong>{summary.partial} 件</strong> が部分一致です。
                    </p>
                  </div>
                </div>
 
                {/* Table */}
-               <div className="border border-gray-200 rounded-lg overflow-hidden flex-1 flex flex-col min-h-0">
-                 <div className="overflow-y-auto flex-1">
-                   <table className="min-w-full text-sm">
-                     <thead className="bg-gray-50 sticky top-0 z-10 shadow-sm">
+               <div className="sk-table-wrap ent-imp__table">
+                   <table className="sk-table">
+                     <thead>
                        <tr>
-                         <th className="px-4 py-2.5 text-left border-b w-10">
-                           <input type="checkbox" className="rounded text-gray-600"
+                         <th className="ent-imp__chk">
+                           <input type="checkbox"
                              checked={importRows.every(r => r.selected)}
                              onChange={e => setImportRows(importRows.map(r => ({ ...r, selected: e.target.checked })))}
                            />
                          </th>
-                         <th className="px-4 py-2.5 text-left font-semibold text-gray-600 border-b">読込氏名</th>
-                         <th className="px-4 py-2.5 text-left font-semibold text-gray-600 border-b">パートナー</th>
-                         <th className="px-4 py-2.5 text-left font-semibold text-gray-600 border-b">種目（Excel）</th>
-                         <th className="px-4 py-2.5 text-left font-semibold text-gray-600 border-b">照合ステータス</th>
-                         <th className="px-4 py-2.5 text-left font-semibold text-gray-600 border-b">マスタ氏名・種目ID</th>
+                         <th>読込氏名</th>
+                         <th>パートナー</th>
+                         <th>種目（Excel）</th>
+                         <th>照合ステータス</th>
+                         <th>マスタ氏名・種目ID</th>
                        </tr>
                      </thead>
-                     <tbody className="divide-y divide-gray-100 bg-white">
+                     <tbody>
                        {importRows.map((row, idx) => (
-                         <tr key={idx} className={row.selected ? '' : 'bg-gray-50 opacity-50'}>
-                           <td className="px-4 py-2">
-                             <input type="checkbox" className="rounded text-gray-600"
+                         <tr key={idx} className={row.selected ? '' : 'is-off'}>
+                           <td className="ent-imp__chk">
+                             <input type="checkbox"
                                checked={row.selected}
                                onChange={e => {
                                  const copy = [...importRows];
@@ -374,56 +359,55 @@ export default function EntryImport({ onClose }: EntryImportProps) {
                                }}
                              />
                            </td>
-                           <td className="px-4 py-2">
-                             <div className="font-medium text-gray-800">{row.rawName}</div>
-                             <div className="text-xs text-gray-500">{row.rawAffiliation}</div>
+                           <td>
+                             <div className="ent-imp__name">{row.rawName}</div>
+                             <div className="ent-imp__sub">{row.rawAffiliation}</div>
                            </td>
-                           <td className="px-4 py-2">
+                           <td>
                              {row.isDoubles && row.rawPartnerName ? (
                                <div>
-                                 <div className="font-medium text-gray-800">{row.rawPartnerName}</div>
-                                 <div className="text-xs text-gray-500">{row.rawPartnerAffiliation}</div>
+                                 <div className="ent-imp__name">{row.rawPartnerName}</div>
+                                 <div className="ent-imp__sub">{row.rawPartnerAffiliation}</div>
                                  <div className="mt-1">{renderPartnerStatusBadge(row)}</div>
                                </div>
                              ) : row.isDoubles ? (
-                               <span className="text-xs text-gray-400">パートナー未指定</span>
+                               <span className="ent-imp__sub">パートナー未指定</span>
                              ) : (
-                               <span className="text-xs text-gray-400">-</span>
+                               <span className="ent-imp__sub">-</span>
                              )}
                            </td>
-                           <td className="px-4 py-2 text-gray-600">{row.rawEventName || '-'}</td>
-                           <td className="px-4 py-2">
+                           <td>{row.rawEventName || '-'}</td>
+                           <td>
                              {renderStatusBadge(row)}
                            </td>
-                           <td className="px-4 py-2 text-xs">
-                             <div className="text-gray-900">{row.matchedPlayerId || '-'}</div>
+                           <td className="ent-imp__ids">
+                             <div>{row.matchedPlayerId || '-'}</div>
                              {row.isDoubles && row.matchedPartnerId && (
-                               <div className="text-gray-600">Partner: {row.matchedPartnerId}</div>
+                               <div>Partner: {row.matchedPartnerId}</div>
                              )}
-                             <div className="text-gray-500 font-mono mt-0.5">{row.matchedEventId || '-'}</div>
+                             <div className="ent-imp__sub">{row.matchedEventId || '-'}</div>
                            </td>
                          </tr>
                        ))}
                      </tbody>
                    </table>
-                 </div>
                </div>
             </div>
           )}
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 border-t bg-gray-50 flex justify-end gap-3 shrink-0">
+        <div className="ent-imp__foot">
           <button
             onClick={onClose}
-            className="px-5 py-2 font-medium text-gray-600 hover:bg-gray-200 rounded-lg transition-colors"
+            className="btn btn--outline sk-btn sk-btn--ghost"
           >
             キャンセル
           </button>
           <button
             onClick={handleRegister}
             disabled={!summary || importRows.filter(r => r.selected).length === 0 || isProcessing}
-            className="px-5 py-2 font-medium bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            className="btn btn--primary sk-btn"
           >
             {isProcessing ? (
                <><RefreshCw className="w-4 h-4 animate-spin" /> 処理中...</>

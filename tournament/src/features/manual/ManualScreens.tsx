@@ -11,10 +11,10 @@ import {
   Trophy, ArrowRight, ClipboardCheck, ListChecks, MapPin, Users, ArrowLeftRight, Pencil,
   Search, Volume2, Check, Plus, Lock, Download, X,
 } from 'lucide-react';
+import { SYSTEM_LOGO } from '../../components/site/SiteChrome';
 
 export type Device = 'mobile' | 'pc';
 
-const LOGO = `${import.meta.env.BASE_URL}site/logo-cut.png`;
 
 /** 説明と対応させる番号（赤い四角） */
 export function Marker({ n, className = '' }: { n: number; className?: string }) {
@@ -70,12 +70,18 @@ function MiniHead({ en, title, right }: { en: string; title: string; right?: Rea
 }
 
 /** 画面の上（サイトのヘッダー）。PC は横並びのメニュー、スマホは三本線 */
-function MiniHeader({ device, active = 0, marks = false }: { device: Device; active?: number; marks?: boolean }) {
+function MiniHeader({ device, active = 0, marks = false, dark = false }: { device: Device; active?: number; marks?: boolean; dark?: boolean }) {
   const items = ['大会準備', '大会進行', '配信', '選手・所属', '印刷', '設定'];
   return (
-    <div className="mm-hd">
-      <img className="mm-hd__logo" src={LOGO} alt="" onError={(e) => { (e.target as HTMLImageElement).style.visibility = 'hidden'; }} />
-      <span className="mm-hd__tag">大会運営<em>SYSTEM</em></span>
+    <div className={`mm-hd ${dark ? 'mm-hd--dark' : ''}`}>
+      <img
+        className="mm-hd__logo"
+        src={dark ? SYSTEM_LOGO.white : SYSTEM_LOGO.src}
+        alt=""
+        width={SYSTEM_LOGO.width}
+        height={SYSTEM_LOGO.height}
+        onError={(e) => { (e.target as HTMLImageElement).style.visibility = 'hidden'; }}
+      />
       {device === 'pc' ? (
         <>
           <span className="mm-hd__nav">
@@ -131,7 +137,7 @@ export function MenuMockup({ device }: { device: Device }) {
   const items = ['大会選択', '選手・所属', 'エントリー', '対戦順', 'タイムテーブル', 'ドロー', 'ダッシュボード', 'ライブ配信', '印刷', '設定'];
   return (
     <div className="mm-win mm-win--sp">
-      <MiniHeader device="mobile" marks />
+      <MiniHeader device="mobile" marks dark />
       <div className="mm-spnav">
         {items.map((it, i) => (
           <span key={it} className={`mm-spnav__item ${i === 3 ? 'is-on' : ''}`}>{it}</span>

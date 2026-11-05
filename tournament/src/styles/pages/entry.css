@@ -1,1 +1,290 @@
-/* entry の画面の見た目（app.css の「サイトの部品」を使い、足りない所だけここに書く） */
+/* entry の画面の見た目（app.css の「サイトの部品」を使い、足りない所だけここに書く）
+   エントリー受付（/entry）・抽選（/draw-lot）・ドロー表（/draw-table）・一括インポート */
+
+/* ===========================================================================
+   エントリー受付（/entry）
+   PC：左に受付の操作（貼り付く）、右に種目ごとの受付。スマホ：上から操作 → 種目の札（これだけ貼り付く）→ 種目
+   =========================================================================== */
+.ent { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; align-items: start; }
+@media (min-width: 1024px) { .ent { grid-template-columns: 300px minmax(0, 1fr); gap: 20px; } }
+
+.ent__side { min-width: 0; }
+@media (min-width: 1024px) {
+  .ent__side { position: sticky; top: calc(var(--app-sticky-top) + 12px); max-height: calc(100vh - 140px); overflow-y: auto; overscroll-behavior: contain; }
+}
+.ent__main { min-width: 0; display: flex; flex-direction: column; gap: 16px; }
+
+/* --- 受付の操作 --- */
+.ent-ctl .sk-sec__head { border-bottom-color: var(--gray-100); }
+.ent-ctl .sk-sec__toggle[aria-expanded="false"] { transform: rotate(-90deg); }
+.ent-ctl__body { display: flex; flex-direction: column; gap: 12px; padding: 14px 16px 16px; }
+.ent-ctl__row { display: flex; flex-wrap: wrap; gap: 8px; }
+.ent-seg { flex: 1 1 100%; }
+.ent-seg .hub-filter__btn { flex: 1 1 0; white-space: nowrap; display: inline-flex; align-items: center; justify-content: center; gap: 5px; min-height: 38px; padding: 8px 10px; }
+.ent-ctl__select { font-weight: 700; }
+.ent-ctl__btns { display: flex; flex-wrap: wrap; gap: 8px; }
+.ent-ctl__btns .sk-btn { flex: 1 1 auto; }
+.ent-ctl__confirm { flex-basis: 100% !important; }
+@media (min-width: 640px) and (max-width: 1023px) { .ent-ctl__confirm { flex-basis: auto !important; } }
+
+/* 合計・受付済・DEF・未受付 */
+.ent-tally { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin: 0; border: 1px solid var(--gray-200); border-radius: var(--radius); }
+.ent-tally > div { display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 9px 4px; border-left: 1px solid var(--gray-200); }
+.ent-tally > div:first-child { border-left: 0; }
+.ent-tally dt { font: 700 10.5px/1 var(--fjp); letter-spacing: .04em; color: var(--gray-500); }
+.ent-tally dd { margin: 0; font: 700 20px/1 var(--flt); color: var(--ink); font-variant-numeric: tabular-nums; }
+.ent-tally .is-on dd { color: var(--red); }
+.ent-tally .is-def dt, .ent-tally .is-def dd { color: var(--red-dark); }
+
+/* 検索 */
+.ent-search { position: relative; flex: 1 1 auto; min-width: 0; }
+.ent-search__ico { position: absolute; left: 12px; top: 50%; width: 16px; height: 16px; transform: translateY(-50%); color: var(--gray-500); pointer-events: none; }
+.app-main .ent-search__input, .ent-modal .ent-search__input { padding-left: 36px; padding-right: 32px; }
+.ent-search__input[readonly] { cursor: pointer; }
+.ent-search__clear { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); display: inline-flex; padding: 4px; border: 0; background: none; color: var(--gray-500); cursor: pointer; }
+@media (hover: hover) { .ent-search__clear:hover { color: var(--red); } }
+
+/* 検索結果（PC は操作の下に並べる） */
+.ent-hits { display: flex; flex-direction: column; max-height: calc(100vh - 360px); overflow-y: auto; border-top: 1px solid var(--gray-200); }
+.ent-hits__head { display: flex; justify-content: space-between; padding: 8px 2px; font: 700 11px/1 var(--fjp); color: var(--gray-500); }
+.ent-hit { display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 4px; border: 0; border-bottom: 1px solid var(--gray-200); background: var(--white); text-align: left; cursor: pointer; transition: background .2s; }
+.ent-hit--popup { padding: 12px 14px; }
+@media (hover: hover) { .ent-hit:hover { background: var(--red-tint); } }
+.ent-hit__mark { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border: 1px solid var(--gray-300); border-radius: var(--radius); color: transparent; background: var(--white); }
+.ent-hit.is-checked .ent-hit__mark { background: var(--red); border-color: var(--red); color: #fff; }
+.ent-hit.is-def .ent-hit__mark { border-color: var(--red); color: var(--red); background: var(--red-tint); }
+.ent-hit__body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.ent-hit__name { font: 700 14px/1.4 var(--fjp); color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ent-hit__meta { font: 400 11.5px/1.4 var(--fjp); color: var(--gray-500); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ent-hit__meta b { font-weight: 700; color: var(--gray-800); }
+.ent-hit__st { flex: none; height: 22px; font-size: 11px; }
+
+.ent-none { padding: 28px 16px; text-align: center; font: 400 13px/1.7 var(--fjp); color: var(--gray-500); }
+
+/* --- 種目の札（横に送れる。スマホではこれだけを上に貼り付ける） --- */
+.ent-evnav { margin: 0 calc(var(--gutter) * -1); padding: 0; background: var(--gray-050); border-bottom: 1px solid var(--gray-200); }
+@media (max-width: 1023px) {
+  .ent-evnav { position: sticky; top: var(--app-sticky-top); z-index: 12; }
+}
+@media (min-width: 1024px) { .ent-evnav { margin: 0; background: transparent; } }
+.ent-evnav__track { display: flex; gap: 6px; padding: 10px var(--gutter); overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+.ent-evnav__track::-webkit-scrollbar { display: none; }
+@media (min-width: 1024px) { .ent-evnav__track { flex-wrap: wrap; overflow: visible; padding: 0 0 12px; } }
+.ent-evnav__chip { flex: none; display: inline-flex; align-items: center; gap: 5px; height: 34px; padding: 0 12px; border: 1px solid var(--gray-300); border-radius: var(--radius); background: var(--white); font: 700 12.5px/1 var(--fjp); letter-spacing: .02em; color: var(--gray-600); white-space: nowrap; cursor: pointer; transition: color .2s, border-color .2s, background .2s; }
+.ent-evnav__chip svg { color: var(--gray-500); }
+@media (hover: hover) { .ent-evnav__chip:hover { border-color: var(--red); color: var(--red); } }
+.ent-evnav__chip.is-on { background: var(--ink); border-color: var(--ink); color: #fff; }
+.ent-evnav__chip.is-on svg { color: rgba(255, 255, 255, .75); }
+
+/* --- 種目の区画 --- */
+.ent-ev { background: var(--white); border: 1px solid var(--gray-200); border-radius: var(--radius); scroll-margin-top: calc(var(--app-sticky-top) + 64px); }
+@media (min-width: 1024px) { .ent-ev { scroll-margin-top: 16px; } }
+.ent-ev__head { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 10px 12px; padding: 12px 14px; border-bottom: 1px solid var(--gray-100); }
+@media (min-width: 1280px) { .ent-ev__head { grid-template-columns: minmax(0, 1fr) auto auto; padding: 14px 18px; } }
+.ent-ev__toggle { display: flex; align-items: center; gap: 12px; min-width: 0; padding: 0; border: 0; background: none; text-align: left; cursor: pointer; }
+.ent-ev__titles { display: flex; flex-direction: column; min-width: 0; }
+.ent-ev__titles .sk-sec__en { margin-bottom: 4px; }
+.ent-ev__en { display: inline-flex; align-items: center; gap: 8px; }
+.ent-ev__done { display: inline-flex; align-items: center; gap: 3px; height: 17px; padding: 0 5px; background: var(--ink); color: #fff; font: 700 10px/1 var(--fjp); letter-spacing: .02em; text-transform: none; border-radius: var(--radius); }
+.ent-ev__title { font: 700 16px/1.4 var(--fjp); letter-spacing: .02em; color: var(--ink); transition: color .2s; }
+@media (min-width: 640px) { .ent-ev__title { font-size: 17px; } }
+@media (hover: hover) { .ent-ev__toggle:hover .ent-ev__title { color: var(--red); } }
+.ent-ev__chev { flex: none; color: var(--gray-500); transition: transform .3s var(--ease); }
+.ent-ev__toggle[aria-expanded="false"] .ent-ev__chev { transform: rotate(-90deg); }
+.ent-ev__count { display: flex; align-items: center; gap: 8px; justify-self: end; }
+.ent-ev__num { display: inline-flex; align-items: baseline; gap: 3px; white-space: nowrap; }
+.ent-ev__num b { font: 700 22px/1 var(--flt); color: var(--red); font-variant-numeric: tabular-nums; }
+.ent-ev__num small { font: 700 13px/1 var(--flt); color: var(--gray-500); }
+.ent-ev__actions { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 6px; }
+@media (min-width: 1280px) { .ent-ev__actions { grid-column: auto; grid-row: 1; grid-column-start: 2; justify-content: flex-end; } .ent-ev__count { grid-column-start: 3; } }
+.ent-ev.is-confirmed { background: var(--gray-050); }
+.ent-ev.is-confirmed .ent-ev__num b { color: var(--ink); }
+.app-main .ent-btn--danger { color: var(--red); border-color: var(--red); }
+
+/* 種目の数（ドロー・エントリー・DEF・開始） */
+.ent-stats { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 16px; padding: 9px 14px; border-bottom: 1px solid var(--gray-100); background: var(--gray-050); font: 400 12px/1.4 var(--fjp); color: var(--gray-600); }
+.ent-stats b { margin-left: 3px; font: 700 13px/1 var(--flt); color: var(--ink); }
+.ent-stats__def b { color: var(--red); }
+.ent-stats__time { display: inline-flex; align-items: center; gap: 4px; color: var(--ink); }
+.ent-stats__time svg { color: var(--red); }
+
+/* --- 選手の一覧（細い罫の行） --- */
+.ent-list.rlist { display: block; border-top: 0; } /* サイトの .rlist は PC で 2 列の格子になるので、ここは 1 列に戻す */
+.ent-row { display: flex; align-items: center; gap: 10px; padding: 9px 14px; border-bottom: 1px solid var(--gray-200); transition: background .2s, opacity .2s; }
+.ent-row:last-child { border-bottom: 0; }
+@media (min-width: 640px) { .ent-row { gap: 14px; padding: 10px 18px; } }
+@media (hover: hover) { .ent-row:hover { background: var(--gray-050); } }
+.ent-row.is-checked { background: var(--red-tint); }
+.ent-row.is-dim { opacity: .25; }
+.ent-row.is-hit { box-shadow: inset 3px 0 0 var(--red); }
+.ent-row__no { flex: none; width: 22px; font: 700 12px/1 var(--flt); color: var(--gray-500); text-align: right; font-variant-numeric: tabular-nums; }
+.ent-row__main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; padding: 2px 0; border: 0; background: none; text-align: left; cursor: pointer; }
+.ent-row__name { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.ent-row__nm { min-width: 0; font: 700 16px/1.35 var(--fjp); letter-spacing: .02em; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; transition: color .2s; }
+@media (hover: hover) { .ent-row__main:hover .ent-row__nm { color: var(--red); } }
+.ent-row__partner { color: var(--gray-600); }
+.ent-row__meta { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.ent-row__aff { min-width: 0; font: 400 12px/1.3 var(--fjp); color: var(--gray-500); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ent-row.is-def .ent-row__nm { color: var(--gray-500); text-decoration: line-through; text-decoration-color: var(--red); }
+.ent-row__acts { flex: none; display: flex; align-items: center; gap: 4px; }
+.app-main .ent-row__btn { min-width: 76px; min-height: 40px; padding: 6px 10px; }
+
+/* 状態の札（受付済・未受付・DEF） */
+.ent-st { flex: none; display: inline-flex; align-items: center; height: 19px; padding: 0 6px; border: 1px solid var(--gray-300); border-radius: var(--radius); font: 700 10.5px/1 var(--fjp); color: var(--gray-500); background: var(--white); }
+.ent-st--on { border-color: var(--red); background: var(--red); color: #fff; }
+.ent-st--def { border-color: var(--red); color: var(--red); }
+
+/* シード */
+.ent-seed { flex: none; display: inline-flex; align-items: center; justify-content: center; min-width: 20px; height: 20px; padding: 0 4px; border-radius: var(--radius); background: var(--ink); color: #fff; font: 700 11px/1 var(--flt); }
+
+/* 小さな四角いアイコンボタン */
+.ent-ico { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border: 1px solid transparent; border-radius: var(--radius); background: none; color: var(--gray-500); cursor: pointer; transition: color .2s, border-color .2s, background .2s; }
+.ent-ico--lg { width: 40px; height: 40px; border-color: var(--gray-200); background: var(--white); }
+@media (hover: hover) { .ent-ico:hover { color: var(--red); border-color: var(--red); } }
+.ent-ico.is-on { background: var(--red); border-color: var(--red); color: #fff; }
+
+/* --- ドロー図（枠と線） --- */
+.ent-bracket { overflow: auto; -webkit-overflow-scrolling: touch; }
+.ent-slot { position: absolute; display: flex; align-items: center; border: 1px solid var(--gray-300); border-radius: var(--radius); background: var(--white); transition: border-color .2s, background .2s, opacity .2s; }
+.ent-slot.is-checked { border-color: var(--red); background: var(--red-tint); }
+.ent-slot.is-def { border-color: var(--gray-300); background: var(--gray-100); }
+.ent-slot.is-dim { opacity: .2; }
+.ent-slot.is-hit { outline: 2px solid var(--ink); outline-offset: 1px; }
+.ent-slot__no { flex: none; align-self: stretch; display: flex; align-items: center; justify-content: center; width: 24px; border-right: 1px solid var(--gray-100); font: 700 10px/1 var(--flt); color: var(--gray-500); }
+.ent-slot--md .ent-slot__no { width: 28px; font-size: 11px; }
+.ent-slot .ent-seed { min-width: 18px; height: 18px; margin-left: 4px; font-size: 10px; }
+.ent-slot__body { flex: 1; min-width: 0; margin: 0 6px; overflow: hidden; }
+.ent-slot__main { display: block; width: 100%; padding: 0; border: 0; background: none; text-align: left; cursor: pointer; }
+.ent-slot__name { display: block; font: 700 12px/1.2 var(--fjp); color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ent-slot--md .ent-slot__name { font-size: 13.5px; }
+.ent-slot__partner { color: var(--gray-500); }
+.ent-slot__aff { display: block; margin-top: 2px; font: 400 9.5px/1.2 var(--fjp); color: var(--gray-500); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ent-slot--md .ent-slot__aff { font-size: 10.5px; }
+.ent-slot.is-def .ent-slot__name { color: var(--gray-500); text-decoration: line-through; text-decoration-color: var(--red); }
+.ent-slot__none { font-size: 13px; color: var(--gray-300); }
+.ent-slot__acts { flex: none; display: flex; align-items: center; gap: 1px; margin-right: 3px; }
+.ent-slot__def { margin-right: 2px; font: 700 10px/1 var(--flt); color: var(--red); letter-spacing: .04em; }
+@media (hover: hover) { .ent-slot__main:hover .ent-slot__name { color: var(--red); } }
+
+.ent-time { position: absolute; padding: 2px 4px; border: 1px solid var(--gray-300); border-radius: var(--radius); background: var(--white); font: 700 9px/1 var(--flt); letter-spacing: .02em; color: var(--ink); white-space: nowrap; pointer-events: none; }
+.ent-time--md { font-size: 10.5px; }
+.ent-side { position: absolute; display: flex; align-items: center; justify-content: center; border-left: 2px solid var(--red); background: var(--red-tint); }
+.ent-side span { writing-mode: vertical-rl; font: 700 9px/1 var(--flt); letter-spacing: .14em; text-transform: uppercase; color: var(--red); }
+
+/* --- あたり修正 --- */
+.ent-ed { display: flex; flex-direction: column; gap: 10px; padding: 12px 14px; border-bottom: 1px solid var(--gray-200); background: var(--gray-050); border-left: 3px solid var(--red); }
+.ent-ed__bar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; }
+.ent-ed__title { display: inline-flex; align-items: center; gap: 6px; font: 700 13px/1 var(--fjp); color: var(--red); }
+.ent-ed__msg { flex: 1 1 200px; font: 400 12px/1.6 var(--fjp); color: var(--gray-600); }
+.ent-ed__step { display: inline-flex; align-items: center; height: 32px; border: 1px solid var(--gray-300); border-radius: var(--radius); background: var(--white); }
+.ent-ed__step button { width: 30px; height: 100%; border: 0; background: none; font: 700 14px/1 var(--flt); color: var(--ink); cursor: pointer; }
+@media (hover: hover) { .ent-ed__step button:hover { color: var(--red); } }
+.ent-ed__stepnum { min-width: 40px; text-align: center; font: 700 12px/1 var(--fjp); color: var(--ink); border-left: 1px solid var(--gray-200); border-right: 1px solid var(--gray-200); line-height: 30px; }
+.ent-ed__label { font: 700 11px/1 var(--fjp); color: var(--gray-600); }
+.app-main .ent-ed__input { flex: 1 1 220px; min-width: 0; height: 32px; min-height: 32px; padding: 0 10px; font-size: 13px; }
+.ent-ed__note { margin: 0; font: 400 11.5px/1.75 var(--fjp); color: var(--gray-600); }
+.ent-ed__note strong { color: var(--ink); }
+.ent-ed__grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
+@media (min-width: 1024px) { .ent-ed__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.ent-ed__col { display: flex; flex-direction: column; gap: 8px; }
+.ent-ed__group { display: flex; flex-direction: column; gap: 6px; padding: 6px; border: 1px solid var(--gray-300); background: var(--white); }
+.ent-ed__hint { margin: 0; text-align: right; font: 400 10px/1 var(--fjp); color: var(--gray-500); }
+.ent-ed__block { display: flex; flex-direction: column; gap: 4px; padding: 5px; border: 1px solid var(--gray-200); background: var(--gray-050); }
+.ent-ed__blockhead { display: flex; align-items: center; gap: 6px; }
+.ent-ed__range { flex: none; font: 700 10px/1 var(--flt); color: var(--gray-500); }
+.ent-ed__select { flex: 1; min-width: 0; height: 26px; padding: 0 4px; border: 1px solid var(--gray-300); border-radius: var(--radius); background: var(--white); font: 400 11px/1 var(--fjp); color: var(--gray-800); }
+.ent-ed__pair { display: flex; flex-direction: column; gap: 2px; padding-left: 5px; border-left: 2px solid var(--red); }
+.ent-ed__slot { display: flex; align-items: center; gap: 6px; width: 100%; min-height: 32px; padding: 4px 6px; border: 1px solid var(--gray-200); border-radius: var(--radius); background: var(--white); text-align: left; cursor: pointer; transition: border-color .2s, background .2s; }
+@media (hover: hover) { .ent-ed__slot:hover { border-color: var(--red); } }
+.ent-ed__slot.is-empty { border-style: dashed; border-color: var(--gray-300); background: var(--gray-050); }
+.ent-ed__slot.is-sel { border-color: var(--red); background: var(--red); color: #fff; }
+.ent-ed__pos { flex: none; width: 22px; text-align: center; font: 700 10px/1 var(--flt); color: var(--gray-500); }
+.ent-ed__name { flex: 1; min-width: 0; font: 700 12.5px/1.3 var(--fjp); color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ent-ed__slot.is-empty .ent-ed__name { font-weight: 400; color: var(--gray-500); }
+.ent-ed__aff { max-width: 38%; font: 400 10.5px/1.3 var(--fjp); color: var(--gray-500); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ent-ed__slot.is-sel .ent-ed__pos, .ent-ed__slot.is-sel .ent-ed__name, .ent-ed__slot.is-sel .ent-ed__aff { color: #fff; }
+
+/* --- 検索のポップアップ（スマホ） --- */
+.ent-modal { position: fixed; inset: 0; z-index: 400; display: flex; align-items: flex-start; justify-content: center; padding: 8vh 16px 16px; }
+.ent-modal__back { position: fixed; inset: 0; background: rgba(26, 26, 26, .45); }
+.ent-modal__panel { position: relative; display: flex; flex-direction: column; width: 100%; max-width: 440px; max-height: 80vh; overflow: hidden; background: var(--white); border-top: 3px solid var(--red); border-radius: var(--radius); animation: ent-pop .25s var(--ease) both; }
+@keyframes ent-pop { from { opacity: 0; transform: translateY(12px); } }
+@media (prefers-reduced-motion: reduce) { .ent-modal__panel { animation: none; } }
+.ent-modal__head { display: flex; align-items: center; gap: 8px; padding: 12px; border-bottom: 1px solid var(--gray-200); }
+.ent-modal__x { flex: none; width: 40px; height: 40px; }
+.ent-modal__list { flex: 1; overflow-y: auto; }
+.ent-modal__empty { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 32px 16px; font: 400 13px/1.7 var(--fjp); color: var(--gray-500); text-align: center; }
+.ent-modal__empty svg { color: var(--gray-300); }
+.ent-modal__foot { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border-top: 1px solid var(--gray-200); font: 400 11px/1 var(--fjp); color: var(--gray-500); }
+.ent-modal .sk-input { width: 100%; height: 40px; min-height: 40px; padding: 0 32px 0 36px; font-size: 16px; }
+.ent-modal .sk-btn { width: auto; min-height: 32px; padding: 5px 14px; font-size: 13px; }
+
+/* ===========================================================================
+   抽選（/draw-lot）・ドロー表（/draw-table）
+   =========================================================================== */
+.ent-draw__pick { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px 20px; }
+.ent-draw__field { flex: 1 1 260px; max-width: 420px; }
+.ent-draw__field .sk-input { font-weight: 700; color: var(--ink); }
+.ent-draw__status { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-height: 40px; }
+.ent-draw__count { display: inline-flex; align-items: baseline; gap: 6px; font: 700 12px/1 var(--fjp); color: var(--gray-600); }
+.ent-draw__count svg { align-self: center; color: var(--red); }
+.ent-draw__count b { font: 700 24px/1 var(--flt); color: var(--ink); }
+.ent-draw__count small { font: 700 12px/1 var(--fjp); color: var(--gray-500); }
+.ent-draw__msg { margin: 0; font: 400 13px/1.7 var(--fjp); color: var(--gray-600); }
+.ent-draw__btns { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--gray-100); }
+.ent-draw__btns .sk-btn { flex: 1 1 200px; }
+@media (min-width: 640px) { .ent-draw__btns .sk-btn { flex: 0 0 auto; } }
+.ent-draw__table .ent-draw__no { width: 56px; text-align: center; font-family: var(--flt); color: var(--gray-500); }
+.ent-draw__table .ent-draw__pt { text-align: right; font-family: var(--flt); }
+.ent-draw__table .ent-draw__name { font-weight: 700; white-space: nowrap; }
+.ent-draw__table .ent-draw__aff { font-size: 12px; color: var(--gray-500); }
+.ent-draw__table tr.is-pair-end td { border-bottom-color: var(--gray-300); }
+.ent-draw__table tr.is-bye td { color: var(--gray-500); font-style: italic; }
+
+.ent-board__bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.ent-board__mode { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; }
+.ent-board__exports { gap: 6px; }
+@media (max-width: 639px) {
+  .ent-board__bar .hub-filter { width: 100%; }
+  .ent-board__bar .hub-filter__btn { flex: 1 1 0; justify-content: center; }
+  .ent-board__exports { width: 100%; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .ent-board__exports .sk-btn { width: 100%; }
+}
+.ent-board__frame { max-height: calc(100vh - 120px); overflow: auto; background: var(--white); border: 1px solid var(--gray-200); border-radius: var(--radius); }
+@media (max-width: 1023px) { .ent-board__frame { max-height: calc(100vh - var(--app-sticky-top) - 24px); } }
+.ent-board__frame > .sk-empty { border: 0; }
+
+/* ===========================================================================
+   エントリーの一括インポート（ポップアップ）
+   =========================================================================== */
+.ent-imp { position: fixed; inset: 0; z-index: 50; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(26, 26, 26, .45); }
+.ent-imp__panel { display: flex; flex-direction: column; width: 100%; max-width: 1152px; height: 85vh; overflow: hidden; background: var(--white); border-top: 3px solid var(--red); border-radius: var(--radius); }
+.ent-imp__head .sk-sec__title svg { color: var(--red); }
+.ent-imp__body { flex: 1; overflow: auto; padding: 16px; display: flex; flex-direction: column; gap: 16px; }
+@media (min-width: 640px) { .ent-imp__body { padding: 20px 24px; } }
+.ent-imp__drop { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 40px 16px; border: 2px dashed var(--gray-300); text-align: center; transition: border-color .2s, background .2s; }
+.ent-imp__drop.is-over { border-color: var(--red); background: var(--red-tint); }
+.ent-imp__ico { width: 40px; height: 40px; color: var(--gray-300); }
+.ent-imp__drop.is-over .ent-imp__ico { color: var(--red); }
+.ent-imp__title { margin: 0; font: 700 16px/1.5 var(--fjp); color: var(--ink); }
+.ent-imp__text { margin: 0 0 8px; font: 400 13px/1.7 var(--fjp); color: var(--gray-600); }
+.ent-imp__fmt { width: 100%; max-width: 520px; margin-top: 18px; padding: 12px 14px; border-left: 3px solid var(--ink); background: var(--gray-050); text-align: left; font: 400 12px/1.8 var(--fjp); color: var(--gray-600); }
+.ent-imp__fmt-title { margin: 0 0 4px; font-weight: 700; color: var(--ink); }
+.ent-imp__fmt ul { margin: 0; padding-left: 1.2em; list-style: disc; }
+.ent-imp__result { display: flex; flex-direction: column; gap: 12px; min-height: 0; }
+.ent-imp__summary { display: flex; align-items: flex-start; gap: 10px; }
+.ent-imp__summary svg { color: var(--red); margin-top: 2px; }
+.ent-imp__summary p { margin: 2px 0 0; }
+.ent-imp__sum-title { margin: 0; font: 700 14px/1.5 var(--fjp); color: var(--ink); }
+.ent-imp__table { border: 1px solid var(--gray-200); }
+.ent-imp__table tr.is-off td { opacity: .5; }
+.ent-imp__chk { width: 40px; }
+.ent-imp__name { font-weight: 700; }
+.ent-imp__sub { font-size: 11.5px; color: var(--gray-500); }
+.ent-imp__ids { font-size: 12px; font-family: var(--flt); }
+.ent-imp__chip { height: 22px; font-size: 11px; }
+.ent-imp__foot { display: flex; justify-content: flex-end; gap: 8px; padding: 12px 16px; border-top: 1px solid var(--gray-200); background: var(--gray-050); }
+
+/* 区画の見出し：説明が長くても赤い四角と見出しを同じ行に置く（操作ボタンは次の行へ回る） */
+.ent-draw .sk-sec__titles, .ent-board .sk-sec__titles { flex: 1 1 0; min-width: min(calc(100% - 40px), 420px); }
+.ent-draw__table .ent-draw__aff { white-space: nowrap; }
