@@ -9,6 +9,7 @@ import { Radio, Clock } from 'lucide-react';
 import { useSyncStore } from '../sync/syncStore';
 import LiveScoreBoard from '../livescore/LiveScoreBoard';
 import { useVisibleLiveScores } from '../livescore/useVisibleLiveScores';
+import { SkPage, SkSection, SkEmpty } from '../../components/site/Kit';
 
 export default function PublicLiveScoreView() {
   const lastSyncAt = useSyncStore(s => s.lastSyncAt);
@@ -17,52 +18,52 @@ export default function PublicLiveScoreView() {
   // 「◯秒前に更新」表示にも使うので now を受け取る
   const { visible, liveCount, now } = useVisibleLiveScores();
 
-  return (
-    <div className="max-w-3xl mx-auto px-3 py-4 space-y-4">
-      {/* 見出し */}
-      <div className="flex items-center justify-between gap-2 flex-wrap">
-        <h2 className="flex items-center gap-2 text-base font-bold text-gray-800">
-          <span className="relative flex h-2.5 w-2.5">
-            {liveCount > 0 && (
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
-            )}
-            <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${liveCount > 0 ? 'bg-red-500' : 'bg-gray-300'}`} />
-          </span>
-          ライブスコア
-          {liveCount > 0 && <span className="text-xs font-bold text-red-600">{liveCount}試合 進行中</span>}
-        </h2>
-        <div className="flex items-center gap-2 text-[10px] text-gray-400">
-          {latencyMs != null && <span>配信遅延 約{latencyMs}ms</span>}
-          {lastSyncAt && (
-            <span className="flex items-center gap-1">
-              <Clock className="w-3 h-3" />
-              {relativeTime(now - lastSyncAt)}に更新
-            </span>
-          )}
-        </div>
-      </div>
-
-      {visible.length === 0 ? (
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-10 text-center">
-          <Radio className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-          <p className="text-gray-500 text-sm">現在ライブスコアを配信中の試合はありません。</p>
-          <p className="text-gray-400 text-xs mt-1 leading-relaxed">
-            運営がコートでライブスコアを開始すると、ここに1ポイントごとの経過が表示されます。
-          </p>
-        </div>
-      ) : (
-        <div className="space-y-5">
-          {/* 観戦ページはスコアボードだけを見せる（下に文字を足さない） */}
-          {visible.map(l => (
-            <LiveScoreBoard key={`${l.eventId}-${l.matchId}`} live={l} size="md" />
-          ))}
-        </div>
+  const meta = (latencyMs != null || lastSyncAt) ? (
+    <div className="pv-ls__meta">
+      {latencyMs != null && <span>配信遅延 約{latencyMs}ms</span>}
+      {lastSyncAt && (
+        <span>
+          <Clock className="w-3 h-3" />
+          {relativeTime(now - lastSyncAt)}に更新
+        </span>
       )}
+    </div>
+  ) : undefined;
 
-      <p className="text-[10px] text-gray-400 text-center leading-relaxed pt-2">
+  return (
+    <SkPage className="pv-ls">
+      <SkSection
+        en="LIVE SCORE"
+        title={(
+          <>
+            <span className={`pv-ls__dot ${liveCount > 0 ? 'is-live' : ''}`} aria-hidden="true"><i /><i /></span>
+            ライブスコア
+          </>
+        )}
+        count={liveCount > 0 ? `${liveCount}試合 進行中` : undefined}
+        actions={meta}
+        flush={visible.length === 0}
+      >
+        {visible.length === 0 ? (
+          <SkEmpty
+            icon={Radio}
+            title="現在ライブスコアを配信中の試合はありません。"
+            text="運営がコートでライブスコアを開始すると、ここに1ポイントごとの経過が表示されます。"
+          />
+        ) : (
+          <div className="pv-ls__list">
+            {/* 観戦ページはスコアボードだけを見せる（下に文字を足さない） */}
+            {visible.map(l => (
+              <LiveScoreBoard key={`${l.eventId}-${l.matchId}`} live={l} size="md" />
+            ))}
+          </div>
+        )}
+      </SkSection>
+
+      <p className="pv-ls__foot">
         ライブスコアは運営端末の入力に合わせて自動更新されます（更新の操作は不要です）。
       </p>
-    </div>
+    </SkPage>
   );
 }
 

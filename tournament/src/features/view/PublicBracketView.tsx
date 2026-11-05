@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Trophy, Medal, Award, Users, Info } from 'lucide-react';
+import { SkEmpty } from '../../components/site/Kit';
 import { useMixedStore } from '../mixed/mixedStore';
 import { useTeamStore } from '../team/teamStore';
 import { leagueBadgeStyle } from '../mixed/leagueColors';
@@ -57,10 +58,7 @@ export default function PublicBracketView() {
 
   if (!bracket) {
     return (
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-10 text-center">
-        <Info className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-        <p className="text-gray-500 text-sm">トーナメントデータがまだありません。</p>
-      </div>
+      <SkEmpty icon={Info} title="トーナメントデータがまだありません。" />
     );
   }
 
@@ -85,7 +83,7 @@ export default function PublicBracketView() {
   return (
     <div>
       <BracketTopBar
-        fullBleedClass="-mx-3 md:-mx-4 -mt-4"
+        fullBleedClass="pv-topbar"
         tabs={tabs}
         selectedId={bracket.category}
         onSelect={id => setSelectedCategory(id as PlacementCategory)}
@@ -97,7 +95,7 @@ export default function PublicBracketView() {
         onStartRoundChange={v =>
           setRoundOverride(v == null ? null : { category: bracket.category, value: v })}
       />
-      <div className="mt-3">
+      <div className="pv-bracket">
         {mixedImported ? (
           <MixedBracketDisplay bracket={bracket as PlacementBracket} startRound={startRound} />
         ) : (
@@ -144,7 +142,7 @@ function MixedBracketDisplay({ bracket, startRound = 0 }: { bracket: PlacementBr
   const svgWidth = (MATCH_WIDTH + ROUND_GAP) * matchesByRound.length;
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 overflow-x-auto">
+    <div className="pv-board">
       <div className="relative" style={{ minWidth: svgWidth, height: svgHeight }}>
         {/* 接続線 */}
         <svg className="absolute inset-0 pointer-events-none" style={{ width: svgWidth, height: svgHeight }}>
@@ -179,9 +177,9 @@ function MixedBracketDisplay({ bracket, startRound = 0 }: { bracket: PlacementBr
               <div className="absolute" style={{ left: colX, top: 0, width: MATCH_WIDTH }}>
                 <div className="text-center">
                   <span
-                    className={`inline-block px-3 py-1 rounded-full text-xs font-bold ${
+                    className={`pv-round ${
                       round === totalRounds
-                        ? 'bg-gradient-to-r from-primary-400 to-primary-500 text-white'
+                        ? 'bg-[var(--red)] text-white'
                         : round === totalRounds - 1
                         ? 'bg-primary-100 text-gray-800'
                         : 'bg-gray-100 text-gray-600'
@@ -249,9 +247,9 @@ function MixedBracketDisplay({ bracket, startRound = 0 }: { bracket: PlacementBr
                     <div
                       className={`rounded-lg border-2 overflow-hidden ${
                         match.status === 'playing'
-                          ? 'border-primary-400 shadow-md'
+                          ? 'border-primary-500'
                           : match.status === 'finished'
-                          ? 'border-primary-300 shadow-sm'
+                          ? 'border-primary-300'
                           : match.team1Id && match.team2Id
                           ? 'border-gray-300'
                           : 'border-gray-200'
@@ -399,7 +397,7 @@ function TeamBracketDisplay({ bracket, startRound = 0 }: { bracket: TeamPlacemen
   const svgWidth = (MATCH_WIDTH + ROUND_GAP) * matchesByRound.length;
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 overflow-x-auto">
+    <div className="pv-board">
       <div className="relative" style={{ minWidth: svgWidth, height: svgHeight }}>
         <svg className="absolute inset-0 pointer-events-none" style={{ width: svgWidth, height: svgHeight }}>
           {matchesByRound.slice(0, -1).map((roundMatches, roundIdx) => {
@@ -433,9 +431,9 @@ function TeamBracketDisplay({ bracket, startRound = 0 }: { bracket: TeamPlacemen
               <div className="absolute" style={{ left: colX, top: 0, width: MATCH_WIDTH }}>
                 <div className="text-center">
                   <span
-                    className={`inline-block px-3 py-1 rounded-full text-xs font-bold ${
+                    className={`pv-round ${
                       round === totalRounds
-                        ? 'bg-gradient-to-r from-primary-400 to-primary-500 text-white'
+                        ? 'bg-[var(--red)] text-white'
                         : round === totalRounds - 1
                         ? 'bg-primary-100 text-gray-800'
                         : 'bg-gray-100 text-gray-600'
@@ -490,9 +488,9 @@ function TeamBracketDisplay({ bracket, startRound = 0 }: { bracket: TeamPlacemen
                     <div
                       className={`rounded-lg border-2 overflow-hidden ${
                         match.status === 'playing'
-                          ? 'border-primary-400 shadow-md'
+                          ? 'border-primary-500'
                           : match.status === 'finished'
-                          ? 'border-primary-300 shadow-sm'
+                          ? 'border-primary-300'
                           : match.team1Id && match.team2Id
                           ? 'border-gray-300'
                           : 'border-gray-200'

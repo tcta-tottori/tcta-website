@@ -7,9 +7,6 @@ import MatchManager from '../referee/MatchManager';
  * 観戦者は対戦順・コート・進行状況（試合中/控え/終了）を閲覧できる。
  */
 export default function PublicMatchOrderView() {
-  return (
-    <div className="h-[calc(100dvh-92px)] min-h-[420px] overflow-auto">
-      <MatchManager readOnly />
-    </div>
-  );
+  // 運営画面の「対戦順」と同じく、画面の中（main）をそのままスクロールさせる（中に別のスクロールを作らない）
+  return <MatchManager readOnly />;
 }

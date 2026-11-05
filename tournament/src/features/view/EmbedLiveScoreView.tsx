@@ -35,7 +35,7 @@ export default function EmbedLiveScoreView() {
     <div className={`min-h-[100dvh] w-full px-2 py-2 ${theme.wrap}`}>
       <div className="max-w-3xl mx-auto space-y-4">
         {visible.length === 0 ? (
-          <p className={`py-8 text-center text-sm leading-relaxed ${theme.text}`}>
+          <p className={`pv-embed__empty ${theme.text}`}>
             {connected
               ? '現在ライブスコアを配信中の試合はありません。'
               : '中継サーバーに接続しています...'}
