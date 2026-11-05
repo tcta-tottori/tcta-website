@@ -1,0 +1,375 @@
+import { useState, useCallback } from 'react';
+import { db } from '../../db/database';
+import { useAppStore } from '../../stores/appStore';
+import { Zap, AlertTriangle, Clock } from 'lucide-react';
+import {
+  extractMatchesFromDraw,
+  autoSchedule,
+  type ScheduleConfig,
+  type EventInfo,
+  type Entry as ScheduleEntry,
+  type Player as SchedulePlayer,
+  type Draw as ScheduleDraw,
+  type ScheduleMatch,
+} from '../schedule/scheduleEngine';
+import {
+  inferScheduleBaseFromDraws,
+  resolveDrawMatchTime,
+} from '../schedule/generateSchedule';
+
+export default function ScheduleGenerator() {
+  const currentTournamentId = useAppStore(state => state.currentTournamentId);
+
+  const [courtNamesInput, setCourtNamesInput] = useState('1,2,3,4,5,6');
+  const [matchDuration, setMatchDuration] = useState(40);
+  const [startTime, setStartTime] = useState('09:00');
+  // ドロー表に開始時刻が記載されているか（記載時刻を基準に生成する旨の表示用）
+  const [drawTimeHint, setDrawTimeHint] = useState<{ startTime: string; matchDuration: number | null } | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [result, setResult] = useState<string | null>(null);
+  const [hasExistingSchedule, setHasExistingSchedule] = useState(false);
+
+  // Check for existing schedule on mount-ish (simple check)
+  const checkExisting = useCallback(async () => {
+    if (!currentTournamentId) return;
+    const events = await db.events.where('tournamentId').equals(currentTournamentId).toArray();
+
+    // ドロー表に記載された開始時刻を初期値に反映する
+    const draws = [];
+    for (const evt of events) {
+      const d = await db.draws.where('eventId').equals(evt.eventId).first();
+      if (d) draws.push(d);
+    }
+    const base = inferScheduleBaseFromDraws(draws);
+    if (base.startTime) {
+      setDrawTimeHint(base);
+      setStartTime(base.startTime);
+      if (base.matchDuration) setMatchDuration(base.matchDuration);
+    }
+
+    for (const evt of events) {
+      const m = await db.matches.where('eventId').equals(evt.eventId).filter(m => !!m.scheduledTime && !!m.courtId).first();
+      if (m) {
+        setHasExistingSchedule(true);
+        return;
+      }
+    }
+    setHasExistingSchedule(false);
+  }, [currentTournamentId]);
+
+  // Run check on render
+  useState(() => { checkExisting(); });
+
+  const handleGenerate = useCallback(async () => {
+    if (!currentTournamentId) return;
+
+    setIsGenerating(true);
+    setResult(null);
+
+    try {
+      // Parse court names
+      const courtNames = courtNamesInput
+        .split(/[,、\s]+/)
+        .map(s => s.trim())
+        .filter(s => s.length > 0);
+
+      if (courtNames.length === 0) {
+        setResult('コート名を入力してください。');
+        setIsGenerating(false);
+        return;
+      }
+
+      // Ensure courts exist in DB
+      const existingCourts = await db.courts.where('tournamentId').equals(currentTournamentId).toArray();
+      const existingCourtNames = new Set(existingCourts.map(c => c.name));
+
+      for (let i = 0; i < courtNames.length; i++) {
+        if (!existingCourtNames.has(courtNames[i])) {
+          const courtId = `C-${Date.now()}-${i}`;
+          await db.courts.add({
+            tournamentId: currentTournamentId,
+            courtId,
+            name: courtNames[i],
+            surface: '',
+            isAvailable: true,
+            currentMatchId: null,
+            order: existingCourts.length + i + 1,
+          });
+        }
+      }
+
+      // Re-fetch courts after creation
+      const allCourts = await db.courts.where('tournamentId').equals(currentTournamentId).toArray();
+      const courtNameToId = new Map(allCourts.map(c => [c.name, c.courtId]));
+
+      // Load all events
+      const allEvents = await db.events.where('tournamentId').equals(currentTournamentId).toArray();
+      if (allEvents.length === 0) {
+        setResult('種目が登録されていません。先にデータを読み込んでください。');
+        setIsGenerating(false);
+        return;
+      }
+
+      const allPlayers = await db.players.toArray();
+      const playersList: SchedulePlayer[] = allPlayers.map(p => ({
+        playerId: p.playerId,
+        name: p.name,
+      }));
+
+      // Extract matches from all events
+      let allScheduleMatches: ScheduleMatch[] = [];
+      // ドロー表に記載された開始時刻から算出した、試合ごとの目標スロット
+      const targetSlotByMatchId = new Map<string, number>();
+      const startMinutes = (() => {
+        const [h, m] = startTime.split(':').map(s => parseInt(s, 10));
+        return (h || 0) * 60 + (m || 0);
+      })();
+      const timeToSlot = (hm: string): number | null => {
+        const mt = /^(\d{1,2}):(\d{2})$/.exec(hm);
+        if (!mt) return null;
+        const mins = parseInt(mt[1], 10) * 60 + parseInt(mt[2], 10);
+        const slot = Math.round((mins - startMinutes) / matchDuration);
+        return slot >= 0 ? slot : 0;
+      };
+
+      for (let idx = 0; idx < allEvents.length; idx++) {
+        const evt = allEvents[idx];
+        const draw = await db.draws.where('eventId').equals(evt.eventId).first();
+        if (!draw) continue;
+
+        const entries = await db.entries.where('eventId').equals(evt.eventId).toArray();
+
+        const eventInfo: EventInfo = {
+          eventCode: evt.eventId,
+          eventName: evt.name,
+          eventOrder: idx,
+        };
+
+        const drawData: ScheduleDraw = {
+          eventId: evt.eventId,
+          drawSize: draw.drawSize,
+          slots: draw.slots,
+        };
+
+        const entryList: ScheduleEntry[] = entries.map(e => ({
+          entryId: e.entryId,
+          playerId: e.playerId,
+          partnerId: e.partnerId,
+        }));
+
+        const extracted = extractMatchesFromDraw(drawData, entryList, playersList, eventInfo);
+
+        // ドロー表に記載された開始時刻（＋確定済みの予定時刻）をその時刻の枠に配置する
+        const dbEventMatches = await db.matches.where('eventId').equals(evt.eventId).toArray();
+        const timeByRoundPos = new Map<string, string>();
+        for (const dm of dbEventMatches) {
+          if (dm.scheduledTime) timeByRoundPos.set(`${dm.round}|${dm.position}`, dm.scheduledTime);
+        }
+        for (const m of extracted) {
+          const hm = resolveDrawMatchTime(m, draw, timeByRoundPos);
+          if (!hm) continue;
+          const slot = timeToSlot(hm);
+          if (slot != null) targetSlotByMatchId.set(m.matchId, slot);
+        }
+
+        allScheduleMatches = allScheduleMatches.concat(extracted);
+      }
+
+      if (allScheduleMatches.length === 0) {
+        setResult('スケジュール対象の試合がありません。ドローデータを先に読み込んでください。');
+        setIsGenerating(false);
+        return;
+      }
+
+      // Run auto-schedule
+      const config: ScheduleConfig = {
+        courtCount: courtNames.length,
+        courtNames,
+        matchDuration,
+        startTime,
+        targetSlotByMatchId: targetSlotByMatchId.size > 0 ? targetSlotByMatchId : undefined,
+      };
+
+      const slots = autoSchedule(allScheduleMatches, config);
+
+      // scheduleEngine matchId → DB matchId のマッピングを構築
+      // eventId + round + position で紐付け（matchId形式が異なるため）
+      const allDbMatchesForLink: { eventId: string; matchId: string; round: number; position: number; id?: number }[] = [];
+      for (const evt of allEvents) {
+        const dbMatches = await db.matches.where('eventId').equals(evt.eventId).toArray();
+        allDbMatchesForLink.push(...dbMatches);
+      }
+
+      // engine matchId → schedule slot
+      const slotMap = new Map(slots.map(s => [s.matchId, s]));
+      // engine matchId → ScheduleMatch
+      const schedMatchMap = new Map(allScheduleMatches.map(m => [m.matchId, m]));
+
+      // DB match (eventId|round|position) → engine matchId の逆引き
+      const dbKeyToEngineMatch = new Map<string, ScheduleMatch>();
+      for (const sm of allScheduleMatches) {
+        dbKeyToEngineMatch.set(`${sm.eventCode}|${sm.round}|${sm.matchNumInRound}`, sm);
+      }
+
+      // Update existing matches in DB
+      let updatedCount = 0;
+      for (const dbm of allDbMatchesForLink) {
+        const key = `${dbm.eventId}|${dbm.round}|${dbm.position}`;
+        const engineMatch = dbKeyToEngineMatch.get(key);
+        if (!engineMatch) continue;
+        const scheduled = slotMap.get(engineMatch.matchId);
+        if (scheduled && dbm.id) {
+          const courtId = courtNameToId.get(scheduled.courtName) || null;
+          await db.matches.update(dbm.id, {
+            courtId,
+            scheduledTime: scheduled.startTime,
+            updatedAt: Date.now(),
+          });
+          updatedCount++;
+        }
+      }
+
+      // Create matches that don't exist yet in DB
+      let createdCount = 0;
+      for (const slot of slots) {
+        const schedMatch = schedMatchMap.get(slot.matchId);
+        if (!schedMatch) continue;
+
+        // DB に同じ eventId+round+position の試合があるか確認
+        const existingKey = `${schedMatch.eventCode}|${schedMatch.round}|${schedMatch.matchNumInRound}`;
+        const existing = allDbMatchesForLink.find(m =>
+          `${m.eventId}|${m.round}|${m.position}` === existingKey
+        );
+        if (!existing) {
+          const courtId = courtNameToId.get(slot.courtName) || null;
+          await db.matches.add({
+            eventId: schedMatch.eventCode,
+            matchId: slot.matchId,
+            round: schedMatch.round,
+            matchOrder: schedMatch.matchNumInRound,
+            position: schedMatch.matchNumInRound,
+            player1EntryId: null,
+            player2EntryId: null,
+            player1Name: schedMatch.players[0] || '',
+            player2Name: schedMatch.players[1] || '',
+            player1Affiliation: '',
+            player2Affiliation: '',
+            score: '',
+            winnerEntryId: null,
+            courtId,
+            scheduledTime: slot.startTime,
+            status: 'waiting',
+            refereeId: null,
+            refereeName: '',
+            updatedAt: Date.now(),
+          });
+          createdCount++;
+        }
+      }
+
+      // Count unique courts used
+      const uniqueCourts = new Set(slots.map(s => s.courtName));
+
+      setResult(
+        `自動生成完了: ${slots.length}試合を${uniqueCourts.size}コートにスケジュールしました。` +
+        (updatedCount > 0 ? ` (${updatedCount}試合を更新)` : '') +
+        (createdCount > 0 ? ` (${createdCount}試合を新規作成)` : '')
+      );
+      setHasExistingSchedule(true);
+    } catch (err) {
+      console.error('自動生成エラー:', err);
+      setResult(`自動生成に失敗しました: ${(err as Error).message}`);
+    } finally {
+      setIsGenerating(false);
+    }
+  }, [currentTournamentId, courtNamesInput, matchDuration, startTime]);
+
+  return (
+    <div className="space-y-4">
+      <p className="text-xs text-gray-500">
+        ドローデータから全種目の試合スケジュールを自動生成します。コートが未登録の場合は自動作成されます。
+      </p>
+
+      {drawTimeHint?.startTime && (
+        <div className="flex items-start gap-2 p-3 bg-primary-50 border border-primary-200 rounded-md">
+          <Clock className="w-4 h-4 text-primary-600 shrink-0 mt-0.5" />
+          <p className="text-xs text-gray-800 font-medium">
+            ドロー表に試合開始時刻の記載があります（最早 {drawTimeHint.startTime}
+            {drawTimeHint.matchDuration ? ` / ${drawTimeHint.matchDuration}分間隔` : ''}）。
+            記載のある試合はその時刻に配置します。
+          </p>
+        </div>
+      )}
+
+      {hasExistingSchedule && (
+        <div className="flex items-start gap-2 p-3 bg-primary-50 border border-primary-200 rounded-md">
+          <AlertTriangle className="w-4 h-4 text-warning shrink-0 mt-0.5" />
+          <p className="text-xs text-warning font-medium">
+            既にスケジュールが設定されています。自動生成を実行すると既存のコート割当・時間が上書きされます。
+          </p>
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div>
+          <label className="block text-xs font-medium text-gray-500 mb-1">コート名（カンマ区切り）</label>
+          <input
+            type="text"
+            value={courtNamesInput}
+            onChange={e => setCourtNamesInput(e.target.value)}
+            placeholder="1,2,3,4,5,6"
+            className="w-full border border-border-main rounded-lg px-3 py-2 text-sm focus:border-ocean focus:ring-[3px] focus:ring-ocean/15 outline-none"
+          />
+          <p className="text-[10px] text-gray-400 mt-1">例: 1,2,3,4,5,6 または A-1,A-2,B-1</p>
+        </div>
+
+        <div>
+          <label className="block text-xs font-medium text-gray-500 mb-1">1試合の所要時間（分）</label>
+          <input
+            type="number"
+            min={20}
+            max={120}
+            value={matchDuration}
+            onChange={e => setMatchDuration(parseInt(e.target.value) || 40)}
+            className="w-full border border-border-main rounded-lg px-3 py-2 text-sm focus:border-ocean focus:ring-[3px] focus:ring-ocean/15 outline-none"
+          />
+        </div>
+
+        <div>
+          <label className="block text-xs font-medium text-gray-500 mb-1">開始時刻</label>
+          <input
+            type="time"
+            value={startTime}
+            onChange={e => setStartTime(e.target.value)}
+            className="w-full border border-border-main rounded-lg px-3 py-2 text-sm focus:border-ocean focus:ring-[3px] focus:ring-ocean/15 outline-none"
+          />
+        </div>
+      </div>
+
+      <div className="flex items-center gap-3">
+        <button
+          onClick={handleGenerate}
+          disabled={isGenerating || !currentTournamentId}
+          className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-ocean rounded-md hover:bg-gray-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        >
+          <Zap className="w-4 h-4" />
+          {isGenerating ? '生成中...' : '自動生成'}
+        </button>
+
+        {!currentTournamentId && (
+          <p className="text-xs text-red-600">大会が選択されていません。</p>
+        )}
+      </div>
+
+      {result && (
+        <div className={`p-3 rounded-md text-sm ${
+          result.includes('失敗') || result.includes('ありません') || result.includes('ください')
+            ? 'bg-red-50 text-red-700 border border-red-200'
+            : 'bg-primary-50 text-gray-800 border border-primary-200'
+        }`}>
+          {result}
+        </div>
+      )}
+    </div>
+  );
+}
