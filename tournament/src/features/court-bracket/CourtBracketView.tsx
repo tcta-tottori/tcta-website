@@ -77,8 +77,8 @@ const CARD_H_VS = 50;
 const CARD_H_VS_DOUBLES = 78;
 
 /** 全体表示で縮める下限（これより小さいと字が読めず、押しにくい）。スマホは字が小さくなりすぎないよう高めにする */
-/** 大きさの調整（0〜100）。50 が標準。0 で画面の幅に全体が収まる大きさ、100 で ZOOM_MAX 倍 */
-const ZOOM_DEFAULT = 50;
+/** 大きさの調整（0〜100）。70 が標準（50 を境に、下は全体が収まる大きさまで、上は ZOOM_MAX まで）。0 で画面の幅に全体が収まる大きさ、100 で ZOOM_MAX 倍 */
+const ZOOM_DEFAULT = 70;
 const ZOOM_MAX = 1.5;
 /** 標準（50）のときの倍率。スマホは字が読める大きさ、PC は画面の幅に合わせる（75〜100%） */
 const STD_MOBILE = 0.9;
@@ -115,7 +115,7 @@ export default function CourtBracketView({
   nameEditMode = false,
 }: CourtBracketViewProps) {
   const isMobile = useIsMobile();
-  // 表示の大きさ（0〜100。50 が標準）。端末に覚えておく
+  // 表示の大きさ（0〜100。70 が標準）。端末に覚えておく
   const [zoom, setZoomState] = React.useState(loadZoom);
   const [zoomOpen, setZoomOpen] = React.useState(false);
   const setZoom = (v: number) => {
