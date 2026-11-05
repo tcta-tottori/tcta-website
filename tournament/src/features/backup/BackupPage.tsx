@@ -1,3 +1,4 @@
+import CloudflareLogo from '../../components/ui/CloudflareLogo';
 import { useState, useCallback, useRef } from 'react';
 import { exportFullBackup, importFullBackup, validateBackupData } from './backupEngine';
 import { useMixedStore } from '../mixed/mixedStore';
@@ -12,7 +13,6 @@ import {
 } from './cloudDataApi';
 import {
   HardDrive,
-  Cloud,
   Download,
   Upload,
   CheckCircle2,
@@ -26,7 +26,7 @@ import {
 } from 'lucide-react';
 
 /** 大会データの置き場（Cloudflare）のアイコン */
-const CloudLogo = ({ size = 20 }: { size?: number }) => <Cloud width={size} height={size} className="text-gray-600" aria-hidden="true" />;
+const CloudLogo = ({ size = 20 }: { size?: number }) => <CloudflareLogo className="shrink-0" style={{ width: size, height: size }} />;
 
 const MIXED_STORAGE_KEY = 'mixed-tournament-storage';
 const TEAM_STORAGE_KEY = 'team-tournament-storage';

@@ -1,10 +1,11 @@
+import CloudflareLogo from './CloudflareLogo';
 import { useEffect, useRef } from 'react';
-import { CheckCircle2, AlertCircle, Cloud } from 'lucide-react';
+import { CheckCircle2, AlertCircle } from 'lucide-react';
 import { createPortal } from 'react-dom';
 
 /** 大会データの置き場（Cloudflare）のアイコン */
 function CloudDataIcon({ className = 'w-5 h-5' }: { className?: string }) {
-  return <Cloud className={`${className} text-gray-600`} aria-hidden="true" />;
+  return <CloudflareLogo className={className} />;
 }
 
 export interface LoadingStep {

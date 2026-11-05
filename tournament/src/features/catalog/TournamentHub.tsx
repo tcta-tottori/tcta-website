@@ -15,6 +15,7 @@ import { cachedCatalog, dateParts, fetchCatalog, fetchTournament, putTournament,
 import { importToDevice, switchToLocal } from './deviceImport';
 import { syncDictionary, useDictSync } from './dictSync';
 import { drawEntry } from './fromExcel';
+import CloudflareLogo from '../../components/ui/CloudflareLogo';
 
 type Filter = 'upcoming' | 'past' | 'all';
 
@@ -113,6 +114,9 @@ export default function TournamentHub() {
             ))}
           </div>
           <div className="hub__sync">
+            <span className="hub-chip hub-chip--cf" title="大会とふりがな辞書は Cloudflare のデータベース（D1）に置いています">
+              <CloudflareLogo className="w-4 h-4" /><span>Cloudflare</span>
+            </span>
             <DictChip players={dict.players || list?.dict.players || 0} affiliations={dict.affiliations || list?.dict.affiliations || 0} status={dict.status} />
             <button className="hub-icon-btn" onClick={() => { setLoadState('loading'); void load(); void syncDictionary(); }} title="データベースから読み直す" aria-label="データベースから読み直す">
               <RefreshCw className={`w-4 h-4 ${loadState === 'loading' ? 'animate-spin' : ''}`} />

@@ -1,9 +1,10 @@
+import CloudflareLogo from '../../components/ui/CloudflareLogo';
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, type Match, type Event, type RoundGameRule, type MatchFormatType } from '../../db/database';
 import { useAppStore, type ImportedScheduleItem } from '../../stores/appStore';
-import { Cloud, CalendarClock, Download, FileSpreadsheet, FolderOpen, X, Loader2, Edit3, Save, Zap, ArrowRightLeft, Clock, Trophy } from 'lucide-react';
+import { CalendarClock, Download, FileSpreadsheet, FolderOpen, X, Loader2, Edit3, Save, Zap, ArrowRightLeft, Clock, Trophy } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import {
   getSavedToken as gdriveGetSavedToken,
@@ -158,7 +159,7 @@ function parseRoundFromLabel(label: string, totalRounds: number | null): number 
 
 /** 大会データの置き場（Cloudflare）のアイコン */
 function CloudDataIcon({ className = 'w-5 h-5' }: { className?: string }) {
-  return <Cloud className={className} aria-hidden="true" />;
+  return <CloudflareLogo className={className} />;
 }
 
 export default function ScheduleSheet() {

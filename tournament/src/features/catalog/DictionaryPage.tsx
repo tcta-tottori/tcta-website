@@ -4,11 +4,12 @@
 //   ・今の大会の選手でふりがなが無い人を上に出す（音声コールで読めない人）
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { AlertTriangle, Check, Loader2, Pencil, Plus, RefreshCw, Search, X } from 'lucide-react';
+import { AlertTriangle, Loader2, Pencil, Plus, RefreshCw, Search, X } from 'lucide-react';
 import { db } from '../../db/database';
 import { useAppStore } from '../../stores/appStore';
 import { fetchDict, putDict, type Dict, type DictPlayer } from './catalogApi';
 import { syncDictionary, useDictSync } from './dictSync';
+import CloudflareLogo from '../../components/ui/CloudflareLogo';
 
 type Tab = 'players' | 'affiliations';
 const keyOf = (name: string) => name.replace(/[\s\u3000]+/g, '');
@@ -93,7 +94,7 @@ export default function DictionaryPage() {
             <button role="tab" aria-selected={tab === 'affiliations'} className={`hub-filter__btn ${tab === 'affiliations' ? 'is-on' : ''}`} onClick={() => { setTab('affiliations'); setLimit(PAGE); }}>所属 <small>{dict?.affiliations.length ?? '…'}</small></button>
           </div>
           <div className="hub__sync">
-            <span className="hub-chip">{sync.status === 'syncing' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+            <span className="hub-chip hub-chip--cf" title="辞書は Cloudflare のデータベース（D1）に置いています">{sync.status === 'syncing' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CloudflareLogo className="w-4 h-4" />}
               {source === 'device' ? '端末の辞書を表示中' : sync.version ? `端末に取り込みずみ（${new Date(sync.version).toLocaleString('ja-JP', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })} 版）` : '取り込み待ち'}
             </span>
             <button className="hub-icon-btn" onClick={() => { setState('loading'); void load(); void syncDictionary(true); }} title="読み直す" aria-label="読み直す">

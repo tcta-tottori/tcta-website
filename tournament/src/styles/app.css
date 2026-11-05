@@ -327,3 +327,6 @@ button.mobile-nav__link { width: 100%; text-align: left; }
 .hub-group + .hub-group { margin-top: 36px; }
 .hub-group__title { display: flex; align-items: baseline; gap: 8px; margin: 0 0 14px; font: 700 14px/1.5 var(--fjp); letter-spacing: .04em; color: var(--gray-600); }
 .hub-group__title small { font: 700 12px/1 var(--flt); color: var(--gray-500); }
+/* Cloudflare に置いたものの印（ロゴはブランドのオレンジのまま。ほかの札の赤いアイコン色を上書きしない） */
+.hub-chip--cf svg { color: inherit; }
+.hub-chip--cf { gap: 7px; }
