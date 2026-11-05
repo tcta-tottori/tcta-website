@@ -120,16 +120,22 @@ Claude Code が `scripts/officers.mjs` で Cloudflare の API を直接操作し
 
 Claude Code が Cloudflare を操作するための鍵（API トークン）を作って、Claude Code の環境に入れます。所要 5 分ほどです。
 
-1. **API トークンを作る** … https://dash.cloudflare.com/profile/api-tokens を開く（協会の Cloudflare アカウント t.c.t.a.r7@gmail.com でログイン）
-   1. **Create Token** を押し、いちばん下の **Custom token** の **Get started** を押す
-   2. Token name: `Claude Code 大会運営 役員ログイン`
-   3. Permissions に、右の **+ Add more** で 3 行を作り、それぞれ次のように選ぶ（左から「Account」「項目」「Edit」）
-      - Account ／ **Access: Apps and Policies** ／ **Edit**
-      - Account ／ **Access: Organizations, Identity Providers, and Groups** ／ **Edit**
-      - Account ／ **Workers Scripts** ／ **Edit**
-   4. Account Resources: **Include** ／ 協会のアカウント（`T.c.t.a.r7@gmail.com's Account` など）
-   5. ほかは空のまま **Continue to summary** → **Create Token**
-   6. 出てきたトークン（長い英数字）を **コピーする**。この画面を閉じると二度と表示されない（失くしたら作り直す）。
+1. **API トークンを作る**（Cloudflare のダッシュボードは日本語表示。英語表示のときの名前を（ ）に書いた）
+   … https://dash.cloudflare.com/profile/api-tokens を開く（協会の Cloudflare アカウント t.c.t.a.r7@gmail.com でログイン）と、
+   「**ユーザー API トークン**」（User API Tokens）の画面が開く（ダッシュボードの右上の人のアイコン →「プロファイル」からも開ける）
+   1. 「**トークンの作成**」（Create Token）を押す
+   2. いちばん下の「**カスタムトークンを作成する**」（Create Custom Token）の「**始める**」（Get started）を押す
+   3. 「**トークン名**」（Token name）に `Claude Code 大会運営 役員ログイン` と入れる
+   4. 「**権限**」（Permissions）の欄で、「**さらに追加**」（+ Add more）を押して 3 行にし、1 行ずつ左から順に選ぶ。
+      左の欄は「**アカウント**」（Account）、右の欄は「**編集**」（Edit）。真ん中の欄は次の 3 つ
+      （真ん中の欄の項目名は、日本語表示でも英語のまま出ることがある。欄に `Access` や `Workers` と打つと絞り込める）
+      - **Access: Apps and Policies**（Access: アプリとポリシー）
+      - **Access: Organizations, Identity Providers, and Groups**（Access: 組織、ID プロバイダー、グループ）
+      - **Workers Scripts**（Workers スクリプト）
+   5. 「**アカウント リソース**」（Account Resources）は「**含む**」（Include）と、協会のアカウント（`T.c.t.a.r7@gmail.com's Account` など）を選ぶ
+   6. ほかの欄（クライアント IP アドレスのフィルタリング・TTL）は空のまま、いちばん下の「**概要に進む**」（Continue to summary）を押す
+   7. 内容を確かめて「**トークンを作成**」（Create Token）を押す
+   8. 出てきたトークン（長い英数字）の横の「コピー」を押す。**この画面を閉じると二度と表示されない**（失くしたら作り直す）。
       **チャットには貼らない**
 2. **Claude Code の環境に入れる** … https://claude.ai/code を開き、このリポジトリで使っているセッションを開く
    1. 画面上部（セッションの題名のあたり）にある **環境の名前** を押し、**Edit**（環境の設定）を開く
@@ -141,25 +147,27 @@ Claude Code が Cloudflare を操作するための鍵（API トークン）を�
 
    3. **新しいセッションを始める**（環境変数は新しいセッションから読まれる）
 3. **Zero Trust（ログインのしくみ）を始める** … 多くの場合、手順 4 で Claude Code が自動で始める。
-   Claude Code から「Zero Trust を始めてください」と言われたときだけ、https://one.dash.cloudflare.com/ を開き、
-   アカウントを選んで、案内に沿ってチーム名（例 `tottori-city-tennis`。ログイン画面のアドレス `tottori-city-tennis.cloudflareaccess.com` になる）を決め、
-   **Free プラン**（50 人まで無料）を選ぶ。支払い方法の登録を求められたら登録する（Free のままなら請求は来ない）
+   Claude Code から「Zero Trust を始めてください」と言われたときだけ、https://one.dash.cloudflare.com/ を開く
+   （ダッシュボードの左のメニューの「**Zero Trust**」からも開ける）。アカウントを選び、画面の案内に沿って
+   1. 「**チーム名**」（team name）を決める（例 `tottori-city-tennis`。ログイン画面のアドレス `tottori-city-tennis.cloudflareaccess.com` になる）
+   2. プランは「**Free**」（無料。50 人まで）を選ぶ
+   3. 支払い方法の登録を求められたら登録する（Free プランのままなら請求は来ない）
 4. **Claude Code に頼む** … 新しいセッションで「役員ログインを設定して。役員は（メールアドレスを並べる）」と書く
 5. **確かめる** … https://tcta-tournament.tcta-admin-worker.workers.dev/data を開き、**役員としてログイン** → メールアドレス →
    メールで届いた 6 桁のコード → 運営画面に戻れば完了。
    ログインしていないブラウザ（シークレットウィンドウ）で同じ URL を開くと案内の画面が出ること、
    https://tcta-tournament.tcta-admin-worker.workers.dev/view（観戦ページ）はそのまま見られることも確かめる
 
-作られるもの（https://one.dash.cloudflare.com/ → Access → Applications ／ Policies で見られる。名前で見分けているので名前は変えない）:
+作られるもの（https://one.dash.cloudflare.com/ の左のメニュー「**アクセス**」（Access）→「**アプリケーション**」（Applications）／「**ポリシー**」（Policies）で見られる。名前で見分けているので名前は変えない）:
 
 | 種類 | 名前 | 中身 |
 | --- | --- | --- |
-| ログインの方法 | メールのコード（One-time PIN） | 無ければ作る |
+| ログインの方法 | メールのコード（日本語表示では「ワンタイム PIN」。One-time PIN） | 無ければ作る |
 | ポリシー | 大会運営システム 役員 | Allow。役員のメールアドレス。セッション 1 週間 |
 | アプリケーション | 大会運営システム（役員） | Self-hosted。`tcta-tournament.tcta-admin-worker.workers.dev/auth/login` だけを守る。ログインの方法はメールのコードだけ |
 | Worker の秘密 | `ACCESS_TEAM_DOMAIN`・`ACCESS_AUD` | `tcta-tournament` に入れる。GitHub からの配備でも消えない |
 
-トークンの期限・権限を見直すときは、手順 1 の URL で同じトークンの **Edit**。使わなくなったら **Delete** すれば、Claude Code からは操作できなくなる（役員ログインそのものは動き続ける）。
+トークンの期限・権限を見直すときは、手順 1 の URL で同じトークンの右の「…」から「**編集**」（Edit）。使わなくなったら「**削除**」（Delete）すれば、Claude Code からは操作できなくなる（役員ログインそのものは動き続ける）。
 
 ### 使うときのこと
 

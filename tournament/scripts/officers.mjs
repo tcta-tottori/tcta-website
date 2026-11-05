@@ -109,7 +109,7 @@ async function organization(acc, team, create) {
     console.log(`✓ Zero Trust のチームを作りました: ${org.auth_domain}`);
     return org;
   } catch (e) {
-    fail(`Zero Trust のチームを作れませんでした（${e.message}）。README の手順 3 の URL から Zero Trust を始めて（チーム名を決めて Free プランを選ぶ）から、もう一度試してください。チーム名が使われているときは --team で別の名前を指定します。`);
+    fail(`Zero Trust のチームを作れませんでした（${e.message}）。https://one.dash.cloudflare.com/ を開いて Zero Trust を始め（チーム名を決めて「Free」プランを選ぶ。README の手順 3）、もう一度試してください。チーム名が使われているときは --team で別の名前を指定します。`);
   }
 }
 
@@ -270,7 +270,7 @@ async function change(args, mode) {
     console.log(`✓ 役員を${mode === 'add' ? '足しました' : '外しました'}（いま ${next.length} 人）`);
   }
   for (const e of next) console.log(`  - ${e}`);
-  if (mode === 'remove') console.log('\n外した人がいまログインしている端末は、セッションが切れるまで（最長 1 週間）使えます。すぐに止めたいときは、Zero Trust → Access → Applications → 大会運営システム（役員）→ 「Revoke existing tokens」を押してください。');
+  if (mode === 'remove') console.log('\n外した人がいまログインしている端末は、セッションが切れるまで（最長 1 週間）使えます。すぐに止めたいときは、https://one.dash.cloudflare.com/ の左のメニュー「アクセス」（Access）→「アプリケーション」（Applications）→「大会運営システム（役員）」→「既存のトークンを取り消す」（Revoke existing tokens）を押してください。');
 }
 
 function optValue(args, name) {
