@@ -62,7 +62,10 @@ ok(!(await connect('operator')), 'ログインしていなければ、運営端�
   const cross = await fetch(BASE + '/api/gemini-tts', { method: 'POST', headers: { 'Content-Type': 'application/json', Origin: 'https://example.com' }, body: '{"text":"テスト"}' });
   ok(cross.status === 403, '他のサイトからの音声コールの中継は断る');
   const login = await fetch(BASE + '/auth/login?return=//evil.example', { redirect: 'manual' });
-  ok(login.status !== 302 || !(login.headers.get('location') || '').includes('evil'), 'ログイン後の戻り先に他のサイトを指定できない');
+  // Access を通っていなければ Access のログイン画面へ移る（その URL の中に元の要求がそのまま入るので、移る先のホストで見る）
+  const loc = login.headers.get('location') || '';
+  const host = loc ? new URL(loc, BASE).hostname : '';
+  ok(login.status !== 302 || !host.includes('evil'), 'ログイン後の戻り先に他のサイトを指定できない');
 }
 
 // 大会データの置き場（D1）
