@@ -9,7 +9,9 @@
 //   node tournament/scripts/officers.mjs add a@x.jp [b@y.jp …]      役員を足す
 //   node tournament/scripts/officers.mjs remove a@x.jp [b@y.jp …]   役員を外す
 //
-// 鍵: 環境変数 CLOUDFLARE_API_TOKEN（Claude Code の環境の設定に入れる。README の「役員ログイン」）。
+// 鍵: Claude Code の環境の「ネットワークの秘密」（Network secrets）に、ホスト api.cloudflare.com・Bearer で入れる（おすすめ）。
+//     鍵はセッションの中に入らず、Cloudflare への通信にだけプロキシが付けて送る。このときスクリプトは鍵を持たずに API を呼ぶ。
+//     環境変数 CLOUDFLARE_API_TOKEN があれば、それを使う（手元のターミナルから使うとき）。README の「役員ログイン」。
 //     必要な権限 … Access: Apps and Policies (Edit) / Access: Organizations, Identity Providers, and Groups (Edit) /
 //                   Workers Scripts (Edit)
 //     アカウントはトークンから自動で見つける（見つからないときだけ CLOUDFLARE_ACCOUNT_ID を使う）。
@@ -76,13 +78,13 @@ const badEmails = (list) => list.filter((e) => !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.tes
 // ---------------------------------------------------------------------------
 
 async function account() {
-  if (!TOKEN && !process.env.CF_API_BASE) {
-    fail('環境変数 CLOUDFLARE_API_TOKEN がありません。tournament/README.md の「役員ログイン」の手順 1・2 で、Claude Code の環境に入れてから新しいセッションで試してください。');
-  }
   try {
     await call('GET', '/user/tokens/verify');
   } catch (e) {
-    fail(`Cloudflare の API トークンが使えません（${e.message}）。トークンが正しいか、期限が切れていないか確かめてください。`);
+    if (!TOKEN && (e.status === 400 || e.status === 401)) {
+      fail('Cloudflare の API トークンが届いていません。Claude Code の環境の「ネットワークの秘密」（Network secrets）に、ホスト api.cloudflare.com でトークンを入れてから、新しいセッションで試してください（tournament/README.md の「役員ログイン」の手順 2）。');
+    }
+    fail(`Cloudflare の API トークンが使えません（${e.message}）。トークンが正しいか、期限が切れていないか、ネットワークの秘密のホストが api.cloudflare.com になっているか確かめてください。`);
   }
   if (process.env.CLOUDFLARE_ACCOUNT_ID) return process.env.CLOUDFLARE_ACCOUNT_ID;
   let accounts = [];
