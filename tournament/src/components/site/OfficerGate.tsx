@@ -3,7 +3,7 @@
 import type { ReactNode } from 'react';
 import { LogIn, Eye, WifiOff, ShieldAlert } from 'lucide-react';
 import { useOfficer, loginHref } from '../../features/auth/officer';
-import { SiteHeader, PageHead, SiteFooter, SITE_URL } from './SiteChrome';
+import { SiteHeader, PageHead, SiteFooter, SITE_URL, SYSTEM_LOGO } from './SiteChrome';
 
 export default function OfficerGate({ children }: { children: ReactNode }) {
   const officer = useOfficer();
@@ -44,8 +44,7 @@ export default function OfficerGate({ children }: { children: ReactNode }) {
     <div className="app-shell">
       <SiteHeader
         homeTo="/view"
-        tag="大会運営"
-        tagEm="SYSTEM"
+        logo={SYSTEM_LOGO}
         items={[]}
         contact={{ label: '観戦ページ', to: '/view' }}
         menuOpen={false}

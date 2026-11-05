@@ -825,3 +825,8 @@ html.is-lite [class~="fixed"][class~="inset-0"] > [class*="bg-white"][class*="ma
   .colf--players .colf__cell--aff .colf__btn { justify-content: flex-end; }
   .colf--players .colf__cell--aff .colf__panel { left: auto; right: 0; }
 }
+
+/* 大会運営システムのロゴ（横長。スマホ 44px・PC 42px の高さ） */
+.site-header__logo--system img { height: 44px; width: auto; }
+@media (min-width: 1024px) { .site-header__logo--system img { height: 42px; } }
+@media (max-width: 380px) { .site-header__logo--system img { height: 38px; } }

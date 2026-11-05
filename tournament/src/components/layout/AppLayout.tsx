@@ -16,7 +16,7 @@ import BulkCallOverlay from '../ui/BulkCallOverlay';
 import VoiceLoadingIndicator from '../ui/VoiceLoadingIndicator';
 import { callTts } from '../../features/broadcast/callTts';
 import {
-  SiteHeader, MobileNav, PageHead, AppTabs, StatusBar, SiteFooter, SITE_URL, type NavLinkItem,
+  SiteHeader, MobileNav, PageHead, AppTabs, StatusBar, SiteFooter, SITE_URL, SYSTEM_LOGO, type NavLinkItem,
 } from '../site/SiteChrome';
 import { OfficerExpiredBar } from '../site/OfficerGate';
 import { useSiteReveal } from '../site/useSiteReveal';
@@ -391,8 +391,7 @@ export default function AppLayout() {
       {/* ===== ヘッダー（協会サイトと同じ。右上の赤いブロックは観戦ページ） ===== */}
       <SiteHeader
         homeTo="/data"
-        tag="大会運営"
-        tagEm="SYSTEM"
+        logo={SYSTEM_LOGO}
         items={navItems}
         contact={{ label: '観戦ページ', href: '/view', external: true }}
         aux={syncChip}

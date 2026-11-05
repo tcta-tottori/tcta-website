@@ -17,6 +17,8 @@ export const SITE_URL: string = (
 const BASE = import.meta.env.BASE_URL;
 export const LOGO = `${BASE}site/logo-cut.png`;
 export const LOGO_WHITE = `${BASE}site/logo-cut-white.png`;
+/** 大会運営システムのロゴ（鳥取市テニス協会／大会運営｜SYSTEM） */
+export const SYSTEM_LOGO = { src: `${BASE}logo-system.png`, white: `${BASE}logo-system-white.png`, width: 957, height: 240, alt: '鳥取市テニス協会 大会運営 SYSTEM' };
 
 export interface NavLinkItem {
   key: string;
@@ -37,8 +39,10 @@ export interface NavLinkItem {
 // ---------------------------------------------------------------------------
 
 export function SiteHeader({
-  homeTo, tag, tagEm, items, contact, aux, menuOpen, onToggleMenu, hideMenu = false, scrolled = false,
+  homeTo, tag, tagEm, items, contact, aux, menuOpen, onToggleMenu, hideMenu = false, scrolled = false, logo,
 }: {
+  /** ロゴを差し替える（大会運営システムのロゴなど） */
+  logo?: { src: string; white: string; width: number; height: number; alt: string };
   homeTo: string;
   /** ロゴの横の札（「大会運営」「観戦」など。協会サイトには無い、このシステムの印） */
   tag?: string;
@@ -58,9 +62,9 @@ export function SiteHeader({
   return (
     <header className={`site-header ${menuOpen ? 'is-menu' : ''} ${scrolled ? 'hsh' : ''}`}>
       <div className="container site-header__inner">
-        <Link className="site-header__logo" to={homeTo} aria-label={`鳥取市テニス協会 ${tag ?? ''}`}>
-          <img className="site-header__logo-img" src={LOGO} alt="鳥取市テニス協会 TOTTORI-CITY TENNIS ASSOCIATION" width={679} height={217} />
-          <img className="site-header__logo-w" src={LOGO_WHITE} alt="" width={679} height={217} />
+        <Link className={`site-header__logo ${logo ? 'site-header__logo--system' : ''}`} to={homeTo} aria-label={logo ? logo.alt : `鳥取市テニス協会 ${tag ?? ''}`}>
+          <img className="site-header__logo-img" src={logo?.src ?? LOGO} alt={logo?.alt ?? '鳥取市テニス協会 TOTTORI-CITY TENNIS ASSOCIATION'} width={logo?.width ?? 679} height={logo?.height ?? 217} />
+          <img className="site-header__logo-w" src={logo?.white ?? LOGO_WHITE} alt="" width={logo?.width ?? 679} height={logo?.height ?? 217} />
         </Link>
         {tag && <span className="app-tag" aria-hidden="true">{tag}{tagEm && <em>{tagEm}</em>}</span>}
         <nav className="nav" aria-label="グローバルナビゲーション">
