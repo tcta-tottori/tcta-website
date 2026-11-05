@@ -77,8 +77,16 @@ const CARD_H_VS = 50;
 const CARD_H_VS_DOUBLES = 78;
 
 /** 全体表示で縮める下限（これより小さいと字が読めず、押しにくい）。スマホは字が小さくなりすぎないよう高めにする */
-const MIN_FIT_PC = 0.6;
-const MIN_FIT_MOBILE = 0.72;
+/** 大きさの調整（0〜100）。50 が標準。0 で画面の幅に全体が収まる大きさ、100 で ZOOM_MAX 倍 */
+const ZOOM_DEFAULT = 50;
+const ZOOM_MAX = 1.5;
+/** 標準（50）のときの倍率。スマホは字が読める大きさ、PC は画面の幅に合わせる（75〜100%） */
+const STD_MOBILE = 0.9;
+const STD_PC_MIN = 0.75;
+const ZOOM_KEY = 'tcta.bracketZoom';
+function loadZoom(): number {
+  try { const v = Number(localStorage.getItem(ZOOM_KEY)); return Number.isFinite(v) && v >= 0 && v <= 100 && localStorage.getItem(ZOOM_KEY) !== null ? v : ZOOM_DEFAULT; } catch { return ZOOM_DEFAULT; }
+}
 
 function useIsMobile() {
   const [isMobile, setIsMobile] = React.useState(
@@ -107,8 +115,14 @@ export default function CourtBracketView({
   nameEditMode = false,
 }: CourtBracketViewProps) {
   const isMobile = useIsMobile();
-  // 全体表示（画面の幅に合わせて縮める）。既定は全体
-  const [fit, setFit] = React.useState(true);
+  // 表示の大きさ（0〜100。50 が標準）。端末に覚えておく
+  const [zoom, setZoomState] = React.useState(loadZoom);
+  const [zoomOpen, setZoomOpen] = React.useState(false);
+  const setZoom = (v: number) => {
+    const n = Math.max(0, Math.min(100, Math.round(v)));
+    setZoomState(n);
+    try { localStorage.setItem(ZOOM_KEY, String(n)); } catch { /* 無視 */ }
+  };
   const boxRef = React.useRef<HTMLDivElement>(null);
   const [boxW, setBoxW] = React.useState(0);
   React.useEffect(() => {
@@ -765,28 +779,51 @@ export default function CourtBracketView({
     ? Math.max(baseHeight, thirdPlaceTop + cardHVs + OFFSET_Y)
     : baseHeight;
 
-  // 画面の幅に収まるよう縮めて全体を見せる（字が読めるよう PC は 60%、スマホは 72% まで。収まらない分は横に送る）。「100%」で元の大きさに戻す
-  const scale = fit && boxW > 0 ? Math.max(isMobile ? MIN_FIT_MOBILE : MIN_FIT_PC, Math.min(1, (boxW - 4) / containerWidth)) : 1;
-  const canFit = boxW > 0 && containerWidth > boxW;
+  // 表示の倍率：0＝画面の幅に全体が収まる大きさ、50＝標準、100＝ZOOM_MAX。あいだはなめらかにつなぐ
+  const wholeScale = boxW > 0 ? Math.min(1, (boxW - 4) / containerWidth) : 1;
+  const stdScale = isMobile ? Math.max(STD_MOBILE, wholeScale) : Math.max(STD_PC_MIN, wholeScale);
+  const minScale = Math.min(wholeScale, stdScale);
+  const scale = boxW <= 0 ? 1
+    : zoom <= 50 ? minScale + (stdScale - minScale) * (zoom / 50)
+    : stdScale + (ZOOM_MAX - stdScale) * ((zoom - 50) / 50);
 
   return (
     <div ref={boxRef} className="relative overflow-auto court-bracket-scroll" style={{ width: '100%', height: '100%' }}>
-      {canFit && (
-        // 横に送っても右上に残るよう、見えている幅の帯（高さ 0）に置く
+      {boxW > 0 && (
+        // 横に送っても右上に残るよう、見えている幅の帯（高さ 0）に置く。押すと大きさの調整バーが出る
         <div className="cbv-fit-bar" style={{ width: boxW }}>
-        <button
-          type="button"
-          className="cbv-fit"
-          onClick={() => setFit((v) => !v)}
-          aria-pressed={fit}
-          title={fit ? '元の大きさで見る' : '画面の幅に合わせて全体を見る'}
-        >
-          {fit ? '100%' : '全体'}
-        </button>
+          <button
+            type="button"
+            className={`cbv-fit ${zoomOpen ? 'is-open' : ''}`}
+            onClick={() => setZoomOpen((v) => !v)}
+            aria-expanded={zoomOpen}
+            title="表示の大きさを変える"
+          >
+            {zoom}%
+          </button>
+          {zoomOpen && (
+            <div className="cbv-zoom" role="group" aria-label="表示の大きさ">
+              <button type="button" className="cbv-zoom__step" onClick={() => setZoom(zoom - 5)} aria-label="小さくする">−</button>
+              <input
+                type="range" min={0} max={100} step={1} value={zoom}
+                onChange={(e) => setZoom(Number(e.target.value))}
+                className="cbv-zoom__range"
+                aria-label="表示の大きさ"
+                style={{ ['--p' as string]: `${zoom}%` }}
+              />
+              <button type="button" className="cbv-zoom__step" onClick={() => setZoom(zoom + 5)} aria-label="大きくする">＋</button>
+              <span className="cbv-zoom__val">{zoom}%</span>
+              <div className="cbv-zoom__presets">
+                <button type="button" onClick={() => setZoom(0)} className={zoom === 0 ? 'is-on' : ''}>全体</button>
+                <button type="button" onClick={() => setZoom(ZOOM_DEFAULT)} className={zoom === ZOOM_DEFAULT ? 'is-on' : ''}>標準</button>
+                <button type="button" onClick={() => setZoomOpen(false)}>閉じる</button>
+              </div>
+            </div>
+          )}
         </div>
       )}
       <div style={{ width: containerWidth * scale, height: containerHeight * scale, position: 'relative' }}>
-      <div className="relative" style={{ width: containerWidth, height: containerHeight, transform: scale < 1 ? `scale(${scale})` : undefined, transformOrigin: '0 0' }}>
+      <div className="relative" style={{ width: containerWidth, height: containerHeight, transform: scale !== 1 ? `scale(${scale})` : undefined, transformOrigin: '0 0' }}>
         {/* 回戦ヘッダー */}
         {roundHeaders}
 

@@ -239,7 +239,7 @@ export default function PublicLayout() {
         ref={mainRef}
         id="main"
         className={`app-main ${location.pathname.startsWith('/view/draw') ? 'app-main--compact' : ''}`}
-        onScroll={(e) => { const y = (e.currentTarget as HTMLElement).scrollTop > 100; if (y !== scrolled) setScrolled(y); }}
+        onScroll={(e) => { const y = (e.currentTarget as HTMLElement).scrollTop > 24; if (y !== scrolled) setScrolled(y); }}
       >
         <PageHead
           key={`head-${current.path}`}
