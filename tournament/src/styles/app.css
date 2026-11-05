@@ -804,6 +804,6 @@ html.is-lite [class~="fixed"][class~="inset-0"] > [class*="bg-white"][class*="ma
 
 /* スマホ：ヘッダーは浮かせたまま、少し送ったら白い地を敷いて下の中身が透けないようにする（運営画面は中身が密なため） */
 @media (max-width: 1023px) {
-  .app-shell .site-header.hsh { background: rgba(255, 255, 255, .97); box-shadow: 0 1px 10px rgba(26, 26, 26, .08); }
+  .app-shell .site-header.hsh { background: #fff; box-shadow: 0 1px 10px rgba(26, 26, 26, .08); }
   .app-shell .site-header.hsh .site-header__logo img, .app-shell .site-header.hsh .hamburger { filter: none; }
 }
