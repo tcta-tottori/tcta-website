@@ -3,7 +3,7 @@ import { Link, Outlet, useLocation } from 'react-router-dom';
 import {
   Database, Users, Dices, Trophy, Swords,
   ClipboardList, CalendarClock, BarChart2,
-  HelpCircle, Settings, Network, Radio, Printer, MapPin, Calendar, BookOpen, Wrench
+  HelpCircle, Settings, Network, Radio, Printer, MapPin, Calendar, BookOpen, Wrench, ClipboardCheck
 } from 'lucide-react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../../db/database';
@@ -30,10 +30,13 @@ interface MainTab {
   /** ページ見出しの赤い英字と、背景の大きな英字 */
   en: string;
   icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>;
+  /** タブ・メニューに出さない画面（ドロー確認など、ほかの画面から開くもの） */
+  hidden?: boolean;
 }
 
 const ALL_MAIN_TABS: MainTab[] = [
   { id: 'S-01', path: '/data', label: '大会選択', en: 'SELECT', icon: Database },
+  { id: 'S-01r', path: '/data/review', label: 'ドロー確認', en: 'CHECK', icon: ClipboardCheck, hidden: true },
   { id: 'S-01b', path: '/dict', label: '選手・所属', en: 'PLAYERS', icon: BookOpen },
   { id: 'S-02', path: '/entry', label: 'エントリー', en: 'ENTRY', icon: Users },
 
@@ -58,7 +61,7 @@ const ALL_MAIN_TABS: MainTab[] = [
  * まとまりの中の画面はページ見出しの下のタブで切り替える（会員ポータルの事務局画面と同じ作り）。
  */
 const NAV_GROUPS: { key: string; label: string; en: string; paths: string[] }[] = [
-  { key: 'prep', label: '大会準備', en: 'PREPARATION', paths: ['/data', '/dict', '/entry', '/draw-lot', '/draw-table'] },
+  { key: 'prep', label: '大会準備', en: 'PREPARATION', paths: ['/data', '/data/review', '/dict', '/entry', '/draw-lot', '/draw-table'] },
   { key: 'run', label: '大会進行', en: 'OPERATION', paths: ['/referee', '/schedule-sheet', '/court-bracket', '/score'] },
   { key: 'live', label: '配信', en: 'LIVE', paths: ['/dashboard', '/broadcast'] },
   { key: 'print', label: '印刷', en: 'PRINT', paths: ['/print'] },
@@ -271,7 +274,7 @@ export default function AppLayout() {
     // 大会データ未読み込み時: データ・印刷・マニュアル・設定のみ表示
     if (!currentTournamentId && !isMixedImported && !isTeamImported) {
       // 賞状印刷は大会データが無くても（手入力で）使えるので常に出す
-      return tabs.filter(t => ['/data', '/print', '/manual', '/settings'].includes(t.path));
+      return tabs.filter(t => ['/data', '/data/review', '/dict', '/print', '/manual', '/settings', '/data-tools'].includes(t.path));
     }
 
     // ミックスダブルス or 団体戦 読込時: 不要なタブを非表示 + ラベル変更
@@ -302,8 +305,9 @@ export default function AppLayout() {
   // 現在のページ（タブ）と、それが入っているまとまり
   // 大会を読み込む前など、メニューに出していない画面を直接開いたときも見出しは正しく出す
   const currentTab = useMemo(
-    () => allTabs.find(t => location.pathname.startsWith(t.path))
-      ?? ALL_MAIN_TABS.find(t => location.pathname.startsWith(t.path)),
+    // いちばん長く一致する画面（/data/review は /data より先）
+    () => [...allTabs].sort((a, b) => b.path.length - a.path.length).find(t => location.pathname.startsWith(t.path))
+      ?? [...ALL_MAIN_TABS].sort((a, b) => b.path.length - a.path.length).find(t => location.pathname.startsWith(t.path)),
     [allTabs, location.pathname]
   );
   const visibleGroups = useMemo(
@@ -320,8 +324,9 @@ export default function AppLayout() {
     to: g.tabs[0].path,
     active: g === currentGroup,
   }));
-  const tabItems: NavLinkItem[] = (currentGroup?.tabs ?? []).map(t => ({
-    key: t.id, label: t.label, to: t.path, icon: t.icon, active: t === currentTab,
+  // 隠れた画面（ドロー確認）はタブに出さず、開いているあいだは「大会選択」を選んだ状態にする
+  const tabItems: NavLinkItem[] = (currentGroup?.tabs ?? []).filter(t => !t.hidden).map(t => ({
+    key: t.id, label: t.label, to: t.path, icon: t.icon, active: t === currentTab || (!!currentTab?.hidden && t.path === '/data'),
   }));
 
   // 表示中の大会（個人戦・ミックス・団体戦）
@@ -361,7 +366,7 @@ export default function AppLayout() {
 
   // スマホのメニュー：サイトと同じく 2 列に並べる（画面の順。あとに観戦ページ・協会サイト・バージョン・ログアウト）
   const mobileItems: NavLinkItem[] = [
-    ...visibleGroups.flatMap(g => g.tabs.map(t => ({ key: t.id, label: t.label, to: t.path, active: t === currentTab }))),
+    ...visibleGroups.flatMap(g => g.tabs.filter(t => !t.hidden).map(t => ({ key: t.id, label: t.label, to: t.path, active: t === currentTab }))),
     { key: 'view', label: '観戦ページ', href: '/view' },
     { key: 'site', label: '協会サイト', href: SITE_URL },
     { key: 'ver', label: `Ver 2.4`, onClick: () => setVersionModalOpen(true) },

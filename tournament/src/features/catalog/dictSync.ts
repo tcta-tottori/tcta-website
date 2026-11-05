@@ -5,6 +5,7 @@
 import { useSyncExternalStore } from 'react';
 import { db, type AffiliationFurigana } from '../../db/database';
 import { fetchDict, type Dict } from './catalogApi';
+import { toHalfwidth } from '../../lib/halfwidth';
 
 const VERSION_KEY = 'tcta-dict-version';
 const keyOf = (name: string) => name.replace(/[\s\u3000]+/g, '');
@@ -42,10 +43,18 @@ async function apply(dict: Dict): Promise<number> {
       return { ...(cur?.id != null ? { id: cur.id } : {}), name: a.name, furigana: a.furigana, updatedAt: now } as AffiliationFurigana;
     });
     await db.affiliationFurigana.bulkPut(rows);
+    // 全角の英数字の所属（ＬＴＣ河原 など。前の版の辞書や初期データの残り）は消す。半角の行に一本化する
+    const fullwidth = (await db.affiliationFurigana.toArray()).filter((a) => a.id != null && toHalfwidth(a.name, { space: true }) !== a.name);
+    if (fullwidth.length) await db.affiliationFurigana.bulkDelete(fullwidth.map((a) => a.id!));
     const byKey = new Map(dict.players.map((p) => [keyOf(p.name), keyOf(p.furigana)]));
     for (const p of await db.players.toArray()) {
+      if (p.id == null) continue;
       const f = byKey.get(p.playerId);
-      if (f && p.id != null && p.furigana !== f) { await db.players.update(p.id, { furigana: f }); fixed++; }
+      const aff = toHalfwidth(p.affiliation ?? '', { space: true });
+      const patch: { furigana?: string; affiliation?: string } = {};
+      if (f && p.furigana !== f) patch.furigana = f;
+      if (aff !== p.affiliation) patch.affiliation = aff;
+      if (Object.keys(patch).length) { await db.players.update(p.id, patch); fixed++; }
     }
   });
   return fixed;

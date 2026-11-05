@@ -7,6 +7,7 @@ import ErrorBoundary from './components/ErrorBoundary'
 import DataManagement from './features/data/DataManagement'
 import TournamentHub from './features/catalog/TournamentHub'
 import DictionaryPage from './features/catalog/DictionaryPage'
+import ReviewPage from './features/catalog/ReviewPage'
 import { loadSeedDataIfNeeded } from './db/database'
 import { installSiteAlert } from './components/site/siteConfirm'
 
@@ -110,6 +111,7 @@ createRoot(document.getElementById('root')!).render(
           <Route index element={<Navigate to="/data" replace />} />
           <Route path="data" element={<TournamentHub />} />
           <Route path="dict" element={<DictionaryPage />} />
+          <Route path="data/review/:id" element={<ReviewPage />} />
           <Route path="data-tools" element={<DataManagement />} />
           <Route path="entry" element={<EntryRegistration />} />
 

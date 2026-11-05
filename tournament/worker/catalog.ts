@@ -64,6 +64,15 @@ interface TournamentBody {
   draw?: { events: DrawEvent[]; earliestStartTime?: string; suggestedCourtCount?: number } | null;
 }
 
+// 全角の英数字・記号を半角に、半角カナを全角カナに（src/lib/halfwidth.ts と同じ。直すときは両方そろえる）。
+// 大会（選手名・所属・種目名）と辞書は、どこから入れても（画面・AI・スクリプト）ここで半角にそろえて保存する
+const FW = /[\uFF10-\uFF19\uFF21-\uFF3A\uFF41-\uFF5A\uFF03\uFF06\uFF0B\uFF0C\uFF0D\uFF0E\uFF0F\uFF1A\uFF20\uFF3F]/g;
+function hw(s: string, space = false): string {
+  let out = (s ?? '').replace(FW, (c) => String.fromCharCode(c.charCodeAt(0) - 0xfee0)).replace(/[\uFF61-\uFF9F]+/g, (m) => m.normalize('NFKC'));
+  if (space) out = out.replace(/\u3000/g, ' ').replace(/ {2,}/g, ' ').trim();
+  return out;
+}
+
 const ID_RE = /^[a-z0-9][a-z0-9-]{0,62}$/;
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const HM_RE = /^\d{2}:\d{2}$/;
@@ -98,7 +107,7 @@ function validateTournament(b: unknown): TournamentBody | string {
     if (!Array.isArray(d.events)) return 'draw.events が配列ではありません';
     const events: DrawEvent[] = [];
     for (const [i, e] of (d.events as Record<string, unknown>[]).entries()) {
-      const eventName = str(e?.eventName);
+      const eventName = hw(str(e?.eventName));
       if (!eventName) return `draw.events[${i}].eventName が要ります`;
       const type = e.type === 'Doubles' ? 'Doubles' : 'Singles';
       const drawSize = Number(e.drawSize);
@@ -108,15 +117,15 @@ function validateTournament(b: unknown): TournamentBody | string {
       const seen = new Set<number>();
       for (const p of e.players as Record<string, unknown>[]) {
         const position = Number(p?.position);
-        const pname = str(p?.name, 60);
+        const pname = hw(str(p?.name, 60));
         if (!pname) continue; // BYE は書かない
         if (!Number.isInteger(position) || position < 1 || position > drawSize) return `draw.events[${i}] の ${pname} の position が 1〜${drawSize} ではありません`;
         if (seen.has(position)) return `draw.events[${i}] の position ${position} が重複しています`;
         seen.add(position);
         players.push({
-          position, name: pname, affiliation: str(p.affiliation, 60),
+          position, name: pname, affiliation: hw(str(p.affiliation, 60), true),
           ...(Number(p.seed) > 0 ? { seed: Number(p.seed) } : {}),
-          ...(type === 'Doubles' && str(p.partnerName, 60) ? { partnerName: str(p.partnerName, 60), partnerAffiliation: str(p.partnerAffiliation, 60) } : {}),
+          ...(type === 'Doubles' && str(p.partnerName, 60) ? { partnerName: hw(str(p.partnerName, 60)), partnerAffiliation: hw(str(p.partnerAffiliation, 60), true) } : {}),
         });
       }
       if (players.length === 0) return `draw.events[${i}]（${eventName}）に選手がいません`;
@@ -200,17 +209,23 @@ export async function handleCatalog(request: Request, env: Env, url: URL): Promi
       if (!body) return json({ error: '本文が JSON ではありません' }, 400);
       const mode = body.mode === 'replace' ? 'replace' : 'merge';
       const cur = await readDict(db);
-      const players = new Map<string, DictPlayer>(mode === 'replace' && Array.isArray(body.players) ? [] : cur.players.map((p) => [keyOf(p.name), p]));
-      const affs = new Map<string, DictAff>(mode === 'replace' && Array.isArray(body.affiliations) ? [] : cur.affiliations.map((a) => [a.name, a]));
+      // 前からある行も半角にそろえる（全角と半角で 2 行あった所属は 1 行になる）
+      const players = new Map<string, DictPlayer>(mode === 'replace' && Array.isArray(body.players) ? [] : cur.players.map((p) => {
+        const n = { ...p, name: hw(p.name), ...(p.affiliation ? { affiliation: hw(p.affiliation, true) } : {}) };
+        return [keyOf(n.name), n];
+      }));
+      const affs = new Map<string, DictAff>();
+      if (!(mode === 'replace' && Array.isArray(body.affiliations))) for (const a of cur.affiliations) { const n = hw(a.name, true); if (!affs.has(n)) affs.set(n, { name: n, furigana: a.furigana }); }
       let np = 0, na = 0;
       for (const p of (Array.isArray(body.players) ? body.players : []) as Record<string, unknown>[]) {
-        const name = str(p?.name, 60), furigana = str(p?.furigana, 80);
+        const name = hw(str(p?.name, 60)), furigana = str(p?.furigana, 80);
         if (!name || !furigana) continue;
-        players.set(keyOf(name), { name, furigana, ...(str(p.affiliation, 60) ? { affiliation: str(p.affiliation, 60) } : {}), ...(str(p.note, 200) ? { note: str(p.note, 200) } : {}) });
+        const aff = hw(str(p.affiliation, 60), true);
+        players.set(keyOf(name), { name, furigana, ...(aff ? { affiliation: aff } : {}), ...(str(p.note, 200) ? { note: str(p.note, 200) } : {}) });
         np++;
       }
       for (const a of (Array.isArray(body.affiliations) ? body.affiliations : []) as Record<string, unknown>[]) {
-        const name = str(a?.name, 60), furigana = str(a?.furigana, 80);
+        const name = hw(str(a?.name, 60), true), furigana = str(a?.furigana, 80);
         if (!name || !furigana) continue;
         affs.set(name, { name, furigana });
         na++;

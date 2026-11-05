@@ -1,4 +1,5 @@
 import * as XLSX from 'xlsx';
+import { toHalfwidth } from '../../lib/halfwidth.ts';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -1156,8 +1157,9 @@ function extractPlayersFromHalf(
     // Verify it looks like a sequential draw number (integer)
     if (!Number.isInteger(drawNum)) continue;
 
-    const rawName = normalizeName(cellStr(row, layout.nameCol));
-    const affiliation = cellStr(row, layout.affiliationCol);
+    // 全角の英数字（ＬＴＣ河原・ｄｏＭｅ など）は半角にそろえる（辞書・音声コールの読みと合わせるため）
+    const rawName = toHalfwidth(normalizeName(cellStr(row, layout.nameCol)));
+    const affiliation = toHalfwidth(cellStr(row, layout.affiliationCol), { space: true });
     const bye = isBye(rawName);
     const name = bye ? '' : rawName;
 
@@ -1174,8 +1176,8 @@ function extractPlayersFromHalf(
       // Partner is on the next row, same columns (name and affiliation only)
       const nextRow = rows[r + 1];
       if (nextRow) {
-        const partnerName = normalizeName(cellStr(nextRow, layout.nameCol));
-        const partnerAff = cellStr(nextRow, layout.affiliationCol);
+        const partnerName = toHalfwidth(normalizeName(cellStr(nextRow, layout.nameCol)));
+        const partnerAff = toHalfwidth(cellStr(nextRow, layout.affiliationCol), { space: true });
         if (partnerName && !isBye(partnerName)) {
           player.partnerName = partnerName;
           player.partnerAffiliation = partnerAff;

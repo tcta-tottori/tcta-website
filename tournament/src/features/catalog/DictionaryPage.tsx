@@ -10,6 +10,7 @@ import { useAppStore } from '../../stores/appStore';
 import { fetchDict, putDict, type Dict, type DictPlayer } from './catalogApi';
 import { syncDictionary, useDictSync } from './dictSync';
 import CloudflareLogo from '../../components/ui/CloudflareLogo';
+import { toHalfwidth } from '../../lib/halfwidth';
 import { ColumnHeader } from './ColumnFilters';
 import { activeChips, applyColumnFilters, clearColumn, emptyFilters, type ColumnDef, type ColumnFilterState } from './columnFilter';
 
@@ -70,13 +71,15 @@ export default function DictionaryPage() {
     return players.filter((p) => ids.has(p.playerId) && !p.furigana);
   }, [currentTournamentId, sync.version], []);
 
-  const save = useCallback(async (p: DictPlayer) => {
+  const save = useCallback(async (p0: DictPlayer) => {
+    const p = { ...p0, name: toHalfwidth(p0.name), ...(p0.affiliation ? { affiliation: toHalfwidth(p0.affiliation, { space: true }) } : {}) };
     await putDict({ mode: 'merge', players: [p] });
     setDict((d) => d && ({ ...d, players: [...d.players.filter((x) => keyOf(x.name) !== keyOf(p.name)), p].sort((a, b) => a.furigana.localeCompare(b.furigana, 'ja')) }));
     setFlash(`${p.name}（${p.furigana}）を保存しました`);
     await syncDictionary(true);
   }, []);
-  const saveAff = useCallback(async (a: { name: string; furigana: string }) => {
+  const saveAff = useCallback(async (a0: { name: string; furigana: string }) => {
+    const a = { ...a0, name: toHalfwidth(a0.name, { space: true }) };
     await putDict({ mode: 'merge', affiliations: [a] });
     setDict((d) => d && ({ ...d, affiliations: [...d.affiliations.filter((x) => x.name !== a.name), a].sort((x, y) => x.furigana.localeCompare(y.furigana, 'ja')) }));
     setFlash(`${a.name}（${a.furigana}）を保存しました`);

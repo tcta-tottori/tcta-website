@@ -6,7 +6,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { ArrowRight, BookOpen, Bot, FileSpreadsheet, ListChecks, Loader2, MapPin, RefreshCw, Users } from 'lucide-react';
+import { ArrowRight, BookOpen, ClipboardCheck, Bot, FileSpreadsheet, ListChecks, Loader2, MapPin, RefreshCw, Users } from 'lucide-react';
 import { db } from '../../db/database';
 import { useAppStore } from '../../stores/appStore';
 import { useOfficer } from '../auth/officer';
@@ -79,13 +79,17 @@ export default function TournamentHub() {
     ].filter((g) => g.items.length > 0);
   }, [visible, filter]);
 
-  const start = useCallback(async (t: CatalogTournament, mode: 'fresh' | 'resume') => {
+  const start = useCallback(async (t: CatalogTournament, mode: 'fresh' | 'resume' | 'direct') => {
     setError(null);
     const local = localByCatalog.get(t.id);
     try {
       if (mode === 'resume' && local) {
         setBusy({ id: t.id, label: '切り替えています' });
         await switchToLocal(local.tournamentId);
+      } else if (mode === 'fresh') {
+        // はじめる前に、ドロー・当たり方・名前を確認する画面へ（そこで直してから端末に入れる）
+        navigate(`/data/review/${encodeURIComponent(t.id)}`);
+        return;
       } else {
         if (local && !(await siteConfirm({ title: '大会を入れ直す', message: `この端末の「${t.name}」の運営データ（受付・試合結果）を消して、データベースの最新の内容で入れ直します。`, confirmLabel: '入れ直す', danger: true }))) return;
         setBusy({ id: t.id, label: '大会を読み込んでいます' });
@@ -105,7 +109,7 @@ export default function TournamentHub() {
       <div className="container hub__inner">
         {/* ---- 見出し ---- */}
         <p className="hub__lead">
-          協会の大会運営データベースにある大会です。「運営をはじめる」を押すと、種目・ドロー・試合時刻がこの端末に入り、そのままエントリー受付に進みます。
+          協会の大会運営データベースにある大会です。「確認して運営をはじめる」を押すと、ドローの当たり方・名前・所属を確かめて直す画面になり、そこからこの端末に入れてエントリー受付に進みます。
         </p>
 
         <div className="hub__bar">
@@ -260,12 +264,15 @@ function HubCard({ t, highlight, isCurrent, onDevice, stale, busy, disabled, err
           ) : onDevice ? (
             <>
               <button className="btn btn--primary hub-card__btn" onClick={onResume} disabled={disabled}>{isCurrent ? 'エントリーへ' : '続きから'}<ArrowRight className="w-4 h-4" /></button>
-              <button className={`btn btn--outline hub-card__btn ${stale ? 'is-stale' : ''}`} onClick={onStart} disabled={disabled} title="データベースの内容で入れ直す">{stale ? '更新あり・入れ直す' : '入れ直す'}</button>
+              <button className={`btn btn--outline hub-card__btn ${stale ? 'is-stale' : ''}`} onClick={onStart} disabled={disabled} title="確認してから入れ直す">{stale ? '更新あり・入れ直す' : '入れ直す'}</button>
             </>
           ) : (
-            <button className="btn btn--primary hub-card__btn" onClick={onStart} disabled={disabled}>運営をはじめる<ArrowRight className="w-4 h-4" /></button>
+            <button className="btn btn--primary hub-card__btn" onClick={onStart} disabled={disabled}>確認して運営をはじめる<ArrowRight className="w-4 h-4" /></button>
           )}
         </div>
+        {(t.status === 'ready' || t.status === 'done') && !busy && (
+          <Link to={`/data/review/${encodeURIComponent(t.id)}`} className="hub-card__check"><ClipboardCheck className="w-4 h-4" />ドローを確認・直す</Link>
+        )}
       </div>
     </article>
   );

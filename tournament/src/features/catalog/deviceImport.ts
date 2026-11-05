@@ -5,6 +5,7 @@
 //   ・同じ大会を前に入れていれば、その端末の分（種目・エントリー・ドロー・試合・コート）を消してから入れ直す
 //   ・選手のふりがなは端末の辞書（ログイン時にデータベースから取り込んだもの）から付ける
 import { db, type Tournament } from '../../db/database';
+import { toHalfwidth } from '../../lib/halfwidth';
 import { useAppStore } from '../../stores/appStore';
 import { useMixedStore } from '../mixed/mixedStore';
 import { useTeamStore } from '../team/teamStore';
@@ -92,11 +93,11 @@ export async function importToDevice(t: CatalogTournamentFull, onProgress?: (p: 
       const entryByPos = new Map<number, string>();
       for (const [pi, p] of ev.players.entries()) {
         const playerId = keyOf(p.name);
-        if (!players.has(playerId)) players.set(playerId, { name: p.name, affiliation: p.affiliation });
+        if (!players.has(playerId)) players.set(playerId, { name: toHalfwidth(p.name), affiliation: toHalfwidth(p.affiliation, { space: true }) });
         let partnerId: string | undefined;
         if (ev.type === 'Doubles' && p.partnerName) {
           partnerId = keyOf(p.partnerName);
-          if (!players.has(partnerId)) players.set(partnerId, { name: p.partnerName, affiliation: p.partnerAffiliation ?? '' });
+          if (!players.has(partnerId)) players.set(partnerId, { name: toHalfwidth(p.partnerName), affiliation: toHalfwidth(p.partnerAffiliation ?? '', { space: true }) });
         }
         const entryId = `EN-${t.id}-${ei}-${pi}`;
         await db.entries.add({ eventId, entryId, playerId, partnerId, rankPoint: 0, seedNo: p.seed && p.seed > 0 ? p.seed : undefined, status: 'active' });
