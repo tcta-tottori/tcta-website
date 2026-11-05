@@ -61,23 +61,15 @@ export default function TournamentHub() {
   const visible = useMemo(() => {
     const ts = (list?.tournaments ?? []).filter((t) => t.status !== 'planned' || t.date);
     const time = (t: CatalogTournament) => dateParts(t.date)?.time ?? Infinity;
-    if (filter === 'upcoming') return ts.filter((t) => time(t) >= today && t.status !== 'done').sort((a, b) => time(a) - time(b));
+    // これから：ドローを入れた（運営できる）大会だけ。日程だけの大会は「すべて」で見る
+    if (filter === 'upcoming') return ts.filter((t) => time(t) >= today && t.status === 'ready').sort((a, b) => time(a) - time(b));
     if (filter === 'past') return ts.filter((t) => time(t) < today || t.status === 'done').sort((a, b) => time(b) - time(a));
     return [...ts].sort((a, b) => time(a) - time(b));
   }, [list, filter, today]);
 
   // 今日か、いちばん近い「運営できる」大会
   const next = useMemo(() => visible.find((t) => t.status === 'ready'), [visible]);
-  // 「これから」は、運営できる大会を先に、ドローの無い大会をあとにまとめる（当日すぐ選べるように）
-  const groups = useMemo(() => {
-    if (filter !== 'upcoming') return [{ key: 'all', title: '', items: visible }];
-    const ready = visible.filter((t) => t.status === 'ready');
-    const planned = visible.filter((t) => t.status !== 'ready');
-    return [
-      { key: 'ready', title: '', items: ready },
-      { key: 'planned', title: ready.length ? 'ドロー未登録の大会' : '', items: planned },
-    ].filter((g) => g.items.length > 0);
-  }, [visible, filter]);
+  const groups = useMemo(() => [{ key: 'all', title: '', items: visible }].filter((g) => g.items.length > 0), [visible]);
 
   const start = useCallback(async (t: CatalogTournament, mode: 'fresh' | 'resume' | 'direct') => {
     setError(null);
@@ -143,8 +135,8 @@ export default function TournamentHub() {
         ) : visible.length === 0 ? (
           <div className="hub-empty">
             <ListChecks className="hub-empty__ico" />
-            <p className="hub-empty__title">{filter === 'upcoming' ? 'これからの大会はまだありません' : '大会がありません'}</p>
-            <p className="hub-empty__text">Claude に「○○大会のドローを入れて」と頼むか、下の「Excel から入れる」で登録できます。</p>
+            <p className="hub-empty__title">{filter === 'upcoming' ? 'ドローの入ったこれからの大会はありません' : '大会がありません'}</p>
+            <p className="hub-empty__text">日程だけの大会は「すべて」で見られます。Claude に「○○大会のドローを入れて」と頼むか、下の「Excel から入れる」で登録できます。</p>
           </div>
         ) : (
           groups.map((g) => (
