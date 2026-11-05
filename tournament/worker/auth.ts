@@ -1,7 +1,7 @@
 // 役員ログイン（Cloudflare Access）。
 //
 // しくみ:
-//   1. Cloudflare Access の「自己ホスト型アプリケーション」で /auth だけを守る（役員のメールアドレスだけを許可）。
+//   1. Cloudflare Access の「自己ホスト型アプリケーション」でログインの入口 /auth/login だけを守る（役員のメールアドレスだけを許可）。
 //      ログインはメールに届く 6 桁のコード（One-time PIN）か Google。パスワードは持たない
 //   2. 役員が /auth/login を開くと、Access がログインを求め、通ったリクエストに署名付きの証明（JWT）を付けて Worker に渡す
 //   3. Worker は証明を検証し、自分の Cookie（__Host-tcta_officer）に移してから元の画面へ戻す
@@ -93,11 +93,11 @@ export async function handleAuth(request: Request, env: Env, url: URL): Promise<
         <p>設定が入るまで、運営の操作（運営端末としての同期・音声コール）はすべて止めてあります。観戦ページは使えます。</p>
         <p>設定の手順は tournament/README.md の「役員ログイン」にあります。</p>`, 503);
     }
-    // ここに来るのは Access のログインを通ったリクエストだけ（/auth は Access が守っている）
+    // ここに来るのは Access のログインを通ったリクエストだけ（/auth/login は Access が守っている）
     const jwt = request.headers.get('Cf-Access-Jwt-Assertion') ?? cookie(request, 'CF_Authorization') ?? undefined;
     const email = await verifyAccessJwt(env, jwt);
     if (!jwt || !email) {
-      return page('ログインを確認できませんでした', `<p>Cloudflare Access の証明を確認できませんでした。/auth が Access で守られているか、ACCESS_AUD が /auth のアプリケーションのものか確かめてください。</p>`, 401);
+      return page('ログインを確認できませんでした', `<p>Cloudflare Access の証明を確認できませんでした。/auth/login が Access で守られているか、ACCESS_AUD がそのアプリケーションのものか確かめてください。</p>`, 401);
     }
     if (!allowed(env, email)) {
       return page('この画面は役員だけが使えます', `<p>${escapeHtml(email)} は役員の一覧（OFFICER_EMAILS）に入っていません。</p>`, 403);

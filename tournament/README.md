@@ -95,34 +95,42 @@ npm run test:auth      # 役員ログインの証明（JWT）の検証を、自�
 | 音声コール（`/api/gemini-tts`） | 役員 | Worker が呼ばれるたびに証明を検証 |
 | 観戦ページ（`/view`）・観戦端末としての同期・HP 埋め込み（`/embed/livescore`） | 誰でも | — |
 
-しくみ: Access で守るのは `/auth` だけです。役員が「役員としてログイン」を押すと `/auth/login` に移り、Access がメールのコードを聞きます。
+しくみ: Access で守るのはログインの入口 `/auth/login` だけです。役員が「役員としてログイン」を押すとそこに移り、Access がメールのコードを聞きます。
 通ると Access が署名付きの証明（JWT）を付けて Worker に渡し、Worker はそれを検証してから自分の Cookie に移します。
 以後、同期の接続・音声コール・画面を開くたびに、Worker がその証明の署名・発行元・宛先・期限を確かめます（`worker/auth.ts`）。
 Access の設定が無いあいだは「未設定」として、運営の操作をすべて断ります（閉じる側に倒してある）。
 
 ### 設定の手順（一度だけ）
 
-1. **Zero Trust を始める** … Cloudflare のダッシュボード（t.c.t.a.r7@gmail.com のアカウント）で **Zero Trust** を開く。
-   はじめてなら、チーム名（例 `tcta`。ログイン画面の URL `tcta.cloudflareaccess.com` になる）を決め、**Free プラン**を選ぶ
-2. **ログインの方法** … Zero Trust → **Settings → Authentication → Login methods** に **One-time PIN** があることを確かめる（既定で入っている）。
-   Google アカウントでも入れるようにしたければ、ここで Google を足す
-3. **アプリケーションを作る** … Zero Trust → **Access → Applications → Add an application → Self-hosted**
-   - Application name: `大会運営システム（役員）`
-   - Session Duration: `1 week`（端末が 7 日間ログインしたままになる。大会の途中で切れないように）
-   - Application domain（Public hostname）: `tcta-tournament.tcta-admin-worker.workers.dev`、Path: `auth`
-     （**`/auth` だけ**を守る。ドメイン全体を守ると観戦ページも見られなくなる）
-   - workers.dev のドメインが選べないときは、先に Workers & Pages → `tcta-tournament` → Settings → Domains & Routes の
-     workers.dev の「Cloudflare Access」を有効にしてアプリケーションを作らせ、そのアプリケーションの Path を `auth` に直す
-4. **役員を登録する** … そのアプリケーションの Policy を `Allow` で作り、Include → **Emails** に役員のメールアドレスを並べる
-   （人が増えたら、ここに足すだけ。抜けた人は消すだけ）
-5. **AUD を写す** … アプリケーションの Overview（または Basic information）にある **Application Audience (AUD) Tag** を写す
-6. **GitHub に入れる** … このリポジトリの Settings → Secrets and variables → Actions → **Variables** に
-   - `ACCESS_TEAM_DOMAIN` … 手順 1 のチーム名（例 `tcta`）
-   - `ACCESS_AUD` … 手順 5 の AUD
-   （任意）**Secrets** に `OFFICER_EMAILS`（役員のメールアドレスをカンマ区切り）を入れると、Access を通っても一覧に無い人は Worker が断る（二重の鍵）
-7. **配備し直す** … Actions → 「Deploy tournament app to Cloudflare Workers」→ Run workflow（または tournament/ を push）
-8. **確かめる** … 運営画面を開く → 「役員としてログイン」→ メールアドレス → 届いたコード → 元の画面に戻れば完了。
+ダッシュボードで人がするのは 1・2 だけです。Access のアプリケーション作り・役員の登録・AUD の受け渡しは、
+配備のたびに `scripts/setup-access.mjs` が API で自動でそろえます（何度走っても同じ結果になる）。
+
+1. **Zero Trust を始める** … Cloudflare のダッシュボード（t.c.t.a.r7@gmail.com のアカウント）の左のメニューから **Zero Trust** を開く。
+   はじめてならチーム名（例 `tcta`。ログイン画面のドメイン `tcta.cloudflareaccess.com` になる）を決め、**Free プラン**を選ぶ（50 人まで無料）。
+   支払い方法の登録を求められたら登録する（Free プランのままなら請求は来ない）
+2. **API トークンに権限を足す** … ダッシュボード右上の人のアイコン → **My Profile → API Tokens** で、
+   GitHub の Secrets の `CLOUDFLARE_API_TOKEN` に入れてあるトークンの **Edit** を開き、Permissions に次の 2 つを足して保存する
+   - Account → **Access: Apps and Policies** → **Edit**
+   - Account → **Access: Organizations, Identity Providers, and Groups** → **Edit**
+3. **役員を登録する** … このリポジトリの Settings → Secrets and variables → Actions → **Secrets** に
+   `OFFICER_EMAILS` を作り、役員のメールアドレスをカンマ区切りで入れる（例 `a@example.jp,b@example.jp`）。
+   人が増えた・抜けたときはここを書き換えて、手順 4 をもう一度
+4. **配備し直す** … Actions → 「Deploy tournament app to Cloudflare Workers」→ **Run workflow**。
+   ログの「Configure officer login (Cloudflare Access)」に「役員ログインの設定ができました」と出れば完了。
+   権限や Zero Trust が足りないときは、黄色の警告で何をすればよいかを出す（配備そのものは続く）
+5. **確かめる** … 運営画面を開く → 「役員としてログイン」→ メールアドレス → 届いた 6 桁のコード → 元の画面に戻れば完了。
    ログインしていないブラウザ（シークレットウィンドウ）で運営画面を開くと案内の画面が出て、観戦ページは見られることも確かめる
+
+自動で作られるもの（Zero Trust → Access で見られる）:
+
+| 種類 | 名前 | 中身 |
+| --- | --- | --- |
+| ログインの方法 | メールのコード（One-time PIN） | 無ければ作る |
+| ポリシー | 大会運営システム 役員 | Allow。`OFFICER_EMAILS` のメールアドレス。セッション 1 週間 |
+| アプリケーション | 大会運営システム（役員） | Self-hosted。`tcta-tournament.tcta-admin-worker.workers.dev/auth/login` だけを守る。ログインの方法はメールのコードだけ |
+
+API トークンに権限を足せないときは、ダッシュボードで同じものを作り（アプリケーションの Path は `auth/login`）、
+アプリケーションの **Application Audience (AUD) Tag** とチーム名を、リポジトリの Variables の `ACCESS_AUD`・`ACCESS_TEAM_DOMAIN` に入れて手順 4 をする。
 
 ### 使うときのこと
 
@@ -150,6 +158,7 @@ tournament/
 │   └── features/…            画面の中身（GitHub Pages 版と同じ）
 ├── public/site/              協会ロゴ（サイトの写し。ビルドの前に作る）
 ├── scripts/sync-site.mjs     協会サイトの CSS・ロゴを写す
+├── scripts/setup-access.mjs  役員ログイン（Cloudflare Access）の設定を API でそろえる（配備のたびに走る）
 ├── scripts/smoke.mjs         中継・役員ログイン・API の動作確認
 └── scripts/auth.test.mts     役員ログインの証明の検証のテスト
 ```
