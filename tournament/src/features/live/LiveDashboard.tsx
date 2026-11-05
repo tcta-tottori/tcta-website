@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
+import { SkSection } from '../../components/site/Kit';
 import { db } from '../../db/database';
 import { useAppStore } from '../../stores/appStore';
 import { useMixedStore } from '../mixed/mixedStore';
@@ -8,7 +9,7 @@ import MixedLiveCourtView from '../mixed/MixedLiveCourtView';
 import TeamLiveCourtView from '../team/TeamLiveCourtView';
 import type { Match, Court } from '../../db/database';
 import {
-  BarChart2, Play, CheckCircle, Clock, Trophy, Users, MapPin,
+  BarChart2, Play, CheckCircle, Clock, Users,
   AlertCircle, Timer, Radio,
 } from 'lucide-react';
 
@@ -63,7 +64,7 @@ type CourtStatus = {
 function BroadcastBadge({ compact = false }: { compact?: boolean }) {
   return (
     <span
-      className={`flex items-center gap-0.5 bg-[#D8232A] text-white font-bold rounded-full leading-none shrink-0 ${
+      className={`flex items-center gap-0.5 bg-[#D8232A] text-white font-bold leading-none shrink-0 ${
         compact ? 'text-[7px] px-1 py-0.5' : 'text-[7px] sm:text-[8px] px-1 sm:px-1.5 py-0.5'
       }`}
       title="ライブスコアを配信中"
@@ -104,30 +105,28 @@ function DonutChart({
         {/* Background track */}
         <circle
           cx={center} cy={center} r={radius}
-          fill="none" stroke="#e8e8e8" strokeWidth={strokeWidth}
+          fill="none" stroke="var(--gray-200)" strokeWidth={strokeWidth}
         />
         {/* Finished arc */}
         <circle
           cx={center} cy={center} r={radius}
-          fill="none" stroke="#767676" strokeWidth={strokeWidth}
+          fill="none" stroke="var(--ink)" strokeWidth={strokeWidth}
           strokeDasharray={`${finishedDash} ${circumference - finishedDash}`}
           strokeDashoffset="0"
-          strokeLinecap="round"
           className="transition-all duration-700"
         />
         {/* Playing arc (on top of finished) */}
         <circle
           cx={center} cy={center} r={radius}
-          fill="none" stroke="#D8232A" strokeWidth={strokeWidth}
+          fill="none" stroke="var(--red)" strokeWidth={strokeWidth}
           strokeDasharray={`${playingDash} ${circumference - playingDash}`}
           strokeDashoffset={`${-finishedDash}`}
-          strokeLinecap="round"
           className="transition-all duration-700"
         />
       </svg>
       {/* Center text */}
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-3xl font-black text-gray-900 leading-none">{percent}%</span>
+        <span className="dld-donut__pct">{percent}<small>%</small></span>
         <span className="text-[10px] text-gray-400 mt-0.5 font-medium">完了</span>
       </div>
     </div>
@@ -198,13 +197,13 @@ function TennisCourtBlockH({
   cs: CourtStatus; isSelected: boolean; onSelect: () => void; eventName?: string; roundLabel?: string; isTimeOver?: boolean;
 }) {
   const statusStyles: Record<string, { bg: string; border: string; text: string; glow: string }> = {
-    playing: { bg: 'bg-primary-100', border: 'border-primary-400', text: 'text-gray-900', glow: 'shadow-[0_0_12px_rgba(216, 35, 42,0.3)]' },
+    playing: { bg: 'bg-primary-100', border: 'border-primary-400', text: 'text-gray-900', glow: '' },
     ready: { bg: 'bg-gray-50', border: 'border-gray-300', text: 'text-gray-700', glow: '' },
     empty: { bg: 'bg-white/80', border: 'border-primary-200', text: 'text-gray-600', glow: '' },
     unavailable: { bg: 'bg-gray-100', border: 'border-gray-300', text: 'text-gray-400', glow: '' },
   };
   const style = isTimeOver
-    ? { bg: 'bg-red-100', border: 'border-red-500', text: 'text-red-800', glow: 'shadow-[0_0_16px_rgba(216, 35, 42,0.4)]' }
+    ? { bg: 'bg-red-100', border: 'border-red-500', text: 'text-red-800', glow: '' }
     : statusStyles[cs.status];
   const courtNum = cs.court.name.replace(/[^\d]/g, '') || cs.court.name;
   const elapsed = cs.currentMatch?.status === 'playing' ? formatElapsed(cs.currentMatch.updatedAt) : '';
@@ -212,9 +211,9 @@ function TennisCourtBlockH({
   return (
     <button
       onClick={onSelect}
-      className={`relative rounded-lg border-2 transition-all cursor-pointer overflow-hidden
+      className={`dld-court relative border-2 cursor-pointer overflow-hidden
         ${style.bg} ${style.border} ${style.glow}
-        ${isSelected ? 'ring-2 ring-primary-500 ring-offset-1 scale-[1.02]' : 'hover:scale-[1.01] hover:shadow-md'}
+        ${isSelected ? 'is-selected' : ''}
       `}
       style={{ aspectRatio: '1.6 / 1', width: '100%' }}
     >
@@ -224,11 +223,11 @@ function TennisCourtBlockH({
         <div className="flex flex-col items-center shrink-0 min-w-[36px] gap-0.5">
           {cs.status === 'playing' && (
             isTimeOver ? (
-              <span className="flex items-center gap-0.5 bg-red-500 text-white text-[7px] font-bold px-1 py-0.5 rounded-full leading-none shrink-0 animate-pulse">
+              <span className="flex items-center gap-0.5 bg-red-500 text-white text-[7px] font-bold px-1 py-0.5 leading-none shrink-0 animate-pulse">
                 <AlertCircle className="w-2 h-2" /> 超過
               </span>
             ) : (
-              <span className="flex items-center gap-0.5 bg-primary-500 text-white text-[7px] font-bold px-1 py-0.5 rounded-full leading-none shrink-0">
+              <span className="flex items-center gap-0.5 bg-primary-500 text-white text-[7px] font-bold px-1 py-0.5 leading-none shrink-0">
                 <Play className="w-2 h-2 fill-white" /> LIVE
               </span>
             )
@@ -294,14 +293,14 @@ function TennisCourtBlock({
   isTimeOver?: boolean;
 }) {
   const statusStyles: Record<string, { bg: string; border: string; text: string; glow: string }> = {
-    playing: { bg: 'bg-primary-100', border: 'border-primary-400', text: 'text-gray-900', glow: 'shadow-[0_0_12px_rgba(216, 35, 42,0.3)]' },
+    playing: { bg: 'bg-primary-100', border: 'border-primary-400', text: 'text-gray-900', glow: '' },
     ready: { bg: 'bg-gray-50', border: 'border-gray-300', text: 'text-gray-700', glow: '' },
     empty: { bg: 'bg-white/80', border: 'border-primary-200', text: 'text-gray-600', glow: '' },
     unavailable: { bg: 'bg-gray-100', border: 'border-gray-300', text: 'text-gray-400', glow: '' },
   };
   // Time-over override
   const style = isTimeOver
-    ? { bg: 'bg-red-100', border: 'border-red-500', text: 'text-red-800', glow: 'shadow-[0_0_16px_rgba(216, 35, 42,0.4)]' }
+    ? { bg: 'bg-red-100', border: 'border-red-500', text: 'text-red-800', glow: '' }
     : statusStyles[cs.status];
   const courtNum = cs.court.name.replace(/[^\d]/g, '') || cs.court.name;
   const elapsed = cs.currentMatch?.status === 'playing' ? formatElapsed(cs.currentMatch.updatedAt) : '';
@@ -309,9 +308,9 @@ function TennisCourtBlock({
   return (
     <button
       onClick={onSelect}
-      className={`relative rounded-lg border-2 transition-all cursor-pointer overflow-hidden
+      className={`dld-court relative border-2 cursor-pointer overflow-hidden
         ${style.bg} ${style.border} ${style.glow}
-        ${isSelected ? 'ring-2 ring-primary-500 ring-offset-1 scale-[1.03]' : 'hover:scale-[1.02] hover:shadow-md'}
+        ${isSelected ? 'is-selected' : ''}
       `}
       style={{ aspectRatio: '1 / 1.7', width: '100%' }}
     >
@@ -325,11 +324,11 @@ function TennisCourtBlock({
           <div className="flex flex-col items-end gap-0.5 shrink-0">
             {cs.status === 'playing' && (
               isTimeOver ? (
-                <span className="flex items-center gap-0.5 bg-red-500 text-white text-[7px] sm:text-[8px] font-bold px-1 sm:px-1.5 py-0.5 rounded-full leading-none shrink-0 animate-pulse">
+                <span className="flex items-center gap-0.5 bg-red-500 text-white text-[7px] sm:text-[8px] font-bold px-1 sm:px-1.5 py-0.5 leading-none shrink-0 animate-pulse">
                   <AlertCircle className="w-2 h-2" /> 超過
                 </span>
               ) : (
-                <span className="flex items-center gap-0.5 bg-primary-500 text-white text-[7px] sm:text-[8px] font-bold px-1 sm:px-1.5 py-0.5 rounded-full leading-none shrink-0">
+                <span className="flex items-center gap-0.5 bg-primary-500 text-white text-[7px] sm:text-[8px] font-bold px-1 sm:px-1.5 py-0.5 leading-none shrink-0">
                   <Play className="w-2 h-2 fill-white" /> LIVE
                 </span>
               )
@@ -637,48 +636,44 @@ function LiveDashboardInner() {
   // =========================================================================
 
   return (
-    <div className="h-full flex flex-col p-4 md:p-6 max-w-7xl mx-auto space-y-5">
-      {/* ===== HEADER ===== */}
-      <header className="bg-white p-5 rounded-2xl shadow-sm border border-border-main">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-xl md:text-2xl font-bold text-gray-900 flex items-center gap-2">
-              <BarChart2 className="w-6 h-6 text-primary-500" />
-              ライブダッシュボード
-            </h1>
-            <p className="text-sm text-gray-500 mt-0.5">
-              {currentTournament ? currentTournament.name : '大会を選択してください'}
-            </p>
-          </div>
-          {/* Current time */}
-          <div className="text-right">
-            <div className="text-3xl font-black text-gray-900 font-mono tracking-tight">{timeStr}</div>
-            <div className="text-[10px] text-gray-400 mt-0.5">
-              {currentTime.toLocaleDateString('ja-JP', { month: 'long', day: 'numeric', weekday: 'short' })}
-            </div>
+    <div className="dld container sk-page sk-page--wide">
+      {/* ===== HEADER（大会名と現在時刻） ===== */}
+      <header className="dld-clock rv-in">
+        <div className="dld-clock__titles">
+          <p className="dld-clock__en"><BarChart2 className="w-3.5 h-3.5" />LIVE DASHBOARD</p>
+          <h1 className="dld-clock__title">ライブダッシュボード</h1>
+          <p className="dld-clock__sub">
+            {currentTournament ? currentTournament.name : '大会を選択してください'}
+          </p>
+        </div>
+        {/* Current time */}
+        <div className="dld-clock__time">
+          <div className="dld-clock__hm">{timeStr}</div>
+          <div className="dld-clock__date">
+            {currentTime.toLocaleDateString('ja-JP', { month: 'long', day: 'numeric', weekday: 'short' })}
           </div>
         </div>
       </header>
 
       {/* ===== TOP ROW: Donut + Stats + Schedule ===== */}
-      <div className="grid grid-cols-1 md:grid-cols-[auto_1fr_auto] gap-4 items-stretch">
+      <section className={`dld-summary ${scheduleDelay ? 'has-schedule' : ''}`}>
         {/* Donut chart */}
-        <div className="bg-white rounded-2xl shadow-sm border border-border-main p-5 flex flex-col items-center justify-center min-w-[180px]">
+        <div className="dld-summary__donut">
           <DonutChart
             percent={stats.progressPercent}
             playing={stats.playing.length}
             finished={stats.finished.length}
             total={stats.total}
           />
-          <div className="flex gap-4 mt-3 text-[10px] font-medium">
-            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-gray-500" />終了</span>
-            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-primary-500" />試合中</span>
-            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-gray-200" />待機</span>
+          <div className="dld-legend">
+            <span><i className="is-done" />終了</span>
+            <span><i className="is-live" />試合中</span>
+            <span><i className="is-wait" />待機</span>
           </div>
         </div>
 
         {/* Summary cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 content-start">
+        <div className="dld-stats">
           <StatCard icon={Users} label="全試合数" value={stats.total} color="gray" />
           <StatCard icon={Play} label="試合中" value={stats.playing.length} color="accent" />
           <StatCard icon={CheckCircle} label="終了" value={stats.finished.length} color="ink" />
@@ -687,90 +682,67 @@ function LiveDashboardInner() {
 
         {/* Schedule delay indicator */}
         {scheduleDelay && (
-          <div className="bg-white rounded-2xl shadow-sm border border-border-main p-4 flex flex-col justify-center min-w-[190px]">
-            <div className="flex items-center gap-2 mb-2">
-              <Timer className="w-4 h-4 text-primary-500" />
-              <span className="text-xs font-bold text-gray-900">スケジュール状況</span>
-            </div>
+          <div className="dld-sched">
+            <p className="dld-sched__head">
+              <Timer className="w-4 h-4" />
+              スケジュール状況
+            </p>
             {scheduleDelay.isOnSchedule ? (
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-primary-400 animate-pulse" />
-                <span className="text-sm font-bold text-gray-700">予定通り</span>
-              </div>
+              <p className="dld-sched__state"><i className="is-pulse" />予定通り</p>
             ) : scheduleDelay.maxDelay > 0 ? (
               <div>
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-primary-400" />
-                  <span className="text-lg font-black text-gray-700">
-                    {minutesToDisplay(scheduleDelay.maxDelay)}
-                  </span>
-                </div>
-                <p className="text-[10px] text-gray-400 mt-0.5">
+                <p className="dld-sched__state is-late">
+                  <i />{minutesToDisplay(scheduleDelay.maxDelay)}
+                </p>
+                <p className="dld-sched__note">
                   {scheduleDelay.behindCount}試合が遅れています
                 </p>
               </div>
             ) : (
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-primary-400" />
-                <span className="text-sm font-bold text-gray-700">予定通り</span>
-              </div>
+              <p className="dld-sched__state"><i />予定通り</p>
             )}
             {scheduleDelay.nextScheduledTime && (
-              <div className="mt-2 pt-2 border-t border-border-main">
-                <p className="text-[10px] text-gray-400">次の予定</p>
-                <p className="text-sm font-bold text-gray-700">{scheduleDelay.nextScheduledTime}</p>
+              <div className="dld-sched__next">
+                <p className="dld-sched__note">次の予定</p>
+                <p className="dld-sched__time">{scheduleDelay.nextScheduledTime}</p>
                 {scheduleDelay.minutesUntilNext !== null && (
-                  <p className="text-[10px] text-gray-400">あと{scheduleDelay.minutesUntilNext}分</p>
+                  <p className="dld-sched__note">あと{scheduleDelay.minutesUntilNext}分</p>
                 )}
               </div>
             )}
           </div>
         )}
-      </div>
+      </section>
 
       {/* ===== COURT MAP ===== */}
       {courtStatusList.length > 0 && (
-        <div className="bg-white rounded-2xl shadow-sm border border-border-main p-5">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-sm font-bold text-gray-900 flex items-center gap-2">
-              <MapPin className="w-4 h-4 text-primary-500" />
-              コートマップ
-            </h2>
-            <div className="flex gap-4 text-xs flex-wrap">
+        <SkSection
+          en="Court Map"
+          title="コートマップ"
+          actions={(
+            <div className="dld-legend dld-legend--map">
               {courtStats.broadcasting > 0 && (
-                <span className="flex items-center gap-1 font-bold text-[#D8232A]">
+                <span className="is-broadcast">
                   <Radio className="w-3 h-3" />
                   ライブ配信 {courtStats.broadcasting}
                 </span>
               )}
-              <span className="flex items-center gap-1">
-                <span className="w-2.5 h-2.5 rounded-full bg-primary-500" />
-                試合中 {courtStats.playing}
-              </span>
-              <span className="flex items-center gap-1">
-                <span className="w-2.5 h-2.5 rounded-full bg-gray-400" />
-                準備 {courtStats.ready}
-              </span>
-              <span className="flex items-center gap-1">
-                <span className="w-2.5 h-2.5 rounded-full bg-primary-100 border border-primary-200" />
-                空き {courtStats.empty}
-              </span>
+              <span><i className="is-live" />試合中 {courtStats.playing}</span>
+              <span><i className="is-ready" />準備 {courtStats.ready}</span>
+              <span><i className="is-free" />空き {courtStats.empty}</span>
               {courtStats.unavailable > 0 && (
-                <span className="flex items-center gap-1">
-                  <span className="w-2.5 h-2.5 rounded-full bg-gray-300" />
-                  不可 {courtStats.unavailable}
-                </span>
+                <span><i className="is-off" />不可 {courtStats.unavailable}</span>
               )}
             </div>
-          </div>
-
+          )}
+        >
           {/* === PC縦列レイアウト (md以上) — ブロックを縦列で左→右に配置 === */}
           <div className="hidden md:flex items-start gap-0 justify-center w-full">
             {courtBlocks.map((block, blockIdx) => (
               <div key={blockIdx} className="flex items-start">
                 {/* ブロック: コートを縦に並べる（番号降順：上が大きい） */}
-                <div className="bg-primary-50/60 rounded-xl border border-primary-200 p-2.5 shadow-sm">
-                  <div className="text-[10px] text-gray-700 font-bold mb-2 px-1 text-center">
+                <div className="dld-block">
+                  <div className="dld-block__label">
                     {block[block.length - 1]?.court.name.replace(/[^\d]/g, '') || (blockIdx * 4 + block.length)}〜{block[0]?.court.name.replace(/[^\d]/g, '') || (blockIdx * 4 + 1)}
                   </div>
                   {/* 対戦情報の有無でカード幅が変わらないよう、全ブロックを同じ幅に揃える */}
@@ -798,9 +770,9 @@ function LiveDashboardInner() {
                 {/* 本部表示（指定ブロックの後 = 5と9の間） */}
                 {blockIdx === hqAfterBlock && (
                   <div className="flex flex-col items-center justify-end mx-2 self-end pb-3">
-                    <div className="flex flex-col items-center gap-1 bg-primary-50 border border-primary-300 rounded-lg px-3 py-4 shadow-sm">
-                      <div className="w-2.5 h-2.5 rounded-sm bg-primary-400" />
-                      <span className="text-xs font-bold text-gray-800 [writing-mode:vertical-rl]">本部</span>
+                    <div className="dld-hq dld-hq--v">
+                      <i />
+                      <span className="[writing-mode:vertical-rl]">本部</span>
                     </div>
                   </div>
                 )}
@@ -821,11 +793,9 @@ function LiveDashboardInner() {
           <div className="md:hidden flex flex-col gap-2 items-center">
             {courtBlocks.map((block, blockIdx) => (
               <div key={blockIdx} className="contents">
-                <div className="bg-primary-50/60 rounded-xl border border-primary-200 p-3 w-full max-w-lg">
-                  <div className="flex items-center gap-1.5 mb-2">
-                    <span className="text-[10px] font-bold text-gray-700 bg-primary-100 px-2 py-0.5 rounded-full">
-                      {block[0]?.court.name.replace(/[^\d]/g, '') || (blockIdx * 4 + 1)}〜{block[block.length - 1]?.court.name.replace(/[^\d]/g, '') || (blockIdx * 4 + block.length)}
-                    </span>
+                <div className="dld-block w-full max-w-lg">
+                  <div className="dld-block__label dld-block__label--left">
+                    {block[0]?.court.name.replace(/[^\d]/g, '') || (blockIdx * 4 + 1)}〜{block[block.length - 1]?.court.name.replace(/[^\d]/g, '') || (blockIdx * 4 + block.length)}
                   </div>
                   <div className="grid grid-cols-4 gap-2">
                     {block.map(cs => {
@@ -849,12 +819,9 @@ function LiveDashboardInner() {
                 </div>
                 {blockIdx === hqAfterBlock && (
                   <div className="flex items-center gap-2 py-1 w-full max-w-lg justify-center">
-                    <div className="flex-1 h-px bg-primary-300" />
-                    <div className="flex items-center gap-1.5 bg-primary-50 border border-primary-300 rounded-lg px-3 py-1.5 shadow-sm">
-                      <div className="w-2.5 h-2.5 rounded-sm bg-primary-400" />
-                      <span className="text-xs font-bold text-gray-800">本部</span>
-                    </div>
-                    <div className="flex-1 h-px bg-primary-300" />
+                    <div className="flex-1 h-px bg-[var(--gray-300)]" />
+                    <div className="dld-hq"><i /><span>本部</span></div>
+                    <div className="flex-1 h-px bg-[var(--gray-300)]" />
                   </div>
                 )}
                 {blockIdx < courtBlocks.length - 1 && blockIdx !== hqAfterBlock && (
@@ -867,115 +834,92 @@ function LiveDashboardInner() {
               </div>
             ))}
           </div>
-        </div>
+        </SkSection>
       )}
 
       {/* ===== COURT DETAIL ===== */}
       {selectedDetail && (
-        <div className="bg-white rounded-2xl shadow-sm border border-border-main p-5">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="font-bold text-gray-900 flex items-center gap-2">
-              <MapPin className="w-4 h-4 text-primary-500" />
-              {selectedDetail.court.name}
-            </h3>
-            <div className="flex items-center gap-2">
+        <SkSection
+          accent
+          className="dld-detail"
+          en="Court"
+          title={selectedDetail.court.name}
+          actions={(
+            <>
               {selectedDetail.isBroadcasting && (
-                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-[#D8232A] text-white">
+                <span className="sk-chip sk-chip--red">
                   <Radio className="w-3 h-3" />ライブスコア配信中
                 </span>
               )}
-              <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium ${
-                selectedDetail.status === 'playing' ? 'bg-primary-100 text-gray-900' :
-                selectedDetail.status === 'ready' ? 'bg-gray-100 text-primary-500' :
-                selectedDetail.status === 'unavailable' ? 'bg-gray-100 text-gray-500' :
-                'bg-gray-50 text-gray-500'
-              }`}>
+              <span className={`sk-chip ${selectedDetail.status === 'playing' ? 'sk-chip--ink' : ''}`}>
                 {selectedDetail.status === 'playing' && <Play className="w-3 h-3" />}
                 {selectedDetail.status === 'ready' && <Clock className="w-3 h-3" />}
                 {selectedDetail.status === 'unavailable' && <AlertCircle className="w-3 h-3" />}
                 {selectedDetail.status === 'playing' ? '試合中' : selectedDetail.status === 'ready' ? '次の試合あり' : selectedDetail.status === 'unavailable' ? '使用不可' : '空き'}
               </span>
-              <span className="text-xs text-gray-500">{selectedDetail.matchCount}試合割当</span>
+              <span className="dld-muted">{selectedDetail.matchCount}試合割当</span>
               <button
                 onClick={() => setSelectedCourtId(null)}
-                className="text-xs text-gray-400 hover:text-gray-600 ml-2 px-2 py-1 rounded hover:bg-gray-100 transition-colors"
+                className="btn btn--outline sk-btn sk-btn--sm"
               >
                 閉じる
               </button>
-            </div>
-          </div>
-
+            </>
+          )}
+        >
           {selectedDetail.currentMatch && (
-            <div className="bg-primary-50 rounded-xl p-4 border border-primary-200 mb-3">
-              <div className="text-xs font-medium text-gray-800 mb-1.5 flex items-center gap-1">
+            <div className="dld-now">
+              <div className="dld-now__label">
                 <Play className="w-3 h-3" /> 現在の試合
-                <span className="text-gray-500 ml-2">{getEventName(selectedDetail.currentMatch.eventId)}</span>
+                <span>{getEventName(selectedDetail.currentMatch.eventId)}</span>
               </div>
-              <div className="flex items-center gap-3 text-sm">
-                <span className="font-bold text-gray-900">{selectedDetail.currentMatch.player1Name}</span>
-                <span className="text-primary-400 text-xs font-bold">VS</span>
-                <span className="font-bold text-gray-900">{selectedDetail.currentMatch.player2Name}</span>
+              <div className="dld-now__vs">
+                <b>{selectedDetail.currentMatch.player1Name}</b>
+                <em>VS</em>
+                <b>{selectedDetail.currentMatch.player2Name}</b>
                 {selectedDetail.currentMatch.score && (
-                  <span className="font-mono text-primary-500 ml-2">{selectedDetail.currentMatch.score}</span>
+                  <span className="dld-score">{selectedDetail.currentMatch.score}</span>
                 )}
               </div>
             </div>
           )}
 
           {selectedCourtMatches.length > 0 && (
-            <div className="space-y-1.5 max-h-64 overflow-auto">
+            <ul className="dld-mlist">
               {selectedCourtMatches.map(m => (
-                <div
-                  key={m.matchId}
-                  className={`rounded-lg p-2.5 text-xs border flex items-center gap-3 ${
-                    m.status === 'playing' ? 'bg-primary-50 border-primary-200' :
-                    m.status === 'finished' ? 'bg-primary-50 border-border-main' :
-                    m.status === 'walkover' ? 'bg-primary-50 border-primary-200' :
-                    'bg-white border-border-main'
-                  }`}
-                >
-                  <span className="text-gray-400 w-16 truncate shrink-0">{getEventName(m.eventId)}</span>
-                  <span className="font-medium truncate">{m.player1Name}</span>
-                  <span className="text-gray-400 shrink-0">vs</span>
-                  <span className="font-medium truncate">{m.player2Name}</span>
-                  {m.score && <span className="font-mono text-primary-500 shrink-0">{m.score}</span>}
-                  <span className={`ml-auto px-1.5 py-0.5 rounded text-[10px] font-medium shrink-0 ${
-                    m.status === 'playing' ? 'bg-primary-100 text-gray-800' :
-                    m.status === 'finished' ? 'bg-gray-100 text-primary-500' :
-                    m.status === 'walkover' ? 'bg-primary-100 text-gray-800' :
-                    m.status === 'ready' ? 'bg-gray-50 text-gray-600' :
-                    'bg-gray-100 text-gray-500'
+                <li key={m.matchId} className={m.status === 'playing' ? 'is-live' : ''}>
+                  <span className="dld-mlist__evt">{getEventName(m.eventId)}</span>
+                  <span className="dld-mlist__p">{m.player1Name}</span>
+                  <span className="dld-mlist__vs">vs</span>
+                  <span className="dld-mlist__p">{m.player2Name}</span>
+                  {m.score && <span className="dld-score">{m.score}</span>}
+                  <span className={`dl-tag ${
+                    m.status === 'playing' ? 'dl-tag--live' :
+                    m.status === 'finished' || m.status === 'walkover' ? 'dl-tag--done' : ''
                   }`}>
                     {m.status === 'playing' ? '試合中' :
                      m.status === 'finished' ? '終了' :
                      m.status === 'walkover' ? 'W.O' :
                      m.status === 'ready' ? '準備完了' : '待機'}
                   </span>
-                </div>
+                </li>
               ))}
-            </div>
+            </ul>
           )}
-        </div>
+        </SkSection>
       )}
 
       {/* ===== EVENT PROGRESS ===== */}
       {eventProgress.length > 0 && (
-        <div className="bg-white rounded-2xl shadow-sm border border-border-main p-5">
-          <h2 className="text-sm font-bold text-gray-900 mb-4 flex items-center gap-2">
-            <Trophy className="w-4 h-4 text-primary-500" />
-            種目別進行
-          </h2>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <SkSection en="Progress" title="種目別進行" count={`${eventProgress.length}種目`} flush>
+          <ul className="dld-events">
             {eventProgress.map(ep => (
-              <div
-                key={ep.event.eventId}
-                className="rounded-xl border border-border-main p-4 hover:shadow-md hover:-translate-y-0.5 transition-all bg-gradient-to-br from-white to-gray-50/50"
-              >
-                <div className="flex justify-between items-start mb-2">
-                  <h3 className="font-bold text-sm text-gray-900 truncate flex-1">{ep.event.name}</h3>
+              <li key={ep.event.eventId}>
+                <div className="dld-events__top">
+                  <h3>{ep.event.name}</h3>
                   {ep.playing > 0 && (
-                    <span className="text-[10px] bg-primary-100 text-gray-700 px-1.5 py-0.5 rounded-full font-medium shrink-0 ml-2 flex items-center gap-0.5">
-                      <span className="w-1.5 h-1.5 rounded-full bg-primary-500 animate-pulse" />
+                    <span className="dl-playing">
+                      <i className="dld-pulse" />
                       {ep.playing}試合中
                     </span>
                   )}
@@ -985,35 +929,31 @@ function LiveDashboardInner() {
                 <div className="flex items-center gap-3">
                   <div className="relative w-10 h-10 shrink-0">
                     <svg viewBox="0 0 36 36" className="w-full h-full transform -rotate-90">
-                      <circle cx="18" cy="18" r="14" fill="none" stroke="#e8e8e8" strokeWidth="4" />
+                      <circle cx="18" cy="18" r="14" fill="none" stroke="var(--gray-200)" strokeWidth="4" />
                       <circle
-                        cx="18" cy="18" r="14" fill="none" stroke="#767676" strokeWidth="4"
+                        cx="18" cy="18" r="14" fill="none" stroke="var(--ink)" strokeWidth="4"
                         strokeDasharray={`${(ep.percent / 100) * 88} ${88 - (ep.percent / 100) * 88}`}
-                        strokeLinecap="round"
                         className="transition-all duration-500"
                       />
                     </svg>
-                    <span className="absolute inset-0 flex items-center justify-center text-[9px] font-bold text-gray-700">
+                    <span className="dld-events__pct">
                       {ep.percent}%
                     </span>
                   </div>
-                  <div className="flex-1">
-                    <div className="flex justify-between text-xs text-gray-500 mb-0.5">
+                  <div className="flex-1 min-w-0">
+                    <div className="dld-events__meta">
                       <span>{ep.finished}/{ep.total} 完了</span>
-                      <span className="font-medium text-primary-500">{ep.roundName}</span>
+                      <b>{ep.roundName}</b>
                     </div>
-                    <div className="w-full bg-gray-100 rounded-full h-1.5">
-                      <div
-                        className="bg-gradient-to-r from-primary-400 to-primary-600 h-1.5 rounded-full transition-all duration-500"
-                        style={{ width: `${ep.percent}%` }}
-                      />
+                    <div className="dl-progress__track">
+                      <div className="dl-progress__fill" style={{ width: `${ep.percent}%` }} />
                     </div>
                   </div>
                 </div>
-              </div>
+              </li>
             ))}
-          </div>
-        </div>
+          </ul>
+        </SkSection>
       )}
     </div>
   );
@@ -1035,19 +975,12 @@ function StatCard({
   color: 'accent' | 'ink' | 'gray';
 }) {
   // 進行中は赤、終了は墨、その他はグレー。差し色は赤ひとつに絞る。
-  const colorMap = {
-    accent: { border: 'border-primary-200', text: 'text-gray-700', icon: 'text-primary-500', bg: 'from-primary-50/60' },
-    ink: { border: 'border-gray-300', text: 'text-gray-800', icon: 'text-gray-600', bg: 'from-gray-100/60' },
-    gray: { border: 'border-border-main', text: 'text-gray-900', icon: 'text-gray-400', bg: 'from-gray-50/30' },
-  };
-  const c = colorMap[color];
-
   return (
-    <div className={`bg-gradient-to-br ${c.bg} to-white rounded-xl shadow-sm border ${c.border} p-3.5 hover:shadow-md hover:-translate-y-0.5 transition-all`}>
-      <div className={`flex items-center gap-1.5 ${c.icon} text-xs mb-1.5`}>
+    <div className={`dld-stat dld-stat--${color}`}>
+      <div className="dld-stat__label">
         <Icon className="w-3.5 h-3.5" /> {label}
       </div>
-      <p className={`text-2xl font-black ${c.text}`}>{value}</p>
+      <p className="dld-stat__value">{value}</p>
     </div>
   );
 }

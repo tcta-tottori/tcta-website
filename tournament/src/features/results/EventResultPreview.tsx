@@ -153,12 +153,12 @@ export default function EventResultPreview({ opts, size = 'md', label = '結果�
     a.click();
   };
 
-  // アイコンのみ（ドロー画面）は、隣の編集ボタンと同じ丸ボタンの体裁にそろえる
+  // アイコンのみ（ドロー画面）は、隣の編集ボタンと同じ四角ボタンの体裁にそろえる
   const btnClass = iconOnly
-    ? 'flex items-center justify-center w-9 h-9 rounded-full border border-gray-300 bg-white text-gray-700 hover:bg-gray-100 transition-colors active:scale-95'
+    ? 'dl-icon-btn'
     : size === 'sm'
-      ? 'flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold text-gray-700 bg-gray-50 border border-gray-200 shadow-sm hover:bg-gray-100 active:scale-95 transition-all whitespace-nowrap'
-      : 'flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold text-gray-700 bg-gray-50 border border-gray-200 shadow-sm hover:shadow hover:bg-gray-100 hover:border-gray-300 transition-all active:scale-95 whitespace-nowrap';
+      ? 'dl-mini-btn'
+      : 'dl-mini-btn erp-btn--md';
 
   return (
     <>
@@ -168,26 +168,27 @@ export default function EventResultPreview({ opts, size = 'md', label = '結果�
         title={iconOnly ? label : undefined}
         aria-label={iconOnly ? label : undefined}
       >
-        <ImageIcon size={iconOnly ? 18 : size === 'sm' ? 12 : 14} className="text-gray-600" />
+        <ImageIcon size={iconOnly ? 18 : size === 'sm' ? 12 : 14} />
         {!iconOnly && label}
       </button>
 
       {isOpen && createPortal(
         <div
-          className="fixed inset-0 bg-gray-950/50 backdrop-blur-sm z-50 flex items-center justify-center p-2 sm:p-4"
+          className="erp-overlay"
           onClick={() => setIsOpen(false)}
         >
           <div
-            className="bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col w-full max-w-6xl max-h-[92dvh] border border-gray-100"
+            className="erp-modal"
             onClick={e => e.stopPropagation()}
           >
             {/* 操作バー。スマホでは「見出し＋保存・閉じる」と「表示幅・ロゴ」の2段に折り返す */}
-            <div className="px-3 sm:px-4 py-2.5 sm:py-3 bg-gradient-to-r from-gray-50 to-white border-b border-gray-100 flex flex-wrap items-center gap-x-3 gap-y-2 shrink-0">
-              <h3 className="order-1 flex-1 min-w-0 font-bold text-gray-900 text-sm flex items-center gap-2">
-                <span className="inline-flex items-center justify-center w-6 h-6 rounded-md bg-gradient-to-br from-primary-500 to-primary-700 text-white shadow-sm shrink-0">
-                  <ImageIcon size={13} />
+            <div className="erp-head">
+              <h3 className="erp-head__title">
+                <span className="erp-head__mark" aria-hidden="true" />
+                <span className="erp-head__titles">
+                  <small>RESULT IMAGE</small>
+                  <span>{opts.event.name} 結果プレビュー</span>
                 </span>
-                <span className="truncate">{opts.event.name} 結果プレビュー</span>
               </h3>
 
               {/* 保存・閉じる（スマホでは見出しと同じ行の右端） */}
@@ -195,7 +196,7 @@ export default function EventResultPreview({ opts, size = 'md', label = '結果�
                 {dataUrl && (
                   <button
                     onClick={handleDownload}
-                    className="flex items-center justify-center w-9 h-9 bg-gradient-to-r from-primary-500 to-primary-600 text-white rounded-lg shadow hover:from-primary-600 hover:to-primary-700 transition-colors active:scale-95"
+                    className="dl-icon-btn is-on"
                     title="JPEGで保存"
                     aria-label="JPEGで保存"
                   >
@@ -204,7 +205,7 @@ export default function EventResultPreview({ opts, size = 'md', label = '結果�
                 )}
                 <button
                   onClick={() => setIsOpen(false)}
-                  className="flex items-center justify-center w-9 h-9 text-primary-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                  className="dl-icon-btn"
                   aria-label="閉じる"
                   title="閉じる"
                 >
@@ -245,8 +246,8 @@ export default function EventResultPreview({ opts, size = 'md', label = '結果�
             </div>
 
             {/* 大会名の修整（画像右上に印字される文字列） */}
-            <div className="px-3 sm:px-4 py-2.5 border-b border-gray-100 bg-white shrink-0">
-              <label className="text-[10px] font-semibold text-gray-700/70 block mb-1">
+            <div className="px-3 sm:px-4 py-2.5 border-b border-gray-200 bg-white shrink-0">
+              <label className="erp-label">
                 大会名（画像に印字されます）
               </label>
               <div className="flex items-center gap-2">
@@ -257,12 +258,12 @@ export default function EventResultPreview({ opts, size = 'md', label = '結果�
                   onBlur={() => setAppliedName(nameDraft)}
                   onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); setAppliedName(nameDraft); } }}
                   placeholder="大会名を入力"
-                  className="flex-1 min-w-0 border border-gray-200 rounded-lg px-3 py-1.5 text-[13px] font-medium bg-gray-50/40 focus:bg-white focus:border-gray-400 focus:ring-[3px] focus:ring-gray-500/10 outline-none transition-all"
+                  className="erp-input"
                 />
                 <button
                   onClick={handleSaveName}
                   disabled={!nameDraft.trim() || nameDraft.trim() === opts.tournament.name}
-                  className="shrink-0 flex items-center gap-1 px-3 py-1.5 rounded-lg text-[11px] font-bold text-white bg-primary-600 hover:bg-primary-700 disabled:opacity-40 disabled:hover:bg-primary-600 transition-colors active:scale-95"
+                  className="dl-mini-btn dl-mini-btn--primary shrink-0" style={{ minHeight: 36 }}
                   title="大会データにも保存する"
                 >
                   {nameSaved ? <Check size={13} /> : <Save size={13} />}
@@ -280,7 +281,7 @@ export default function EventResultPreview({ opts, size = 'md', label = '結果�
 
             {champId && <ChampionNameField draft={champion.draft} onChange={champion.setDraft} />}
 
-            <div className="flex-1 overflow-auto bg-white p-2 sm:p-4 flex items-center justify-center">
+            <div className="flex-1 overflow-auto bg-[var(--gray-050)] p-2 sm:p-4 flex items-center justify-center">
               {isLoading && (
                 <div className="flex flex-col items-center gap-2 text-gray-400">
                   <Loader2 size={32} className="animate-spin text-primary-500" />
@@ -294,7 +295,7 @@ export default function EventResultPreview({ opts, size = 'md', label = '結果�
                 <img
                   src={dataUrl}
                   alt={`${opts.event.name}結果`}
-                  className="max-w-full h-auto object-contain shadow-sm border border-gray-100 bg-white rounded"
+                  className="max-w-full h-auto object-contain border border-gray-200 bg-white"
                   style={{ maxHeight: '100%' }}
                 />
               )}
