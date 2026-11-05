@@ -186,7 +186,7 @@ export default function MixedResultsExport() {
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
       {/* エクスポートヘッダー */}
-      <div className="bg-gradient-to-r from-primary-700 to-primary-800 rounded-2xl p-6 text-white">
+      <div className="bg-primary-700 rounded-2xl p-6 text-white">
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-2xl font-bold">大会結果</h2>
@@ -202,7 +202,7 @@ export default function MixedResultsExport() {
             </button>
             <button
               onClick={exportToExcel}
-              className="flex items-center gap-2 px-5 py-2.5 bg-white text-gray-800 rounded-xl text-sm font-medium hover:bg-primary-50 transition-colors shadow-md"
+              className="flex items-center gap-2 px-5 py-2.5 bg-white text-gray-800 rounded-xl text-sm font-medium hover:bg-primary-50 transition-colors"
             >
               <FileDown size={16} />
               Excel出力
@@ -230,7 +230,7 @@ export default function MixedResultsExport() {
       {activeTab === 'all' ? (
         <>
           {/* 予選リーグ結果サマリー */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+          <div className="bg-white rounded-xl border border-gray-200 p-5">
             <h3 className="text-lg font-bold text-gray-800 mb-4">予選リーグ結果</h3>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
               {leagues.map(league => {
@@ -274,28 +274,28 @@ export default function MixedResultsExport() {
                 const Icon = icons[cat];
 
                 return (
-                  <div key={cat} className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+                  <div key={cat} className="bg-white rounded-xl border border-gray-200 p-5">
                     <div className="flex items-center gap-2 mb-4">
                       <Icon size={20} className={iconColors[cat]} />
                       <h3 className="text-lg font-bold text-gray-800">{CATEGORY_LABELS[cat]}</h3>
                     </div>
                     <div className="grid grid-cols-3 gap-4">
                       {results.winner && (
-                        <div className="bg-gradient-to-br from-primary-50 to-white rounded-xl p-4 border border-primary-200">
+                        <div className="bg-primary-50 rounded-xl p-4 border border-primary-200">
                           <div className="text-xs text-primary-600 font-medium mb-1">優勝</div>
                           <div className="font-bold text-gray-800">{results.winner.teamName}</div>
                           <div className="text-xs text-gray-400 mt-1">{results.winner.male.affiliation} / {results.winner.female.affiliation}</div>
                         </div>
                       )}
                       {results.runnerUp && (
-                        <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-4 border border-gray-200">
+                        <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
                           <div className="text-xs text-gray-500 font-medium mb-1">準優勝</div>
                           <div className="font-bold text-gray-800">{results.runnerUp.teamName}</div>
                           <div className="text-xs text-gray-400 mt-1">{results.runnerUp.male.affiliation} / {results.runnerUp.female.affiliation}</div>
                         </div>
                       )}
                       {results.sfLosers.length > 0 && (
-                        <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-4 border border-gray-200">
+                        <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
                           <div className="text-xs text-gray-500 font-medium mb-1">3位</div>
                           {results.sfLosers.map((team, i) => team && (
                             <div key={i} className={i > 0 ? 'mt-2 pt-2 border-t border-gray-200' : ''}>
@@ -348,8 +348,8 @@ export default function MixedResultsExport() {
             }
 
             return (
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                <div className="px-4 py-3 bg-gradient-to-r from-primary-50 to-white border-b border-primary-100">
+              <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+                <div className="px-4 py-3 bg-primary-50 border-b border-primary-100">
                   <div className="flex items-center gap-2">
                     <span className="w-8 h-8 text-sm font-bold rounded-lg flex items-center justify-center" style={leagueBadgeStyle(league.leagueId, leagues.length)}>
                       {league.leagueId.trim()}
@@ -430,12 +430,12 @@ export default function MixedResultsExport() {
                               <td className="px-2 py-1 text-center border-l border-gray-200">
                                 {standing?.tiebreakReason && (
                                   standing.tiebreakReason.startsWith('ゲーム率') ? (
-                                    <span className="inline-flex items-center gap-0.5 text-[9px] text-gray-600 bg-gray-50 px-1.5 py-0.5 rounded-full whitespace-nowrap">
+                                    <span className="inline-flex items-center gap-0.5 text-[9px] text-gray-600 bg-gray-50 px-1.5 py-0.5 rounded whitespace-nowrap">
                                       <Info size={9} className="shrink-0" />
                                       <GameRatioCell gamesWon={standing.gamesWon} gamesLost={standing.gamesLost} className="text-[9px]" />
                                     </span>
                                   ) : (
-                                    <span className="inline-flex items-center gap-0.5 text-[9px] text-gray-600 bg-gray-50 px-1.5 py-0.5 rounded-full whitespace-nowrap">
+                                    <span className="inline-flex items-center gap-0.5 text-[9px] text-gray-600 bg-gray-50 px-1.5 py-0.5 rounded whitespace-nowrap">
                                       <Info size={9} className="shrink-0" />
                                       {standing.tiebreakReason}
                                     </span>

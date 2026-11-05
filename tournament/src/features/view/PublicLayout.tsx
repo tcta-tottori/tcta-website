@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { Trophy, Swords, Radio, Network, ClipboardList, RefreshCw, Activity, BarChart2, Calendar, MapPin } from 'lucide-react';
+import { Trophy, Swords, Radio, Network, ClipboardList, RefreshCw, Activity, BarChart2, Calendar, MapPin, WifiOff, Hourglass } from 'lucide-react';
+import { SkEmpty } from '../../components/site/Kit';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../../db/database';
 import { useAppStore } from '../../stores/appStore';
@@ -43,13 +44,14 @@ export default function PublicLayout() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const closeMenu = useCallback(() => setMenuOpen(false), []);
-  const [now, setNow] = useState(Date.now());
+  const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
     const t = setInterval(() => setNow(Date.now()), 15000);
     return () => clearInterval(t);
   }, []);
   // ルート変更時にメニューを閉じる
-  useEffect(() => { setMenuOpen(false); }, [location.pathname]);
+  const [menuPath, setMenuPath] = useState(location.pathname);
+  if (menuPath !== location.pathname) { setMenuPath(location.pathname); setMenuOpen(false); }
 
   // 運営端末が大会を選択していない状態でスナップショットが届くこともあるため、
   // 選択中大会が無ければ DB にある最新の大会にフォールバックする。
@@ -236,8 +238,8 @@ export default function PublicLayout() {
       <main
         ref={mainRef}
         id="main"
-        className="app-main"
-        onScroll={(e) => { const y = (e.currentTarget as HTMLElement).scrollTop > 100; if (y !== scrolled) setScrolled(y); }}
+        className={`app-main ${location.pathname.startsWith('/view/draw') ? 'app-main--compact' : ''}`}
+        onScroll={(e) => { const y = (e.currentTarget as HTMLElement).scrollTop > 24; if (y !== scrolled) setScrolled(y); }}
       >
         <PageHead
           key={`head-${current.path}`}
@@ -255,13 +257,13 @@ export default function PublicLayout() {
         {statusBar('main')}
         <div className="app-page app-page--gray min-h-[60vh]">
           {!info ? (
-            <div className="container app-page--pad">
+            <div className="container app-page--pad pv-wait">
               <WaitingCard sync={sync} />
             </div>
           ) : (
             <div key={location.pathname} className="page-enter min-h-full pb-12">
               {isGroup ? (
-                <div className="max-w-7xl w-full mx-auto px-3 md:px-4 py-4">
+                <div className="container pv-group">
                   <Outlet />
                 </div>
               ) : (
@@ -310,33 +312,34 @@ function WaitingCard({ sync }: { sync: ReturnType<typeof usePublicSync> }) {
   // 観戦者には「待てば映る」と誤解させず、運営側の設定漏れだと分かる文言にする。
   if (!sync.serverConfigured) {
     return (
-      <div className="panel app-panel">
-        <h2 className="app-panel__title">観戦用の配信が有効になっていません。</h2>
-        <p>中継の接続先が見つからないため、運営端末の大会データを受信できません。</p>
-        <p className="note">運営の方へ: この URL（Cloudflare 版）の Worker が配備されているか確認してください。</p>
-      </div>
+      <SkEmpty
+        icon={WifiOff}
+        title="観戦用の配信が有効になっていません。"
+        text="中継の接続先が見つからないため、運営端末の大会データを受信できません。"
+      >
+        <p className="pv-wait__note">運営の方へ: この URL（Cloudflare 版）の Worker が配備されているか確認してください。</p>
+      </SkEmpty>
     );
   }
 
+  const connected = sync.connectionState === 'connected';
   return (
-    <div className="panel app-panel">
-      <h2 className="app-panel__title">
-        {sync.connectionState === 'connected'
-          ? '運営端末からのデータを待っています'
-          : sync.connectionState === 'disconnected'
-            ? '中継に接続できていません'
-            : '運営端末のルームに接続しています'}
-      </h2>
-      <p>
-        {sync.connectionState === 'connected'
-          ? '運営端末で大会データを読み込み、設定の「インターネット公開を開始」を押すと自動で表示されます。'
-          : '運営端末で大会データが読み込まれ、同期が始まると自動で表示されます。'}
-      </p>
-      <p className="note">ルーム: <code>{sync.roomCode}</code></p>
-      <button onClick={handleRetry} disabled={retrying} className="btn btn--outline" style={{ marginTop: 16 }}>
-        <span className="inline-flex items-center gap-2"><RefreshCw className={`w-4 h-4 ${retrying ? 'animate-spin' : ''}`} />再読み込み</span>
+    <SkEmpty
+      icon={connected ? Hourglass : sync.connectionState === 'disconnected' ? WifiOff : Radio}
+      title={connected
+        ? '運営端末からのデータを待っています'
+        : sync.connectionState === 'disconnected'
+          ? '中継に接続できていません'
+          : '運営端末のルームに接続しています'}
+      text={connected
+        ? '運営端末で大会データを読み込み、設定の「インターネット公開を開始」を押すと自動で表示されます。'
+        : '運営端末で大会データが読み込まれ、同期が始まると自動で表示されます。'}
+    >
+      <p className="pv-wait__room">ルーム:<code>{sync.roomCode}</code></p>
+      <button onClick={handleRetry} disabled={retrying} className="btn btn--outline sk-btn">
+        <RefreshCw className={`w-4 h-4 ${retrying ? 'animate-spin' : ''}`} />再読み込み
       </button>
-    </div>
+    </SkEmpty>
   );
 }
 

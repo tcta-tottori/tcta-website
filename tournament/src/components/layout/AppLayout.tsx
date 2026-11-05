@@ -16,7 +16,7 @@ import BulkCallOverlay from '../ui/BulkCallOverlay';
 import VoiceLoadingIndicator from '../ui/VoiceLoadingIndicator';
 import { callTts } from '../../features/broadcast/callTts';
 import {
-  SiteHeader, MobileNav, PageHead, AppTabs, StatusBar, SiteFooter, SITE_URL, type NavLinkItem,
+  SiteHeader, MobileNav, PageHead, AppTabs, StatusBar, SiteFooter, SITE_URL, SYSTEM_LOGO, type NavLinkItem,
 } from '../site/SiteChrome';
 import { OfficerExpiredBar } from '../site/OfficerGate';
 import { useSiteReveal } from '../site/useSiteReveal';
@@ -61,9 +61,11 @@ const ALL_MAIN_TABS: MainTab[] = [
  * まとまりの中の画面はページ見出しの下のタブで切り替える（会員ポータルの事務局画面と同じ作り）。
  */
 const NAV_GROUPS: { key: string; label: string; en: string; paths: string[] }[] = [
-  { key: 'prep', label: '大会準備', en: 'PREPARATION', paths: ['/data', '/data/review', '/dict', '/entry', '/draw-lot', '/draw-table'] },
+  { key: 'prep', label: '大会準備', en: 'PREPARATION', paths: ['/data', '/data/review', '/entry', '/draw-lot', '/draw-table'] },
   { key: 'run', label: '大会進行', en: 'OPERATION', paths: ['/referee', '/schedule-sheet', '/court-bracket', '/score'] },
   { key: 'live', label: '配信', en: 'LIVE', paths: ['/dashboard', '/broadcast'] },
+  // 選手・所属のふりがなは大会に依らないので、大会準備のタブではなく独立したメニューにする
+  { key: 'players', label: '選手・所属', en: 'PLAYERS', paths: ['/dict'] },
   { key: 'print', label: '印刷', en: 'PRINT', paths: ['/print'] },
   // マニュアルは設定のまとまりに入れる（ロゴ横の札のぶん、ナビを 5 項目に収めるため）
   { key: 'settings', label: '設定', en: 'SETTINGS', paths: ['/settings', '/data-tools', '/manual'] },
@@ -74,6 +76,9 @@ const NAV_GROUPS: { key: string; label: string; en: string; paths: string[] }[] 
  * （印刷は左右 2 列を画面の高さで並べる作りのため）。
  */
 const FILL_PATHS = ['/print'];
+
+/** 見出しを小さくして、中身（ドロー表）をできるだけ上から見せるページ */
+const COMPACT_PATHS = ['/court-bracket'];
 
 /** 抽選・ドロー表タブを非表示にするパス */
 const DRAW_TAB_PATHS = ['/draw-lot', '/draw-table'];
@@ -344,6 +349,7 @@ export default function AppLayout() {
   const hasTournament = !!(currentTournamentId || isMixedImported || isTeamImported);
 
   const fill = FILL_PATHS.some(p => location.pathname.startsWith(p));
+  const compact = COMPACT_PATHS.some(p => location.pathname.startsWith(p));
   const pageLabel = currentTab?.label || '大会運営システム';
   const pageEn = currentTab?.en || 'TOURNAMENT';
 
@@ -385,8 +391,7 @@ export default function AppLayout() {
       {/* ===== ヘッダー（協会サイトと同じ。右上の赤いブロックは観戦ページ） ===== */}
       <SiteHeader
         homeTo="/data"
-        tag="大会運営"
-        tagEm="SYSTEM"
+        logo={SYSTEM_LOGO}
         items={navItems}
         contact={{ label: '観戦ページ', href: '/view', external: true }}
         aux={syncChip}
@@ -407,8 +412,8 @@ export default function AppLayout() {
       <main
         ref={mainRef}
         id="main"
-        className={`app-main ${fill ? 'app-main--fill' : ''}`}
-        onScroll={(e) => { const y = (e.currentTarget as HTMLElement).scrollTop > 100; if (y !== scrolled) setScrolled(y); }}
+        className={`app-main ${fill ? 'app-main--fill' : ''} ${compact ? 'app-main--compact' : ''}`}
+        onScroll={(e) => { const y = (e.currentTarget as HTMLElement).scrollTop > 24; if (y !== scrolled) setScrolled(y); }}
       >
         <PageHead
           key={`head-${currentTab?.path ?? location.pathname}`}

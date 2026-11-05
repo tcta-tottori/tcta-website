@@ -263,7 +263,7 @@ function HubCard({ t, highlight, isCurrent, onDevice, stale, busy, disabled, err
           )}
         </div>
         {(t.status === 'ready' || t.status === 'done') && !busy && (
-          <Link to={`/data/review/${encodeURIComponent(t.id)}`} className="hub-card__check"><ClipboardCheck className="w-4 h-4" />ドローを確認・直す</Link>
+          <Link to={`/data/review/${encodeURIComponent(t.id)}`} className="btn hub-card__btn hub-card__btn--gray"><ClipboardCheck className="w-4 h-4" />ドローを確認・修正</Link>
         )}
       </div>
     </article>

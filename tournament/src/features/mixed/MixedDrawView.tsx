@@ -50,7 +50,7 @@ export default function MixedDrawView() {
         <div className="flex justify-end">
           <button
             onClick={async () => { if (await siteConfirm('テスト用：全ての予選リーグ未完了試合を6-4で入力しますか？')) fillAllScoresForTest(); }}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-sm font-medium bg-white text-gray-600 border border-gray-200 hover:bg-gray-50 hover:border-gray-300 transition-all active:scale-95 shadow-sm"
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-sm font-medium bg-white text-gray-600 border border-gray-200 hover:bg-gray-50 hover:border-gray-300 transition-all active:scale-95"
           >
             <FlaskConical size={14} />
             テスト: 全6-4入力
@@ -112,7 +112,7 @@ function RankEditButton({ standing, totalTeams, leagueId }: {
       {showPicker && createPortal(
         <div className="fixed inset-0 z-50" onClick={() => setShowPicker(false)}>
           <div
-            className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-xl shadow-2xl p-3 z-[60]"
+            className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-xl p-3 z-[60]"
             onClick={e => e.stopPropagation()}
           >
             <div className="text-[10px] text-gray-500 mb-2 text-center font-bold">順位変更: {standing.teamName}</div>
@@ -233,13 +233,13 @@ function TiebreakLotteryButton({ standing, standings, leagueId }: {
     <>
       <button
         onClick={(e) => { e.stopPropagation(); setShowPicker(true); setLotteryResult(null); setManualRanks(new Map()); }}
-        className="inline-flex items-center gap-0.5 text-[9px] sm:text-[10px] text-gray-700 bg-primary-50 px-1.5 py-0.5 rounded-full whitespace-nowrap hover:bg-primary-100 transition-colors"
+        className="inline-flex items-center gap-0.5 text-[9px] sm:text-[10px] text-gray-700 bg-primary-50 px-1.5 py-0.5 rounded whitespace-nowrap hover:bg-primary-100 transition-colors"
       >
         🎲 抽選
       </button>
       {showPicker && createPortal(
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center" onClick={() => setShowPicker(false)}>
-          <div className="bg-white rounded-2xl shadow-2xl w-[380px] max-w-[95vw] p-5 max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+          <div className="bg-white rounded-2xl w-[380px] max-w-[95vw] p-5 max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
             <h3 className="text-sm font-bold text-gray-800 mb-3">順位決定（抽選）</h3>
             <p className="text-xs text-gray-500 mb-3">
               ゲーム取得率が同率のため、抽選または手動で順位を決定してください。
@@ -260,7 +260,7 @@ function TiebreakLotteryButton({ standing, standings, leagueId }: {
             {spinning && spinDisplay && (
               <div className="mb-4">
                 <div className="text-center mb-3">
-                  <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-primary-100 to-white rounded-full">
+                  <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary-100 rounded">
                     <span className="text-lg animate-spin">🎲</span>
                     <span className="text-sm font-bold text-gray-800">抽選中...</span>
                   </div>
@@ -294,7 +294,7 @@ function TiebreakLotteryButton({ standing, standings, leagueId }: {
                 </div>
                 <button
                   onClick={() => applyResult(lotteryResult)}
-                  className="w-full mt-3 py-2.5 bg-gradient-to-r from-primary-500 to-primary-600 text-white rounded-xl font-bold text-sm hover:from-primary-600 hover:to-primary-700 transition-all active:scale-[0.98]"
+                  className="w-full mt-3 py-2.5 bg-primary-500 text-white rounded-xl font-bold text-sm hover:bg-primary-600 transition-all active:scale-[0.98]"
                 >
                   この結果で確定
                 </button>
@@ -313,7 +313,7 @@ function TiebreakLotteryButton({ standing, standings, leagueId }: {
                 <button
                   onClick={handleLottery}
                   disabled={spinning}
-                  className="w-full py-3 mb-4 bg-gradient-to-r from-primary-500 to-primary-600 text-white rounded-xl font-bold text-sm hover:from-primary-600 hover:to-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-[0.98]"
+                  className="w-full py-3 mb-4 bg-primary-500 text-white rounded-xl font-bold text-sm hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-[0.98]"
                 >
                   {spinning ? '🎲 抽選中...' : '🎲 ルーレットで決定'}
                 </button>
@@ -349,7 +349,7 @@ function TiebreakLotteryButton({ standing, standings, leagueId }: {
                   {allManualAssigned && (
                     <button
                       onClick={() => applyResult([...manualRanks.entries()].map(([teamId, rank]) => ({ teamId, teamName: '', rank })))}
-                      className="w-full mt-3 py-2.5 bg-gradient-to-r from-primary-500 to-primary-600 text-white rounded-xl font-bold text-sm hover:from-primary-600 hover:to-primary-700 transition-all active:scale-[0.98]"
+                      className="w-full mt-3 py-2.5 bg-primary-500 text-white rounded-xl font-bold text-sm hover:bg-primary-600 transition-all active:scale-[0.98]"
                     >
                       この順位で確定
                     </button>
@@ -445,15 +445,15 @@ function AllLeaguesView({ onEditMatch }: { onEditMatch: (m: LeagueMatchScore) =>
           };
 
           return (
-            <div key={league.leagueId} className={`relative bg-white rounded-xl shadow-sm border ${colors.border} overflow-hidden ${!allEntryDone ? 'opacity-50' : ''}`}>
+            <div key={league.leagueId} className={`relative bg-white rounded-xl border ${colors.border} overflow-hidden ${!allEntryDone ? 'opacity-50' : ''}`}>
               {!allEntryDone && (
                 <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/60 pointer-events-none">
-                  <span className="px-4 py-2 bg-gray-800/70 text-white text-xs font-bold rounded-full">エントリー未完了</span>
+                  <span className="px-4 py-2 bg-gray-800/70 text-white text-xs font-bold rounded">エントリー未完了</span>
                 </div>
               )}
               {/* リーグヘッダー */}
-              <div className={`flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 sm:py-2.5 bg-gradient-to-r ${colors.light} border-b ${colors.border}`}>
-                <span className="w-8 h-8 text-sm font-bold rounded-lg flex items-center justify-center shadow shrink-0" style={leagueBadgeStyle(league.leagueId, leagues.length)}>
+              <div className={`flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 sm:py-2.5 tm-flat ${colors.light} border-b ${colors.border}`}>
+                <span className="w-8 h-8 text-sm font-bold rounded-lg flex items-center justify-center shrink-0" style={leagueBadgeStyle(league.leagueId, leagues.length)}>
                   {league.leagueId.trim()}
                 </span>
                 <div className="min-w-0 flex-1">
@@ -503,7 +503,7 @@ function AllLeaguesView({ onEditMatch }: { onEditMatch: (m: LeagueMatchScore) =>
                   {isComplete && <Check size={14} className="text-primary-500" />}
                   <div className="w-12 sm:w-16 h-1.5 bg-gray-200 rounded-full overflow-hidden">
                     <div
-                      className={`h-full bg-gradient-to-r ${colors.from} ${colors.to} rounded-full transition-all`}
+                      className={`h-full tm-flat ${colors.from} ${colors.to} rounded-full transition-all`}
                       style={{ width: `${totalCount > 0 ? (finishedCount / totalCount) * 100 : 0}%` }}
                     />
                   </div>
@@ -591,7 +591,7 @@ function AllLeaguesView({ onEditMatch }: { onEditMatch: (m: LeagueMatchScore) =>
                             <td className="px-1 sm:px-2 py-1.5 text-center border-l border-gray-200">
                               {standing?.tiebreakReason && (
                                 standing.tiebreakReason.startsWith('ゲーム率') ? (
-                                  <span className="inline-flex items-center gap-0.5 text-[9px] sm:text-[10px] text-gray-600 bg-gray-50 px-1.5 py-0.5 rounded-full whitespace-nowrap">
+                                  <span className="inline-flex items-center gap-0.5 text-[9px] sm:text-[10px] text-gray-600 bg-gray-50 px-1.5 py-0.5 rounded whitespace-nowrap">
                                     <Info size={9} className="shrink-0" />
                                     <GameRatioCell
                                       gamesWon={standing.gamesWon}
@@ -618,7 +618,7 @@ function AllLeaguesView({ onEditMatch }: { onEditMatch: (m: LeagueMatchScore) =>
                                     leagueId={league.leagueId}
                                   />
                                 ) : (
-                                  <span className="inline-flex items-center gap-0.5 text-[9px] sm:text-[10px] text-gray-600 bg-gray-50 px-1.5 py-0.5 rounded-full whitespace-nowrap">
+                                  <span className="inline-flex items-center gap-0.5 text-[9px] sm:text-[10px] text-gray-600 bg-gray-50 px-1.5 py-0.5 rounded whitespace-nowrap">
                                     <Info size={9} className="shrink-0" />
                                     {standing.tiebreakReason}
                                   </span>
@@ -635,7 +635,7 @@ function AllLeaguesView({ onEditMatch }: { onEditMatch: (m: LeagueMatchScore) =>
 
               {/* 対戦順 */}
               {league.matchOrder.length > 0 && (
-                <div className={`px-3 py-2 bg-gradient-to-r ${colors.light} border-t ${colors.border}`}>
+                <div className={`px-3 py-2 tm-flat ${colors.light} border-t ${colors.border}`}>
                   <div className="text-[10px] font-bold text-gray-500 mb-1">対戦順</div>
                   <div className="flex flex-wrap gap-1">
                     {league.matchOrder.map(mo => {

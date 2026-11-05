@@ -4,7 +4,7 @@ import { createPortal } from 'react-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, type Match, type Event, type RoundGameRule, type MatchFormatType } from '../../db/database';
 import { useAppStore, type ImportedScheduleItem } from '../../stores/appStore';
-import { CalendarClock, Download, FileSpreadsheet, FolderOpen, X, Loader2, Edit3, Save, Zap, ArrowRightLeft, Clock, Trophy } from 'lucide-react';
+import { CalendarClock, Download, FileSpreadsheet, FolderOpen, X, Loader2, Save, Zap, ArrowRightLeft, Clock, Trophy } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import {
   getSavedToken as gdriveGetSavedToken,
@@ -15,6 +15,7 @@ import { assignVenueCourtNames } from './scheduleEngine';
 import { generateScheduleFromDraws, inferScheduleBaseFromDraws, AUTO_GENERATED_SCHEDULE_LABEL } from './generateSchedule';
 import ScoreInputDialog, { type ScoreInputMatch } from '../score/ScoreInputDialog';
 import GameRulesDialog from '../../components/ui/GameRulesDialog';
+import SiteDialog from '../../components/site/SiteDialog';
 import { resolveRequiredGames } from '../score/gameRules';
 
 /** 回戦番号から日本語ラウンド名を返す */
@@ -1008,37 +1009,29 @@ export default function ScheduleSheet() {
   const hasData = importedSchedule.length > 0 && gridData;
 
   return (
-    <div className="h-full flex flex-col p-4 md:p-6 max-w-7xl mx-auto space-y-4">
+    <div className="container sk-page sk-page--wide op-tt">
       {/* Header */}
-      <header className="bg-white p-4 rounded-xl shadow-sm border border-border-main">
-        <div className="flex items-center justify-between flex-wrap gap-2">
-          <div>
-            <h1 className="text-xl md:text-2xl font-bold text-gray-900 flex items-center gap-2">
-              <CalendarClock className="w-6 h-6 text-primary-500" />
-              タイムテーブル
-              {hasPlayingMatch && (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-red-50 text-red-600 text-[10px] font-bold border border-red-200">
-                  <span className="relative flex h-2 w-2">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500" />
-                  </span>
-                  LIVE
-                </span>
-              )}
-            </h1>
-            <p className="text-sm text-gray-500 mt-1 hidden sm:block">
+      <section className="sk-sec op-tt__head">
+        <div className="sk-sec__head">
+          <span className="sk-sec__mark" aria-hidden="true" />
+          <div className="sk-sec__titles">
+            <p className="sk-sec__en">LIVE STATUS</p>
+            <h2 className="sk-sec__title">
               リアルタイム試合進行状況
-            </p>
+              {hasPlayingMatch && (
+                <span className="op-live"><i aria-hidden="true" />LIVE</span>
+              )}
+            </h2>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="sk-sec__actions">
             {/* 時間割がある状態でも、ドロー表の記載時刻で作り直せるようにする */}
             {hasData && (
               <button
                 onClick={handleRegenerate}
                 disabled={isGenerating || !currentTournamentId}
                 title="ドロー表に書かれた開始時刻を基準に、時間割を作り直します"
-                className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-gray-800 bg-primary-50 border border-primary-200 rounded-lg hover:bg-primary-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="btn btn--outline sk-btn sk-btn--sm"
               >
                 {isGenerating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Zap className="w-3.5 h-3.5" />}
                 {isGenerating ? '作成中...' : 'ドロー表の時刻で作り直す'}
@@ -1057,14 +1050,16 @@ export default function ScheduleSheet() {
 
         {/* Status Message */}
         {statusMessage && (
-          <div
-            className={`mt-3 p-3 rounded-md text-sm ${
-              statusMessage.includes('失敗') || statusMessage.includes('ありません')
-                ? 'bg-red-50 text-red-700 border border-red-200'
-                : 'bg-primary-50 text-gray-800 border border-primary-200'
-            }`}
-          >
-            {statusMessage}
+          <div className="sk-sec__body op-tt__msgs">
+            <div
+              className={`sk-note ${
+                statusMessage.includes('失敗') || statusMessage.includes('ありません')
+                  ? 'sk-note--red'
+                  : ''
+              }`}
+            >
+              {statusMessage}
+            </div>
           </div>
         )}
 
@@ -1072,25 +1067,27 @@ export default function ScheduleSheet() {
         {swapSourceIndex != null && (() => {
           const src = importedSchedule[swapSourceIndex];
           return (
-            <div className="mt-3 p-3 rounded-md text-sm bg-primary-50 border border-primary-300 text-gray-900 flex items-center justify-between gap-2">
-              <span className="flex items-center gap-1.5">
-                <ArrowRightLeft className="w-4 h-4 shrink-0" />
-                入れ替えモード:「{src?.eventName} {roundLabelToJapanese(src?.roundLabel || '')}」の入れ替え先（他の試合カードまたは空きコマ）をタップしてください。
-              </span>
-              <button
-                onClick={() => setSwapSourceIndex(null)}
-                className="shrink-0 px-2.5 py-1 text-xs font-medium text-gray-800 bg-white border border-primary-300 rounded-md hover:bg-primary-100 transition-colors"
-              >
-                キャンセル
-              </button>
+            <div className="sk-sec__body op-tt__msgs">
+              <div className="sk-note sk-note--red op-tt__swap">
+                <span className="op-tt__swap-text">
+                  <ArrowRightLeft className="w-4 h-4 shrink-0" />
+                  入れ替えモード:「{src?.eventName} {roundLabelToJapanese(src?.roundLabel || '')}」の入れ替え先（他の試合カードまたは空きコマ）をタップしてください。
+                </span>
+                <button
+                  onClick={() => setSwapSourceIndex(null)}
+                  className="btn btn--outline sk-btn sk-btn--sm"
+                >
+                  キャンセル
+                </button>
+              </div>
             </div>
           );
         })()}
-      </header>
+      </section>
 
       {/* Timetable Grid */}
       {hasData ? (
-        <div className="bg-white rounded-xl shadow-sm border border-border-main overflow-hidden flex-1 flex flex-col">
+        <div className="sk-sec op-tt__grid">
           <style>{`
             @keyframes shimmer {
               0% { background-position: -200% 0; }
@@ -1175,11 +1172,11 @@ export default function ScheduleSheet() {
               z-index: 5;
             }
           `}</style>
-          <div className="overflow-auto flex-1 relative">
-            <table className="border-collapse min-w-full">
-              <thead className="sticky top-0 z-20">
+          <div className="op-tt__scroll">
+            <table className="op-tt__table">
+              <thead className="op-tt__thead">
                 <tr>
-                  <th className="sticky left-0 z-30 bg-gray-800 text-white text-xs px-3 py-2 border border-gray-600 whitespace-nowrap">
+                  <th className="op-tt__corner">
                     コート
                   </th>
                   {timeSlots.map((time, idx) => {
@@ -1188,12 +1185,12 @@ export default function ScheduleSheet() {
                     return (
                       <th
                         key={idx}
-                        className={`text-xs px-2 py-2 border border-gray-600 whitespace-nowrap transition-colors ${
+                        className={`op-tt__th ${
                           isNowSlot
-                            ? 'bg-red-600 text-white font-bold time-now-header'
+                            ? 'is-now time-now-header'
                             : isPast
-                              ? 'bg-gray-600 text-gray-300'
-                              : 'bg-gray-800 text-white'
+                              ? 'is-past'
+                              : ''
                         }`}
                       >
                         {time}
@@ -1205,7 +1202,7 @@ export default function ScheduleSheet() {
               <tbody>
                 {courtNames.map((cn) => (
                   <tr key={cn} className="group">
-                    <td className="sticky left-0 z-10 bg-gray-100 font-bold text-sm px-3 py-2 border border-gray-300 text-center whitespace-nowrap group-hover:bg-gray-200 transition-colors">
+                    <td className="op-tt__court">
                       {cn}
                     </td>
                     {timeSlots.map((time, slotIdx) => {
@@ -1220,10 +1217,10 @@ export default function ScheduleSheet() {
                             key={slotIdx}
                             onClick={swapping ? () => handleEmptyCellClick(cn, time) : undefined}
                             title={swapping ? `${cn}番コート ${time} へ移動` : undefined}
-                            className={`border border-gray-200 min-w-[80px] h-12 transition-colors ${
-                              swapping ? 'cursor-pointer bg-primary-50/40 hover:bg-primary-100 hover:ring-2 hover:ring-inset hover:ring-primary-400' : ''
+                            className={`op-tt__td op-tt__td--empty ${
+                              swapping ? 'is-droppable' : ''
                             } ${
-                              isNowSlot ? 'bg-red-50/50 time-now-line' : isPastSlot ? 'bg-gray-50/80' : ''
+                              isNowSlot ? 'is-now time-now-line' : isPastSlot ? 'is-past' : ''
                             }`}
                           />
                         );
@@ -1283,7 +1280,7 @@ export default function ScheduleSheet() {
                           key={slotIdx}
                           onClick={() => handleCellClick(index)}
                           title={tooltipParts.join(' | ')}
-                          className={`border border-gray-300 min-w-[80px] h-12 cursor-pointer text-center transition-all duration-300 px-0.5 ${statusBg} ${color?.text || 'text-gray-800'} hover:brightness-90 hover:scale-[1.02] ${cellStatusClass} ${isNowSlot && !isFinished && !isPlaying ? 'time-now-line' : ''} ${isSwapSource ? 'ring-2 ring-inset ring-primary-500 ring-offset-0 z-[3]' : ''} ${isSwapTargetable ? 'ring-2 ring-inset ring-primary-300' : ''}`}
+                          className={`op-tt__td op-tt__cell ${statusBg} ${color?.text || 'text-gray-800'} ${cellStatusClass} ${isNowSlot && !isFinished && !isPlaying ? 'time-now-line' : ''} ${isSwapSource ? 'is-swap-src' : ''} ${isSwapTargetable ? 'is-swap-target' : ''}`}
                         >
                           <div className="flex items-center justify-center gap-0.5 relative z-[2]">
                             <span className="text-[10px] font-medium leading-tight truncate">{evAbbr}</span>
@@ -1314,31 +1311,31 @@ export default function ScheduleSheet() {
           </div>
         </div>
       ) : (
-        <div className="flex-1 flex flex-col items-center justify-center p-8 text-center bg-white rounded-xl border border-dashed border-border-main shadow-sm">
-          <CalendarClock className="w-16 h-16 text-gray-300 mb-4" />
-          <h3 className="text-lg font-bold text-gray-900 mb-2">
+        <div className="sk-empty op-tt__empty">
+          <CalendarClock className="sk-empty__ico" />
+          <p className="sk-empty__title">
             タイムテーブルデータがありません
-          </h3>
-          <p className="text-gray-500 max-w-md mb-6">
+          </p>
+          <p className="sk-empty__text">
             Excel読込ボタンまたは Cloudflare の時間割からスケジュールデータをインポートするか、
             下記からドローをもとに時間割を自動生成できます。
           </p>
 
           {/* --- ドローから時間割を自動生成 --- */}
-          <div className="w-full max-w-xl text-left bg-gradient-to-br from-primary-50 to-white border border-primary-200 rounded-xl p-4 sm:p-5">
-            <div className="flex items-center gap-2 mb-1">
-              <Zap className="w-4 h-4 text-primary-600" />
-              <h4 className="text-sm font-bold text-gray-900">ドローから時間割を自動生成</h4>
+          <div className="sk-sec sk-sec--accent op-tt__gen">
+            <div className="op-tt__gen-head">
+              <Zap className="w-4 h-4" />
+              <h4>ドローから時間割を自動生成</h4>
             </div>
-            <p className="text-xs text-gray-500 mb-4">
+            <p className="op-tt__gen-lead">
               ドロー表に書かれた開始時刻から同時進行の試合数（＝コート数）を判定し、対戦順・コート割を自動作成します。
               {detectedCourtCount != null && (
-                <span className="block mt-1 text-gray-800 font-medium">
+                <span className="op-tt__gen-det">
                   検出: {genStartTime}開始の試合が{detectedCourtCount}件 → {detectedCourtCount}面（{assignVenueCourtNames(detectedCourtCount).join('・')}番コート）
                 </span>
               )}
               {genDrawBase?.startTime && (
-                <span className="block mt-1 text-gray-800 font-medium">
+                <span className="op-tt__gen-det">
                   ドロー表の記載時刻（最早 {genDrawBase.startTime}
                   {genDrawBase.matchDuration ? ` / 1試合${genDrawBase.matchDuration}分` : ''}）を基準に配置します。
                   {genDrawBase.slotStep != null && genDrawBase.matchDuration != null
@@ -1349,35 +1346,35 @@ export default function ScheduleSheet() {
               )}
             </p>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
+            <div className="op-tt__gen-grid">
               <div className="sm:col-span-3">
-                <label className="block text-xs font-medium text-gray-500 mb-1">使用コート（カンマ区切り）</label>
+                <label className="sk-field op-label">使用コート（カンマ区切り）</label>
                 <input
                   type="text"
                   value={genCourtNames}
                   onChange={(e) => setGenCourtNames(e.target.value)}
                   placeholder="5,6,7,8,9,10,11,12,13,14,15,16"
-                  className="w-full border border-border-main rounded-lg px-3 py-2 text-sm focus:border-primary-500 focus:ring-[3px] focus:ring-primary-500/15 outline-none"
+                  className="input sk-input"
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-500 mb-1">開始時刻</label>
+                <label className="sk-field op-label">開始時刻</label>
                 <input
                   type="time"
                   value={genStartTime}
                   onChange={(e) => setGenStartTime(e.target.value)}
-                  className="w-full border border-border-main rounded-lg px-3 py-2 text-sm focus:border-primary-500 focus:ring-[3px] focus:ring-primary-500/15 outline-none"
+                  className="input sk-input"
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-500 mb-1">1試合の所要時間（分）</label>
+                <label className="sk-field op-label">1試合の所要時間（分）</label>
                 <input
                   type="number"
                   min={20}
                   max={120}
                   value={genDuration}
                   onChange={(e) => setGenDuration(parseInt(e.target.value) || 40)}
-                  className="w-full border border-border-main rounded-lg px-3 py-2 text-sm focus:border-primary-500 focus:ring-[3px] focus:ring-primary-500/15 outline-none"
+                  className="input sk-input"
                 />
               </div>
             </div>
@@ -1385,7 +1382,7 @@ export default function ScheduleSheet() {
             <button
               onClick={handleAutoGenerate}
               disabled={isGenerating || !currentTournamentId}
-              className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="btn btn--primary sk-btn"
             >
               {isGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
               {isGenerating ? '生成中...' : '時間割を自動生成'}
@@ -1395,8 +1392,7 @@ export default function ScheduleSheet() {
       )}
 
       {/* アクション選択ポップアップ（スコア入力 / 入れ替え / 時間変更） */}
-      {actionIndex != null && createPortal(
-        (() => {
+      {actionIndex != null && (() => {
           const item = importedSchedule[actionIndex];
           if (!item) return null;
           const dbMatch = matchLookup.get(actionIndex);
@@ -1404,43 +1400,35 @@ export default function ScheduleSheet() {
           const p2 = dbMatch?.player2Name || item.player2Hint || '';
           const canScore = !!dbMatch?.id;
           return (
-            <div className="fixed inset-0 bg-black/50 z-[9999] flex items-center justify-center p-4" onClick={() => setActionIndex(null)}>
-              <div className="bg-white rounded-xl shadow-2xl max-w-sm w-full p-5 space-y-4" onClick={e => e.stopPropagation()}>
-                <div className="flex items-center justify-between">
-                  <h3 className="text-base font-bold text-gray-900">試合メニュー</h3>
-                  <button onClick={() => setActionIndex(null)} className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors">
-                    <X className="w-5 h-5 text-gray-500" />
-                  </button>
-                </div>
-
-                <div className="p-3 bg-gray-50 rounded-lg text-sm space-y-1">
+            <SiteDialog open eyebrow="MATCH" title="試合メニュー" onClose={() => setActionIndex(null)} closable>
+                <div className="op-dlg-sum">
                   <div>
-                    <span className="font-medium">{item.eventName}</span>
-                    <span className="ml-2 text-gray-500">{roundLabelToJapanese(item.roundLabel)}</span>
+                    <span className="op-dlg-sum__ev">{item.eventName}</span>
+                    <span className="op-dlg-sum__rd">{roundLabelToJapanese(item.roundLabel)}</span>
                   </div>
-                  <div className="text-xs text-gray-500">{item.courtName}番コート・{item.startTime}</div>
+                  <div className="op-dlg-sum__sub">{item.courtName}番コート・{item.startTime}</div>
                   {(p1 || p2) && (
-                    <div className="text-gray-900 font-semibold">
-                      {p1} <span className="text-gray-400 font-normal mx-0.5">vs</span> {p2}
+                    <div className="op-dlg-sum__vs">
+                      {p1} <span>vs</span> {p2}
                     </div>
                   )}
                   {dbMatch?.score && (
-                    <div className="text-xs text-gray-500">スコア: {dbMatch.score}</div>
+                    <div className="op-dlg-sum__sub">スコア: {dbMatch.score}</div>
                   )}
                 </div>
 
-                <div className="grid grid-cols-1 gap-2">
+                <div className="op-dlg-btns">
                   <button
                     onClick={() => { if (!canScore) return; setScoreIndex(actionIndex); setActionIndex(null); }}
                     disabled={!canScore}
-                    className="flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                    className="btn btn--primary sk-btn sk-btn--lg sk-btn--block"
                   >
                     <Trophy className="w-4 h-4" />
                     スコア入力
                   </button>
                   <button
                     onClick={() => { setSwapSourceIndex(actionIndex); setActionIndex(null); }}
-                    className="flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-gray-800 bg-primary-50 border border-primary-300 rounded-lg hover:bg-primary-100 transition-colors"
+                    className="btn btn--outline sk-btn sk-btn--lg sk-btn--block"
                   >
                     <ArrowRightLeft className="w-4 h-4" />
                     入れ替え
@@ -1450,23 +1438,21 @@ export default function ScheduleSheet() {
                       setEditingCell({ scheduleIndex: actionIndex, courtName: item.courtName, startTime: item.startTime });
                       setActionIndex(null);
                     }}
-                    className="flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-200 rounded-lg hover:bg-gray-200 transition-colors"
+                    className="btn btn--outline sk-btn sk-btn--lg sk-btn--block"
                   >
                     <Clock className="w-4 h-4" />
                     時間変更
                   </button>
                 </div>
                 {!canScore && (
-                  <p className="text-[11px] text-gray-400 text-center">
+                  <p className="op-dlg-note">
                     この枠にはまだ対戦カードが確定していないため、スコア入力はできません。
                   </p>
                 )}
-              </div>
-            </div>
+                <div className="op-dlg-pad" />
+            </SiteDialog>
           );
-        })(),
-        document.body,
-      )}
+        })()}
 
       {/* スコア入力ダイアログ */}
       {scoreInputMatch && scoreInputContext && (
@@ -1492,19 +1478,29 @@ export default function ScheduleSheet() {
       })()}
 
       {/* Edit Cell Modal */}
-      {editingCell && createPortal(
-        <div className="fixed inset-0 bg-black/50 z-[9999] flex items-center justify-center p-4" onClick={() => setEditingCell(null)}>
-          <div className="bg-white rounded-xl shadow-2xl max-w-sm w-full p-5 space-y-4" onClick={e => e.stopPropagation()}>
-            <div className="flex items-center justify-between">
-              <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
-                <Edit3 className="w-4 h-4 text-primary-500" />
-                セル編集
-              </h3>
-              <button onClick={() => setEditingCell(null)} className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors">
-                <X className="w-5 h-5 text-gray-500" />
-              </button>
-            </div>
-
+      {editingCell && (
+        <SiteDialog
+          open
+          eyebrow="EDIT"
+          title="セル編集"
+          onClose={() => setEditingCell(null)}
+          closable
+          actions={<>
+            <button
+              onClick={() => setEditingCell(null)}
+              className="btn btn--outline sdlg__btn"
+            >
+              キャンセル
+            </button>
+            <button
+              onClick={handleEditSave}
+              className="btn btn--primary sdlg__btn"
+            >
+              <Save className="w-4 h-4" />
+              保存
+            </button>
+          </>}
+        >
             {(() => {
               const item = importedSchedule[editingCell.scheduleIndex];
               if (!item) return null;
@@ -1512,27 +1508,27 @@ export default function ScheduleSheet() {
               const p1 = dbMatch?.player1Name || item.player1Hint || '';
               const p2 = dbMatch?.player2Name || item.player2Hint || '';
               return (
-                <div className="space-y-3">
-                  <div className="p-3 bg-gray-50 rounded-lg text-sm space-y-1">
+                <div className="op-dlg-form">
+                  <div className="op-dlg-sum">
                     <div>
-                      <span className="font-medium">{item.eventName}</span>
-                      <span className="ml-2 text-gray-500">{roundLabelToJapanese(item.roundLabel)}</span>
+                      <span className="op-dlg-sum__ev">{item.eventName}</span>
+                      <span className="op-dlg-sum__rd">{roundLabelToJapanese(item.roundLabel)}</span>
                     </div>
                     {(p1 || p2) && (
-                      <div className="text-gray-900 font-semibold">
-                        {p1} <span className="text-gray-400 font-normal mx-0.5">vs</span> {p2}
+                      <div className="op-dlg-sum__vs">
+                        {p1} <span>vs</span> {p2}
                       </div>
                     )}
                     {dbMatch?.score && (
-                      <div className="text-xs text-gray-500">スコア: {dbMatch.score}</div>
+                      <div className="op-dlg-sum__sub">スコア: {dbMatch.score}</div>
                     )}
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-gray-500 mb-1">コート</label>
+                    <label className="sk-field op-label">コート</label>
                     <select
                       value={editingCell.courtName}
                       onChange={e => setEditingCell({ ...editingCell, courtName: e.target.value })}
-                      className="w-full border border-border-main rounded-lg px-3 py-2 text-sm focus:border-primary-500 focus:ring-[3px] focus:ring-primary-500/15 outline-none"
+                      className="input sk-input"
                     >
                       {courtNames.map(cn => (
                         <option key={cn} value={cn}>{cn}番コート</option>
@@ -1541,36 +1537,19 @@ export default function ScheduleSheet() {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-gray-500 mb-1">開始時間</label>
+                    <label className="sk-field op-label">開始時間</label>
                     <input
                       type="time"
                       value={editingCell.startTime}
                       onChange={e => setEditingCell({ ...editingCell, startTime: e.target.value })}
-                      className="w-full border border-border-main rounded-lg px-3 py-2 text-sm focus:border-primary-500 focus:ring-[3px] focus:ring-primary-500/15 outline-none"
+                      className="input sk-input"
                     />
                   </div>
                 </div>
               );
             })()}
 
-            <div className="flex justify-end gap-2 pt-2">
-              <button
-                onClick={() => setEditingCell(null)}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-              >
-                キャンセル
-              </button>
-              <button
-                onClick={handleEditSave}
-                className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-primary-500 rounded-lg hover:bg-primary-600 shadow-sm transition-colors"
-              >
-                <Save className="w-4 h-4" />
-                保存
-              </button>
-            </div>
-          </div>
-        </div>,
-        document.body,
+        </SiteDialog>
       )}
 
       {/* Cloudflare の時間割のファイル選択 */}
@@ -1617,7 +1596,7 @@ export default function ScheduleSheet() {
                         disabled={driveLoading}
                         className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-primary-50 border border-transparent hover:border-primary-200 transition-all text-left disabled:opacity-50 disabled:cursor-not-allowed group"
                       >
-                        <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-primary-100 flex items-center justify-center group-hover:bg-primary-200 transition-colors">
+                        <div className="flex-shrink-0 w-10 h-10 bg-red-tint flex items-center justify-center">
                           <FileSpreadsheet className="w-5 h-5 text-primary-600" />
                         </div>
                         <div className="flex-1 min-w-0">
@@ -1637,7 +1616,7 @@ export default function ScheduleSheet() {
                 </div>
               )}
             </div>
-            <div className="px-5 py-3 border-t border-gray-200 bg-gray-50 rounded-b-xl">
+            <div className="px-5 py-3 border-t border-gray-200 bg-gray-50">
               <p className="text-xs text-gray-400 text-center">
                 鳥取テニス協会バックアップ &gt; 大会運営システム &gt; 時間割
               </p>

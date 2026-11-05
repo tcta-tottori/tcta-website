@@ -32,7 +32,7 @@ export function GameRatioCell({ gamesWon, gamesLost, className = '', teamName, m
       </button>
       {showDetail && createPortal(
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center backdrop-blur-sm" onClick={() => setShowDetail(false)}>
-          <div className="bg-white rounded-2xl shadow-2xl w-[380px] max-w-[95vw] p-5" onClick={e => e.stopPropagation()}>
+          <div className="bg-white rounded-2xl w-[380px] max-w-[95vw] p-5" onClick={e => e.stopPropagation()}>
             <div className="text-center mb-4">
               <div className="text-sm font-bold text-gray-700">ゲーム取得率</div>
               {teamName && <div className="text-xs text-gray-400 mt-1">{teamName}</div>}

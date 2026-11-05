@@ -54,9 +54,9 @@ const SIZE: Record<BoardSize, {
  */
 const COLOR = {
   /** パネルの地色 */
-  panel: 'bg-[#262626]',
+  panel: 'bg-[var(--ink)]',
   /** 進行中セットの帯（差し色の赤） */
-  current: 'bg-[#D8232A]',
+  current: 'bg-[var(--red)]',
   /** 決着済みセットで負けている側の数字 */
   dim: 'text-[#8f8f8f]',
 };
@@ -141,7 +141,7 @@ export default function LiveScoreBoard({
       {/* 見出し（左上にクラス名＋ラウンド / 右上にコート） */}
       <div className="flex items-end gap-2">
         <span
-          className={`inline-block min-w-0 truncate rounded-t-md font-bold text-white py-0.5 bg-[#262626] ${sz.label}`}
+          className={`inline-block min-w-0 truncate font-bold text-white py-0.5 bg-[var(--ink)] ${sz.label}`}
           title={classLabel}
         >
           {classLabel}
@@ -149,7 +149,7 @@ export default function LiveScoreBoard({
         <span className="flex-1" />
         {courtLabel && (
           <span
-            className={`inline-block shrink-0 truncate rounded-t-md font-black text-white py-0.5 bg-[#D8232A] ${sz.label}`}
+            className={`inline-block shrink-0 truncate font-black text-white py-0.5 bg-[var(--red)] dlsb-num ${sz.label}`}
           >
             {courtLabel}
           </span>
@@ -157,29 +157,29 @@ export default function LiveScoreBoard({
       </div>
 
       {/* スコアパネル */}
-      <div className={`rounded-md rounded-tl-none overflow-hidden shadow-xl ring-1 ring-black/20 ${COLOR.panel}`}>
+      <div className={`dlsb-panel overflow-hidden ${COLOR.panel}`}>
         {rows.map((row, idx) => (
           <div
             key={row.player}
             data-testid={`lsb-row-${row.player}`}
-            className={`flex items-stretch ${sz.row} ${idx === 0 ? 'border-b border-black/20' : ''}`}
+            className={`flex items-stretch ${sz.row} ${idx === 0 ? 'border-b border-white/10' : ''}`}
           >
             {/* サーブ表示（赤の▶） */}
             <div className={`${sz.serveCol} shrink-0 flex items-center justify-center pl-1`}>
               {row.serving && (
-                <Play className={`${sz.serveIcon} fill-[#e05a56] text-[#e05a56] drop-shadow-[0_0_4px_rgba(216, 35, 42,0.55)]`} />
+                <Play className={`${sz.serveIcon} fill-[var(--red)] text-[var(--red)]`} />
               )}
             </div>
 
             {/* 番号 → 選手名 →（所属）: 結果表と同じ並び */}
             <div className="flex items-center min-w-0 flex-1 gap-1.5 pr-2 py-1">
               {row.number != null && (
-                <span className={`${sz.num} shrink-0 text-right font-bold text-white/55 tabular-nums`}>
+                <span className={`${sz.num} shrink-0 text-right font-bold text-white/55 tabular-nums dlsb-num`}>
                   {row.number}
                 </span>
               )}
               {row.seed != null && (
-                <span className={`${sz.seed} shrink-0 rounded-full bg-[#D8232A] text-white font-black leading-tight`}>
+                <span className={`${sz.seed} shrink-0 bg-[var(--red)] text-white font-black leading-tight dlsb-num`}>
                   {row.seed}
                 </span>
               )}
@@ -204,7 +204,7 @@ export default function LiveScoreBoard({
               return (
                 <div
                   key={i}
-                  className={`shrink-0 flex items-center justify-center font-black ${
+                  className={`dlsb-num shrink-0 flex items-center justify-center font-black ${
                     col.isCurrent
                       ? `${sz.curCol} ${sz.curText} ${COLOR.current} text-white`
                       : `${sz.setCol} ${sz.setText} ${leading ? 'text-white' : COLOR.dim}`
@@ -218,7 +218,7 @@ export default function LiveScoreBoard({
 
             {/* セット取得数（2セットマッチのみ・終了時） */}
             {multiSet && finished && (
-              <div className={`${sz.curCol} ${sz.curText} ${COLOR.current} flex items-center justify-center font-black text-white shrink-0`}>
+              <div className={`${sz.curCol} ${sz.curText} ${COLOR.current} dlsb-num flex items-center justify-center font-black text-white shrink-0`}>
                 {row.player === 1 ? won.p1 : won.p2}
               </div>
             )}
@@ -227,12 +227,12 @@ export default function LiveScoreBoard({
             {!finished ? (
               <div
                 data-testid={`lsb-point-${row.player}`}
-                className={`${sz.pointBox} ${sz.point} shrink-0 flex items-center justify-center font-black bg-white text-[#262626]`}
+                className={`${sz.pointBox} ${sz.point} dlsb-num shrink-0 flex items-center justify-center font-black bg-white text-[var(--ink)]`}
               >
                 {pointLabel(live, row.player)}
               </div>
             ) : (
-              <div className={`${sz.pointBox} ${sz.point} shrink-0 flex items-center justify-center font-black bg-white text-[#262626]`}>
+              <div className={`${sz.pointBox} ${sz.point} dlsb-num shrink-0 flex items-center justify-center font-black bg-white text-[var(--ink)]`}>
                 {row.isWinner ? '✓' : ''}
               </div>
             )}

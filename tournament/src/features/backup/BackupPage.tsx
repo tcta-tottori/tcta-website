@@ -314,89 +314,61 @@ export default function BackupPage({ embedded = false }: BackupPageProps = {}) {
   // レンダリング
   // ================================================================
   return (
-    <div className={embedded ? '' : 'min-h-full bg-gradient-to-b from-gray-50 via-white to-gray-50'}>
-      <div className={embedded ? 'space-y-6' : 'p-4 md:p-6 max-w-4xl mx-auto space-y-6'}>
-        {/* ヘッダー（設定ページに埋め込むときは設定側の見出しを使う） */}
-        {!embedded && (
-        <header className="relative overflow-hidden bg-gradient-to-br from-primary-500 to-primary-700 rounded-2xl shadow-lg">
-          <div className="absolute inset-0 opacity-10">
-            <div className="absolute -top-10 -right-10 w-40 h-40 rounded-full bg-white blur-3xl" />
-            <div className="absolute -bottom-10 -left-10 w-40 h-40 rounded-full bg-white blur-3xl" />
-          </div>
-          <div className="relative px-6 py-5">
-            <div className="flex items-center gap-3">
-              <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm">
-                <Shield className="w-7 h-7 text-white" />
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold text-white tracking-tight">バックアップ</h1>
-                <p className="text-sm text-primary-50 mt-0.5">大会データをまとめて安全に保存・復元</p>
-              </div>
-            </div>
-          </div>
-        </header>
-        )}
+    <div className={embedded ? 'ps-backup ps-backup--embedded' : 'ps-backup'}>
+      <div className={embedded ? 'ps-backup__stack' : 'container sk-page ps-backup__stack'}>
+        {/* ヘッダー（設定ページに埋め込むときは設定側の見出しを使う。単独のときも見出しは AppLayout が出す） */}
 
         {/* 現在の大会情報カード */}
         {tournamentName && (
-          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-            <div className="px-5 py-4 flex items-center gap-3">
-              <div className="flex items-center justify-center w-11 h-11 rounded-xl bg-gradient-to-br from-primary-100 to-white text-gray-700 shrink-0">
-                <Trophy className="w-5 h-5" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="text-[10px] text-gray-400 font-medium uppercase tracking-wider">現在の大会</div>
-                <div className="font-bold text-gray-800 truncate">{tournamentName}</div>
-                {mixedStore.tournamentInfo?.date && (
-                  <div className="flex items-center gap-1 text-xs text-gray-500 mt-0.5">
-                    <Calendar className="w-3 h-3" />
-                    {mixedStore.tournamentInfo.date}
-                  </div>
-                )}
-              </div>
+          <div className="ps-current">
+            <Trophy className="ps-current__ico" />
+            <div className="ps-current__body">
+              <p className="ps-current__label">現在の大会</p>
+              <p className="ps-current__name">{tournamentName}</p>
+              {mixedStore.tournamentInfo?.date && (
+                <p className="ps-current__date">
+                  <Calendar className="w-3 h-3" />
+                  {mixedStore.tournamentInfo.date}
+                </p>
+              )}
             </div>
           </div>
         )}
 
         {/* データ内容 説明 */}
-        <div className="bg-gray-50 border border-gray-200 rounded-2xl px-5 py-4">
-          <div className="text-xs text-gray-500 mb-2 font-medium">バックアップに含まれるデータ</div>
-          <div className="flex flex-wrap gap-2">
+        <div className="ps-includes">
+          <p className="ps-includes__label">バックアップに含まれるデータ</p>
+          <div className="ps-includes__chips">
             {['エントリー', '予選リーグ', '決勝トーナメント', '選手情報', 'ふりがな', '試合結果'].map(item => (
-              <span key={item} className="px-2.5 py-1 bg-white border border-gray-200 rounded-full text-xs text-gray-600 font-medium">{item}</span>
+              <span key={item} className="sk-chip">{item}</span>
             ))}
           </div>
         </div>
 
         {/* ローカル保存 */}
-        <section className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-          <div className="px-5 py-4 border-b border-gray-100 flex items-center gap-3">
-            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-gray-100 to-white text-gray-600">
-              <HardDrive className="w-5 h-5" />
-            </div>
-            <div>
-              <h2 className="font-bold text-gray-800">ローカル保存</h2>
-              <p className="text-xs text-gray-500">お使いの端末にJSONファイルとして保存</p>
+        <section className="ps-sub">
+          <div className="ps-sub__head">
+            <HardDrive className="ps-sub__ico" />
+            <div className="ps-sub__titles">
+              <h3 className="ps-sub__title">ローカル保存</h3>
+              <p className="ps-sub__lead">お使いの端末にJSONファイルとして保存</p>
             </div>
           </div>
-          <div className="p-5 space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="ps-sub__body">
+            <div className="ps-btn2">
               <button
                 onClick={handleExport}
                 disabled={isExporting || isImporting}
-                className="group relative overflow-hidden flex items-center justify-center gap-2.5 px-5 py-4 rounded-xl font-semibold bg-gradient-to-br from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-[0.98]"
+                className="btn btn--primary sk-btn sk-btn--lg"
               >
-                <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />
-                <div className="relative flex items-center gap-2.5">
-                  {isExporting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Download className="w-5 h-5" />}
-                  <span>バックアップ保存</span>
-                </div>
+                {isExporting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Download className="w-5 h-5" />}
+                <span>バックアップ保存</span>
               </button>
 
               <button
                 onClick={() => fileInputRef.current?.click()}
                 disabled={isExporting || isImporting}
-                className="group relative overflow-hidden flex items-center justify-center gap-2.5 px-5 py-4 rounded-xl font-semibold bg-white border-2 border-gray-200 hover:border-primary-300 text-gray-700 hover:text-gray-700 shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-[0.98]"
+                className="btn btn--outline sk-btn sk-btn--lg"
               >
                 {isImporting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Upload className="w-5 h-5" />}
                 <span>バックアップ復元</span>
@@ -405,9 +377,7 @@ export default function BackupPage({ embedded = false }: BackupPageProps = {}) {
             </div>
 
             {status && (
-              <div className={`flex items-start gap-2.5 px-4 py-3 rounded-xl text-sm border ${
-                status.type === 'success' ? 'bg-primary-50 text-gray-900 border-primary-200' : 'bg-red-50 text-red-700 border-red-200'
-              }`}>
+              <div className={`ps-msg ${status.type === 'success' ? '' : 'is-error'}`}>
                 {status.type === 'success' ? <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5" /> : <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />}
                 <span className="flex-1">{status.message}</span>
               </div>
@@ -416,50 +386,45 @@ export default function BackupPage({ embedded = false }: BackupPageProps = {}) {
         </section>
 
         {/* Cloudflare（大会データの置き場） */}
-        <section className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-          <div className="px-5 py-4 border-b border-gray-100 flex items-center gap-3">
-            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-white border border-gray-200 shadow-sm">
-              <CloudLogo size={22} />
-            </div>
-            <div className="flex-1">
-              <h2 className="font-bold text-gray-800">Cloudflare</h2>
-              <p className="text-xs text-gray-500">協会の Cloudflare に保管。役員ならどの端末からでも復元できます</p>
+        <section className="ps-sub">
+          <div className="ps-sub__head">
+            <CloudLogo size={22} />
+            <div className="ps-sub__titles">
+              <h3 className="ps-sub__title">Cloudflare</h3>
+              <p className="ps-sub__lead">協会の Cloudflare に保管。役員ならどの端末からでも復元できます</p>
             </div>
             {isGdriveConnected && (
-              <div className="flex items-center gap-1 px-2.5 py-1 bg-primary-50 border border-primary-200 rounded-full">
-                <div className="w-1.5 h-1.5 rounded-full bg-primary-500 animate-pulse" />
-                <span className="text-[10px] font-bold text-gray-800">接続中</span>
-              </div>
+              <span className="sk-chip sk-chip--red ps-live">
+                <span className="ps-live__dot" />
+                接続中
+              </span>
             )}
           </div>
-          <div className="p-5 space-y-4">
+          <div className="ps-sub__body">
             {!isGdriveConnected ? (
-              <div className="flex items-center gap-3 px-4 py-4 rounded-xl bg-primary-50 border border-primary-200">
+              <div className="sk-note sk-note--red ps-msg-row">
                 <AlertCircle className="w-5 h-5 shrink-0 text-primary-600" />
-                <div className="text-sm text-gray-900">
-                  <div className="font-medium">役員ログインが必要です</div>
+                <div>
+                  <div className="font-bold">役員ログインが必要です</div>
                   <div className="text-xs text-gray-700 mt-0.5">画面上部の「ログインし直す」からログインしてください</div>
                 </div>
               </div>
             ) : (
               <>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="ps-btn2">
                   <button
                     onClick={handleDriveUpload}
                     disabled={isUploading || isDownloading !== null}
-                    className="group relative overflow-hidden flex items-center justify-center gap-2.5 px-5 py-4 rounded-xl font-semibold bg-gradient-to-br from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700 text-white shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-[0.98]"
+                    className="btn sk-btn sk-btn--gray sk-btn--lg"
                   >
-                    <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />
-                    <div className="relative flex items-center gap-2.5">
-                      {isUploading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Upload className="w-5 h-5" />}
-                      <span>Cloudflare に保存</span>
-                    </div>
+                    {isUploading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Upload className="w-5 h-5" />}
+                    <span>Cloudflare に保存</span>
                   </button>
 
                   <button
                     onClick={handleDriveListFiles}
                     disabled={isLoadingFiles || isUploading || isDownloading !== null}
-                    className="flex items-center justify-center gap-2.5 px-5 py-4 rounded-xl font-semibold bg-white border-2 border-gray-200 hover:border-gray-300 text-gray-700 hover:text-gray-600 shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-[0.98]"
+                    className="btn btn--outline sk-btn sk-btn--lg"
                   >
                     {isLoadingFiles ? <Loader2 className="w-5 h-5 animate-spin" /> : <RefreshCw className="w-5 h-5" />}
                     <span>ファイル一覧を更新</span>
@@ -467,17 +432,15 @@ export default function BackupPage({ embedded = false }: BackupPageProps = {}) {
                 </div>
 
                 {driveFiles.length > 0 && (
-                  <div className="border border-gray-200 rounded-xl overflow-hidden">
-                    <div className="px-4 py-2.5 bg-gray-50 border-b border-gray-200 flex items-center gap-2">
+                  <div className="ps-files">
+                    <div className="ps-files__head">
                       <CloudLogo size={14} />
-                      <span className="text-xs font-bold text-gray-600">保存済みバックアップ ({driveFiles.length}件)</span>
+                      <span>保存済みバックアップ ({driveFiles.length}件)</span>
                     </div>
-                    <div className="divide-y divide-gray-100 max-h-80 overflow-y-auto">
+                    <div className="ps-files__list">
                       {driveFiles.map(file => (
-                        <div key={file.id} className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors">
-                          <div className="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center shrink-0">
-                            <FileJson className="w-4 h-4 text-gray-500" />
-                          </div>
+                        <div key={file.id} className="ps-files__row">
+                          <FileJson className="w-4 h-4 text-gray-500 shrink-0" />
                           <div className="flex-1 min-w-0">
                             <div className="text-sm font-medium text-gray-800 truncate">{file.name}</div>
                             <div className="flex items-center gap-2 text-[10px] text-gray-400 mt-0.5">
@@ -488,7 +451,7 @@ export default function BackupPage({ embedded = false }: BackupPageProps = {}) {
                           <button
                             onClick={() => handleDriveRestore(file)}
                             disabled={isDownloading !== null || isUploading}
-                            className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold bg-gray-500 hover:bg-gray-600 text-white shadow-sm disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-95 shrink-0"
+                            className="btn btn--outline sk-btn sk-btn--sm shrink-0"
                           >
                             {isDownloading === file.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Download className="w-3 h-3" />}
                             復元
@@ -500,9 +463,7 @@ export default function BackupPage({ embedded = false }: BackupPageProps = {}) {
                 )}
 
                 {driveStatus && (
-                  <div className={`flex items-start gap-2.5 px-4 py-3 rounded-xl text-sm border ${
-                    driveStatus.type === 'success' ? 'bg-primary-50 text-gray-900 border-primary-200' : 'bg-red-50 text-red-700 border-red-200'
-                  }`}>
+                  <div className={`ps-msg ${driveStatus.type === 'success' ? '' : 'is-error'}`}>
                     {driveStatus.type === 'success' ? <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5" /> : <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />}
                     <span className="flex-1">{driveStatus.message}</span>
                   </div>
@@ -513,7 +474,7 @@ export default function BackupPage({ embedded = false }: BackupPageProps = {}) {
         </section>
 
         {/* フッター注意書き */}
-        <div className="flex items-start gap-2 px-4 py-3 text-xs text-gray-500">
+        <div className="ps-foot">
           <Shield className="w-4 h-4 shrink-0 mt-0.5 text-gray-400" />
           <p>バックアップには大会の全データが含まれます。復元すると現在のデータは上書きされるのでご注意ください。</p>
         </div>

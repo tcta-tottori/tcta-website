@@ -61,19 +61,20 @@ function MixedTournamentInfoSection() {
   const defCount = allTeams.filter(t => t.status === 'def').length;
 
   return (
-    <section className="bg-white rounded-xl shadow-sm border border-primary-200 overflow-hidden">
-      <div className="bg-gradient-to-r from-primary-50 to-white px-4 py-3 border-b border-primary-100">
-        <div className="flex items-center gap-2">
-          <Trophy className="w-5 h-5 text-primary-600" />
-          <h2 className="font-semibold text-gray-800">ミックス大会情報</h2>
+    <section className="sk-sec">
+      <div className="sk-sec__head">
+        <span className="sk-sec__mark" aria-hidden="true" />
+        <div className="sk-sec__titles">
+          <p className="sk-sec__en">MIXED TOURNAMENT</p>
+          <h2 className="sk-sec__title">ミックス大会情報</h2>
         </div>
       </div>
-      <div className="p-4 space-y-3">
+      <div className="sk-sec__body ps-info">
         {/* 大会名 */}
-        <div className="flex items-start gap-3">
-          <Trophy className="w-4 h-4 text-primary-500 mt-0.5 shrink-0" />
+        <div className="ps-info__row">
+          <Trophy className="ps-info__ico" />
           <div className="flex-1 min-w-0">
-            <div className="text-[10px] text-gray-400 font-medium">大会名</div>
+            <div className="ps-info__label">大会名</div>
             {editingField === 'name' ? (
               <input
                 type="text"
@@ -81,11 +82,11 @@ function MixedTournamentInfoSection() {
                 onChange={e => setEditValue(e.target.value)}
                 onBlur={saveEdit}
                 onKeyDown={e => { if (e.key === 'Enter') saveEdit(); if (e.key === 'Escape') setEditingField(null); }}
-                className="w-full px-2 py-1 text-sm border border-primary-400 rounded-lg focus:outline-none focus:ring-1 focus:ring-primary-500"
+                className="input sk-input"
                 autoFocus
               />
             ) : (
-              <button onClick={() => startEdit('name')} className="flex items-center gap-1 text-sm font-bold text-gray-800 hover:text-gray-700 transition-colors">
+              <button onClick={() => startEdit('name')} className="ps-info__edit ps-info__edit--name">
                 {tournamentInfo.name}
                 <Pencil size={10} className="opacity-40" />
               </button>
@@ -94,10 +95,10 @@ function MixedTournamentInfoSection() {
         </div>
 
         {/* 日付 */}
-        <div className="flex items-start gap-3">
-          <Calendar className="w-4 h-4 text-primary-500 mt-0.5 shrink-0" />
+        <div className="ps-info__row">
+          <Calendar className="ps-info__ico" />
           <div className="flex-1 min-w-0">
-            <div className="text-[10px] text-gray-400 font-medium">開催日</div>
+            <div className="ps-info__label">開催日</div>
             {editingField === 'date' ? (
               <input
                 type="text"
@@ -105,12 +106,12 @@ function MixedTournamentInfoSection() {
                 onChange={e => setEditValue(e.target.value)}
                 onBlur={saveEdit}
                 onKeyDown={e => { if (e.key === 'Enter') saveEdit(); if (e.key === 'Escape') setEditingField(null); }}
-                className="w-full px-2 py-1 text-sm border border-primary-400 rounded-lg focus:outline-none focus:ring-1 focus:ring-primary-500"
+                className="input sk-input"
                 autoFocus
               />
             ) : (
               <div className="flex items-center gap-2 flex-wrap">
-                <button onClick={() => startEdit('date')} className="flex items-center gap-1 text-sm text-gray-700 hover:text-gray-700 transition-colors">
+                <button onClick={() => startEdit('date')} className="ps-info__edit">
                   {tournamentInfo.date || '(未設定)'}
                   <Pencil size={10} className="opacity-40" />
                 </button>
@@ -118,7 +119,7 @@ function MixedTournamentInfoSection() {
                   <select
                     onChange={e => { if (e.target.value) updateTournamentInfo('date', e.target.value); }}
                     defaultValue=""
-                    className="text-xs border border-primary-300 bg-primary-50 text-gray-800 rounded-lg px-2 py-1 cursor-pointer"
+                    className="ps-info__select"
                   >
                     <option value="" disabled>予備日を除去...</option>
                     {dateOptions.map((opt, i) => (
@@ -132,10 +133,10 @@ function MixedTournamentInfoSection() {
         </div>
 
         {/* 会場 */}
-        <div className="flex items-start gap-3">
-          <MapPin className="w-4 h-4 text-primary-500 mt-0.5 shrink-0" />
+        <div className="ps-info__row">
+          <MapPin className="ps-info__ico" />
           <div className="flex-1 min-w-0">
-            <div className="text-[10px] text-gray-400 font-medium">会場</div>
+            <div className="ps-info__label">会場</div>
             {editingField === 'venue' ? (
               <input
                 type="text"
@@ -143,12 +144,12 @@ function MixedTournamentInfoSection() {
                 onChange={e => setEditValue(e.target.value)}
                 onBlur={saveEdit}
                 onKeyDown={e => { if (e.key === 'Enter') saveEdit(); if (e.key === 'Escape') setEditingField(null); }}
-                className="w-full px-2 py-1 text-sm border border-primary-400 rounded-lg focus:outline-none focus:ring-1 focus:ring-primary-500"
+                className="input sk-input"
                 autoFocus
               />
             ) : (
               <div className="flex items-center gap-2 flex-wrap">
-                <button onClick={() => startEdit('venue')} className="flex items-center gap-1 text-sm text-gray-700 hover:text-gray-700 transition-colors">
+                <button onClick={() => startEdit('venue')} className="ps-info__edit">
                   {tournamentInfo.venue || '(未設定)'}
                   <Pencil size={10} className="opacity-40" />
                 </button>
@@ -156,7 +157,7 @@ function MixedTournamentInfoSection() {
                   <select
                     onChange={e => { if (e.target.value) updateTournamentInfo('venue', e.target.value); }}
                     defaultValue=""
-                    className="text-xs border border-primary-300 bg-primary-50 text-gray-800 rounded-lg px-2 py-1 cursor-pointer"
+                    className="ps-info__select"
                   >
                     <option value="" disabled>予備日を除去...</option>
                     {venueOptions.map((opt, i) => (
@@ -170,10 +171,10 @@ function MixedTournamentInfoSection() {
         </div>
 
         {/* 統計 */}
-        <div className="flex items-start gap-3">
-          <Users className="w-4 h-4 text-primary-500 mt-0.5 shrink-0" />
+        <div className="ps-info__row">
+          <Users className="ps-info__ico" />
           <div className="flex-1">
-            <div className="text-[10px] text-gray-400 font-medium">参加状況</div>
+            <div className="ps-info__label">参加状況</div>
             <div className="text-sm text-gray-700">
               {allTeams.length}ペア / {leagues.length}リーグ
               {entryCount > 0 && <span className="text-gray-700 ml-2">Entry {entryCount}</span>}
@@ -184,8 +185,8 @@ function MixedTournamentInfoSection() {
 
         {/* ルール */}
         {tournamentInfo.rules.length > 0 && (
-          <div className="mt-2 px-3 py-2 bg-primary-50 border border-primary-200 rounded-lg">
-            <div className="text-[10px] font-medium text-gray-700 mb-1">ゲームルール</div>
+          <div className="sk-note ps-info__rules">
+            <div className="ps-info__label">ゲームルール</div>
             <div className="text-xs text-gray-800">
               {tournamentInfo.rules.map((r, i) => <div key={i}>{r}</div>)}
             </div>
@@ -220,19 +221,20 @@ function TeamTournamentInfoSection() {
   const defCount = allTeams.filter(t => t.status === 'def').length;
 
   return (
-    <section className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-      <div className="bg-gradient-to-r from-gray-50 to-white px-4 py-3 border-b border-gray-100">
-        <div className="flex items-center gap-2">
-          <Trophy className="w-5 h-5 text-gray-600" />
-          <h2 className="font-semibold text-gray-700">団体戦 大会情報</h2>
+    <section className="sk-sec">
+      <div className="sk-sec__head">
+        <span className="sk-sec__mark" aria-hidden="true" />
+        <div className="sk-sec__titles">
+          <p className="sk-sec__en">TEAM TOURNAMENT</p>
+          <h2 className="sk-sec__title">団体戦 大会情報</h2>
         </div>
       </div>
-      <div className="p-4 space-y-3">
+      <div className="sk-sec__body ps-info">
         {/* 大会名 */}
-        <div className="flex items-start gap-3">
-          <Trophy className="w-4 h-4 text-gray-500 mt-0.5 shrink-0" />
+        <div className="ps-info__row">
+          <Trophy className="ps-info__ico" />
           <div className="flex-1 min-w-0">
-            <div className="text-[10px] text-gray-400 font-medium">大会名</div>
+            <div className="ps-info__label">大会名</div>
             {editingField === 'name' ? (
               <input
                 type="text"
@@ -240,11 +242,11 @@ function TeamTournamentInfoSection() {
                 onChange={e => setEditValue(e.target.value)}
                 onBlur={saveEdit}
                 onKeyDown={e => { if (e.key === 'Enter') saveEdit(); if (e.key === 'Escape') setEditingField(null); }}
-                className="w-full px-2 py-1 text-sm border border-gray-400 rounded-lg focus:outline-none focus:ring-1 focus:ring-gray-500"
+                className="input sk-input"
                 autoFocus
               />
             ) : (
-              <button onClick={() => startEdit('name')} className="flex items-center gap-1 text-sm font-bold text-gray-800 hover:text-gray-600 transition-colors">
+              <button onClick={() => startEdit('name')} className="ps-info__edit ps-info__edit--name">
                 {tournamentInfo.name}
                 <Pencil size={10} className="opacity-40" />
               </button>
@@ -253,10 +255,10 @@ function TeamTournamentInfoSection() {
         </div>
 
         {/* 日付 */}
-        <div className="flex items-start gap-3">
-          <Calendar className="w-4 h-4 text-gray-500 mt-0.5 shrink-0" />
+        <div className="ps-info__row">
+          <Calendar className="ps-info__ico" />
           <div className="flex-1 min-w-0">
-            <div className="text-[10px] text-gray-400 font-medium">開催日</div>
+            <div className="ps-info__label">開催日</div>
             {editingField === 'date' ? (
               <input
                 type="text"
@@ -264,11 +266,11 @@ function TeamTournamentInfoSection() {
                 onChange={e => setEditValue(e.target.value)}
                 onBlur={saveEdit}
                 onKeyDown={e => { if (e.key === 'Enter') saveEdit(); if (e.key === 'Escape') setEditingField(null); }}
-                className="w-full px-2 py-1 text-sm border border-gray-400 rounded-lg focus:outline-none focus:ring-1 focus:ring-gray-500"
+                className="input sk-input"
                 autoFocus
               />
             ) : (
-              <button onClick={() => startEdit('date')} className="flex items-center gap-1 text-sm text-gray-700 hover:text-gray-600 transition-colors">
+              <button onClick={() => startEdit('date')} className="ps-info__edit">
                 {tournamentInfo.date || '(未設定)'}
                 <Pencil size={10} className="opacity-40" />
               </button>
@@ -277,10 +279,10 @@ function TeamTournamentInfoSection() {
         </div>
 
         {/* 会場 */}
-        <div className="flex items-start gap-3">
-          <MapPin className="w-4 h-4 text-gray-500 mt-0.5 shrink-0" />
+        <div className="ps-info__row">
+          <MapPin className="ps-info__ico" />
           <div className="flex-1 min-w-0">
-            <div className="text-[10px] text-gray-400 font-medium">会場</div>
+            <div className="ps-info__label">会場</div>
             {editingField === 'venue' ? (
               <input
                 type="text"
@@ -288,11 +290,11 @@ function TeamTournamentInfoSection() {
                 onChange={e => setEditValue(e.target.value)}
                 onBlur={saveEdit}
                 onKeyDown={e => { if (e.key === 'Enter') saveEdit(); if (e.key === 'Escape') setEditingField(null); }}
-                className="w-full px-2 py-1 text-sm border border-gray-400 rounded-lg focus:outline-none focus:ring-1 focus:ring-gray-500"
+                className="input sk-input"
                 autoFocus
               />
             ) : (
-              <button onClick={() => startEdit('venue')} className="flex items-center gap-1 text-sm text-gray-700 hover:text-gray-600 transition-colors">
+              <button onClick={() => startEdit('venue')} className="ps-info__edit">
                 {tournamentInfo.venue || '(未設定)'}
                 <Pencil size={10} className="opacity-40" />
               </button>
@@ -301,10 +303,10 @@ function TeamTournamentInfoSection() {
         </div>
 
         {/* 統計 */}
-        <div className="flex items-start gap-3">
-          <Users className="w-4 h-4 text-gray-500 mt-0.5 shrink-0" />
+        <div className="ps-info__row">
+          <Users className="ps-info__ico" />
           <div className="flex-1">
-            <div className="text-[10px] text-gray-400 font-medium">参加状況</div>
+            <div className="ps-info__label">参加状況</div>
             <div className="text-sm text-gray-700">
               {allTeams.length}チーム / {leagues.length}リーグ
               {entryCount > 0 && <span className="text-gray-600 ml-2">Entry {entryCount}</span>}
@@ -315,8 +317,8 @@ function TeamTournamentInfoSection() {
 
         {/* ルール */}
         {tournamentInfo.rules.length > 0 && (
-          <div className="mt-2 px-3 py-2 bg-primary-50 border border-primary-200 rounded-lg">
-            <div className="text-[10px] font-medium text-gray-700 mb-1">ゲームルール</div>
+          <div className="sk-note ps-info__rules">
+            <div className="ps-info__label">ゲームルール</div>
             <div className="text-xs text-gray-800">
               {tournamentInfo.rules.map((r, i) => <div key={i}>{r}</div>)}
             </div>
@@ -461,7 +463,7 @@ export default function DataManagement() {
 
 
   return (
-    <div className="p-4 md:p-6 max-w-5xl mx-auto space-y-6">
+    <div className="container sk-page ps-data">
       {/* ミックス大会情報 */}
       {isMixedImported && <MixedTournamentInfoSection />}
 
@@ -472,20 +474,25 @@ export default function DataManagement() {
       {isTeamImported && <TeamTournamentInfoSection />}
 
       {/* 大会データ読込パネル（Excelボタン方式） */}
-      <section className="bg-white rounded-xl shadow-sm border border-border-main overflow-hidden">
+      <section className="sk-sec ps-card">
         <button
           onClick={() => setDataImportOpen(!dataImportOpen)}
-          className="w-full bg-white px-4 py-3 border-b border-border-main flex items-center justify-between hover:bg-gray-50 transition-colors"
+          className="sk-sec__head ps-card__head"
+          aria-expanded={dataImportOpen}
         >
-          <div className="flex items-center gap-2">
-            {dataImportOpen ? <ChevronDown className="w-4 h-4 text-gray-500" /> : <ChevronRight className="w-4 h-4 text-gray-500" />}
-            <FileSpreadsheet className="w-5 h-5 text-primary-500" />
-            <h2 className="font-semibold text-gray-700">Excel から端末に直接取り込む</h2>
-            <span className="text-xs text-gray-500 hidden sm:inline">ミックスダブルス・団体戦・時間割の Excel など。ふつうの大会は「大会選択」から</span>
-          </div>
+          <span className="sk-sec__mark" aria-hidden="true" />
+          <span className="sk-sec__titles">
+            <span className="sk-sec__en">EXCEL IMPORT</span>
+            <span className="sk-sec__title">Excel から端末に直接取り込む</span>
+            <span className="sk-sec__lead">ミックスダブルス・団体戦・時間割の Excel など。ふつうの大会は「大会選択」から</span>
+          </span>
+          <span className="ps-card__ico" aria-hidden="true"><FileSpreadsheet /></span>
+          {dataImportOpen
+            ? <ChevronDown className="ps-card__chev is-open" aria-hidden="true" />
+            : <ChevronRight className="ps-card__chev is-open" aria-hidden="true" />}
         </button>
         {dataImportOpen && (
-          <div className="p-4">
+          <div className="sk-sec__body ps-data__import">
             <DataImport externalTournamentExcel={null} externalScheduleExcel={null} wizardAutoImport={null} />
           </div>
         )}
@@ -493,32 +500,30 @@ export default function DataManagement() {
 
       {/* テスト用スコア一括入力（動作確認用・観戦用ページには表示しない） */}
       {hasIndividualMatches && (
-        <section className="rounded-xl overflow-hidden border border-gray-200/70 bg-gradient-to-r from-gray-50/70 to-gray-50/40">
-          <div className="px-5 py-4 flex items-center gap-4">
-            <div className="w-10 h-10 rounded-xl bg-white border border-gray-200 shadow-sm flex items-center justify-center shrink-0">
-              <FlaskConical className="w-5 h-5 text-gray-400" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <h3 className="text-sm font-bold text-gray-800">テスト用スコア一括入力</h3>
-              <p className="text-[11px] text-gray-500 mt-0.5 leading-relaxed">
+        <section className="sk-sec">
+          <div className="sk-sec__head">
+            <span className="sk-sec__mark" aria-hidden="true" />
+            <div className="sk-sec__titles">
+              <p className="sk-sec__en">TEST SCORE</p>
+              <h2 className="sk-sec__title">テスト用スコア一括入力</h2>
+              <p className="sk-sec__lead">
                 全種目（トーナメント・リーグ）の試合に 8-4 / 6-4 のスコアを決勝まで入力します。動作確認用で、既存のスコアは上書きされます。
               </p>
             </div>
-            <button
-              onClick={() => setShowTestScoreConfirm(true)}
-              disabled={testScoreRunning || !currentTournamentId}
-              className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-gray-600 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-all shadow-sm shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <FlaskConical className="w-3.5 h-3.5" />
-              {testScoreRunning ? '入力中...' : 'テストスコア入力'}
-            </button>
+            <div className="sk-sec__actions ps-data__act">
+              <button
+                onClick={() => setShowTestScoreConfirm(true)}
+                disabled={testScoreRunning || !currentTournamentId}
+                className="btn btn--outline sk-btn"
+              >
+                <FlaskConical className="w-4 h-4" />
+                {testScoreRunning ? '入力中...' : 'テストスコア入力'}
+              </button>
+            </div>
           </div>
           {testScoreResult && (
-            <div className="px-5 pb-3 -mt-1">
-              <div className="flex items-start gap-2 px-3 py-2 bg-white rounded-lg border border-gray-200">
-                <span className="w-2 h-2 rounded-full bg-gray-400 shrink-0 mt-1.5" />
-                <p className="text-xs text-gray-700 font-medium leading-relaxed">{testScoreResult}</p>
-              </div>
+            <div className="sk-sec__body">
+              <p className="ps-msg">{testScoreResult}</p>
             </div>
           )}
         </section>
@@ -526,68 +531,63 @@ export default function DataManagement() {
 
       {/* シート別データクリア */}
       {clearItems.length > 0 && (
-        <section className="rounded-xl overflow-hidden border border-primary-200/70 bg-gradient-to-r from-primary-50/70 to-primary-50/40">
-          <div className="px-5 py-3.5 border-b border-primary-200/60 flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-white border border-primary-200 shadow-sm flex items-center justify-center shrink-0">
-              <Eraser className="w-4.5 h-4.5 text-primary-500" />
+        <section className="sk-sec">
+          <div className="sk-sec__head">
+            <span className="sk-sec__mark" aria-hidden="true" />
+            <div className="sk-sec__titles">
+              <p className="sk-sec__en">CLEAR BY SHEET</p>
+              <h2 className="sk-sec__title">シート別データクリア</h2>
+              <p className="sk-sec__lead">決勝トーナメントなど、区分ごとにデータを個別に削除できます</p>
             </div>
-            <div>
-              <h3 className="text-sm font-bold text-gray-800">シート別データクリア</h3>
-              <p className="text-[11px] text-gray-500 mt-0.5">決勝トーナメントなど、区分ごとにデータを個別に削除できます</p>
-            </div>
+            <Eraser className="ps-data__headico" aria-hidden="true" />
           </div>
-          <div className="p-4 grid gap-2.5 sm:grid-cols-2">
-            {clearItems.map(item => (
-              <div key={item.key} className="flex items-center gap-3 px-3.5 py-3 bg-white rounded-xl border border-primary-100">
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-bold text-gray-800">{item.label}</p>
-                  <p className="text-[10px] text-gray-500 mt-0.5 leading-relaxed">{item.desc}</p>
-                </div>
-                <button
-                  onClick={() => setPendingClear({ title: item.label, message: item.message, run: item.run })}
-                  className="flex items-center gap-1 px-3 py-1.5 text-[11px] font-bold text-gray-800 bg-primary-50 border border-primary-200 rounded-lg hover:bg-primary-100 hover:border-primary-300 transition-all shrink-0"
-                >
-                  <Trash2 className="w-3 h-3" />
-                  クリア
-                </button>
-              </div>
-            ))}
+          <div className="sk-sec__body">
+            <ul className="ps-clear">
+              {clearItems.map(item => (
+                <li key={item.key} className="ps-clear__item">
+                  <div className="ps-clear__text">
+                    <p className="ps-clear__label">{item.label}</p>
+                    <p className="ps-clear__desc">{item.desc}</p>
+                  </div>
+                  <button
+                    onClick={() => setPendingClear({ title: item.label, message: item.message, run: item.run })}
+                    className="btn btn--outline sk-btn sk-btn--sm ps-clear__btn"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    クリア
+                  </button>
+                </li>
+              ))}
+            </ul>
+            {clearDoneLabel && (
+              <p className="ps-msg ps-data__done">「{clearDoneLabel}」をクリアしました</p>
+            )}
           </div>
-          {clearDoneLabel && (
-            <div className="px-5 pb-3">
-              <div className="flex items-center gap-2 px-3 py-2 bg-primary-50 rounded-lg border border-primary-200">
-                <span className="w-2 h-2 rounded-full bg-primary-400 shrink-0" />
-                <p className="text-xs text-gray-800 font-medium">「{clearDoneLabel}」をクリアしました</p>
-              </div>
-            </div>
-          )}
         </section>
       )}
 
       {/* 全データリセット */}
-      <section className="rounded-xl overflow-hidden border border-red-200/60 bg-gradient-to-r from-red-50/80 to-primary-50/50">
-        <div className="px-5 py-4 flex items-center gap-4">
-          <div className="w-10 h-10 rounded-xl bg-white border border-red-200 shadow-sm flex items-center justify-center shrink-0">
-            <Trash2 className="w-5 h-5 text-red-400" />
+      <section className="sk-sec ps-danger">
+        <div className="sk-sec__head">
+          <span className="sk-sec__mark" aria-hidden="true" />
+          <div className="sk-sec__titles">
+            <p className="sk-sec__en">RESET ALL</p>
+            <h2 className="sk-sec__title">全データリセット</h2>
+            <p className="sk-sec__lead">大会・エントリー・対戦表・試合結果・コート設定・時間割をすべて削除します</p>
           </div>
-          <div className="flex-1 min-w-0">
-            <h3 className="text-sm font-bold text-gray-800">全データリセット</h3>
-            <p className="text-[11px] text-gray-500 mt-0.5">大会・エントリー・対戦表・試合結果・コート設定・時間割をすべて削除します</p>
+          <div className="sk-sec__actions ps-data__act">
+            <button
+              onClick={() => setShowResetConfirm(true)}
+              className="btn btn--outline sk-btn ps-danger__btn"
+            >
+              <AlertTriangle className="w-4 h-4" />
+              リセット
+            </button>
           </div>
-          <button
-            onClick={() => setShowResetConfirm(true)}
-            className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-red-600 bg-white border border-red-200 rounded-xl hover:bg-red-50 hover:border-red-300 transition-all shadow-sm shrink-0"
-          >
-            <AlertTriangle className="w-3.5 h-3.5" />
-            リセット
-          </button>
         </div>
         {resetDone && (
-          <div className="px-5 pb-3 -mt-1">
-            <div className="flex items-center gap-2 px-3 py-2 bg-primary-50 rounded-lg border border-primary-200">
-              <span className="w-2 h-2 rounded-full bg-primary-400 shrink-0" />
-              <p className="text-xs text-gray-800 font-medium">全データをリセットしました</p>
-            </div>
+          <div className="sk-sec__body">
+            <p className="ps-msg">全データをリセットしました</p>
           </div>
         )}
       </section>

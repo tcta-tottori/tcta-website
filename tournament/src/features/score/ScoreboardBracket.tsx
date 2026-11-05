@@ -190,15 +190,15 @@ export default function ScoreboardBracket({
     const base = 'absolute flex items-center rounded-md transition-all cursor-pointer';
     const ring = selected ? 'ring-2 ring-primary-500 ring-offset-1' : '';
     if (!match || match.status === 'waiting')
-      return `${base} border border-dashed border-gray-300 bg-white hover:border-gray-400 hover:shadow ${ring}`;
+      return `${base} border border-dashed border-gray-300 bg-white hover:border-gray-400 hover:bg-[var(--red-tint)] ${ring}`;
     if (match.status === 'ready')
-      return `${base} border border-gray-400 bg-gray-50 hover:border-gray-500 hover:shadow ${ring}`;
+      return `${base} border border-gray-400 bg-gray-50 hover:border-gray-500 hover:bg-[var(--red-tint)] ${ring}`;
     if (match.status === 'playing')
-      return `${base} border-2 border-primary-500 bg-primary-50 hover:shadow ${ring}`;
+      return `${base} border-2 border-primary-500 bg-primary-50 hover:bg-[var(--red-tint)] ${ring}`;
     if (match.status === 'finished')
-      return `${base} border border-primary-500 bg-white shadow-sm hover:shadow ${ring}`;
+      return `${base} border border-primary-500 bg-white hover:bg-[var(--red-tint)] ${ring}`;
     if (match.status === 'walkover')
-      return `${base} border border-primary-500 bg-white shadow-sm hover:shadow ${ring}`;
+      return `${base} border border-primary-500 bg-white hover:bg-[var(--red-tint)] ${ring}`;
     return `${base} border border-gray-300 bg-white ${ring}`;
   };
 
@@ -221,22 +221,22 @@ export default function ScoreboardBracket({
 
     slotElements.push(
       <div key={`s-${slot.position}`}
-        className={`absolute flex items-center px-2 gap-1.5 bg-white border shadow-sm rounded-md select-none text-sm
+        className={`absolute flex items-center px-2 gap-1.5 bg-white border rounded-sm select-none text-sm
           ${slot.isBye ? 'border-dashed border-gray-300 text-gray-400' : 'border-gray-300'}
-          ${isClickable ? 'hover:border-primary-400 hover:shadow cursor-pointer' : ''}
+          ${isClickable ? 'hover:border-primary-400 hover:bg-[var(--gray-050)] cursor-pointer' : ''}
         `}
         style={{ left: x, top: y, width: slotW, height: SLOT_HEIGHT }}
         onClick={() => isClickable && onMatchSelect(1, matchIdx + 1)}
       >
         <div className="w-5 text-[10px] font-mono text-gray-400 border-r border-gray-100 pr-1 text-center">{visibleIndex}</div>
         {slot.seed > 0 && (
-          <div className="w-4 h-4 flex-shrink-0 flex items-center justify-center bg-primary-100 text-gray-800 text-[9px] font-bold rounded-full">{slot.seed}</div>
+          <div className="w-4 h-4 flex-shrink-0 flex items-center justify-center bg-[var(--red)] text-white text-[9px] font-bold">{slot.seed}</div>
         )}
-        <div className="flex-1 truncate font-medium text-gray-800 text-xs" title={slot.name}>
+        <div className="shrink-0 max-w-full truncate font-medium text-gray-800 text-xs" title={slot.name}>
           {slot.name}
         </div>
         {!slot.isBye && slot.affiliation && (
-          <div className="text-[10px] text-gray-500 truncate max-w-[50px]" title={slot.affiliation}>{slot.affiliation}</div>
+          <div className="flex-1 min-w-0 ml-auto text-right text-[10px] text-gray-500 truncate max-w-[50px]" title={slot.affiliation}>{slot.affiliation}</div>
         )}
       </div>
     );

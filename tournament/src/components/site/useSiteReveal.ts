@@ -44,7 +44,8 @@ export function useSiteReveal(rootRef: RefObject<HTMLElement | null>, key: strin
     };
 
     const scan = () => {
-      root.querySelectorAll('.ghost, .rv').forEach((el) => watch(el));
+      // 画面の側で .rv-in を付けた物も見張る（付けただけで、画面の外から入ってきたときに浮き上がる）
+      root.querySelectorAll('.ghost, .rv, .rv-in:not(.on)').forEach((el) => watch(el));
       const page = root.querySelector('.app-page');
       const candidates: Element[] = [];
       if (page) {

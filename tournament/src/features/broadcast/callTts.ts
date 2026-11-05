@@ -87,6 +87,34 @@ class ModelUnavailableError extends Error {
   }
 }
 
+
+/**
+ * ほかのアプリの音を小さくしない（ダッキングしない）ための音声セッションの切り替え。
+ *   ・ふだん（コールしていないとき）は 'ambient'：ほかのアプリの音と混ぜ、音量を下げさせない
+ *   ・コールを読み上げるあいだだけ 'transient'：ほかの音を一時的に下げ、読み終えたら戻す
+ * navigator.audioSession は iOS/Safari 17 以降にある。無いブラウザでは何もしない。
+ */
+type AudioSessionType = 'auto' | 'playback' | 'transient' | 'transient-solo' | 'ambient' | 'play-and-record';
+function setAudioSession(type: AudioSessionType): void {
+  try {
+    const nav = navigator as Navigator & { audioSession?: { type: AudioSessionType } };
+    if (nav.audioSession && nav.audioSession.type !== type) nav.audioSession.type = type;
+  } catch { /* 無視 */ }
+}
+if (typeof navigator !== 'undefined') setAudioSession('ambient');
+
+/**
+ * 再生し終えた audio 要素を空にする。src を残したままだと、Android の Chrome などは
+ * 「このページが音を出している」とみなして音声の優先権を持ち続け、ほかのアプリの音が小さいままになる
+ */
+function releaseAudio(a: HTMLAudioElement): void {
+  try {
+    a.pause();
+    a.removeAttribute('src');
+    a.load();
+  } catch { /* 無視 */ }
+}
+
 class CallTtsService {
   private audio: HTMLAudioElement | null = null;
   private unlocked = false;
@@ -150,6 +178,7 @@ class CallTtsService {
   }
 
   private setSpeaking(v: boolean) {
+    setAudioSession(v ? 'transient' : 'ambient');
     if (this._isSpeaking !== v) {
       this._isSpeaking = v;
       this.emit();
@@ -190,8 +219,7 @@ class CallTtsService {
       const p = a.play();
       if (p && typeof p.then === 'function') {
         p.then(() => {
-          a.pause();
-          a.currentTime = 0;
+          releaseAudio(a);
           this.unlocked = true;
         }).catch(() => {
           // 次回の操作で再試行
@@ -300,9 +328,7 @@ class CallTtsService {
       this.abortCtrl.abort();
       this.abortCtrl = null;
     }
-    if (this.audio) {
-      try { this.audio.pause(); } catch { /* noop */ }
-    }
+    if (this.audio) releaseAudio(this.audio);
     if (this.currentUrl) {
       URL.revokeObjectURL(this.currentUrl);
       this.currentUrl = null;
@@ -446,6 +472,7 @@ class CallTtsService {
       const onError = () => { cleanup(); reject(new Error('audio playback error')); };
       const onAbort = () => { cleanup(); resolve(); };
       const cleanup = () => {
+        releaseAudio(a);
         a.removeEventListener('ended', onEnded);
         a.removeEventListener('error', onError);
         this.abortCtrl?.signal.removeEventListener('abort', onAbort);

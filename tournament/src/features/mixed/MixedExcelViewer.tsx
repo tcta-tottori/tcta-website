@@ -17,10 +17,10 @@ export default function MixedExcelViewer() {
   const trimmedData = data.slice(0, lastNonEmpty + 1);
 
   return (
-    <section className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+    <section className="bg-white rounded-xl border border-gray-200 overflow-hidden">
       <button
         onClick={() => setOpen(!open)}
-        className="w-full flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-gray-50 to-white border-b border-gray-100 hover:from-gray-100 hover:to-white transition-colors"
+        className="w-full flex items-center gap-2 px-4 py-3 bg-gray-50 border-b border-gray-100 hover:bg-gray-100 transition-colors"
       >
         {open ? <ChevronDown size={16} className="text-gray-600" /> : <ChevronRight size={16} className="text-gray-600" />}
         <FileSpreadsheet size={16} className="text-gray-600" />
@@ -50,7 +50,7 @@ export default function MixedExcelViewer() {
           {/* テーブル表示 */}
           <div className="overflow-auto max-h-[500px] border border-gray-200 rounded-lg">
             <table className="text-[10px] border-collapse">
-              <thead className="sticky top-0 z-10">
+              <thead className="sticky top-[0px] z-10">
                 <tr className="bg-gray-100">
                   <th className="px-1.5 py-1 text-gray-400 border-r border-b border-gray-200 font-mono w-8">#</th>
                   {trimmedData[0]?.map((_, ci) => (

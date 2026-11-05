@@ -602,150 +602,122 @@ export default function CourtBracketPage({ enableScoreInput = true }: CourtBrack
     <div className="flex flex-col h-full">
       {/* ヘッダー: 種目選択 + ルール（上部固定・スワイプ切替） */}
       <div
-        className="sticky top-0 z-30 shrink-0 bg-white border-b px-3 py-2 shadow-sm"
+        className="dl-bar"
         onTouchStart={onSwipeStart}
         onTouchEnd={(e) => handleSwipeEnd(e)}
       >
-        <div className="flex items-center gap-2">
-          <button
-            onClick={gotoPrevEvent}
-            className="p-1 rounded hover:bg-gray-100"
-          >
-            <ChevronLeft className="w-5 h-5" />
+        <div className="dl-bar__row">
+          <button onClick={gotoPrevEvent} className="dl-arrow" aria-label="前の種目">
+            <ChevronLeft />
           </button>
 
-          <div className="flex-1 min-w-0 text-center">
+          <div className="dl-title">
             {/* クラス名をタップすると、下にクラス一覧が開く */}
             <button
               onClick={() => setClassListOpen(v => !v)}
-              className="max-w-full inline-flex items-center gap-1 text-base font-bold text-gray-900 rounded px-1 hover:bg-gray-100 transition-colors"
+              className="dl-title__btn"
               aria-expanded={classListOpen}
               title="タップしてクラスを選ぶ"
             >
               <Trophy className="w-4 h-4 shrink-0 text-primary-500" />
-              <span className="truncate">{selectedEvent?.name || '種目を選択'}</span>
-              <ChevronDown
-                className={`w-4 h-4 shrink-0 text-gray-500 transition-transform ${classListOpen ? 'rotate-180' : ''}`}
-              />
+              <span>{selectedEvent?.name || '種目を選択'}</span>
+              <ChevronDown className="dl-title__chev" />
             </button>
             {selectedEvent && (
-              <p className="text-[10px] text-gray-500 truncate mt-0.5">
+              <p className="dl-title__sub">
                 {getGameRulesText(selectedEvent)}
               </p>
             )}
           </div>
 
-          <button
-            onClick={gotoNextEvent}
-            className="p-1 rounded hover:bg-gray-100"
-          >
-            <ChevronRight className="w-5 h-5" />
+          <button onClick={gotoNextEvent} className="dl-arrow" aria-label="次の種目">
+            <ChevronRight />
           </button>
         </div>
 
         {/* クラス一覧（見出しをタップすると開く） */}
         {classListOpen && (
-          <div className="mt-1.5 max-h-[45vh] overflow-y-auto rounded-xl border border-gray-200 bg-white shadow-sm divide-y divide-gray-100">
+          <ul className="dl-classlist">
             {events.map((evt, i) => (
-              <button
-                key={evt.eventId}
-                onClick={() => { setSelectedEventIdx(i); setClassListOpen(false); }}
-                className={`w-full flex items-center gap-2 px-3 py-2.5 text-left transition-colors ${
-                  i === selectedEventIdx ? 'bg-primary-50' : 'hover:bg-gray-50'
-                }`}
-              >
-                <Trophy className={`w-4 h-4 shrink-0 ${i === selectedEventIdx ? 'text-primary-500' : 'text-gray-300'}`} />
-                <span className={`flex-1 min-w-0 truncate text-sm ${
-                  i === selectedEventIdx ? 'font-bold text-primary-700' : 'font-medium text-gray-800'
-                }`}>
-                  {evt.name}
-                </span>
-                <ChevronRight className="w-4 h-4 shrink-0 text-gray-300" />
-              </button>
+              <li key={evt.eventId}>
+                <button
+                  onClick={() => { setSelectedEventIdx(i); setClassListOpen(false); }}
+                  className={i === selectedEventIdx ? 'is-current' : ''}
+                >
+                  <Trophy className={i === selectedEventIdx ? 'text-primary-500' : ''} />
+                  <span>{evt.name}</span>
+                  <ChevronRight />
+                </button>
+              </li>
             ))}
-          </div>
+          </ul>
         )}
 
-        {/* 進捗バー + コート使用状況 */}
-        <div className="flex items-center gap-3 mt-1.5 text-[10px]">
-          <div className="flex-1 flex items-center gap-1.5">
-            <div className="flex-1 h-1.5 bg-gray-200 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-primary-500 rounded-full transition-all"
-                style={{ width: `${progress.pct}%` }}
-              />
+        {/* 表示範囲の切り替え（左）・進捗バー（中央）・編集メニュー（右端）を 1 行に。
+            「3回戦以降」など文字数が変わっても右のボタンが動かないよう、
+            ラベルは固定幅、進捗バーだけを伸縮させる。 */}
+        <div className="dl-bar__row">
+          {!editMode && canAdjustRounds && (
+            <div className="dl-rounds">
+              <button
+                onClick={() => setStartRound(Math.max(0, startRound - 1))}
+                disabled={startRound === 0}
+                title="前の回戦を表示する"
+                aria-label="前の回戦を表示する"
+              >
+                <ChevronLeft />
+              </button>
+              <button
+                onClick={() => setStartRound(null)}
+                className={`dl-rounds__label ${startRound === 0 ? '' : 'is-on'}`}
+                title="タップで自動（決着済みの回戦を省略）に戻す"
+              >
+                {startRound === 0 ? <Eye /> : <EyeOff />}
+                {/* ラベルの幅を固定して、回戦が変わってもボタンが動かないようにする */}
+                <span>{startRoundLabel}</span>
+              </button>
+              <button
+                onClick={() => setStartRound(Math.min(maxStartRound, startRound + 1))}
+                disabled={startRound >= maxStartRound}
+                title="終わった回戦を隠す"
+                aria-label="終わった回戦を隠す"
+              >
+                <ChevronRight />
+              </button>
             </div>
-            <span className="text-gray-500 whitespace-nowrap">
+          )}
+
+          {/* 進捗バー + コート使用状況 */}
+          <div className="dl-progress">
+            <div className="dl-progress__track">
+              <div className="dl-progress__fill" style={{ width: `${progress.pct}%` }} />
+            </div>
+            <span className="dl-progress__num">
               {progress.finished}/{progress.total} ({progress.pct}%)
             </span>
           </div>
           {progress.playing > 0 && (
-            <span className="flex items-center gap-0.5 text-gray-700 font-bold">
-              <Timer className="w-3 h-3" />
+            <span className="dl-playing">
+              <Timer />
               {progress.playing}試合中
             </span>
           )}
-        </div>
 
-        {/* 表示範囲の切り替え（左寄せ）と、編集メニュー（右端）。
-            「3回戦以降」など文字数が変わっても右のボタンが動かないよう、
-            左のまとまりだけを伸縮させて右は固定幅で置く。 */}
-        {!editMode && (canAdjustRounds || resultPreviewOpts || (enableScoreInput && drawSize > 0)) && (
-          <div className="mt-2 flex items-center justify-between gap-2 min-h-[38px]">
-            <div className="flex-1 min-w-0 flex items-center">
-            {canAdjustRounds && (
-              <div className="inline-flex items-center gap-0.5 rounded-full border border-gray-300 bg-white px-1 py-0.5 shadow-sm">
-                <button
-                  onClick={() => setStartRound(Math.max(0, startRound - 1))}
-                  disabled={startRound === 0}
-                  className="p-1.5 rounded-full text-gray-600 hover:bg-gray-100 disabled:opacity-25 disabled:hover:bg-transparent"
-                  title="前の回戦を表示する"
-                  aria-label="前の回戦を表示する"
-                >
-                  <ChevronLeft className="w-5 h-5" />
-                </button>
-                <button
-                  onClick={() => setStartRound(null)}
-                  className="flex items-center gap-1.5 px-2 py-1 text-sm font-bold text-gray-900 whitespace-nowrap"
-                  title="タップで自動（決着済みの回戦を省略）に戻す"
-                >
-                  {startRound === 0
-                    ? <Eye className="w-4 h-4 text-gray-400" />
-                    : <EyeOff className="w-4 h-4 text-primary-500" />}
-                  {/* ラベルの幅を固定して、回戦が変わってもボタンが動かないようにする */}
-                  <span className="inline-block w-[58px] text-center">{startRoundLabel}</span>
-                </button>
-                <button
-                  onClick={() => setStartRound(Math.min(maxStartRound, startRound + 1))}
-                  disabled={startRound >= maxStartRound}
-                  className="p-1.5 rounded-full text-gray-600 hover:bg-gray-100 disabled:opacity-25 disabled:hover:bg-transparent"
-                  title="終わった回戦を隠す"
-                  aria-label="終わった回戦を隠す"
-                >
-                  <ChevronRight className="w-5 h-5" />
-                </button>
-              </div>
-            )}
-            </div>
-
-            {/* 右端: 結果画像プレビューと編集メニュー（位置は常に固定） */}
-            <div className="shrink-0 flex items-center gap-1.5">
-              {/* 結果画像はアイコンのみ。右隣の編集ボタンと同じ丸ボタンで並べる */}
+          {/* 右端: 結果画像プレビューと編集メニュー（位置は常に固定） */}
+          {!editMode && (resultPreviewOpts || (enableScoreInput && drawSize > 0)) && (
+            <div className="dl-tools">
+              {/* 結果画像はアイコンのみ。右隣の編集ボタンと同じ四角ボタンで並べる */}
               {resultPreviewOpts && <EventResultPreview opts={resultPreviewOpts} iconOnly />}
               {enableScoreInput && drawSize > 0 && (
                 <div className="relative">
                   <button
                     onClick={() => setEditMenuOpen(v => !v)}
-                    className={`flex items-center justify-center w-9 h-9 rounded-full border transition-colors ${
-                      editMenuOpen || nameEditMode
-                        ? 'bg-primary-500 border-primary-500 text-white'
-                        : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-100'
-                    }`}
+                    className={`dl-icon-btn ${editMenuOpen || nameEditMode ? 'is-on' : ''}`}
                     title="あたり・名前・ゲームルールの修正"
                     aria-label="修正メニューを開く"
                     aria-expanded={editMenuOpen}
                   >
-                    <SlidersHorizontal className="w-4.5 h-4.5" style={{ width: 18, height: 18 }} />
+                    <SlidersHorizontal />
                   </button>
 
                   {editMenuOpen && (
@@ -757,47 +729,47 @@ export default function CourtBracketPage({ enableScoreInput = true }: CourtBrack
                         aria-label="メニューを閉じる"
                       />
                       {/* 上に開くとヘッダーの外にはみ出して隠れるため、下向きに開く */}
-                      <div className="absolute right-0 top-11 z-50 w-56 rounded-xl border border-gray-200 bg-white shadow-lg overflow-hidden">
-                        <div className="flex items-center justify-between px-3 py-2 border-b border-gray-100">
-                          <span className="text-[11px] font-bold text-gray-500">修正メニュー</span>
-                          <button onClick={() => setEditMenuOpen(false)} className="p-0.5 text-gray-400 hover:text-gray-700" aria-label="閉じる">
+                      <div className="dl-menu">
+                        <div className="dl-menu__head">
+                          <span>EDIT<b>修正メニュー</b></span>
+                          <button onClick={() => setEditMenuOpen(false)} className="dl-menu__close" aria-label="閉じる">
                             <X className="w-3.5 h-3.5" />
                           </button>
                         </div>
                         {!isRoundRobin && (
                           <button
                             onClick={() => { setEditMenuOpen(false); startEdit(); }}
-                            className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-gray-800 hover:bg-gray-50 text-left"
+                            className="dl-menu__item"
                           >
-                            <Shuffle className="w-4 h-4 shrink-0 text-primary-500" />
+                            <Shuffle />
                             あたりを修正
                           </button>
                         )}
                         {!isRoundRobin && drawSize >= 4 && (
                           <button
                             onClick={() => { setEditMenuOpen(false); void toggleThirdPlace(); }}
-                            className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-gray-800 hover:bg-gray-50 text-left"
+                            className="dl-menu__item"
                           >
-                            <Medal className="w-4 h-4 shrink-0 text-primary-500" />
+                            <Medal />
                             3位決定戦
-                            <span className={`ml-auto text-[11px] font-bold ${hasThirdPlace ? 'text-primary-600' : 'text-gray-400'}`}>
+                            <em className={hasThirdPlace ? 'is-on' : ''}>
                               {hasThirdPlace ? 'あり' : 'なし'}
-                            </span>
+                            </em>
                           </button>
                         )}
                         <button
                           onClick={() => { setEditMenuOpen(false); setNameEditMode(v => !v); }}
-                          className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-gray-800 hover:bg-gray-50 text-left"
+                          className="dl-menu__item"
                         >
-                          <UserPen className="w-4 h-4 shrink-0 text-primary-500" />
+                          <UserPen />
                           名前を修正
-                          {nameEditMode && <span className="ml-auto text-[11px] font-bold text-primary-600">修正中</span>}
+                          {nameEditMode && <em className="is-on">修正中</em>}
                         </button>
                         <button
                           onClick={() => { setEditMenuOpen(false); setRulesDialogOpen(true); }}
-                          className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-gray-800 hover:bg-gray-50 text-left"
+                          className="dl-menu__item"
                         >
-                          <Pencil className="w-4 h-4 shrink-0 text-primary-500" />
+                          <Pencil />
                           ゲームルールを変更
                         </button>
                       </div>
@@ -806,111 +778,102 @@ export default function CourtBracketPage({ enableScoreInput = true }: CourtBrack
                 </div>
               )}
             </div>
-          </div>
-        )}
+          )}
+        </div>
 
         {/* 名前の修正中は、枠をタップして直せることを知らせる */}
         {!editMode && nameEditMode && (
-          <div className="mt-1.5 flex items-center gap-1.5 rounded-lg border border-primary-200 bg-primary-50 px-2 py-1.5">
-            <UserPen className="w-3.5 h-3.5 shrink-0 text-primary-500" />
-            <span className="text-[11px] font-bold text-gray-800">名前を修正中</span>
-            <span className="text-[10px] text-gray-600 flex-1">枠をタップすると氏名・ふりがな・所属を直せます</span>
-            <button
-              onClick={() => setNameEditMode(false)}
-              className="text-[10px] font-bold text-gray-600 border border-gray-300 bg-white rounded-full px-2 py-0.5 hover:bg-gray-100"
-            >
-              やめる
-            </button>
+          <div className="dl-bar__note">
+            <div className="dl-bar__note-row">
+              <span className="dl-bar__note-title"><UserPen />名前を修正中</span>
+              <span className="dl-bar__note-text">枠をタップすると氏名・ふりがな・所属を直せます</span>
+              <button onClick={() => setNameEditMode(false)} className="dl-mini-btn">
+                やめる
+              </button>
+            </div>
           </div>
         )}
 
         {/* あたり（対戦の組み合わせ）修正中の操作 */}
         {enableScoreInput && drawSize > 0 && editMode && (
-          <div className="mt-1.5">
-            {(
-              <div className="rounded-lg border border-primary-200 bg-primary-50 px-2 py-1.5">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-[10px] font-bold text-gray-800 flex items-center gap-1">
-                    <Shuffle className="w-3 h-3" />あたり修正中
-                  </span>
-                  <span className="text-[10px] text-gray-600 flex-1 min-w-[150px]">
-                    {selectedSlotPos == null
-                      ? '枠をタップして選ぶと、入れ替え・ずらしができます（空き枠も選べます）'
-                      : `#${selectedSlotPos} を選択中 — 入れ替え先の枠をタップ、または下のボタンでずらす`}
-                  </span>
+          <div className="dl-bar__note">
+            <div className="dl-bar__note-row">
+              <span className="dl-bar__note-title">
+                <Shuffle />あたり修正中
+              </span>
+              <span className="dl-bar__note-text">
+                {selectedSlotPos == null
+                  ? '枠をタップして選ぶと、入れ替え・ずらしができます（空き枠も選べます）'
+                  : `#${selectedSlotPos} を選択中 — 入れ替え先の枠をタップ、または下のボタンでずらす`}
+              </span>
+              <button
+                onClick={undoDraft}
+                disabled={savingDraw || draftHistory.length === 0}
+                className="dl-mini-btn"
+              >
+                <Undo2 />1つ戻す
+              </button>
+              <button
+                onClick={cancelEdit}
+                disabled={savingDraw}
+                className="dl-mini-btn"
+              >
+                やめる
+              </button>
+              <button
+                onClick={() => void saveEdit()}
+                disabled={savingDraw || !drawDirty}
+                className="dl-mini-btn dl-mini-btn--primary"
+              >
+                {savingDraw ? '保存中...' : '保存して対戦表に反映'}
+              </button>
+            </div>
+            {/* 枠のずらし操作。2回戦の相手は4枠ごとのブロックで決まるため、
+                入れ替えだけでは作れない並びを「空き枠の挿入・詰め」で作れるようにする。 */}
+            {selectedSlotPos != null && (
+              <div className="dl-bar__note-row" style={{ marginTop: 6 }}>
+                <button
+                  onClick={() => handleInsertGap(selectedSlotPos)}
+                  className="dl-mini-btn"
+                  title="この位置に空き枠を作り、以降の選手を1つずつ下へずらします"
+                >
+                  <ArrowDownToLine />ここに空きを入れて下へずらす
+                </button>
+                {selectedSlotIsEmpty && (
                   <button
-                    onClick={undoDraft}
-                    disabled={savingDraw || draftHistory.length === 0}
-                    className="flex items-center gap-1 text-[10px] font-bold text-gray-600 border border-gray-300 bg-white rounded-full px-2 py-1 hover:bg-gray-100 disabled:opacity-40"
+                    onClick={() => handleRemoveGap(selectedSlotPos)}
+                    className="dl-mini-btn"
+                    title="この空き枠を詰めて、以降の選手を1つずつ上へ上げます"
                   >
-                    <Undo2 className="w-3 h-3" />1つ戻す
+                    <ArrowUpToLine />この空きを詰めて上へずらす
                   </button>
-                  <button
-                    onClick={cancelEdit}
-                    disabled={savingDraw}
-                    className="text-[10px] font-bold text-gray-600 border border-gray-300 bg-white rounded-full px-2 py-1 hover:bg-gray-100 disabled:opacity-40"
-                  >
-                    やめる
-                  </button>
-                  <button
-                    onClick={() => void saveEdit()}
-                    disabled={savingDraw || !drawDirty}
-                    className="text-[10px] font-bold text-white bg-primary-600 rounded-full px-3 py-1 hover:brightness-110 disabled:opacity-40"
-                  >
-                    {savingDraw ? '保存中...' : '保存して対戦表に反映'}
-                  </button>
-                </div>
-                {/* 枠のずらし操作。2回戦の相手は4枠ごとのブロックで決まるため、
-                    入れ替えだけでは作れない並びを「空き枠の挿入・詰め」で作れるようにする。 */}
-                {selectedSlotPos != null && (
-                  <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
-                    <button
-                      onClick={() => handleInsertGap(selectedSlotPos)}
-                      className="flex items-center gap-1 text-[10px] font-bold text-gray-700 border border-gray-300 bg-white rounded-full px-2 py-1 hover:bg-gray-100"
-                      title="この位置に空き枠を作り、以降の選手を1つずつ下へずらします"
-                    >
-                      <ArrowDownToLine className="w-3 h-3" />ここに空きを入れて下へずらす
-                    </button>
-                    {selectedSlotIsEmpty && (
-                      <button
-                        onClick={() => handleRemoveGap(selectedSlotPos)}
-                        className="flex items-center gap-1 text-[10px] font-bold text-gray-700 border border-gray-300 bg-white rounded-full px-2 py-1 hover:bg-gray-100"
-                        title="この空き枠を詰めて、以降の選手を1つずつ上へ上げます"
-                      >
-                        <ArrowUpToLine className="w-3 h-3" />この空きを詰めて上へずらす
-                      </button>
-                    )}
-                    <button
-                      onClick={() => setSelectedSlotPos(null)}
-                      className="text-[10px] text-gray-500 px-1.5 py-1 hover:text-gray-700"
-                    >
-                      選択解除
-                    </button>
-                  </div>
                 )}
-                <p className="text-[9px] text-gray-500 mt-1 leading-relaxed">
-                  2回戦の相手は4枠ずつのまとまりで決まります。「7・8の勝者と9が2回戦で当たる」形にするには、
-                  その3人が同じまとまりに入るよう空き枠でずらしてください。
-                  入力済みのスコアは、対戦カードが変わらない試合はそのまま引き継がれます。
-                </p>
+                <button
+                  onClick={() => setSelectedSlotPos(null)}
+                  className="dl-mini-btn dl-mini-btn--ghost"
+                >
+                  選択解除
+                </button>
               </div>
             )}
+            <p className="dl-bar__note-hint">
+              2回戦の相手は4枠ずつのまとまりで決まります。「7・8の勝者と9が2回戦で当たる」形にするには、
+              その3人が同じまとまりに入るよう空き枠でずらしてください。
+              入力済みのスコアは、対戦カードが変わらない試合はそのまま引き継がれます。
+            </p>
           </div>
         )}
 
-        {/* 種目タブ（小さいドット） */}
+        {/* 種目タブ（小さい四角） */}
         {events.length > 1 && (
-          <div className="flex items-center justify-center gap-1 mt-1.5">
+          <div className="dl-dots">
             {events.map((evt, i) => (
               <button
                 key={evt.eventId}
                 onClick={() => setSelectedEventIdx(i)}
-                className={`w-2 h-2 rounded-full transition-all ${
-                  i === selectedEventIdx
-                    ? 'bg-primary-500 scale-125'
-                    : 'bg-gray-300 hover:bg-gray-400'
-                }`}
+                className={i === selectedEventIdx ? 'is-current' : ''}
                 title={evt.name}
+                aria-label={evt.name}
               />
             ))}
           </div>
@@ -918,7 +881,7 @@ export default function CourtBracketPage({ enableScoreInput = true }: CourtBrack
       </div>
 
       {/* ブラケット表示 */}
-      <div className="flex-1 overflow-auto bg-gray-50">
+      <div className="dl-canvas">
         {drawSize > 0 && !isRoundRobin ? (
           <CourtBracketView
             slots={viewSlots}
@@ -935,39 +898,27 @@ export default function CourtBracketPage({ enableScoreInput = true }: CourtBrack
             nameEditMode={nameEditMode}
           />
         ) : isRoundRobin ? (
-          <div className="p-3 space-y-3">
+          <div className="dl-league">
             {/* リーグの使用コート（1〜2面を固定で使い、空いたら次の対戦を入れる） */}
-            <div className="flex items-center gap-2 flex-wrap rounded-lg border border-gray-200 bg-white px-3 py-2">
-              <span className="text-xs font-bold text-gray-600 flex items-center gap-1">
-                <MapPin className="w-3.5 h-3.5 text-primary-600" />使用コート
-              </span>
+            <div className="dl-courtbar">
+              <span className="dl-courtbar__label">使用コート</span>
               {assignedLeagueCourts.length > 0 ? (
                 <>
                   {assignedLeagueCourts.map(c => {
                     const isFree = freeAssignedCourts.some(f => f.courtId === c.courtId);
                     return (
-                      <span
-                        key={c.courtId}
-                        className={`text-[11px] font-bold px-2 py-0.5 rounded-full border ${
-                          isFree
-                            ? 'bg-primary-50 text-gray-800 border-primary-300'
-                            : 'bg-primary-600 text-white border-primary-600'
-                        }`}
-                      >
+                      <span key={c.courtId} className={`dl-tag ${isFree ? 'dl-tag--free' : 'dl-tag--live'}`}>
                         {c.name}番コート{isFree ? '（空き）' : '（試合中）'}
                       </span>
                     );
                   })}
                 </>
               ) : (
-                <span className="text-[11px] text-gray-500">未割り当て（試合ごとにコートを選ぶ運用のまま）</span>
+                <span className="dl-courtbar__none">未割り当て（試合ごとにコートを選ぶ運用のまま）</span>
               )}
               {enableScoreInput && (
-                <button
-                  onClick={() => setLeagueCourtDialogOpen(true)}
-                  className="ml-auto text-[10px] font-bold text-gray-600 border border-gray-200 bg-gray-50 rounded-full px-2 py-1 hover:bg-gray-100"
-                >
-                  {assignedLeagueCourts.length > 0 ? 'コートを変更' : 'コートを割り当て'}
+                <button onClick={() => setLeagueCourtDialogOpen(true)} className="dl-mini-btn">
+                  <MapPin />{assignedLeagueCourts.length > 0 ? 'コートを変更' : 'コートを割り当て'}
                 </button>
               )}
             </div>
@@ -981,11 +932,12 @@ export default function CourtBracketPage({ enableScoreInput = true }: CourtBrack
             />
             {/* 対戦カード（タップでスコア入力） */}
             {rrMatches.length > 0 && (
-              <div className="space-y-2">
-                <div className="text-xs font-bold text-gray-500 px-1 flex items-center gap-1">
-                  <Layers className="w-3.5 h-3.5" />
+              <div className="flex flex-col gap-2">
+                <p className="dl-rr-head">
+                  <Layers className="w-3.5 h-3.5" /><small>MATCHES</small>
                   対戦カード{enableScoreInput ? '（タップでスコア入力）' : ''}
-                </div>
+                </p>
+                <ul className="dl-rr-list">
                 {rrMatches.map(m => {
                   const court = m.courtId ? courts.find(c => c.courtId === m.courtId) : null;
                   const isFinished = m.status === 'finished' || m.status === 'walkover';
@@ -993,36 +945,24 @@ export default function CourtBracketPage({ enableScoreInput = true }: CourtBrack
                   const w1 = isFinished && !!m.winnerEntryId && m.winnerEntryId === m.player1EntryId;
                   const w2 = isFinished && !!m.winnerEntryId && m.winnerEntryId === m.player2EntryId;
                   return (
+                    <li key={m.matchId}>
                     <button
-                      key={m.matchId}
                       onClick={() => enableScoreInput && setSelectedMatchKey(`${m.round}-${m.position}`)}
                       disabled={!enableScoreInput}
-                      className={`w-full text-left rounded-lg border p-2 transition-all ${
-                        isPlaying ? 'bg-primary-50 border-2 border-primary-500'
-                        : isFinished ? 'bg-gray-50 border-gray-200'
-                        : 'bg-white border-gray-200 hover:border-primary-300'} ${enableScoreInput ? 'cursor-pointer' : ''}`}
+                      className={`dl-rr-card ${isPlaying ? 'is-playing' : isFinished ? 'is-done' : ''}`}
                     >
-                      <div className="flex items-center gap-2">
-                        <div className="flex-1 min-w-0 text-center">
-                          <span className={`text-sm truncate ${w1 ? 'font-bold text-gray-800' : 'font-semibold text-gray-900'}`}>{m.player1Name}</span>
-                        </div>
-                        <div className="shrink-0 text-center min-w-[52px]">
-                          {isFinished && m.score
-                            ? <span className="text-xs font-mono font-bold text-gray-700">{m.score}</span>
-                            : <span className="text-[11px] font-bold text-gray-300">vs</span>}
-                        </div>
-                        <div className="flex-1 min-w-0 text-center">
-                          <span className={`text-sm truncate ${w2 ? 'font-bold text-gray-800' : 'font-semibold text-gray-900'}`}>{m.player2Name}</span>
-                        </div>
+                      <div className="dl-rr-card__vs">
+                        <span className={`dl-rr-card__p ${w1 ? 'is-win' : ''}`}>{m.player1Name}</span>
+                        {isFinished && m.score
+                          ? <span className="dl-rr-card__score">{m.score}</span>
+                          : <span className="dl-rr-card__score is-vs">VS</span>}
+                        <span className={`dl-rr-card__p ${w2 ? 'is-win' : ''}`}>{m.player2Name}</span>
                       </div>
-                      <div className="flex items-center justify-center gap-2 mt-1">
+                      <div className="dl-rr-card__meta">
                         {court && (isPlaying || isFinished) && (
-                          <span className="text-[10px] font-bold text-gray-800">{court.name}番コート</span>
+                          <span className="dl-rr-card__court">{court.name}番コート</span>
                         )}
-                        <span className={`text-[9px] px-1.5 py-0.5 rounded font-bold ${
-                          isPlaying ? 'bg-primary-100 text-gray-800'
-                          : isFinished ? 'bg-gray-200 text-gray-500'
-                          : 'bg-gray-100 text-gray-500'}`}>
+                        <span className={`dl-tag ${isPlaying ? 'dl-tag--live' : isFinished ? 'dl-tag--done' : ''}`}>
                           {isPlaying ? '試合中' : isFinished ? '終了' : '待機'}
                         </span>
                         {/* 待機中の対戦は、割り当てコートが空いていればここから入れられる */}
@@ -1035,13 +975,9 @@ export default function CourtBracketPage({ enableScoreInput = true }: CourtBrack
                               if (freeAssignedCourts.length === 0) return;
                               enterLeagueMatch(m);
                             }}
-                            className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-full border ${
-                              freeAssignedCourts.length === 0
-                                ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed'
-                                : 'bg-primary-600 text-white border-primary-600 hover:bg-primary-700 cursor-pointer'
-                            }`}
+                            className="dl-rr-enter"
                           >
-                            <Play className="w-3 h-3" />
+                            <Play />
                             {freeAssignedCourts.length === 0
                               ? 'コート使用中'
                               : freeAssignedCourts.length === 1
@@ -1051,14 +987,16 @@ export default function CourtBracketPage({ enableScoreInput = true }: CourtBrack
                         )}
                       </div>
                     </button>
+                    </li>
                   );
                 })}
+                </ul>
               </div>
             )}
           </div>
         ) : (
-          <div className="p-6 text-center text-gray-500">
-            <MapPin className="w-8 h-8 mx-auto mb-2 text-gray-300" />
+          <div className="dl-canvas__empty">
+            <MapPin />
             ドローデータがありません
           </div>
         )}

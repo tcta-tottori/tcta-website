@@ -18,6 +18,7 @@ import { Trophy, Save, AlertCircle, Download, LayoutGrid, GitBranch, Image, File
 import { useMixedStore } from '../mixed/mixedStore';
 import MixedDrawView from '../mixed/MixedDrawView';
 import { useTeamStore } from '../team/teamStore';
+import { SkPage, SkSection, SkEmpty } from '../../components/site/Kit';
 import TeamDrawView from '../team/TeamDrawView';
 
 export type DrawSlotData = {
@@ -374,119 +375,108 @@ function NormalDrawBoard() {
   }, [matches]);
 
   return (
-    <div className="h-full flex flex-col p-4 md:p-6 mx-auto space-y-6">
-      <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-4 rounded-xl shadow-sm border border-border-main shrink-0">
-        <div>
-          <h1 className="text-xl md:text-2xl font-bold text-gray-900 flex items-center gap-2">
-            <Trophy className="w-6 h-6 text-primary-500" />
-            ドロー表プレビュー・調整
-          </h1>
-          <p className="text-sm text-gray-500 mt-1">
-            生成されたドローをブラケット形式で確認し、必要に応じて枠の入れ替えができます。
-          </p>
+    <SkPage wide className="ent-board">
+      <SkSection
+        en="Draw"
+        title="ドロー表プレビュー・調整"
+        accent
+        lead="生成されたドローをブラケット形式で確認し、必要に応じて枠の入れ替えができます。"
+      >
+        <div className="ent-draw__pick">
+          <label className="sk-field ent-draw__field">
+            対象種目
+            <select
+              value={selectedEventId}
+              onChange={e => setSelectedEventId(e.target.value)}
+              className="input sk-input"
+            >
+              <option value="">-- 種目を選択 --</option>
+              {events.map(e => (
+                <option key={e.eventId} value={e.eventId}>{e.name} ({e.type})</option>
+              ))}
+            </select>
+          </label>
+          {selectedEventId && (
+            <div className="ent-draw__status">
+              {drawData ? (
+                <>
+                  <span className="sk-chip">ドローサイズ <b className="sk-num">{drawData.drawSize}</b></span>
+                  {hasUnsavedChanges && (
+                    <span className="sk-chip sk-chip--red">
+                      <AlertCircle className="w-3.5 h-3.5" />
+                      未保存の変更があります
+                    </span>
+                  )}
+                </>
+              ) : (
+                <p className="ent-draw__msg">
+                  まだ抽選結果が保存されていません。「抽選機能 S-04」でドローを作成してください。
+                </p>
+              )}
+            </div>
+          )}
         </div>
-
-        <div className="w-full sm:w-auto flex items-center gap-2">
-          <label className="text-sm font-semibold text-gray-900 whitespace-nowrap">対象種目:</label>
-          <select
-            value={selectedEventId}
-            onChange={e => setSelectedEventId(e.target.value)}
-            className="w-full sm:w-64 border-border-main rounded-lg shadow-sm focus:border-primary-500 focus:ring-[3px] focus:ring-primary-500/15 text-sm px-3 py-2 bg-white border outline-none font-medium"
-          >
-            <option value="">-- 種目を選択 --</option>
-            {events.map(e => (
-              <option key={e.eventId} value={e.eventId}>{e.name} ({e.type})</option>
-            ))}
-          </select>
-        </div>
-      </header>
+      </SkSection>
 
       {selectedEventId ? (
-        <div className="flex-1 flex flex-col gap-4 min-h-0">
-          <div className="bg-white rounded-xl shadow-sm border border-border-main p-4 flex flex-col md:flex-row gap-4 items-center justify-between shrink-0">
-            <div className="flex items-center gap-4">
-               {drawData ? (
-                 <>
-                   <div className="px-3 py-1.5 bg-primary-50 text-primary-500 rounded-md text-sm font-medium">
-                     ドローサイズ: {drawData.drawSize}
-                   </div>
-                   {hasUnsavedChanges && (
-                     <div className="flex items-center gap-1.5 text-warning text-sm font-medium bg-primary-50 px-3 py-1.5 rounded-md">
-                       <AlertCircle className="w-4 h-4" />
-                       未保存の変更があります
-                     </div>
-                   )}
-                 </>
-               ) : (
-                 <div className="text-sm text-gray-500">
-                   まだ抽選結果が保存されていません。「抽選機能 S-04」でドローを作成してください。
-                 </div>
-               )}
+        <>
+          <div className="ent-board__bar">
+            {/* 表示切替ボタン */}
+            <div className="hub-filter" role="group" aria-label="表示の切り替え">
+              <button
+                onClick={() => setViewMode('tournament')}
+                className={`hub-filter__btn ent-board__mode ${viewMode === 'tournament' ? 'is-on' : ''}`}
+              >
+                <GitBranch className="w-3.5 h-3.5" />
+                トーナメント
+              </button>
+              <button
+                onClick={() => setViewMode('roundRobin')}
+                className={`hub-filter__btn ent-board__mode ${viewMode === 'roundRobin' ? 'is-on' : ''}`}
+              >
+                <LayoutGrid className="w-3.5 h-3.5" />
+                リーグ
+              </button>
             </div>
-
-            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-              {/* 表示切替ボタン */}
-              <div className="flex rounded-md border border-border-main overflow-hidden">
-                <button
-                  onClick={() => setViewMode('tournament')}
-                  className={`flex items-center gap-1 px-2.5 sm:px-3 py-2 text-xs font-medium transition-colors ${
-                    viewMode === 'tournament'
-                      ? 'bg-primary-500 text-white'
-                      : 'bg-white text-gray-600 hover:bg-gray-50'
-                  }`}
-                >
-                  <GitBranch className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">トーナメント</span><span className="sm:hidden">T</span>
-                </button>
-                <button
-                  onClick={() => setViewMode('roundRobin')}
-                  className={`flex items-center gap-1 px-2.5 sm:px-3 py-2 text-xs font-medium transition-colors ${
-                    viewMode === 'roundRobin'
-                      ? 'bg-primary-500 text-white'
-                      : 'bg-white text-gray-600 hover:bg-gray-50'
-                  }`}
-                >
-                  <LayoutGrid className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">リーグ</span><span className="sm:hidden">L</span>
-                </button>
-              </div>
-              {selectedPosition !== null && viewMode === 'tournament' && (
-                <button
-                  onClick={() => setSelectedPosition(null)}
-                  className="flex items-center gap-1.5 bg-primary-50 text-gray-900 px-3 sm:px-4 py-2 rounded-md font-medium hover:bg-gray-200 shadow-sm transition-colors text-xs sm:text-sm"
-                >
-                  選択解除
-                </button>
-              )}
+            {selectedPosition !== null && viewMode === 'tournament' && (
+              <button
+                onClick={() => setSelectedPosition(null)}
+                className="btn btn--outline sk-btn sk-btn--gray"
+              >
+                選択解除
+              </button>
+            )}
+            <span className="sk-toolbar__grow" />
+            <div className="sk-btns ent-board__exports">
               <button
                 onClick={handleExportExcel}
                 disabled={!drawData}
-                className="flex items-center gap-1.5 bg-primary-500 text-white px-3 sm:px-5 py-2 sm:py-2.5 rounded-md font-medium hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm transition-colors text-xs sm:text-sm"
+                className="btn btn--outline sk-btn"
               >
                 <FileSpreadsheet className="w-4 h-4" />
-                <Download className="w-3.5 h-3.5 hidden sm:block" />
+                <Download className="w-3.5 h-3.5" />
                 Excel
               </button>
               <button
                 onClick={handleExportResultJpeg}
                 disabled={!drawData}
-                className="flex items-center gap-1.5 bg-primary-500 text-white px-3 sm:px-4 py-2 sm:py-2.5 rounded-md font-medium hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm transition-colors text-xs sm:text-sm"
+                className="btn btn--outline sk-btn"
               >
                 <Image className="w-4 h-4" />
-                <span className="hidden sm:inline">結果</span>JPEG
+                結果JPEG
               </button>
               <button
                 onClick={handleExportResultExcel}
                 disabled={!drawData}
-                className="flex items-center gap-1.5 bg-primary-600 text-white px-3 sm:px-4 py-2 sm:py-2.5 rounded-md font-medium hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm transition-colors text-xs sm:text-sm"
+                className="btn btn--outline sk-btn"
               >
                 <FileSpreadsheet className="w-4 h-4" />
-                <span className="hidden sm:inline">結果</span>Excel
+                結果Excel
               </button>
               <button
                 onClick={handleSave}
                 disabled={!hasUnsavedChanges || isSaving}
-                className="flex items-center gap-1.5 bg-primary-600 text-white px-3 sm:px-5 py-2 sm:py-2.5 rounded-md font-medium hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm transition-colors text-xs sm:text-sm"
+                className="btn btn--primary sk-btn"
               >
                 <Save className="w-4 h-4" />
                 {isSaving ? '保存中...' : '保存'}
@@ -495,12 +485,12 @@ function NormalDrawBoard() {
           </div>
 
           {selectedPosition !== null && (
-            <div className="bg-primary-50 border border-primary-500/30 rounded-md px-4 py-2 text-sm text-gray-700 font-medium shrink-0">
+            <p className="sk-note sk-note--red">
               スロット #{selectedPosition} を選択中 -- 入れ替え先のスロットをタップしてください
-            </div>
+            </p>
           )}
 
-          <div className="flex-1 min-h-0 rounded-xl overflow-hidden shadow-sm border border-border-main bg-white">
+          <div className="ent-board__frame" data-no-reveal>
             {editedSlots.length > 0 && drawData ? (
               viewMode === 'roundRobin' ? (
                 <RoundRobinRenderer
@@ -523,17 +513,12 @@ function NormalDrawBoard() {
                 />
               )
             ) : (
-               <div className="flex flex-col items-center justify-center p-8 h-full bg-primary-50 text-center text-gray-500">
-                 <Trophy className="w-16 h-16 mb-4 opacity-20" />
-                 <p className="font-semibold">表示できるドローが存在しません</p>
-               </div>
+              <SkEmpty icon={Trophy} title="表示できるドローが存在しません" />
             )}
           </div>
-        </div>
+        </>
       ) : (
-        <div className="flex items-center justify-center p-8 text-center bg-white rounded-xl border border-border-main shadow-sm h-64">
-           <p className="font-semibold text-gray-500">上部のドロップダウンから対象種目を選択してください</p>
-        </div>
+        <SkEmpty icon={Trophy} title="上部のドロップダウンから対象種目を選択してください" />
       )}
 
       {/* Score input dialog */}
@@ -550,6 +535,6 @@ function NormalDrawBoard() {
           getRoundName={makeRoundName}
         />
       )}
-    </div>
+    </SkPage>
   );
 }

@@ -35,7 +35,7 @@ export default function MixedStandingsView() {
   return (
     <div className="space-y-6">
       {/* ヘッダー */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+      <div className="bg-white rounded-xl border border-gray-200 p-5">
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
@@ -58,9 +58,9 @@ export default function MixedStandingsView() {
               onClick={generateBrackets}
               disabled={!allLeaguesComplete}
               className={`
-                flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium transition-all shadow-md
+                flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium transition-all
                 ${allLeaguesComplete
-                  ? 'bg-gradient-to-r from-primary-600 to-primary-700 text-white hover:from-primary-700 hover:to-primary-800'
+                  ? 'bg-primary-600 text-white hover:bg-primary-700'
                   : 'bg-gray-200 text-gray-400 cursor-not-allowed shadow-none'
                 }
               `}
@@ -82,9 +82,9 @@ export default function MixedStandingsView() {
           const isComplete = finished === total && total > 0;
 
           return (
-            <div key={league.leagueId} className={`bg-white rounded-xl shadow-sm border overflow-hidden transition-all hover:shadow-md ${isComplete ? 'border-primary-200' : 'border-gray-200'}`}>
+            <div key={league.leagueId} className={`bg-white rounded-xl border overflow-hidden transition-all ${isComplete ? 'border-primary-200' : 'border-gray-200'}`}>
               {/* カードヘッダー */}
-              <div className={`px-4 py-3 flex items-center justify-between ${isComplete ? 'bg-gradient-to-r from-primary-50 to-white' : 'bg-gray-50'}`}>
+              <div className={`px-4 py-3 flex items-center justify-between ${isComplete ? 'bg-primary-50' : 'bg-gray-50'}`}>
                 <div className="flex items-center gap-2">
                   <span className="w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold" style={leagueBadgeStyle(league.leagueId, leagues.length)}>
                     {league.leagueId.trim()}
@@ -104,7 +104,7 @@ export default function MixedStandingsView() {
               <div className="p-3 space-y-1.5">
                 {standings.map((s, i) => (
                   <div key={s.teamId} className={`flex items-center gap-2 px-3 py-2 rounded-lg border ${rankBg[i] || rankBg[3]}`}>
-                    <span className={`w-6 h-6 rounded-full bg-gradient-to-br ${rankColors[i] || rankColors[3]} text-white flex items-center justify-center text-xs font-bold shadow-sm`}>
+                    <span className={`w-6 h-6 rounded-full tm-flat ${rankColors[i] || rankColors[3]} text-white flex items-center justify-center text-xs font-bold`}>
                       {s.rank}
                     </span>
                     <div className="flex-1 min-w-0">
@@ -122,9 +122,9 @@ export default function MixedStandingsView() {
               {/* 進捗バー */}
               {!isComplete && (
                 <div className="px-4 pb-3">
-                  <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                  <div className="w-full h-1.5 bg-gray-100 rounded overflow-hidden">
                     <div
-                      className="h-full bg-gradient-to-r from-primary-400 to-primary-500 rounded-full transition-all"
+                      className="h-full bg-primary-400 rounded transition-all"
                       style={{ width: `${total > 0 ? (finished / total) * 100 : 0}%` }}
                     />
                   </div>
@@ -137,7 +137,7 @@ export default function MixedStandingsView() {
 
       {/* 順位別チーム振り分け表 */}
       {allLeaguesComplete && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+        <div className="bg-white rounded-xl border border-gray-200 p-5">
           <h3 className="text-lg font-bold text-gray-800 mb-4">順位別チーム振り分け</h3>
           <div className="grid grid-cols-4 gap-4">
             {[

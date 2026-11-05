@@ -291,7 +291,7 @@ export default function ScheduleGenerator() {
       </p>
 
       {drawTimeHint?.startTime && (
-        <div className="flex items-start gap-2 p-3 bg-primary-50 border border-primary-200 rounded-md">
+        <div className="flex items-start gap-2 p-3 bg-primary-50 border border-primary-200 rounded">
           <Clock className="w-4 h-4 text-primary-600 shrink-0 mt-0.5" />
           <p className="text-xs text-gray-800 font-medium">
             ドロー表に試合開始時刻の記載があります（最早 {drawTimeHint.startTime}
@@ -302,7 +302,7 @@ export default function ScheduleGenerator() {
       )}
 
       {hasExistingSchedule && (
-        <div className="flex items-start gap-2 p-3 bg-primary-50 border border-primary-200 rounded-md">
+        <div className="flex items-start gap-2 p-3 bg-primary-50 border border-primary-200 rounded">
           <AlertTriangle className="w-4 h-4 text-warning shrink-0 mt-0.5" />
           <p className="text-xs text-warning font-medium">
             既にスケジュールが設定されています。自動生成を実行すると既存のコート割当・時間が上書きされます。
@@ -318,7 +318,7 @@ export default function ScheduleGenerator() {
             value={courtNamesInput}
             onChange={e => setCourtNamesInput(e.target.value)}
             placeholder="1,2,3,4,5,6"
-            className="w-full border border-border-main rounded-lg px-3 py-2 text-sm focus:border-ocean focus:ring-[3px] focus:ring-ocean/15 outline-none"
+            className="w-full border border-border-main rounded px-3 py-2 text-sm focus:border-ocean focus:ring-[3px] focus:ring-ocean/15 outline-none"
           />
           <p className="text-[10px] text-gray-400 mt-1">例: 1,2,3,4,5,6 または A-1,A-2,B-1</p>
         </div>
@@ -331,7 +331,7 @@ export default function ScheduleGenerator() {
             max={120}
             value={matchDuration}
             onChange={e => setMatchDuration(parseInt(e.target.value) || 40)}
-            className="w-full border border-border-main rounded-lg px-3 py-2 text-sm focus:border-ocean focus:ring-[3px] focus:ring-ocean/15 outline-none"
+            className="w-full border border-border-main rounded px-3 py-2 text-sm focus:border-ocean focus:ring-[3px] focus:ring-ocean/15 outline-none"
           />
         </div>
 
@@ -341,7 +341,7 @@ export default function ScheduleGenerator() {
             type="time"
             value={startTime}
             onChange={e => setStartTime(e.target.value)}
-            className="w-full border border-border-main rounded-lg px-3 py-2 text-sm focus:border-ocean focus:ring-[3px] focus:ring-ocean/15 outline-none"
+            className="w-full border border-border-main rounded px-3 py-2 text-sm focus:border-ocean focus:ring-[3px] focus:ring-ocean/15 outline-none"
           />
         </div>
       </div>
@@ -350,7 +350,7 @@ export default function ScheduleGenerator() {
         <button
           onClick={handleGenerate}
           disabled={isGenerating || !currentTournamentId}
-          className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-ocean rounded-md hover:bg-gray-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-ocean rounded hover:bg-gray-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           <Zap className="w-4 h-4" />
           {isGenerating ? '生成中...' : '自動生成'}
@@ -362,7 +362,7 @@ export default function ScheduleGenerator() {
       </div>
 
       {result && (
-        <div className={`p-3 rounded-md text-sm ${
+        <div className={`p-3 rounded text-sm ${
           result.includes('失敗') || result.includes('ありません') || result.includes('ください')
             ? 'bg-red-50 text-red-700 border border-red-200'
             : 'bg-primary-50 text-gray-800 border border-primary-200'

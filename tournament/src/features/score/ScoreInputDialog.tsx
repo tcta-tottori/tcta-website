@@ -87,11 +87,11 @@ interface ScoreInputDialogProps {
 // ---------------------------------------------------------------------------
 
 const STATUS_CONFIG: Record<string, { label: string; bg: string; text: string; dot: string }> = {
-  waiting:  { label: '待機中',   bg: 'bg-gray-100',    text: 'text-gray-600',    dot: 'bg-gray-400' },
-  ready:    { label: '準備完了', bg: 'bg-gray-100',    text: 'text-gray-700',    dot: 'bg-gray-500' },
-  playing:  { label: '試合中',   bg: 'bg-primary-100',   text: 'text-gray-800',   dot: 'bg-primary-500' },
-  finished: { label: '終了',     bg: 'bg-primary-100', text: 'text-gray-800', dot: 'bg-primary-500' },
-  walkover: { label: 'W/O',     bg: 'bg-primary-100',  text: 'text-gray-800',  dot: 'bg-primary-400' },
+  waiting:  { label: '待機中',   bg: 'op-st--waiting',    text: 'text-gray-600',    dot: 'bg-gray-400' },
+  ready:    { label: '準備完了', bg: 'op-st--ready',    text: 'text-gray-700',    dot: 'bg-gray-500' },
+  playing:  { label: '試合中',   bg: 'op-st--playing',   text: 'text-gray-800',   dot: 'bg-primary-500' },
+  finished: { label: '終了',     bg: 'op-st--finished', text: 'text-gray-800', dot: 'bg-primary-500' },
+  walkover: { label: 'W/O',     bg: 'op-st--walkover',  text: 'text-gray-800',  dot: 'bg-primary-400' },
 };
 
 const DEFAULT_VOICE: VoiceSettings = { rate: 0.95, pitch: 1.0, volume: 1.0, repeatCount: 1 };
@@ -769,48 +769,48 @@ export default function ScoreInputDialog({
   return createPortal(
     // キーボード表示中は visualViewport の高さ・位置に合わせ、見えている領域だけを使う
     <div
-      className="fixed left-0 right-0 z-[100] flex items-center justify-center p-2 sm:p-4"
+      className="op-sid fixed left-0 right-0 z-[100] flex items-center justify-center p-2 sm:p-4"
       style={{ top: viewportOffsetTop, height: viewportHeight || undefined }}
       onClick={onClose}
     >
       {/* Backdrop */}
-      <div className="fixed inset-0 bg-black/25 backdrop-blur-[2px]" />
+      <div className="op-sid__backdrop" />
 
       {/* Dialog — ヘッダー / スクロール本文 / 固定フッター の3段構成 */}
       <div
-        className="relative bg-white rounded-2xl shadow-2xl w-full max-w-[calc(100vw-1rem)] sm:max-w-lg max-h-full flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+        className="op-sid__panel"
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
-        <div className={`shrink-0 bg-gradient-to-r from-primary-600 to-primary-700 text-white px-4 sm:px-6 ${keyboardOpen ? 'py-2' : 'py-3 sm:py-4'}`}>
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="flex items-center gap-2 text-primary-200 text-xs">
-                <span className="font-mono">#{match.matchOrder}</span>
+        <div className={`op-sid__head ${keyboardOpen ? 'is-compact' : ''}`}>
+          <div className="op-sid__headrow">
+            <span className="sec-head__mark op-sid__mark" aria-hidden="true" />
+            <div className="op-sid__heading">
+              <p className="op-sid__crumbs">
+                <span className="op-sid__no">#{match.matchOrder}</span>
                 <ChevronRight className="w-3 h-3" />
                 <span>{match.eventName}</span>
-                <ChevronRight className="w-3 h-3" />
-                <span className="font-bold text-white">{roundName}</span>
-              </div>
+              </p>
+              <h3 className="op-sid__title">{roundName}</h3>
             </div>
-            <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-white/20 transition-colors">
+            <button onClick={onClose} className="sdlg__close" aria-label="閉じる">
               <X className="w-5 h-5" />
             </button>
           </div>
 
           {/* ステータスと経過時間 */}
-          <div className={`flex items-center gap-3 ${keyboardOpen ? 'mt-1.5' : 'mt-3'}`}>
-            <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${statusCfg.bg} ${statusCfg.text}`}>
+          <div className={`op-sid__meta ${keyboardOpen ? 'is-compact' : ''}`}>
+            <span className={`op-st ${statusCfg.bg}`}>
               {statusCfg.label}
             </span>
             {elapsedTime && (
-              <span className="flex items-center gap-1 text-xs text-primary-200">
+              <span className="op-sid__elapsed">
                 <Timer className="w-3.5 h-3.5" />
-                <span className="font-mono font-bold text-white">{elapsedTime}</span>
+                <span>{elapsedTime}</span>
               </span>
             )}
             {match.scheduledTime && match.round === 1 && (
-              <span className="text-xs text-primary-200">予定 {match.scheduledTime}</span>
+              <span className="op-sid__sched">予定 {match.scheduledTime}</span>
             )}
           </div>
         </div>
@@ -821,14 +821,14 @@ export default function ScoreInputDialog({
         {/* ゲームルール表示 */}
         {gameRuleText && (
           <div className={`px-4 sm:px-6 pb-0 ${keyboardOpen ? 'pt-2' : 'pt-3'}`}>
-            <div className="flex items-center gap-2 px-3 py-2 bg-primary-50 rounded-lg border border-primary-200">
-              <BookOpen className="w-4 h-4 text-primary-600 shrink-0" />
-              <span className="text-xs font-bold text-gray-900 flex-1 min-w-0">{gameRuleText}</span>
+            <div className="op-sid__rule">
+              <BookOpen className="w-4 h-4 shrink-0" />
+              <span className="op-sid__rule-tx">{gameRuleText}</span>
               {onEditRules && (
                 <button
                   onClick={onEditRules}
                   title="ゲームルールを修正"
-                  className="shrink-0 inline-flex items-center gap-1 text-[10px] font-bold text-gray-800 bg-white border border-primary-300 rounded-full px-2 py-0.5 hover:bg-primary-100 transition-colors"
+                  className="op-sid__rule-btn"
                 >
                   <Pencil className="w-3 h-3" />修正
                 </button>
@@ -849,7 +849,7 @@ export default function ScoreInputDialog({
                 {/* Player 1 */}
                 <div className="text-center">
                   <p className={`font-bold text-base sm:text-lg leading-tight ${
-                    isP1Winner ? 'text-gray-700' : isP1Loser ? 'text-gray-400' : 'text-gray-900'
+                    isP1Winner ? 'text-[var(--red)]' : isP1Loser ? 'text-gray-400' : 'text-gray-900'
                   }`}>
                     {match.player1Name || '(未定)'}
                     {isP1Winner && <Trophy className="w-4 h-4 inline ml-1 text-primary-500" />}
@@ -857,12 +857,12 @@ export default function ScoreInputDialog({
                   <p className={`text-xs mt-0.5 ${isP1Loser ? 'text-gray-300' : 'text-gray-500'}`}>{match.player1Affiliation}</p>
                 </div>
 
-                <div className="text-gray-300 font-bold text-sm">VS</div>
+                <div className="op-sid__vs">VS</div>
 
                 {/* Player 2 */}
                 <div className="text-center">
                   <p className={`font-bold text-base sm:text-lg leading-tight ${
-                    isP2Winner ? 'text-gray-700' : isP2Loser ? 'text-gray-400' : 'text-gray-900'
+                    isP2Winner ? 'text-[var(--red)]' : isP2Loser ? 'text-gray-400' : 'text-gray-900'
                   }`}>
                     {match.player2Name || '(未定)'}
                     {isP2Winner && <Trophy className="w-4 h-4 inline ml-1 text-primary-500" />}
@@ -876,7 +876,7 @@ export default function ScoreInputDialog({
 
         {/* Score Input — コート未選択・未開始でもスコアを入力できる */}
         <div ref={scoreBoxRef} className={`px-4 sm:px-6 ${keyboardOpen ? 'pb-2' : 'pb-4'} scroll-mt-2`}>
-          <div className={`bg-gray-50 rounded-xl space-y-3 ${keyboardOpen ? 'p-3' : 'p-3 sm:p-4'}`}>
+          <div className={`op-sid__box space-y-3 ${keyboardOpen ? 'p-3' : 'p-3 sm:p-4'}`}>
             {/* コート — 終了後も直せるようにする（記録したコートが違っていたときの修正用） */}
             <div className="flex items-center gap-2 sm:gap-3">
               <span className="text-xs text-gray-500 w-12 sm:w-14 shrink-0">{isFinished ? 'コート修正' : 'コート'}</span>
@@ -891,7 +891,7 @@ export default function ScoreInputDialog({
                   <select
                     value={match.courtId ?? ''}
                     onChange={e => handleAssignCourt(e.target.value)}
-                    className="flex-1 border border-gray-200 rounded-lg text-sm px-2.5 py-1.5 bg-white focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 outline-none"
+                    className="input op-sid__select"
                   >
                     <option value="">未割当</option>
                     {emptyCourts.length > 0 && (
@@ -935,7 +935,7 @@ export default function ScoreInputDialog({
                         value={set.p1}
                         onChange={e => handleSetChange(i, 'p1', e.target.value)}
                         disabled={isFinished}
-                        className="w-12 h-10 text-center text-lg font-bold border border-gray-200 rounded-lg bg-white focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 outline-none disabled:bg-gray-100 disabled:text-gray-500"
+                        className="op-sid__in"
                       />
                       {/* タイブレーク — P1側が敗者の場合ここに表示 */}
                       {tiebreakFlags[i] && loserSide === 'p1' && (
@@ -950,7 +950,7 @@ export default function ScoreInputDialog({
                             value={tiebreaks[i] || ''}
                             onChange={e => handleTiebreakChange(i, e.target.value)}
                             disabled={isFinished}
-                            className="w-10 h-8 text-center text-sm font-bold border border-primary-200 rounded bg-primary-50 focus:border-primary-400 focus:ring-2 focus:ring-primary-300/30 outline-none disabled:bg-primary-50/50 disabled:text-gray-400"
+                            className="op-sid__in op-sid__in--tb"
                           />
                           <span className="text-gray-300 text-[10px]">)</span>
                         </>
@@ -965,7 +965,7 @@ export default function ScoreInputDialog({
                         value={set.p2}
                         onChange={e => handleSetChange(i, 'p2', e.target.value)}
                         disabled={isFinished}
-                        className="w-12 h-10 text-center text-lg font-bold border border-gray-200 rounded-lg bg-white focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 outline-none disabled:bg-gray-100 disabled:text-gray-500"
+                        className="op-sid__in"
                       />
                       {/* タイブレーク — P2側が敗者の場合ここに表示 */}
                       {tiebreakFlags[i] && loserSide === 'p2' && (
@@ -980,7 +980,7 @@ export default function ScoreInputDialog({
                             value={tiebreaks[i] || ''}
                             onChange={e => handleTiebreakChange(i, e.target.value)}
                             disabled={isFinished}
-                            className="w-10 h-8 text-center text-sm font-bold border border-primary-200 rounded bg-primary-50 focus:border-primary-400 focus:ring-2 focus:ring-primary-300/30 outline-none disabled:bg-primary-50/50 disabled:text-gray-400"
+                            className="op-sid__in op-sid__in--tb"
                           />
                           <span className="text-gray-300 text-[10px]">)</span>
                         </>
@@ -1012,7 +1012,7 @@ export default function ScoreInputDialog({
                         }
                       }}
                       disabled={isFinished}
-                      className="w-12 h-10 text-center text-lg font-bold border-2 border-gray-300 rounded-lg bg-gray-50 focus:border-gray-500 focus:ring-2 focus:ring-gray-300/30 outline-none disabled:bg-gray-50/50 disabled:text-gray-500"
+                      className="op-sid__in op-sid__in--stb"
                     />
                     <span className="text-gray-400 font-bold">-</span>
                     <input
@@ -1025,7 +1025,7 @@ export default function ScoreInputDialog({
                         setSuperTB(prev => ({ ...prev, p2: toHalfWidthDigits(e.target.value).slice(0, 2) }));
                       }}
                       disabled={isFinished}
-                      className="w-12 h-10 text-center text-lg font-bold border-2 border-gray-300 rounded-lg bg-gray-50 focus:border-gray-500 focus:ring-2 focus:ring-gray-300/30 outline-none disabled:bg-gray-50/50 disabled:text-gray-500"
+                      className="op-sid__in op-sid__in--stb"
                     />
                     <span className="text-[10px] text-gray-400 font-bold">]</span>
                   </div>
@@ -1038,7 +1038,7 @@ export default function ScoreInputDialog({
 
             {/* スコアバリデーションエラー */}
             {scoreValidationError && canFinish && (
-              <div className="bg-red-50 border border-red-200 rounded-lg p-2 space-y-0.5">
+              <div className="sk-note sk-note--red op-sid__err">
                 {scoreValidationError.map((err, idx) => (
                   <p key={idx} className="text-[11px] text-red-600 font-medium flex items-center gap-1">
                     <AlertCircle className="w-3 h-3 shrink-0" />{err}
@@ -1050,7 +1050,7 @@ export default function ScoreInputDialog({
             {/* 自動勝者判定表示 */}
             {autoWinner && canFinish && !scoreValidationError && (
               <div className="text-center">
-                <span className="text-xs text-gray-700 font-bold">
+                <span className="op-sid__winner">
                   → {autoWinner === 1 ? match.player1Name : match.player2Name} 勝利
                   {retPlayer && (match.status === 'playing' ? ' (DEF/Ret)' : ' (DEF/W.O)')}
                 </span>
@@ -1065,11 +1065,11 @@ export default function ScoreInputDialog({
             <button
               onClick={handleOpenLiveScore}
               disabled={isProcessing || !match.player1Name || !match.player2Name}
-              className="w-full inline-flex items-center justify-center gap-2 text-sm font-bold px-4 py-3.5 rounded-xl bg-gradient-to-r from-[#d2504c] to-[#D8232A] text-white hover:brightness-110 active:scale-[0.98] disabled:opacity-40 transition-all min-h-[48px] shadow-lg shadow-[#D8232A]/30"
+              className="btn btn--outline op-sid__btn op-sid__btn--block op-sid__btn--red op-sid__btn--live"
             >
               <Radio className="w-5 h-5" />
               {hasLiveScore ? 'ライブスコアを再開' : 'ライブスコア開始'}
-              <span className="text-[10px] font-bold bg-white/20 rounded-full px-2 py-0.5">観戦ページへ配信</span>
+              <span className="op-sid__tag">観戦ページへ配信</span>
             </button>
             {/* キーボード表示中は説明文を省いて高さを稼ぐ */}
             {!keyboardOpen && (
@@ -1084,18 +1084,14 @@ export default function ScoreInputDialog({
         {!isFinished && (
           <div className="px-4 sm:px-6 pb-3">
             <div className="space-y-2">
-              <span className="text-xs font-bold text-red-600 flex items-center gap-1.5">
+              <span className="op-sid__label op-sid__label--red">
                 <UserX className="w-3.5 h-3.5" />
                 DEF（{hasAnyScore ? '途中棄権 Ret' : '棄権 W.O'}）
               </span>
               <div className="grid grid-cols-2 gap-2">
                 <button
                   onClick={() => setRetPlayer(retPlayer === 1 ? null : 1)}
-                  className={`flex items-center justify-center gap-2 text-sm font-bold py-3.5 rounded-xl border-2 transition-all active:scale-[0.98] min-h-[52px] ${
-                    retPlayer === 1
-                      ? 'bg-red-100 border-red-400 text-red-700 shadow-sm'
-                      : 'bg-white border-gray-200 text-gray-500 hover:border-red-300 hover:text-red-500 hover:bg-red-50'
-                  }`}
+                  className={`op-sid__def ${retPlayer === 1 ? 'is-on' : ''}`}
                 >
                   <UserX className="w-4 h-4 shrink-0" />
                   <span className="truncate">{match.player1Name || 'P1'}</span>
@@ -1103,11 +1099,7 @@ export default function ScoreInputDialog({
                 </button>
                 <button
                   onClick={() => setRetPlayer(retPlayer === 2 ? null : 2)}
-                  className={`flex items-center justify-center gap-2 text-sm font-bold py-3.5 rounded-xl border-2 transition-all active:scale-[0.98] min-h-[52px] ${
-                    retPlayer === 2
-                      ? 'bg-red-100 border-red-400 text-red-700 shadow-sm'
-                      : 'bg-white border-gray-200 text-gray-500 hover:border-red-300 hover:text-red-500 hover:bg-red-50'
-                  }`}
+                  className={`op-sid__def ${retPlayer === 2 ? 'is-on' : ''}`}
                 >
                   <UserX className="w-4 h-4 shrink-0" />
                   <span className="truncate">{match.player2Name || 'P2'}</span>
@@ -1124,19 +1116,19 @@ export default function ScoreInputDialog({
             {canCall && (
               isSpeaking ? (
                 <button onClick={() => stop()}
-                  className="inline-flex items-center gap-1.5 text-sm px-3 py-2.5 rounded-xl bg-red-600 text-white hover:bg-red-700 active:scale-[0.98] transition-all min-h-[44px]">
+                  className="btn btn--primary op-sid__btn">
                   <VolumeX className="w-4 h-4" /> 停止
                 </button>
               ) : (
                 <button onClick={handleCall}
-                  className="inline-flex items-center gap-1.5 text-sm px-3 py-2.5 rounded-xl bg-primary-600 text-white hover:bg-primary-700 active:scale-[0.98] transition-all min-h-[44px]">
+                  className="btn btn--outline op-sid__btn op-sid__btn--red">
                   <Volume2 className="w-4 h-4" /> コール
                 </button>
               )
             )}
             {(match.status === 'ready' || match.status === 'playing' || isFinished) && (
               <button onClick={handleResetMatch} disabled={isProcessing}
-                className="inline-flex items-center gap-1.5 text-sm px-3 py-2.5 rounded-xl border border-red-200 text-red-600 hover:bg-red-50 active:scale-[0.98] transition-all min-h-[44px]">
+                className="btn btn--outline op-sid__btn">
                 <RotateCcw className="w-4 h-4" /> リセット
               </button>
             )}
@@ -1147,19 +1139,19 @@ export default function ScoreInputDialog({
 
         {/* ===== フッター（試合開始・結果確定）— キーボード表示中も常に見える ===== */}
         {(canReady || canStart || canFinish) && (
-          <div className={`shrink-0 border-t border-gray-100 bg-white px-4 sm:px-6 space-y-2 ${keyboardOpen ? 'py-2' : 'py-3'}`}>
+          <div className={`op-sid__foot space-y-2 ${keyboardOpen ? 'py-2' : 'py-3'}`}>
             {/* 準備完了 / 試合開始 */}
             {(canReady || canStart) && (
               <div className="flex gap-2">
                 {canReady && (
                   <button onClick={handleReadyMatch} disabled={isProcessing}
-                    className="flex-1 inline-flex items-center justify-center gap-2 text-sm font-bold px-4 py-3.5 rounded-xl bg-gray-600 text-white hover:bg-gray-700 active:scale-[0.98] disabled:opacity-50 transition-all min-h-[48px]">
+                    className="btn op-sid__btn op-sid__btn--grow op-sid__btn--gray">
                     <Check className="w-5 h-5" /> 準備完了
                   </button>
                 )}
                 {canStart && (
                   <button onClick={handleStartMatch} disabled={isProcessing}
-                    className="flex-1 inline-flex items-center justify-center gap-2 text-sm font-bold px-4 py-3.5 rounded-xl bg-primary-600 text-white hover:bg-primary-700 active:scale-[0.98] disabled:opacity-50 transition-all min-h-[48px]">
+                    className="btn btn--primary op-sid__btn op-sid__btn--grow">
                     <Play className="w-5 h-5" /> 試合開始
                   </button>
                 )}
@@ -1171,18 +1163,18 @@ export default function ScoreInputDialog({
               <div className="space-y-2">
                 {/* キーボード表示中は見出しを省いて確定ボタンを優先表示する */}
                 {!keyboardOpen && (
-                  <span className="text-xs font-bold text-gray-600 flex items-center gap-1.5">
-                    <Trophy className="w-3.5 h-3.5 text-primary-500" />
+                  <span className="op-sid__label">
+                    <Trophy className="w-3.5 h-3.5" />
                     結果を確定
                   </span>
                 )}
                 {autoWinner && !scoreValidationError ? (
                   <button onClick={() => handleFinishMatch(autoWinner)} disabled={isProcessing}
-                    className={`w-full inline-flex items-center justify-center gap-2 text-base font-bold px-4 rounded-xl bg-primary-600 text-white hover:bg-primary-700 active:scale-[0.98] disabled:opacity-50 transition-all shadow-lg shadow-primary-500/25 ${keyboardOpen ? 'py-3 min-h-[48px]' : 'py-4 min-h-[56px]'}`}>
+                    className={`btn btn--primary op-sid__btn op-sid__btn--block op-sid__btn--finish ${keyboardOpen ? 'is-compact' : ''}`}>
                     <Trophy className="w-5 h-5" /> 結果確定（{autoWinner === 1 ? match.player1Name : match.player2Name} 勝利）
                   </button>
                 ) : (
-                  <div className={`w-full text-center text-[11px] text-gray-400 bg-gray-50 border border-dashed border-gray-200 rounded-xl ${keyboardOpen ? 'py-2' : 'py-3'}`}>
+                  <div className={`op-sid__hint ${keyboardOpen ? 'py-2' : 'py-3'}`}>
                     負け側のスコアを入力すると勝者側が自動入力され、確定できます
                   </div>
                 )}

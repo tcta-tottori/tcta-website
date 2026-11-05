@@ -94,7 +94,7 @@ export default function TournamentInfo() {
         <p className="text-xs text-gray-500">ドロー会議システムから大会情報を取得します。</p>
         <button
           onClick={loadInfo}
-          className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-white bg-primary-500 rounded-md hover:bg-primary-700 transition-colors"
+          className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-white bg-primary-500 rounded hover:bg-primary-700 transition-colors"
         >
           <RefreshCw className="w-3.5 h-3.5" />
           情報を取得
@@ -102,7 +102,7 @@ export default function TournamentInfo() {
       </div>
 
       {error && (
-        <div className="p-3 rounded-lg text-sm bg-red-50 text-red-800 border border-red-200 flex items-start gap-2">
+        <div className="p-3 rounded text-sm bg-red-50 text-red-800 border border-red-200 flex items-start gap-2">
           <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
           <span>{error}</span>
         </div>
@@ -111,7 +111,7 @@ export default function TournamentInfo() {
       {loaded && tournamentData && tournamentData.length > 0 && (
         <div className="space-y-3">
           {tournamentData.map((t, idx) => (
-            <div key={idx} className="bg-primary-50 rounded-lg p-3 border border-primary-100">
+            <div key={idx} className="bg-primary-50 rounded p-3 border border-primary-100">
               <h3 className="font-bold text-gray-700 text-sm mb-2 flex items-center gap-1.5">
                 <Info className="w-4 h-4" />
                 {t.name}
@@ -156,7 +156,7 @@ export default function TournamentInfo() {
       )}
 
       {loaded && drawSummaries.length > 0 && (
-        <div className="bg-white rounded-lg border border-border-main overflow-hidden">
+        <div className="bg-white rounded border border-border-main overflow-hidden">
           <table className="w-full text-xs">
             <thead className="bg-primary-50">
               <tr>

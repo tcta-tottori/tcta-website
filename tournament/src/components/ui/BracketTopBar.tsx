@@ -86,100 +86,88 @@ export default function BracketTopBar({
 
   return (
     <div
-      className={`sticky top-0 z-30 shrink-0 bg-white border-b px-3 py-2 shadow-sm ${fullBleedClass}`}
+      className={`dl-bar ${fullBleedClass}`}
       onTouchStart={onTouchStart}
       onTouchEnd={onTouchEnd}
     >
-      <div className="flex items-center gap-2">
-        <button onClick={gotoPrev} className="p-1 rounded hover:bg-gray-100" aria-label="前のクラス">
-          <ChevronLeft className="w-5 h-5" />
+      <div className="dl-bar__row">
+        <button onClick={gotoPrev} className="dl-arrow" aria-label="前のクラス">
+          <ChevronLeft />
         </button>
 
-        <div className="flex-1 min-w-0 text-center">
-          <h2 className="text-base font-bold text-gray-800 truncate">
-            <Trophy className="w-4 h-4 inline-block mr-1 text-primary-500" />
-            {current?.label || 'トーナメント'}
+        <div className="dl-title">
+          <h2 className="dl-title__btn" style={{ cursor: 'default' }}>
+            <Trophy className="w-4 h-4 shrink-0" />
+            <span>{current?.label || 'トーナメント'}</span>
           </h2>
-          {subtitle && <p className="text-[10px] text-gray-500 truncate mt-0.5">{subtitle}</p>}
+          {subtitle && <p className="dl-title__sub">{subtitle}</p>}
         </div>
 
-        <button onClick={gotoNext} className="p-1 rounded hover:bg-gray-100" aria-label="次のクラス">
-          <ChevronRight className="w-5 h-5" />
+        <button onClick={gotoNext} className="dl-arrow" aria-label="次のクラス">
+          <ChevronRight />
         </button>
       </div>
 
-      {/* 進捗バー */}
-      <div className="flex items-center gap-3 mt-1.5 text-[10px]">
-        <div className="flex-1 flex items-center gap-1.5">
-          <div className="flex-1 h-1.5 bg-gray-200 rounded-full overflow-hidden">
-            <div className="h-full bg-primary-500 rounded-full transition-all" style={{ width: `${pct}%` }} />
+      {/* 表示回戦の絞り込み（左）・進捗バー（中央・伸縮）・右側のボタン群（固定）を 1 行に。
+          「3回戦以降」など文字数が変わっても右のボタンが動かないよう、ラベルは固定幅。 */}
+      <div className="dl-bar__row">
+        {canAdjustRounds && onStartRoundChange ? (
+          <div className="dl-rounds">
+            <button
+              onClick={() => onStartRoundChange(Math.max(0, startRound - 1))}
+              disabled={startRound === 0}
+              title="前の回戦を表示する"
+              aria-label="前の回戦を表示する"
+            >
+              <ChevronLeft />
+            </button>
+            <button
+              onClick={() => onStartRoundChange(null)}
+              className={`dl-rounds__label ${startRound === 0 ? '' : 'is-on'}`}
+              title="タップで自動（決着済みの回戦を省略）に戻す"
+            >
+              {startRound === 0 ? <Eye /> : <EyeOff />}
+              {/* ラベルの幅を固定して、回戦が変わってもボタンが動かないようにする */}
+              <span>{startRoundLabel}</span>
+            </button>
+            <button
+              onClick={() => onStartRoundChange(Math.min(maxStartRound, startRound + 1))}
+              disabled={startRound >= maxStartRound}
+              title="終わった回戦を隠す"
+              aria-label="終わった回戦を隠す"
+            >
+              <ChevronRight />
+            </button>
           </div>
-          <span className="text-gray-500 whitespace-nowrap">
+        ) : null}
+
+        {/* 進捗バー */}
+        <div className="dl-progress">
+          <div className="dl-progress__track">
+            <div className="dl-progress__fill" style={{ width: `${pct}%` }} />
+          </div>
+          <span className="dl-progress__num">
             {current?.finished ?? 0}/{current?.total ?? 0} ({pct}%)
           </span>
         </div>
         {playing > 0 && (
-          <span className="flex items-center gap-0.5 text-gray-700 font-bold">
-            <Timer className="w-3 h-3" />
+          <span className="dl-playing">
+            <Timer />
             {playing}試合中
           </span>
         )}
+
+        {right && <div className="dl-tools">{right}</div>}
       </div>
 
-      {/* 表示回戦の絞り込み（左寄せ）と、右側のボタン群。
-          「3回戦以降」など文字数が変わっても右のボタンが動かないよう、
-          左のまとまりだけを伸縮させて右は固定で置く。 */}
-      {(canAdjustRounds || right) && (
-        <div className="flex items-center justify-between gap-2 mt-1.5">
-          <div className="flex-1 min-w-0 flex items-center">
-          {canAdjustRounds && onStartRoundChange ? (
-            <div className="flex items-center gap-1 rounded-full border border-gray-200 bg-gray-50 px-1 py-0.5">
-              <button
-                onClick={() => onStartRoundChange(Math.max(0, startRound - 1))}
-                disabled={startRound === 0}
-                className="p-0.5 rounded-full text-gray-500 hover:bg-gray-200 disabled:opacity-30 disabled:hover:bg-transparent"
-                title="前の回戦を表示する"
-                aria-label="前の回戦を表示する"
-              >
-                <ChevronLeft className="w-3.5 h-3.5" />
-              </button>
-              <button
-                onClick={() => onStartRoundChange(null)}
-                className="flex items-center gap-1 px-1.5 text-[10px] font-bold text-gray-600 whitespace-nowrap"
-                title="タップで自動（決着済みの回戦を省略）に戻す"
-              >
-                {startRound === 0
-                  ? <Eye className="w-3 h-3 text-gray-400" />
-                  : <EyeOff className="w-3 h-3 text-primary-500" />}
-                {/* ラベルの幅を固定して、回戦が変わってもボタンが動かないようにする */}
-                <span className="inline-block w-[52px] text-center">{startRoundLabel}</span>
-              </button>
-              <button
-                onClick={() => onStartRoundChange(Math.min(maxStartRound, startRound + 1))}
-                disabled={startRound >= maxStartRound}
-                className="p-0.5 rounded-full text-gray-500 hover:bg-gray-200 disabled:opacity-30 disabled:hover:bg-transparent"
-                title="終わった回戦を隠す"
-                aria-label="終わった回戦を隠す"
-              >
-                <ChevronRight className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          ) : null}
-          </div>
-          <div className="shrink-0 flex items-center gap-1.5">{right}</div>
-        </div>
-      )}
-
-      {/* クラスタブ（小さいドット） */}
+      {/* クラスタブ（小さい四角） */}
       {tabs.length > 1 && (
-        <div className="flex items-center justify-center gap-1 mt-1.5">
+        <div className="dl-dots">
           {tabs.map((t, i) => (
             <button
               key={t.id}
               onClick={() => onSelect(t.id)}
-              className={`w-2 h-2 rounded-full transition-all ${
-                i === idx ? 'bg-primary-500 scale-125' : 'bg-gray-300 hover:bg-gray-400'
-              }`}
+              className={i === idx ? 'is-current' : ''}
               title={t.label}
               aria-label={t.label}
             />

@@ -32,10 +32,10 @@ interface MatchTheme {
  */
 const NEUTRAL_MATCH_THEME: MatchTheme = {
   grad: 'from-gray-600 to-gray-700',
-  bg: 'bg-gradient-to-br from-gray-50 to-white',
+  bg: 'bg-gray-50',
   border: 'border-gray-200',
   text: 'text-gray-700',
-  badge: 'bg-gradient-to-br from-gray-600 to-gray-700 text-white',
+  badge: 'bg-gray-600 text-white',
   ring: 'focus:ring-gray-400 focus:border-gray-500',
   accentBorder: 'border-gray-300',
   softBg: 'bg-gray-100/60',
@@ -166,11 +166,11 @@ function PlayerPickerPopup({
   return createPortal(
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[130] flex items-center justify-center p-3" onClick={onClose}>
       <div
-        className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[92vh] flex flex-col overflow-hidden"
+        className="bg-white rounded-2xl w-full max-w-md max-h-[92vh] flex flex-col overflow-hidden"
         onClick={e => e.stopPropagation()}
       >
         {/* ヘッダー（対戦チーム別カラー） */}
-        <div className={`bg-gradient-to-br ${teamTheme.grad} px-4 py-3 text-white flex items-center justify-between shrink-0`}>
+        <div className={`tm-flat ${teamTheme.grad} px-4 py-3 text-white flex items-center justify-between shrink-0`}>
           <div className="min-w-0">
             <div className="text-[10px] opacity-90 font-bold uppercase tracking-wider">{title}</div>
             <div className="text-sm font-black truncate">{teamName}</div>
@@ -202,7 +202,7 @@ function PlayerPickerPopup({
                         isUsed
                           ? 'bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed opacity-60'
                           : isSelected
-                          ? `${teamTheme.bgStrong} ${teamTheme.borderStrong} ${teamTheme.textStrong} shadow-sm`
+                          ? `${teamTheme.bgStrong} ${teamTheme.borderStrong} ${teamTheme.textStrong}`
                           : `${teamTheme.btnBg} ${teamTheme.btnBorder} ${teamTheme.btnText} active:scale-95`
                       }`}
                     >
@@ -305,7 +305,7 @@ function PlayerPickerPopup({
                   type="submit"
                   disabled={!manualTrim}
                   title={manualIsDuplicate ? 'この名前はこの対戦で出場済みですが、そのまま追加できます' : undefined}
-                  className={`px-3 py-2 rounded-lg text-xs font-bold text-white bg-gradient-to-br ${manualIsDuplicate ? 'from-primary-500 to-primary-600' : teamTheme.grad} disabled:opacity-30 active:scale-95`}
+                  className={`px-3 py-2 rounded-lg text-xs font-bold text-white tm-flat ${manualIsDuplicate ? 'from-primary-500 to-primary-600' : teamTheme.grad} disabled:opacity-30 active:scale-95`}
                 >
                   <Check className="w-4 h-4" />
                 </button>
@@ -848,11 +848,11 @@ export default function TeamScoreInput({
   return createPortal(
     <div className="fixed inset-0 bg-black/40 z-[100]" onClick={onClose}>
       <div
-        className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-2xl shadow-2xl w-[480px] max-w-[95vw] max-h-[90vh] overflow-y-auto z-[110]"
+        className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-2xl w-[480px] max-w-[95vw] max-h-[90vh] overflow-y-auto z-[110]"
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="bg-gradient-to-r from-gray-700 to-gray-800 text-white px-5 py-3">
+        <div className="bg-gray-700 text-white px-5 py-3">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="font-bold text-sm">団体戦スコア入力</h3>
@@ -877,7 +877,7 @@ export default function TeamScoreInput({
           <div className="flex items-stretch gap-2 mb-2">
             <div className={`flex-1 flex flex-col items-center justify-center text-center py-2.5 px-3 rounded-xl border-2 transition-all min-h-[56px] ${
               overallWinner === 1
-                ? 'bg-gradient-to-b from-primary-50 to-primary-100/60 border-primary-400 shadow-sm'
+                ? 'bg-primary-50 border-primary-400'
                 : overallWinner === 2
                 ? 'bg-gray-50 border-gray-200'
                 : `${TEAM_THEME[1].bg} ${TEAM_THEME[1].border}`
@@ -893,7 +893,7 @@ export default function TeamScoreInput({
             </div>
             <div className={`flex-1 flex flex-col items-center justify-center text-center py-2.5 px-3 rounded-xl border-2 transition-all min-h-[56px] ${
               overallWinner === 2
-                ? 'bg-gradient-to-b from-primary-50 to-primary-100/60 border-primary-400 shadow-sm'
+                ? 'bg-primary-50 border-primary-400'
                 : overallWinner === 1
                 ? 'bg-gray-50 border-gray-200'
                 : `${TEAM_THEME[2].bg} ${TEAM_THEME[2].border}`
@@ -914,7 +914,7 @@ export default function TeamScoreInput({
             <div className="flex items-baseline gap-1">
               <span className={`text-5xl font-black tabular-nums leading-none ${
                 overallWinner > 0
-                  ? 'bg-gradient-to-br from-primary-500 to-primary-600 bg-clip-text text-transparent'
+                  ? 'bg-primary-500 bg-clip-text text-transparent'
                   : 'text-gray-300'
               }`}>
                 {winTally.t1}
@@ -924,7 +924,7 @@ export default function TeamScoreInput({
               }`}>-</span>
               <span className={`text-5xl font-black tabular-nums leading-none ${
                 overallWinner > 0
-                  ? 'bg-gradient-to-br from-primary-500 to-primary-600 bg-clip-text text-transparent'
+                  ? 'bg-primary-500 bg-clip-text text-transparent'
                   : 'text-gray-300'
               }`}>
                 {winTally.t2}
@@ -949,23 +949,23 @@ export default function TeamScoreInput({
                 : `border-gray-300 ${theme.ring}`;
 
               return (
-                <div key={mt} className={`rounded-2xl border-2 ${theme.border} ${theme.bg} p-3 shadow-sm transition-all overflow-hidden`}>
+                <div key={mt} className={`rounded-2xl border-2 ${theme.border} ${theme.bg} p-3 transition-all overflow-hidden`}>
                   {/* Match type label */}
                   <div className="flex items-center justify-between mb-2.5">
                     <div className="flex items-center gap-2">
-                      <span className={`inline-flex items-center justify-center px-2.5 h-7 ${theme.badge} text-xs font-black rounded-lg shadow-sm tracking-wider`}>
+                      <span className={`inline-flex items-center justify-center px-2.5 h-7 ${theme.badge} text-xs font-black rounded-lg tracking-wider`}>
                         {MATCH_TYPE_SHORT[mt]}
                       </span>
                       <span className={`text-xs font-bold ${theme.text}`}>{MATCH_TYPE_LABELS[mt]}</span>
                       {terminated[mt] && (
-                        <span className="text-[9px] font-black text-gray-700 bg-primary-50 border border-primary-300 px-1.5 py-0.5 rounded-full tracking-wider">
+                        <span className="text-[9px] font-black text-gray-700 bg-primary-50 border border-primary-300 px-1.5 py-0.5 rounded tracking-wider">
                           打ち切り
                         </span>
                       )}
                     </div>
                     <div className="flex items-center gap-1.5">
                       {hasScores && info.winner > 0 && !terminated[mt] && (
-                        <span className="text-[10px] font-bold text-gray-700 bg-white border border-primary-300 px-2 py-0.5 rounded-full">
+                        <span className="text-[10px] font-bold text-gray-700 bg-white border border-primary-300 px-2 py-0.5 rounded">
                           <Trophy className="w-2.5 h-2.5 inline mr-0.5" />
                           {info.winner === 1 ? team1Name : team2Name}
                         </span>
@@ -1175,7 +1175,7 @@ export default function TeamScoreInput({
           <button
             type="button"
             onClick={onClose}
-            className="w-full flex items-center justify-center gap-2 px-4 py-3 min-h-[48px] rounded-xl transition-all shadow-md text-sm font-medium mb-3 active:scale-[0.98] bg-gradient-to-r from-gray-600 to-gray-700 text-white hover:from-gray-700 hover:to-gray-800"
+            className="w-full flex items-center justify-center gap-2 px-4 py-3 min-h-[48px] rounded-xl transition-all text-sm font-medium mb-3 active:scale-[0.98] bg-gray-600 text-white hover:bg-gray-700"
           >
             <Check size={14} />
             閉じる {filledCount > 0 && `(${filledCount}/${matchTypeOrder.length} 自動保存済み)`}

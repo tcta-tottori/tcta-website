@@ -57,21 +57,24 @@ export default function LeagueCourtDialog({
   const blocks = chunk(courts, BLOCK_SIZE);
 
   return (
-    <div className="fixed inset-0 bg-black/50 z-[9999] flex items-center justify-center p-4" onClick={onClose}>
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center psd-overlay" onClick={onClose} role="dialog" aria-modal="true">
       <div
-        className="bg-white rounded-xl shadow-2xl max-w-md w-full p-5 space-y-4 max-h-[90vh] overflow-y-auto"
+        className="psd-panel psd-panel--sm"
         onClick={e => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between">
-          <h3 className="text-base font-bold text-gray-900 flex items-center gap-1.5">
-            <MapPin className="w-4 h-4 text-primary-600" />リーグの使用コート
-          </h3>
-          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors">
-            <X className="w-5 h-5 text-gray-500" />
+        <div className="sdlg__head psd-head psd-head--plain">
+          <span className="sec-head__mark sdlg__mark" aria-hidden="true" />
+          <div className="sdlg__heading">
+            <p className="sdlg__eyebrow">LEAGUE COURTS</p>
+            <h3 className="sdlg__title"><MapPin className="w-5 h-5 text-primary-600" />リーグの使用コート</h3>
+          </div>
+          <button onClick={onClose} className="sdlg__close" aria-label="閉じる">
+            <X className="w-5 h-5" />
           </button>
         </div>
+        <div className="psd-body space-y-4">
 
-        <div className="p-3 bg-gray-50 rounded-lg text-sm">
+        <div className="psd-box text-sm">
           <span className="font-medium">{eventName}</span>
           <p className="text-[11px] text-gray-500 mt-1 leading-snug">
             このリーグを行うコートを{MAX_LEAGUE_COURTS}面まで選べます。
@@ -84,7 +87,7 @@ export default function LeagueCourtDialog({
         ) : (
           <div className="space-y-2">
             {blocks.map((block, bi) => (
-              <div key={bi} className="border border-primary-200 bg-primary-50/40 rounded-lg p-2">
+              <div key={bi} className="psd-box psd-courtblock">
                 <div className="text-[10px] font-bold text-gray-800 mb-1.5 px-0.5">
                   {block.length > 1
                     ? `${block[0].name}〜${block[block.length - 1].name}番コート`
@@ -100,13 +103,7 @@ export default function LeagueCourtDialog({
                         onClick={() => !blocked && toggle(c.courtId)}
                         disabled={blocked}
                         title={c.takenBy ? `${c.takenBy} が使用中` : undefined}
-                        className={`flex flex-col items-center justify-center py-2 rounded-lg border transition-colors ${
-                          isSelected
-                            ? 'bg-primary-600 text-white border-primary-600 shadow-sm'
-                            : blocked
-                              ? 'bg-gray-200 text-gray-400 border-gray-200 cursor-not-allowed'
-                              : 'bg-white text-gray-700 border-gray-300 hover:border-primary-400'
-                        }`}
+                        className={`psd-cnum psd-cnum--col ${isSelected ? 'is-on' : blocked ? 'is-off' : ''}`}
                       >
                         <span className="text-base font-black leading-none">{c.name}</span>
                         <span className="text-[9px] font-bold leading-none mt-1 opacity-90">
@@ -121,19 +118,20 @@ export default function LeagueCourtDialog({
           </div>
         )}
 
-        <div className="flex gap-2 pt-1 border-t border-gray-100">
+        <div className="flex gap-2 pt-4 border-t border-gray-100">
           <button
             onClick={() => onSave([])}
-            className="px-4 py-2.5 text-sm font-bold text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+            className="btn btn--outline psd-btn"
           >
             割り当てを解除
           </button>
           <button
             onClick={() => onSave(selected)}
-            className="flex-1 px-4 py-2.5 text-sm font-bold text-white bg-primary-600 rounded-lg hover:bg-primary-700 transition-colors"
+            className="btn btn--primary psd-btn"
           >
             {selected.length > 0 ? `${selected.length}面で決定` : '決定'}
           </button>
+        </div>
         </div>
       </div>
     </div>

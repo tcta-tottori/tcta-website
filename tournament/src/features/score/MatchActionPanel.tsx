@@ -436,7 +436,7 @@ export default function MatchActionPanel({
 
   if (!match) {
     return (
-      <div className="h-full flex flex-col items-center justify-center p-8 bg-white rounded-xl shadow-lg border border-border-main">
+      <div className="h-full flex flex-col items-center justify-center p-8 bg-white rounded-sm border border-border-main">
         <MonitorPlay className="w-12 h-12 text-gray-300 mb-3" />
         <p className="text-gray-500 font-medium">試合を選択してください</p>
       </div>
@@ -460,7 +460,7 @@ export default function MatchActionPanel({
 
   return (
     <>
-    <div className="h-full flex flex-col bg-white rounded-xl shadow-lg border border-border-main overflow-hidden">
+    <div className="h-full flex flex-col bg-white rounded-sm border border-border-main overflow-hidden">
       {/* ---- Header ---- */}
       <div className="flex items-center justify-between px-5 py-3 border-b border-border-main bg-gray-50/60">
         <div className="min-w-0">
@@ -626,7 +626,7 @@ export default function MatchActionPanel({
                   <button
                     onClick={() => handleFinishMatch(aw as 1 | 2)}
                     disabled={isProcessing}
-                    className="inline-flex items-center gap-1.5 text-sm font-medium px-4 py-2 rounded-lg bg-primary-600 text-white hover:bg-primary-700 active:bg-primary-800 disabled:opacity-50 transition-colors shadow-lg shadow-primary-500/25"
+                    className="inline-flex items-center gap-1.5 text-sm font-medium px-4 py-2 rounded-lg bg-primary-600 text-white hover:bg-primary-700 active:bg-primary-800 disabled:opacity-50 transition-colors"
                   >
                     <Trophy className="w-4 h-4" />
                     結果確定

@@ -22,8 +22,8 @@ export default function TeamCallStatusBubble() {
       role="status"
       aria-live="polite"
     >
-      <div className="bg-white rounded-2xl shadow-2xl border-2 border-primary-400 overflow-hidden">
-        <div className="bg-gradient-to-r from-primary-500 to-primary-600 px-4 py-2 flex items-center gap-2 text-white">
+      <div className="bg-white rounded-2xl border-2 border-primary-400 overflow-hidden">
+        <div className="bg-primary-500 px-4 py-2 flex items-center gap-2 text-white">
           <span className="relative flex h-2.5 w-2.5">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75" />
             <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-white" />

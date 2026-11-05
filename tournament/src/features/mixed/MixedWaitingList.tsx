@@ -203,10 +203,10 @@ export default function MixedWaitingList() {
         const isSpeakingThis = speakingMatchId === match.matchId;
 
         return (
-          <div key={match.matchId} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+          <div key={match.matchId} className="bg-white rounded-xl border border-gray-200 overflow-hidden">
             {/* ヘッダー: カテゴリ + 回戦 */}
             <div className="flex items-center gap-2 px-3 py-2.5 bg-gray-50 border-b border-gray-100">
-              <span className={`px-2.5 py-1 rounded-full text-xs font-bold border ${CATEGORY_COLORS[category]}`}>
+              <span className={`px-2.5 py-1 rounded text-xs font-bold border ${CATEGORY_COLORS[category]}`}>
                 {CATEGORY_LABELS[category]}
               </span>
               <span className="text-xs font-medium text-gray-600">{roundLabel}</span>
@@ -275,7 +275,7 @@ export default function MixedWaitingList() {
         return (
           <div className="fixed inset-0 bg-black/40 z-50 overflow-y-auto" onClick={() => setCourtAssignWm(null)}>
             <div className="min-h-full flex items-start justify-center py-[10vh] px-4">
-              <div className="bg-white rounded-2xl shadow-2xl w-[380px] max-w-full p-5 z-50" onClick={e => e.stopPropagation()}>
+              <div className="bg-white rounded-2xl w-[380px] max-w-full p-5 z-50" onClick={e => e.stopPropagation()}>
                 <h3 className="text-sm font-bold text-gray-800 mb-3">コートを決定</h3>
                 <div className="bg-gray-50 rounded-lg p-3 mb-3 text-xs">
                   <div className="text-gray-500 mb-1.5">{catLabel} {roundLabel}</div>

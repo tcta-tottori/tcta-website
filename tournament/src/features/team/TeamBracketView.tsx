@@ -41,10 +41,10 @@ function renderCategoryShortLabel(label: string): React.ReactNode {
 }
 
 const CATEGORY_CONFIG: Record<PlacementCategory, { grad: string; bg: string; text: string; icon: typeof Trophy }> = {
-  '1st': { grad: 'from-primary-400 to-primary-500', bg: 'bg-primary-50', text: 'text-gray-800', icon: Trophy },
-  '2nd': { grad: 'from-gray-400 to-gray-500', bg: 'bg-gray-50', text: 'text-gray-700', icon: Medal },
-  '3rd': { grad: 'from-gray-400 to-gray-500', bg: 'bg-gray-50', text: 'text-gray-700', icon: Award },
-  '4th': { grad: 'from-gray-400 to-gray-500', bg: 'bg-gray-50', text: 'text-gray-700', icon: Sparkles },
+  '1st': { grad: 'from-primary-500 to-primary-600', bg: 'bg-primary-50', text: 'text-gray-800', icon: Trophy },
+  '2nd': { grad: 'from-gray-700 to-gray-800', bg: 'bg-gray-50', text: 'text-gray-700', icon: Medal },
+  '3rd': { grad: 'from-gray-700 to-gray-800', bg: 'bg-gray-50', text: 'text-gray-700', icon: Award },
+  '4th': { grad: 'from-gray-700 to-gray-800', bg: 'bg-gray-50', text: 'text-gray-700', icon: Sparkles },
 };
 
 
@@ -186,15 +186,15 @@ export default function TeamBracketView() {
   }
 
   return (
-    <div className="space-y-4 pb-20">
+    <div className="tm-page">
       {/* モバイル: メインタブ: トーナメント / 控えリスト（セグメント切替） */}
       <div className="flex justify-center lg:hidden">
-        <div className="inline-flex bg-gray-100 rounded-xl p-1 gap-1">
+        <div className="inline-flex bg-white border border-gray-200 rounded p-1 gap-1">
           <button
             onClick={() => setViewMode('bracket')}
             className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold transition-all ${
               viewMode === 'bracket'
-                ? 'bg-white text-gray-800 shadow-sm'
+                ? 'bg-[var(--ink)] text-white'
                 : 'text-gray-500 hover:text-gray-700'
             }`}
           >
@@ -205,14 +205,14 @@ export default function TeamBracketView() {
             onClick={() => setViewMode('waiting')}
             className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold transition-all ${
               viewMode === 'waiting'
-                ? 'bg-white text-gray-800 shadow-sm'
+                ? 'bg-[var(--ink)] text-white'
                 : 'text-gray-500 hover:text-gray-700'
             }`}
           >
             <ClipboardList className="w-3.5 h-3.5" />
             控えリスト
             {waitingMatches.length > 0 && (
-              <span className="bg-primary-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none">{waitingMatches.length}</span>
+              <span className="bg-primary-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded leading-none">{waitingMatches.length}</span>
             )}
           </button>
         </div>
@@ -240,7 +240,7 @@ export default function TeamBracketView() {
               <ClipboardList className="w-4 h-4 text-gray-500" />
               <span className="text-sm font-black text-gray-700">控えリスト</span>
               {waitingMatches.length > 0 && (
-                <span className="bg-primary-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none">{waitingMatches.length}</span>
+                <span className="bg-primary-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded leading-none">{waitingMatches.length}</span>
               )}
             </div>
             <TeamWaitingList
@@ -254,9 +254,9 @@ export default function TeamBracketView() {
         </div>
 
         {/* 右カラム（PC）/ フルワイド（モバイル）: トーナメント表示 */}
-        <div className={`lg:w-2/3 lg:shrink-0 space-y-4 ${viewMode !== 'bracket' ? 'hidden lg:block' : ''}`}>
+        <div className={`lg:flex-1 lg:min-w-0 space-y-4 ${viewMode !== 'bracket' ? 'hidden lg:block' : ''}`}>
       {/* カテゴリタブ（リッチカラー文字） */}
-      <div className="-mx-2 px-2">
+      <div className="tm-tabs tm-tabs--static">
         <div className="chrome-tab-bar">
           <button
             onClick={() => setShowAllBrackets(true)}
@@ -320,7 +320,7 @@ export default function TeamBracketView() {
               }
             }
           }}
-          className="flex items-center justify-center py-2.5 rounded-xl text-xs font-black tracking-wider bg-gradient-to-b from-primary-50 to-primary-100/60 text-gray-800 border border-primary-200/80 shadow-sm hover:shadow hover:border-primary-300 active:scale-95 transition-all"
+          className="flex items-center justify-center py-2.5 rounded-xl text-xs font-black tracking-wider bg-primary-50 text-gray-800 border border-primary-200/80 hover:border-primary-300 active:scale-95 transition-all"
         >
           TEST
         </button>
@@ -347,7 +347,7 @@ export default function TeamBracketView() {
               }
             }
           }}
-          className="flex items-center justify-center py-2.5 rounded-xl text-xs font-black tracking-wider bg-gradient-to-b from-primary-50 to-primary-100/60 text-gray-800 border border-primary-200/80 shadow-sm hover:shadow hover:border-primary-300 active:scale-95 transition-all"
+          className="flex items-center justify-center py-2.5 rounded-xl text-xs font-black tracking-wider bg-primary-50 text-gray-800 border border-primary-200/80 hover:border-primary-300 active:scale-95 transition-all"
         >
           TEST（ALL）
         </button>
@@ -399,10 +399,10 @@ export default function TeamBracketView() {
             const bracketDone = headerTotal > 0 && headerFinished === headerTotal;
 
             return (
-              <div key={cat} className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+              <div key={cat} className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
                 {/* 一体型ヘッダー（アイコン削除、右側に進捗ゲージ） */}
-                <div className={`px-4 py-3 flex items-center gap-3 bg-gradient-to-r ${cfg.grad} text-white`}>
-                  <div className="flex-1 min-w-0">
+                <div className={`px-4 py-3 flex flex-wrap items-center gap-x-3 gap-y-2 tm-flat ${cfg.grad} text-white`}>
+                  <div className="flex-1 min-w-[9em]">
                     {editingLabelCategory === cat ? (
                       <div className="flex items-center gap-1">
                         <input
@@ -464,7 +464,7 @@ export default function TeamBracketView() {
                         onClick={() => setReorderingCategory(prev => prev === cat ? null : cat)}
                         className={`flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold transition-all ${
                           reorderingCategory === cat
-                            ? 'bg-white text-gray-700 shadow-sm'
+                            ? 'bg-white text-gray-700'
                             : 'bg-white/20 text-white hover:bg-white/30'
                         }`}
                         title="トーナメントの並べ替え"
@@ -486,7 +486,7 @@ export default function TeamBracketView() {
                         <span className="text-xs font-black tabular-nums tracking-tight">
                           {headerFinished}<span className="opacity-60">/{headerTotal}</span>
                         </span>
-                        <div className="w-20 h-1.5 rounded-full bg-white/25 overflow-hidden shadow-inner">
+                        <div className="w-20 h-1.5 rounded-full bg-white/25 overflow-hidden">
                           <div
                             className="h-full bg-white rounded-full transition-all duration-500 shadow-[0_0_6px_rgba(255,255,255,0.6)]"
                             style={{ width: `${headerPct}%` }}
@@ -519,7 +519,7 @@ export default function TeamBracketView() {
                 )}
 
                 {/* ブラケット本体 */}
-                <div className="overflow-x-auto bg-gradient-to-br from-gray-50/80 via-white to-gray-50/50">
+                <div className="overflow-x-auto bg-gray-50/80">
                   <div className="relative p-4" style={{ minWidth: (MATCH_WIDTH + ROUND_GAP) * bTotalRounds, height: svgHeight }}>
                     {/* 接続線SVG */}
                     <svg className="absolute inset-0 pointer-events-none" style={{ width: (MATCH_WIDTH + ROUND_GAP) * bTotalRounds, height: svgHeight }}>
@@ -555,9 +555,9 @@ export default function TeamBracketView() {
                           {/* ラウンドラベル */}
                           <div className="absolute" style={{ left: colX, top: 4, width: MATCH_WIDTH }}>
                             <div className="text-center">
-                              <span className={`inline-block px-4 py-1 rounded-full text-xs font-black shadow-sm ${
+                              <span className={`inline-block px-4 py-1 rounded text-xs font-black ${
                                 round === bTotalRounds
-                                  ? `bg-gradient-to-r ${cfg.grad} text-white`
+                                  ? `tm-flat ${cfg.grad} text-white`
                                   : round === bTotalRounds - 1
                                   ? `${cfg.bg} ${cfg.text} border border-current/20`
                                   : 'bg-gray-100 text-gray-600 border border-gray-200'
@@ -595,11 +595,11 @@ export default function TeamBracketView() {
                             }
 
                             const borderStyle = isFinished
-                              ? 'border-primary-300 shadow-sm'
+                              ? 'border-primary-300'
                               : isPlaying
-                              ? 'border-primary-400 shadow-md bracket-playing-blink'
+                              ? 'border-primary-400 bracket-playing-blink'
                               : isReady && match.team1Id && match.team2Id
-                              ? 'border-gray-300 hover:shadow-md'
+                              ? 'border-gray-300'
                               : 'border-gray-200';
 
                             return (
@@ -817,8 +817,8 @@ export default function TeamBracketView() {
       {/* コート割当ダイアログ（複数選択可） */}
       {courtAssignMatch && createPortal(
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[100] p-4" onClick={() => setCourtAssignMatch(null)}>
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden" onClick={e => e.stopPropagation()}>
-            <div className="bg-gradient-to-br from-gray-500 to-gray-600 px-5 py-4 text-white">
+          <div className="bg-white rounded-2xl w-full max-w-md overflow-hidden" onClick={e => e.stopPropagation()}>
+            <div className="bg-gray-500 px-5 py-4 text-white">
               <div className="flex items-center gap-2">
                 <MapPin className="w-5 h-5" />
                 <h3 className="font-black">コート割当（複数選択可）</h3>
@@ -893,7 +893,7 @@ export default function TeamBracketView() {
                 <button
                   onClick={confirmCourtAssign}
                   disabled={courtAssignSelected.length === 0}
-                  className="flex-1 py-2.5 rounded-xl text-sm font-bold bg-gradient-to-br from-gray-500 to-gray-600 text-white shadow-md hover:shadow-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="flex-1 py-2.5 rounded-xl text-sm font-bold bg-gray-500 text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   決定
                 </button>
@@ -1050,8 +1050,8 @@ function TeamCallDialog({
 
   return createPortal(
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[120] flex items-center justify-center p-4" onClick={onClose}>
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden" onClick={e => e.stopPropagation()}>
-        <div className="bg-gradient-to-br from-primary-500 to-primary-600 px-5 py-4 text-white flex items-center justify-between">
+      <div className="bg-white rounded-2xl w-full max-w-md overflow-hidden" onClick={e => e.stopPropagation()}>
+        <div className="bg-primary-500 px-5 py-4 text-white flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Volume2 className="w-5 h-5" />
             <h3 className="font-black">試合コール</h3>
@@ -1092,7 +1092,7 @@ function TeamCallDialog({
               <button
                 onClick={handleSpeak}
                 disabled={!text.trim()}
-                className="flex-1 py-2.5 rounded-xl text-sm font-bold bg-gradient-to-br from-primary-500 to-primary-600 text-white shadow-md hover:shadow-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
+                className="flex-1 py-2.5 rounded-xl text-sm font-bold bg-primary-500 text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
               >
                 <Volume2 className="w-4 h-4" />
                 コール
@@ -1146,11 +1146,11 @@ function TeamWaitingList({
         return (
           <div key={match.matchId} className={`rounded-xl border overflow-hidden transition-all ${
             hasCourtAssigned
-              ? 'border-gray-200 shadow-md ring-1 ring-gray-100/50'
-              : 'border-gray-200/80 shadow-sm'
+              ? 'border-gray-200 ring-1 ring-gray-100/50'
+              : 'border-gray-200/80'
           }`}>
             {/* ヘッダー: カテゴリ + ラウンド */}
-            <div className={`flex items-center gap-2 px-3 py-2 bg-gradient-to-r ${cfg.grad} text-white`}>
+            <div className={`flex items-center gap-2 px-3 py-2 tm-flat ${cfg.grad} text-white`}>
               <span className="text-xs font-black opacity-80 tabular-nums">#{idx + 1}</span>
               <span className="text-xs font-black tracking-wide">{catFullLabel(bracket.category)} {roundLabel}</span>
             </div>
@@ -1184,7 +1184,7 @@ function TeamWaitingList({
                 {hasCourtAssigned && (
                   <button
                     onClick={() => onCall(match)}
-                    className="flex items-center gap-1 px-3 py-1.5 text-[11px] font-black text-white bg-gradient-to-b from-red-500 to-red-600 rounded-lg shadow-sm hover:from-red-600 hover:to-red-700 active:scale-95 transition-all"
+                    className="flex items-center gap-1 px-3 py-1.5 text-[11px] font-black text-white bg-red-500 rounded-lg hover:bg-red-600 active:scale-95 transition-all"
                     title="試合コール"
                   >
                     <Volume2 className="w-3.5 h-3.5" />
@@ -1195,8 +1195,8 @@ function TeamWaitingList({
                   onClick={() => onAssignCourt(match)}
                   className={`flex items-center gap-1 px-3 py-1.5 text-[11px] font-black rounded-lg active:scale-95 transition-all ${
                     hasCourtAssigned
-                      ? 'text-gray-600 bg-white border border-gray-200 hover:bg-gray-50 shadow-sm'
-                      : 'text-white bg-gradient-to-b from-primary-500 to-primary-600 shadow-sm hover:from-primary-600 hover:to-primary-700'
+                      ? 'text-gray-600 bg-white border border-gray-200 hover:bg-gray-50'
+                      : 'text-white bg-primary-500 hover:bg-primary-600'
                   }`}
                 >
                   <MapPin className="w-3.5 h-3.5" />
@@ -1330,8 +1330,8 @@ function TeamRouletteDrawPanel({ bracket, onRebuild }: {
   useEffect(() => () => { if (spinTimerRef.current) clearTimeout(spinTimerRef.current); }, []);
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-primary-200 overflow-hidden">
-      <div className="bg-gradient-to-r from-primary-50 to-white px-4 py-2.5 border-b border-primary-100 flex items-center justify-between">
+    <div className="bg-white rounded-2xl border border-primary-200 overflow-hidden">
+      <div className="bg-primary-50 px-4 py-2.5 border-b border-primary-100 flex items-center justify-between">
         <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2">
           <Shuffle size={14} className="text-primary-600" />
           1位トーナメント 抽選
@@ -1668,8 +1668,8 @@ function TeamBracketReorderPanel({ bracket, allBrackets, customLabels, onClose, 
   const drawSize = bracket.drawSize;
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-      <div className="bg-gradient-to-r from-gray-50 to-white px-4 py-2.5 border-b border-gray-100 flex items-center justify-between">
+    <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+      <div className="bg-gray-50 px-4 py-2.5 border-b border-gray-100 flex items-center justify-between">
         <h3 className="text-sm font-bold text-gray-800 flex items-center gap-2">
           <ArrowLeftRight size={14} className="text-gray-600" />
           並べ替え

@@ -6,6 +6,7 @@ import { calculateTeamStandings, MATCH_TYPE_SHORT } from '../team/teamLogic';
 import type { LeagueMatchScore, MixedLeague, LeagueStanding } from '../mixed/types';
 import type { TeamLeagueMatch, TeamLeague, TeamLeagueStanding } from '../team/types';
 import { MapPin, Info } from 'lucide-react';
+import { SkEmpty } from '../../components/site/Kit';
 import { leagueColor, leagueBadgeStyle } from '../mixed/leagueColors';
 
 // =========================================================================
@@ -45,10 +46,7 @@ export default function PublicLeagueView() {
   if (teamImported) return <PublicTeamLeagueView />;
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-10 text-center">
-      <Info className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-      <p className="text-gray-500 text-sm">予選リーグデータがまだありません。</p>
-    </div>
+    <SkEmpty icon={Info} title="予選リーグデータがまだありません。" />
   );
 }
 
@@ -67,11 +65,11 @@ function PublicMixedLeagueView() {
   );
 
   if (leagues.length === 0) {
-    return <div className="text-center text-gray-400 py-12">リーグ情報がありません</div>;
+    return <SkEmpty icon={Info} title="リーグ情報がありません" />;
   }
 
   return (
-    <div className="space-y-8">
+    <div className="pv-leagues">
       {leagues.map((league, idx) => (
         <MixedLeagueSection
           key={league.leagueId}
@@ -112,7 +110,7 @@ function MixedLeagueSection({
   }
 
   return (
-    <section className="space-y-3">
+    <section className="pv-league">
       <LeagueHeaderCard
         title={`${league.leagueId.trim()}リーグ`}
         court={league.courtName}
@@ -122,7 +120,7 @@ function MixedLeagueSection({
       />
 
       {/* 対戦結果マトリクス（選手名/所属は左固定、スコア以降は横スクロール） */}
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-x-auto">
+      <div className="pv-table-wrap">
         <table className="min-w-full w-max">
           <thead>
             <tr className="bg-gray-50 border-b border-gray-200">
@@ -132,7 +130,7 @@ function MixedLeagueSection({
               </th>
               {league.teams.map((_, i) => (
                 <th key={i} className="px-2 py-2 text-center text-[11px] text-gray-500" style={scoreColStyle}>
-                  <span className={`inline-flex items-center justify-center w-6 h-6 ${colors.badge} rounded-full text-xs font-bold`}>
+                  <span className={`inline-flex items-center justify-center w-6 h-6 ${colors.badge} text-xs font-bold`}>
                     {i + 1}
                   </span>
                 </th>
@@ -149,7 +147,7 @@ function MixedLeagueSection({
               return (
                 <tr key={team.teamId} className="border-t border-gray-100">
                   <td className={`${stickyNumCls} bg-white`} style={numColStyle}>
-                    <span className={`inline-flex items-center justify-center w-6 h-6 ${colors.badge} rounded-full text-xs font-bold`}>
+                    <span className={`inline-flex items-center justify-center w-6 h-6 ${colors.badge} text-xs font-bold`}>
                       {rowIdx + 1}
                     </span>
                   </td>
@@ -249,11 +247,11 @@ function PublicTeamLeagueView() {
   );
 
   if (leagues.length === 0) {
-    return <div className="text-center text-gray-400 py-12">リーグ情報がありません</div>;
+    return <SkEmpty icon={Info} title="リーグ情報がありません" />;
   }
 
   return (
-    <div className="space-y-8">
+    <div className="pv-leagues">
       {leagues.map((league, idx) => (
         <TeamLeagueSection
           key={league.leagueId}
@@ -294,7 +292,7 @@ function TeamLeagueSection({
   }
 
   return (
-    <section className="space-y-3">
+    <section className="pv-league">
       <LeagueHeaderCard
         title={`${league.leagueId.trim()}リーグ`}
         court={league.courtName}
@@ -304,7 +302,7 @@ function TeamLeagueSection({
       />
 
       {/* 対戦結果（チーム名は左固定、スコア以降は横スクロール） */}
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-x-auto">
+      <div className="pv-table-wrap">
         <table className="min-w-full w-max">
           <thead>
             <tr className="bg-gray-50 border-b border-gray-200">
@@ -314,7 +312,7 @@ function TeamLeagueSection({
               </th>
               {league.teams.map((_, i) => (
                 <th key={i} className="px-2 py-2 text-center text-[11px] text-gray-500" style={teamScoreColStyle}>
-                  <span className={`inline-flex items-center justify-center w-6 h-6 ${colors.badge} rounded-full text-xs font-bold`}>
+                  <span className={`inline-flex items-center justify-center w-6 h-6 ${colors.badge} text-xs font-bold`}>
                     {i + 1}
                   </span>
                 </th>
@@ -331,7 +329,7 @@ function TeamLeagueSection({
               return (
                 <tr key={team.teamId} className="border-t border-gray-100">
                   <td className={`${stickyNumCls} bg-white`} style={numColStyle}>
-                    <span className={`inline-flex items-center justify-center w-6 h-6 ${colors.badge} rounded-full text-xs font-bold`}>
+                    <span className={`inline-flex items-center justify-center w-6 h-6 ${colors.badge} text-xs font-bold`}>
                       {rowIdx + 1}
                     </span>
                   </td>
@@ -434,50 +432,31 @@ function LeagueHeaderCard({
   badgeStyle: CSSProperties;
 }) {
   return (
-    <div className="bg-white border border-gray-200 text-gray-800 rounded-xl shadow-sm px-4 py-3 flex items-center justify-between gap-3 flex-wrap">
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-lg flex items-center justify-center text-lg font-bold shadow" style={badgeStyle}>
-          {title.replace('リーグ', '').trim()}
-        </div>
-        <div>
-          <h2 className="text-lg font-bold leading-tight">{title}</h2>
-          {court && (
-            <p className="text-[11px] text-gray-500 flex items-center gap-1 mt-0.5">
-              <MapPin className="w-3 h-3" />
-              {court}
-            </p>
-          )}
-        </div>
+    <div className="pv-league__head">
+      <span className="pv-league__badge" style={badgeStyle}>
+        {title.replace('リーグ', '').trim()}
+      </span>
+      <div className="pv-league__titles">
+        <p className="pv-league__en">LEAGUE</p>
+        <h2 className="pv-league__title">{title}</h2>
+        {court && (
+          <p className="pv-league__court">
+            <MapPin className="w-3 h-3" />
+            {court}
+          </p>
+        )}
       </div>
-      <div className="text-right">
-        <div className="text-sm font-bold">
-          {finished}/{total} 完了
-        </div>
-        <div className="w-24 h-1.5 bg-gray-200 rounded-full overflow-hidden mt-1">
-          <div
-            className="h-full bg-primary-500 rounded-full transition-all"
-            style={{ width: `${total > 0 ? (finished / total) * 100 : 0}%` }}
-          />
-        </div>
+      <div className="pv-league__prog">
+        <span className="pv-league__num">{finished}/{total}<small>完了</small></span>
+        <span className="pv-league__bar">
+          <i style={{ width: `${total > 0 ? (finished / total) * 100 : 0}%` }} />
+        </span>
       </div>
     </div>
   );
 }
 
 function RankBadge({ rank }: { rank: number }) {
-  const color =
-    rank === 1
-      ? 'bg-primary-400 text-white'
-      : rank === 2
-      ? 'bg-gray-400 text-white'
-      : rank === 3
-      ? 'bg-primary-400 text-white'
-      : 'bg-gray-200 text-gray-600';
-  return (
-    <span
-      className={`inline-flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold ${color}`}
-    >
-      {rank}
-    </span>
-  );
+  const cls = rank === 1 ? 'pv-rank--1' : rank === 2 ? 'pv-rank--2' : rank === 3 ? 'pv-rank--3' : 'pv-rank--n';
+  return <span className={`pv-rank ${cls}`}>{rank}</span>;
 }

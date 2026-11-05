@@ -48,21 +48,25 @@ export default function CourtChangeDialog({
   const courts = Array.from({ length: courtCount }, (_, i) => String(i + 1));
 
   return createPortal(
-    <div className="fixed inset-0 bg-black/40 z-[300] flex items-center justify-center p-4" onClick={onClose}>
+    <div className="fixed inset-0 z-[300] flex items-center justify-center psd-overlay" onClick={onClose} role="dialog" aria-modal="true">
       <div
-        className="bg-white rounded-2xl shadow-2xl w-[380px] max-w-[92vw] max-h-[85vh] overflow-y-auto"
+        className="psd-panel psd-panel--xs"
         onClick={e => e.stopPropagation()}
       >
-        <div className="px-4 py-3 bg-primary-600 text-white flex items-center justify-between">
-          <h3 className="text-sm font-black flex items-center gap-2"><MapPin className="w-4 h-4" />{title}</h3>
-          <button onClick={onClose} className="p-1 rounded-lg hover:bg-white/20 transition-colors" aria-label="閉じる">
-            <X className="w-4 h-4" />
+        <div className="sdlg__head psd-head psd-head--plain">
+          <span className="sec-head__mark sdlg__mark" aria-hidden="true" />
+          <div className="sdlg__heading">
+            <p className="sdlg__eyebrow">COURT</p>
+            <h3 className="sdlg__title"><MapPin className="w-5 h-5 text-primary-600" />{title}</h3>
+          </div>
+          <button onClick={onClose} className="sdlg__close" aria-label="閉じる">
+            <X className="w-5 h-5" />
           </button>
         </div>
 
-        <div className="p-4">
+        <div className="psd-body">
           {subtitle && (
-            <div className="bg-gray-50 rounded-lg px-3 py-2 mb-3 text-xs font-bold text-gray-700">{subtitle}</div>
+            <div className="psd-box mb-3 text-xs font-bold text-gray-700">{subtitle}</div>
           )}
           <p className="text-[11px] font-bold text-gray-500 mb-2">
             コート番号を選択
@@ -78,11 +82,7 @@ export default function CourtChangeDialog({
                   type="button"
                   onClick={() => { if (!busyReason) onToggle(c); }}
                   disabled={!!busyReason}
-                  className={`py-2 rounded-lg border-2 text-xs font-bold transition-all ${
-                    busyReason ? 'border-gray-100 bg-gray-50 text-gray-300 cursor-not-allowed'
-                      : isSelected ? 'border-primary-500 bg-primary-50 text-gray-800'
-                      : 'border-gray-200 text-gray-600 hover:border-primary-300'
-                  }`}
+                  className={`psd-cnum ${busyReason ? 'is-off' : isSelected ? 'is-on' : ''}`}
                 >
                   {c}
                   {busyReason && <span className="block text-[7px] font-normal text-gray-300">{busyReason}</span>}
@@ -100,13 +100,13 @@ export default function CourtChangeDialog({
           )}
 
           <div className="flex gap-2 mt-4">
-            <button onClick={onClose} className="flex-1 py-2.5 bg-gray-100 text-gray-600 rounded-xl text-sm hover:bg-gray-200 transition-colors">
+            <button onClick={onClose} className="btn btn--outline psd-btn">
               キャンセル
             </button>
             <button
               onClick={() => onConfirm(selected)}
               disabled={selected.length === 0}
-              className="flex-1 py-2.5 bg-primary-500 text-white rounded-xl text-sm font-bold hover:bg-primary-600 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+              className="btn btn--primary psd-btn"
             >
               決定
             </button>
@@ -114,7 +114,7 @@ export default function CourtChangeDialog({
           {onClear && (
             <button
               onClick={onClear}
-              className="w-full mt-2 py-2 text-xs font-bold text-gray-400 hover:text-red-500 transition-colors"
+              className="w-full mt-2 py-2 text-xs font-bold text-gray-500 hover:text-primary-600 transition-colors"
             >
               コート指定を消す
             </button>

@@ -64,18 +64,23 @@ export default function CourtPickDialog({
   const emptyCount = courts.filter(c => c.status === 'empty').length;
 
   return (
-    <div className="fixed inset-0 bg-black/50 z-[9999] flex items-center justify-center p-4" onClick={onClose}>
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center psd-overlay" onClick={onClose} role="dialog" aria-modal="true">
       <div
-        className="bg-white rounded-xl shadow-2xl max-w-md w-full p-5 space-y-4 max-h-[90vh] overflow-y-auto"
+        className="psd-panel psd-panel--sm"
         onClick={e => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between">
-          <h3 className="text-base font-bold text-gray-900">コートに入れる</h3>
-          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors">
-            <X className="w-5 h-5 text-gray-500" />
+        <div className="sdlg__head psd-head psd-head--plain">
+          <span className="sec-head__mark sdlg__mark" aria-hidden="true" />
+          <div className="sdlg__heading">
+            <p className="sdlg__eyebrow">COURT</p>
+            <h3 className="sdlg__title">コートに入れる</h3>
+          </div>
+          <button onClick={onClose} className="sdlg__close" aria-label="閉じる">
+            <X className="w-5 h-5" />
           </button>
         </div>
-        <div className="p-3 bg-gray-50 rounded-lg text-sm space-y-1">
+        <div className="psd-body space-y-4">
+        <div className="psd-box text-sm space-y-1">
           <div>
             <span className="font-medium">{eventName}</span>
             {roundName && <span className="ml-2 text-gray-500">{roundName}</span>}
@@ -94,7 +99,7 @@ export default function CourtPickDialog({
           ) : (
             <div className="space-y-2">
               {blocks.map((block, bi) => (
-                <div key={bi} className="border border-primary-200 bg-primary-50/40 rounded-lg p-2">
+                <div key={bi} className="psd-box psd-courtblock">
                   <div className="text-[10px] font-bold text-gray-800 mb-1.5 px-0.5">
                     {block.length > 1
                       ? `${block[0].name}〜${block[block.length - 1].name}番コート`
@@ -108,11 +113,7 @@ export default function CourtPickDialog({
                           key={c.courtId}
                           onClick={() => selectable && onSelect(c.courtId)}
                           disabled={!selectable}
-                          className={`flex flex-col items-center justify-center py-2 rounded-lg border transition-colors ${
-                            selectable
-                              ? 'bg-primary-600 text-white border-primary-600 hover:bg-primary-700 shadow-sm'
-                              : 'bg-gray-200 text-gray-400 border-gray-200 cursor-not-allowed'
-                          }`}
+                          className={`psd-court ${selectable ? '' : 'is-off'}`}
                         >
                           <span className="text-base font-black leading-none">{c.name}</span>
                           <span className="text-[9px] font-bold leading-none mt-1 opacity-90">
@@ -136,13 +137,14 @@ export default function CourtPickDialog({
           <div className="pt-1 border-t border-gray-100">
             <button
               onClick={onScoreInput}
-              className="w-full flex items-center justify-center gap-2 px-4 py-3 min-h-[48px] text-sm font-bold text-gray-800 bg-primary-50 border border-primary-300 rounded-lg hover:bg-primary-100 active:scale-[0.98] transition-colors"
+              className="btn btn--outline psd-btn psd-btn--block"
             >
               <Trophy className="w-4 h-4" />
               コートを選ばずにスコア入力
             </button>
           </div>
         )}
+        </div>
       </div>
     </div>
   );

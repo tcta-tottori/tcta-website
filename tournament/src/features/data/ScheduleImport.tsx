@@ -263,7 +263,7 @@ export default function ScheduleImport() {
         インポート後に個別調整が可能です。
       </p>
 
-      <div className="text-xs text-gray-500 bg-gray-50 rounded-lg p-3 border border-gray-200">
+      <div className="text-xs text-gray-500 bg-gray-50 rounded p-3 border border-gray-200">
         <p className="font-medium text-gray-700 mb-1">必要な列:</p>
         <ul className="list-disc list-inside space-y-0.5">
           <li><span className="font-medium">試合番号</span> または <span className="font-medium">No.</span> - 試合の通し番号</li>
@@ -284,7 +284,7 @@ export default function ScheduleImport() {
         />
         <button
           onClick={() => fileInputRef.current?.click()}
-          className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-ocean rounded-lg hover:bg-gray-800 transition-colors"
+          className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-ocean rounded hover:bg-gray-800 transition-colors"
         >
           <Upload className="w-4 h-4" />
           <span>ファイルを選択</span>
@@ -299,7 +299,7 @@ export default function ScheduleImport() {
 
       {/* パースエラー */}
       {parseError && (
-        <div className="p-3 rounded-lg text-sm bg-red-50 text-red-800 border border-red-200">
+        <div className="p-3 rounded text-sm bg-red-50 text-red-800 border border-red-200">
           <div className="flex items-start gap-2">
             <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
             <span>{parseError}</span>
@@ -313,7 +313,7 @@ export default function ScheduleImport() {
           <h3 className="text-sm font-medium text-gray-700 mb-2">
             プレビュー ({parsedRows.length}件)
           </h3>
-          <div className="border border-gray-200 rounded-lg overflow-hidden max-h-64 overflow-y-auto">
+          <div className="border border-gray-200 rounded overflow-hidden max-h-64 overflow-y-auto">
             <table className="w-full text-sm">
               <thead className="bg-gray-50 sticky top-0">
                 <tr>
@@ -343,7 +343,7 @@ export default function ScheduleImport() {
           <button
             onClick={handleImport}
             disabled={isImporting}
-            className="mt-3 flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-primary-500 rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="mt-3 flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-primary-500 rounded hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             <CheckCircle2 className="w-4 h-4" />
             <span>{isImporting ? 'インポート中...' : 'インポート実行'}</span>
@@ -353,7 +353,7 @@ export default function ScheduleImport() {
 
       {/* インポート結果 */}
       {importResult && (
-        <div className={`p-3 rounded-lg text-sm ${
+        <div className={`p-3 rounded text-sm ${
           importResult.success
             ? 'bg-primary-50 text-gray-900 border border-primary-200'
             : 'bg-primary-50 text-gray-900 border border-primary-200'

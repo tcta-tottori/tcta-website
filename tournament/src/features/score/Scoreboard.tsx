@@ -1,11 +1,12 @@
 import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
-import { createPortal } from 'react-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../../db/database';
 import { useAppStore } from '../../stores/appStore';
 import type { DrawSlotData, MatchResult } from '../draw/DrawBoard';
 import ScoreboardBracket from './ScoreboardBracket';
 import ScoreboardLeague from './ScoreboardLeague';
+import SiteDialog from '../../components/site/SiteDialog';
+import { SkEmpty } from '../../components/site/Kit';
 import ScoreInputDialog from './ScoreInputDialog';
 import type { ScoreInputMatch } from './ScoreInputDialog';
 import { resolveRequiredGames } from './gameRules';
@@ -28,7 +29,6 @@ import {
   Trophy,
   AlertTriangle,
   BookOpen,
-  X,
 } from 'lucide-react';
 import { useMixedStore } from '../mixed/mixedStore';
 import MixedScoreView from '../mixed/MixedScoreView';
@@ -649,39 +649,36 @@ function NormalScoreboard() {
   // =========================================================================
 
   return (
-    <div ref={scrollContainerRef} className="h-full flex flex-col p-4 md:p-6 mx-auto space-y-4 print:p-0 print:space-y-2 overflow-auto">
+    <div ref={scrollContainerRef} className="container sk-page sk-page--wide op-sb print:p-0 print:space-y-2">
       {/* ヘッダー再表示ボタン（非表示時のみ） */}
       {!headerVisible && (
         <button
           onClick={() => setHeaderVisible(true)}
-          className="fixed bottom-20 right-3 z-50 bg-primary-600 text-white w-10 h-10 rounded-full shadow-lg flex items-center justify-center hover:bg-primary-700 active:scale-95 transition-all print:hidden"
+          className="op-sb__reveal print:hidden"
           title="メニュー表示"
         >
           <Eye className="w-5 h-5" />
         </button>
       )}
       {/* ===== HEADER ===== */}
-      <header className={`flex flex-col gap-3 bg-white p-4 rounded-xl shadow-sm border border-border-main print:shadow-none print:border-none print:p-2 shrink-0 z-10 transition-all duration-300 ${!headerVisible ? 'hidden' : ''}`}>
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-          <div>
-            <h1 className="text-xl md:text-2xl font-bold text-gray-900 flex items-center gap-2">
-              <MonitorPlay className="w-6 h-6 text-primary-500" />
-              スコアボード
-            </h1>
-            <p className="text-sm text-gray-500 mt-0.5 hidden sm:block">
+      <header className={`sk-sec op-sb__head print:border-none ${!headerVisible ? 'hidden' : ''}`}>
+        <div className="sk-sec__head">
+          <span className="sk-sec__mark" aria-hidden="true" />
+          <div className="sk-sec__titles">
+            <p className="sk-sec__en">SCOREBOARD</p>
+            <h2 className="sk-sec__title">スコアボード</h2>
+            <p className="sk-sec__lead">
               トーナメント／リーグの対戦状況・スコア管理
             </p>
           </div>
 
           {/* View mode toggle */}
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="sk-sec__actions">
             {/* 全種目 / 個別 切替 */}
-            <div className="flex rounded-lg border border-border-main overflow-hidden">
+            <div className="hub-filter op-seg op-seg--inline">
               <button
                 onClick={() => { setShowAllEvents(true); setSelectedMatchKey(null); }}
-                className={`flex items-center gap-1 px-2.5 sm:px-3 py-2 text-xs font-medium transition-colors ${
-                  showAllEvents ? 'bg-primary-500 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'
-                }`}
+                className={`hub-filter__btn ${showAllEvents ? 'is-on' : ''}`}
               >
                 <Layers className="w-3.5 h-3.5" /><span className="hidden xs:inline">全種目</span><span className="xs:hidden">全</span>
               </button>
@@ -693,34 +690,24 @@ function NormalScoreboard() {
                     setSelectedEventIdx(events.length >= 2 ? events.length - 2 : 0);
                   }
                 }}
-                className={`flex items-center gap-1 px-2.5 sm:px-3 py-2 text-xs font-medium transition-colors ${
-                  !showAllEvents ? 'bg-primary-500 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'
-                }`}
+                className={`hub-filter__btn ${!showAllEvents ? 'is-on' : ''}`}
               >
                 <Eye className="w-3.5 h-3.5" /><span className="hidden xs:inline">個別</span><span className="xs:hidden">1</span>
               </button>
             </div>
 
             {!showAllEvents && (
-              <div className="flex rounded-lg border border-border-main overflow-hidden">
+              <div className="hub-filter op-seg op-seg--inline">
                 <button
                   onClick={() => { setViewMode('bracket'); setSelectedMatchKey(null); }}
-                  className={`flex items-center gap-1 px-2.5 sm:px-3 py-2 text-xs font-medium transition-colors ${
-                    viewMode === 'bracket'
-                      ? 'bg-primary-500 text-white'
-                      : 'bg-white text-gray-600 hover:bg-gray-50'
-                  }`}
+                  className={`hub-filter__btn ${viewMode === 'bracket' ? 'is-on' : ''}`}
                 >
                   {isRoundRobin ? <LayoutGrid className="w-3.5 h-3.5" /> : <GitBranch className="w-3.5 h-3.5" />}
                   {isRoundRobin ? 'リーグ' : 'トーナメント'}
                 </button>
                 <button
                   onClick={() => { setViewMode('table'); setSelectedMatchKey(null); }}
-                  className={`flex items-center gap-1 px-2.5 sm:px-3 py-2 text-xs font-medium transition-colors ${
-                    viewMode === 'table'
-                      ? 'bg-primary-500 text-white'
-                      : 'bg-white text-gray-600 hover:bg-gray-50'
-                  }`}
+                  className={`hub-filter__btn ${viewMode === 'table' ? 'is-on' : ''}`}
                 >
                   <Table2 className="w-3.5 h-3.5" />
                   テーブル
@@ -729,14 +716,14 @@ function NormalScoreboard() {
             )}
             <button
               onClick={handlePrintBracket}
-              className="flex items-center gap-1.5 px-2.5 sm:px-3 py-2 text-xs font-medium bg-white text-gray-600 border border-border-main rounded-lg hover:bg-gray-50 transition-colors print:hidden"
+              className="btn btn--outline sk-btn sk-btn--sm print:hidden"
             >
               <Printer className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">印刷</span>
             </button>
             <button
               onClick={() => setShowRules(true)}
-              className="flex items-center gap-1.5 px-2.5 sm:px-3 py-2 text-xs font-medium bg-primary-50 text-gray-800 border border-primary-200 rounded-lg hover:bg-primary-100 transition-colors print:hidden"
+              className="btn btn--outline sk-btn sk-btn--sm print:hidden"
             >
               <BookOpen className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">大会ルール</span>
@@ -745,13 +732,14 @@ function NormalScoreboard() {
           </div>
         </div>
 
+        <div className="sk-sec__body op-sb__headbody">
         {/* Event navigator — 個別表示時のみ */}
         {!showAllEvents && (
-          <div className="flex items-center gap-2">
+          <div className="op-sb__nav">
             <button
               onClick={handlePrevEvent}
               disabled={selectedEventIdx <= 0}
-              className="p-2 rounded-lg border border-border-main text-gray-500 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors print:hidden"
+              className="op-ibtn op-ibtn--lg print:hidden"
               title="前種目"
             >
               <ChevronLeft className="w-4 h-4" />
@@ -763,7 +751,7 @@ function NormalScoreboard() {
                 setSelectedEventIdx(Number(e.target.value));
                 setSelectedMatchKey(null);
               }}
-              className="flex-1 border-border-main rounded-lg shadow-sm focus:border-primary-500 focus:ring-[3px] focus:ring-primary-500/15 text-sm px-3 py-2 bg-white border outline-none font-medium"
+              className="input sk-input op-sb__select"
             >
               <option value="" disabled>-- 種目を選択 --</option>
               {events.map((e, i) => (
@@ -776,7 +764,7 @@ function NormalScoreboard() {
             <button
               onClick={handleNextEvent}
               disabled={selectedEventIdx >= events.length - 1}
-              className="p-2 rounded-lg border border-border-main text-gray-500 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors print:hidden"
+              className="op-ibtn op-ibtn--lg print:hidden"
               title="次種目"
             >
               <ChevronRight className="w-4 h-4" />
@@ -786,17 +774,17 @@ function NormalScoreboard() {
 
         {/* Progress bar — 個別表示時 */}
         {!showAllEvents && selectedEventId && matches.length > 0 && (
-          <div className="flex items-center gap-3 text-xs text-gray-500">
-            <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+          <div className="op-sb__prog">
+            <div className="op-bar op-bar--grow">
               <div
-                className="h-full bg-primary-500 rounded-full transition-all duration-500"
+                className="op-bar__fill"
                 style={{ width: `${progressStats.pct}%` }}
               />
             </div>
-            <span className="font-medium whitespace-nowrap">
+            <span className="op-sb__prog-n">
               {progressStats.finished}/{progressStats.total} 完了
               {progressStats.playing > 0 && (
-                <span className="text-gray-700 ml-1">({progressStats.playing} 試合中)</span>
+                <span className="op-sb__playing">({progressStats.playing} 試合中)</span>
               )}
             </span>
           </div>
@@ -810,51 +798,52 @@ function NormalScoreboard() {
           }), { total: 0, finished: 0, playing: 0 });
           const pct = agg.total > 0 ? Math.round((agg.finished / agg.total) * 100) : 0;
           return (
-            <div className="flex items-center gap-3 text-xs text-gray-500">
-              <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+            <div className="op-sb__prog">
+              <div className="op-bar op-bar--grow">
                 <div
-                  className="h-full bg-primary-500 rounded-full transition-all duration-500"
+                  className="op-bar__fill"
                   style={{ width: `${pct}%` }}
                 />
               </div>
-              <span className="font-medium whitespace-nowrap">
+              <span className="op-sb__prog-n">
                 {agg.finished}/{agg.total} 完了
                 {agg.playing > 0 && (
-                  <span className="text-gray-700 ml-1">({agg.playing} 試合中)</span>
+                  <span className="op-sb__playing">({agg.playing} 試合中)</span>
                 )}
               </span>
             </div>
           );
         })()}
+        </div>
       </header>
 
       {/* ===== COURT STATUS BAR ===== */}
       {!headerVisible ? null : courtStatus.length > 0 && (showAllEvents || selectedEventId) && (
-        <div className="flex gap-2 overflow-x-auto pb-1 print:hidden shrink-0">
+        <div className="op-sb__courts print:hidden">
           {courtStatus.map(c => {
             const isOver = c.matchInfo && c.startedAt > 0 && (clockTick - c.startedAt) > matchDuration * 60 * 1000;
             return (
               <div
                 key={c.courtId}
-                className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium transition-colors ${
+                className={`op-sb__court ${
                   isOver
-                    ? 'bg-red-50 border-red-400 text-red-700 shadow-[0_0_8px_rgba(216, 35, 42,0.3)]'
+                    ? 'is-over'
                     : c.matchInfo
-                      ? 'bg-primary-50 border-primary-300 text-gray-800'
+                      ? 'is-busy'
                       : c.isAvailable
-                        ? 'bg-white border-border-main text-gray-500'
-                        : 'bg-gray-100 border-gray-300 text-gray-400'
+                        ? ''
+                        : 'is-off'
                 }`}
               >
-                <MapPin className={`w-3 h-3 ${isOver ? 'text-red-500' : ''}`} />
-                <span className="font-bold">{c.name}</span>
-                {isOver && <AlertTriangle className="w-3 h-3 text-red-500 animate-pulse" />}
+                <MapPin className="w-3 h-3" />
+                <span className="op-sb__court-n">{c.name}</span>
+                {isOver && <AlertTriangle className="w-3 h-3 animate-pulse" />}
                 {c.matchInfo && (
                   <>
-                    {c.eventName && <span className={`text-[10px] truncate max-w-[80px] ${isOver ? 'text-red-400' : 'text-primary-500'}`}>{c.eventName}</span>}
-                    <span className={`truncate max-w-[120px] ${isOver ? 'text-red-600' : 'text-gray-700'}`}>{c.matchInfo}</span>
+                    {c.eventName && <span className="op-sb__court-ev">{c.eventName}</span>}
+                    <span className="op-sb__court-m">{c.matchInfo}</span>
                     {c.startedAt > 0 && (
-                      <span className={`text-[10px] font-mono whitespace-nowrap ${isOver ? 'text-red-500 font-bold' : 'text-primary-500'}`}>{formatElapsedMinutes(c.startedAt, clockTick)}</span>
+                      <span className="op-sb__court-t">{formatElapsedMinutes(c.startedAt, clockTick)}</span>
                     )}
                   </>
                 )}
@@ -867,43 +856,41 @@ function NormalScoreboard() {
       {/* ===== MAIN CONTENT ===== */}
       {showAllEvents ? (
         /* ===== 全種目表示 ===== */
-        <div className="flex-1 flex flex-col gap-6 overflow-auto">
+        <div className="op-sb__list">
           {perEventData.length === 0 ? (
-            <div className="flex items-center justify-center p-8 bg-white rounded-xl border border-border-main shadow-sm min-h-64">
-              <p className="font-semibold text-gray-500">試合データがありません</p>
-            </div>
+            <SkEmpty icon={MonitorPlay} title="試合データがありません" />
           ) : (
             perEventData.map(evtData => {
               return (
-                <section key={evtData.event.eventId} className="bg-white rounded-xl shadow-sm border border-border-main overflow-hidden">
+                <section key={evtData.event.eventId} className="sk-sec op-sb__ev">
                   {/* Event header — sticky */}
-                  <div className="px-4 py-3 bg-gradient-to-r from-primary-50 to-white border-b border-border-main sticky -top-4 md:-top-6 z-[5] shadow-sm">
-                    <div className="flex items-center justify-between">
-                      <h2 className="text-sm font-bold text-gray-900 flex items-center gap-2">
+                  <div className="op-sb__evhead">
+                    <div className="op-sb__evrow">
+                      <h2 className="op-sb__evtitle">
                         {evtData.isRoundRobin
-                          ? <LayoutGrid className="w-4 h-4 text-primary-500" />
-                          : <GitBranch className="w-4 h-4 text-primary-500" />
+                          ? <LayoutGrid className="w-4 h-4" />
+                          : <GitBranch className="w-4 h-4" />
                         }
                         {evtData.event.name}
-                        <span className="text-xs font-normal text-gray-500">({evtData.event.type})</span>
+                        <small>({evtData.event.type})</small>
                       </h2>
-                      <span className="text-xs text-gray-500 font-medium">
+                      <span className="op-sb__prog-n">
                         {evtData.progress.finished}/{evtData.progress.total} 完了
                         {evtData.progress.playing > 0 && (
-                          <span className="text-gray-700 ml-1">({evtData.progress.playing} 試合中)</span>
+                          <span className="op-sb__playing">({evtData.progress.playing} 試合中)</span>
                         )}
                       </span>
                     </div>
                     {/* Per-event mini progress bar */}
-                    <div className="mt-2 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                    <div className="op-bar op-bar--grow op-sb__evbar">
                       <div
-                        className="h-full bg-primary-500 rounded-full transition-all duration-500"
+                        className="op-bar__fill"
                         style={{ width: `${evtData.progress.pct}%` }}
                       />
                     </div>
                   </div>
                   {/* Bracket / League */}
-                  <div className="min-h-[200px]">
+                  <div className="op-sb__evbody">
                     {evtData.slots.length > 0 && evtData.draw ? (
                       evtData.isRoundRobin ? (
                         <ScoreboardLeague
@@ -937,9 +924,9 @@ function NormalScoreboard() {
                         />
                       )
                     ) : (
-                      <div className="flex flex-col items-center justify-center h-full p-8 text-center">
-                        <MonitorPlay className="w-12 h-12 text-gray-300 mb-2" />
-                        <p className="text-sm text-gray-500">試合を生成してください</p>
+                      <div className="op-sb__none">
+                        <MonitorPlay className="w-8 h-8" />
+                        <p>試合を生成してください</p>
                       </div>
                     )}
                   </div>
@@ -980,14 +967,12 @@ function NormalScoreboard() {
           )}
         </div>
       ) : !selectedEventId || selectedEventIdx < 0 ? (
-        <div className="flex items-center justify-center p-8 bg-white rounded-xl border border-border-main shadow-sm min-h-64">
-          <p className="font-semibold text-gray-500">種目を選択してください</p>
-        </div>
+        <SkEmpty icon={MonitorPlay} title="種目を選択してください" />
       ) : viewMode === 'bracket' ? (
         /* ===== BRACKET / LEAGUE VIEW (MAIN) ===== */
-        <div className="flex-1 flex gap-4 min-h-0">
+        <div className="op-sb__single">
           {/* Bracket/League area */}
-          <div className="flex-1 min-h-0 rounded-xl overflow-hidden shadow-sm border border-border-main bg-white">
+          <div className="sk-sec op-sb__ev op-sb__evbody">
             {editedSlots.length > 0 && drawData ? (
               isRoundRobin ? (
                 <ScoreboardLeague
@@ -1009,14 +994,14 @@ function NormalScoreboard() {
                 />
               )
             ) : matches.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-full p-8 text-center">
-                <MonitorPlay className="w-16 h-16 text-gray-300 mb-4" />
-                <p className="text-gray-500">エントリーを確定して試合を生成してください</p>
+              <div className="op-sb__none">
+                <MonitorPlay className="w-8 h-8" />
+                <p>エントリーを確定して試合を生成してください</p>
               </div>
             ) : (
-              <div className="flex flex-col items-center justify-center h-full p-8 text-center">
-                <GitBranch className="w-16 h-16 text-gray-300 mb-4" />
-                <p className="text-gray-500">ドロー表が見つかりません。テーブル表示に切り替えてください。</p>
+              <div className="op-sb__none">
+                <GitBranch className="w-8 h-8" />
+                <p>ドロー表が見つかりません。テーブル表示に切り替えてください。</p>
               </div>
             )}
           </div>
@@ -1042,14 +1027,14 @@ function NormalScoreboard() {
         </div>
       ) : (
         /* ===== TABLE VIEW (LEGACY) ===== */
-        <div className="flex-1 flex flex-col gap-6 overflow-auto">
+        <div className="op-sb__list">
           {/* 試合中 */}
           {activeMatches.length > 0 && (
             <section>
-              <h2 className="text-sm font-bold text-gray-700 uppercase tracking-wider mb-3 flex items-center gap-2">
+              <h2 className="op-sb__h">
                 <Play className="w-4 h-4" /> 進行中 ({activeMatches.length})
               </h2>
-              <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+              <div className="op-sb__cards">
                 {activeMatches.map(m => {
                   // テーブルビュー用: スコアから勝者自動判定
                   const tableAutoWinner = (() => {
@@ -1065,11 +1050,11 @@ function NormalScoreboard() {
                     return null;
                   })();
                   return (
-                    <div key={m.matchId} className="bg-white rounded-xl shadow-sm border-2 border-primary-600/40 p-4">
+                    <div key={m.matchId} className="op-sb__card">
                       <div className="flex justify-between items-center mb-3">
                         <span className="text-xs font-mono text-gray-500">#{m.matchOrder} R{m.round}</span>
-                        {m.courtId && <span className="text-xs bg-primary-50 text-primary-500 px-2 py-0.5 rounded font-medium">{getCourtName(m.courtId)}</span>}
-                        <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-primary-100 text-gray-700">
+                        {m.courtId && <span className="op-badge op-badge--court">{getCourtName(m.courtId)}</span>}
+                        <span className="op-st op-st--playing">
                           試合中
                         </span>
                       </div>
@@ -1093,11 +1078,11 @@ function NormalScoreboard() {
                           <input
                             type="text" placeholder="スコア (例: 6-4 6-3)" value={scoreInput}
                             onChange={e => setScoreInput(e.target.value)}
-                            className="w-full border border-border-main rounded-lg px-2 py-1 text-sm focus:border-primary-500 focus:ring-[3px] focus:ring-primary-500/15 outline-none"
+                            className="input sk-input"
                           />
                           {tableAutoWinner ? (
                             <button onClick={() => handleFinishMatch(m.matchId, tableAutoWinner)} disabled={isProcessing}
-                              className="w-full text-xs bg-primary-600 text-white px-3 py-2 rounded-md font-bold hover:bg-primary-700 disabled:opacity-50">
+                              className="btn btn--primary sk-btn sk-btn--block">
                               <Trophy className="w-3 h-3 inline mr-1" />
                               結果確定 ({tableAutoWinner === 1 ? getSurname(m.player1Name) : getSurname(m.player2Name)} 勝利)
                             </button>
@@ -1109,7 +1094,7 @@ function NormalScoreboard() {
                         <div className="mt-3 pt-3 border-t border-border-main flex items-center gap-2">
                           {m.status === 'playing' && (
                             <button onClick={() => { setEditingMatchId(m.matchId); setScoreInput(''); }}
-                              className="text-xs bg-primary-500 text-white px-3 py-2 rounded-md font-medium hover:bg-primary-600">
+                              className="btn btn--primary sk-btn sk-btn--sm">
                               <Check className="w-3 h-3 inline mr-1" />結果入力
                             </button>
                           )}
@@ -1130,21 +1115,21 @@ function NormalScoreboard() {
           {/* 待機中 */}
           {waitingMatches.length > 0 && (
             <section>
-              <h2 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-3">
+              <h2 className="op-sb__h">
                 待機中 ({waitingMatches.length})
               </h2>
-              <div className="bg-white rounded-xl shadow-sm border border-border-main overflow-hidden overflow-x-auto">
-                <table className="w-full text-left border-collapse text-xs sm:text-sm">
-                  <thead className="bg-primary-50 text-xs font-semibold text-gray-900">
+              <div className="sk-sec sk-table-wrap">
+                <table className="sk-table">
+                  <thead>
                     <tr>
-                      <th className="py-2 px-2 sm:px-3 w-8 sm:w-10 border-b-2 border-border-main">#</th>
-                      <th className="py-2 px-2 sm:px-3 border-b-2 border-border-main">対戦</th>
-                      <th className="py-2 px-2 sm:px-3 w-24 sm:w-32 border-b-2 border-border-main">コート</th>
+                      <th className="py-2 px-2 sm:px-3 w-8 sm:w-10">#</th>
+                      <th className="py-2 px-2 sm:px-3">対戦</th>
+                      <th className="py-2 px-2 sm:px-3 w-24 sm:w-32">コート</th>
                     </tr>
                   </thead>
                   <tbody>
                     {waitingMatches.map((m, idx) => (
-                      <tr key={m.matchId} className={`border-b border-border-main hover:bg-primary-50 ${idx % 2 === 1 ? 'bg-gray-50' : ''}`}>
+                      <tr key={m.matchId} className={idx % 2 === 1 ? 'is-odd' : ''}>
                         <td className="py-2 px-2 sm:px-3 font-mono text-gray-500">{m.matchOrder}</td>
                         <td className="py-2 px-2 sm:px-3">
                           <span className="font-medium">{m.player1Name}</span>
@@ -1153,7 +1138,7 @@ function NormalScoreboard() {
                         </td>
                         <td className="py-2 px-3">
                           <select value={m.courtId || ''} onChange={e => handleAssignCourt(m.matchId, e.target.value)}
-                            className="w-full border-border-main rounded-lg text-xs px-2 py-1 bg-white border">
+                            className="input op-cs__mini">
                             <option value="">未割当</option>
                             {courts.filter(c => c.isAvailable && (!occupiedCourtIds.has(c.courtId) || c.courtId === m.courtId)).map(c => (
                               <option key={c.courtId} value={c.courtId}>{c.name}</option>
@@ -1171,18 +1156,18 @@ function NormalScoreboard() {
           {/* 終了済み */}
           {finishedMatches.length > 0 && (
             <section>
-              <h2 className="text-sm font-bold text-primary-500 uppercase tracking-wider mb-3">
+              <h2 className="op-sb__h">
                 終了 ({finishedMatches.length})
               </h2>
-              <div className="bg-white rounded-xl shadow-sm border border-border-main overflow-hidden overflow-x-auto">
-                <table className="w-full text-left border-collapse text-sm">
-                  <thead className="bg-primary-50 text-xs font-semibold text-gray-900">
+              <div className="sk-sec sk-table-wrap">
+                <table className="sk-table">
+                  <thead>
                     <tr>
-                      <th className="py-2 px-3 w-10 border-b-2 border-border-main">#</th>
-                      <th className="py-2 px-3 border-b-2 border-border-main">勝者</th>
-                      <th className="py-2 px-3 border-b-2 border-border-main">敗者</th>
-                      <th className="py-2 px-3 w-28 border-b-2 border-border-main">スコア</th>
-                      <th className="py-2 px-3 w-16 border-b-2 border-border-main"></th>
+                      <th className="py-2 px-3 w-10">#</th>
+                      <th className="py-2 px-3">勝者</th>
+                      <th className="py-2 px-3">敗者</th>
+                      <th className="py-2 px-3 w-28">スコア</th>
+                      <th className="py-2 px-3 w-16"></th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1191,7 +1176,7 @@ function NormalScoreboard() {
                       const winner = isP1Winner ? m.player1Name : m.player2Name;
                       const loser = isP1Winner ? m.player2Name : m.player1Name;
                       return (
-                        <tr key={m.matchId} className={`border-b border-border-main hover:bg-primary-50 ${idx % 2 === 1 ? 'bg-gray-50' : ''}`}>
+                        <tr key={m.matchId} className={idx % 2 === 1 ? 'is-odd' : ''}>
                           <td className="py-2 px-3 font-mono text-gray-500">{m.matchOrder}</td>
                           <td className="py-2 px-3 font-bold text-gray-900 whitespace-nowrap">{winner}</td>
                           <td className="py-2 px-3 text-gray-600 whitespace-nowrap">{loser || 'BYE'}</td>
@@ -1212,32 +1197,30 @@ function NormalScoreboard() {
           )}
 
           {matches.length === 0 && (
-            <div className="flex-1 flex flex-col items-center justify-center p-8 text-center bg-white rounded-xl border border-dashed border-border-main">
-              <MonitorPlay className="w-16 h-16 text-gray-300 mb-4" />
-              <p className="text-gray-500">エントリーを確定して試合を生成してください</p>
-            </div>
+            <SkEmpty icon={MonitorPlay} title="エントリーを確定して試合を生成してください" />
           )}
         </div>
       )}
 
       {/* 大会ルール ポップアップ */}
-      {showRules && createPortal(
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4" onClick={() => setShowRules(false)}>
-          <div className="fixed inset-0 bg-black/25 backdrop-blur-[2px]" />
-          <div
-            className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[80vh] overflow-hidden animate-in fade-in zoom-in-95 duration-200"
-            onClick={e => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between px-5 py-4 bg-gradient-to-r from-primary-50 to-primary-100 border-b border-primary-200">
-              <h2 className="text-base font-bold text-gray-900 flex items-center gap-2">
-                <BookOpen className="w-5 h-5 text-primary-600" />
-                大会ルール
-              </h2>
-              <button onClick={() => setShowRules(false)} className="p-1.5 rounded-lg hover:bg-primary-200/50 transition-colors">
-                <X className="w-5 h-5 text-primary-700" />
-              </button>
-            </div>
-            <div className="p-5 space-y-4 overflow-y-auto max-h-[calc(80vh-120px)]">
+      {showRules && (
+        <SiteDialog
+          open
+          eyebrow="RULES"
+          title="大会ルール"
+          size="md"
+          onClose={() => setShowRules(false)}
+          closable
+          actions={
+            <button
+              onClick={() => setShowRules(false)}
+              className="btn btn--primary sdlg__btn"
+            >
+              閉じる
+            </button>
+          }
+        >
+            <div className="op-rules">
               {events.length === 0 ? (
                 <p className="text-sm text-gray-500">種目が設定されていません</p>
               ) : (
@@ -1246,18 +1229,18 @@ function NormalScoreboard() {
                   const defaultGames = evt.gameRules?.games ?? 6;
                   return (
                     <div key={evt.eventId} className="space-y-2">
-                      <h3 className="text-sm font-bold text-gray-900 border-b border-gray-200 pb-1">
+                      <h3 className="op-rules__ev">
                         {evt.name}
-                        <span className="text-xs font-normal text-gray-500 ml-2">({evt.type})</span>
+                        <small>({evt.type})</small>
                       </h3>
                       {rules.length > 0 ? (
                         <div className="space-y-1.5">
                           {rules.map((rule, idx) => (
                             <div key={idx} className="flex items-start gap-2 text-sm">
-                              <span className="shrink-0 text-xs font-medium text-gray-800 bg-primary-100 px-2 py-0.5 rounded">
+                              <span className="op-rules__rd">
                                 {rule.roundLabel}
                               </span>
-                              <span className="text-gray-700 font-medium">{rule.ruleText}</span>
+                              <span className="op-rules__tx">{rule.ruleText}</span>
                             </div>
                           ))}
                         </div>
@@ -1271,17 +1254,7 @@ function NormalScoreboard() {
                 })
               )}
             </div>
-            <div className="px-5 py-3 border-t border-gray-100">
-              <button
-                onClick={() => setShowRules(false)}
-                className="w-full py-2.5 bg-primary-600 text-white rounded-xl font-bold text-sm hover:bg-primary-700 transition-colors"
-              >
-                閉じる
-              </button>
-            </div>
-          </div>
-        </div>,
-        document.body
+        </SiteDialog>
       )}
     </div>
   );

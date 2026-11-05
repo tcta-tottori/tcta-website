@@ -166,15 +166,15 @@ export default function BulkCallOverlay() {
       : Math.round((currentIndex / items.length) * 100);
 
   return (
-    <div className="fixed top-[56px] right-3 z-50 w-80">
-      <div className="bg-white rounded-xl shadow-2xl border border-primary-200 overflow-hidden">
-        <div className="bg-gradient-to-r from-primary-600 to-primary-700 px-4 py-2.5 flex items-center gap-2">
+    <div className="fixed right-3 z-50 w-80 psd-bulk">
+      <div className="psd-call overflow-hidden">
+        <div className="psd-call__head">
           <div className="relative">
             {isPreparing
               ? <Loader2 className="w-5 h-5 text-white animate-spin" />
               : <Megaphone className="w-5 h-5 text-white" />}
             {isActive && !isPreparing && (
-              <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-400 rounded-full animate-pulse" />
+              <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-white rounded-full animate-pulse" />
             )}
           </div>
           <div className="flex-1 min-w-0">
@@ -195,7 +195,7 @@ export default function BulkCallOverlay() {
           {isActive && (
             <button
               onClick={handleAbort}
-              className="flex items-center gap-1 px-2.5 py-1.5 bg-white/20 hover:bg-white/30 text-white text-xs font-bold rounded-lg transition-colors backdrop-blur-sm"
+              className="psd-call__stop"
             >
               <Square className="w-3 h-3" />
               中断
@@ -209,16 +209,16 @@ export default function BulkCallOverlay() {
               <span className="text-[10px] text-gray-500 font-medium">進捗</span>
               <span className="text-xs font-bold text-gray-700">{progress}%</span>
             </div>
-            <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+            <div className="sdlg-progress__bar">
               <div
-                className="h-full bg-gradient-to-r from-primary-500 to-primary-600 rounded-full transition-all duration-700"
+                className="sdlg-progress__fill"
                 style={{ width: `${progress}%` }}
               />
             </div>
           </div>
 
           {isPreparing && (
-            <div className="flex items-center gap-2 px-3 py-2 bg-primary-50 rounded-lg border border-primary-100">
+            <div className="flex items-center gap-2 sk-note sk-note--red">
               <Loader2 className="w-4 h-4 text-primary-500 shrink-0 animate-spin" />
               <p className="text-[11px] text-gray-800 font-medium">
                 全{items.length}コート分の音声を読み込んでから、続けてコールします
@@ -227,7 +227,7 @@ export default function BulkCallOverlay() {
           )}
 
           {current && isActive && !isPreparing && (
-            <div className="flex items-center gap-2 px-3 py-2 bg-primary-50 rounded-lg border border-primary-100">
+            <div className="flex items-center gap-2 sk-note sk-note--red">
               <Volume2 className="w-4 h-4 text-primary-500 shrink-0 animate-pulse" />
               <div className="min-w-0 flex-1">
                 <p className="text-xs font-bold text-gray-900 truncate">
@@ -245,14 +245,14 @@ export default function BulkCallOverlay() {
               {items.map((item, i) => (
                 <span
                   key={`${item.courtName}-${item.matchId}`}
-                  className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-[10px] font-bold transition-all ${
+                  className={`psd-bulk__court ${
                     isPreparing
-                      ? (i < preparedCount ? 'bg-primary-100 text-gray-700' : 'bg-gray-100 text-gray-400')
+                      ? (i < preparedCount ? 'is-done' : '')
                       : i < currentIndex
-                        ? 'bg-primary-100 text-gray-700'
+                        ? 'is-done'
                         : i === currentIndex
-                          ? 'bg-primary-600 text-white ring-2 ring-primary-300 animate-pulse'
-                          : 'bg-gray-100 text-gray-400'
+                          ? 'is-now'
+                          : ''
                   }`}
                 >
                   {item.courtName}

@@ -285,11 +285,11 @@ export default function MixedScoreInput({ match, teams, onClose }: Props) {
       <div className="fixed inset-0 bg-black/40" />
       <div
         ref={popupRef}
-        className={`relative bg-white rounded-2xl shadow-2xl w-[440px] max-w-[92vw] max-h-full flex flex-col overflow-hidden z-[110] ${keyboardOpen ? 'h-full' : ''}`}
+        className={`relative bg-white rounded-2xl w-[440px] max-w-[92vw] max-h-full flex flex-col overflow-hidden z-[110] ${keyboardOpen ? 'h-full' : ''}`}
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
-        <div className={`shrink-0 bg-gradient-to-r from-primary-700 to-primary-800 text-white px-5 ${keyboardOpen ? 'py-1.5' : 'py-2.5'}`}>
+        <div className={`shrink-0 bg-primary-700 text-white px-5 ${keyboardOpen ? 'py-1.5' : 'py-2.5'}`}>
           <div className="flex items-center justify-between">
             <div>
               <h3 className="font-bold text-sm">スコア入力</h3>
@@ -405,7 +405,7 @@ export default function MixedScoreInput({ match, teams, onClose }: Props) {
         <div className={`shrink-0 border-t border-gray-100 bg-white px-4 ${keyboardOpen ? 'py-2 space-y-1.5' : 'py-3 space-y-2'}`}>
           <button
             onClick={handleSave}
-            className={`w-full flex items-center justify-center gap-2 px-4 bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-xl hover:from-primary-700 hover:to-primary-800 transition-all shadow-md text-sm font-bold active:scale-[0.98] ${keyboardOpen ? 'py-2.5 min-h-[44px]' : 'py-3 min-h-[48px]'}`}
+            className={`w-full flex items-center justify-center gap-2 px-4 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition-all text-sm font-bold active:scale-[0.98] ${keyboardOpen ? 'py-2.5 min-h-[44px]' : 'py-3 min-h-[48px]'}`}
           >
             <Save size={14} />決定
           </button>
