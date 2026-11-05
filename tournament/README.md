@@ -20,6 +20,7 @@ GitHub Pages で動いている大会運営システム（[`tcta-tottori/tournam
 | 観戦端末からの書き込み | 中継サーバーはそのまま流す | 観戦端末（`viewer`）からは大会データの変更を流さない。データの要求だけ通す |
 | 音声コール（Gemini TTS） | 鍵をビルドに埋め込む（ブラウザから見える）か、Render の中継が代理 | 同じ Worker の `/api/gemini-tts` が代理。鍵は Worker の secret に置き、ブラウザには渡さない。他のサイトからは使えない |
 | 見た目 | 赤いサイドメニューの独自デザイン | 協会サイト（開発中）と同じ枠：白いヘッダーと横一列のナビ、右上の赤いブロック、灰色のページ見出しと背景の大きな英字、黒地のスマホメニュー、黒地のフッター。色・字・角もサイトにそろえた |
+| 大会データの読み込み元 | Google ドライブの共有フォルダ（各自が Google でログインして接続） | Cloudflare のデータベース（D1「tcta-tournament-data」）。役員ログインだけで読める。外の仕組みからも直接送り込める（下の「大会データ（Cloudflare）」） |
 | 端末内のデータ | `tcta-tottori.github.io` の IndexedDB | 別の URL なので別。移すときは旧版の「設定 → バックアップ」で書き出し、こちらで復元する |
 
 画面の中身（取り込み・ドロー・スコア入力・印刷などの処理）は GitHub Pages 版と同じコードです（GitHub Pages 版の main `70fe04b`（2026-10-18）から写した。写すときに、元から型検査で落ちていた 19 か所だけ直してある）。
@@ -76,12 +77,49 @@ npm run test:auth      # 役員ログインの証明（JWT）の検証を、自�
 
 ### 配備のあとに一度だけ行うこと
 
-1. **Google ドライブ連携** … Google Cloud コンソールの OAuth クライアント（`316429350105-…`）の「承認済みの JavaScript 生成元」に
-   `https://tcta-tournament.tcta-admin-worker.workers.dev` を足す。足すまでは、この URL でドライブに接続できない（GitHub Pages 版はそのまま使える）
+1. **大会データのデータベース** … 最初の配備で D1「tcta-tournament-data」が名前どおりに作られる（GitHub Actions の配備用トークンに D1: Edit が要る。公式サイトと同じトークンなので入っている）。
+   表は Worker が最初に使うときに作る。Google ドライブの設定は要らない
 2. **音声コール（任意）** … Gemini の API キーを Worker に入れる。リポジトリの Secrets に `GEMINI_API_KEY` を入れておけば配備のたびに入る。
    手元からなら `npx wrangler secret put GEMINI_API_KEY`。入れなければブラウザ内蔵の声だけで動く（既定もこちら）
 3. **協会サイトの観戦リンク** … 観戦ページの URL を `https://tcta-tournament.tcta-admin-worker.workers.dev/view` に差し替える（Render を止めるときに）
 4. **役員ログイン** … 下の「はじめに一度だけ、人がすること」。**これをするまで運営画面は誰も使えない**（観戦ページは使える）
+
+## 大会データ（Cloudflare）
+
+Google ドライブからの読み込みはやめ、Cloudflare のデータベース（D1）に置いた大会データを読み込んで進めます。
+運営画面の「データ」→「大会データ（Cloudflare）」の **一括読込**・**ふりがな・所属**・**大会・時間割** は、GitHub Pages 版のドライブのボタンと同じ動きで、読む先だけが Cloudflare になりました。
+「設定」→「バックアップ」の保存先も Cloudflare です。役員ログインしていれば、Google のログインは要りません。
+
+置き場は種類ごとに分かれています（ドライブのフォルダと 1 対 1）。
+
+| 種類（kind） | ドライブのときのフォルダ | 置くもの |
+| --- | --- | --- |
+| `tournament` | 大会一覧 | 大会日程表（「令和8年度…大会日程.xlsx」）と、各大会のドロー Excel |
+| `schedule` | 時間割 | 時間割 Excel |
+| `furigana` | ふりがな一覧 | ふりがな一覧 Excel（いちばん新しい 1 つを読む） |
+| `affiliation` | 所属一覧 | 所属一覧 Excel（いちばん新しい 1 つを読む） |
+| `backup` | バックアップ | 「設定 → バックアップ」から保存した JSON |
+| `result` | 大会結果 | 大会結果のファイル |
+
+### データを送る
+
+- **Claude Code に頼む** … ファイルを渡して「時間割として Cloudflare に入れて」などと頼むと、`scripts/data.mjs` で送ります。
+  ```bash
+  node tournament/scripts/data.mjs push schedule 時間割.xlsx      # 送る（同じ名前があれば上書き）
+  node tournament/scripts/data.mjs list                         # 置いてあるものの一覧
+  node tournament/scripts/data.mjs remove schedule 時間割.xlsx    # 消す
+  ```
+  送るたびに送信用の鍵を作り直し、Worker に入れてから送ります（Cloudflare の API トークン（Workers Scripts: Edit）を使う。役員ログインと同じもの）。
+- **外の仕組みから直接送る** … `node tournament/scripts/data.mjs token` で送信用の鍵を作り（1 度だけ表示）、その仕組みに渡します。
+  ```bash
+  curl -X PUT "https://tcta-tournament.tcta-admin-worker.workers.dev/api/data/files?kind=schedule&name=時間割.xlsx" \
+       -H "Authorization: Bearer <鍵>" --data-binary @時間割.xlsx
+  ```
+  鍵そのものはどこにも置かず、Worker には SHA-256 だけを入れます（`DATA_PUSH_TOKEN_SHA256`）。`token` か、鍵を持たずに `push` すると前の鍵は使えなくなります。
+- **運営画面から書き込む** … ふりがな・所属の「Cloudflare に書込」、バックアップの「Cloudflare に保存」。
+
+API（`worker/data.ts`）: `GET /api/data/files?kind=…`（一覧）・`GET /api/data/files/<id>`（中身）・`PUT /api/data/files?kind=…&name=…`（置く）・`DELETE /api/data/files/<id>`。
+使えるのは役員（書き込みはこのサイトの画面からだけ）と送信用の鍵だけです。1 ファイル 25 MB まで（D1 の 1 行 2 MB の上限に合わせ、1 MB ずつに分けて保存）。
 
 ## 役員ログイン
 
@@ -191,9 +229,10 @@ Claude Code が Cloudflare を操作するための鍵（API トークン）を�
 
 ```
 tournament/
-├── wrangler.jsonc            Worker 名 tcta-tournament、静的ファイル（dist/）、Durable Object「SyncRoom」
+├── wrangler.jsonc            Worker 名 tcta-tournament、静的ファイル（dist/）、Durable Object「SyncRoom」、D1「tcta-tournament-data」
 ├── worker/
 │   ├── index.ts              入口。/ws をルームごとの Durable Object へ（運営端末は役員だけ）、/api/gemini-* を Gemini へ、ほかは静的ファイル
+│   ├── data.ts               大会データの置き場（D1。/api/data/files）
 │   ├── auth.ts               役員ログイン（Cloudflare Access の証明の検証・/auth/login・/auth/logout・/api/me）
 │   └── sync-room.ts          中継（join / leave / broadcast / cache / ping。Render 版 sync-server と同じ約束事）
 ├── src/
@@ -207,6 +246,7 @@ tournament/
 │   └── features/…            画面の中身（GitHub Pages 版と同じ）
 ├── public/site/              協会ロゴ（サイトの写し。ビルドの前に作る）
 ├── scripts/sync-site.mjs     協会サイトの CSS・ロゴを写す
+├── scripts/data.mjs         大会データを Cloudflare に送る・一覧・消す（Claude Code からも使う）
 ├── scripts/officers.mjs      役員ログイン（Cloudflare Access）の設定と役員の追加・削除（Claude Code から使う）
 ├── scripts/smoke.mjs         中継・役員ログイン・API の動作確認
 └── scripts/auth.test.mts     役員ログインの証明の検証のテスト

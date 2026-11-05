@@ -3,13 +3,13 @@ import { createPortal } from 'react-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, type Match, type Event, type RoundGameRule, type MatchFormatType } from '../../db/database';
 import { useAppStore, type ImportedScheduleItem } from '../../stores/appStore';
-import { CalendarClock, Download, FileSpreadsheet, FolderOpen, X, Loader2, Edit3, Save, Zap, ArrowRightLeft, Clock, Trophy } from 'lucide-react';
+import { Cloud, CalendarClock, Download, FileSpreadsheet, FolderOpen, X, Loader2, Edit3, Save, Zap, ArrowRightLeft, Clock, Trophy } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import {
   getSavedToken as gdriveGetSavedToken,
   downloadScheduleExcel,
-  type GoogleDriveFile,
-} from '../backup/googleDriveApi';
+  type CloudDataFile,
+} from '../backup/cloudDataApi';
 import { assignVenueCourtNames } from './scheduleEngine';
 import { generateScheduleFromDraws, inferScheduleBaseFromDraws, AUTO_GENERATED_SCHEDULE_LABEL } from './generateSchedule';
 import ScoreInputDialog, { type ScoreInputMatch } from '../score/ScoreInputDialog';
@@ -156,18 +156,9 @@ function parseRoundFromLabel(label: string, totalRounds: number | null): number 
   return null;
 }
 
-/** Google Drive brand icon */
-function GoogleDriveIcon({ className = 'w-5 h-5' }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 87.3 78" xmlns="http://www.w3.org/2000/svg">
-      <path d="M6.6 66.85l3.85 6.65c.8 1.4 1.95 2.5 3.3 3.3l13.75-23.8H0c0 1.55.4 3.1 1.2 4.5l5.4 9.35z" fill="#0066DA"/>
-      <path d="M43.65 25L29.9 1.2C28.55 2 27.4 3.1 26.6 4.5L3.45 44.7c-.8 1.4-1.2 2.95-1.2 4.5h27.5L43.65 25z" fill="#00AC47"/>
-      <path d="M73.55 76.8c1.35-.8 2.5-1.9 3.3-3.3l1.6-2.75 7.65-13.25c.8-1.4 1.2-2.95 1.2-4.5H59.85L73.55 76.8z" fill="#EA4335"/>
-      <path d="M43.65 25L57.4 1.2C56.05.4 54.5 0 52.9 0H34.4c-1.6 0-3.15.45-4.5 1.2L43.65 25z" fill="#00832D"/>
-      <path d="M59.85 53H27.5l-13.75 23.8c1.35.8 2.9 1.2 4.5 1.2h50.8c1.6 0 3.15-.45 4.5-1.2L59.85 53z" fill="#2684FC"/>
-      <path d="M73.4 26.5l-12.7-22c-.8-1.4-1.95-2.5-3.3-3.3L43.65 25l16.2 28h27.45c0-1.55-.4-3.1-1.2-4.5L73.4 26.5z" fill="#FFBA00"/>
-    </svg>
-  );
+/** 大会データの置き場（Cloudflare）のアイコン */
+function CloudDataIcon({ className = 'w-5 h-5' }: { className?: string }) {
+  return <Cloud className={className} aria-hidden="true" />;
 }
 
 export default function ScheduleSheet() {
@@ -190,9 +181,9 @@ export default function ScheduleSheet() {
   // Excel import
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Google Drive file picker
+  // Cloudflare の時間割のファイル選択
   const [showDrivePicker, setShowDrivePicker] = useState(false);
-  const [driveFiles] = useState<GoogleDriveFile[]>([]);
+  const [driveFiles] = useState<CloudDataFile[]>([]);
   const [driveLoading, setDriveLoading] = useState(false);
   const [driveError, setDriveError] = useState('');
 
@@ -895,9 +886,9 @@ export default function ScheduleSheet() {
     if (fileInputRef.current) fileInputRef.current.value = '';
   }, [tid, setImportedSchedule]);
 
-  // --------------- Google Drive Import ---------------
+  // --------------- Cloudflare から読込 ---------------
 
-  const handleDriveFileSelect = useCallback(async (file: GoogleDriveFile) => {
+  const handleDriveFileSelect = useCallback(async (file: CloudDataFile) => {
     if (!tid) return;
     const token = gdriveGetSavedToken();
     if (!token) return;
@@ -1003,7 +994,7 @@ export default function ScheduleSheet() {
       }
 
       setImportedSchedule(items);
-      setStatusMessage(`Google Drive「${file.name}」から ${items.length} 件のスケジュールを読み込みました。`);
+      setStatusMessage(`Cloudflare の「${file.name}」から ${items.length} 件のスケジュールを読み込みました。`);
     } catch (err) {
       setDriveError(`読み込みに失敗しました: ${(err as Error).message}`);
     } finally {
@@ -1328,7 +1319,7 @@ export default function ScheduleSheet() {
             タイムテーブルデータがありません
           </h3>
           <p className="text-gray-500 max-w-md mb-6">
-            Excel読込ボタンまたはGoogle Drive時間割フォルダからスケジュールデータをインポートするか、
+            Excel読込ボタンまたは Cloudflare の時間割からスケジュールデータをインポートするか、
             下記からドローをもとに時間割を自動生成できます。
           </p>
 
@@ -1581,14 +1572,14 @@ export default function ScheduleSheet() {
         document.body,
       )}
 
-      {/* Google Drive File Picker Modal */}
+      {/* Cloudflare の時間割のファイル選択 */}
       {showDrivePicker && createPortal(
         <div className="fixed inset-0 bg-black/50 z-[9999] flex items-center justify-center p-4" onClick={() => setShowDrivePicker(false)}>
           <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full max-h-[80vh] flex flex-col" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200">
               <div className="flex items-center gap-2.5">
-                <GoogleDriveIcon className="w-5 h-5" />
-                <h3 className="text-base font-bold text-gray-900">時間割フォルダ</h3>
+                <CloudDataIcon className="w-5 h-5" />
+                <h3 className="text-base font-bold text-gray-900">Cloudflare の「時間割」</h3>
               </div>
               <button onClick={() => setShowDrivePicker(false)} className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors">
                 <X className="w-5 h-5 text-gray-500" />

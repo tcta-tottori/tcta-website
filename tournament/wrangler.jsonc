@@ -2,7 +2,7 @@
 	// 大会運営システム（Cloudflare 版）の Worker。GitHub Pages 版（tcta-tottori/tournament-management-app）は残したまま、別の URL で動く。
 	//   アプリ本体 … dist/（vite build の出力）を Workers Static Assets で配る。Worker を通らないので無料・無制限
 	//   /ws        … 端末どうしの同期と観戦配信（Durable Object「SyncRoom」。Render の中継サーバーの置き換え）
-	//   /api/*     … 音声コール（Gemini TTS）の中継。API キーは wrangler secret put GEMINI_API_KEY で入れる
+	//   /api/*     … 音声コール（Gemini TTS）の中継（API キーは wrangler secret put GEMINI_API_KEY）と、大会データの置き場（D1）
 	"$schema": "node_modules/wrangler/config-schema.json",
 	"name": "tcta-tournament",
 	"main": "worker/index.ts",
@@ -20,6 +20,9 @@
 	},
 	// Free プランで使えるのは SQLite を使う Durable Object だけ
 	"migrations": [{ "tag": "v1", "new_sqlite_classes": ["SyncRoom"] }],
+	// 大会データの置き場（大会一覧・時間割・ふりがな・所属の Excel、バックアップ）。Google ドライブの代わり（worker/data.ts）。
+	// database_id を書かなければ、最初の配備で名前どおりに作られる。表は Worker が最初に使うときに作る
+	"d1_databases": [{ "binding": "DATA", "database_name": "tcta-tournament-data" }],
 	// 役員ログイン（Cloudflare Access）の ACCESS_TEAM_DOMAIN・ACCESS_AUD は、ここには書かず Worker の秘密として入れる
 	// （scripts/officers.mjs setup が Cloudflare の API で入れる。配備しても消えない）。無ければ運営の操作はすべて断る。
 	"vars": {

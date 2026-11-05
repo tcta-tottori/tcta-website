@@ -64,6 +64,16 @@ ok(!(await connect('operator')), 'ログインしていなければ、運営端�
   const login = await fetch(BASE + '/auth/login?return=//evil.example', { redirect: 'manual' });
   ok(login.status !== 302 || !(login.headers.get('location') || '').includes('evil'), 'ログイン後の戻り先に他のサイトを指定できない');
 }
+
+// 大会データの置き場（D1）
+{
+  const list = await fetch(BASE + '/api/data/files?kind=schedule');
+  ok(list.status === 401, 'ログインしていなければ大会データの一覧は読めない');
+  const put = await fetch(BASE + '/api/data/files?kind=schedule&name=x.xlsx', { method: 'PUT', headers: { Origin: BASE }, body: 'x' });
+  ok(put.status === 401, 'ログインしていなければ大会データは置けない');
+  const forged = await fetch(BASE + '/api/data/files', { headers: { Authorization: 'Bearer tcta_push_forged' } });
+  ok(forged.status === 401, '偽の送信用の鍵では大会データを読めない');
+}
 {
   const refused = await new Promise((resolve) => {
     const ws = new WebSocket(`${WS}?room=bad%20room&role=viewer`);

@@ -7,6 +7,7 @@
 //   /api/me                   … ログイン中の役員（運営画面が最初に確かめる）
 //   /api/gemini-status        … 音声コール（Gemini TTS）が使えるか
 //   /api/gemini-tts           … 音声コールの生成（役員だけ。API キーは Worker の secret。ブラウザには渡さない）
+//   /api/data/files…          … 大会データの置き場（D1。worker/data.ts）。役員と、外からデータを送る仕組み（送信用の鍵）だけ
 //   /api/health               … 動作確認
 //   それ以外                  … アプリ本体（dist/ の静的ファイル。SPA なので未知の URL は index.html）
 //
@@ -17,12 +18,17 @@
 // （join / leave / broadcast / cache / ping）をそのまま受けるので、アプリ側の同期処理は変えていない。
 
 import { handleAuth, handleMe, officerOf, sameOrigin } from './auth';
+import { handleData } from './data';
 
 export { SyncRoom } from './sync-room';
 
 export interface Env {
   ASSETS: Fetcher;
   SYNC_ROOM: DurableObjectNamespace;
+  /** 大会データの置き場（D1。worker/data.ts） */
+  DATA?: D1Database;
+  /** 外からデータを送るときの鍵の SHA-256（scripts/data.mjs が Worker の秘密として入れる） */
+  DATA_PUSH_TOKEN_SHA256?: string;
   /** Gemini の API キー（wrangler secret put GEMINI_API_KEY）。無ければ音声コールはブラウザ内蔵の声だけ */
   GEMINI_API_KEY?: string;
   /** 既定の TTS モデル */
@@ -67,6 +73,10 @@ export default {
 
     if (url.pathname === '/api/me') {
       return handleMe(request, env, url);
+    }
+
+    if (url.pathname === '/api/data/files' || url.pathname.startsWith('/api/data/files/')) {
+      return handleData(request, env, url);
     }
 
     if (url.pathname === '/api/health') {

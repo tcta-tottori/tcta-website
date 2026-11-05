@@ -4,7 +4,7 @@ import { ListChecks, FileSpreadsheet, ChevronDown, ChevronRight, Trash2, AlertTr
 import {
   getSavedClientId,
   isTokenValid as gdriveIsTokenValid,
-} from '../backup/googleDriveApi';
+} from '../backup/cloudDataApi';
 import PlayerDataList from './PlayerDataList';
 import DataImport from './DrawMeetingImport';
 import DataSync, { FuriganaAffiliationOps } from './DataSync';
@@ -334,7 +334,7 @@ function TeamTournamentInfoSection() {
 }
 
 export default function DataManagement() {
-  // 共有 Google Drive 接続状態（再レンダリングトリガー用）
+  // Cloudflare の大会データへの接続状態（役員ログイン。再レンダリングトリガー用）
   const [, setGdriveVersion] = useState(0);
   const gdriveConnected = !!getSavedClientId() && gdriveIsTokenValid();
   const isMixedImported = useMixedStore(s => s.isImported);
@@ -529,7 +529,7 @@ export default function DataManagement() {
       {/* 団体戦 大会情報 */}
       {isTeamImported && <TeamTournamentInfoSection />}
 
-      {/* Google ドライブ連携（接続 + 一括読込 + フォルダ + 大会/時間割読込） */}
+      {/* 大会データ（Cloudflare）: 一括読込 + 大会/時間割読込 */}
       <DataSync
         onConnectionChange={handleConnectionChange}
         onDataLoaded={handleDataLoaded}

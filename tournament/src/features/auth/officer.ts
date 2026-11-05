@@ -125,3 +125,9 @@ export function logout(): void {
   remember(null);
   location.href = '/auth/logout';
 }
+
+/** React の外から今の状態を読む（データの読み書きの前に使う） */
+export function getOfficerState(): OfficerState {
+  start();
+  return state;
+}

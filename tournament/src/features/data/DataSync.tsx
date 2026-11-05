@@ -6,9 +6,9 @@ import type { AffiliationFurigana } from '../../db/database';
 import { useLiveQuery } from 'dexie-react-hooks';
 import {
   RefreshCw, CheckCircle2, AlertCircle, Clock,
-  Download, Upload, FolderOpen, FileSpreadsheet, LogIn, LogOut, Users, Building2, Layers,
+  Download, Upload, FolderOpen, FileSpreadsheet, LogIn, Users, Building2, Layers,
   X, Loader2, CalendarClock, ChevronRight, ChevronDown, Trophy, Dices, Calendar, MapPin, Sparkles,
-  ListChecks, Search,
+  ListChecks, Search, Cloud,
 } from 'lucide-react';
 import { parseDrawExcel } from './drawExcelParser';
 import type { ParsedDrawFile } from './drawExcelParser';
@@ -37,31 +37,20 @@ import {
   uploadAffiliationExcel,
   getSharedFolderLink,
   getUserEmail,
-  revokeToken,
-  clearToken,
-  clearFolderCache,
   loadGisScript,
   listTournamentExcelFiles,
   downloadTournamentExcel,
   listScheduleExcelFiles,
   downloadScheduleExcel,
-  type GoogleDriveFile,
-} from '../backup/googleDriveApi';
+  type CloudDataFile,
+} from '../backup/cloudDataApi';
+import { useOfficer } from '../auth/officer';
 
 const LS_KEY_LAST_SYNC = 'dataSyncLastTimestamp';
 
-/** Google Drive ブランドアイコン */
-function GoogleDriveIcon({ className = 'w-5 h-5' }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 87.3 78" xmlns="http://www.w3.org/2000/svg">
-      <path d="M6.6 66.85l3.85 6.65c.8 1.4 1.95 2.5 3.3 3.3l13.75-23.8H0c0 1.55.4 3.1 1.2 4.5l5.4 9.35z" fill="#0066DA"/>
-      <path d="M43.65 25L29.9 1.2C28.55 2 27.4 3.1 26.6 4.5L3.45 44.7c-.8 1.4-1.2 2.95-1.2 4.5h27.5L43.65 25z" fill="#00AC47"/>
-      <path d="M73.55 76.8c1.35-.8 2.5-1.9 3.3-3.3l1.6-2.75 7.65-13.25c.8-1.4 1.2-2.95 1.2-4.5H59.85L73.55 76.8z" fill="#EA4335"/>
-      <path d="M43.65 25L57.4 1.2C56.05.4 54.5 0 52.9 0H34.4c-1.6 0-3.15.45-4.5 1.2L43.65 25z" fill="#00832D"/>
-      <path d="M59.85 53H27.5l-13.75 23.8c1.35.8 2.9 1.2 4.5 1.2h50.8c1.6 0 3.15-.45 4.5-1.2L59.85 53z" fill="#2684FC"/>
-      <path d="M73.4 26.5l-12.7-22c-.8-1.4-1.95-2.5-3.3-3.3L43.65 25l16.2 28h27.45c0-1.55-.4-3.1-1.2-4.5L73.4 26.5z" fill="#FFBA00"/>
-    </svg>
-  );
+/** 大会データの置き場（Cloudflare）のアイコン。Google ドライブ版のアイコンの代わり */
+function CloudDataIcon({ className = 'w-5 h-5' }: { className?: string }) {
+  return <Cloud className={className} aria-hidden="true" />;
 }
 
 /** スペースを全角半角問わず除去 */
@@ -183,7 +172,7 @@ function useModalState() {
 
 async function doDownloadFurigana(token: string): Promise<{ success: boolean; details: string[] }> {
   const file = await downloadFuriganaExcel(token);
-  if (!file) throw new Error('「ふりがな一覧」フォルダにExcelファイルがありません');
+  if (!file) throw new Error('Cloudflare の「ふりがな一覧」にExcelファイルがありません');
   const wb = XLSX.read(file.data, { type: 'array' });
   const ws = wb.Sheets[wb.SheetNames[0]];
   const rows = XLSX.utils.sheet_to_json<any>(ws);
@@ -217,7 +206,7 @@ async function doDownloadFurigana(token: string): Promise<{ success: boolean; de
 
 async function doDownloadAffiliation(token: string): Promise<{ success: boolean; details: string[] }> {
   const file = await downloadAffiliationExcel(token);
-  if (!file) throw new Error('「所属一覧」フォルダにExcelファイルがありません');
+  if (!file) throw new Error('Cloudflare の「所属一覧」にExcelファイルがありません');
   const wb = XLSX.read(file.data, { type: 'array' });
   const ws = wb.Sheets[wb.SheetNames[0]];
   const rows = XLSX.utils.sheet_to_json<any>(ws);
@@ -242,7 +231,7 @@ async function doDownloadAffiliation(token: string): Promise<{ success: boolean;
 }
 
 // ============================================================
-// DataSync メインコンポーネント（Google ドライブ連携）
+// DataSync メインコンポーネント（Cloudflare に置いた大会データの読込）
 // ============================================================
 
 /** 大会名から不要な文字列を自動除去 */
@@ -296,17 +285,19 @@ export default function DataSync({ onConnectionChange, onDataLoaded, onTournamen
   const [result, setResult] = useState<{ success: boolean; message: string; details?: string[] } | null>(null);
   const [lastSyncTime, setLastSyncTime] = useState<string | null>(null);
   const [gdriveFolderLink, setGdriveFolderLink] = useState('');
-  const [isConnected, setIsConnected] = useState(false);
+  // 「接続」＝役員ログイン。運営画面は役員だけが開けるので、ふつうはいつも接続している
+  const officer = useOfficer();
+  const isConnected = officer.status === 'ok';
   const [userEmail, setUserEmail] = useState('');
 
   const modal = useModalState();
 
   // 大会一覧ファイルリスト
-  const [gdriveFileList, setGdriveFileList] = useState<GoogleDriveFile[]>([]);
+  const [gdriveFileList, setGdriveFileList] = useState<CloudDataFile[]>([]);
   const [showFileList, setShowFileList] = useState(false);
   const [loadingFileId, setLoadingFileId] = useState<string | null>(null);
   // 時間割ファイルリスト
-  const [scheduleGDriveFiles, setScheduleGDriveFiles] = useState<GoogleDriveFile[]>([]);
+  const [scheduleGDriveFiles, setScheduleGDriveFiles] = useState<CloudDataFile[]>([]);
   const [showScheduleFileList, setShowScheduleFileList] = useState(false);
   const [loadingScheduleFileId, setLoadingScheduleFileId] = useState<string | null>(null);
 
@@ -318,8 +309,8 @@ export default function DataSync({ onConnectionChange, onDataLoaded, onTournamen
   const [wizardPhase, setWizardPhase] = useState<WizardPhase>('loading');
   const [wizardSteps, setWizardSteps] = useState<LoadingStep[]>([]);
   const [wizardProgress, setWizardProgress] = useState(0);
-  const [wizardTournamentFiles, setWizardTournamentFiles] = useState<GoogleDriveFile[]>([]);
-  const [wizardScheduleFiles, setWizardScheduleFiles] = useState<GoogleDriveFile[]>([]);
+  const [wizardTournamentFiles, setWizardTournamentFiles] = useState<CloudDataFile[]>([]);
+  const [wizardScheduleFiles, setWizardScheduleFiles] = useState<CloudDataFile[]>([]);
   const [wizardLoadingFileId, setWizardLoadingFileId] = useState<string | null>(null);
   const [wizardResult, setWizardResult] = useState<{ success: boolean; message: string } | null>(null);
   const [wizardDetails, setWizardDetails] = useState<string[]>([]);
@@ -365,12 +356,12 @@ export default function DataSync({ onConnectionChange, onDataLoaded, onTournamen
   const [wizardScheduleGenerating, setWizardScheduleGenerating] = useState(false);
   // 大会インポート完了待ちで自動生成が保留中か
   const [wizardAutoGenPending, setWizardAutoGenPending] = useState(false);
-  // 時間割ファイル一覧（Googleドライブから読み込む）の開閉・取得状態
+  // 時間割ファイル一覧（Cloudflare から読み込む）の開閉・取得状態
   const [wizardScheduleListOpen, setWizardScheduleListOpen] = useState(false);
   const [wizardScheduleListLoading, setWizardScheduleListLoading] = useState(false);
   const [wizardScheduleListError, setWizardScheduleListError] = useState('');
 
-  // 大会日程表（大会一覧フォルダに置かれた年間日程）から正式な大会名を選ぶ
+  // 大会日程表（Cloudflare の「大会一覧」に置かれた年間日程）から正式な大会名を選ぶ
   const [officialList, setOfficialList] = useState<OfficialTournament[]>([]);
   const [officialListLoaded, setOfficialListLoaded] = useState(false);
   const [officialListLoading, setOfficialListLoading] = useState(false);
@@ -385,7 +376,6 @@ export default function DataSync({ onConnectionChange, onDataLoaded, onTournamen
   useEffect(() => {
     const checkConnection = async () => {
       const connected = !!getSavedClientId() && gdriveIsTokenValid();
-      setIsConnected(connected);
       if (connected) {
         const token = gdriveGetSavedToken();
         if (token) {
@@ -412,7 +402,7 @@ export default function DataSync({ onConnectionChange, onDataLoaded, onTournamen
     try { localStorage.setItem(LS_KEY_LAST_SYNC, now); } catch { /* ignore */ }
   }, []);
 
-  // --- Google Drive 接続 ---
+  // --- 接続（役員ログイン。ログインしていなければログインの画面へ） ---
   const handleConnect = useCallback(async () => {
     setIsProcessing(true);
     setProcessingLabel('接続中...');
@@ -421,12 +411,11 @@ export default function DataSync({ onConnectionChange, onDataLoaded, onTournamen
       const token = await connectWithDefaultClientId();
       const email = await getUserEmail(token);
       setUserEmail(email);
-      setIsConnected(true);
       try {
         const link = await getSharedFolderLink(token);
         setGdriveFolderLink(link);
       } catch { /* ignore */ }
-      setResult({ success: true, message: `Google ドライブに接続しました（${email}）` });
+      setResult({ success: true, message: `Cloudflare のデータに接続しました（${email}）` });
       onConnectionChange?.();
     } catch (err) {
       setResult({ success: false, message: `接続に失敗しました: ${(err as Error).message}` });
@@ -436,18 +425,6 @@ export default function DataSync({ onConnectionChange, onDataLoaded, onTournamen
     }
   }, [onConnectionChange]);
 
-  // --- Google Drive 切断 ---
-  const handleDisconnect = useCallback(() => {
-    const token = gdriveGetSavedToken();
-    if (token) revokeToken(token);
-    clearToken();
-    clearFolderCache();
-    setIsConnected(false);
-    setUserEmail('');
-    setGdriveFolderLink('');
-    setResult({ success: true, message: 'Google ドライブから切断しました' });
-    onConnectionChange?.();
-  }, [onConnectionChange]);
 
   // --- 一括読込（ふりがな＋所属） ---
   const handleBulkDownload = useCallback(async () => {
@@ -467,7 +444,7 @@ export default function DataSync({ onConnectionChange, onDataLoaded, onTournamen
     let hasError = false;
     try {
       const token = gdriveGetSavedToken();
-      if (!token) throw new Error('Google ドライブに接続してください');
+      if (!token) throw new Error('役員としてログインしてください');
       modal.setModalProgress(10);
       try {
         const res = await doDownloadFurigana(token);
@@ -514,7 +491,7 @@ export default function DataSync({ onConnectionChange, onDataLoaded, onTournamen
   }, [updateLastSync, modal, onDataLoaded]);
 
   // --- GDrive 大会ファイル選択→ダウンロード ---
-  const handleSelectTournamentFile = useCallback(async (file: GoogleDriveFile) => {
+  const handleSelectTournamentFile = useCallback(async (file: CloudDataFile) => {
     const token = gdriveGetSavedToken();
     if (!token) return;
     setShowFileList(false);
@@ -551,7 +528,7 @@ export default function DataSync({ onConnectionChange, onDataLoaded, onTournamen
   }, [modal, onTournamentExcelLoaded, scheduleGDriveFiles]);
 
   // --- GDrive 時間割ファイル選択→ダウンロード ---
-  const handleSelectScheduleFile = useCallback(async (file: GoogleDriveFile) => {
+  const handleSelectScheduleFile = useCallback(async (file: CloudDataFile) => {
     const token = gdriveGetSavedToken();
     if (!token) return;
     setShowScheduleFileList(false);
@@ -586,8 +563,8 @@ export default function DataSync({ onConnectionChange, onDataLoaded, onTournamen
     const token = gdriveGetSavedToken();
     if (!token) return;
     let steps: LoadingStep[] = [
-      { label: '大会一覧フォルダを取得中...', status: 'loading' },
-      { label: '時間割フォルダ', status: 'waiting' },
+      { label: 'Cloudflare の「大会一覧」を取得中...', status: 'loading' },
+      { label: 'Cloudflare の「時間割」', status: 'waiting' },
     ];
     modal.setModalTitle('大会・時間割 読込');
     modal.setModalSteps(steps);
@@ -596,8 +573,8 @@ export default function DataSync({ onConnectionChange, onDataLoaded, onTournamen
     modal.setModalOpen(true);
     const allDetails: string[] = [];
     let hasError = false;
-    let tournamentFiles: GoogleDriveFile[] = [];
-    let scheduleFiles: GoogleDriveFile[] = [];
+    let tournamentFiles: CloudDataFile[] = [];
+    let scheduleFiles: CloudDataFile[] = [];
     try {
       // 大会一覧
       modal.setModalProgress(10);
@@ -613,7 +590,7 @@ export default function DataSync({ onConnectionChange, onDataLoaded, onTournamen
       modal.setModalSteps([...steps]);
       modal.setModalProgress(50);
       // 時間割
-      steps = modal.updateStep(steps, 1, { status: 'loading', label: '時間割フォルダを取得中...' });
+      steps = modal.updateStep(steps, 1, { status: 'loading', label: 'Cloudflare の「時間割」を取得中...' });
       modal.setModalSteps([...steps]);
       try {
         scheduleFiles = await listScheduleExcelFiles(token);
@@ -660,7 +637,7 @@ export default function DataSync({ onConnectionChange, onDataLoaded, onTournamen
     setWizardScheduleListLoading(false);
     setWizardScheduleListError('');
     setWizardAutoGenPending(false);
-    // 大会日程表は読込のたびに取り直す（Drive側で更新されている可能性があるため）
+    // 大会日程表は読込のたびに取り直す（Cloudflare 側で更新されている可能性があるため）
     setOfficialPickerOpen(false);
     setOfficialFilter('');
     setOfficialList([]);
@@ -713,12 +690,12 @@ export default function DataSync({ onConnectionChange, onDataLoaded, onTournamen
       // 3. 大会一覧 + 時間割を並列取得
       steps[2] = { ...steps[2], status: 'loading', label: '大会・時間割ファイル一覧を取得中...' };
       setWizardSteps([...steps]);
-      let tournamentFiles: GoogleDriveFile[] = [];
-      let scheduleFiles: GoogleDriveFile[] = [];
+      let tournamentFiles: CloudDataFile[] = [];
+      let scheduleFiles: CloudDataFile[] = [];
       try {
         const [tFiles, sFiles] = await Promise.all([
-          listTournamentExcelFiles(token).catch((err) => { allDetails.push(`【大会一覧】取得失敗: ${(err as Error).message}`); hasError = true; return [] as GoogleDriveFile[]; }),
-          listScheduleExcelFiles(token).catch((err) => { allDetails.push(`【時間割】取得失敗: ${(err as Error).message}`); hasError = true; return [] as GoogleDriveFile[]; }),
+          listTournamentExcelFiles(token).catch((err) => { allDetails.push(`【大会一覧】取得失敗: ${(err as Error).message}`); hasError = true; return [] as CloudDataFile[]; }),
+          listScheduleExcelFiles(token).catch((err) => { allDetails.push(`【時間割】取得失敗: ${(err as Error).message}`); hasError = true; return [] as CloudDataFile[]; }),
         ]);
         tournamentFiles = tFiles;
         scheduleFiles = sFiles;
@@ -766,7 +743,7 @@ export default function DataSync({ onConnectionChange, onDataLoaded, onTournamen
     }
   }, [updateLastSync, onDataLoaded]);
 
-  // 大会一覧フォルダのファイルを「ドロー等の大会ファイル」と「大会日程表」に振り分ける
+  // Cloudflare の「大会一覧」のファイルを「ドロー等の大会ファイル」と「大会日程表」に振り分ける
   const wizardListDocFiles = useMemo(
     () => wizardTournamentFiles.filter(f => isTournamentListFileName(f.name)),
     [wizardTournamentFiles],
@@ -789,13 +766,13 @@ export default function DataSync({ onConnectionChange, onDataLoaded, onTournamen
     setOfficialListLoading(true);
     try {
       const token = gdriveGetSavedToken();
-      if (!token) throw new Error('Googleドライブに接続されていません。');
+      if (!token) throw new Error('役員ログインが切れています。ログインし直してください。');
       let files = [...wizardTournamentFiles, ...gdriveFileList].filter(f => isTournamentListFileName(f.name));
       if (files.length === 0) {
         files = (await listTournamentExcelFiles(token)).filter(f => isTournamentListFileName(f.name));
       }
       if (files.length === 0) {
-        throw new Error('大会一覧フォルダに大会日程表（例:「令和8年度…大会日程.xlsx」）が見つかりません。');
+        throw new Error('Cloudflare の「大会一覧」に大会日程表（例:「令和8年度…大会日程.xlsx」）が見つかりません。');
       }
       // 同じファイルが両方の一覧に入るので重複を除き、更新が新しい順に読む
       const uniq = [...new Map(files.map(f => [f.id, f])).values()]
@@ -839,7 +816,7 @@ export default function DataSync({ onConnectionChange, onDataLoaded, onTournamen
   }, [officialList, officialFilter]);
 
   // ウィザード内: 大会ファイル選択→ダウンロード→確認画面へ
-  const handleWizardSelectTournament = useCallback(async (file: GoogleDriveFile) => {
+  const handleWizardSelectTournament = useCallback(async (file: CloudDataFile) => {
     const token = gdriveGetSavedToken();
     if (!token) return;
     setWizardLoadingFileId(file.id);
@@ -1048,7 +1025,7 @@ export default function DataSync({ onConnectionChange, onDataLoaded, onTournamen
   }, [wizardTeamPending, wizardMixedPending, wizardTournamentArrayBuffer, wizardTournamentFileName, wizardEditName, wizardEditDate, wizardEditVenue, wizardEditReserveDate, wizardEditCourtNames, wizardIsMixedOrTeam, wizardScheduleFiles, onWizardTournamentConfirmed, navigate]);
 
   // ウィザード内: 時間割ファイル選択→ダウンロード→完了
-  const handleWizardSelectSchedule = useCallback(async (file: GoogleDriveFile) => {
+  const handleWizardSelectSchedule = useCallback(async (file: CloudDataFile) => {
     const token = gdriveGetSavedToken();
     if (!token) return;
     setWizardLoadingFileId(file.id);
@@ -1065,7 +1042,7 @@ export default function DataSync({ onConnectionChange, onDataLoaded, onTournamen
     }
   }, [onScheduleExcelLoaded]);
 
-  // ウィザード内: Googleドライブの時間割フォルダからファイル一覧を取得して表示
+  // ウィザード内: Cloudflare の時間割からファイル一覧を取得して表示
   const handleWizardBrowseSchedule = useCallback(async () => {
     // 開いていれば閉じる
     if (wizardScheduleListOpen) { setWizardScheduleListOpen(false); return; }
@@ -1073,15 +1050,15 @@ export default function DataSync({ onConnectionChange, onDataLoaded, onTournamen
     setWizardScheduleListOpen(true);
     // 既に取得済みならそのまま表示
     if (wizardScheduleFiles.length > 0) return;
-    // 未取得ならGoogleドライブから取得する
+    // 未取得なら Cloudflare から取得する
     const token = gdriveGetSavedToken();
-    if (!token) { setWizardScheduleListError('Googleドライブに接続されていません。'); return; }
+    if (!token) { setWizardScheduleListError('役員ログインが切れています。ログインし直してください。'); return; }
     setWizardScheduleListLoading(true);
     try {
       const files = await listScheduleExcelFiles(token);
       setWizardScheduleFiles(files);
       setScheduleGDriveFiles(files);
-      if (files.length === 0) setWizardScheduleListError('時間割フォルダにExcelファイルが見つかりませんでした。');
+      if (files.length === 0) setWizardScheduleListError('Cloudflare の「時間割」にExcelファイルが見つかりませんでした。');
     } catch (err) {
       setWizardScheduleListError(`時間割一覧の取得に失敗しました: ${(err as Error).message}`);
     } finally {
@@ -1183,8 +1160,8 @@ export default function DataSync({ onConnectionChange, onDataLoaded, onTournamen
       {/* Header */}
       <div className="bg-white px-4 py-3 border-b border-border-main flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <GoogleDriveIcon className="w-5 h-5" />
-          <h2 className="font-semibold text-gray-800">Google ドライブ連携</h2>
+          <CloudDataIcon className="w-5 h-5" />
+          <h2 className="font-semibold text-gray-800">大会データ（Cloudflare）</h2>
           {isConnected && (
             <span className="text-[10px] font-bold bg-primary-100 text-gray-800 px-2 py-0.5 rounded-full">接続中</span>
           )}
@@ -1211,7 +1188,7 @@ export default function DataSync({ onConnectionChange, onDataLoaded, onTournamen
         {!isConnected ? (
           <div className="text-center py-4">
             <p className="text-sm text-gray-500 mb-3">
-              Google ドライブに接続して、データの読込/書込を行います
+              役員としてログインすると、Cloudflare に置いた大会データを読み込めます
             </p>
             <button
               onClick={handleConnect}
@@ -1219,8 +1196,8 @@ export default function DataSync({ onConnectionChange, onDataLoaded, onTournamen
               className="inline-flex items-center gap-2 px-6 py-3 text-sm font-bold text-white bg-[#1a73e8] rounded-lg hover:bg-[#1557b0] disabled:opacity-50 shadow-md transition-all hover:shadow-lg"
             >
               <LogIn className="w-4 h-4" />
-              <GoogleDriveIcon className="w-4 h-4" />
-              Google ドライブに接続
+              <CloudDataIcon className="w-4 h-4" />
+              役員としてログイン
               {isProcessing && <RefreshCw className="w-4 h-4 animate-spin" />}
             </button>
           </div>
@@ -1230,7 +1207,7 @@ export default function DataSync({ onConnectionChange, onDataLoaded, onTournamen
             <div className="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2">
               <div className="flex items-center gap-2 text-xs text-gray-600">
                 <span className="w-2 h-2 bg-primary-500 rounded-full" />
-                <span>{userEmail || 'Google ドライブ接続中'}</span>
+                <span>{userEmail || officer.email || '役員ログイン中'}</span>
               </div>
               <div className="flex items-center gap-2">
                 {gdriveFolderLink && (
@@ -1244,19 +1221,16 @@ export default function DataSync({ onConnectionChange, onDataLoaded, onTournamen
                     フォルダ
                   </a>
                 )}
-                <button onClick={handleDisconnect} className="flex items-center gap-1 text-xs text-gray-500 hover:text-red-600 transition-colors">
-                  <LogOut className="w-3.5 h-3.5" /> 切断
-                </button>
               </div>
             </div>
 
-            {/* ★ 一括読込ボタン（全Google Drive読込） — 最も目立つデザイン */}
+            {/* ★ 一括読込ボタン（Cloudflare のデータをすべて読込） — 最も目立つデザイン */}
             <button
               onClick={handleLoadAll}
               disabled={isProcessing}
               className="w-full relative flex items-center justify-center gap-2.5 px-5 py-4 text-base font-black text-white bg-gradient-to-r from-[#EA4335] via-[#FBBC04] via-[#34A853] to-[#4285F4] rounded-2xl hover:opacity-90 disabled:opacity-50 transition-all shadow-lg hover:shadow-xl ring-2 ring-white/30"
             >
-              <GoogleDriveIcon className="w-5 h-5" />
+              <CloudDataIcon className="w-5 h-5" />
               <Layers className="w-5 h-5" />
               一括読込
               {isProcessing && processingLabel.includes('一括') && <RefreshCw className="w-5 h-5 animate-spin" />}
@@ -1269,7 +1243,7 @@ export default function DataSync({ onConnectionChange, onDataLoaded, onTournamen
                 disabled={isProcessing}
                 className="flex items-center justify-center gap-1.5 px-3 py-3 text-xs font-bold text-white bg-gradient-to-r from-[#1a73e8] to-[#8e24aa] rounded-xl hover:from-[#1557b0] hover:to-[#6a1b9a] disabled:opacity-40 transition-all shadow-md hover:shadow-lg"
               >
-                <GoogleDriveIcon className="w-4 h-4 shrink-0" />
+                <CloudDataIcon className="w-4 h-4 shrink-0" />
                 <span>ふりがな・所属</span>
               </button>
               <button
@@ -1277,7 +1251,7 @@ export default function DataSync({ onConnectionChange, onDataLoaded, onTournamen
                 disabled={isProcessing}
                 className="flex items-center justify-center gap-1.5 px-3 py-3 text-xs font-bold text-white bg-gradient-to-r from-[#4285F4] to-[#34A853] rounded-xl hover:opacity-90 disabled:opacity-40 transition-all shadow-md hover:shadow-lg"
               >
-                <GoogleDriveIcon className="w-4 h-4 shrink-0" />
+                <CloudDataIcon className="w-4 h-4 shrink-0" />
                 <span>大会・時間割</span>
               </button>
             </div>
@@ -1318,7 +1292,7 @@ export default function DataSync({ onConnectionChange, onDataLoaded, onTournamen
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="w-9 h-9 rounded-xl bg-white/80 shadow-sm flex items-center justify-center">
-                    <GoogleDriveIcon className="w-5 h-5" />
+                    <CloudDataIcon className="w-5 h-5" />
                   </div>
                   <div>
                     <h3 className="text-sm font-bold text-gray-800">大会ファイルを選択</h3>
@@ -1370,7 +1344,7 @@ export default function DataSync({ onConnectionChange, onDataLoaded, onTournamen
             </div>
             {/* フッター */}
             <div className="px-5 py-2.5 border-t border-gray-100">
-              <p className="text-[10px] text-gray-400 text-center">大会一覧フォルダから読込</p>
+              <p className="text-[10px] text-gray-400 text-center">Cloudflare の「大会一覧」から読込</p>
             </div>
           </div>
         </div>,
@@ -1438,7 +1412,7 @@ export default function DataSync({ onConnectionChange, onDataLoaded, onTournamen
             </div>
             {/* フッター */}
             <div className="px-5 py-2.5 border-t border-gray-100">
-              <p className="text-[10px] text-gray-400 text-center">時間割フォルダから読込</p>
+              <p className="text-[10px] text-gray-400 text-center">Cloudflare の「時間割」から読込</p>
             </div>
           </div>
         </div>,
@@ -1452,7 +1426,7 @@ export default function DataSync({ onConnectionChange, onDataLoaded, onTournamen
             {/* ヘッダー */}
             <div className="bg-gradient-to-r from-[#e8f0fe] to-[#d2e3fc] px-5 py-4 flex items-center gap-3 shrink-0">
               <div className="relative">
-                <GoogleDriveIcon className="w-7 h-7" />
+                <CloudDataIcon className="w-7 h-7" />
                 {wizardPhase !== 'done' && (
                   <span className="absolute -top-1 -right-1 w-3 h-3 bg-gray-500 rounded-full drive-modal-pulse" />
                 )}
@@ -1508,7 +1482,7 @@ export default function DataSync({ onConnectionChange, onDataLoaded, onTournamen
                         <circle cx="40" cy="40" r="32" fill="none" stroke="url(#wizGrad)" strokeWidth="6" strokeLinecap="round" strokeDasharray="150 51" />
                       </svg>
                       <div className="absolute inset-0 flex items-center justify-center">
-                        <GoogleDriveIcon className="w-6 h-6 drive-icon-pulse" />
+                        <CloudDataIcon className="w-6 h-6 drive-icon-pulse" />
                       </div>
                     </div>
                   </div>
@@ -1567,7 +1541,7 @@ export default function DataSync({ onConnectionChange, onDataLoaded, onTournamen
                   <div className="space-y-1 max-h-64 overflow-y-auto">
                     {wizardDrawFiles.length === 0 && (
                       <p className="text-[12px] text-gray-500 text-center py-6">
-                        大会一覧フォルダに大会（ドロー）ファイルがありません。
+                        Cloudflare の「大会一覧」に大会（ドロー）ファイルがありません。
                       </p>
                     )}
                     {wizardDrawFiles.map(f => {
@@ -1757,7 +1731,7 @@ export default function DataSync({ onConnectionChange, onDataLoaded, onTournamen
                       </div>
                       <p className="text-[10px] text-gray-400 mt-1">
                         <ListChecks className="w-3 h-3 inline -mt-0.5 mr-0.5" />
-                        大会一覧フォルダの大会日程表から正式名称を選べます。
+                        Cloudflare の「大会一覧」の大会日程表から正式名称を選べます。
                       </p>
 
                       {/* 正式名称の選択パネル */}
@@ -1945,7 +1919,7 @@ export default function DataSync({ onConnectionChange, onDataLoaded, onTournamen
                     <ChevronRight className="w-4 h-4 text-primary-400 shrink-0" />
                   </button>
 
-                  {/* Googleドライブから時間割ファイルを読み込む */}
+                  {/* Cloudflare から時間割ファイルを読み込む */}
                   <button
                     onClick={handleWizardBrowseSchedule}
                     disabled={wizardScheduleListLoading}
@@ -1957,9 +1931,9 @@ export default function DataSync({ onConnectionChange, onDataLoaded, onTournamen
                         : <CalendarClock className="w-5 h-5 text-gray-600" />}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="text-[13px] font-bold text-gray-800">Googleドライブから読み込む</div>
+                      <div className="text-[13px] font-bold text-gray-800">Cloudflare から読み込む</div>
                       <div className="text-[11px] text-gray-500 mt-0.5">
-                        「時間割」フォルダのExcelファイルを選択します
+                        Cloudflare の「時間割」のExcelファイルを選択します
                         {wizardScheduleFiles.length > 0 ? `（${wizardScheduleFiles.length}件）` : ''}
                       </div>
                     </div>
@@ -1983,7 +1957,7 @@ export default function DataSync({ onConnectionChange, onDataLoaded, onTournamen
                         </div>
                       ) : wizardScheduleFiles.length === 0 ? (
                         <div className="px-3 py-4 text-[12px] text-gray-500 text-center">
-                          時間割フォルダにファイルがありません。
+                          Cloudflare の「時間割」にファイルがありません。
                         </div>
                       ) : (
                         <div className="space-y-1 max-h-64 overflow-y-auto">
@@ -2106,7 +2080,7 @@ export function FuriganaAffiliationOps({ gdriveConnected, onDataLoaded }: Furiga
     setResult(null);
     try {
       const token = gdriveGetSavedToken();
-      if (!token) throw new Error('Google ドライブに接続してください');
+      if (!token) throw new Error('役員としてログインしてください');
       modal.setModalProgress(30);
       const res = await doDownloadFurigana(token);
       modal.setModalProgress(100);
@@ -2139,7 +2113,7 @@ export function FuriganaAffiliationOps({ gdriveConnected, onDataLoaded }: Furiga
     setResult(null);
     try {
       const token = gdriveGetSavedToken();
-      if (!token) throw new Error('Google ドライブに接続してください');
+      if (!token) throw new Error('役員としてログインしてください');
       modal.setModalProgress(20);
       const allDict = await db.furiganaDict.toArray();
       const sorted = allDict.sort((a, b) => a.furigana.localeCompare(b.furigana, 'ja'));
@@ -2178,7 +2152,7 @@ export function FuriganaAffiliationOps({ gdriveConnected, onDataLoaded }: Furiga
     setResult(null);
     try {
       const token = gdriveGetSavedToken();
-      if (!token) throw new Error('Google ドライブに接続してください');
+      if (!token) throw new Error('役員としてログインしてください');
       modal.setModalProgress(30);
       const res = await doDownloadAffiliation(token);
       modal.setModalProgress(100);
@@ -2210,7 +2184,7 @@ export function FuriganaAffiliationOps({ gdriveConnected, onDataLoaded }: Furiga
     setResult(null);
     try {
       const token = gdriveGetSavedToken();
-      if (!token) throw new Error('Google ドライブに接続してください');
+      if (!token) throw new Error('役員としてログインしてください');
       modal.setModalProgress(20);
       const allAff = await db.affiliationFurigana.toArray();
       const sorted = allAff.filter(a => a.furigana).sort((a, b) => a.furigana.localeCompare(b.furigana, 'ja'));
@@ -2345,18 +2319,18 @@ export function FuriganaAffiliationOps({ gdriveConnected, onDataLoaded }: Furiga
             disabled={isProcessing || !gdriveConnected}
             className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-[#1a73e8] rounded-lg hover:bg-[#1557b0] disabled:opacity-50 transition-colors shadow-sm"
           >
-            <GoogleDriveIcon className="w-3.5 h-3.5" />
+            <CloudDataIcon className="w-3.5 h-3.5" />
             <Download className="w-3.5 h-3.5" />
-            ドライブから読込
+            Cloudflare から読込
           </button>
           <button
             onClick={handleUploadFurigana}
             disabled={isProcessing || !gdriveConnected || furiganaDictCount === 0}
             className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-[#1a73e8] bg-[#e8f0fe] rounded-lg hover:bg-[#d2e3fc] disabled:opacity-50 transition-colors border border-[#1a73e8]/20"
           >
-            <GoogleDriveIcon className="w-3.5 h-3.5" />
+            <CloudDataIcon className="w-3.5 h-3.5" />
             <Upload className="w-3.5 h-3.5" />
-            ドライブに書込
+            Cloudflare に書込
           </button>
           <div className="w-px h-8 bg-gray-200 mx-1 self-center hidden sm:block" />
           <input ref={excelFuriganaRef} type="file" accept=".xlsx,.xls" className="hidden" onChange={handleExcelFurigana} />
@@ -2384,18 +2358,18 @@ export function FuriganaAffiliationOps({ gdriveConnected, onDataLoaded }: Furiga
             disabled={isProcessing || !gdriveConnected}
             className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-gray-600 rounded-lg hover:bg-gray-700 disabled:opacity-50 transition-colors shadow-sm"
           >
-            <GoogleDriveIcon className="w-3.5 h-3.5" />
+            <CloudDataIcon className="w-3.5 h-3.5" />
             <Download className="w-3.5 h-3.5" />
-            ドライブから読込
+            Cloudflare から読込
           </button>
           <button
             onClick={handleUploadAffiliation}
             disabled={isProcessing || !gdriveConnected || affiliationCount === 0}
             className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-gray-700 bg-gray-50 rounded-lg hover:bg-gray-100 disabled:opacity-50 transition-colors border border-gray-200"
           >
-            <GoogleDriveIcon className="w-3.5 h-3.5" />
+            <CloudDataIcon className="w-3.5 h-3.5" />
             <Upload className="w-3.5 h-3.5" />
-            ドライブに書込
+            Cloudflare に書込
           </button>
           <div className="w-px h-8 bg-gray-200 mx-1 self-center hidden sm:block" />
           <input ref={excelAffRef} type="file" accept=".xlsx,.xls" className="hidden" onChange={handleExcelAff} />

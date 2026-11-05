@@ -1848,7 +1848,7 @@ export default function DataImport({ externalTournamentExcel, externalScheduleEx
           <p className="text-[10px] text-gray-400 text-center">
             {isMixedImported
               ? 'ドローExcel (.xlsx) を読み込みます。'
-              : 'ドローExcel (.xlsx) / 時間割Excel (.xlsx) を読み込みます。Google ドライブからの読込は上部の連携セクションをご利用ください。'
+              : 'ドローExcel (.xlsx) / 時間割Excel (.xlsx) を読み込みます。Cloudflare に置いた大会データの読込は、上部の「大会データ（Cloudflare）」をご利用ください。'
             }
           </p>
         </div>

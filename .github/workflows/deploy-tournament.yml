@@ -11,7 +11,7 @@ name: Deploy tournament app to Cloudflare Workers
 #   Worker の秘密として入っているので、ここで配備しても消えない。手順は tournament/README.md の「役員ログイン」。
 on:
   push:
-    branches: [main, ccr-adeb62f8-4n5xza]
+    branches: [main, ccr-adeb62f8-4n5xza, ccr-e746dd10-x5azan]
     # 見た目は協会サイトの CSS・ロゴをそのまま使う（tournament/scripts/sync-site.mjs）ので、それが変わったときも配備し直す
     paths: ['tournament/**', 'public/assets/css/style.css', 'public/assets/img/logo-cut*.png', '.github/workflows/deploy-tournament.yml']
   workflow_dispatch:
