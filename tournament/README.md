@@ -81,7 +81,7 @@ npm run test:auth      # 役員ログインの証明（JWT）の検証を、自�
 2. **音声コール（任意）** … Gemini の API キーを Worker に入れる。リポジトリの Secrets に `GEMINI_API_KEY` を入れておけば配備のたびに入る。
    手元からなら `npx wrangler secret put GEMINI_API_KEY`。入れなければブラウザ内蔵の声だけで動く（既定もこちら）
 3. **協会サイトの観戦リンク** … 観戦ページの URL を `https://tcta-tournament.tcta-admin-worker.workers.dev/view` に差し替える（Render を止めるときに）
-4. **役員ログイン** … 下の手順。**これをするまで運営画面は誰も使えない**（観戦ページは使える）
+4. **役員ログイン** … 下の「はじめに一度だけ、人がすること」。**これをするまで運営画面は誰も使えない**（観戦ページは使える）
 
 ## 役員ログイン
 
@@ -100,41 +100,70 @@ npm run test:auth      # 役員ログインの証明（JWT）の検証を、自�
 以後、同期の接続・音声コール・画面を開くたびに、Worker がその証明の署名・発行元・宛先・期限を確かめます（`worker/auth.ts`）。
 Access の設定が無いあいだは「未設定」として、運営の操作をすべて断ります（閉じる側に倒してある）。
 
-### 設定の手順（一度だけ）
+### 運用のしかた（Claude Code に頼む）
 
-ダッシュボードで人がするのは 1・2 だけです。Access のアプリケーション作り・役員の登録・AUD の受け渡しは、
-配備のたびに `scripts/setup-access.mjs` が API で自動でそろえます（何度走っても同じ結果になる）。
+役員ログインの設定と役員の出し入れは、**Claude Code に日本語で頼むだけ**で済むようにしてあります。
+Claude Code が `scripts/officers.mjs` で Cloudflare の API を直接操作します（GitHub は通さない。ダッシュボードを開く必要もない）。
+頼み方の決まりは `.claude/skills/officer-login/SKILL.md` にあり、このリポジトリを開いた Claude Code は自動で読みます。
 
-1. **Zero Trust を始める** … Cloudflare のダッシュボード（t.c.t.a.r7@gmail.com のアカウント）の左のメニューから **Zero Trust** を開く。
-   はじめてならチーム名（例 `tcta`。ログイン画面のドメイン `tcta.cloudflareaccess.com` になる）を決め、**Free プラン**を選ぶ（50 人まで無料）。
-   支払い方法の登録を求められたら登録する（Free プランのままなら請求は来ない）
-2. **API トークンに権限を足す** … ダッシュボード右上の人のアイコン → **My Profile → API Tokens** で、
-   GitHub の Secrets の `CLOUDFLARE_API_TOKEN` に入れてあるトークンの **Edit** を開き、Permissions に次の 2 つを足して保存する
-   - Account → **Access: Apps and Policies** → **Edit**
-   - Account → **Access: Organizations, Identity Providers, and Groups** → **Edit**
-3. **役員を登録する** … このリポジトリの Settings → Secrets and variables → Actions → **Secrets** に
-   `OFFICER_EMAILS` を作り、役員のメールアドレスをカンマ区切りで入れる（例 `a@example.jp,b@example.jp`）。
-   人が増えた・抜けたときはここを書き換えて、手順 4 をもう一度
-4. **配備し直す** … Actions → 「Deploy tournament app to Cloudflare Workers」→ **Run workflow**。
-   ログの「Configure officer login (Cloudflare Access)」に「役員ログインの設定ができました」と出れば完了。
-   権限や Zero Trust が足りないときは、黄色の警告で何をすればよいかを出す（配備そのものは続く）
-5. **確かめる** … 運営画面を開く → 「役員としてログイン」→ メールアドレス → 届いた 6 桁のコード → 元の画面に戻れば完了。
-   ログインしていないブラウザ（シークレットウィンドウ）で運営画面を開くと案内の画面が出て、観戦ページは見られることも確かめる
+| 頼むこと（例） | Claude Code がすること |
+| --- | --- |
+| 「役員ログインを設定して。役員は a@example.jp と b@example.jp」 | Zero Trust のチーム・メールのコードでのログイン・役員の許可・`/auth/login` を守るアプリケーションを作り、Worker に入れ、公開先で使える状態になったかを確かめる |
+| 「c@example.jp を役員に追加して」 | 役員の一覧に足す（すぐに効く） |
+| 「b@example.jp を役員から外して」 | 一覧から外す。その人がいまログイン中の端末をすぐ止める方法も案内する |
+| 「役員の一覧を見せて」 | 今の一覧 |
+| 「役員ログインの状態を確認して」「○○さんがログインできない」 | 設定・Worker・公開先の状態を確かめる |
 
-自動で作られるもの（Zero Trust → Access で見られる）:
+役員のメールアドレスは Cloudflare の中だけに置き、このリポジトリ（公開）には書きません。
+
+### はじめに一度だけ、人がすること
+
+Claude Code が Cloudflare を操作するための鍵（API トークン）を作って、Claude Code の環境に入れます。所要 5 分ほどです。
+
+1. **API トークンを作る** … https://dash.cloudflare.com/profile/api-tokens を開く（協会の Cloudflare アカウント t.c.t.a.r7@gmail.com でログイン）
+   1. **Create Token** を押し、いちばん下の **Custom token** の **Get started** を押す
+   2. Token name: `Claude Code 大会運営 役員ログイン`
+   3. Permissions に、右の **+ Add more** で 3 行を作り、それぞれ次のように選ぶ（左から「Account」「項目」「Edit」）
+      - Account ／ **Access: Apps and Policies** ／ **Edit**
+      - Account ／ **Access: Organizations, Identity Providers, and Groups** ／ **Edit**
+      - Account ／ **Workers Scripts** ／ **Edit**
+   4. Account Resources: **Include** ／ 協会のアカウント（`T.c.t.a.r7@gmail.com's Account` など）
+   5. ほかは空のまま **Continue to summary** → **Create Token**
+   6. 出てきたトークン（長い英数字）を **コピーする**。この画面を閉じると二度と表示されない（失くしたら作り直す）。
+      **チャットには貼らない**
+2. **Claude Code の環境に入れる** … https://claude.ai/code を開き、このリポジトリで使っているセッションを開く
+   1. 画面上部（セッションの題名のあたり）にある **環境の名前** を押し、**Edit**（環境の設定）を開く
+   2. **Environment variables**（環境変数）の欄に、次の 1 行を書き足して保存する（`=` の右は手順 1 でコピーしたトークン）
+
+      ```
+      CLOUDFLARE_API_TOKEN=ここにトークン
+      ```
+
+   3. **新しいセッションを始める**（環境変数は新しいセッションから読まれる）
+3. **Zero Trust（ログインのしくみ）を始める** … 多くの場合、手順 4 で Claude Code が自動で始める。
+   Claude Code から「Zero Trust を始めてください」と言われたときだけ、https://one.dash.cloudflare.com/ を開き、
+   アカウントを選んで、案内に沿ってチーム名（例 `tottori-city-tennis`。ログイン画面のアドレス `tottori-city-tennis.cloudflareaccess.com` になる）を決め、
+   **Free プラン**（50 人まで無料）を選ぶ。支払い方法の登録を求められたら登録する（Free のままなら請求は来ない）
+4. **Claude Code に頼む** … 新しいセッションで「役員ログインを設定して。役員は（メールアドレスを並べる）」と書く
+5. **確かめる** … https://tcta-tournament.tcta-admin-worker.workers.dev/data を開き、**役員としてログイン** → メールアドレス →
+   メールで届いた 6 桁のコード → 運営画面に戻れば完了。
+   ログインしていないブラウザ（シークレットウィンドウ）で同じ URL を開くと案内の画面が出ること、
+   https://tcta-tournament.tcta-admin-worker.workers.dev/view（観戦ページ）はそのまま見られることも確かめる
+
+作られるもの（https://one.dash.cloudflare.com/ → Access → Applications ／ Policies で見られる。名前で見分けているので名前は変えない）:
 
 | 種類 | 名前 | 中身 |
 | --- | --- | --- |
 | ログインの方法 | メールのコード（One-time PIN） | 無ければ作る |
-| ポリシー | 大会運営システム 役員 | Allow。`OFFICER_EMAILS` のメールアドレス。セッション 1 週間 |
+| ポリシー | 大会運営システム 役員 | Allow。役員のメールアドレス。セッション 1 週間 |
 | アプリケーション | 大会運営システム（役員） | Self-hosted。`tcta-tournament.tcta-admin-worker.workers.dev/auth/login` だけを守る。ログインの方法はメールのコードだけ |
+| Worker の秘密 | `ACCESS_TEAM_DOMAIN`・`ACCESS_AUD` | `tcta-tournament` に入れる。GitHub からの配備でも消えない |
 
-API トークンに権限を足せないときは、ダッシュボードで同じものを作り（アプリケーションの Path は `auth/login`）、
-アプリケーションの **Application Audience (AUD) Tag** とチーム名を、リポジトリの Variables の `ACCESS_AUD`・`ACCESS_TEAM_DOMAIN` に入れて手順 4 をする。
+トークンの期限・権限を見直すときは、手順 1 の URL で同じトークンの **Edit**。使わなくなったら **Delete** すれば、Claude Code からは操作できなくなる（役員ログインそのものは動き続ける）。
 
 ### 使うときのこと
 
-- 一度ログインした端末は、Access のセッション（手順 3 で 1 週間）のあいだそのまま使えます。期限が切れても画面は止めず、上に赤い帯で「ログインし直す」を出します（入力した内容は端末に残ります）
+- 一度ログインした端末は、Access のセッション（1 週間）のあいだそのまま使えます。期限が切れても画面は止めず、上に赤い帯で「ログインし直す」を出します（入力した内容は端末に残ります）
 - 会場で電波が無いときも、前に（7 日以内に）ログインできていた端末なら運営画面はそのまま使えます。同期と音声コールは電波が戻ってから
 - ログアウトはフッター（スマホはメニューの下）の「ログアウト」
 
@@ -158,7 +187,7 @@ tournament/
 │   └── features/…            画面の中身（GitHub Pages 版と同じ）
 ├── public/site/              協会ロゴ（サイトの写し。ビルドの前に作る）
 ├── scripts/sync-site.mjs     協会サイトの CSS・ロゴを写す
-├── scripts/setup-access.mjs  役員ログイン（Cloudflare Access）の設定を API でそろえる（配備のたびに走る）
+├── scripts/officers.mjs      役員ログイン（Cloudflare Access）の設定と役員の追加・削除（Claude Code から使う）
 ├── scripts/smoke.mjs         中継・役員ログイン・API の動作確認
 └── scripts/auth.test.mts     役員ログインの証明の検証のテスト
 ```

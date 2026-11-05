@@ -20,8 +20,8 @@
 	},
 	// Free プランで使えるのは SQLite を使う Durable Object だけ
 	"migrations": [{ "tag": "v1", "new_sqlite_classes": ["SyncRoom"] }],
-	// 役員ログイン（Cloudflare Access）の ACCESS_TEAM_DOMAIN・ACCESS_AUD は、GitHub のリポジトリ変数から配備のときに入れる
-	// （.github/workflows/deploy-tournament.yml。手順は README の「役員ログイン」）。無ければ運営の操作はすべて断る。
+	// 役員ログイン（Cloudflare Access）の ACCESS_TEAM_DOMAIN・ACCESS_AUD は、ここには書かず Worker の秘密として入れる
+	// （scripts/officers.mjs setup が Cloudflare の API で入れる。配備しても消えない）。無ければ運営の操作はすべて断る。
 	"vars": {
 		"GEMINI_TTS_MODEL": "gemini-3.1-flash-preview-tts"
 	},
