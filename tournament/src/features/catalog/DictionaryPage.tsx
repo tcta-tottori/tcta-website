@@ -10,6 +10,21 @@ import { useAppStore } from '../../stores/appStore';
 import { fetchDict, putDict, type Dict, type DictPlayer } from './catalogApi';
 import { syncDictionary, useDictSync } from './dictSync';
 import CloudflareLogo from '../../components/ui/CloudflareLogo';
+import { ColumnHeader } from './ColumnFilters';
+import { activeChips, applyColumnFilters, clearColumn, emptyFilters, type ColumnDef, type ColumnFilterState } from './columnFilter';
+
+type Aff = { name: string; furigana: string };
+// 列（漢字 → ふりがな → 所属 → 確認）。見出しを押すと列ごとに絞り込める
+const PLAYER_COLS: ColumnDef<DictPlayer>[] = [
+  { key: 'name', label: '漢字', value: (r) => r.name, sortable: true },
+  { key: 'kana', label: 'ふりがな', value: (r) => r.furigana, kanaHead: true, sortable: true },
+  { key: 'aff', label: '所属', value: (r) => r.affiliation ?? '', pick: true, sortable: true },
+  { key: 'note', label: '確認', value: (r) => (r.note ? 'check' : 'ok'), options: [{ value: 'check', label: '要確認だけ' }, { value: 'ok', label: '要確認以外' }] },
+];
+const AFF_COLS: ColumnDef<Aff>[] = [
+  { key: 'name', label: '所属名', value: (r) => r.name, sortable: true },
+  { key: 'kana', label: 'ふりがな', value: (r) => r.furigana, kanaHead: true, sortable: true },
+];
 
 type Tab = 'players' | 'affiliations';
 const keyOf = (name: string) => name.replace(/[\s\u3000]+/g, '');
@@ -23,7 +38,7 @@ export default function DictionaryPage() {
   const [state, setState] = useState<'loading' | 'ok' | 'error'>('loading');
   const [tab, setTab] = useState<Tab>('players');
   const [q, setQ] = useState('');
-  const [onlyNote, setOnlyNote] = useState(false);
+  const [filters, setFilters] = useState<Record<Tab, ColumnFilterState>>({ players: emptyFilters(), affiliations: emptyFilters() });
   const [limit, setLimit] = useState(PAGE);
   const [flash, setFlash] = useState('');
 
@@ -68,17 +83,23 @@ export default function DictionaryPage() {
     await syncDictionary(true);
   }, []);
 
-  const rows = useMemo(() => {
-    if (!dict) return [];
+  // 上の検索（全部の列）→ 列ごとの絞り込み・並べ替え
+  const searched = useMemo(() => {
+    if (!dict) return { players: [] as DictPlayer[], affiliations: [] as Aff[] };
     const nq = keyOf(q);
-    const src = tab === 'players' ? dict.players : dict.affiliations;
-    return src.filter((r) => {
-      if (onlyNote && tab === 'players' && !(r as DictPlayer).note) return false;
-      if (!nq) return true;
-      return keyOf(r.name).includes(nq) || keyOf(r.furigana).includes(nq) || (tab === 'players' && keyOf((r as DictPlayer).affiliation ?? '').includes(nq));
-    });
-  }, [dict, q, tab, onlyNote]);
-  const noteCount = dict?.players.filter((p) => p.note).length ?? 0;
+    const hit = (...v: (string | undefined)[]) => !nq || v.some((x) => keyOf(x ?? '').includes(nq));
+    return {
+      players: dict.players.filter((r) => hit(r.name, r.furigana, r.affiliation)),
+      affiliations: dict.affiliations.filter((r) => hit(r.name, r.furigana)),
+    };
+  }, [dict, q]);
+  const f = filters[tab];
+  const setF = (next: ColumnFilterState) => { setFilters((all) => ({ ...all, [tab]: next })); setLimit(PAGE); };
+  const rows: (DictPlayer | Aff)[] = useMemo(
+    () => (tab === 'players' ? applyColumnFilters(searched.players, PLAYER_COLS, f) : applyColumnFilters(searched.affiliations, AFF_COLS, f)),
+    [searched, tab, f],
+  );
+  const chips = tab === 'players' ? activeChips(PLAYER_COLS, f) : activeChips(AFF_COLS, f);
 
   return (
     <div className="hub">
@@ -123,20 +144,30 @@ export default function DictionaryPage() {
             <input className="input" value={q} onChange={(e) => { setQ(e.target.value); setLimit(PAGE); }} placeholder={tab === 'players' ? '氏名・ふりがな・所属で探す' : '所属名・ふりがなで探す'} />
             {q && <button onClick={() => { setQ(''); setLimit(PAGE); }} aria-label="消す"><X className="w-4 h-4" /></button>}
           </label>
-          {tab === 'players' && noteCount > 0 && (
-            <label className="dict-check"><input type="checkbox" checked={onlyNote} onChange={(e) => { setOnlyNote(e.target.checked); setLimit(PAGE); }} />要確認だけ（{noteCount}）</label>
-          )}
           {source === 'db' && <AddRow tab={tab} onAdd={(n, f, a) => (tab === 'players' ? save({ name: n, furigana: f, affiliation: a }) : saveAff({ name: n, furigana: f }))} />}
         </div>
+
+        {/* 列の見出し（押すと列ごとに絞り込める）と、掛かっている条件 */}
+        {dict && (tab === 'players'
+          ? <ColumnHeader className="colf--players" cols={PLAYER_COLS} rows={searched.players} filters={f} onChange={setF} />
+          : <ColumnHeader className="colf--aff" cols={AFF_COLS} rows={searched.affiliations} filters={f} onChange={setF} />)}
+        {chips.length > 0 && (
+          <div className="colf-chips" aria-label="掛かっている絞り込み">
+            {chips.map((c) => (
+              <button key={c.key} className="colf-chip" onClick={() => setF(clearColumn(f, c.key))} title="この条件を外す">{c.label}<X className="w-3.5 h-3.5" /></button>
+            ))}
+            <button className="colf-chip colf-chip--all" onClick={() => setF({ ...emptyFilters(), sort: f.sort })}>すべて外す</button>
+          </div>
+        )}
 
         {!dict ? (
           <div className="hub-empty"><Loader2 className="hub-empty__ico animate-spin" /><p className="hub-empty__title">読み込んでいます</p></div>
         ) : rows.length === 0 ? (
-          <div className="hub-empty"><p className="hub-empty__title">見つかりません</p></div>
+          <div className="hub-empty"><p className="hub-empty__title">条件に合う{tab === 'players' ? '選手' : '所属'}はいません</p><p className="hub-empty__text">見出しの絞り込みを外すか、検索の文字を変えてください。</p></div>
         ) : (
           <>
             <p className="dict-count">{rows.length} 件{rows.length > limit ? `（${limit} 件まで表示）` : ''}</p>
-            <ul className="dict-list">
+            <ul className={`dict-list dict-list--table dict-list--${tab}`}>
               {rows.slice(0, limit).map((r) => (
                 <DictRow
                   key={r.name}
@@ -144,8 +175,9 @@ export default function DictionaryPage() {
                   furigana={r.furigana}
                   sub={tab === 'players' ? (r as DictPlayer).affiliation : undefined}
                   note={tab === 'players' ? (r as DictPlayer).note : undefined}
+                  flagCol={tab === 'players'}
                   readOnly={source !== 'db'}
-                  onSave={(f) => (tab === 'players' ? save({ ...(r as DictPlayer), furigana: f, note: '' }) : saveAff({ name: r.name, furigana: f }))}
+                  onSave={(fu) => (tab === 'players' ? save({ ...(r as DictPlayer), furigana: fu, note: '' }) : saveAff({ name: r.name, furigana: fu }))}
                 />
               ))}
             </ul>
@@ -157,8 +189,8 @@ export default function DictionaryPage() {
   );
 }
 
-function DictRow({ name, furigana, sub, note, readOnly, editing: startEditing, onSave }: {
-  name: string; furigana: string; sub?: string; note?: string; readOnly?: boolean; editing?: boolean; onSave: (f: string) => Promise<void>;
+function DictRow({ name, furigana, sub, note, readOnly, editing: startEditing, flagCol, onSave }: {
+  name: string; furigana: string; sub?: string; note?: string; readOnly?: boolean; editing?: boolean; flagCol?: boolean; onSave: (f: string) => Promise<void>;
 }) {
   const [editing, setEditing] = useState(!!startEditing);
   const [value, setValue] = useState(furigana);
@@ -177,6 +209,7 @@ function DictRow({ name, furigana, sub, note, readOnly, editing: startEditing, o
       <span className="dict-row__name">{name}</span>
       {!editing && <span className={`dict-row__kana ${furigana ? '' : 'is-empty'}`}>{furigana || 'ふりがな未登録'}</span>}
       {sub ? <span className="dict-row__sub">{sub}</span> : <span className="dict-row__sub is-empty" aria-hidden="true" />}
+      {flagCol && !editing && <span className="dict-row__flag">{note ? <span className="dict-flag">要確認</span> : null}</span>}
       {!readOnly && !editing && (
         <button className="hub-icon-btn dict-row__pen" onClick={() => setEditing(true)} aria-label={`${name} のふりがなを直す`}><Pencil className="w-3.5 h-3.5" /></button>
       )}
@@ -190,7 +223,7 @@ function DictRow({ name, furigana, sub, note, readOnly, editing: startEditing, o
             autoFocus={!startEditing}
             inputMode="text"
             autoComplete="off"
-            placeholder="例 とっとり　たろう"
+            placeholder="例 とっとり たろう"
             onChange={(e) => setValue(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') void commit(); if (e.key === 'Escape' && !startEditing) setEditing(false); }}
           />

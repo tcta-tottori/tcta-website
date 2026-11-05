@@ -448,3 +448,132 @@ html.is-lite [class~="fixed"][class~="inset-0"] > [class*="bg-white"][class*="ma
 /* 直しているあいだも 漢字 → ふりがな（入力欄）→ 所属 の順 */
 .dict-row.is-editing { grid-template-columns: minmax(0, 1fr); grid-template-areas: "name" "edit" "sub" "note" "err"; }
 .dict-row.is-editing .dict-row__edit { margin: 6px 0 4px; }
+
+/* ---------------------------------------------------------------------------
+   列ごとの絞り込み（features/catalog/ColumnFilters.tsx）。表の見出しの行を押すと、その列の絞り込みの窓が開く
+   --------------------------------------------------------------------------- */
+/* 表の形（1 列。見出しと各行の列をそろえる） */
+@media (min-width: 900px) { .dict-list--table { grid-template-columns: minmax(0, 1fr); } }
+@media (min-width: 640px) {
+  .dict-list--players .dict-row:not(.is-editing) {
+    grid-template-columns: minmax(6.5em, 11em) minmax(0, 1fr) minmax(0, 14em) 6em 32px;
+    grid-template-areas: "name kana sub flag pen" "note note note note note" "err err err err err";
+  }
+  .dict-list--affiliations .dict-row:not(.is-editing) {
+    grid-template-columns: minmax(8em, 18em) minmax(0, 1fr) 32px;
+    grid-template-areas: "name kana pen" "note note note" "err err err";
+  }
+  .dict-list--affiliations .dict-row__sub { display: none; }
+}
+.dict-row__flag { grid-area: flag; display: none; }
+@media (min-width: 640px) { .dict-row__flag { display: block; } }
+.dict-flag { display: inline-flex; padding: 3px 6px; background: #FFE9B0; font: 700 11px/1 var(--fjp); color: #7A4F00; border-radius: var(--radius); }
+
+.colf {
+  position: sticky;
+  top: var(--app-sticky-top);
+  z-index: 6;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0 0 8px;
+  padding: 8px 0;
+  background: var(--gray-050);
+}
+@media (min-width: 640px) {
+  .colf {
+    display: grid;
+    gap: 0 14px;
+    padding: 0 14px;
+    margin: 0;
+    background: var(--ink);
+  }
+  .colf--players { grid-template-columns: minmax(6.5em, 11em) minmax(0, 1fr) minmax(0, 14em) 6em 32px; }
+  .colf--players::after, .colf--aff::after { content: ""; }
+  .colf--aff { grid-template-columns: minmax(8em, 18em) minmax(0, 1fr) 32px; }
+}
+.colf__cell { position: relative; min-width: 0; }
+.colf__btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  height: 34px; padding: 0 12px;
+  border: 1px solid var(--gray-300); border-radius: var(--radius); background: var(--white);
+  font: 700 13px/1 var(--fjp); letter-spacing: .04em; color: var(--ink);
+  cursor: pointer; transition: color .2s, border-color .2s, background .2s;
+}
+.colf__ico, .colf__sort { width: 14px; height: 14px; flex: none; color: var(--gray-500); }
+.colf__btn.is-active { border-color: var(--red); color: var(--red); background: var(--red-tint); }
+.colf__btn.is-active .colf__ico { color: var(--red); }
+.colf__btn.is-open { border-color: var(--ink); }
+@media (min-width: 640px) {
+  .colf__btn { width: 100%; height: 44px; padding: 0; border: 0; border-radius: 0; background: none; color: #fff; justify-content: flex-start; }
+  .colf__ico, .colf__sort { color: rgba(255, 255, 255, .55); }
+  .colf__btn.is-active { background: none; color: #fff; box-shadow: inset 0 -3px 0 var(--red); }
+  .colf__btn.is-active .colf__ico { color: #FF6B70; }
+  .colf__btn.is-open { box-shadow: inset 0 -3px 0 #fff; }
+  @media (hover: hover) { .colf__btn:hover { color: #fff; } .colf__btn:hover .colf__ico { color: #fff; } }
+}
+
+/* 絞り込みの窓（サイトのポップアップと同じ決まり：上端の赤い線、赤い四角の見出し） */
+.colf__panel {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 30;
+  width: min(320px, calc(100vw - 32px));
+  max-height: min(70dvh, 560px);
+  overflow-y: auto;
+  background: var(--white);
+  border-top: 3px solid var(--red);
+  border-radius: var(--radius);
+  box-shadow: 0 18px 44px rgba(26, 26, 26, .22);
+  animation: sdlg-up .3s var(--ease) both;
+  color: var(--ink);
+}
+.colf__cell:last-child .colf__panel, .colf__cell--note .colf__panel { left: auto; right: 0; }
+@media (max-width: 639px) {
+  .colf { position: sticky; }
+  .colf__cell { position: static; }
+  .colf__panel { left: 0; right: 0; width: auto; }
+}
+.colf__panel-head { display: flex; align-items: center; gap: 10px; padding: 14px 14px 4px; }
+.colf__panel-title { flex: 1; margin: 0; display: flex; align-items: baseline; gap: 8px; font: 700 15px/1.4 var(--fjp); }
+.colf__panel-title small { font: 700 11px/1 var(--flt); letter-spacing: .14em; color: var(--red); }
+.colf__x { display: inline-flex; padding: 4px; border: 0; background: none; color: var(--gray-500); cursor: pointer; }
+.colf__group { padding: 10px 14px; border-top: 1px solid var(--gray-100); }
+.colf__panel-head + .colf__group { border-top: 0; }
+.colf__glabel { margin: 0 0 8px; font: 700 11px/1 var(--fjp); letter-spacing: .08em; color: var(--gray-500); }
+.colf__glabel small { margin-left: 6px; font-weight: 400; }
+.colf__glabel-row { display: flex; justify-content: space-between; align-items: baseline; }
+.colf__links { display: inline-flex; gap: 12px; }
+.colf__links button { border: 0; background: none; padding: 0; font: 700 12px/1 var(--fjp); color: var(--red); cursor: pointer; }
+.colf__seg { display: flex; gap: 6px; }
+.colf__seg--col { flex-direction: column; }
+.colf__segbtn {
+  flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  height: 38px; border: 1px solid var(--gray-300); border-radius: var(--radius); background: var(--white);
+  font: 700 13px/1 var(--fjp); color: var(--ink); cursor: pointer;
+}
+.colf__seg--col .colf__segbtn { justify-content: flex-start; padding: 0 12px; }
+.colf__segbtn.is-on { background: var(--ink); border-color: var(--ink); color: #fff; }
+.colf__search { position: relative; display: flex; align-items: center; }
+.colf__search > svg { position: absolute; left: 10px; color: var(--gray-500); pointer-events: none; }
+.colf .colf__search .input { min-height: 40px; height: 40px; padding: 0 10px 0 32px; font-size: 16px; }
+.colf__search--sm { margin-bottom: 8px; }
+.colf__kana { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+.colf__kanabtn { height: 36px; border: 1px solid var(--gray-300); border-radius: var(--radius); background: var(--white); font: 700 14px/1 var(--fjp); color: var(--ink); cursor: pointer; }
+.colf__kanabtn.is-on { background: var(--red); border-color: var(--red); color: #fff; }
+.colf__list { margin: 0; padding: 0; list-style: none; max-height: 240px; overflow-y: auto; border: 1px solid var(--gray-200); }
+.colf__opt { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-bottom: 1px solid var(--gray-100); font: 400 13px/1.4 var(--fjp); cursor: pointer; }
+.colf__list li:last-child .colf__opt { border-bottom: 0; }
+.colf__opt input { accent-color: var(--red); width: 16px; height: 16px; flex: none; }
+.colf__opt-label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.colf__opt-n { flex: none; font: 700 12px/1 var(--flt); color: var(--gray-500); }
+.colf__none { padding: 12px; font: 400 12px/1.5 var(--fjp); color: var(--gray-500); }
+.colf__panel-foot { position: sticky; bottom: 0; display: flex; gap: 8px; padding: 12px 14px; border-top: 1px solid var(--gray-200); background: var(--white); }
+.colf .colf__foot-btn { flex: 1 1 0; width: auto; min-width: 0; min-height: 40px; padding: 8px 10px; justify-content: center; font-size: 13px; }
+
+/* 掛かっている条件の札 */
+.colf-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 4px; }
+.colf-chip { display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 10px; border: 1px solid var(--red); border-radius: var(--radius); background: var(--white); font: 700 12px/1 var(--fjp); color: var(--red); cursor: pointer; }
+.colf-chip--all { border-color: var(--gray-300); color: var(--gray-600); }
+@media (hover: hover) { .colf-chip:hover { background: var(--red-tint); } }
