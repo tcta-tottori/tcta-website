@@ -182,7 +182,7 @@ const HOME_TOURNAMENTS_VISIBLE = 3;
         </div>
       </div>
       {/* 上から3件（HOME_TOURNAMENTS_VISIBLE）だけ出す。4件目以降があるときは、お知らせと同じく次の1件を薄くフェードさせ、
-          その右端の VIEW ALL で大会情報のページへ（「開催前」で絞り込んだ状態で開く）。続きが無いときは一覧の下の右端に VIEW ALL */}
+          その右端の VIEW ALL で大会情報のページへ（「開催前」で絞り込み、一覧表示（要項・ドロー・結果のボタン付き）で開く）。続きが無いときは一覧の下の右端に VIEW ALL */}
       <HomeTournaments items={HOME_TOURNAMENTS.slice(0, HOME_TOURNAMENTS_VISIBLE)} />
       {HOME_TOURNAMENTS.length > HOME_TOURNAMENTS_VISIBLE ? (
         <div class="news-peek tl-peek rv">
@@ -190,14 +190,14 @@ const HOME_TOURNAMENTS_VISIBLE = 3;
             <HomeTournaments items={[HOME_TOURNAMENTS[HOME_TOURNAMENTS_VISIBLE]]} reveal={false} showEmpty={false} />
           </div>
           <div class="news-peek__more">
-            <a class="view-all" href="tournaments.html?filter=upcoming" aria-label={`大会情報をすべて見る（ほか${HOME_TOURNAMENTS.length - HOME_TOURNAMENTS_VISIBLE}件）`}>
+            <a class="view-all" href="tournaments.html?filter=upcoming&view=list" aria-label={`大会情報をすべて見る（ほか${HOME_TOURNAMENTS.length - HOME_TOURNAMENTS_VISIBLE}件）`}>
               <span class="view-all__label">VIEW ALL</span><span class="ln-arrow" aria-hidden="true"></span>
             </a>
           </div>
         </div>
       ) : (
         <div class="sec-more rv">
-          <a class="view-all" href="tournaments.html?filter=upcoming">
+          <a class="view-all" href="tournaments.html?filter=upcoming&view=list">
             <span class="view-all__label">VIEW ALL</span><span class="ln-arrow" aria-hidden="true"></span>
           </a>
         </div>

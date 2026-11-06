@@ -1834,7 +1834,8 @@
 
   /* ---------- 大会一覧の表示の切り替え（大会情報ページ） ----------
      「縮小表示」（.tl--rows。初め）と「拡大表示」を切り替える。ページ内の大会一覧（.tl）すべてに効き、
-     選んだ方はこの端末に覚えておいて次に開いたときも使う（覚えられない環境では毎回「縮小表示」） */
+     選んだ方はこの端末に覚えておいて次に開いたときも使う（覚えられない環境では毎回「縮小表示」）。
+     URL の ?view=（rows／list／cards）が付いていれば、そちらを優先する（トップの VIEW ALL は ?view=list） */
   function initViewSwitch() {
     var sw = document.querySelector('[data-view-switch]');
     if (!sw) return;
@@ -1898,6 +1899,11 @@
     };
     var saved = null;
     try { saved = localStorage.getItem(KEY); } catch (e) {}
+    // URL に ?view=list などが付いていれば、覚えている表示より優先してその表示で開く（覚え直しはしない）。
+    // トップの大会情報の VIEW ALL からは、いつも一覧表示（要項・ドロー・結果のボタン付き）で開く
+    var asked = null;
+    try { asked = new URLSearchParams(location.search).get('view'); } catch (e) {}
+    if (asked === 'rows' || asked === 'cards' || asked === 'list') saved = asked;
     if (saved === 'rows' || saved === 'cards' || saved === 'list') set(saved);
     // ページを開いたときも、見えている行・カードから順にズームして出し、外の分はスクロールして見えてきたときに出す
     appear();
