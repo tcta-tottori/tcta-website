@@ -9,6 +9,11 @@
 //   … catalog.mts dict <ふりがな.xlsx> [所属.xlsx] [--merge]                                 辞書を入れる（既定は丸ごと置き換え）
 //   … catalog.mts status <id> <planned|ready|done>                                          大会の状態を変える
 //   … catalog.mts remove <id>
+//   … catalog.mts results <id> <結果.json> [--replace] [--source 手描きのドロー表]  試合結果を受け箱に入れる（運営中の端末が取り込む）
+//   … catalog.mts results <id>                                                      受け箱の中身を見る
+//   … catalog.mts results <id> --clear                                              受け箱を空にする
+//      結果.json の形：{ "events": [{ "event": "一般男子シングルス", "matches": [{ "winner": "北畠 史基", "loser": "渕上 雅博", "score": "8-3" }] }] }
+//      スコアは勝った人から見た形（8-3、6-1 RET）。不戦勝は "score": "", "note": "W.O"。途中経過（その時点までの結果）でよい
 //
 // 送信用の鍵は scripts/lib/push.mjs（data.mjs と同じ）。
 import { readFile } from 'node:fs/promises';
@@ -120,9 +125,28 @@ if (cmd === 'list') {
   const t = await app('GET', `/api/catalog/${id}`);
   const r = await put(id, { ...t, status });
   console.log(`✓ ${r.id} を ${r.status} にしました`);
+} else if (cmd === 'results') {
+  const id = rest[0] ?? fail('大会の id を指定してください（catalog.mts list で見られます）');
+  const source = flag('source');
+  if (has('clear')) {
+    await app('DELETE', `/api/catalog/${id}/results`);
+    console.log(`✓ ${id} の受け箱を空にしました`);
+  } else if (rest[1]) {
+    const doc = JSON.parse(await readFile(rest[1], 'utf8'));
+    const mode = has('replace') ? 'replace' : 'merge';
+    const r = await app('PUT', `/api/catalog/${id}/results`, { json: { ...doc, mode, ...(source ? { source } : {}) } });
+    console.log(`✓ ${r.received} 試合の結果を入れました（受け箱の合計 ${r.total} 試合・${r.version}）。運営中の端末は 20 秒ほどで取り込みます`);
+  } else {
+    const doc = await app('GET', `/api/catalog/${id}/results`);
+    if (!doc.events?.length) console.log('受け箱は空です');
+    for (const e of doc.events ?? []) {
+      console.log(`■ ${e.event}（${e.matches.length} 試合）`);
+      for (const m of e.matches) console.log(`   ${m.winner} が ${m.loser} に ${m.score || ''}${m.note ? ` ${m.note}` : ''}`);
+    }
+  }
 } else if (cmd === 'remove') {
   await app('DELETE', `/api/catalog/${rest[0]}`);
   console.log(`✓ ${rest[0]} を消しました`);
 } else {
-  console.log('使い方: node --experimental-strip-types tournament/scripts/catalog.mts list | show <id> | season <大会日程.xlsx> | draw <ドロー.xlsx> [--id] [--name] [--courts] | put <大会.json> [--id] | dict <ふりがな.xlsx> [所属.xlsx] [--merge] | status <id> <planned|ready|done> | remove <id>');
+  console.log('使い方: node --experimental-strip-types tournament/scripts/catalog.mts list | show <id> | season <大会日程.xlsx> | draw <ドロー.xlsx> [--id] [--name] [--courts] | put <大会.json> [--id] | dict <ふりがな.xlsx> [所属.xlsx] [--merge] | status <id> <planned|ready|done> | remove <id> | results <id> [結果.json] [--replace] [--clear]');
 }
