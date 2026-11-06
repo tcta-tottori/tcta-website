@@ -11,7 +11,6 @@ import { useAppStore } from '../../stores/appStore';
 import { useMixedStore } from '../../features/mixed/mixedStore';
 import { useTeamStore } from '../../features/team/teamStore';
 import { useSyncStore } from '../../features/sync/syncStore';
-import VersionInfoModal from '../ui/VersionInfoModal';
 import BulkCallOverlay from '../ui/BulkCallOverlay';
 import VoiceLoadingIndicator from '../ui/VoiceLoadingIndicator';
 import { callTts } from '../../features/broadcast/callTts';
@@ -99,7 +98,6 @@ export default function AppLayout() {
   const teamLeagueMatches = useTeamStore((s) => s.leagueMatches);
   const teamLeagues = useTeamStore((s) => s.leagues);
   const teamBrackets = useTeamStore((s) => s.brackets);
-  const [versionModalOpen, setVersionModalOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   // 本文が少し下がったらヘッダーに影（サイトの .hsh）
   const [scrolled, setScrolled] = useState(false);
@@ -370,12 +368,11 @@ export default function AppLayout() {
     </Link>
   ) : null;
 
-  // スマホのメニュー：サイトと同じく 2 列に並べる（画面の順。あとに観戦ページ・協会サイト・バージョン・ログアウト）
+  // スマホのメニュー：サイトと同じく 2 列に並べる（画面の順。あとに観戦ページ・協会サイト・ログアウト）
   const mobileItems: NavLinkItem[] = [
     ...visibleGroups.flatMap(g => g.tabs.filter(t => !t.hidden).map(t => ({ key: t.id, label: t.label, to: t.path, active: t === currentTab }))),
     { key: 'view', label: '観戦ページ', href: '/view' },
     { key: 'site', label: '協会サイト', href: SITE_URL },
-    { key: 'ver', label: `Ver 2.4`, onClick: () => setVersionModalOpen(true) },
     ...(officer.email ? [{ key: 'logout', label: 'ログアウト', onClick: logout }] : []),
   ];
 
@@ -459,9 +456,6 @@ export default function AppLayout() {
             </>}
             utils={<>
               <a className="fw" href="/view" target="_blank" rel="noopener noreferrer">観戦ページ</a>
-              <button className="fw app-ver" onClick={() => setVersionModalOpen(true)}>
-                Ver 2.4<small>{__BUILD_TIMESTAMP__}</small>
-              </button>
               {officer.email && (
                 <button className="fw app-ver" onClick={logout} title="役員ログインを終える">ログアウト<small>{officer.email}</small></button>
               )}
@@ -469,9 +463,6 @@ export default function AppLayout() {
           />
         )}
       </main>
-
-      {/* バージョン情報モーダル */}
-      <VersionInfoModal open={versionModalOpen} onClose={() => setVersionModalOpen(false)} />
 
       {/* 一斉コール フローティングオーバーレイ */}
       <BulkCallOverlay />
