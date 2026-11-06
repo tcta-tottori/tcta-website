@@ -14,6 +14,7 @@ import {
   dateParts, fetchTournament, putDict, putTournament,
   type CatalogDrawEvent, type CatalogDrawPlayer, type CatalogTournamentFull,
 } from './catalogApi';
+import { generateLeagueMatchOrder } from '../draw/rebuildMatches';
 import { checkDraw, pairsOf, secondRoundOpponent, type DrawIssue, type IssueLevel } from './drawCheck';
 import { importToDevice, localCopyOf } from './deviceImport';
 import { syncDictionary } from './dictSync';
@@ -160,6 +161,27 @@ export default function ReviewPage() {
 
   const d = dateParts(meta.date);
   const e = draft[ev];
+  // 枠 1 つ（トーナメントの組・リーグの並びで共用）
+  const slot = (pos: number, p: CatalogDrawPlayer | null | undefined) => (
+    <Slot
+      key={pos}
+      id={`slot-${ev}-${pos}`}
+      pos={pos}
+      player={p ?? null}
+      doubles={e.type === 'Doubles'}
+      issues={issues.filter((i) => i.event === ev && i.position === pos)}
+      picking={pick != null}
+      picked={pick === pos}
+      focus={focus === pos}
+      editing={editing === pos}
+      onPick={() => setPick(pos)}
+      onTarget={() => onSlot(pos)}
+      onEdit={() => setEditing(pos)}
+      onCancel={() => setEditing(null)}
+      onSave={(np) => { update((evs) => { const x = evs[ev]; x.players = x.players.filter((q) => q.position !== pos); x.players.push({ ...np, position: pos }); x.players.sort((a, b) => a.position - b.position); }); setEditing(null); }}
+      onRemove={async () => { if (p && await siteConfirm({ title: '空きにする', message: `${pos} 番の ${p.name} をドローから外して空きにします。`, confirmLabel: '空きにする', danger: true })) update((evs) => { evs[ev].players = evs[ev].players.filter((q) => q.position !== pos); }); }}
+    />
+  );
   const evIssues = (i: number) => issues.filter((x) => x.event === i && x.level !== 'info').length;
 
   return (
@@ -235,14 +257,26 @@ export default function ReviewPage() {
 
         {e && (
           <section className="rvw-draw" aria-label={`${e.eventName}のドロー`}>
-            <label className="dict-check rvw-only"><input type="checkbox" checked={onlyMatches} onChange={(x) => setOnlyMatches(x.target.checked)} />1 回戦の試合だけ表示（不戦勝・空きの組を隠す）</label>
-            <p className="rvw-draw__meta">{e.type === 'Doubles' ? 'ダブルス' : 'シングルス'} ・ {e.drawSize} 枠 ・ {e.roundGameRules?.map((r) => `${r.roundLabel} ${r.ruleText}`).join(' / ') || e.matchFormat}</p>
+            {!e.isRoundRobin && <label className="dict-check rvw-only"><input type="checkbox" checked={onlyMatches} onChange={(x) => setOnlyMatches(x.target.checked)} />1 回戦の試合だけ表示（不戦勝・空きの組を隠す）</label>}
+            <p className="rvw-draw__meta">{e.type === 'Doubles' ? 'ダブルス' : 'シングルス'} ・ {e.isRoundRobin ? `リーグ戦 ${e.drawSize} ${e.type === 'Doubles' ? 'ペア' : '人'}` : `${e.drawSize} 枠`} ・ {e.roundGameRules?.map((r) => `${r.roundLabel} ${r.ruleText}`).join(' / ') || e.matchFormat}</p>
             {pick != null && (
               <div className="rvw-pickbar" role="status">
                 <ArrowLeftRight className="w-4 h-4" /><span>{pick} 番と入れ替える枠を押してください（空きの枠なら移します）</span>
                 <button className="btn btn--outline rvw-pickbar__btn" onClick={() => setPick(null)}>やめる</button>
               </div>
             )}
+            {e.isRoundRobin ? (
+              // リーグ戦：①〜の順に並べる（試合順は運営画面で ①-② ③-④ ①-③ ②-④ ②-③ ①-④ の順に組む）
+              <ol className="rvw-pairs">
+                <li className="rvw-pair is-match">
+                  <div className="rvw-pair__head">
+                    <span className="rvw-pair__label">リーグ{e.leagueCourts?.length ? ` ・ ${e.leagueCourts.join('・')} 番コート` : ''}{e.eventStartTime ? ` ・ ${e.eventStartTime} 開始` : ''}</span>
+                  </div>
+                  {Array.from({ length: e.drawSize }, (_, i) => i + 1).map((pos) => slot(pos, e.players.find((q) => q.position === pos)))}
+                  <p className="rvw-pair__next">試合順：{leagueOrderText(e.drawSize)}</p>
+                </li>
+              </ol>
+            ) : (
             <ol className="rvw-pairs">
               {pairsOf(e).filter((x) => !onlyMatches || (x.top && x.bottom)).map(({ k, top, bottom }) => {
                 const time = e.matchTimes?.[String(2 * k - 1)] ?? '';
@@ -257,34 +291,13 @@ export default function ReviewPage() {
                         </label>
                       )}
                     </div>
-                    {[2 * k - 1, 2 * k].map((pos) => {
-                      const p = pos === 2 * k - 1 ? top : bottom;
-                      return (
-                        <Slot
-                          key={pos}
-                          id={`slot-${ev}-${pos}`}
-                          pos={pos}
-                          player={p}
-                          doubles={e.type === 'Doubles'}
-                          issues={issues.filter((i) => i.event === ev && i.position === pos)}
-                          picking={pick != null}
-                          picked={pick === pos}
-                          focus={focus === pos}
-                          editing={editing === pos}
-                          onPick={() => setPick(pos)}
-                          onTarget={() => onSlot(pos)}
-                          onEdit={() => setEditing(pos)}
-                          onCancel={() => setEditing(null)}
-                          onSave={(np) => { update((evs) => { const x = evs[ev]; x.players = x.players.filter((q) => q.position !== pos); x.players.push({ ...np, position: pos }); x.players.sort((a, b) => a.position - b.position); }); setEditing(null); }}
-                          onRemove={async () => { if (p && await siteConfirm({ title: '空きにする', message: `${pos} 番の ${p.name} をドローから外して空きにします。`, confirmLabel: '空きにする', danger: true })) update((evs) => { evs[ev].players = evs[ev].players.filter((q) => q.position !== pos); }); }}
-                        />
-                      );
-                    })}
+                    {[2 * k - 1, 2 * k].map((pos) => slot(pos, pos === 2 * k - 1 ? top : bottom))}
                     {e.drawSize >= 4 && (top || bottom) && <p className="rvw-pair__next">2 回戦の相手：{secondRoundOpponent(e, k)}</p>}
                   </li>
                 );
               })}
             </ol>
+            )}
           </section>
         )}
       </div>
@@ -303,6 +316,12 @@ export default function ReviewPage() {
       </div>
     </div>
   );
+}
+
+const CIRCLED = '①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯';
+/** リーグの試合順の文言（運営画面が組む順。①-② ③-④ …） */
+function leagueOrderText(n: number): string {
+  return generateLeagueMatchOrder(n).map(([a, b]) => `${CIRCLED[a] ?? a + 1}-${CIRCLED[b] ?? b + 1}`).join(' ');
 }
 
 function Slot({ id, pos, player, doubles, issues, picking, picked, focus, editing, onPick, onTarget, onEdit, onCancel, onSave, onRemove }: {

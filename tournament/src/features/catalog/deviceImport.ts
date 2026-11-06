@@ -72,6 +72,8 @@ export async function importToDevice(t: CatalogTournamentFull, onProgress?: (p: 
   const heat = useAppStore.getState().heatRulePattern;
   const courtNames = t.settings.courtNames?.length ? t.settings.courtNames : STANDARD_COURTS.split(',');
   const startTime = t.settings.startTime || t.draw.earliestStartTime || '09:00';
+  // コートの ID は先に決めておく（リーグ戦の専用コート leagueCourts をコート名から引くため）
+  const courtIdByName = new Map(courtNames.map((name, ci) => [name, `C-${now}-${ci}`]));
 
   // ふりがなは端末の辞書から
   const dict = new Map((await db.furiganaDict.toArray()).map((d) => [d.name, d.furigana]));
@@ -136,6 +138,9 @@ export async function importToDevice(t: CatalogTournamentFull, onProgress?: (p: 
         matchTimes: ev.matchTimes && Object.keys(ev.matchTimes).length > 0 ? (ev.matchTimes as Record<number, string>) : undefined,
         roundMatchTimes: ev.roundMatchTimes && Object.keys(ev.roundMatchTimes).length > 0 ? ev.roundMatchTimes : undefined,
         eventStartTime: ev.eventStartTime || undefined,
+        // リーグ戦の専用コート（大会データにコート名で書いてあれば、そのリーグのコートに固定する）
+        ...(ev.isRoundRobin && ev.leagueCourts?.length
+          ? { leagueCourtIds: ev.leagueCourts.map((n) => courtIdByName.get(n)).filter((x): x is string => !!x).slice(0, 2) } : {}),
         updatedAt: now,
       });
     }
@@ -149,7 +154,7 @@ export async function importToDevice(t: CatalogTournamentFull, onProgress?: (p: 
     }
 
     for (const [ci, name] of courtNames.entries()) {
-      await db.courts.add({ tournamentId, courtId: `C-${now}-${ci}`, name, surface: '', isAvailable: true, currentMatchId: null, order: ci + 1 });
+      await db.courts.add({ tournamentId, courtId: courtIdByName.get(name) ?? `C-${now}-${ci}`, name, surface: '', isAvailable: true, currentMatchId: null, order: ci + 1 });
     }
   });
 

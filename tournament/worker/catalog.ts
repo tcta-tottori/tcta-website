@@ -56,6 +56,8 @@ interface RoundRule { roundLabel: string; ruleText: string; games: number; match
 interface DrawEvent {
   eventName: string; type: 'Singles' | 'Doubles'; drawSize: number; isRoundRobin?: boolean; matchFormat?: string;
   players: DrawPlayer[]; roundGameRules?: RoundRule[]; matchTimes?: Record<string, string>; roundMatchTimes?: Record<string, string>; eventStartTime?: string;
+  /** リーグ戦の専用コート（コート名。1〜2面）。端末に入れるとそのリーグのコートに固定する */
+  leagueCourts?: string[];
 }
 interface TournamentBody {
   name: string; date?: string; venue?: string; reserveDate?: string; reserveVenue?: string; category?: string;
@@ -140,6 +142,8 @@ function validateTournament(b: unknown): TournamentBody | string {
         roundGameRules: Array.isArray(e.roundGameRules) ? (e.roundGameRules as RoundRule[]).slice(0, 10) : [],
         matchTimes: times(e.matchTimes), roundMatchTimes: times(e.roundMatchTimes),
         ...(str(e.eventStartTime, 5) && HM_RE.test(str(e.eventStartTime, 5)) ? { eventStartTime: str(e.eventStartTime, 5) } : {}),
+        ...(e.isRoundRobin === true && Array.isArray(e.leagueCourts) && e.leagueCourts.length > 0
+          ? { leagueCourts: (e.leagueCourts as unknown[]).map((c) => hw(str(c, 20))).filter(Boolean).slice(0, 2) } : {}),
       });
     }
     out.draw = {
@@ -374,6 +378,8 @@ const SCHEMA = {
         matchFormat: '試合形式の文言', players: [{ position: '枠番号 1〜drawSize（BYE の枠は書かない）', name: '氏名（姓と名の間に空白）', affiliation: '所属', seed: 'シード番号（任意）', partnerName: 'ダブルスの相方', partnerAffiliation: '相方の所属' }],
         roundGameRules: [{ roundLabel: '全回戦 | 1・2回戦 | 準決勝・決勝 …', ruleText: '8ゲームマッチ（8-8タイブレーク）', games: 8, matchFormat: '3セットのときだけ twoSetsSuper10' }],
         matchTimes: '1回戦の開始時刻 { 上側の枠番号: "HH:MM" }', roundMatchTimes: '2回戦以降の開始時刻 { "R{回戦}-{その回戦の何試合目}": "HH:MM" }（左山の上から数える）',
+        eventStartTime: 'その種目の最初の試合の時刻 HH:MM（リーグ戦など）',
+        leagueCourts: 'リーグ戦の専用コート（settings.courtNames のコート名。1〜2面。例 ["2","3"]）。リーグは1リーグ＝1種目（例 男子B級ダブルス Aリーグ）。試合順は 4チーム ①-② ③-④ ①-③ ②-④ ②-③ ①-④、3チーム ①-② ②-③ ①-③',
       }],
     },
   },

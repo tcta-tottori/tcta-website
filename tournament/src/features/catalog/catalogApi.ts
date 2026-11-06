@@ -35,6 +35,8 @@ export interface CatalogDrawEvent {
   matchTimes?: Record<string, string>;
   roundMatchTimes?: Record<string, string>;
   eventStartTime?: string;
+  /** リーグ戦の専用コート（コート名。1〜2面） */
+  leagueCourts?: string[];
 }
 export interface CatalogTournamentFull extends CatalogTournament {
   draw: { events: CatalogDrawEvent[]; earliestStartTime?: string; suggestedCourtCount?: number } | null;

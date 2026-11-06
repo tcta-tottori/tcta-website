@@ -18,13 +18,16 @@ import { syncThirdPlaceMatch, THIRD_PLACE_MATCH_ID, wantsThirdPlace } from './th
 type SlotLike = { position: number; entryId: string | null; seed: number; isBye: boolean };
 
 /**
- * リーグ戦の対戦順を生成（サークル法）。
- * 3人: 1-2, 2-3, 1-3 / 4人: 1-4, 2-3, 1-3, 2-4, 1-2, 3-4 ...
+ * リーグ戦の対戦順を生成。
+ * 3人・4人は協会の大会の試合順（要項・プログラムの「試合順」）に合わせる：
+ *   3人: ①-② ②-③ ①-③ / 4人: ①-② ③-④ ①-③ ②-④ ②-③ ①-④
+ * 5人以上はサークル法。
  */
 export function generateLeagueMatchOrder(n: number): [number, number][] {
   if (n < 2) return [];
   if (n === 2) return [[0, 1]];
   if (n === 3) return [[0, 1], [1, 2], [0, 2]];
+  if (n === 4) return [[0, 1], [2, 3], [0, 2], [1, 3], [1, 2], [0, 3]];
   const pairs: [number, number][] = [];
   const isOdd = n % 2 !== 0;
   const total = isOdd ? n + 1 : n; // 奇数の場合ダミー追加
