@@ -9,6 +9,7 @@ import MixedScoreInput from './MixedScoreInput';
 import { GameRatioCell } from './GameRatioCell';
 import { exportLeagueResultJpeg } from './exportLeagueResultJpeg';
 import { siteConfirm } from '../../components/site/siteConfirm';
+import { useIsTestMode } from '../catalog/testMode';
 
 /** コートオーバーライド: matchId -> courtName を localStorage に保存 */
 const COURT_OVERRIDE_KEY = 'mixed-court-overrides';
@@ -30,6 +31,8 @@ const LEAGUE_COLORS = [
 ];
 
 export default function MixedLeagueView() {
+  // テスト用のスコア入力は、テストモード（大会選択の「テストモードで試す」）で入れた大会のときだけ出す
+  const testMode = useIsTestMode();
   const { leagues, leagueMatches, selectedLeagueId, setSelectedLeagueId, updateCourtName, tournamentInfo, fillAllScoresForTest } = useMixedStore();
   const [editingMatch, setEditingMatch] = useState<LeagueMatchScore | null>(null);
   const [editingCourt, setEditingCourt] = useState(false);
@@ -365,7 +368,7 @@ export default function MixedLeagueView() {
                     ルール
                   </button>
                 )}
-                {leagueMatches.some(m => m.status !== 'finished') && (
+                {testMode && leagueMatches.some(m => m.status !== 'finished') && (
                   <button
                     onClick={async () => { if (await siteConfirm('テスト用：全ての予選リーグ未完了試合を6-4で入力しますか？')) fillAllScoresForTest(); }}
                     className="flex items-center gap-1 px-2.5 py-1.5 text-[10px] bg-white/15 rounded-lg hover:bg-white/25 transition-colors"

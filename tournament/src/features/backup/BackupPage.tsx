@@ -39,6 +39,7 @@ function AutoSaveStatus() {
   const text = st.kind === 'saved' ? `${time(st.at)} に保存しました（${st.fileName}）`
     : st.kind === 'saving' ? '保存しています…'
     : st.kind === 'pending' ? '変更を保存する準備をしています…'
+    : st.kind === 'test' ? 'テストモードの大会なので、自動保存はしていません'
     : st.kind === 'error' ? `${time(st.at)} に保存できませんでした（${st.message}）。少しあとにもう一度試します`
     : '運営中の大会があると、変わるたびに自動で保存します';
   return (

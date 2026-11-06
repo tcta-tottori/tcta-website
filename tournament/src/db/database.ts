@@ -20,6 +20,8 @@ export interface Tournament {
   catalogId?: string;
   /** 入れたときの、データベース側の更新日時（新しい版があるかの判定に使う） */
   catalogUpdatedAt?: string;
+  /** テストモードで入れた大会（自動保存しない・テスト用のスコア入力が使える。features/catalog/testMode.ts） */
+  isTest?: boolean;
 }
 
 // ---------------------------

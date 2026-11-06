@@ -10,6 +10,7 @@ import TeamScoreInput from './TeamScoreInput';
 import { TeamLeagueResultPreview } from './TeamLeagueResultPreview';
 import { createPortal } from 'react-dom';
 import { siteConfirm } from '../../components/site/siteConfirm';
+import { useIsTestMode } from '../catalog/testMode';
 
 /** 判定ルール詳細 */
 const TIEBREAK_RULE_DETAILS: Record<TiebreakRuleId, {
@@ -552,6 +553,8 @@ function LeagueCourtNameEditor({
 }
 
 export default function TeamLeagueView() {
+  // テスト用のスコア入力は、テストモード（大会選択の「テストモードで試す」）で入れた大会のときだけ出す
+  const testMode = useIsTestMode();
   const { leagues, leagueMatches, selectedLeagueId, setSelectedLeagueId, tiebreakOrder, updateSubMatchScore, updateSubMatchPlayers, allTeams, tournamentInfo, promotionOverrides, setPromotionOverride, updateCourtName, updateMatchOrderCourts } = useTeamStore();
   const [editingMatch, setEditingMatch] = useState<TeamLeagueMatch | null>(null);
   // リーグのコート名（"5～8番コート" 等）の編集。編集中のリーグIDを持つ
@@ -901,7 +904,8 @@ export default function TeamLeagueView() {
       <TiebreakRuleSettings />
 
       {/* テスト入力ボタン */}
-      <div className="grid grid-cols-2 gap-2">
+      {testMode && (
+<div className="grid grid-cols-2 gap-2">
         <button
           onClick={async () => {
             if (!(await siteConfirm(`${selectedLeague.leagueId}リーグの全試合を、各チームのメンバーを使って 6-4 で埋めます。よろしいですか？`))) return;
@@ -939,6 +943,7 @@ export default function TeamLeagueView() {
           TEST（ALL）
         </button>
       </div>
+      )}
 
       {/* 成績表 */}
       {(() => {

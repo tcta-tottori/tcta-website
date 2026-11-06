@@ -9,6 +9,7 @@ import { useMixedStore } from '../mixed/mixedStore';
 import MixedExcelViewer from '../mixed/MixedExcelViewer';
 import { useTeamStore } from '../team/teamStore';
 import { fillTestScores } from '../score/testScoreFiller';
+import { useIsTestMode } from '../catalog/testMode';
 
 /** 予備日を含む文字列から選択肢を生成 */
 function parseReserveDayOptions(value: string, type: 'date' | 'venue'): string[] {
@@ -330,6 +331,8 @@ function TeamTournamentInfoSection() {
 }
 
 export default function DataManagement() {
+  // テスト用のスコア入力は、テストモード（大会選択の「テストモードで試す」）で入れた大会のときだけ出す
+  const testMode = useIsTestMode();
   const isMixedImported = useMixedStore(s => s.isImported);
   const isTeamImported = useTeamStore(s => s.isImported);
 
@@ -498,8 +501,8 @@ export default function DataManagement() {
         )}
       </section>
 
-      {/* テスト用スコア一括入力（動作確認用・観戦用ページには表示しない） */}
-      {hasIndividualMatches && (
+      {/* テスト用スコア一括入力（テストモードのときだけ） */}
+      {testMode && hasIndividualMatches && (
         <section className="sk-sec">
           <div className="sk-sec__head">
             <span className="sk-sec__mark" aria-hidden="true" />

@@ -9,6 +9,7 @@ import type { LeagueMatchScore, LeagueStanding } from './types';
 import { GameRatioCell } from './GameRatioCell';
 import { leagueColor, leagueBadgeStyle } from './leagueColors';
 import { siteConfirm } from '../../components/site/siteConfirm';
+import { useIsTestMode } from '../catalog/testMode';
 
 
 
@@ -35,6 +36,8 @@ function AlignedName({ name, className = '' }: { name: string; className?: strin
 }
 
 export default function MixedDrawView() {
+  // テスト用のスコア入力は、テストモード（大会選択の「テストモードで試す」）で入れた大会のときだけ出す
+  const testMode = useIsTestMode();
   const { leagues, leagueMatches, fillAllScoresForTest } = useMixedStore();
   const [editingMatch, setEditingMatch] = useState<LeagueMatchScore | null>(null);
   const handleEditMatch = (m: LeagueMatchScore) => {
@@ -45,8 +48,8 @@ export default function MixedDrawView() {
 
   return (
     <div className="p-2 sm:p-4 space-y-3">
-      {/* テストボタン */}
-      {hasUnfinished && (
+      {/* テストボタン（テストモードのときだけ） */}
+      {testMode && hasUnfinished && (
         <div className="flex justify-end">
           <button
             onClick={async () => { if (await siteConfirm('テスト用：全ての予選リーグ未完了試合を6-4で入力しますか？')) fillAllScoresForTest(); }}

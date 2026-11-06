@@ -4,6 +4,7 @@
 //   ・前に保存した中身と同じなら送らない。送れなかったら次の変化・次の周期（RETRY_MS）でもう一度
 //   ・ファイル名は大会ごとに 1 つ（「自動保存_<大会名>_<日付>.json」）。上書きしていくので、いつも最新の 1 つが残る
 //   ・設定 → バックアップの「Cloudflare」の一覧に出るので、別の端末からでもそこから復元できる
+//   ・テストモード（大会選択の「テストモードで試す」）の大会は保存しない
 //   ・運営データをクリアして最初からやり直すときは、その前の状態を「クリア前_…」として別に残す（saveSnapshot）
 import { liveQuery, type Subscription } from 'dexie';
 import { db } from '../../db/database';
@@ -12,6 +13,7 @@ import { useMixedStore } from '../mixed/mixedStore';
 import { useTeamStore } from '../team/teamStore';
 import { uploadFile } from './cloudDataApi';
 import { buildUnifiedBackup } from './unifiedBackup';
+import { isTestModeNow } from '../catalog/testMode';
 
 const DEBOUNCE_MS = 8_000;
 const RETRY_MS = 60_000;
@@ -20,6 +22,7 @@ const MAX_WAIT_MS = 30_000;
 
 export type AutoSaveState =
   | { kind: 'idle' }
+  | { kind: 'test' }
   | { kind: 'pending' }
   | { kind: 'saving' }
   | { kind: 'saved'; at: number; fileName: string }
@@ -67,6 +70,8 @@ async function saveNow(): Promise<void> {
   try {
     const label = await currentLabel();
     if (!label) { setState({ kind: 'idle' }); return; }
+    // テストモードの大会は保存しない（本番の記録を上書きしないため）
+    if (await isTestModeNow()) { setState({ kind: 'test' }); return; }
     const data = await buildUnifiedBackup();
     const json = JSON.stringify(data);
     if (fingerprint(json) === lastSaved) {
@@ -94,7 +99,7 @@ function schedule(ms = DEBOUNCE_MS) {
   const now = Date.now();
   if (!timer) pendingSince = now;
   if (timer) clearTimeout(timer);
-  if (state.kind !== 'saving') setState({ kind: 'pending' });
+  if (state.kind !== 'saving' && state.kind !== 'test') setState({ kind: 'pending' });
   // 変化が続いて待ちが延び続けないよう、最初の変化から MAX_WAIT_MS で必ず保存する
   const wait = Math.max(0, Math.min(ms, pendingSince + Math.max(ms, MAX_WAIT_MS) - now));
   timer = setTimeout(() => { timer = null; void saveNow(); }, wait);

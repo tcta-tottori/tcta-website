@@ -26,6 +26,7 @@ import { fillTestScores } from '../score/testScoreFiller';
 import { siteConfirm } from '../../components/site/siteConfirm';
 import { SkEmpty } from '../../components/site/Kit';
 import { sortEventsByClass } from '../data/eventOrder';
+import { useIsTestMode } from '../catalog/testMode';
 
 /** 回戦に応じたゲームルール（試合方式）を解決する */
 function resolveRoundRule(evt: Event | undefined, round: number, totalRounds: number): RoundGameRule | null {
@@ -114,6 +115,8 @@ type DrawSlot = { position: number; entryId: string | null; seed: number; isBye:
 
 
 export default function MatchManager({ readOnly = false }: { readOnly?: boolean } = {}) {
+  // テスト用のスコア入力は、テストモード（大会選択の「テストモードで試す」）で入れた大会のときだけ出す
+  const testMode = useIsTestMode();
   const currentTournamentId = useAppStore(state => state.currentTournamentId);
   const importedSchedule = useAppStore(state => state.importedSchedule);
   const [selectedEventId, setSelectedEventId] = useState<string>('');
@@ -1814,15 +1817,17 @@ ${printableMatches.map(m => {
                     全コート初戦一斉コール
                   </button>
                 )}
-                {/* テスト用: 全試合を 8-4 / 6-4 で終了（動作確認用） */}
-                <button
-                  onClick={handleFillTestScores}
-                  disabled={testScoreRunning}
-                  className="btn btn--outline sk-btn sk-btn--sm sk-btn--block op-mm__test"
-                >
-                  <Check className="w-3.5 h-3.5" />
-                  {testScoreRunning ? '入力中...' : 'テスト: 全試合を8-4/6-4で終了'}
-                </button>
+                {/* テスト用: 全試合を 8-4 / 6-4 で終了（テストモードのときだけ） */}
+                {testMode && (
+                  <button
+                    onClick={handleFillTestScores}
+                    disabled={testScoreRunning}
+                    className="btn btn--outline sk-btn sk-btn--sm sk-btn--block op-mm__test"
+                  >
+                    <Check className="w-3.5 h-3.5" />
+                    {testScoreRunning ? '入力中...' : 'テスト: 全試合を8-4/6-4で終了'}
+                  </button>
+                )}
                 {/* コール中の停止操作は画面下部の固定ポップアップから行う */}
               </div>
             </div>

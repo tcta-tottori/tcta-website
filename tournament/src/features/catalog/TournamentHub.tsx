@@ -6,7 +6,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { ArrowRight, BookOpen, ClipboardCheck, Bot, FileSpreadsheet, ListChecks, Loader2, MapPin, RefreshCw, RotateCcw, Users } from 'lucide-react';
+import { ArrowRight, BookOpen, ClipboardCheck, Bot, FileSpreadsheet, ListChecks, Loader2, MapPin, RefreshCw, RotateCcw, Users, FlaskConical } from 'lucide-react';
 import { db } from '../../db/database';
 import { useAppStore } from '../../stores/appStore';
 import { useOfficer } from '../auth/officer';
@@ -53,7 +53,7 @@ export default function TournamentHub() {
   useEffect(() => { void load(); }, [load]);
 
   const localByCatalog = useMemo(() => {
-    const m = new Map<string, { tournamentId: string; catalogUpdatedAt?: string }>();
+    const m = new Map<string, { tournamentId: string; catalogUpdatedAt?: string; isTest?: boolean }>();
     for (const t of localTournaments ?? []) if (t.catalogId) m.set(t.catalogId, t);
     return m;
   }, [localTournaments]);
@@ -72,13 +72,22 @@ export default function TournamentHub() {
   const next = useMemo(() => visible.find((t) => t.status === 'ready'), [visible]);
   const groups = useMemo(() => [{ key: 'all', title: '', items: visible }].filter((g) => g.items.length > 0), [visible]);
 
-  const start = useCallback(async (t: CatalogTournament, mode: 'fresh' | 'resume' | 'direct') => {
+  const start = useCallback(async (t: CatalogTournament, mode: 'fresh' | 'resume' | 'direct' | 'test') => {
     setError(null);
     const local = localByCatalog.get(t.id);
     try {
       if (mode === 'resume' && local) {
         setBusy({ id: t.id, label: '切り替えています' });
         await switchToLocal(local.tournamentId);
+      } else if (mode === 'test') {
+        if (!(await siteConfirm({
+          title: 'テストモードで試す',
+          message: `「${t.name}」をテスト用に端末に入れて、エントリーから動きを試します。\n\n・運営中のデータは Cloudflare に自動保存しません\n・対戦順やデータ管理から、テスト用のスコアを自動で入れられます\n${local ? '\n※ この端末の今の運営データは消えます。' : ''}`,
+          confirmLabel: 'テストモードではじめる',
+        }))) return;
+        setBusy({ id: t.id, label: 'テスト用に読み込んでいます' });
+        const full = await fetchTournament(t.id);
+        await importToDevice(full, (p) => setBusy({ id: t.id, label: p.label }), { test: true });
       } else if (mode === 'fresh') {
         // はじめる前に、ドロー・当たり方・名前を確認する画面へ（そこで直してから端末に入れる）
         navigate(`/data/review/${encodeURIComponent(t.id)}`);
@@ -97,7 +106,7 @@ export default function TournamentHub() {
         }
         setBusy({ id: t.id, label: '大会を読み込んでいます' });
         const full = await fetchTournament(t.id);
-        await importToDevice(full, (p) => setBusy({ id: t.id, label: p.label }));
+        await importToDevice(full, (p) => setBusy({ id: t.id, label: p.label }), { test: !!local?.isTest });
       }
       navigate('/entry');
     } catch (err) {
@@ -172,6 +181,8 @@ export default function TournamentHub() {
                     onStart={() => start(t, 'fresh')}
                     onResume={() => start(t, 'resume')}
                     onReset={() => start(t, 'direct')}
+                    onTest={() => start(t, 'test')}
+                    isTest={!!local?.isTest}
                   />
                 </li>
               );
@@ -224,9 +235,9 @@ function DictChip({ players, affiliations, status }: { players: number; affiliat
   );
 }
 
-function HubCard({ t, highlight, isCurrent, onDevice, stale, busy, disabled, error, onStart, onResume, onReset }: {
+function HubCard({ t, highlight, isCurrent, onDevice, stale, busy, disabled, error, onStart, onResume, onReset, onTest, isTest }: {
   t: CatalogTournament; highlight: boolean; isCurrent: boolean; onDevice: boolean; stale: boolean;
-  busy: string | null; disabled: boolean; error: string | null; onStart: () => void; onResume: () => void; onReset: () => void;
+  busy: string | null; disabled: boolean; error: string | null; onStart: () => void; onResume: () => void; onReset: () => void; onTest: () => void; isTest: boolean;
 }) {
   const d = dateParts(t.date);
   const badge = STATUS_BADGE[t.status] ?? STATUS_BADGE.planned;
@@ -245,7 +256,7 @@ function HubCard({ t, highlight, isCurrent, onDevice, stale, busy, disabled, err
           ) : <span className="date-chip date-chip--card hub-card__date"><span className="date-chip__md">未定</span></span>}
           <span className="tcard__status">
             <span className={`badge ${badge.cls}`}>{isToday && t.status === 'ready' ? '本日開催' : badge.label}</span>
-            {isCurrent && <span className="hub-card__here">この端末で運営中</span>}
+            {isCurrent && <span className="hub-card__here">{isTest ? 'この端末でテスト中' : 'この端末で運営中'}</span>}
           </span>
         </div>
         <div className="tcard__head"><h3 className="tcard__title">{t.name}</h3></div>
@@ -277,8 +288,13 @@ function HubCard({ t, highlight, isCurrent, onDevice, stale, busy, disabled, err
         {(t.status === 'ready' || t.status === 'done') && !busy && (
           <Link to={`/data/review/${encodeURIComponent(t.id)}`} className="btn hub-card__btn hub-card__btn--gray"><ClipboardCheck className="w-4 h-4" />ドローを確認・修正</Link>
         )}
-        {onDevice && !busy && (
-          <button type="button" className="hub-card__reset" onClick={onReset} disabled={disabled}><RotateCcw className="w-3.5 h-3.5" />運営データをクリアして最初から</button>
+        {(t.status === 'ready' || t.status === 'done') && !busy && (
+          <div className="hub-card__links">
+            <button type="button" className="hub-card__reset" onClick={onTest} disabled={disabled}><FlaskConical className="w-3.5 h-3.5" />テストモードで試す</button>
+            {onDevice && (
+              <button type="button" className="hub-card__reset" onClick={onReset} disabled={disabled}><RotateCcw className="w-3.5 h-3.5" />{isTest ? 'テストのデータをクリアして最初から' : '運営データをクリアして最初から'}</button>
+            )}
+          </div>
         )}
       </div>
     </article>
