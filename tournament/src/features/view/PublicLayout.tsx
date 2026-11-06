@@ -9,7 +9,7 @@ import { useMixedStore } from '../mixed/mixedStore';
 import { useTeamStore } from '../team/teamStore';
 import { usePublicSync } from './usePublicSync';
 import { useSiteReveal } from '../../components/site/useSiteReveal';
-import { SiteHeader, MobileNav, PageHead, StatusBar, SiteFooter, SITE_URL, type NavLinkItem } from '../../components/site/SiteChrome';
+import { SiteHeader, MobileNav, PageHead, StatusBar, SiteFooter, SITE_URL, VIEW_LOGO, type NavLinkItem } from '../../components/site/SiteChrome';
 import { sortEventsByClass } from '../data/eventOrder';
 
 /**
@@ -219,8 +219,7 @@ export default function PublicLayout() {
       {/* ヘッダー（協会サイトと同じ。右上の赤いブロックは協会サイトへ） */}
       <SiteHeader
         homeTo={`/view${location.search}`}
-        tag="観戦"
-        tagEm="LIVE"
+        logo={VIEW_LOGO}
         items={navItems}
         contact={{ label: '協会サイト', href: SITE_URL, external: true }}
         aux={sync.hasRoom ? <SyncBadge sync={sync} /> : null}

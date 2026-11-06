@@ -898,3 +898,8 @@ html.is-lite [class~="fixed"][class~="inset-0"] > [class*="bg-white"][class*="ma
 .hub-card__reset { display: inline-flex; align-items: center; justify-content: center; gap: 6px; width: 100%; margin-top: 10px; padding: 8px 0; border: 0; background: none; font: 700 12px/1.4 var(--fjp); color: var(--gray-500); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; transition: color .2s; }
 @media (hover: hover) { .hub-card__reset:hover { color: var(--red); } }
 .hub-card__reset:disabled { opacity: .5; cursor: not-allowed; }
+
+/* 観戦ページのロゴ（縦に少し高い。スマホ 54px・PC 50px） */
+.site-header__logo--system img[src*="logo-view"] { height: 54px; }
+@media (min-width: 1024px) { .site-header__logo--system img[src*="logo-view"] { height: 50px; } }
+@media (max-width: 380px) { .site-header__logo--system img[src*="logo-view"] { height: 46px; } }
