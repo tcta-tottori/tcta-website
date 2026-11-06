@@ -723,7 +723,12 @@ html.is-lite [class~="fixed"][class~="inset-0"] > [class*="bg-white"][class*="ma
 .rvw-bar__state { display: inline-flex; align-items: center; gap: 6px; font: 700 12px/1.4 var(--fjp); color: var(--gray-600); }
 .rvw-bar__btns { display: flex; gap: 8px; flex: 1 1 auto; justify-content: flex-end; }
 .app-main .rvw-bar__btn { width: auto; min-height: 48px; padding: 10px 18px; gap: 8px; justify-content: center; font-size: 14px; }
-@media (max-width: 639px) { .rvw-bar__btns { width: 100%; } .app-main .rvw-bar__btn { flex: 1 1 0; padding: 10px; font-size: 13px; } }
+/* スマホ：「運営をはじめる」を上の段に横いっぱい、その下に 保存｜キャンセル */
+@media (max-width: 639px) {
+  .rvw-bar__btns { width: 100%; display: grid; grid-template-columns: 1fr 1fr; }
+  .app-main .rvw-bar__btn { width: 100%; padding: 10px; font-size: 13px; }
+  .app-main .rvw-bar__btn--start { grid-column: 1 / -1; order: -1; font-size: 14px; }
+}
 
 /* 空き（BYE）の枠は低く（64 枠のドローでもスマホで追いやすく） */
 .rvw-slot.is-bye { min-height: 40px; padding-block: 4px; }

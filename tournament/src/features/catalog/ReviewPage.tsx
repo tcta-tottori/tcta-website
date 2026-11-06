@@ -135,6 +135,12 @@ export default function ReviewPage() {
     }
   };
 
+  // 運営をはじめずに大会選択へ戻る（データベースにも端末にも何も書かない）
+  const cancel = async () => {
+    if (dirty && !(await siteConfirm({ title: 'キャンセル', message: '直した所はまだ保存していません。保存せずに大会選択へ戻りますか？', confirmLabel: '保存せずに戻る', danger: true }))) return;
+    navigate('/data');
+  };
+
   const addFurigana = async (name: string, furigana: string, affiliation?: string) => {
     await putDict({ mode: 'merge', players: [{ name: toHalfwidth(name), furigana, ...(affiliation ? { affiliation } : {}) }] });
     await syncDictionary(true);
@@ -289,7 +295,9 @@ export default function ReviewPage() {
           <span className="rvw-bar__state">{busy ? <><Loader2 className="w-4 h-4 animate-spin" />{busy}</> : dirty ? '直した所はまだ保存していません' : 'データベースの内容と同じです'}</span>
           <div className="rvw-bar__btns">
             <button className="btn btn--outline rvw-bar__btn" onClick={() => void save()} disabled={!dirty || !!busy}><Save className="w-4 h-4" />保存</button>
-            <button className="btn btn--primary rvw-bar__btn" onClick={() => void start()} disabled={!!busy}>{dirty ? '保存して運営をはじめる' : 'この内容で運営をはじめる'}<ArrowRight className="w-4 h-4" /></button>
+            <button className="btn btn--primary rvw-bar__btn rvw-bar__btn--start" onClick={() => void start()} disabled={!!busy}>{dirty ? '保存して運営をはじめる' : 'この内容で運営をはじめる'}<ArrowRight className="w-4 h-4" /></button>
+            {/* キャンセル：運営をはじめずに大会選択へ戻る。直した所が保存されていなければ、捨ててよいか聞く */}
+            <button className="btn btn--outline rvw-bar__btn rvw-bar__btn--cancel" onClick={() => void cancel()} disabled={!!busy}><X className="w-4 h-4" />キャンセル</button>
           </div>
         </div>
       </div>
