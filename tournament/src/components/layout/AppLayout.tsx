@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect, useCallback, useRef } from 'react';
-import { Link, Outlet, useLocation } from 'react-router-dom';
+import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import {
   Database, Users, Dices, Trophy, Swords,
   ClipboardList, CalendarClock, BarChart2,
@@ -89,6 +89,7 @@ const MIXED_HIDDEN_PATHS = ['/referee', '/schedule-sheet', '/draw-lot', '/court-
 
 export default function AppLayout() {
   const location = useLocation();
+  const navigate = useNavigate();
   const currentTournamentId = useAppStore((s) => s.currentTournamentId);
   const isMixedImported = useMixedStore((s) => s.isImported);
   const mixedTournamentInfo = useMixedStore((s) => s.tournamentInfo);
@@ -396,6 +397,11 @@ export default function AppLayout() {
   ];
 
   const live = activeTickerItems.some(t => t.includes('進行中'));
+  // 大会が無いのに試合の画面（受付・対戦順・時間割・ドロー・スコア・配信）を開いたら、大会選択へ戻す
+  //（運営データを消したあとに、前の画面が残って見えないように）
+  const needsTournament = !hasTournament && !['/data', '/dict', '/print', '/manual', '/settings', '/data-tools', '/backup'].some(p => location.pathname === p || location.pathname.startsWith(`${p}/`));
+  useEffect(() => { if (needsTournament) navigate('/data', { replace: true }); }, [needsTournament, navigate]);
+
   const statusBar = (place: 'top' | 'main') => hasTournament ? (
     <StatusBar place={place} label={live ? 'LIVE' : 'NOW'} live={live} lead={displayName || '大会運営システム'} items={activeTickerItems} />
   ) : null;
