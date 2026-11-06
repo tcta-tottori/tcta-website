@@ -21,20 +21,36 @@ export async function localCopyOf(catalogId: string): Promise<Tournament | undef
   return (await db.tournaments.toArray()).find((t) => t.catalogId === catalogId);
 }
 
-/** 端末から大会 1 つ分の運営データを消す */
+/**
+ * 端末から大会 1 つ分の運営データを消す（種目・受付・ドロー・試合・コート・ライブスコア）。
+ * その大会を運営中だったときは、アプリに 1 つだけ持っている時間割（タイムテーブル）も空にする
+ * （消したあとも前の試合が時間割に残って見えないように）
+ */
 export async function removeLocalTournament(tournamentId: string): Promise<void> {
   const events = await db.events.where('tournamentId').equals(tournamentId).toArray();
   const eventIds = events.map((e) => e.eventId);
-  await db.transaction('rw', [db.tournaments, db.events, db.entries, db.draws, db.matches, db.courts], async () => {
+  const store = useAppStore.getState();
+  if (store.currentTournamentId === tournamentId) clearScheduleState();
+  await db.transaction('rw', [db.tournaments, db.events, db.entries, db.draws, db.matches, db.courts, db.liveScores], async () => {
     if (eventIds.length) {
       await db.entries.where('eventId').anyOf(eventIds).delete();
       await db.draws.where('eventId').anyOf(eventIds).delete();
       await db.matches.where('eventId').anyOf(eventIds).delete();
+      await db.liveScores.where('eventId').anyOf(eventIds).delete();
     }
     await db.events.where('tournamentId').equals(tournamentId).delete();
     await db.courts.where('tournamentId').equals(tournamentId).delete();
     await db.tournaments.where('tournamentId').equals(tournamentId).delete();
   });
+}
+
+/** アプリに 1 つだけ持っている時間割・対戦順の作業データを空にする */
+export function clearScheduleState(): void {
+  const store = useAppStore.getState();
+  store.setImportedSchedule([]);
+  store.setScheduleFileName('');
+  store.setScheduleSlots([]);
+  store.setAllScheduleMatches([]);
 }
 
 export interface ImportProgress { step: 'prepare' | 'write' | 'schedule' | 'done'; label: string }
