@@ -289,8 +289,10 @@ function HubCard({ t, highlight, isCurrent, onDevice, stale, busy, disabled, err
           <Link to={`/data/review/${encodeURIComponent(t.id)}`} className="btn hub-card__btn hub-card__btn--gray"><ClipboardCheck className="w-4 h-4" />ドローを確認・修正</Link>
         )}
         {(t.status === 'ready' || t.status === 'done') && !busy && (
+          <button type="button" className="btn hub-card__btn hub-card__btn--test" onClick={onTest} disabled={disabled}><FlaskConical className="w-4 h-4" />テストモードで試す</button>
+        )}
+        {(t.status === 'ready' || t.status === 'done') && !busy && onDevice && (
           <div className="hub-card__links">
-            <button type="button" className="hub-card__reset" onClick={onTest} disabled={disabled}><FlaskConical className="w-3.5 h-3.5" />テストモードで試す</button>
             {onDevice && (
               <button type="button" className="hub-card__reset" onClick={onReset} disabled={disabled}><RotateCcw className="w-3.5 h-3.5" />{isTest ? 'テストのデータをクリアして最初から' : '運営データをクリアして最初から'}</button>
             )}
