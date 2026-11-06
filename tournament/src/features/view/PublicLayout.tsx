@@ -11,6 +11,7 @@ import { usePublicSync } from './usePublicSync';
 import { useSiteReveal } from '../../components/site/useSiteReveal';
 import { SiteHeader, MobileNav, PageHead, StatusBar, SiteFooter, SITE_URL, VIEW_LOGO, type NavLinkItem } from '../../components/site/SiteChrome';
 import { sortEventsByClass } from '../data/eventOrder';
+import { useVisibleLiveScores } from '../livescore/useVisibleLiveScores';
 
 /**
  * 参加者・HP訪問者向け公開ビューのレイアウト（読み取り専用）。
@@ -182,6 +183,8 @@ export default function PublicLayout() {
   const tournamentName = info?.name?.replace(/\(.*?\)|（.*?）/g, '').trim() || '';
   const tickerItems = isGroup ? groupTickerItems : individualTickerItems;
 
+  // 配信中のライブスコアの数（あればメニューに「ライブスコア」を出す）
+  const { liveCount } = useVisibleLiveScores();
   const menuItems = isGroup
     ? [
         { path: '/view/league', label: '予選リーグ', en: 'LEAGUE', icon: Swords },
@@ -189,7 +192,9 @@ export default function PublicLayout() {
         { path: '/view/live', label: 'ダッシュボード', en: 'DASHBOARD', icon: BarChart2 },
       ]
     : [
-        { path: '/view/livescore', label: 'ライブスコア', en: 'LIVE SCORE', icon: Activity },
+        // ライブスコアは、配信中の試合があるとき（か、その画面を開いているとき）だけメニューに出す
+        ...(liveCount > 0 || location.pathname.startsWith('/view/livescore')
+          ? [{ path: '/view/livescore', label: 'ライブスコア', en: 'LIVE SCORE', icon: Activity }] : []),
         { path: '/view/draw', label: 'ドロー', en: 'DRAW', icon: Network },
         { path: '/view/order', label: '対戦順', en: 'ORDER OF PLAY', icon: ClipboardList },
         { path: '/view/live', label: 'ダッシュボード', en: 'DASHBOARD', icon: Radio },
@@ -222,7 +227,6 @@ export default function PublicLayout() {
         logo={VIEW_LOGO}
         items={navItems}
         contact={{ label: '協会サイト', href: SITE_URL, external: true }}
-        aux={sync.hasRoom ? <SyncBadge sync={sync} /> : null}
         menuOpen={menuOpen}
         onToggleMenu={() => setMenuOpen(v => !v)}
         scrolled={scrolled}
@@ -340,16 +344,5 @@ function WaitingCard({ sync }: { sync: ReturnType<typeof usePublicSync> }) {
         <RefreshCw className={`w-4 h-4 ${retrying ? 'animate-spin' : ''}`} />再読み込み
       </button>
     </SkEmpty>
-  );
-}
-
-function SyncBadge({ sync }: { sync: ReturnType<typeof usePublicSync> }) {
-  const connected = sync.connectionState === 'connected';
-  const connecting = sync.connectionState === 'connecting' || sync.connectionState === 'reconnecting';
-  const label = connected ? 'ライブ受信中' : connecting ? '接続中' : sync.serverConfigured ? '切断' : 'ローカル同期';
-  return (
-    <span className={`sync-chip ${connected ? 'sync-chip--on' : connecting ? 'sync-chip--wait' : ''}`} title={`ルーム: ${sync.roomCode}`}>
-      <i aria-hidden="true" /><span>{label}</span>
-    </span>
   );
 }
