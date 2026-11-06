@@ -438,8 +438,9 @@ export default function DataManagement() {
   const handleResetAll = useCallback(async () => {
     setShowResetConfirm(false);
     try {
-      await db.transaction('rw', [db.tournaments, db.players, db.events, db.entries, db.draws, db.matches, db.courts], async () => {
+      await db.transaction('rw', [db.tournaments, db.players, db.events, db.entries, db.draws, db.matches, db.courts, db.liveScores], async () => {
         await db.tournaments.clear();
+        await db.liveScores.clear();
         await db.players.clear();
         await db.events.clear();
         await db.entries.clear();
@@ -576,7 +577,7 @@ export default function DataManagement() {
           <div className="sk-sec__titles">
             <p className="sk-sec__en">RESET ALL</p>
             <h2 className="sk-sec__title">全データリセット</h2>
-            <p className="sk-sec__lead">大会・エントリー・対戦表・試合結果・コート設定・時間割をすべて削除します</p>
+            <p className="sk-sec__lead">この端末の大会・エントリー・対戦表・試合結果・コート設定・時間割をすべて削除します。協会のデータベース（大会選択の大会・ドロー・辞書）と Cloudflare のバックアップは消えません</p>
           </div>
           <div className="sk-sec__actions ps-data__act">
             <button
@@ -599,7 +600,7 @@ export default function DataManagement() {
       <ConfirmDialog
         open={showResetConfirm}
         title="全データリセット"
-        message={"以下のデータをすべて削除します：\n\n・大会情報\n・選手データ\n・エントリー\n・ドロー・対戦表\n・試合結果\n・コート設定\n・時間割\n\nふりがな・所属辞書は保持されます。\nこの操作は取り消せません。"}
+        message={"この端末に入っている運営データを、すべて削除します：\n\n・大会情報（ミックス・団体戦を含む）\n・選手データ\n・エントリー\n・ドロー・対戦表\n・試合結果・ライブスコア\n・コート設定\n・時間割\n\n消えないもの：ふりがな・所属辞書、音声などの設定、協会のデータベース（大会選択に出る大会・ドロー・辞書）、Cloudflare のバックアップ（自動保存_… など）、ほかの端末のデータ。\n\nこの端末の分は取り消せません（Cloudflare のバックアップからは戻せます）。"}
         danger
         confirmLabel="リセット実行"
         onConfirm={handleResetAll}
