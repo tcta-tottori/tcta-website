@@ -25,6 +25,7 @@ import CallStatusPopup from '../../components/ui/CallStatusPopup';
 import { fillTestScores } from '../score/testScoreFiller';
 import { siteConfirm } from '../../components/site/siteConfirm';
 import { SkEmpty } from '../../components/site/Kit';
+import { sortEventsByClass } from '../data/eventOrder';
 
 /** 回戦に応じたゲームルール（試合方式）を解決する */
 function resolveRoundRule(evt: Event | undefined, round: number, totalRounds: number): RoundGameRule | null {
@@ -119,7 +120,7 @@ export default function MatchManager({ readOnly = false }: { readOnly?: boolean 
   const [viewMode, setViewMode] = useState<'event' | 'global'>('global'); // 種目別 or 対戦順
 
   const events = useLiveQuery(
-    () => currentTournamentId ? db.events.where('tournamentId').equals(currentTournamentId).toArray() : [],
+    () => currentTournamentId ? db.events.where('tournamentId').equals(currentTournamentId).toArray().then(sortEventsByClass) : [],
     [currentTournamentId]
   ) || [];
 

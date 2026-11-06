@@ -10,6 +10,7 @@ import { useTeamStore } from '../team/teamStore';
 import { usePublicSync } from './usePublicSync';
 import { useSiteReveal } from '../../components/site/useSiteReveal';
 import { SiteHeader, MobileNav, PageHead, StatusBar, SiteFooter, SITE_URL, type NavLinkItem } from '../../components/site/SiteChrome';
+import { sortEventsByClass } from '../data/eventOrder';
 
 /**
  * 参加者・HP訪問者向け公開ビューのレイアウト（読み取り専用）。
@@ -71,7 +72,7 @@ export default function PublicLayout() {
 
   const events = useLiveQuery(
     () => (!isGroup && activeTournamentId
-      ? db.events.where('tournamentId').equals(activeTournamentId).toArray()
+      ? db.events.where('tournamentId').equals(activeTournamentId).toArray().then(sortEventsByClass)
       : []),
     [isGroup, activeTournamentId]
   ) || [];

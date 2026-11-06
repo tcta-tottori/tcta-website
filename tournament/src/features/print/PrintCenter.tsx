@@ -33,6 +33,7 @@ import {
   swapPairName, winnersOnly, type CertCandidate,
 } from './certificateCandidates';
 import { siteConfirm } from '../../components/site/siteConfirm';
+import { sortEventsByClass } from '../data/eventOrder';
 
 /** 賞位のよく使う選択肢（自由入力も可） */
 const RANK_PRESETS = ['優勝', '準優勝', '第3位', '第4位', '第5位', 'ベスト8', '敢闘賞', '3位'];
@@ -126,7 +127,7 @@ export default function PrintCenter() {
   );
   const events = useLiveQuery(
     () => currentTournamentId
-      ? db.events.where('tournamentId').equals(currentTournamentId).toArray()
+      ? db.events.where('tournamentId').equals(currentTournamentId).toArray().then(sortEventsByClass)
       : [],
     [currentTournamentId],
   ) || [];

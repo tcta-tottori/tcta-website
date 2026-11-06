@@ -35,6 +35,7 @@ import MixedScoreView from '../mixed/MixedScoreView';
 import { useTeamStore } from '../team/teamStore';
 import TeamScoreView from '../team/TeamScoreView';
 import { siteConfirm } from '../../components/site/siteConfirm';
+import { sortEventsByClass } from '../data/eventOrder';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -166,7 +167,7 @@ function NormalScoreboard() {
   // -- Data queries --
   const events = useLiveQuery(
     () => currentTournamentId
-      ? db.events.where('tournamentId').equals(currentTournamentId).toArray()
+      ? db.events.where('tournamentId').equals(currentTournamentId).toArray().then(sortEventsByClass)
       : [],
     [currentTournamentId]
   ) || [];

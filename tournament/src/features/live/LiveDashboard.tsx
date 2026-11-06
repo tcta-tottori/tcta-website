@@ -8,6 +8,7 @@ import { useTeamStore } from '../team/teamStore';
 import MixedLiveCourtView from '../mixed/MixedLiveCourtView';
 import TeamLiveCourtView from '../team/TeamLiveCourtView';
 import type { Match, Court } from '../../db/database';
+import { sortEventsByClass } from '../data/eventOrder';
 import {
   BarChart2, Play, CheckCircle, Clock, Users,
   AlertCircle, Timer, Radio,
@@ -422,7 +423,7 @@ function LiveDashboardInner() {
   );
 
   const events = useLiveQuery(
-    () => currentTournamentId ? db.events.where('tournamentId').equals(currentTournamentId).toArray() : [],
+    () => currentTournamentId ? db.events.where('tournamentId').equals(currentTournamentId).toArray().then(sortEventsByClass) : [],
     [currentTournamentId]
   ) || [];
 
