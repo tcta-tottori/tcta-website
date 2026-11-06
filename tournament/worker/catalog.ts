@@ -241,6 +241,10 @@ export async function handleCatalog(request: Request, env: Env, url: URL): Promi
   }
 
   const rest = url.pathname.replace(/^\/api\/catalog\/?/, '');
+  // 試合結果の受け箱（/api/catalog/<id>/results）。手描きのドロー表の写真から Claude が読み取った結果などを置き、
+  // 運営中の端末が取りに来て反映する（src/features/catalog/resultInbox.ts）
+  const rm = rest.match(/^([^/]+)\/results$/);
+  if (rm) return handleResults(request, db, decodeURIComponent(rm[1]), who);
   const id = rest ? decodeURIComponent(rest) : '';
 
   if (!id) {
@@ -280,6 +284,63 @@ export async function handleCatalog(request: Request, env: Env, url: URL): Promi
     return json({ ok: true });
   }
   return json({ error: 'not found' }, 404);
+}
+
+// ---------------------------------------------------------------------------
+// 試合結果の受け箱
+//   GET    … { version, events: [{ event, matches: [{ winner, loser, score, note }] }] }
+//   PUT    … 本文 { events: [...], mode?: 'merge' | 'replace', source? }。merge は同じ組み合わせ（2 人）の結果を上書きし、ほかは残す
+//   DELETE … 空にする
+// 名前は全角の英数字を半角にし、空白の違いは同じ人として扱う。スコアは勝った人から見た形（例 8-3、6-1 RET）
+// ---------------------------------------------------------------------------
+interface ResultMatch { winner: string; loser: string; score: string; note?: string }
+interface ResultEvent { event: string; matches: ResultMatch[] }
+interface ResultDoc { version: string; updatedBy: string; source?: string; events: ResultEvent[] }
+
+async function handleResults(request: Request, db: D1Database, id: string, who: string): Promise<Response> {
+  if (!ID_RE.test(id)) return json({ error: 'id が不正です' }, 400);
+  const key = `results:${id}`;
+  const read = async (): Promise<ResultDoc> => {
+    const r = await db.prepare('SELECT v FROM catalog_meta WHERE k = ?').bind(key).first<{ v: string }>();
+    return r ? (JSON.parse(r.v) as ResultDoc) : { version: '', updatedBy: '', events: [] };
+  };
+  if (request.method === 'GET') return json(await read());
+  if (request.method === 'DELETE') {
+    await db.prepare('DELETE FROM catalog_meta WHERE k = ?').bind(key).run();
+    return json({ ok: true });
+  }
+  if (request.method !== 'PUT') return json({ error: 'GET・PUT・DELETE で呼んでください' }, 405);
+  const body = (await request.json().catch(() => null)) as Record<string, unknown> | null;
+  if (!body || !Array.isArray(body.events)) return json({ error: '本文は { events: [{ event, matches: [{ winner, loser, score }] }] } の形で送ってください' }, 400);
+  const cur = body.mode === 'replace' ? { version: '', updatedBy: '', events: [] as ResultEvent[] } : await read();
+  const pairKey = (a: string, b: string) => [keyOf(a), keyOf(b)].sort().join('|');
+  const byEvent = new Map<string, Map<string, ResultMatch>>();
+  for (const e of cur.events) byEvent.set(keyOf(e.event), new Map(e.matches.map((m) => [pairKey(m.winner, m.loser), m])));
+  const names = new Map<string, string>(cur.events.map((e) => [keyOf(e.event), e.event]));
+  let n = 0;
+  for (const e of body.events as Record<string, unknown>[]) {
+    const ev = hw(str(e?.event, 80));
+    if (!ev || !Array.isArray(e.matches)) continue;
+    const k = keyOf(ev);
+    names.set(k, names.get(k) ?? ev);
+    const m = byEvent.get(k) ?? new Map<string, ResultMatch>();
+    for (const x of e.matches as Record<string, unknown>[]) {
+      const winner = hw(str(x?.winner, 60)), loser = hw(str(x?.loser, 60));
+      if (!winner || !loser) continue;
+      const score = hw(str(x.score, 40));
+      const note = hw(str(x.note, 40));
+      m.set(pairKey(winner, loser), { winner, loser, score, ...(note ? { note } : {}) });
+      n++;
+    }
+    byEvent.set(k, m);
+  }
+  const doc: ResultDoc = {
+    version: new Date().toISOString(), updatedBy: who, ...(str(body.source, 80) ? { source: str(body.source, 80) } : {}),
+    events: [...byEvent.entries()].map(([k, m]) => ({ event: names.get(k) ?? k, matches: [...m.values()] })),
+  };
+  await db.prepare('INSERT INTO catalog_meta (k, v, updated_at) VALUES (?, ?, ?) ON CONFLICT (k) DO UPDATE SET v = excluded.v, updated_at = excluded.updated_at')
+    .bind(key, JSON.stringify(doc), doc.version).run();
+  return json({ ok: true, received: n, total: doc.events.reduce((a, e) => a + e.matches.length, 0), version: doc.version });
 }
 
 function json(body: unknown, status = 200): Response {

@@ -23,6 +23,8 @@ import { useOfficer, logout } from '../../features/auth/officer';
 import { syncDictionary } from '../../features/catalog/dictSync';
 import { startAutoSave } from '../../features/backup/autoSave';
 import TestModeBar from '../../features/catalog/TestModeBar';
+import ResultInboxNotice from '../../features/catalog/ResultInboxNotice';
+import { useResultInbox } from '../../features/catalog/resultInbox';
 
 interface MainTab {
   id: string;
@@ -112,6 +114,9 @@ export default function AppLayout() {
   useEffect(() => {
     if (officer.status === 'ok') void syncDictionary();
   }, [officer.status]);
+
+  // 試合結果の受け箱（手描きのドロー表を Claude が読み取った結果など）を少しおきに取りに行き、運営中の試合に反映する
+  useResultInbox(officer.status === 'ok');
 
   // 運営中のデータを Cloudflare に自動で保存する（変わったら少し待ってまとめて保存）
   useEffect(() => {
@@ -416,6 +421,9 @@ export default function AppLayout() {
 
       {/* ===== テストモードの帯（自動保存しない・テスト用のスコア入力が使える） ===== */}
       <TestModeBar />
+
+      {/* ===== 受け箱の結果を反映したお知らせ（画面の下） ===== */}
+      <ResultInboxNotice />
 
       {/* ===== 大会の状況（PC はヘッダーの直下に固定） ===== */}
       {statusBar('top')}
