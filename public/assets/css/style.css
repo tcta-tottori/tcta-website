@@ -601,10 +601,10 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   0%   { opacity: .38; scale: 0; }
   100% { opacity: 0; scale: 1; }
 }
-/* 2週間以内のお知らせに付く NEW。静かに脈を打たせて目に留める。 */
-@keyframes news-new {
-  0%, 100% { opacity: 1; transform: none; }
-  50%      { opacity: .45; transform: scale(.92); }
+/* 2週間以内のお知らせに付く NEW。一定の間をおいて、光沢の帯が左から右へ横切る（4秒に1回。走るのは最初の約0.8秒だけ）。 */
+@keyframes news-new-shine {
+  0%        { translate: -120% 0; }
+  20%, 100% { translate: 220% 0; }
 }
 /* 全画面の一覧（お知らせ #news-all・コート案内 #court-all・大会情報 #tournaments-all）の項目。
    モバイルメニューと同じ動き：項目は見出しの下に重ねて隠してあり、開くと上から順に滑り出して位置につく。
@@ -1867,15 +1867,35 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   color: var(--gray-500);
 }
 .news-row__flag { grid-area: flag; justify-self: start; }
-/* 2週間以内のお知らせに付く印。目に留まるよう、静かに脈を打たせる。 */
+/* 2週間以内のお知らせに付く印。赤く塗りつぶした角丸のバッジに白い文字。一定時間ごとに光沢が横に走る。 */
 .news-new {
-  display: inline-block;
-  font: 700 12px/1 var(--flt);
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 20px;
+  padding: 0 7px 0 8px; /* 字間（letter-spacing）の分だけ右を詰めて、文字を真ん中に見せる */
+  overflow: hidden;
+  border: 1px solid var(--red);
+  border-radius: var(--radius);
+  background: var(--red);
+  font: 700 11px/1 var(--flt);
   letter-spacing: .12em;
-  color: var(--red);
-  animation: news-new 1.6s ease-in-out infinite;
+  color: #fff;
+  isolation: isolate;
 }
-@media (prefers-reduced-motion: reduce) { .news-new { animation: none; } }
+/* 光沢の帯（斜めの白いグラデーション）。バッジの外に待たせておき、一定時間ごとに横へ滑らせる */
+.news-new::after {
+  content: "";
+  position: absolute;
+  inset: -2px auto -2px 0;
+  width: 60%;
+  background: linear-gradient(100deg, transparent 0%, rgba(255, 255, 255, .15) 30%, rgba(255, 255, 255, .7) 50%, rgba(255, 255, 255, .15) 70%, transparent 100%);
+  translate: -120% 0;
+  pointer-events: none;
+  animation: news-new-shine 4s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) { .news-new::after { animation: none; display: none; } }
 
 /* 題名の文字は読みやすさを優先して大きめに（スマホ 15px／タブレット 17px／PC 18px。以前は 12／15／16px で小さかった） */
 .news-row__title {
