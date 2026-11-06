@@ -873,3 +873,23 @@ html.is-lite [class~="fixed"][class~="inset-0"] > [class*="bg-white"][class*="ma
   .app-tabs .tabs { padding-right: 60px; }
   .app-tabs .tab { padding-inline: 12px; }
 }
+
+/* ---------------------------------------------------------------------------
+   スマホのメニュー：中に画面があるまとまり（大会進行・設定）は、押すとその行のすぐ下に開いて画面を選ぶ
+   --------------------------------------------------------------------------- */
+.mobile-nav__link--parent { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; border: 0; background: none; text-align: left; cursor: pointer; }
+.mobile-nav__chev { flex: none; width: 9px; height: 9px; margin-right: 4px; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: translateY(-3px) rotate(45deg); opacity: 0; transition: transform .3s var(--ease), opacity .3s ease; }
+.mobile-nav.is-open .mobile-nav__chev { opacity: .75; transition: transform .3s var(--ease), opacity .4s ease calc(var(--mn-up) + var(--i, 0) * var(--mn-step)); }
+.mobile-nav__link--parent.is-expanded .mobile-nav__chev { transform: translateY(2px) rotate(-135deg); }
+.mobile-nav__link--parent.is-expanded .mobile-nav__tx > span { color: var(--red); }
+.mobile-nav__subs { grid-column: 1 / -1; display: grid; grid-template-rows: 0fr; transition: grid-template-rows .4s var(--ease); }
+.mobile-nav__subs.is-open { grid-template-rows: 1fr; }
+.mobile-nav__subs-in { overflow: hidden; display: grid; grid-template-columns: 1fr 1fr; gap: 0 32px; }
+.mobile-nav__subs.is-open .mobile-nav__subs-in { padding: 2px 0 14px; }
+.mobile-nav__sub { position: relative; display: flex; align-items: center; gap: 10px; padding: 12px 0 12px 14px; font: 700 13.5px/1.4 var(--fjp); color: rgba(255, 255, 255, .82); -webkit-tap-highlight-color: transparent; opacity: 0; transform: translateY(-4px); transition: opacity .2s ease, transform .2s ease, color .2s ease; }
+.mobile-nav__sub::before { content: ""; position: absolute; left: 0; top: 50%; width: 6px; height: 6px; margin-top: -3px; background: rgba(255, 255, 255, .35); }
+.mobile-nav__subs.is-open .mobile-nav__sub { opacity: 1; transform: none; transition: opacity .35s ease calc(.08s + var(--j, 0) * .03s), transform .4s var(--ease) calc(.08s + var(--j, 0) * .03s), color .2s ease; }
+.mobile-nav__sub.is-active { color: var(--red); }
+.mobile-nav__sub.is-active::before { background: var(--red); }
+@media (hover: hover) { .mobile-nav__sub:hover { color: #fff; } }
+@media (prefers-reduced-motion: reduce) { .mobile-nav__subs, .mobile-nav__sub, .mobile-nav__chev { transition: none; } }

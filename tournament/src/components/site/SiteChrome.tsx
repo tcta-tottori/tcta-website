@@ -3,7 +3,7 @@
 //   SiteHeader.astro / MobileNav.astro / LiteToggle.astro / SnsLinks.astro / SiteFooter.astro / 下層ページの .page-head
 // サイト側のマークアップを変えたら、ここも同じに直すこと。
 // 大会運営システムだけのもの（ロゴ横の札・同期の札・状態の帯・タブの帯）の見た目は src/styles/app.css。
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { Fragment, useEffect, useRef, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { AlertTriangle } from 'lucide-react';
 import DecoSquares from './DecoSquares';
@@ -32,6 +32,8 @@ export interface NavLinkItem {
   en?: boolean;
   icon?: React.ComponentType<{ className?: string; style?: React.CSSProperties }>;
   onClick?: () => void;
+  /** スマホのメニューで、押すとメニューの中で開いて選ぶ画面 */
+  children?: NavLinkItem[];
 }
 
 // ---------------------------------------------------------------------------
@@ -96,6 +98,13 @@ export function SiteHeader({
 export function MobileNav({ open, items, onClose }: { open: boolean; items: NavLinkItem[]; onClose: () => void }) {
   // サイトの main.js と同じく、開くときに上の余白をヘッダーの下端にそろえる
   const [padTop, setPadTop] = useState<number | undefined>(undefined);
+  // 開いている「中に画面があるまとまり」。メニューを開くたびに、今いるまとまりを開いた状態にする
+  const [expanded, setExpanded] = useState<string | null>(null);
+  const [wasOpen, setWasOpen] = useState(open);
+  if (open !== wasOpen) {
+    setWasOpen(open);
+    if (open) setExpanded(items.find((it) => it.children && it.active)?.key ?? null);
+  }
   useEffect(() => {
     if (!open) return;
     const hd = document.querySelector('.site-header');
@@ -111,10 +120,30 @@ export function MobileNav({ open, items, onClose }: { open: boolean; items: NavL
       <DecoSquares className="mobile-nav__deco" />
       <nav className="mobile-nav__grid" aria-label="モバイルナビゲーション">
         {items.map((it, i) => {
-          const style = { '--i': i } as React.CSSProperties;
+          const style = { '--i': i, order: i * 2 } as React.CSSProperties;
           const inner = <span className="mobile-nav__tx"><span>{it.label}</span></span>;
           const cls = `mobile-nav__link ${it.active ? 'is-active' : ''}`;
           const tab = open ? 0 : -1;
+          if (it.children) {
+            const isOpen = expanded === it.key;
+            const panelId = `mobile-nav-sub-${it.key}`;
+            return (
+              <Fragment key={it.key}>
+                <button type="button" className={`${cls} mobile-nav__link--parent ${isOpen ? 'is-expanded' : ''}`} style={style} tabIndex={tab}
+                  aria-expanded={isOpen} aria-controls={panelId} onClick={() => setExpanded((k) => (k === it.key ? null : it.key))}>
+                  {inner}<span className="mobile-nav__chev" aria-hidden="true" />
+                </button>
+                <div id={panelId} className={`mobile-nav__subs ${isOpen ? 'is-open' : ''}`} style={{ order: subOrder(i) }}>
+                  <div className="mobile-nav__subs-in">
+                    {it.children.map((c, j) => (
+                      <Link key={c.key} className={`mobile-nav__sub ${c.active ? 'is-active' : ''}`} style={{ '--j': j } as React.CSSProperties}
+                        to={c.to ?? '/'} tabIndex={open && isOpen ? 0 : -1} onClick={onClose}>{c.label}</Link>
+                    ))}
+                  </div>
+                </div>
+              </Fragment>
+            );
+          }
           if (it.onClick) return <button key={it.key} type="button" className={cls} style={style} tabIndex={tab} onClick={() => { onClose(); it.onClick!(); }}>{inner}</button>;
           if (it.href) return <a key={it.key} className={cls} href={it.href} target="_blank" rel="noopener noreferrer" style={style} tabIndex={tab} onClick={onClose}>{inner}</a>;
           return <Link key={it.key} className={cls} to={it.to ?? '/'} style={style} tabIndex={tab} onClick={onClose}>{inner}</Link>;
@@ -129,6 +158,11 @@ export function MobileNav({ open, items, onClose }: { open: boolean; items: NavL
       </div>
     </div>
   );
+}
+
+/** 開いた中身は 2 列の並びの「その行のすぐ下」に出す（grid の order で、行の 2 つ目の項目の後ろへ回す） */
+function subOrder(i: number): number {
+  return (Math.floor(i / 2) * 2 + 1) * 2 + 1;
 }
 
 // ---------------------------------------------------------------------------

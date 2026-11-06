@@ -60,13 +60,12 @@ const ALL_MAIN_TABS: MainTab[] = [
  * まとまりの中の画面はページ見出しの下のタブで切り替える（会員ポータルの事務局画面と同じ作り）。
  */
 const NAV_GROUPS: { key: string; label: string; en: string; paths: string[] }[] = [
-  { key: 'prep', label: '大会準備', en: 'PREPARATION', paths: ['/data', '/data/review', '/entry', '/draw-lot', '/draw-table'] },
-  { key: 'run', label: '大会進行', en: 'OPERATION', paths: ['/referee', '/schedule-sheet', '/court-bracket', '/score'] },
-  { key: 'live', label: '配信', en: 'LIVE', paths: ['/dashboard', '/broadcast'] },
-  // 選手・所属のふりがなは大会に依らないので、大会準備のタブではなく独立したメニューにする
+  { key: 'prep', label: '大会選択', en: 'SELECT', paths: ['/data', '/data/review'] },
+  // 試合の当日に使う画面（受付から対戦順・時間割・ドロー・スコア・状況・配信まで）は 1 つのまとまりにする
+  { key: 'run', label: '大会進行', en: 'OPERATION', paths: ['/entry', '/draw-lot', '/draw-table', '/referee', '/schedule-sheet', '/court-bracket', '/score', '/dashboard', '/broadcast'] },
+  // 選手・所属のふりがなは大会に依らないので、独立したメニューにする
   { key: 'players', label: '選手・所属', en: 'PLAYERS', paths: ['/dict'] },
   { key: 'print', label: '印刷', en: 'PRINT', paths: ['/print'] },
-  // マニュアルは設定のまとまりに入れる（ロゴ横の札のぶん、ナビを 5 項目に収めるため）
   { key: 'settings', label: '設定', en: 'SETTINGS', paths: ['/settings', '/data-tools', '/manual'] },
 ];
 
@@ -315,7 +314,8 @@ export default function AppLayout() {
   );
   const visibleGroups = useMemo(
     () => NAV_GROUPS
-      .map(g => ({ ...g, tabs: allTabs.filter(t => g.paths.includes(t.path)) }))
+      // まとまりの中の画面は NAV_GROUPS に書いた順に並べる（最初の画面がまとまりの入口）
+      .map(g => ({ ...g, tabs: g.paths.flatMap(p => allTabs.filter(t => t.path === p)) }))
       .filter(g => g.tabs.length > 0),
     [allTabs]
   );
@@ -368,9 +368,16 @@ export default function AppLayout() {
     </Link>
   ) : null;
 
-  // スマホのメニュー：サイトと同じく 2 列に並べる（画面の順。あとに観戦ページ・協会サイト・ログアウト）
+  // スマホのメニュー：サイトと同じ 2 列の並び。項目はまとまりの数だけにし、中に画面が複数あるもの（大会進行・設定）は
+  // 押すとメニューの中で開いて画面を選ぶ。あとに観戦ページ・協会サイト・ログアウト
   const mobileItems: NavLinkItem[] = [
-    ...visibleGroups.flatMap(g => g.tabs.filter(t => !t.hidden).map(t => ({ key: t.id, label: t.label, to: t.path, active: t === currentTab }))),
+    ...visibleGroups.map(g => {
+      const subs = g.tabs.filter(t => !t.hidden);
+      return {
+        key: g.key, label: g.label, to: g.tabs[0].path, active: g === currentGroup,
+        ...(subs.length > 1 ? { children: subs.map(t => ({ key: t.id, label: t.label, to: t.path, active: t === currentTab })) } : {}),
+      };
+    }),
     { key: 'view', label: '観戦ページ', href: '/view' },
     { key: 'site', label: '協会サイト', href: SITE_URL },
     ...(officer.email ? [{ key: 'logout', label: 'ログアウト', onClick: logout }] : []),
