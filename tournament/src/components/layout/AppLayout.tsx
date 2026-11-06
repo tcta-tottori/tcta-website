@@ -62,8 +62,8 @@ const ALL_MAIN_TABS: MainTab[] = [
  */
 const NAV_GROUPS: { key: string; label: string; en: string; paths: string[] }[] = [
   { key: 'prep', label: '大会準備', en: 'PREPARATION', paths: ['/data', '/data/review', '/entry', '/draw-lot', '/draw-table'] },
-  // 大会の当日に使う画面（対戦順・時間割・ドロー・スコア・状況・配信）は 1 つのまとまりにし、上のタブで切り替える
-  { key: 'run', label: '大会進行', en: 'OPERATION', paths: ['/referee', '/schedule-sheet', '/court-bracket', '/score', '/dashboard', '/broadcast'] },
+  { key: 'run', label: '大会進行', en: 'OPERATION', paths: ['/referee', '/schedule-sheet', '/court-bracket', '/score'] },
+  { key: 'live', label: '配信', en: 'LIVE', paths: ['/dashboard', '/broadcast'] },
   // 選手・所属のふりがなは大会に依らないので、大会準備のタブではなく独立したメニューにする
   { key: 'players', label: '選手・所属', en: 'PLAYERS', paths: ['/dict'] },
   { key: 'print', label: '印刷', en: 'PRINT', paths: ['/print'] },
@@ -317,8 +317,7 @@ export default function AppLayout() {
   );
   const visibleGroups = useMemo(
     () => NAV_GROUPS
-      // まとまりの中の画面は NAV_GROUPS に書いた順に並べる（最初の画面がまとまりの入口）
-      .map(g => ({ ...g, tabs: g.paths.flatMap(p => allTabs.filter(t => t.path === p)) }))
+      .map(g => ({ ...g, tabs: allTabs.filter(t => g.paths.includes(t.path)) }))
       .filter(g => g.tabs.length > 0),
     [allTabs]
   );
@@ -371,13 +370,9 @@ export default function AppLayout() {
     </Link>
   ) : null;
 
-  // スマホのメニュー：まとまりごとに 1 行（名前の下に中の画面を小さく並べ、どちらからでも移れる）。
-  // あとに観戦ページ・協会サイト・バージョン・ログアウトを小さく 2 列で
+  // スマホのメニュー：サイトと同じく 2 列に並べる（画面の順。あとに観戦ページ・協会サイト・バージョン・ログアウト）
   const mobileItems: NavLinkItem[] = [
-    ...visibleGroups.map(g => ({
-      key: g.key, label: g.label, eyebrow: g.en, to: g.tabs[0].path, active: g === currentGroup,
-      children: g.tabs.filter(t => !t.hidden).map(t => ({ key: t.id, label: t.label, to: t.path, active: t === currentTab })),
-    })),
+    ...visibleGroups.flatMap(g => g.tabs.filter(t => !t.hidden).map(t => ({ key: t.id, label: t.label, to: t.path, active: t === currentTab }))),
     { key: 'view', label: '観戦ページ', href: '/view' },
     { key: 'site', label: '協会サイト', href: SITE_URL },
     { key: 'ver', label: `Ver 2.4`, onClick: () => setVersionModalOpen(true) },
