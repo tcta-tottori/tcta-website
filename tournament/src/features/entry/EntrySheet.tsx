@@ -17,6 +17,8 @@ export type SheetSlot = {
   partner: string;
   affiliation: string;
   state: 'none' | 'checked' | 'def';
+  /** 順位別トーナメントの枠の見出し（例 B1位）。選手が入るまで出す */
+  label?: string;
 };
 
 const CIRCLED = '①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯';
@@ -119,7 +121,7 @@ export default function EntrySheet({ eventName, drawSize, isLeague, doubles, slo
           const pos = i + 1;
           const isRight = split && pos > perSide;
           const idx = isRight ? pos - perSide - 1 : pos - 1;
-          const s = byPos.get(pos) ?? { position: pos, seed: 0, isBye: true, hasEntry: false, name: '', partner: '', affiliation: '', state: 'none' as const };
+          const s: SheetSlot = byPos.get(pos) ?? { position: pos, seed: 0, isBye: true, hasEntry: false, name: '', partner: '', affiliation: '', state: 'none' };
           return (
             <div key={pos} className={`esh__cell ${isRight ? 'is-right' : ''}`} style={{ left: isRight ? width - PAD - NAME_W : PAD, top: top0 + idx * rowH, width: NAME_W, height: rowH }}>
               <SlotBox s={s} no={String(pos)} h={rowH} onTap={onTap} />
@@ -134,9 +136,9 @@ export default function EntrySheet({ eventName, drawSize, isLeague, doubles, slo
 function SlotBox({ s, no, h, onTap }: { s: SheetSlot; no: string; h: number; onTap: (p: number) => void }) {
   if (!s.hasEntry) {
     return (
-      <div className="esh-slot is-bye" style={{ height: h }}>
+      <div className={`esh-slot is-bye ${s.label ? 'is-src' : ''}`} style={{ height: h }}>
         <span className="esh-slot__no">{no}</span>
-        <span className="esh-slot__body"><span className="esh-slot__name">{s.isBye ? 'BYE' : '—'}</span></span>
+        <span className="esh-slot__body"><span className="esh-slot__name">{s.label ? s.label : s.isBye ? 'BYE' : '—'}</span></span>
       </div>
     );
   }

@@ -1,6 +1,7 @@
 import type { DrawSlotData, MatchResult } from './DrawBoard';
 import { pairDisplayLines } from './pairLabel';
 import { sideScoreText } from '../score/scoreDisplay';
+import { leagueStandings, type RankRule } from './leagueStandings';
 
 /** 星取表の列見出し用に苗字だけにする（ダブルスは「苗字・苗字」） */
 function surnameLabel(name: string): string {
@@ -16,6 +17,8 @@ interface RoundRobinRendererProps {
   onCellSelect?: (round: number, position: number) => void;
   /** 選手名をタップしたときに名前の修正を開く（名前修正モード時のみ指定する） */
   onPlayerSelect?: (entryId: string) => void;
+  /** 順位の決め方（Draw.leagueRankRule。games＝取得ゲーム率が先）。順位別トーナメントの組み合わせと同じ計算 */
+  rankRule?: RankRule;
 }
 
 /** "8-4" 形式のスコアを [自分のゲーム, 相手のゲーム] に分解（取得できなければ null） */
@@ -26,7 +29,7 @@ function parseScore(score: string | undefined | null): [number, number] | null {
   return [parseInt(m[1], 10), parseInt(m[2], 10)];
 }
 
-export default function RoundRobinRenderer({ slots, matchResults = [], onCellSelect, onPlayerSelect }: RoundRobinRendererProps) {
+export default function RoundRobinRenderer({ slots, matchResults = [], onCellSelect, onPlayerSelect, rankRule = 'wins' }: RoundRobinRendererProps) {
   // BYEを除いた実選手のみ
   const players = slots.filter(s => !s.isBye);
   const n = players.length;
@@ -86,36 +89,13 @@ export default function RoundRobinRenderer({ slots, matchResults = [], onCellSel
     return !!(match && match.winnerEntryId);
   });
 
-  // 直接対戦（2者同率時の優先）: a が b に勝っていれば a を上位
-  const headToHead = (aIdx: number, bIdx: number): number => {
-    const match = findMatchBetween(players[aIdx], players[bIdx]);
-    if (match?.winnerEntryId) {
-      if (match.winnerEntryId === players[aIdx].entryId) return -1;
-      if (match.winnerEntryId === players[bIdx].entryId) return 1;
-    }
-    return 0;
-  };
-
-  // 順位計算: 勝数降順 → 取得ゲーム率降順 → 得失ゲーム差降順。
-  // 同勝数がちょうど2人なら直接対戦を最優先。
-  const rankings = players.map((_, i) => i);
-  rankings.sort((a, b) => {
-    if (stats[b].wins !== stats[a].wins) return stats[b].wins - stats[a].wins;
-    // 同勝数がこの2人だけ（同勝数グループが2人）なら直接対戦
-    const sameWinCount = players.filter((_, i) => stats[i].wins === stats[a].wins).length;
-    if (sameWinCount === 2) {
-      const h = headToHead(a, b);
-      if (h !== 0) return h;
-    }
-    if (stats[b].gameRate !== stats[a].gameRate) return stats[b].gameRate - stats[a].gameRate;
-    const diffA = stats[a].gamesWon - stats[a].gamesLost;
-    const diffB = stats[b].gamesWon - stats[b].gamesLost;
-    return diffB - diffA;
-  });
+  // 順位（leagueStandings.ts。順位別トーナメントの組み合わせと同じ計算）
+  //   wins  … 勝数 → 同数 2 者は直接対戦、3 者以上は取得ゲーム率
+  //   games … 取得ゲーム率 → 同率 2 者は直接対戦
+  const ids = players.map((p) => p.entryId ?? '');
+  const { standings } = leagueStandings(ids, matchResults, rankRule);
   const rankMap = new Map<number, number>();
-  rankings.forEach((playerIdx, rankIdx) => {
-    rankMap.set(playerIdx, rankIdx + 1);
-  });
+  for (const s of standings) rankMap.set(ids.indexOf(s.entryId), s.rank);
 
   // セル内のスコア表示（行選手視点にそろえる）
   const getCellContent = (rowIdx: number, colIdx: number): { text: string; isWin: boolean; isLoss: boolean; match?: MatchResult } => {
@@ -251,7 +231,9 @@ export default function RoundRobinRenderer({ slots, matchResults = [], onCellSel
         {/* 補足: 順位表示条件・並び替えルール */}
         <div className="mt-2 text-[11px] text-gray-500">
           {!allFinished && <span className="text-gray-700 font-medium">※順位は全対戦終了後に表示されます。</span>}
-          <span className="block mt-0.5">勝率＝取得ゲーム率。同勝数は「直接対戦（2者同率時）→ 勝率 → 得失ゲーム差」で順位を決定します。</span>
+          <span className="block mt-0.5">{rankRule === 'games'
+            ? '勝率＝取得ゲーム率。取得ゲーム率の高い順、同率は直接対戦の勝者が上位。'
+            : '勝率＝取得ゲーム率。勝数の多い順、同勝数は「2者なら直接対戦／3者以上なら取得ゲーム率」で順位を決定します。'}</span>
         </div>
 
         {/* 対戦順 */}

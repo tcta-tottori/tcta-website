@@ -112,6 +112,13 @@ export interface Draw {
   eventId: string;      // 外部キー
   drawSize: number;
   drawType?: 'tournament' | 'roundRobin';
+  /** リーグ戦の順位の決め方（wins＝勝数が先・既定／games＝取得ゲーム率が先）。leagueStandings.ts */
+  leagueRankRule?: 'wins' | 'games';
+  /**
+   * 順位別トーナメント：枠ごとに入るリーグ（種目名）と順位。リーグが終わったら
+   * エントリー受付の「順位を反映して組む」でその順位のペアを枠に入れる（placement.ts）
+   */
+  slotSources?: { position: number; league: string; rank: number }[];
   slots: {
     position: number;   // 1-indexed
     entryId: string | null;

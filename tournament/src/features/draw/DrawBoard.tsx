@@ -496,6 +496,7 @@ function NormalDrawBoard() {
                 <RoundRobinRenderer
                   slots={editedSlots}
                   matchResults={matchResults}
+                  rankRule={drawData.leagueRankRule}
                   onCellSelect={handleMatchClick}
                 />
               ) : (

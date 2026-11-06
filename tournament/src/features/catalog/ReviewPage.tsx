@@ -250,7 +250,7 @@ export default function ReviewPage() {
         <div className="hub-filter rvw-tabs" role="tablist" aria-label="種目">
           {draft.map((x, i) => (
             <button key={i} role="tab" aria-selected={ev === i} className={`hub-filter__btn ${ev === i ? 'is-on' : ''}`} onClick={() => { setEv(i); setPick(null); setEditing(null); }}>
-              {x.eventName}<small>{x.players.length}人</small>{evIssues(i) > 0 && <span className="rvw-tabs__dot" aria-label={`${evIssues(i)} 件`} />}
+              {x.eventName}<small>{x.sources?.length ? `順位別 ${x.sources.length}` : `${x.players.length}人`}</small>{evIssues(i) > 0 && <span className="rvw-tabs__dot" aria-label={`${evIssues(i)} 件`} />}
             </button>
           ))}
         </div>
@@ -265,7 +265,20 @@ export default function ReviewPage() {
                 <button className="btn btn--outline rvw-pickbar__btn" onClick={() => setPick(null)}>やめる</button>
               </div>
             )}
-            {e.isRoundRobin ? (
+            {e.sources?.length ? (
+              // 順位別トーナメント：枠ごとに入るリーグの順位（選手はリーグが終わってから運営画面で入る）
+              <ol className="rvw-pairs">
+                <li className="rvw-pair is-match">
+                  <div className="rvw-pair__head"><span className="rvw-pair__label">順位別トーナメント ・ {e.drawSize} ドロー（リーグが終わったら、エントリー受付の「順位を反映して組む」で選手が入ります）</span></div>
+                  <ul className="rvw-src">
+                    {Array.from({ length: e.drawSize }, (_, i) => i + 1).map((pos) => {
+                      const src = e.sources!.find((x) => x.position === pos);
+                      return <li key={pos} className={src ? '' : 'is-bye'}><b>{pos}</b>{src ? `${src.league} ${src.rank}位` : 'BYE'}</li>;
+                    })}
+                  </ul>
+                </li>
+              </ol>
+            ) : e.isRoundRobin ? (
               // リーグ戦：①〜の順に並べる（試合順は運営画面で ①-② ③-④ ①-③ ②-④ ②-③ ①-④ の順に組む）
               <ol className="rvw-pairs">
                 <li className="rvw-pair is-match">

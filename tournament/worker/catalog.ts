@@ -58,6 +58,10 @@ interface DrawEvent {
   players: DrawPlayer[]; roundGameRules?: RoundRule[]; matchTimes?: Record<string, string>; roundMatchTimes?: Record<string, string>; eventStartTime?: string;
   /** リーグ戦の専用コート（コート名。1〜2面）。端末に入れるとそのリーグのコートに固定する */
   leagueCourts?: string[];
+  /** リーグ戦の順位の決め方。wins＝勝率が先（既定）、games＝取得ゲーム率が先 */
+  rankRule?: 'wins' | 'games';
+  /** 順位別トーナメント：枠に入るリーグの順位（league はリーグの種目名） */
+  sources?: { position: number; league: string; rank: number }[];
 }
 interface TournamentBody {
   name: string; date?: string; venue?: string; reserveDate?: string; reserveVenue?: string; category?: string;
@@ -130,7 +134,19 @@ function validateTournament(b: unknown): TournamentBody | string {
           ...(type === 'Doubles' && str(p.partnerName, 60) ? { partnerName: hw(str(p.partnerName, 60)), partnerAffiliation: hw(str(p.partnerAffiliation, 60), true) } : {}),
         });
       }
-      if (players.length === 0) return `draw.events[${i}]（${eventName}）に選手がいません`;
+      // 順位別トーナメント：枠ごとに「どのリーグの何位か」。選手はリーグの順位が決まってから入る
+      const sources: { position: number; league: string; rank: number }[] = [];
+      if (Array.isArray(e.sources)) {
+        for (const x of e.sources as Record<string, unknown>[]) {
+          const position = Number(x?.position), rank = Number(x?.rank), league = hw(str(x?.league));
+          if (!Number.isInteger(position) || position < 1 || position > drawSize) return `draw.events[${i}].sources の position が 1〜${drawSize} ではありません`;
+          if (!league || !Number.isInteger(rank) || rank < 1) return `draw.events[${i}].sources の league・rank が不正です`;
+          if (seen.has(position)) return `draw.events[${i}] の position ${position} が重複しています`;
+          seen.add(position);
+          sources.push({ position, league, rank });
+        }
+      }
+      if (players.length === 0 && sources.length === 0) return `draw.events[${i}]（${eventName}）に選手がいません`;
       const times = (v: unknown) => {
         const r: Record<string, string> = {};
         if (v && typeof v === 'object') for (const [k, t] of Object.entries(v as Record<string, unknown>)) if (typeof t === 'string' && HM_RE.test(t)) r[k] = t;
@@ -144,6 +160,8 @@ function validateTournament(b: unknown): TournamentBody | string {
         ...(str(e.eventStartTime, 5) && HM_RE.test(str(e.eventStartTime, 5)) ? { eventStartTime: str(e.eventStartTime, 5) } : {}),
         ...(e.isRoundRobin === true && Array.isArray(e.leagueCourts) && e.leagueCourts.length > 0
           ? { leagueCourts: (e.leagueCourts as unknown[]).map((c) => hw(str(c, 20))).filter(Boolean).slice(0, 2) } : {}),
+        ...(e.isRoundRobin === true && (e.rankRule === 'games' || e.rankRule === 'wins') ? { rankRule: e.rankRule } : {}),
+        ...(sources.length ? { sources: sources.sort((a, b) => a.position - b.position) } : {}),
       });
     }
     out.draw = {
@@ -380,6 +398,8 @@ const SCHEMA = {
         matchTimes: '1回戦の開始時刻 { 上側の枠番号: "HH:MM" }', roundMatchTimes: '2回戦以降の開始時刻 { "R{回戦}-{その回戦の何試合目}": "HH:MM" }（左山の上から数える）',
         eventStartTime: 'その種目の最初の試合の時刻 HH:MM（リーグ戦など）',
         leagueCourts: 'リーグ戦の専用コート（settings.courtNames のコート名。1〜2面。例 ["2","3"]）。リーグは1リーグ＝1種目（例 男子B級ダブルス Aリーグ）。試合順は 4チーム ①-② ③-④ ①-③ ②-④ ②-③ ①-④、3チーム ①-② ②-③ ①-③',
+        rankRule: 'リーグの順位の決め方。"wins"＝勝数が先（同数 2 者は対戦勝者、3 者以上は取得ゲーム率。既定）| "games"＝取得ゲーム率が先（同率は対戦勝者）',
+        sources: '順位別トーナメント（リーグの順位で枠が決まるトーナメント）の枠：[{ position: 枠番号, league: "リーグの種目名（例 男子B級ダブルス Bリーグ）", rank: 1 }]。players は空でよく、BYE の枠は書かない。運営画面で「順位を反映して組む」とリーグの順位のペアが入る',
       }],
     },
   },

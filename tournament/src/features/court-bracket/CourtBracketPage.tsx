@@ -927,6 +927,7 @@ export default function CourtBracketPage({ enableScoreInput = true }: CourtBrack
             <RoundRobinRenderer
               slots={slots}
               matchResults={matchResults}
+              rankRule={drawData?.leagueRankRule}
               onCellSelect={enableScoreInput && !nameEditMode ? (round, position) => setSelectedMatchKey(`${round}-${position}`) : undefined}
               onPlayerSelect={enableScoreInput && nameEditMode ? openNameEditor : undefined}
             />

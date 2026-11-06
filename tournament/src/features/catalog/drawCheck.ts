@@ -52,6 +52,15 @@ export function checkDraw(
   events.forEach((ev, ei) => {
     const add = (i: Omit<DrawIssue, 'event'>) => issues.push({ ...i, event: ei });
     if (!ev.isRoundRobin && !isPow2(ev.drawSize)) add({ level: 'error', kind: 'shape', message: `ドローの枠数 ${ev.drawSize} が 2・4・8・16… ではありません` });
+    // 順位別トーナメント：枠の元のリーグがあるか・その順位がいるかだけを見る（選手はリーグの順位が決まってから入る）
+    if (ev.sources?.length) {
+      for (const src of ev.sources) {
+        const lg = events.find((x) => x.eventName === src.league);
+        if (!lg) add({ level: 'error', kind: 'shape', position: src.position, message: `${src.position} 番の枠の元のリーグ「${src.league}」がありません` });
+        else if (src.rank > lg.players.length) add({ level: 'warn', kind: 'shape', position: src.position, message: `${src.position} 番の枠：「${src.league}」は ${lg.players.length} チームなので ${src.rank} 位がいません` });
+      }
+      return;
+    }
     if (ev.players.length === 0) add({ level: 'error', kind: 'shape', message: '選手がいません' });
     if (ev.players.length === 1) add({ level: 'warn', kind: 'shape', message: '選手が 1 人だけです（試合が成立しません）' });
 

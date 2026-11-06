@@ -60,6 +60,9 @@ export function compareEventName(a: string, b: string): number {
   for (let i = 0; i < 3; i++) {
     if (ka[i] !== kb[i]) return (ka[i] as number) - (kb[i] as number);
   }
+  // 同じクラスの中は、予選リーグ → 順位別トーナメント（「1位・2位トーナメント」など）の順
+  const stage = (n: string) => (/位.*トーナメント|順位別/.test(n) ? 1 : 0);
+  if (stage(a || '') !== stage(b || '')) return stage(a || '') - stage(b || '');
   return String(ka[3]).localeCompare(String(kb[3]), 'ja');
 }
 

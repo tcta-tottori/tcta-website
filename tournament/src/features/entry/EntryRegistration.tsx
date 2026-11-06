@@ -25,6 +25,8 @@ import { SkPage, SkEmpty } from '../../components/site/Kit';
 import { sortEventsByClass } from '../data/eventOrder';
 import EntrySheet, { type SheetSlot } from './EntrySheet';
 import EntrySlotDialog, { type SlotChange } from './EntrySlotDialog';
+import { sourceLabel } from '../draw/placement';
+import PlacementPanel from './PlacementPanel';
 import { toHalfwidth } from '../../lib/halfwidth';
 
 /** 'HH:MM' → 分。不正な値は Infinity（比較時に最後に来る）。 */
@@ -126,7 +128,12 @@ type CheckInSlot = {
   playerName: string;
   partnerName: string;
   affiliation: string;
+  /** 順位別トーナメントの枠の見出し（例 B1位）。選手が入るまで枠に出す */
+  sourceLabel?: string;
 };
+
+/** 順位別トーナメントで、まだリーグの順位を入れていない（枠が全部空き） */
+const isUnfilledPlacement = (d?: Draw) => !!d?.slotSources?.length && !d.slots.some((s) => s.entryId);
 
 
 export default function EntryRegistration() {
@@ -255,6 +262,7 @@ function NormalEntryRegistration() {
     const drawSlots = drawEdit?.eventId === eventId ? drawEdit.slots : draw?.slots;
 
     if (draw && drawSlots && drawSlots.length > 0) {
+      const labelByPos = new Map((draw.slotSources ?? []).map((x) => [x.position, sourceLabel(x)]));
       return drawSlots
         .slice()
         .sort((a, b) => a.position - b.position)
@@ -286,6 +294,7 @@ function NormalEntryRegistration() {
             playerName: slot.isBye && !entry ? 'BYE' : playerName,
             partnerName,
             affiliation,
+            sourceLabel: labelByPos.get(slot.position),
           };
         });
     }
@@ -752,6 +761,11 @@ function NormalEntryRegistration() {
     // DBから最新データを直接取得（クロージャの古いデータに依存しない）
     const draw = await db.draws.where('eventId').equals(eventId).first();
     if (!draw) return;
+    // 順位別トーナメントは、リーグの順位を入れてから確定する
+    if (isUnfilledPlacement(draw)) {
+      if (!skipConfirm) await requestConfirm({ title: '順位別トーナメント', message: 'まだリーグの順位を入れていません。リーグが終わったら「順位を反映して組む」を押してから確定してください。', confirmLabel: 'わかりました' });
+      return;
+    }
 
     // 熱中症警戒時の試合形式を指定している場合は種目の回戦ルールへ付与する
     if (heatRulePattern.enabled) {
@@ -831,7 +845,8 @@ function NormalEntryRegistration() {
     const currentDraws = eventIds.length > 0
       ? await db.draws.where('eventId').anyOf(eventIds).toArray()
       : [];
-    const drawEventIds = new Set(currentDraws.map(d => d.eventId));
+    // 順位別トーナメントでまだ組んでいないもの（リーグの順位待ち）は飛ばす
+    const drawEventIds = new Set(currentDraws.filter(d => !isUnfilledPlacement(d)).map(d => d.eventId));
     const targets = events.filter(evt => drawEventIds.has(evt.eventId));
     if (targets.length === 0) return;
     const scoredAll = (await db.matches.where('eventId').anyOf(targets.map(t => t.eventId)).toArray())
@@ -981,7 +996,7 @@ function NormalEntryRegistration() {
               </span>
               {slot.affiliation && !isWithdrawn && <span className="ent-slot__aff">{slot.affiliation}</span>}
             </button>
-          ) : <span className="ent-slot__none">---</span>}
+          ) : <span className="ent-slot__none">{slot.sourceLabel || '---'}</span>}
         </div>
         {slot.entry && (
           <div className="ent-slot__acts">
@@ -1112,6 +1127,7 @@ function NormalEntryRegistration() {
       name: s.playerName,
       partner: s.partnerName,
       affiliation: s.affiliation,
+      label: s.sourceLabel,
       state: s.entry?.status === 'withdrawn' ? 'def' : s.entryId && confirmedIds.has(s.entryId) ? 'checked' : 'none',
     }));
     const stats = computeStats(slots);
@@ -1991,6 +2007,9 @@ function NormalEntryRegistration() {
 
         <div className={`sk-collapse ${isCollapsed ? '' : 'is-open'}`}>
           <div>
+            {!isCollapsed && drawMap.get(eventId)?.slotSources?.length ? (
+              <PlacementPanel eventId={eventId} filled={!isUnfilledPlacement(drawMap.get(eventId))} confirmed={isConfirmedEvent} ask={requestConfirm} />
+            ) : null}
             {!isCollapsed && renderDrawEditor(eventId, slots)}
             {!isCollapsed && renderDrawTable(eventId, slots)}
           </div>

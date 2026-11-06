@@ -37,7 +37,12 @@ export interface CatalogDrawEvent {
   eventStartTime?: string;
   /** リーグ戦の専用コート（コート名。1〜2面） */
   leagueCourts?: string[];
+  /** リーグ戦の順位の決め方（wins＝勝数が先・既定／games＝取得ゲーム率が先） */
+  rankRule?: 'wins' | 'games';
+  /** 順位別トーナメントの枠（どのリーグの何位が入るか） */
+  sources?: PlacementSource[];
 }
+export interface PlacementSource { position: number; league: string; rank: number }
 export interface CatalogTournamentFull extends CatalogTournament {
   draw: { events: CatalogDrawEvent[]; earliestStartTime?: string; suggestedCourtCount?: number } | null;
 }

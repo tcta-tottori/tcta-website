@@ -124,8 +124,11 @@ export async function importToDevice(t: CatalogTournamentFull, onProgress?: (p: 
       }
 
       const byPos = new Map(ev.players.map((p) => [p.position, p]));
+      // 順位別トーナメントの枠は、選手が決まるまで空き（BYE ではない）
+      const sourcePos = new Set((ev.sources ?? []).map((x) => x.position));
       const slots = Array.from({ length: ev.drawSize }, (_, i) => {
         const p = byPos.get(i + 1);
+        if (!p && sourcePos.has(i + 1)) return { position: i + 1, entryId: null, seed: 0, isBye: false };
         return p
           ? { position: i + 1, entryId: entryByPos.get(i + 1) ?? null, seed: p.seed ?? 0, isBye: false }
           : { position: i + 1, entryId: null, seed: 0, isBye: true };
@@ -138,6 +141,8 @@ export async function importToDevice(t: CatalogTournamentFull, onProgress?: (p: 
         matchTimes: ev.matchTimes && Object.keys(ev.matchTimes).length > 0 ? (ev.matchTimes as Record<number, string>) : undefined,
         roundMatchTimes: ev.roundMatchTimes && Object.keys(ev.roundMatchTimes).length > 0 ? ev.roundMatchTimes : undefined,
         eventStartTime: ev.eventStartTime || undefined,
+        ...(ev.isRoundRobin && ev.rankRule ? { leagueRankRule: ev.rankRule } : {}),
+        ...(ev.sources?.length ? { slotSources: ev.sources } : {}),
         // リーグ戦の専用コート（大会データにコート名で書いてあれば、そのリーグのコートに固定する）
         ...(ev.isRoundRobin && ev.leagueCourts?.length
           ? { leagueCourtIds: ev.leagueCourts.map((n) => courtIdByName.get(n)).filter((x): x is string => !!x).slice(0, 2) } : {}),

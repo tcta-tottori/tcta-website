@@ -1063,3 +1063,25 @@ button.esh-slot:active { transform: scale(.985); }
 .esd-err { margin: 10px 0 0; font: 700 12.5px/1.5 var(--fjp); color: var(--red); }
 /* 確認ダイアログのボタンは 1 行に（文言を折り返さない） */
 .sdlg__panel:has(.esd, .esd-form) .sdlg__actions .btn { flex: 1 1 0; min-width: 0; padding-inline: 10px; gap: 6px; white-space: nowrap; justify-content: center; }
+
+/* 順位別トーナメントの欄（PlacementPanel.tsx） */
+.plc { margin: 8px 0 14px; padding: 14px; border: 1px solid var(--gray-200); border-top: 3px solid var(--ink); border-radius: var(--radius); background: var(--white); }
+.plc__head { display: flex; align-items: center; gap: 8px; }
+.plc__title { margin: 0; display: flex; align-items: baseline; gap: 8px; font: 700 15px/1.4 var(--fjp); }
+.plc__title small { font: 700 11px/1 var(--fjp); color: var(--gray-500); }
+.plc__lead { margin: 6px 0 10px; font: 400 12.5px/1.6 var(--fjp); color: var(--gray-600); }
+.plc__rows { margin: 0 0 12px; padding: 0; list-style: none; border-top: 1px solid var(--gray-100); }
+.plc__row { display: grid; grid-template-columns: 28px 64px minmax(0, 1fr); align-items: center; gap: 4px 8px; padding: 8px 2px; border-bottom: 1px solid var(--gray-100); font: 400 13px/1.4 var(--fjp); }
+.plc__pos { font: 700 12px/1 var(--flt); color: var(--gray-500); text-align: center; }
+.plc__label { font: 700 13px/1 var(--fjp); color: var(--red); }
+.plc__name { font-weight: 700; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.plc__prob { grid-column: 2 / -1; display: inline-flex; align-items: center; gap: 4px; font: 700 11.5px/1.4 var(--fjp); color: #B07400; }
+.app-main .plc__btn, .plc__btn { width: 100%; min-height: 48px; gap: 8px; justify-content: center; }
+/* 対戦表で、選手が入る前の順位別トーナメントの枠（「B1位」など） */
+.esh-slot.is-src { border-style: solid; border-color: var(--gray-300); background: var(--white); color: var(--red); }
+.esh-slot.is-src .esh-slot__name { font-weight: 700; }
+/* 確認画面：順位別トーナメントの枠 */
+.rvw-src { margin: 6px 0 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 4px 12px; }
+.rvw-src li { display: flex; gap: 8px; padding: 6px 4px; border-bottom: 1px solid var(--gray-100); font: 400 13px/1.4 var(--fjp); }
+.rvw-src li b { min-width: 22px; font: 700 12px/1.4 var(--flt); color: var(--gray-500); }
+.rvw-src li.is-bye { color: var(--gray-400); }

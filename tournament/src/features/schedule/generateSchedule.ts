@@ -309,6 +309,8 @@ export async function generateScheduleFromDraws(
     if (!draw) continue;
     // ラウンドロビン（決勝リーグ等）はトーナメント抽出の対象外
     if (draw.drawType === 'roundRobin') continue;
+    // 順位別トーナメントで、まだ組んでいない（リーグの順位を入れていない）ものも対象外
+    if (draw.slotSources?.length && !draw.slots.some((s) => s.entryId)) continue;
 
     const entries = await db.entries.where('eventId').equals(evt.eventId).toArray();
 
