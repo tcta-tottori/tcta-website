@@ -18,6 +18,8 @@ const BASE = import.meta.env.BASE_URL;
 export const LOGO = `${BASE}site/logo-cut.png`;
 export const LOGO_WHITE = `${BASE}site/logo-cut-white.png`;
 /** 大会運営システムのロゴ（鳥取市テニス協会／大会運営｜SYSTEM） */
+/** 観戦ページのロゴ（鳥取市テニス協会／大会観戦｜LIVE・VIEW） */
+export const VIEW_LOGO = { src: `${BASE}logo-view.png`, white: `${BASE}logo-view-white.png`, width: 841, height: 300, alt: '鳥取市テニス協会 大会観戦 LIVE VIEW' };
 export const SYSTEM_LOGO = { src: `${BASE}logo-system.png`, white: `${BASE}logo-system-white.png`, width: 957, height: 240, alt: '鳥取市テニス協会 大会運営 SYSTEM' };
 
 export interface NavLinkItem {
