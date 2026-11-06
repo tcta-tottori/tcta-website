@@ -602,13 +602,13 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   100% { opacity: 0; scale: 1; }
 }
 /* 2週間以内のお知らせに付く NEW。光沢の帯が左から右へ横切る。
-   表示されてすぐ（最初の0.5秒）に1回光らせ、そのあとは4秒に1回（各周期の終わりの約0.8秒で走る）。 */
+   表示されてすぐ（最初の0.5秒）に1回光らせ、そのあとは2.5秒に1回（各周期の終わりの約0.8秒で走る）。 */
 @keyframes news-new-shine-first {
   from { translate: -120% 0; }
   to   { translate: 220% 0; }
 }
 @keyframes news-new-shine {
-  0%, 80% { translate: -120% 0; }
+  0%, 68% { translate: -120% 0; }
   100%    { translate: 220% 0; }
 }
 /* 全画面の一覧（お知らせ #news-all・コート案内 #court-all・大会情報 #tournaments-all）の項目。
@@ -1898,10 +1898,10 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
   background: linear-gradient(100deg, transparent 0%, rgba(255, 255, 255, .15) 30%, rgba(255, 255, 255, .7) 50%, rgba(255, 255, 255, .15) 70%, transparent 100%);
   translate: -120% 0;
   pointer-events: none;
-  /* 1つ目：最初の0.5秒で1回だけ。2つ目：0.5秒後から4秒周期（最初の光りは約3.7秒後。以後4秒ごと） */
+  /* 1つ目：最初の0.5秒で1回だけ。2つ目：0.5秒後から2.5秒周期（最初の光りは約2.2秒後。以後2.5秒ごと） */
   animation:
     news-new-shine-first .5s ease-in-out,
-    news-new-shine 4s ease-in-out .5s infinite;
+    news-new-shine 2.5s ease-in-out .5s infinite;
 }
 @media (prefers-reduced-motion: reduce) { .news-new::after { animation: none; display: none; } }
 
