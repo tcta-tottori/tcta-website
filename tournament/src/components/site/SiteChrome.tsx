@@ -32,10 +32,6 @@ export interface NavLinkItem {
   en?: boolean;
   icon?: React.ComponentType<{ className?: string; style?: React.CSSProperties }>;
   onClick?: () => void;
-  /** スマホのメニューで、まとまりの中の画面（まとまりの名前の下に小さく並べ、押すとその画面へ） */
-  children?: NavLinkItem[];
-  /** まとまりの英字（スマホのメニューで名前の上に小さく出す） */
-  eyebrow?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -116,25 +112,11 @@ export function MobileNav({ open, items, onClose }: { open: boolean; items: NavL
       <nav className="mobile-nav__grid" aria-label="モバイルナビゲーション">
         {items.map((it, i) => {
           const style = { '--i': i } as React.CSSProperties;
-          const inner = <span className="mobile-nav__tx"><span>{it.eyebrow && <small className="mobile-nav__en">{it.eyebrow}</small>}{it.label}</span></span>;
-          const cls = `mobile-nav__link ${it.active ? 'is-active' : ''} ${it.children ? 'mobile-nav__link--group' : ''}`;
+          const inner = <span className="mobile-nav__tx"><span>{it.label}</span></span>;
+          const cls = `mobile-nav__link ${it.active ? 'is-active' : ''}`;
           const tab = open ? 0 : -1;
-          if (it.children) {
-            return (
-              <div key={it.key} className={`mobile-nav__group ${it.active ? 'is-active' : ''}`} style={style}>
-                <Link className={cls} to={it.to ?? '/'} tabIndex={tab} onClick={onClose}>{inner}</Link>
-                {it.children.length > 1 && (
-                  <div className="mobile-nav__subs">
-                    {it.children.map((c) => (
-                      <Link key={c.key} className={`mobile-nav__sub ${c.active ? 'is-active' : ''}`} to={c.to ?? '/'} tabIndex={tab} onClick={onClose}>{c.label}</Link>
-                    ))}
-                  </div>
-                )}
-              </div>
-            );
-          }
-          if (it.onClick) return <button key={it.key} type="button" className={`${cls} mobile-nav__link--sm`} style={style} tabIndex={tab} onClick={() => { onClose(); it.onClick!(); }}>{inner}</button>;
-          if (it.href) return <a key={it.key} className={`${cls} mobile-nav__link--sm`} href={it.href} target="_blank" rel="noopener noreferrer" style={style} tabIndex={tab} onClick={onClose}>{inner}</a>;
+          if (it.onClick) return <button key={it.key} type="button" className={cls} style={style} tabIndex={tab} onClick={() => { onClose(); it.onClick!(); }}>{inner}</button>;
+          if (it.href) return <a key={it.key} className={cls} href={it.href} target="_blank" rel="noopener noreferrer" style={style} tabIndex={tab} onClick={onClose}>{inner}</a>;
           return <Link key={it.key} className={cls} to={it.to ?? '/'} style={style} tabIndex={tab} onClick={onClose}>{inner}</Link>;
         })}
       </nav>
