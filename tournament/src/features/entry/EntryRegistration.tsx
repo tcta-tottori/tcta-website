@@ -22,6 +22,7 @@ import MixedEntryView from '../mixed/MixedEntryView';
 import { useTeamStore } from '../team/teamStore';
 import TeamEntryView from '../team/TeamEntryView';
 import { SkPage, SkEmpty } from '../../components/site/Kit';
+import { sortEventsByClass } from '../data/eventOrder';
 
 /** 'HH:MM' → 分。不正な値は Infinity（比較時に最後に来る）。 */
 function toMinutes(hm: string): number {
@@ -201,7 +202,7 @@ function NormalEntryRegistration() {
 
   // Queries
   const events = useLiveQuery(
-    () => currentTournamentId ? db.events.where('tournamentId').equals(currentTournamentId).toArray() : [],
+    () => currentTournamentId ? db.events.where('tournamentId').equals(currentTournamentId).toArray().then(sortEventsByClass) : [],
     [currentTournamentId]
   ) || [];
 
