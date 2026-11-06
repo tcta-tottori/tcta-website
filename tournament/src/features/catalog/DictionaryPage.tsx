@@ -2,9 +2,10 @@
 //   ・開いたときにデータベースから読む（電波が無いときは端末に入っている辞書を出す）
 //   ・ふりがなはその場で直せる。直すとデータベースに書き、ほかの端末にも次のログインで届く
 //   ・今の大会の選手でふりがなが無い人を上に出す（音声コールで読めない人）
+//   ・いま出している行（検索・絞り込みのあと）を CSV / Excel に書き出せる（dictExport.ts）
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { AlertTriangle, Loader2, Pencil, Plus, RefreshCw, Search, X } from 'lucide-react';
+import { AlertTriangle, Download, Loader2, Pencil, Plus, RefreshCw, Search, X } from 'lucide-react';
 import { db } from '../../db/database';
 import { useAppStore } from '../../stores/appStore';
 import { fetchDict, putDict, type Dict, type DictPlayer } from './catalogApi';
@@ -12,6 +13,7 @@ import { syncDictionary, useDictSync } from './dictSync';
 import CloudflareLogo from '../../components/ui/CloudflareLogo';
 import { toHalfwidth } from '../../lib/halfwidth';
 import { ColumnHeader } from './ColumnFilters';
+import { exportDictCsv, exportDictExcel } from './dictExport';
 import { activeChips, applyColumnFilters, clearColumn, emptyFilters, type ColumnDef, type ColumnFilterState } from './columnFilter';
 
 type Aff = { name: string; furigana: string };
@@ -169,7 +171,14 @@ export default function DictionaryPage() {
           <div className="hub-empty"><p className="hub-empty__title">条件に合う{tab === 'players' ? '選手' : '所属'}はいません</p><p className="hub-empty__text">見出しの絞り込みを外すか、検索の文字を変えてください。</p></div>
         ) : (
           <>
-            <p className="dict-count">{rows.length} 件{rows.length > limit ? `（${limit} 件まで表示）` : ''}</p>
+            <div className="dict-countbar">
+              <p className="dict-count">{rows.length} 件{rows.length > limit ? `（${limit} 件まで表示）` : ''}</p>
+              {/* いま出している行（検索・絞り込みのあと。「さらに表示」で隠れている行も含む）を書き出す */}
+              <div className="dict-export" role="group" aria-label={`${tab === 'players' ? '選手' : '所属'}を書き出す`}>
+                <button className="btn btn--outline dict-export__btn" onClick={() => exportDictCsv(tab, rows)} title={`表示中の ${rows.length} 件を CSV で書き出す`}><Download className="w-4 h-4" />CSV</button>
+                <button className="btn btn--outline dict-export__btn" onClick={() => exportDictExcel(tab, rows)} title={`表示中の ${rows.length} 件を Excel で書き出す`}><Download className="w-4 h-4" />Excel</button>
+              </div>
+            </div>
             <ul className={`dict-list dict-list--table dict-list--${tab}`}>
               {rows.slice(0, limit).map((r) => (
                 <DictRow

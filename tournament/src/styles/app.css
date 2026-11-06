@@ -307,6 +307,12 @@ button.mobile-nav__link { width: 100%; text-align: left; }
 .dict-addform { display: flex; flex-wrap: wrap; gap: 8px; width: 100%; padding: 12px; border: 1px solid var(--gray-200); background: var(--white); }
 .dict-addform .input { flex: 1 1 180px; }
 .dict-count { margin: 0 0 8px; font: 700 12px/1 var(--fjp); color: var(--gray-500); }
+/* 件数の行の右端に、CSV・Excel の書き出しボタン */
+.dict-countbar { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 0 0 8px; }
+.dict-countbar .dict-count { margin: 0; }
+.dict-export { display: inline-flex; gap: 6px; }
+.app-main .dict-export__btn { width: auto; min-height: 36px; padding: 6px 12px; gap: 6px; font-size: 13px; }
+@media (max-width: 639px) { .app-main .dict-export__btn { min-height: 44px; padding: 8px 14px; font-size: 14px; } }
 .dict-list { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0; margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--gray-200); background: var(--white); }
 @media (min-width: 900px) { .dict-list { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 24px; border-top: 0; background: none; } }
 /* 1 行＝漢字 → ふりがな → 所属（→ 直すボタン）。PC は横 1 列、スマホは 3 段（右に直すボタン） */
