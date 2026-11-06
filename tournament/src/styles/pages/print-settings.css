@@ -321,3 +321,17 @@ html.is-lite .psd-overlay, html.is-lite .psd-panel { animation: none; }
 .psd-btn--fit.btn { flex: 0 0 auto; padding-inline: 18px; }
 .ps-data__import { border-top: 1px solid var(--gray-100); }
 @media (max-width: 479px) { .ps-card__ico { display: none; } }
+
+/* 自動保存の様子（BackupPage の AutoSaveStatus） */
+.ps-auto { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; margin: 0 0 16px; padding: 14px 16px; background: var(--white); border: 1px solid var(--gray-200); border-left: 3px solid var(--ink); border-radius: var(--radius); }
+.ps-auto.is-error { border-left-color: var(--red); background: var(--red-tint); }
+.ps-auto__main { flex: 1 1 260px; min-width: 0; }
+.ps-auto__title { display: flex; align-items: center; gap: 8px; margin: 0 0 4px; font: 700 14px/1.4 var(--fjp); color: var(--ink); }
+.ps-auto__text { margin: 0; font: 400 13px/1.6 var(--fjp); color: var(--gray-800); overflow-wrap: anywhere; }
+.ps-auto__note { margin: 4px 0 0; font: 400 12px/1.7 var(--fjp); color: var(--gray-500); }
+.ps-auto__dot { width: 8px; height: 8px; border-radius: 50%; background: var(--gray-300); }
+.ps-auto__dot--saved { background: #1F9D55; }
+.ps-auto__dot--saving, .ps-auto__dot--pending { background: #E0A100; animation: ps-auto-blink 1s ease-in-out infinite; }
+.ps-auto__dot--error { background: var(--red); }
+@keyframes ps-auto-blink { 50% { opacity: .3; } }
+@media (prefers-reduced-motion: reduce) { .ps-auto__dot { animation: none; } }

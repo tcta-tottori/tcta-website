@@ -6,13 +6,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { ArrowRight, BookOpen, ClipboardCheck, Bot, FileSpreadsheet, ListChecks, Loader2, MapPin, RefreshCw, Users } from 'lucide-react';
+import { ArrowRight, BookOpen, ClipboardCheck, Bot, FileSpreadsheet, ListChecks, Loader2, MapPin, RefreshCw, RotateCcw, Users } from 'lucide-react';
 import { db } from '../../db/database';
 import { useAppStore } from '../../stores/appStore';
 import { useOfficer } from '../auth/officer';
 import { parseDrawExcel } from '../data/drawExcelParser';
 import { cachedCatalog, dateParts, fetchCatalog, fetchTournament, putTournament, todayStart, type CatalogList, type CatalogTournament } from './catalogApi';
 import { importToDevice, switchToLocal } from './deviceImport';
+import { saveSnapshot } from '../backup/autoSave';
 import { syncDictionary, useDictSync } from './dictSync';
 import { drawEntry } from './fromExcel';
 import CloudflareLogo from '../../components/ui/CloudflareLogo';
@@ -83,7 +84,17 @@ export default function TournamentHub() {
         navigate(`/data/review/${encodeURIComponent(t.id)}`);
         return;
       } else {
-        if (local && !(await siteConfirm({ title: '大会を入れ直す', message: `この端末の「${t.name}」の運営データ（受付・試合結果）を消して、データベースの最新の内容で入れ直します。`, confirmLabel: '入れ直す', danger: true }))) return;
+        if (local && !(await siteConfirm({
+          title: '運営データをクリアして最初から',
+          message: `この端末の「${t.name}」の運営データ（受付・試合結果・コート）を消して、データベースの内容で最初からやり直します。\n\n消す前の状態は Cloudflare に「クリア前_…」として残します（設定 → バックアップから戻せます）。`,
+          confirmLabel: 'クリアして最初から', danger: true,
+        }))) return;
+        if (local) {
+          setBusy({ id: t.id, label: '今の状態を保存しています' });
+          try { await saveSnapshot('クリア前', t.name); } catch (err) {
+            if (!(await siteConfirm({ title: '保存できませんでした', message: `今の状態を Cloudflare に残せませんでした（${(err as Error).message}）。このままクリアしますか？`, confirmLabel: 'クリアする', danger: true }))) return;
+          }
+        }
         setBusy({ id: t.id, label: '大会を読み込んでいます' });
         const full = await fetchTournament(t.id);
         await importToDevice(full, (p) => setBusy({ id: t.id, label: p.label }));
@@ -160,6 +171,7 @@ export default function TournamentHub() {
                     error={error?.id === t.id ? error.message : null}
                     onStart={() => start(t, 'fresh')}
                     onResume={() => start(t, 'resume')}
+                    onReset={() => start(t, 'direct')}
                   />
                 </li>
               );
@@ -212,9 +224,9 @@ function DictChip({ players, affiliations, status }: { players: number; affiliat
   );
 }
 
-function HubCard({ t, highlight, isCurrent, onDevice, stale, busy, disabled, error, onStart, onResume }: {
+function HubCard({ t, highlight, isCurrent, onDevice, stale, busy, disabled, error, onStart, onResume, onReset }: {
   t: CatalogTournament; highlight: boolean; isCurrent: boolean; onDevice: boolean; stale: boolean;
-  busy: string | null; disabled: boolean; error: string | null; onStart: () => void; onResume: () => void;
+  busy: string | null; disabled: boolean; error: string | null; onStart: () => void; onResume: () => void; onReset: () => void;
 }) {
   const d = dateParts(t.date);
   const badge = STATUS_BADGE[t.status] ?? STATUS_BADGE.planned;
@@ -264,6 +276,9 @@ function HubCard({ t, highlight, isCurrent, onDevice, stale, busy, disabled, err
         </div>
         {(t.status === 'ready' || t.status === 'done') && !busy && (
           <Link to={`/data/review/${encodeURIComponent(t.id)}`} className="btn hub-card__btn hub-card__btn--gray"><ClipboardCheck className="w-4 h-4" />ドローを確認・修正</Link>
+        )}
+        {onDevice && !busy && (
+          <button type="button" className="hub-card__reset" onClick={onReset} disabled={disabled}><RotateCcw className="w-3.5 h-3.5" />運営データをクリアして最初から</button>
         )}
       </div>
     </article>

@@ -1,6 +1,6 @@
 import CloudflareLogo from '../../components/ui/CloudflareLogo';
-import { useState, useCallback, useRef } from 'react';
-import { exportFullBackup, importFullBackup, validateBackupData } from './backupEngine';
+import { useState, useCallback, useRef, useEffect } from 'react';
+import { buildUnifiedBackup, restoreUnifiedBackup, isValidBackup } from './unifiedBackup';
 import { useMixedStore } from '../mixed/mixedStore';
 import {
   getSavedClientId,
@@ -25,112 +25,35 @@ import {
   Calendar,
 } from 'lucide-react';
 import { siteConfirm } from '../../components/site/siteConfirm';
+import { getAutoSaveState, saveAutoNow, subscribeAutoSave, type AutoSaveState } from './autoSave';
 
 /** 大会データの置き場（Cloudflare）のアイコン */
 const CloudLogo = ({ size = 20 }: { size?: number }) => <CloudflareLogo className="shrink-0" style={{ width: size, height: size }} />;
 
-const MIXED_STORAGE_KEY = 'mixed-tournament-storage';
-const TEAM_STORAGE_KEY = 'team-tournament-storage';
-
-/** LocalStorageから軽量化したZustand state を取得 */
-function extractStoreState(key: string): { state: any; tournamentName: string; tournamentDate: string } | null {
-  const raw = localStorage.getItem(key);
-  if (!raw) return null;
-  try {
-    const parsed = JSON.parse(raw);
-    const state = parsed?.state || parsed;
-    return {
-      state: { ...state, rawExcelSheets: [] },
-      tournamentName: state?.tournamentInfo?.name || '',
-      tournamentDate: state?.tournamentInfo?.date || '',
-    };
-  } catch {
-    return null;
-  }
-}
-
-/** DB + ミックスダブルス + 団体戦を統合した軽量バックアップを生成 */
-async function buildUnifiedBackup() {
-  const dbData = await exportFullBackup();
-  const mixed = extractStoreState(MIXED_STORAGE_KEY);
-  const team = extractStoreState(TEAM_STORAGE_KEY);
-
-  const tournamentName = mixed?.tournamentName || team?.tournamentName || '';
-  const tournamentDate = mixed?.tournamentDate || team?.tournamentDate || '';
-
-  return {
-    _type: 'unified-backup',
-    _version: 3,
-    createdAt: new Date().toISOString(),
-    tournamentName,
-    tournamentDate,
-    db: dbData,
-    mixed: mixed?.state || null,
-    team: team?.state || null,
-  };
-}
-
-/** 統合バックアップを復元 */
-async function restoreUnifiedBackup(data: any): Promise<{ imported: number; errors: string[] }> {
-  const errors: string[] = [];
-  let imported = 0;
-
-  // DB復元
-  if (data.db && validateBackupData(data.db)) {
-    const result = await importFullBackup(data.db, true);
-    imported += result.imported;
-    errors.push(...result.errors);
-  } else if (data.tables && validateBackupData(data)) {
-    // 旧形式（DB onlyバックアップ）のフォールバック
-    const result = await importFullBackup(data, true);
-    imported += result.imported;
-    errors.push(...result.errors);
-  }
-
-  // ミックスダブルス復元
-  if (data.mixed) {
-    try {
-      const persistData = { state: data.mixed, version: 4 };
-      localStorage.setItem(MIXED_STORAGE_KEY, JSON.stringify(persistData));
-      imported += 1;
-    } catch (e) {
-      errors.push(`ミックスダブルス: ${(e as Error).message}`);
-    }
-  } else if (data._type === 'mixed-tournament-backup' && data.state) {
-    // 旧ミックス単体バックアップのフォールバック
-    try {
-      const persistData = { state: data.state, version: 4 };
-      localStorage.setItem(MIXED_STORAGE_KEY, JSON.stringify(persistData));
-      imported += 1;
-    } catch (e) {
-      errors.push(`ミックスダブルス: ${(e as Error).message}`);
-    }
-  }
-
-  // 団体戦復元
-  if (data.team) {
-    try {
-      const persistData = { state: data.team, version: 1 };
-      localStorage.setItem(TEAM_STORAGE_KEY, JSON.stringify(persistData));
-      imported += 1;
-    } catch (e) {
-      errors.push(`団体戦: ${(e as Error).message}`);
-    }
-  }
-
-  return { imported, errors };
-}
-
-/** バックアップデータの形式チェック */
-function isValidBackup(data: any): boolean {
-  if (!data || typeof data !== 'object') return false;
-  // 統合バックアップ
-  if (data._type === 'unified-backup') return true;
-  // 旧DBバックアップ
-  if (data.tables && data.stats) return true;
-  // 旧ミックス単体バックアップ
-  if (data._type === 'mixed-tournament-backup' && data.state) return true;
-  return false;
+/** 自動保存の様子（最後に保存した時刻・今すぐ保存） */
+function AutoSaveStatus() {
+  const [st, setSt] = useState<AutoSaveState>(getAutoSaveState);
+  const [busy, setBusy] = useState(false);
+  useEffect(() => subscribeAutoSave(setSt), []);
+  const time = (t: number) => new Date(t).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  const text = st.kind === 'saved' ? `${time(st.at)} に保存しました（${st.fileName}）`
+    : st.kind === 'saving' ? '保存しています…'
+    : st.kind === 'pending' ? '変更を保存する準備をしています…'
+    : st.kind === 'error' ? `${time(st.at)} に保存できませんでした（${st.message}）。少しあとにもう一度試します`
+    : '運営中の大会があると、変わるたびに自動で保存します';
+  return (
+    <section className={`ps-auto ${st.kind === 'error' ? 'is-error' : ''}`} aria-live="polite">
+      <div className="ps-auto__main">
+        <p className="ps-auto__title"><span className={`ps-auto__dot ps-auto__dot--${st.kind}`} />自動保存（Cloudflare）</p>
+        <p className="ps-auto__text">{text}</p>
+        <p className="ps-auto__note">運営中のデータは、変わるたびに Cloudflare に自動で保存されます。下の一覧の「自動保存_…」から、別の端末でも復元できます。</p>
+      </div>
+      <button type="button" className="btn btn--outline sk-btn sk-btn--sm" disabled={busy || st.kind === 'saving'}
+        onClick={async () => { setBusy(true); try { await saveAutoNow(); } finally { setBusy(false); } }}>
+        {busy || st.kind === 'saving' ? <Loader2 className="w-4 h-4 animate-spin" /> : null}今すぐ保存
+      </button>
+    </section>
+  );
 }
 
 interface BackupPageProps {
@@ -384,6 +307,9 @@ export default function BackupPage({ embedded = false }: BackupPageProps = {}) {
             )}
           </div>
         </section>
+
+        {/* 運営中のデータの自動保存（autoSave.ts） */}
+        <AutoSaveStatus />
 
         {/* Cloudflare（大会データの置き場） */}
         <section className="ps-sub">

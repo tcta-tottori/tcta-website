@@ -21,6 +21,7 @@ import { OfficerExpiredBar } from '../site/OfficerGate';
 import { useSiteReveal } from '../site/useSiteReveal';
 import { useOfficer, logout } from '../../features/auth/officer';
 import { syncDictionary } from '../../features/catalog/dictSync';
+import { startAutoSave } from '../../features/backup/autoSave';
 
 interface MainTab {
   id: string;
@@ -63,10 +64,9 @@ const NAV_GROUPS: { key: string; label: string; en: string; paths: string[] }[] 
   { key: 'prep', label: '大会選択', en: 'SELECT', paths: ['/data', '/data/review'] },
   // 試合の当日に使う画面（受付から対戦順・時間割・ドロー・スコア・状況・配信まで）は 1 つのまとまりにする
   { key: 'run', label: '大会進行', en: 'OPERATION', paths: ['/entry', '/draw-lot', '/draw-table', '/referee', '/schedule-sheet', '/court-bracket', '/score', '/dashboard', '/broadcast'] },
-  // 選手・所属のふりがなは大会に依らないので、独立したメニューにする
-  { key: 'players', label: '選手・所属', en: 'PLAYERS', paths: ['/dict'] },
   { key: 'print', label: '印刷', en: 'PRINT', paths: ['/print'] },
-  { key: 'settings', label: '設定', en: 'SETTINGS', paths: ['/settings', '/data-tools', '/manual'] },
+  // 選手・所属（ふりがな辞書）はデータ管理と並べて、設定のまとまりに入れる
+  { key: 'settings', label: '設定', en: 'SETTINGS', paths: ['/settings', '/data-tools', '/dict', '/manual'] },
 ];
 
 /**
@@ -110,6 +110,12 @@ export default function AppLayout() {
   // ログインした時点で、選手・所属のふりがな辞書をデータベースから取り込む（版が同じなら何もしない）
   useEffect(() => {
     if (officer.status === 'ok') void syncDictionary();
+  }, [officer.status]);
+
+  // 運営中のデータを Cloudflare に自動で保存する（変わったら少し待ってまとめて保存）
+  useEffect(() => {
+    if (officer.status !== 'ok') return;
+    return startAutoSave();
   }, [officer.status]);
 
   // モバイルの自動再生制約対策: 最初のユーザー操作でオーディオをアンロックする
