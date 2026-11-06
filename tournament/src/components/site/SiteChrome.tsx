@@ -3,7 +3,7 @@
 //   SiteHeader.astro / MobileNav.astro / LiteToggle.astro / SnsLinks.astro / SiteFooter.astro / 下層ページの .page-head
 // サイト側のマークアップを変えたら、ここも同じに直すこと。
 // 大会運営システムだけのもの（ロゴ横の札・同期の札・状態の帯・タブの帯）の見た目は src/styles/app.css。
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { AlertTriangle } from 'lucide-react';
 import DecoSquares from './DecoSquares';
@@ -32,6 +32,10 @@ export interface NavLinkItem {
   en?: boolean;
   icon?: React.ComponentType<{ className?: string; style?: React.CSSProperties }>;
   onClick?: () => void;
+  /** スマホのメニューで、まとまりの中の画面（まとまりの名前の下に小さく並べ、押すとその画面へ） */
+  children?: NavLinkItem[];
+  /** まとまりの英字（スマホのメニューで名前の上に小さく出す） */
+  eyebrow?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -112,11 +116,25 @@ export function MobileNav({ open, items, onClose }: { open: boolean; items: NavL
       <nav className="mobile-nav__grid" aria-label="モバイルナビゲーション">
         {items.map((it, i) => {
           const style = { '--i': i } as React.CSSProperties;
-          const inner = <span className="mobile-nav__tx"><span>{it.label}</span></span>;
-          const cls = `mobile-nav__link ${it.active ? 'is-active' : ''}`;
+          const inner = <span className="mobile-nav__tx"><span>{it.eyebrow && <small className="mobile-nav__en">{it.eyebrow}</small>}{it.label}</span></span>;
+          const cls = `mobile-nav__link ${it.active ? 'is-active' : ''} ${it.children ? 'mobile-nav__link--group' : ''}`;
           const tab = open ? 0 : -1;
-          if (it.onClick) return <button key={it.key} type="button" className={cls} style={style} tabIndex={tab} onClick={() => { onClose(); it.onClick!(); }}>{inner}</button>;
-          if (it.href) return <a key={it.key} className={cls} href={it.href} target="_blank" rel="noopener noreferrer" style={style} tabIndex={tab} onClick={onClose}>{inner}</a>;
+          if (it.children) {
+            return (
+              <div key={it.key} className={`mobile-nav__group ${it.active ? 'is-active' : ''}`} style={style}>
+                <Link className={cls} to={it.to ?? '/'} tabIndex={tab} onClick={onClose}>{inner}</Link>
+                {it.children.length > 1 && (
+                  <div className="mobile-nav__subs">
+                    {it.children.map((c) => (
+                      <Link key={c.key} className={`mobile-nav__sub ${c.active ? 'is-active' : ''}`} to={c.to ?? '/'} tabIndex={tab} onClick={onClose}>{c.label}</Link>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          }
+          if (it.onClick) return <button key={it.key} type="button" className={`${cls} mobile-nav__link--sm`} style={style} tabIndex={tab} onClick={() => { onClose(); it.onClick!(); }}>{inner}</button>;
+          if (it.href) return <a key={it.key} className={`${cls} mobile-nav__link--sm`} href={it.href} target="_blank" rel="noopener noreferrer" style={style} tabIndex={tab} onClick={onClose}>{inner}</a>;
           return <Link key={it.key} className={cls} to={it.to ?? '/'} style={style} tabIndex={tab} onClick={onClose}>{inner}</Link>;
         })}
       </nav>
@@ -226,10 +244,33 @@ export function PageHead({
 // ---------------------------------------------------------------------------
 
 export function AppTabs({ items, label }: { items: NavLinkItem[]; label: string }) {
-  if (items.length < 2) return null;
+  const navRef = useRef<HTMLElement>(null);
+  const activeKey = items.find((it) => it.active)?.key;
+  // 今の画面のタブが端に隠れないよう、横に送って見える位置に出す
+  useEffect(() => {
+    const nav = navRef.current;
+    const el = nav?.querySelector<HTMLElement>('.tab.is-active');
+    if (!nav || !el) return;
+    const left = el.offsetLeft - (nav.clientWidth - el.offsetWidth) / 2;
+    nav.scrollTo({ left: Math.max(0, left), behavior: 'smooth' });
+  }, [activeKey]);
+  // タブの高さを main に知らせ、ほかの貼り付く帯（表の見出しなど）をタブの下に並べる
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const show = items.length >= 2;
+  useEffect(() => {
+    const el = wrapRef.current;
+    const main = el?.closest<HTMLElement>('.app-main');
+    if (!el || !main || typeof ResizeObserver === 'undefined') return;
+    const set = () => main.style.setProperty('--app-sticky-top', `${el.offsetHeight}px`);
+    set();
+    const ro = new ResizeObserver(set);
+    ro.observe(el);
+    return () => { ro.disconnect(); main.style.removeProperty('--app-sticky-top'); };
+  }, [show]);
+  if (!show) return null;
   return (
-    <div className="app-tabs">
-      <nav className="container tabs" aria-label={label}>
+    <div ref={wrapRef} className="app-tabs">
+      <nav ref={navRef} className="container tabs" aria-label={label}>
         {items.map((it) => (
           <Link key={it.key} className={`tab ${it.active ? 'is-active' : ''}`} to={it.to ?? '/'} aria-current={it.active ? 'page' : undefined}>
             {it.icon && <it.icon className="app-tabs__ico" />}
