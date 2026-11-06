@@ -979,3 +979,87 @@ html.is-lite [class~="fixed"][class~="inset-0"] > [class*="bg-white"][class*="ma
 .inbox-note__list b { margin-right: 6px; color: var(--ink); }
 .inbox-note__list li.is-warn b { color: #B07400; }
 @media (prefers-reduced-motion: reduce) { .inbox-note { animation: none; } }
+
+/* ==========================================================================
+   エントリー受付の「対戦表」（EntrySheet.tsx・ZoomPan.tsx・EntrySlotDialog.tsx）
+   サイトのドロー表と同じ形で描き、ズーム・全体表示・全画面ができる。選手をタップすると確認ダイアログ
+   ========================================================================== */
+.ent-sheet { padding: 4px 0 8px; }
+.zp { position: relative; }
+.zp__box { position: relative; overflow: hidden; touch-action: none; user-select: none; -webkit-user-select: none; background: var(--gray-050); border: 1px solid var(--gray-200); border-radius: var(--radius); cursor: grab; }
+.zp__box:active { cursor: grabbing; }
+.zp__content { position: absolute; left: 0; top: 0; transform-origin: 0 0; will-change: transform; }
+.zp__tools { display: flex; align-items: center; justify-content: flex-end; gap: 2px; margin: 0 0 6px; }
+.zp__tools .zp__btn { border: 1px solid var(--gray-200); background: var(--white); }
+.zp__btn { display: inline-flex; align-items: center; justify-content: center; gap: 4px; min-width: 40px; height: 40px; padding: 0 8px; border: 0; border-radius: var(--radius); background: none; font: 700 13px/1 var(--fjp); color: var(--ink); cursor: pointer; }
+@media (hover: hover) { .zp__btn:hover { background: var(--gray-100); } }
+.zp__pct { min-width: 44px; text-align: center; font: 700 12px/1 var(--flt); color: var(--gray-600); }
+.zp__hint { margin: 6px 0 0; font: 400 11.5px/1.5 var(--fjp); color: var(--gray-500); }
+/* 全画面：画面いっぱいに出し、道具は右上に */
+.zp.is-full { position: fixed; inset: 0; z-index: 400; display: flex; flex-direction: column; padding: 8px; background: var(--white); }
+.zp.is-full .zp__box { flex: 1; height: auto; }
+.zp.is-full .zp__tools { padding-top: env(safe-area-inset-top); }
+.zp.is-full .zp__hint { text-align: center; }
+
+/* 対戦表の紙面 */
+.esh { position: relative; background: var(--white); color: var(--ink); }
+.esh__title { margin: 0; display: flex; align-items: baseline; gap: 10px; font: 700 18px/1.4 var(--fjp); }
+.esh__title small { font: 700 12px/1 var(--flt); color: var(--gray-500); letter-spacing: .06em; }
+.esh__lines { position: absolute; left: 0; top: 0; pointer-events: none; }
+.esh__lines path { fill: none; stroke: var(--ink); stroke-width: 1.4; }
+.esh__time { font: 700 10.5px/1 var(--flt); fill: var(--red); }
+.esh__cell { position: absolute; padding: 3px 0; }
+
+/* 選手の枠（ボタン） */
+.esh-slot { position: relative; display: flex; align-items: center; gap: 8px; width: 100%; padding: 0 30px 0 6px; border: 1px solid var(--gray-300); border-radius: var(--radius); background: var(--white); text-align: left; color: var(--ink); cursor: pointer; transition: background .15s, border-color .15s; }
+.esh__cell .esh-slot { height: 100% !important; }
+.esh__cell.is-right .esh-slot { flex-direction: row-reverse; padding: 0 6px 0 30px; text-align: right; }
+.esh__cell.is-right .esh-slot__mark { left: 6px; right: auto; }
+.esh__cell.is-right .esh-slot__body { align-items: flex-end; }
+@media (hover: hover) { button.esh-slot:hover { border-color: var(--ink); } }
+button.esh-slot:active { transform: scale(.985); }
+.esh-slot__no { flex: none; min-width: 20px; font: 700 12px/1 var(--flt); color: var(--gray-500); text-align: center; }
+.esh-slot__seed { flex: none; display: inline-flex; align-items: center; justify-content: center; min-width: 18px; height: 18px; padding: 0 4px; border-radius: 9px; background: var(--red); color: #fff; font: 700 10.5px/1 var(--flt); }
+.esh-slot__body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.esh-slot__name { font: 700 14px/1.25 var(--fjp); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.esh-slot__aff { font: 400 11px/1.2 var(--fjp); color: var(--gray-500); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.esh-slot__mark { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); display: inline-flex; font: 700 10px/1 var(--flt); letter-spacing: .04em; }
+.esh-slot.is-checked { background: var(--ink); border-color: var(--ink); color: #fff; }
+.esh-slot.is-checked .esh-slot__no, .esh-slot.is-checked .esh-slot__aff { color: rgba(255, 255, 255, .7); }
+.esh-slot.is-def { background: var(--red-tint); border-color: var(--red); color: var(--red); }
+.esh-slot.is-def .esh-slot__name { text-decoration: line-through; }
+.esh-slot.is-def .esh-slot__mark { color: var(--red); }
+.esh-slot.is-bye { background: var(--gray-050); border-style: dashed; color: var(--gray-400); cursor: default; }
+
+/* リーグの表 */
+.esh-league { display: grid; gap: 0; border: 1.4px solid var(--ink); }
+.esh-league > * { border-right: 1px solid var(--ink); padding: 4px; }
+.esh-league > *:last-child { border-right: 0; }
+.esh-league.is-narrow > * { border-right: 0; border-bottom: 1px solid var(--gray-200); }
+.esh-league.is-narrow > .esh-league__label { border-right: 1px solid var(--ink); border-bottom: 0; }
+.esh-league.is-narrow > *:last-child { border-bottom: 0; }
+.esh-league .esh-slot { height: 100% !important; border-color: transparent; }
+.esh-league .esh-slot.is-checked { border-color: var(--ink); }
+.esh-league__label { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding: 4px; }
+.esh-league__label b { font: 700 16px/1.2 var(--fjp); }
+.esh-league__label small { font: 400 11px/1.2 var(--fjp); color: var(--gray-500); }
+.esh-league__order { margin: 10px 0 0; font: 700 13px/1.6 var(--fjp); color: var(--gray-600); }
+
+/* 確認ダイアログ */
+.esd { text-align: center; }
+.esd__name { margin: 4px 0 2px; font: 700 22px/1.35 var(--fjp); }
+.esd__aff { margin: 0 0 10px; font: 400 13px/1.5 var(--fjp); color: var(--gray-500); }
+.esd__state { display: inline-block; margin: 0 0 8px; padding: 4px 10px; border: 1px solid var(--gray-300); border-radius: var(--radius); font: 700 12px/1 var(--fjp); color: var(--gray-600); }
+.esd__state.is-checked { background: var(--ink); border-color: var(--ink); color: #fff; }
+.esd__state.is-def { background: var(--red-tint); border-color: var(--red); color: var(--red); }
+.esd__q { margin: 4px 0 0; font: 700 14px/1.6 var(--fjp); }
+.esd__more { display: flex; gap: 8px; margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--gray-100); }
+.app-main .esd__mbtn, .esd__mbtn { flex: 1 1 0; width: auto; min-width: 0; min-height: 44px; padding: 8px; gap: 6px; justify-content: center; font-size: 13px; }
+.esd__mbtn--def { color: var(--red); border-color: var(--red); }
+.esd-form { display: grid; gap: 10px; }
+.esd-form__f { display: grid; gap: 4px; font: 700 12px/1.4 var(--fjp); color: var(--gray-600); }
+.esd-form__f .input { font-size: 16px; min-height: 46px; }
+.esd-note { margin: 2px 0 0; font: 400 12px/1.6 var(--fjp); color: var(--gray-500); }
+.esd-err { margin: 10px 0 0; font: 700 12.5px/1.5 var(--fjp); color: var(--red); }
+/* 確認ダイアログのボタンは 1 行に（文言を折り返さない） */
+.sdlg__panel:has(.esd, .esd-form) .sdlg__actions .btn { flex: 1 1 0; min-width: 0; padding-inline: 10px; gap: 6px; white-space: nowrap; justify-content: center; }
