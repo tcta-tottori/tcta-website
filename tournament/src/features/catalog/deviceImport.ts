@@ -40,7 +40,7 @@ export async function removeLocalTournament(tournamentId: string): Promise<void>
 export interface ImportProgress { step: 'prepare' | 'write' | 'schedule' | 'done'; label: string }
 
 /** 端末に入れて、その大会を選んだ状態にする。戻り値は端末の大会 ID */
-export async function importToDevice(t: CatalogTournamentFull, onProgress?: (p: ImportProgress) => void): Promise<string> {
+export async function importToDevice(t: CatalogTournamentFull, onProgress?: (p: ImportProgress) => void, opts: { test?: boolean } = {}): Promise<string> {
   if (!t.draw || t.draw.events.length === 0) throw new Error('この大会にはまだドローが入っていません');
   onProgress?.({ step: 'prepare', label: '端末を準備しています' });
 
@@ -74,6 +74,7 @@ export async function importToDevice(t: CatalogTournamentFull, onProgress?: (p: 
       suggestedCourtCount: t.draw!.suggestedCourtCount,
       catalogId: t.id,
       catalogUpdatedAt: t.updatedAt,
+      ...(opts.test ? { isTest: true } : {}),
     });
 
     const players = new Map<string, { name: string; affiliation: string }>();

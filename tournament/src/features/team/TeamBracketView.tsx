@@ -11,6 +11,7 @@ import { useCallTts } from '../broadcast/useCallTts';
 import { TeamBracketResultPreview } from './TeamBracketResultPreview';
 import { leagueBadgeStyle } from '../mixed/leagueColors';
 import { siteConfirm } from '../../components/site/siteConfirm';
+import { useIsTestMode } from '../catalog/testMode';
 
 const CATEGORY_LABELS: Record<PlacementCategory, string> = {
   '1st': '1位トーナメント',
@@ -71,6 +72,8 @@ function extractCourtNumberShort(courtName: string): string {
 }
 
 export default function TeamBracketView() {
+  // テスト用のスコア入力は、テストモード（大会選択の「テストモードで試す」）で入れた大会のときだけ出す
+  const testMode = useIsTestMode();
   const {
     brackets, selectedBracketCategory, setSelectedBracketCategory,
     advanceWinner, bracketCourtAssignments, assignBracketMatchToCourt,
@@ -294,7 +297,8 @@ export default function TeamBracketView() {
       </div>
 
       {/* テスト入力ボタン */}
-      <div className="grid grid-cols-2 gap-2">
+      {testMode && (
+<div className="grid grid-cols-2 gap-2">
         <button
           onClick={async () => {
             const target = showAllBrackets ? brackets : (currentBracket ? [currentBracket] : []);
@@ -352,6 +356,7 @@ export default function TeamBracketView() {
           TEST（ALL）
         </button>
       </div>
+      )}
 
       {/* === ブラケット表示（全体・個別共通） === */}
       {(() => {

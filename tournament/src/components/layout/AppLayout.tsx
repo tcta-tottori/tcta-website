@@ -22,6 +22,7 @@ import { useSiteReveal } from '../site/useSiteReveal';
 import { useOfficer, logout } from '../../features/auth/officer';
 import { syncDictionary } from '../../features/catalog/dictSync';
 import { startAutoSave } from '../../features/backup/autoSave';
+import TestModeBar from '../../features/catalog/TestModeBar';
 
 interface MainTab {
   id: string;
@@ -412,6 +413,9 @@ export default function AppLayout() {
 
       {/* ===== 役員ログインの期限切れ（画面は止めずに知らせる） ===== */}
       <OfficerExpiredBar />
+
+      {/* ===== テストモードの帯（自動保存しない・テスト用のスコア入力が使える） ===== */}
+      <TestModeBar />
 
       {/* ===== 大会の状況（PC はヘッダーの直下に固定） ===== */}
       {statusBar('top')}

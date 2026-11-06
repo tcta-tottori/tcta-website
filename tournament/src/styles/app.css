@@ -903,3 +903,14 @@ html.is-lite [class~="fixed"][class~="inset-0"] > [class*="bg-white"][class*="ma
 .site-header__logo--system img[src*="logo-view"] { height: 54px; }
 @media (min-width: 1024px) { .site-header__logo--system img[src*="logo-view"] { height: 50px; } }
 @media (max-width: 380px) { .site-header__logo--system img[src*="logo-view"] { height: 46px; } }
+.hub-card__links { display: flex; flex-wrap: wrap; justify-content: center; gap: 0 18px; margin-top: 6px; }
+.hub-card__links .hub-card__reset { width: auto; margin-top: 4px; }
+
+/* テストモードの帯（TestModeBar.tsx）。黄色地で、本番の運営と見分けられるようにする */
+.test-bar { flex: none; position: relative; z-index: 30; background: #FFE9A8; border-bottom: 1px solid #E0B94A; color: #5A4300; }
+@media (max-width: 1023px) { .test-bar { padding-top: var(--header-h); } }
+.test-bar__inner { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; padding-block: 8px; }
+.test-bar__label { display: inline-flex; align-items: center; gap: 5px; padding: 3px 8px; background: #5A4300; color: #FFE9A8; font: 700 11px/1 var(--flt); letter-spacing: .14em; border-radius: var(--radius); }
+.test-bar__text { flex: 1 1 220px; margin: 0; font: 700 12.5px/1.6 var(--fjp); }
+.test-bar__btn { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px; border: 1px solid #5A4300; border-radius: var(--radius); background: #fff; font: 700 12px/1 var(--fjp); color: #5A4300; cursor: pointer; }
+@media (hover: hover) { .test-bar__btn:hover { background: #5A4300; color: #FFE9A8; } }
