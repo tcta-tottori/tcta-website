@@ -955,14 +955,29 @@ html.is-lite [class~="fixed"][class~="inset-0"] > [class*="bg-white"][class*="ma
 .hub-card__links { display: flex; flex-wrap: wrap; justify-content: center; gap: 0 18px; margin-top: 6px; }
 .hub-card__links .hub-card__reset { width: auto; margin-top: 4px; }
 
-/* テストモードの帯（TestModeBar.tsx）。黄色地で、本番の運営と見分けられるようにする */
+/* テストモードの帯（TestModeBar.tsx）。黄色地の 1 行。収まらない説明は横に流す */
 .test-bar { flex: none; position: relative; z-index: 30; background: #FFE9A8; border-bottom: 1px solid #E0B94A; color: #5A4300; }
 @media (max-width: 1023px) { .test-bar { padding-top: var(--header-h); } }
-.test-bar__inner { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; padding-block: 8px; }
-.test-bar__label { display: inline-flex; align-items: center; gap: 5px; padding: 3px 8px; background: #5A4300; color: #FFE9A8; font: 700 11px/1 var(--flt); letter-spacing: .14em; border-radius: var(--radius); }
-.test-bar__text { flex: 1 1 220px; margin: 0; font: 700 12.5px/1.6 var(--fjp); }
-.test-bar__btn { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px; border: 1px solid #5A4300; border-radius: var(--radius); background: #fff; font: 700 12px/1 var(--fjp); color: #5A4300; cursor: pointer; }
-@media (hover: hover) { .test-bar__btn:hover { background: #5A4300; color: #FFE9A8; } }
+.test-bar__inner { display: flex; align-items: center; gap: 10px; height: 34px; }
+.test-bar__label { flex: none; display: inline-flex; align-items: center; gap: 5px; padding: 3px 8px; background: #5A4300; color: #FFE9A8; font: 700 11px/1 var(--flt); letter-spacing: .14em; border-radius: var(--radius); }
+.test-bar__mq { flex: 1; min-width: 0; overflow: hidden; white-space: nowrap; }
+.test-bar__track { display: inline-flex; }
+.test-bar__text { flex: none; font: 700 12.5px/34px var(--fjp); }
+.test-bar__mq:not(.is-run) .test-bar__text { display: block; overflow: hidden; text-overflow: ellipsis; }
+.test-bar__mq.is-run .test-bar__text { padding-right: 3em; }
+.test-bar__mq.is-run .test-bar__track { animation: test-bar-run 22s linear infinite; }
+@keyframes test-bar-run { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+@media (prefers-reduced-motion: reduce) { .test-bar__mq.is-run .test-bar__track { animation: none; } }
+html.is-lite .test-bar__mq.is-run .test-bar__track { animation: none; }
+/* メニューの軽量モードの横の「テストを終える」 */
+.mobile-nav__lite { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.test-end { display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 14px; border: 1px solid #FFE9A8; border-radius: 999px; background: #FFE9A8; font: 700 12px/1 var(--fjp); color: #5A4300; cursor: pointer; }
+@media (hover: hover) { .test-end:hover { background: #fff; } }
+.test-end:disabled { opacity: .6; }
+/* PC は帯の右端に（メニューが無いため）。スマホはメニューの中だけ */
+.test-bar__end { flex: none; display: none; }
+.test-bar__end .test-end { height: 26px; padding: 0 10px; border-color: #5A4300; background: #fff; }
+@media (min-width: 1024px) { .test-bar__end { display: block; } }
 
 /* 受け箱の結果を反映したお知らせ（ResultInboxNotice.tsx）。画面の下に浮かせる */
 .inbox-note { position: fixed; left: 50%; bottom: 16px; z-index: 300; width: min(560px, calc(100% - 24px)); transform: translateX(-50%); background: var(--white); border: 1px solid var(--gray-200); border-top: 3px solid #1F9D55; border-radius: var(--radius); box-shadow: 0 12px 32px rgba(26, 26, 26, .18); animation: inbox-up .35s var(--ease) both; }

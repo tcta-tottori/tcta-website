@@ -97,7 +97,7 @@ export function SiteHeader({
 // スマホのメニュー（MobileNav.astro。黒地が下からせり上がり、行が下線の下から順に出る）
 // ---------------------------------------------------------------------------
 
-export function MobileNav({ open, items, onClose }: { open: boolean; items: NavLinkItem[]; onClose: () => void }) {
+export function MobileNav({ open, items, onClose, liteExtra }: { open: boolean; items: NavLinkItem[]; onClose: () => void; /** 軽量モードの横に並べるもの（テストモードの「テストを終える」など） */ liteExtra?: ReactNode }) {
   // サイトの main.js と同じく、開くときに上の余白をヘッダーの下端にそろえる
   const [padTop, setPadTop] = useState<number | undefined>(undefined);
   // 開いている「中に画面があるまとまり」。メニューを開くたびに、今いるまとまりを開いた状態にする
@@ -153,7 +153,7 @@ export function MobileNav({ open, items, onClose }: { open: boolean; items: NavL
       </nav>
       {/* 下端に寄せる：軽量モード・SNS・キャッチコピー・著作権の表記（サイトのメニューと同じ） */}
       <div className="mobile-nav__foot">
-        <div className="mobile-nav__lite"><LiteToggle dark /></div>
+        <div className="mobile-nav__lite"><LiteToggle dark />{liteExtra}</div>
         <div className="mobile-nav__sns" style={{ '--i': items.length } as React.CSSProperties}><SnsLinks /></div>
         <p className="mobile-nav__copy mobile-nav__tagline" style={{ '--i': items.length + 1 } as React.CSSProperties}><span className="tagline">PLAY BEYOND.</span></p>
         <p className="mobile-nav__copy" style={{ '--i': items.length + 2 } as React.CSSProperties}><span>© Tottori-City Tennis Association All Rights Reserved.</span></p>

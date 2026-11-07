@@ -22,7 +22,7 @@ import { useSiteReveal } from '../site/useSiteReveal';
 import { useOfficer, logout } from '../../features/auth/officer';
 import { syncDictionary } from '../../features/catalog/dictSync';
 import { startAutoSave } from '../../features/backup/autoSave';
-import TestModeBar from '../../features/catalog/TestModeBar';
+import TestModeBar, { TestEndButton } from '../../features/catalog/TestModeBar';
 import ResultInboxNotice from '../../features/catalog/ResultInboxNotice';
 import { useResultInbox } from '../../features/catalog/resultInbox';
 
@@ -435,7 +435,7 @@ export default function AppLayout() {
       {statusBar('top')}
 
       {/* ===== スマホ: 黒地のメニュー（サイトと同じ） ===== */}
-      <MobileNav open={menuOpen} onClose={closeMenu} items={mobileItems} />
+      <MobileNav open={menuOpen} onClose={closeMenu} items={mobileItems} liteExtra={<TestEndButton onDone={closeMenu} />} />
 
       <main
         ref={mainRef}
