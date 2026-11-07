@@ -206,6 +206,14 @@ export default function ReviewPage() {
           </div>
         </section>
 
+        {/* 大会のメモ（コート割り・順位の決め方など。大会選択のカードには出さない） */}
+        {t.note && (
+          <details className="rvw-meta">
+            <summary>大会のメモ（コート割り・順位の決め方など）</summary>
+            <p className="rvw-note">{t.note}</p>
+          </details>
+        )}
+
         <details className="rvw-meta">
           <summary>大会の情報を直す（大会名・期日・会場・コート数・開始時刻）</summary>
           <div className="rvw-meta__grid">

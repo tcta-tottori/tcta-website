@@ -264,7 +264,7 @@ button.mobile-nav__link { width: 100%; text-align: left; }
 .hub-card__top { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
 .hub-card__date { flex: none; }
 .hub-card__here { font: 700 11px/1 var(--fjp); color: var(--red); white-space: nowrap; }
-.hub-card__note { margin: 0; padding: 8px 10px; background: var(--gray-050); font: 400 12px/1.6 var(--fjp); color: var(--gray-600); }
+.rvw-note { margin: 0; padding: 10px 2px 4px; font: 400 13px/1.7 var(--fjp); color: var(--gray-600); white-space: pre-wrap; }
 .hub-card__error { margin: 0; font: 700 12px/1.6 var(--fjp); color: var(--red); }
 .hub-card__btns { display: flex; gap: 8px; margin-top: auto; padding-top: 4px; }
 .hub-card__btn { flex: 1 1 0; justify-content: center; gap: 8px; min-height: 44px; padding: 10px 12px; font-size: 13.5px; }

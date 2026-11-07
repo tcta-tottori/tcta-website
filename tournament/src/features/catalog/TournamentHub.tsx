@@ -269,7 +269,6 @@ function HubCard({ t, highlight, isCurrent, onDevice, stale, busy, disabled, err
             </div>
           </div>
         </div>
-        {t.note && <p className="hub-card__note">{t.note}</p>}
         {error && <p className="hub-card__error" role="alert">{error}</p>}
         <div className="hub-card__btns">
           {busy ? (
