@@ -12,7 +12,9 @@ const TAP_SLOP = 8; // これより動いたらタップではなくドラッグ
 
 type View = { s: number; x: number; y: number };
 
-export default function ZoomPan({ width, height, children, label }: {
+export default function ZoomPan({ width, height, children, label, fill = false }: {
+  /** 親の高さいっぱいに広げる（エントリー受付の全画面の対戦表）。全画面のボタンは出さない */
+  fill?: boolean;
   /** 中身の実寸（px） */
   width: number;
   height: number;
@@ -147,15 +149,17 @@ export default function ZoomPan({ width, height, children, label }: {
   const pct = Math.round(view.s * 100);
 
   return (
-    <div className={`zp ${full ? 'is-full' : ''}`}>
+    <div className={`zp ${full ? 'is-full' : ''} ${fill ? 'zp--fill' : ''}`}>
       <div className="zp__tools" role="toolbar" aria-label="表示の大きさ">
         <button type="button" className="zp__btn" onClick={() => zoomAt(view.s / 1.4, center().x, center().y)} aria-label="縮小"><Minus className="w-4 h-4" /></button>
         <span className="zp__pct" aria-live="polite">{pct}%</span>
         <button type="button" className="zp__btn" onClick={() => zoomAt(view.s * 1.4, center().x, center().y)} aria-label="拡大"><Plus className="w-4 h-4" /></button>
         <button type="button" className="zp__btn zp__btn--txt" onClick={fit} aria-label="全体を表示"><Scan className="w-4 h-4" /><span>全体</span></button>
-        <button type="button" className="zp__btn" onClick={() => setFull((f) => !f)} aria-label={full ? '全画面をやめる' : '全画面で表示'}>
-          {full ? <Minimize className="w-4 h-4" /> : <Maximize className="w-4 h-4" />}
-        </button>
+        {!fill && (
+          <button type="button" className="zp__btn" onClick={() => setFull((f) => !f)} aria-label={full ? '全画面をやめる' : '全画面で表示'}>
+            {full ? <Minimize className="w-4 h-4" /> : <Maximize className="w-4 h-4" />}
+          </button>
+        )}
       </div>
       <div
         ref={box}
@@ -165,13 +169,13 @@ export default function ZoomPan({ width, height, children, label }: {
         onPointerDown={onPointerDown}
         // ドラッグ・ピンチのあとは中のボタンを押さない
         onClickCapture={(e) => { if (moved.current) { e.stopPropagation(); e.preventDefault(); moved.current = false; } }}
-        style={full ? undefined : { height: `min(72dvh, ${Math.max(220, Math.round(height * Math.min(1, (vp.w || width) / width)) + 16)}px)` }}
+        style={full || fill ? undefined : { height: `min(72dvh, ${Math.max(220, Math.round(height * Math.min(1, (vp.w || width) / width)) + 16)}px)` }}
       >
         <div className="zp__content" style={{ width, height, transform: `translate(${view.x}px, ${view.y}px) scale(${view.s})` }}>
           {children}
         </div>
       </div>
-      <p className="zp__hint">{full ? '2 本指で拡大・縮小、1 本指で移動。Esc か右上のボタンで戻る' : 'ピンチで拡大・縮小、ドラッグで移動、2 回タップで拡大／全体。選手をタップで受付'}</p>
+      <p className="zp__hint">{fill ? '1 本指で移動・ピンチで拡大・2 回タップで拡大／全体。選手をタップで受付' : full ? '2 本指で拡大・縮小、1 本指で移動。Esc か右上のボタンで戻る' : 'ピンチで拡大・縮小、ドラッグで移動、2 回タップで拡大／全体。選手をタップで受付'}</p>
     </div>
   );
 }

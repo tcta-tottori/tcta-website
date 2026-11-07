@@ -1111,3 +1111,28 @@ button.esh-slot:active { transform: scale(.985); }
 .rvw-src li { display: flex; gap: 8px; padding: 6px 4px; border-bottom: 1px solid var(--gray-100); font: 400 13px/1.4 var(--fjp); }
 .rvw-src li b { min-width: 22px; font: 700 12px/1.4 var(--flt); color: var(--gray-500); }
 .rvw-src li.is-bye { color: var(--gray-400); }
+
+/* 全画面の対戦表（EntryRegistration.tsx の renderSheetScreen）。上に受付の数と種目の札、下いっぱいに対戦表 */
+.ent-ss { position: fixed; inset: 0; z-index: 390; display: flex; flex-direction: column; background: var(--white); padding-top: env(safe-area-inset-top); }
+.ent-ss__head { flex: none; display: flex; align-items: center; gap: 10px; padding: 8px 8px 6px 16px; border-bottom: 1px solid var(--gray-100); }
+.ent-ss__ttl { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.ent-ss__en { font: 700 11px/1 var(--flt); letter-spacing: .14em; color: var(--red); }
+.ent-ss__tally { font: 700 13px/1.4 var(--fjp); color: var(--gray-600); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ent-ss__tally b { font: 700 18px/1 var(--flt); color: var(--ink); }
+.ent-ss__tally em { font-style: normal; color: var(--red); }
+.ent-ss__x { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; border: 1px solid var(--gray-200); border-radius: var(--radius); background: var(--white); color: var(--ink); cursor: pointer; }
+.ent-ss__nav { flex: none; display: flex; align-items: center; gap: 4px; padding: 6px 4px; border-bottom: 1px solid var(--gray-200); background: var(--gray-050); }
+.ent-ss__arrow { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; border: 0; border-radius: var(--radius); background: none; color: var(--ink); cursor: pointer; }
+.ent-ss__chips { flex: 1; min-width: 0; display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+.ent-ss__chips::-webkit-scrollbar { display: none; }
+.ent-ss__chip { flex: none; display: inline-flex; align-items: center; gap: 6px; height: 40px; padding: 0 12px; border: 1px solid var(--gray-300); border-radius: var(--radius); background: var(--white); font: 700 13px/1 var(--fjp); color: var(--ink); white-space: nowrap; cursor: pointer; }
+.ent-ss__chip small { font: 700 11px/1 var(--flt); color: var(--gray-500); }
+.ent-ss__chip.is-on { background: var(--ink); border-color: var(--ink); color: #fff; }
+.ent-ss__chip.is-on small { color: rgba(255, 255, 255, .7); }
+.ent-ss__chip.is-done:not(.is-on) { color: var(--gray-500); }
+.ent-ss__body { flex: 1; min-height: 0; display: flex; flex-direction: column; padding: 8px 8px calc(4px + env(safe-area-inset-bottom)); }
+.ent-ss__sheet { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+/* 親の高さいっぱいの ZoomPan */
+.zp--fill { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.zp--fill .zp__box { flex: 1; min-height: 0; }
+.zp--fill .zp__hint { text-align: center; }

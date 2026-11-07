@@ -29,7 +29,9 @@ const ROUND_W = 34;
 const CENTER_W = 44;
 const PAD = 16;
 
-export default function EntrySheet({ eventName, drawSize, isLeague, doubles, slots, matchTimes, leagueCourts, onTap }: {
+export default function EntrySheet({ eventName, drawSize, isLeague, doubles, slots, matchTimes, leagueCourts, onTap, fill = false }: {
+  /** 親の高さいっぱいに広げる（全画面の対戦表） */
+  fill?: boolean;
   eventName: string;
   drawSize: number;
   isLeague: boolean;
@@ -54,7 +56,7 @@ export default function EntrySheet({ eventName, drawSize, isLeague, doubles, slo
     const height = PAD * 2 + headH + rowH * lines + 18 + 40;
     const order = generateLeagueMatchOrder(list.length).map(([a, b]) => `${CIRCLED[a] ?? a + 1}-${CIRCLED[b] ?? b + 1}`).join('  ');
     return (
-      <ZoomPan width={width} height={height} label={`${eventName}の対戦表`}>
+      <ZoomPan width={width} height={height} label={`${eventName}の対戦表`} fill={fill}>
         <div className="esh" style={{ width, height, padding: PAD }}>
           <p className="esh__title" style={{ height: headH }}>{eventName}</p>
           <div className={`esh-league ${narrow ? 'is-narrow' : ''}`} style={{ gridTemplateColumns: `${labelW}px repeat(${cols}, ${cellW}px)`, gridTemplateRows: `repeat(${lines}, ${rowH}px)` }}>
@@ -109,7 +111,7 @@ export default function EntrySheet({ eventName, drawSize, isLeague, doubles, slo
   const right = split ? lines(perSide, true) : null;
 
   return (
-    <ZoomPan width={width} height={height} label={`${eventName}の対戦表`}>
+    <ZoomPan width={width} height={height} label={`${eventName}の対戦表`} fill={fill}>
       <div className="esh" style={{ width, height }}>
         <p className="esh__title" style={{ position: 'absolute', left: PAD, top: PAD, height: headH }}>{eventName}<small>{size} ドロー</small></p>
         <svg className="esh__lines" width={width} height={height} aria-hidden="true">
