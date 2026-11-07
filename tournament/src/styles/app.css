@@ -957,7 +957,18 @@ html.is-lite [class~="fixed"][class~="inset-0"] > [class*="bg-white"][class*="ma
 
 /* テストモードの帯（TestModeBar.tsx）。黄色地の 1 行。収まらない説明は横に流す */
 .test-bar { flex: none; position: relative; z-index: 30; background: #FFE9A8; border-bottom: 1px solid #E0B94A; color: #5A4300; }
-@media (max-width: 1023px) { .test-bar { padding-top: var(--header-h); } }
+/* スマホは帯を出さず、ヘッダーの協会ロゴの位置に「TEST」の 1 行（メニューボタンと同じ行）。ヘッダーは黄色地 */
+@media (max-width: 1023px) {
+  .test-bar { display: none; }
+  .site-header.has-brand { background: #FFE9A8; border-bottom: 1px solid #E0B94A; }
+  .site-header.has-brand .site-header__logo { display: none; }
+  .site-header.has-brand .site-header__brand { flex: 1; min-width: 0; display: flex; align-items: center; margin-right: 12px; color: #5A4300; }
+  /* メニューを開いているあいだは黒地のメニューに合わせる（× を白のまま見せる） */
+  .site-header.has-brand.is-menu { background: transparent; border-bottom-color: transparent; }
+  .site-header.has-brand.is-menu .site-header__brand { color: #FFE9A8; }
+}
+@media (min-width: 1024px) { .site-header__brand { display: none; } }
+.test-line { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
 .test-bar__inner { display: flex; align-items: center; gap: 10px; height: 34px; }
 .test-bar__label { flex: none; display: inline-flex; align-items: center; gap: 5px; padding: 3px 8px; background: #5A4300; color: #FFE9A8; font: 700 11px/1 var(--flt); letter-spacing: .14em; border-radius: var(--radius); }
 .test-bar__mq { flex: 1; min-width: 0; overflow: hidden; white-space: nowrap; }

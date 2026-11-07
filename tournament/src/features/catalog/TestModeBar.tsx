@@ -1,5 +1,6 @@
-// テストモードの大会を開いているあいだ、ヘッダーの下に出す 1 行の帯（testMode.ts）。
+// テストモードの大会を開いているあいだの印（testMode.ts）。
 //   ・「TEST」の札と説明を 1 行で。説明が 1 行に収まらない幅では、横に流す（軽量モード・動きを減らす設定では流さず省略）
+//   ・スマホはヘッダーの協会ロゴの代わりに出す（メニューボタンと同じ行）。ヘッダーは黄色地に。PC はヘッダーの下の帯
 //   ・「テストを終える」はスマホではメニューの軽量モードの横（TestEndButton。AppLayout.tsx が MobileNav に渡す）。
 //     PC はメニュー（三本線）が無いので、帯の右端に小さく置く
 import { useLayoutEffect, useRef, useState } from 'react';
@@ -12,7 +13,8 @@ import { removeLocalTournament } from './deviceImport';
 
 const TEXT = 'テストモード：Cloudflare に自動保存しません。対戦順・データ管理からテスト用のスコアを自動で入れられます。';
 
-export default function TestModeBar() {
+/** 「TEST」の札と説明の 1 行（収まらない説明は流す）。PC は帯の中、スマホはヘッダーのロゴの位置（メニューボタンと同じ行） */
+export function TestModeLine() {
   const testMode = useIsTestMode();
   const box = useRef<HTMLDivElement>(null);
   const txt = useRef<HTMLSpanElement>(null);
@@ -30,15 +32,26 @@ export default function TestModeBar() {
 
   if (!testMode) return null;
   return (
-    <div className="test-bar" role="status">
+    <span className="test-line" role="status">
+      <span className="test-bar__label"><FlaskConical className="w-3.5 h-3.5" />TEST</span>
+      <span ref={box} className={`test-bar__mq ${overflow ? 'is-run' : ''}`}>
+        <span className="test-bar__track">
+          <span ref={txt} className="test-bar__text">{TEXT}</span>
+          {overflow && <span className="test-bar__text" aria-hidden="true">{TEXT}</span>}
+        </span>
+      </span>
+    </span>
+  );
+}
+
+/** PC：ヘッダーの下の黄色い帯（TEST の 1 行 ＋ 右端に「テストを終える」）。スマホは出さない（ヘッダーの中に TestModeLine） */
+export default function TestModeBar() {
+  const testMode = useIsTestMode();
+  if (!testMode) return null;
+  return (
+    <div className="test-bar">
       <div className="container test-bar__inner">
-        <span className="test-bar__label"><FlaskConical className="w-3.5 h-3.5" />TEST</span>
-        <div ref={box} className={`test-bar__mq ${overflow ? 'is-run' : ''}`}>
-          <span className="test-bar__track">
-            <span ref={txt} className="test-bar__text">{TEXT}</span>
-            {overflow && <span className="test-bar__text" aria-hidden="true">{TEXT}</span>}
-          </span>
-        </div>
+        <TestModeLine />
         <span className="test-bar__end"><TestEndButton /></span>
       </div>
     </div>

@@ -22,7 +22,8 @@ import { useSiteReveal } from '../site/useSiteReveal';
 import { useOfficer, logout } from '../../features/auth/officer';
 import { syncDictionary } from '../../features/catalog/dictSync';
 import { startAutoSave } from '../../features/backup/autoSave';
-import TestModeBar, { TestEndButton } from '../../features/catalog/TestModeBar';
+import TestModeBar, { TestEndButton, TestModeLine } from '../../features/catalog/TestModeBar';
+import { useIsTestMode } from '../../features/catalog/testMode';
 import ResultInboxNotice from '../../features/catalog/ResultInboxNotice';
 import { useResultInbox } from '../../features/catalog/resultInbox';
 
@@ -88,6 +89,7 @@ const DRAW_TAB_PATHS = ['/draw-lot', '/draw-table'];
 const MIXED_HIDDEN_PATHS = ['/referee', '/schedule-sheet', '/draw-lot', '/court-bracket'];
 
 export default function AppLayout() {
+  const isTest = useIsTestMode();
   const location = useLocation();
   const navigate = useNavigate();
   const currentTournamentId = useAppStore((s) => s.currentTournamentId);
@@ -414,6 +416,7 @@ export default function AppLayout() {
       <SiteHeader
         homeTo="/data"
         logo={SYSTEM_LOGO}
+        brand={isTest ? <TestModeLine /> : undefined}
         items={navItems}
         contact={{ label: '観戦ページ', href: '/view', external: true }}
         aux={syncChip}

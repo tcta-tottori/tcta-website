@@ -43,8 +43,10 @@ export interface NavLinkItem {
 // ---------------------------------------------------------------------------
 
 export function SiteHeader({
-  homeTo, tag, tagEm, items, contact, aux, menuOpen, onToggleMenu, hideMenu = false, scrolled = false, logo,
+  homeTo, tag, tagEm, items, contact, aux, menuOpen, onToggleMenu, hideMenu = false, scrolled = false, logo, brand,
 }: {
+  /** スマホでロゴの代わりに出すもの（テストモードの「TEST」の 1 行など）。PC はロゴのまま */
+  brand?: ReactNode;
   /** ロゴを差し替える（大会運営システムのロゴなど） */
   logo?: { src: string; white: string; width: number; height: number; alt: string };
   homeTo: string;
@@ -64,12 +66,13 @@ export function SiteHeader({
   scrolled?: boolean;
 }) {
   return (
-    <header className={`site-header ${menuOpen ? 'is-menu' : ''} ${scrolled ? 'hsh' : ''}`}>
+    <header className={`site-header ${menuOpen ? 'is-menu' : ''} ${scrolled ? 'hsh' : ''} ${brand ? 'has-brand' : ''}`}>
       <div className="container site-header__inner">
         <Link className={`site-header__logo ${logo ? 'site-header__logo--system' : ''}`} to={homeTo} aria-label={logo ? logo.alt : `鳥取市テニス協会 ${tag ?? ''}`}>
           <img className="site-header__logo-img" src={logo?.src ?? LOGO} alt={logo?.alt ?? '鳥取市テニス協会 TOTTORI-CITY TENNIS ASSOCIATION'} width={logo?.width ?? 679} height={logo?.height ?? 217} />
           <img className="site-header__logo-w" src={logo?.white ?? LOGO_WHITE} alt="" width={logo?.width ?? 679} height={logo?.height ?? 217} />
         </Link>
+        {brand && <div className="site-header__brand">{brand}</div>}
         {tag && <span className="app-tag" aria-hidden="true">{tag}{tagEm && <em>{tagEm}</em>}</span>}
         <nav className="nav" aria-label="グローバルナビゲーション">
           {items.map((it) => it.href ? (
