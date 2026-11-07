@@ -3,6 +3,7 @@ import { Trophy, Play } from 'lucide-react';
 import type { DrawSlotData, MatchResult } from '../draw/DrawBoard';
 import { parseScoreParts } from '../score/scoreDisplay';
 import { pairDisplayLines } from '../draw/pairLabel';
+import MarqueeText from '../../components/ui/MarqueeText';
 
 /** 経過時間を H:MM 形式 */
 function formatElapsed(startedAt: number): string {
@@ -288,18 +289,18 @@ export default function CourtBracketView({
    * ダブルスは「A / B」をペアの1人ずつ2行に分け、所属もその行の右に並べる。
    * 2人が同じ所属で1つしか入っていないときは、2行の縦中央に1つだけ置く。
    * シングルスはこれまで通り「氏名（左）＋所属（右）」の1行。
+   * 氏名は省略しない（苗字だけにするのは surname のときだけ）。所属は残りの幅に入れ、収まらなければ横に流す（MarqueeText）。
    */
   const nameBlock = (
     name: string,
     affiliation: string,
-    opt: { nameCls: string; affCls: string; number?: number | null },
+    opt: { nameCls: string; affCls: string; number?: number | null; surname?: boolean },
   ) => {
     const { names, affiliations } = isDoubles
       ? pairDisplayLines(name, affiliation)
       : { names: [name], affiliations: affiliation ? [affiliation] : [] };
-    const multi = names.length > 1;
     return (
-      <div className="flex-1 flex items-stretch gap-1.5 min-w-0">
+      <div className="flex-1 flex items-stretch gap-1.5 min-w-0 overflow-hidden">
         {opt.number != null && (
           // 番号は2行に分けた選手の中央（枠の縦中央）に置き、区切り線で選手と分ける
           <div className="shrink-0 flex items-center border-r border-gray-300 pr-1">
@@ -308,22 +309,16 @@ export default function CourtBracketView({
             </span>
           </div>
         )}
-        <div className="flex-1 min-w-0 leading-tight self-center">
+        <div className={`${affiliations.length > 0 ? 'shrink-0' : 'flex-1'} min-w-0 leading-tight self-center`}>
           {names.map((n, i) => (
-            <div key={i} className={`truncate min-w-[3.5em] ${opt.nameCls}`} title={n}>{n}</div>
+            <div key={i} className={`whitespace-nowrap ${opt.nameCls}`} title={n}>{opt.surname ? n.split(/[\s\u3000]+/)[0] : n}</div>
           ))}
         </div>
         {affiliations.length > 0 && (
-          // 枠が狭いときは所属のほうを先に省略して、氏名を残す
-          <div className={`leading-tight text-right self-center shrink min-w-0 ${multi ? 'max-w-[46%]' : 'max-w-[42%]'}`}>
+          // 所属は氏名の残りの幅に。収まらなければ横に流す（氏名は省略しない）
+          <div className="flex-1 min-w-0 leading-tight self-center">
             {affiliations.map((a, i) => (
-              <div
-                key={i}
-                className={`truncate ${opt.affCls}`}
-                title={a}
-              >
-                {a}
-              </div>
+              <MarqueeText key={i} text={a} align="right" className={opt.affCls} />
             ))}
           </div>
         )}
@@ -546,7 +541,8 @@ export default function CourtBracketView({
 
   // 対戦カード（vs）用の選手1行：番号＋フルネームと所属。
   // シングルスは氏名の下に所属、ダブルスはペアを1人ずつ2行にして各行の右に所属を出す。
-  const playerRow = (entryId: string | null, name: string, key: string, dim: boolean) => {
+  /** surname … 左にコート番号などの列があるカード。苗字だけ＋流れる所属にして重ならないようにする */
+  const playerRow = (entryId: string | null, name: string, key: string, dim: boolean, surname = false) => {
     const full = fullNameOf(entryId, name);
     const aff = affiliationOf(entryId);
     const num = numberOf(entryId);
@@ -557,6 +553,7 @@ export default function CourtBracketView({
           nameCls,
           affCls: 'text-[9px] text-gray-500',
           number: num,
+          surname,
         })}
       </div>
     );
@@ -687,6 +684,7 @@ export default function CourtBracketView({
       } else if (isVs) {
         // vs表示：実際に試合中のもののみ左端にコート番号を表示（控えは時間割上の仮割当のため非表示）。
         const dim = !isPlaying && !isReady;
+        const withCol = isPlaying || !!matchResult!.enterCourtName || !!matchResult!.standbyLabel;
         content = (
           <div className="flex items-stretch w-full h-full min-w-0">
             {isPlaying
@@ -697,9 +695,9 @@ export default function CourtBracketView({
                   ? standbyColumn(matchResult!.standbyLabel)
                   : null}
             <div className="flex-1 flex flex-col justify-center min-w-0 px-2 gap-0.5">
-              {playerRow(matchResult!.player1EntryId, matchResult!.player1Name, 'p1', dim)}
+              {playerRow(matchResult!.player1EntryId, matchResult!.player1Name, 'p1', dim, withCol)}
               <div className="border-t border-gray-200" />
-              {playerRow(matchResult!.player2EntryId, matchResult!.player2Name, 'p2', dim)}
+              {playerRow(matchResult!.player2EntryId, matchResult!.player2Name, 'p2', dim, withCol)}
             </div>
           </div>
         );

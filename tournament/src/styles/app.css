@@ -1136,3 +1136,15 @@ button.esh-slot:active { transform: scale(.985); }
 .zp--fill { flex: 1; min-height: 0; display: flex; flex-direction: column; }
 .zp--fill .zp__box { flex: 1; min-height: 0; }
 .zp--fill .zp__hint { text-align: center; }
+
+/* 収まらないときだけ流す 1 行の文字（MarqueeText.tsx。対戦順のドローの所属など） */
+.mqt { display: block; overflow: hidden; white-space: nowrap; }
+.mqt__track { display: inline-flex; }
+.mqt__text { flex: none; }
+.mqt--right:not(.is-run) { text-align: right; }
+.mqt:not(.is-run) .mqt__text { display: block; overflow: hidden; text-overflow: ellipsis; }
+.mqt.is-run .mqt__text { padding-right: 2em; }
+.mqt.is-run .mqt__track { animation: mqt-run 8s linear infinite; }
+@keyframes mqt-run { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+@media (prefers-reduced-motion: reduce) { .mqt.is-run .mqt__track { animation: none; } }
+html.is-lite .mqt.is-run .mqt__track { animation: none; }
