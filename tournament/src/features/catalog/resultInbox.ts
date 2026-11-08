@@ -144,9 +144,19 @@ async function pollOnce(tournamentId: string): Promise<void> {
   // 端末に大会を入れ直したら（作った時刻が新しい）、前の結果も入れ直す
   if (seen && seen >= doc.version && seen.endsWith(`@${t.createdAt}`)) return;
   const report = await applyInbox(tournamentId, doc);
-  try { localStorage.setItem(seenKey(tournamentId), `${doc.version}@${t.createdAt}`); } catch { /* 無視 */ }
-  if (report.applied.length || report.conflicts.length || report.notFound.length) setReport({ ...report, at: Date.now(), source: doc.source });
+  // 入れられなかった結果（エントリー確定の前で試合がまだ無い・前の回戦が未入力など）があるうちは「読んだ」にせず、
+  // 次の回にまた試す（確定して試合ができたら入る）。知らせは、入った試合があるときか、残りの中身が変わったときだけ出す
+  if (report.notFound.length === 0) {
+    try { localStorage.setItem(seenKey(tournamentId), `${doc.version}@${t.createdAt}`); } catch { /* 無視 */ }
+    pendingSig.delete(tournamentId);
+  }
+  const sig = `${doc.version}|${report.notFound.map((x) => `${x.event}:${x.winner}:${x.loser}`).join(',')}`;
+  const repeated = report.notFound.length > 0 && pendingSig.get(tournamentId) === sig;
+  if (report.notFound.length > 0) pendingSig.set(tournamentId, sig);
+  if (report.applied.length || ((report.conflicts.length || report.notFound.length) && !repeated)) setReport({ ...report, at: Date.now(), source: doc.source });
 }
+/** 入れられずに残っている結果の中身（同じ知らせを 20 秒おきに出し直さないため） */
+const pendingSig = new Map<string, string>();
 
 /** 運営中の大会について、受け箱の結果を取り込み続ける */
 export function useResultInbox(enabled: boolean): void {
