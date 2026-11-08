@@ -6,15 +6,20 @@
 //   ・試合は「種目の名前」と「2 人の名前」で探す（並び・空白の違いは気にしない）
 //   ・トーナメントは勝った人を次の回戦へ上げる。上げたことで次の試合が見つかれば、続けてその結果も入れる
 //   ・端末の側ですでに別の結果が入っている試合は上書きしない（食い違いとして知らせる）
+//   ・エントリーをまだ確定していない種目に結果が届いたら、写真からエントリー受付もする：
+//     初戦を W.O で負けた人（ほかに結果が無い人）は欠場にし、残りはそのまま出場として確定（対戦表を作る）してから結果を入れる
 import { useEffect, useSyncExternalStore } from 'react';
 import { db, type Match } from '../../db/database';
 import { useAppStore } from '../../stores/appStore';
+import { confirmEventCore } from '../entry/confirmCore';
 
 export interface InboxMatch { winner: string; loser: string; score: string; note?: string }
 export interface InboxEvent { event: string; matches: InboxMatch[] }
 export interface InboxDoc { version: string; updatedBy?: string; source?: string; events: InboxEvent[] }
 
 export interface ApplyReport {
+  /** 写真の結果からエントリーを確定した種目と、欠場にした人 */
+  confirmed?: { event: string; absent: string[] }[];
   applied: { event: string; winner: string; loser: string; score: string }[];
   conflicts: { event: string; winner: string; loser: string; reason: string }[];
   notFound: { event: string; winner: string; loser: string; reason: string }[];
@@ -55,10 +60,20 @@ export async function applyInbox(tournamentId: string, doc: InboxDoc): Promise<A
       for (const r of ie.matches) report.notFound.push({ event: ie.event, winner: r.winner, loser: r.loser, reason: '種目が見つかりません' });
       continue;
     }
-    const matches = await db.matches.where('eventId').equals(evt.eventId).toArray();
+    let matches = await db.matches.where('eventId').equals(evt.eventId).toArray();
+    // エントリーをまだ確定していない（対戦表が無い）種目：写真の結果からエントリー受付をして確定する
+    if (matches.length === 0 && ie.matches.length > 0) {
+      const auto = await autoConfirm(evt.eventId, ie.matches);
+      if (auto) {
+        report.confirmed = [...(report.confirmed ?? []), { event: evt.name, absent: auto.absent }];
+        matches = await db.matches.where('eventId').equals(evt.eventId).toArray();
+      }
+    }
+    const absentNames = await withdrawnNames(evt.eventId);
     const byKey = new Map<string, Match>(matches.map((m) => [`${m.round}|${m.position}`, m]));
     const changed = new Set<Match>();
-    let pending = [...ie.matches];
+    // 欠場の人の W.O は、確定で相手が不戦勝になっているので済み
+    let pending = ie.matches.filter((r) => !(isWalkover(r) && [...absentNames].some((n) => sideHas(n, r.loser))));
 
     // 勝ち上がりで次の試合の 2 人がそろうので、入れられるものが無くなるまで繰り返す
     for (let pass = 0; pass < 12 && pending.length > 0; pass++) {
@@ -118,6 +133,49 @@ export async function applyInbox(tournamentId: string, doc: InboxDoc): Promise<A
   return report;
 }
 
+/** 種目のエントリーの名前（ダブルスは「A・B」）を出す */
+async function entryNames(eventId: string) {
+  const entries = await db.entries.where('eventId').equals(eventId).toArray();
+  const players = new Map((await db.players.toArray()).map((p) => [p.playerId, p]));
+  return entries.map((en) => {
+    const p1 = players.get(en.playerId)?.name ?? '';
+    const p2 = en.partnerId ? players.get(en.partnerId)?.name ?? '' : '';
+    return { entry: en, name: p2 ? `${p1}・${p2}` : p1 };
+  });
+}
+
+/** 欠場（エントリーを取り消した）人の名前 */
+async function withdrawnNames(eventId: string): Promise<Set<string>> {
+  return new Set((await entryNames(eventId)).filter((x) => x.entry.status === 'withdrawn').map((x) => x.name));
+}
+
+/**
+ * 写真の結果から、まだ確定していない種目のエントリー受付をして確定する。
+ * 初戦を W.O で負けた人（その結果のほかに名前が出てこない人）は欠場（枠を BYE）にする。
+ * 確定できなかったとき（順位別トーナメントの順位待ちなど）は null
+ */
+async function autoConfirm(eventId: string, results: InboxMatch[]): Promise<{ absent: string[] } | null> {
+  const draw = await db.draws.where('eventId').equals(eventId).first();
+  if (!draw?.id) return null;
+  const named = await entryNames(eventId);
+  const appearances = (person: string) => results.filter((r) => keyOf(r.winner) === keyOf(person) || keyOf(r.loser) === keyOf(person)).length;
+  const absent: string[] = [];
+  const absentIds = new Set<string>();
+  for (const r of results) {
+    if (!isWalkover(r) || appearances(r.loser) !== 1) continue;
+    const en = named.find((x) => x.entry.status === 'active' && sideHas(x.name, r.loser))?.entry;
+    if (!en?.id || absentIds.has(en.entryId)) continue;
+    await db.entries.update(en.id, { status: 'withdrawn' });
+    absentIds.add(en.entryId);
+    absent.push(r.loser);
+  }
+  if (absentIds.size) {
+    await db.draws.update(draw.id, { slots: draw.slots.map((s) => (s.entryId && absentIds.has(s.entryId) ? { ...s, isBye: true } : s)), updatedAt: Date.now() });
+  }
+  const ok = await confirmEventCore(eventId);
+  return ok ? { absent } : null;
+}
+
 // ---------------------------------------------------------------------------
 // 運営中に少しおきに取りに来る（AppLayout から）
 // ---------------------------------------------------------------------------
@@ -153,7 +211,7 @@ async function pollOnce(tournamentId: string): Promise<void> {
   const sig = `${doc.version}|${report.notFound.map((x) => `${x.event}:${x.winner}:${x.loser}`).join(',')}`;
   const repeated = report.notFound.length > 0 && pendingSig.get(tournamentId) === sig;
   if (report.notFound.length > 0) pendingSig.set(tournamentId, sig);
-  if (report.applied.length || ((report.conflicts.length || report.notFound.length) && !repeated)) setReport({ ...report, at: Date.now(), source: doc.source });
+  if (report.applied.length || report.confirmed?.length || ((report.conflicts.length || report.notFound.length) && !repeated)) setReport({ ...report, at: Date.now(), source: doc.source });
 }
 /** 入れられずに残っている結果の中身（同じ知らせを 20 秒おきに出し直さないため） */
 const pendingSig = new Map<string, string>();

@@ -14,6 +14,7 @@ export default function ResultInboxNotice() {
         {issues.length ? <AlertTriangle className="w-4 h-4" /> : <CheckCircle2 className="w-4 h-4" />}
         <p className="inbox-note__title">
           {r.source ? `${r.source}から` : '届いた結果から'} {r.applied.length} 試合を反映しました
+          {(r.confirmed?.length ?? 0) > 0 && <small>（{r.confirmed!.length} 種目のエントリーを確定）</small>}
           {issues.length > 0 && <small>（入れられなかった {issues.length} 件）</small>}
         </p>
         <button type="button" className="inbox-note__more" onClick={() => setOpen((v) => !v)}>{open ? '閉じる' : '中身'}</button>
@@ -21,6 +22,7 @@ export default function ResultInboxNotice() {
       </div>
       {open && (
         <ul className="inbox-note__list">
+          {(r.confirmed ?? []).map((c, i) => <li key={`c${i}`}><b>{c.event}</b> 写真の結果からエントリーを確定しました{c.absent.length > 0 && `（欠場：${c.absent.join('、')}）`}</li>)}
           {r.applied.map((a, i) => <li key={`a${i}`}><b>{a.event}</b> {a.winner} が {a.loser} に {a.score}</li>)}
           {issues.map((a, i) => <li key={`i${i}`} className="is-warn"><b>{a.kind}</b> {a.event}：{a.winner} 対 {a.loser}（{a.reason}）</li>)}
         </ul>
