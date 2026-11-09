@@ -56,8 +56,13 @@ function collectMaterials(t, mediaUrl) {
   for (const b of Array.isArray(t.materials) ? t.materials : []) {
     const key = SECTION_KEY[b.section];
     if (!key) continue;
-    if (b._type === 'material_image' && b.image?.src) {
-      sec(key).images.push({ src: b.image.src, label: b.label || null, w: b.image.width ?? 1241, h: b.image.height ?? 1754 });
+    if (b._type === 'material_image' && b.image) {
+      // 管理画面・API で入れた画像は src を持たず、R2 の storageKey だけが残る（EmDash が保存時に src を落とす）
+      const img = b.image;
+      const storageKey = typeof img.meta?.storageKey === 'string' ? img.meta.storageKey : null;
+      const src = img.src || (storageKey && mediaUrl(storageKey)) || null;
+      if (!src) continue;
+      sec(key).images.push({ src, label: b.label || null, w: img.width ?? 1241, h: img.height ?? 1754 });
     } else if (b._type === 'material_pdf' && b.file) {
       const f = b.file;
       const storageKey = typeof f.meta?.storageKey === 'string' ? f.meta.storageKey : null;
