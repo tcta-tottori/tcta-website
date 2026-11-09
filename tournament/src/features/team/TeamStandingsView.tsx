@@ -16,11 +16,12 @@ const LEAGUE_COLORS = [
 ];
 
 export default function TeamStandingsView() {
-  const { leagues, leagueMatches, rankOverrides, generateBrackets } = useTeamStore();
+  const { leagues, leagueMatches, rankOverrides, generateBrackets, tiebreakOrder, tournamentInfo } = useTeamStore();
+  const rankBy = tournamentInfo?.rankBy;
 
   const allStandings = useMemo(
-    () => calculateTeamStandings(leagues, leagueMatches, rankOverrides),
-    [leagues, leagueMatches, rankOverrides]
+    () => calculateTeamStandings(leagues, leagueMatches, rankOverrides, tiebreakOrder, rankBy),
+    [leagues, leagueMatches, rankOverrides, tiebreakOrder, rankBy]
   );
 
   // 全リーグ完了チェック

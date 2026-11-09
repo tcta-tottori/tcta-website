@@ -240,10 +240,11 @@ function PublicTeamLeagueView() {
   const leagueMatches = useTeamStore(s => s.leagueMatches);
   const rankOverrides = useTeamStore(s => s.rankOverrides);
   const tiebreakOrder = useTeamStore(s => s.tiebreakOrder);
+  const rankBy = useTeamStore(s => s.tournamentInfo?.rankBy);
 
   const allStandings = useMemo(
-    () => calculateTeamStandings(leagues, leagueMatches, rankOverrides, tiebreakOrder),
-    [leagues, leagueMatches, rankOverrides, tiebreakOrder]
+    () => calculateTeamStandings(leagues, leagueMatches, rankOverrides, tiebreakOrder, rankBy),
+    [leagues, leagueMatches, rankOverrides, tiebreakOrder, rankBy]
   );
 
   if (leagues.length === 0) {

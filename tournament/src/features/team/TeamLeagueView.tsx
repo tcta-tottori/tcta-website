@@ -575,7 +575,7 @@ export default function TeamLeagueView() {
   );
 
   const { rankOverrides } = useTeamStore();
-  const allStandings = calculateTeamStandings(leagues, leagueMatches, rankOverrides, tiebreakOrder);
+  const allStandings = calculateTeamStandings(leagues, leagueMatches, rankOverrides, tiebreakOrder, tournamentInfo?.rankBy);
 
   const selectedLeague = leagues.find(l => l.leagueId === selectedLeagueId) || leagues[0];
   if (!selectedLeague) {
@@ -1417,6 +1417,7 @@ export default function TeamLeagueView() {
             team2Members={t2Members}
             team2Roster={t2Roster}
             winGames={winGames}
+            totalGames={tournamentInfo?.rankBy === 'totalGames' ? winGames : undefined}
             onClose={() => setEditingMatch(null)}
           />
         );

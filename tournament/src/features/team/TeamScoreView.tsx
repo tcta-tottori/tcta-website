@@ -6,8 +6,9 @@ import TeamBracketView from './TeamBracketView';
 export default function TeamScoreView() {
   const {
     brackets, leagues, leagueMatches, rankOverrides, allTeams,
-    lastStandingsHash, autoPopulateBrackets, tiebreakOrder,
+    lastStandingsHash, autoPopulateBrackets, tiebreakOrder, tournamentInfo,
   } = useTeamStore();
+  const rankBy = tournamentInfo?.rankBy;
 
   // ハッシュには順位だけでなく「リーグ完了状態」も含める。
   // 初期状態（全0勝）は stable sort によりチーム順がそのまま 1,2,3... の
@@ -15,7 +16,7 @@ export default function TeamScoreView() {
   // ハッシュが変わらず、決勝トーナメントが更新されない問題を防ぐ。
   const currentHash = useMemo(() => {
     if (leagues.length === 0) return '';
-    const standings = calculateTeamStandings(leagues, leagueMatches, rankOverrides, tiebreakOrder);
+    const standings = calculateTeamStandings(leagues, leagueMatches, rankOverrides, tiebreakOrder, rankBy);
     const parts: string[] = [];
     for (const league of leagues) {
       const lid = league.leagueId;
@@ -25,7 +26,7 @@ export default function TeamScoreView() {
       parts.push(`${lid}[${isCompleted ? '1' : '0'}]:${ls.map(s => `${s.teamId}@${s.rank}`).join(',')}`);
     }
     return parts.sort().join('|');
-  }, [leagues, leagueMatches, rankOverrides, tiebreakOrder]);
+  }, [leagues, leagueMatches, rankOverrides, tiebreakOrder, rankBy]);
 
   const bracketsStale = useMemo(() => {
     if (brackets.length === 0 || allTeams.length === 0) return false;

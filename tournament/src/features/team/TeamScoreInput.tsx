@@ -437,6 +437,11 @@ interface Props {
   team2Members?: TeamMember[];
   /** 1セット獲得に必要なゲーム数（6 or 8）。タイブレークは N+1 になる。 */
   winGames?: number;
+  /**
+   * 総ゲーム数で行う種目（例 総ゲーム数8ゲーム）のときの総ゲーム数。
+   * 指定すると、片方を入れたときにもう片方を「総ゲーム数 − 入れた数」で埋める（5 → 3、4 → 4）
+   */
+  totalGames?: number;
 }
 
 interface SubMatchState {
@@ -457,6 +462,7 @@ export default function TeamScoreInput({
   team1Roster = [], team2Roster = [],
   team1Members = [], team2Members = [],
   winGames = DEFAULT_WIN_GAMES,
+  totalGames,
 }: Props) {
   // ローカルでは WIN_GAMES として扱う（後方互換のため変数名を維持）
   const WIN_GAMES = winGames;
@@ -683,7 +689,12 @@ export default function TeamScoreInput({
     };
     let next: SubMatchState = { ...currentBase, [field]: raw };
     // Auto-fill 仕様：1桁を入力した瞬間、相手側が空ならゲーム取得本数 (=WIN_GAMES) で埋める
-    if (raw.length === 1 && /^[0-9]$/.test(raw)) {
+    if (totalGames && raw.length === 1 && /^[0-9]$/.test(raw)) {
+      // 総ゲーム数で行う種目：もう片方は 総ゲーム数 − 入れた数
+      const num = parseInt(raw);
+      const other = field === 'score1' ? 'score2' : 'score1';
+      if (num <= totalGames && next[other] === '') next = { ...next, [other]: String(totalGames - num) };
+    } else if (raw.length === 1 && /^[0-9]$/.test(raw)) {
       const num = parseInt(raw);
       if (field === 'score1' && num < WIN_GAMES && next.score2 === '') {
         next = { ...next, score2: WIN_GAMES.toString() };
@@ -725,7 +736,7 @@ export default function TeamScoreInput({
         }
       }
     }
-  }, [scores, matchTypeOrder, terminated, persistSubMatch, WIN_GAMES]);
+  }, [scores, matchTypeOrder, terminated, persistSubMatch, WIN_GAMES, totalGames]);
 
   const handleTiebreakChange = useCallback((matchType: MatchType, value: string) => {
     const raw = toHalfWidth(value).replace(/[^0-9]/g, '');

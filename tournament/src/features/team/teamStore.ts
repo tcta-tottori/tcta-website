@@ -6,7 +6,7 @@ import type {
   TeamPhase, TeamTournamentInfo, ExcelSheetData,
   MatchType, TeamMember, TiebreakRuleId
 } from './types';
-import { calculateTeamStandings, generateAllBrackets, determineTeamWinner, getMatchTypeOrder, DEFAULT_TIEBREAK_ORDER } from './teamLogic';
+import { calculateTeamStandings, generateAllBrackets, determineTeamWinner, getMatchTypeOrder, isSubMatchDone, DEFAULT_TIEBREAK_ORDER } from './teamLogic';
 import { findMembersByTeamName } from './clubExcelParser';
 
 /**
@@ -341,7 +341,7 @@ export const useTeamStore = create<TeamState>()(
               return { ...sm, score1, score2, tiebreakScore: tb, winnerId, terminated: terminated || false };
             });
             const { winnerId, winsTeam1, winsTeam2 } = determineTeamWinner(newSubMatches, m.team1Id, m.team2Id);
-            const allFinished = newSubMatches.every(sm => sm.winnerId !== null || sm.terminated);
+            const allFinished = newSubMatches.every(sm => isSubMatchDone(sm, state.tournamentInfo?.rankBy));
             return {
               ...m,
               subMatches: newSubMatches,
@@ -364,7 +364,7 @@ export const useTeamStore = create<TeamState>()(
               return { ...sm, score1: null, score2: null, tiebreakScore: null, winnerId: null, terminated: false };
             });
             const { winnerId, winsTeam1, winsTeam2 } = determineTeamWinner(newSubMatches, m.team1Id, m.team2Id);
-            const allFinished = newSubMatches.every(sm => sm.winnerId !== null || sm.terminated);
+            const allFinished = newSubMatches.every(sm => isSubMatchDone(sm, state.tournamentInfo?.rankBy));
             return {
               ...m,
               subMatches: newSubMatches,
@@ -387,13 +387,13 @@ export const useTeamStore = create<TeamState>()(
       },
 
       getStandings: () => {
-        const { leagues, leagueMatches, rankOverrides, tiebreakOrder } = get();
-        return calculateTeamStandings(leagues, leagueMatches, rankOverrides, tiebreakOrder);
+        const { leagues, leagueMatches, rankOverrides, tiebreakOrder, tournamentInfo } = get();
+        return calculateTeamStandings(leagues, leagueMatches, rankOverrides, tiebreakOrder, tournamentInfo?.rankBy);
       },
 
       generateBrackets: () => {
         const { leagues, leagueMatches, allTeams, tournamentInfo, rankOverrides } = get();
-        const standings = calculateTeamStandings(leagues, leagueMatches, rankOverrides, get().tiebreakOrder);
+        const standings = calculateTeamStandings(leagues, leagueMatches, rankOverrides, get().tiebreakOrder, tournamentInfo?.rankBy);
         const brackets = generateAllBrackets(standings, allTeams, leagues, tournamentInfo?.bracketOrders, tournamentInfo?.matchFormat);
         set({ brackets, currentPhase: 'tournament' });
       },
@@ -925,7 +925,7 @@ export const useTeamStore = create<TeamState>()(
       autoPopulateBrackets: () => {
         const { leagues, leagueMatches, allTeams } = get();
         if (leagues.length === 0) return;
-        const baseStandings = calculateTeamStandings(leagues, leagueMatches, get().rankOverrides, get().tiebreakOrder);
+        const baseStandings = calculateTeamStandings(leagues, leagueMatches, get().rankOverrides, get().tiebreakOrder, get().tournamentInfo?.rankBy);
         const completedStandings = new Map<string, TeamLeagueStanding[]>();
         for (const [leagueId, stds] of baseStandings) {
           const lMatches = leagueMatches.filter(m => m.leagueId === leagueId);
@@ -938,7 +938,7 @@ export const useTeamStore = create<TeamState>()(
 
       regenerateBrackets: () => {
         const { leagues, leagueMatches, allTeams, brackets: oldBrackets, tournamentInfo, rankOverrides, bracketCourtAssignments } = get();
-        const baseStandings = calculateTeamStandings(leagues, leagueMatches, rankOverrides, get().tiebreakOrder);
+        const baseStandings = calculateTeamStandings(leagues, leagueMatches, rankOverrides, get().tiebreakOrder, tournamentInfo?.rankBy);
         const completedStandings = new Map<string, TeamLeagueStanding[]>();
         for (const [leagueId, stds] of baseStandings) {
           const lMatches = leagueMatches.filter(m => m.leagueId === leagueId);

@@ -158,6 +158,12 @@ export interface TeamTournamentInfo {
   bracketGameRule?: string;
   /** 試合形式（省略時は 'mix' = MIX/WD/MD の3種目） */
   matchFormat?: MatchFormat;
+  /**
+   * リーグの順位の決め方（省略時は 'wins'＝対戦の勝数が先）。
+   * 'totalGames'＝対戦の勝敗ではなく取得ゲーム数の合計で決める（プリンスオープンのチーム対抗戦など）。
+   * この方式では各種目を「総ゲーム数N」で行い 4-4 の引き分けがあるので、スコアが入った種目を終わったものとみなす
+   */
+  rankBy?: 'wins' | 'totalGames';
   bracketOrders?: {
     '1st'?: string[];
     '2nd'?: string[];

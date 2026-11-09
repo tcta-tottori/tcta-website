@@ -1243,9 +1243,17 @@ function TeamRouletteDrawPanel({ bracket, onRebuild }: {
   const teams = bracket.teams;
   const DRAW_SIZE = 8;
 
+  // 他の順位別トーナメントの並び（Excel の決勝トーナメント表）に BYE の位置があれば、それに合わせる
+  // （プリンスオープンの 6 チームは 1 番と 6 番が BYE。紙のトーナメント表と同じ番号で抽選できるように）
+  const bracketOrders = useTeamStore(s => s.tournamentInfo?.bracketOrders);
   // チーム数に応じてBYE位置を決定（5チームなら3 BYE等）
   const BYE_POSITIONS = useMemo(() => {
     const byeCount = Math.max(0, DRAW_SIZE - teams.length);
+    for (const order of Object.values(bracketOrders ?? {})) {
+      if (!order || order.length !== DRAW_SIZE) continue;
+      const byes = order.map((code, i) => (code === 'BYE' ? i : -1)).filter(i => i >= 0);
+      if (byes.length === byeCount && byeCount > 0) return new Set(byes);
+    }
     // 5チーム→[1,5,7]、4チーム→[1,3,5,7]、6チーム→[1,5]、7チーム→[1]、8チーム→[]
     const presets: Record<number, number[]> = {
       0: [],
@@ -1255,7 +1263,7 @@ function TeamRouletteDrawPanel({ bracket, onRebuild }: {
       4: [1, 3, 5, 7],
     };
     return new Set(presets[byeCount] ?? []);
-  }, [teams.length]);
+  }, [teams.length, bracketOrders]);
 
   const teamSlots = useMemo(() =>
     Array.from({ length: DRAW_SIZE }, (_, i) => i).filter(i => !BYE_POSITIONS.has(i)),

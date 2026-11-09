@@ -306,6 +306,15 @@ export function regenerateLeagueMatches(league: TeamLeague, format?: MatchFormat
 }
 
 /** 種目勝利数からチーム勝敗を判定。打ち切り種目はカウントから除外 */
+/**
+ * 種目が終わったか。通常は勝者が決まるか打ち切りで終わり。
+ * 取得ゲーム数で順位を決める方式（総ゲーム数N・4-4 の引き分けあり）では、両方のスコアが入れば終わり
+ */
+export function isSubMatchDone(sm: SubMatchScore, rankBy?: TeamTournamentInfo['rankBy']): boolean {
+  if (sm.winnerId !== null || sm.terminated) return true;
+  return rankBy === 'totalGames' && sm.score1 !== null && sm.score2 !== null;
+}
+
 export function determineTeamWinner(
   subMatches: SubMatchScore[],
   team1Id: string,
@@ -345,8 +354,10 @@ export function calculateTeamStandings(
   leagues: TeamLeague[],
   matches: TeamLeagueMatch[],
   rankOverrides?: Record<string, Record<string, number>>,
-  tiebreakOrder: TiebreakRuleId[] = DEFAULT_TIEBREAK_ORDER
+  tiebreakOrder: TiebreakRuleId[] = DEFAULT_TIEBREAK_ORDER,
+  rankBy: TeamTournamentInfo['rankBy'] = 'wins',
 ): Map<string, TeamLeagueStanding[]> {
+  const byTotalGames = rankBy === 'totalGames';
   const result = new Map<string, TeamLeagueStanding[]>();
 
   for (const league of leagues) {
@@ -362,17 +373,18 @@ export function calculateTeamStandings(
     }
 
     for (const m of leagueMatches) {
-      if (!m.winnerId) continue;
+      // 取得ゲーム数で決める方式では、引き分け（勝者なし）の対戦もゲーム数を数える
+      if (!m.winnerId && !byTotalGames) continue;
       const s1 = statsMap.get(m.team1Id);
       const s2 = statsMap.get(m.team2Id);
 
       // 対戦勝敗
-      if (s1) {
+      if (m.winnerId && s1) {
         if (m.winnerId === m.team1Id) s1.wins++; else s1.losses++;
         s1.pointsWon += m.winsTeam1;
         s1.pointsLost += m.winsTeam2;
       }
-      if (s2) {
+      if (m.winnerId && s2) {
         if (m.winnerId === m.team2Id) s2.wins++; else s2.losses++;
         s2.pointsWon += m.winsTeam2;
         s2.pointsLost += m.winsTeam1;
@@ -407,10 +419,18 @@ export function calculateTeamStandings(
 
     // ソート: 勝数 → ユーザー設定の優先順位に従ってタイブレーク
     standings.sort((a, b) => {
-      // 0. 勝数降順（常に最優先）
-      if (a.wins !== b.wins) return b.wins - a.wins;
+      // 0. 取得ゲーム数で決める方式ではゲーム数の合計、それ以外は勝数（降順・最優先）
+      if (byTotalGames) {
+        if (a.gamesWon !== b.gamesWon) {
+          a.tiebreakReason = `取得ゲーム ${a.gamesWon}`;
+          b.tiebreakReason = `取得ゲーム ${b.gamesWon}`;
+          return b.gamesWon - a.gamesWon;
+        }
+      } else if (a.wins !== b.wins) return b.wins - a.wins;
 
-      const tiedTeams = standings.filter(s => s.wins === a.wins);
+      const tiedTeams = byTotalGames
+        ? standings.filter(s => s.gamesWon === a.gamesWon)
+        : standings.filter(s => s.wins === a.wins);
 
       for (const rule of tiebreakOrder) {
         if (rule === 'points') {

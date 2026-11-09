@@ -1,7 +1,7 @@
 import * as XLSX from 'xlsx';
 import type {
   TeamEntry, TeamLeague, TeamLeagueMatch, TeamTournamentInfo,
-  MatchOrderEntry
+  MatchOrderEntry, PlacementCategory
 } from './types';
 import { MATCH_TYPE_ORDER } from './teamLogic';
 
@@ -161,10 +161,17 @@ export function parseTeamExcel(buffer: ArrayBuffer): ParseResult {
   // 選手名簿からメンバー情報を取得（色による性別判定付き）
   if (rosterWs) {
     parseRoster(rosterWs, leagues, teamNumberMap, rosterColorMap);
+  } else {
+    // 選手名簿シートが無い形（プリンスオープンなど）：予選リーグの表のチーム名の下に選手が並ぶ
+    const leagueSheetIndex = wb.SheetNames.indexOf(leagueSheetName);
+    const leagueColorMap = buildCellFontColorMap(buffer, wb, `/xl/worksheets/sheet${leagueSheetIndex + 1}.xml`);
+    parseLeagueSheetMembers(leagueWs, leagues, leagueColorMap);
   }
 
   // 予選リーグシートから決勝トーナメントのブラケット順を取得
   parseBracketOrders(leagueWs, info);
+  // 決勝トーナメントが別のシート（「決勝T」など）にある形
+  if (!info.bracketOrders) parseBracketSheet(wb, info);
 
   // 試合データ生成
   const matches: TeamLeagueMatch[] = [];
@@ -232,7 +239,7 @@ function parseTournamentInfo(wb: XLSX.WorkBook): TeamTournamentInfo {
     /(方法|ルール|マッチ|ノーアド|タイブレ|ゲーム先取|ゲームマッチ|行います|ダブルス|男子|女子|先取|リーグ戦|特別|順位|決定)/.test(s);
 
   const pickTitle = (clean: string) => {
-    if (!/(会長杯|テニス大会|選手権|カップ|杯)/.test(clean)) return;
+    if (!/(会長杯|テニス大会|選手権|カップ|杯|オープン|対抗戦)/.test(clean)) return;
     if (/令和/.test(clean)) return;
     if (isRuleLike(clean)) return;
     if (clean.length > 40) return;
@@ -332,6 +339,16 @@ function parseTournamentInfo(wb: XLSX.WorkBook): TeamTournamentInfo {
   // 年度 + 大会タイトルを連結
   info.name = [yearText, titleText].filter(Boolean).join(' ').trim();
 
+  // 表紙の文章（セルをまたいで折り返していることがあるので、つなげてから見る）
+  const coverText = toHalf(collectSheetText(ws));
+  // 「対戦の勝敗ではなく、獲得ゲーム数の合計により順位を決定」→ 取得ゲーム数の合計で順位を決める
+  if (/ゲーム数の合計(により|で)順位/.test(coverText)) info.rankBy = 'totalGames';
+  // 「各対戦は総ゲーム数8ゲーム(ノーアドバンテージ…)」→ リーグの種目は総ゲーム数8
+  const totalMatch = coverText.match(/総ゲーム数(\d+)ゲーム/);
+  const leagueTotalRule = totalMatch ? `総ゲーム数${totalMatch[1]}ゲーム（ノーアド）` : '';
+  // 「順位別決勝トーナメントは、6ゲーム先取（ノーアド）」
+  const bracketMatch = coverText.match(/決勝トーナメントは[、,]?(\d+)ゲーム先取/);
+
   // ゲームルール解析
   info.gameRules = {};
   for (const r of info.rules) {
@@ -357,9 +374,30 @@ function parseTournamentInfo(wb: XLSX.WorkBook): TeamTournamentInfo {
     info.gameRules[5] = '6ゲーム先取（ノーアド）';
   }
 
-  info.bracketGameRule = '6ゲームマッチ（6-6タイブレーク・ノーアド）';
+  if (leagueTotalRule) {
+    info.gameRules[3] = leagueTotalRule;
+    info.gameRules[4] = leagueTotalRule;
+    info.gameRules[5] = leagueTotalRule;
+  }
+
+  info.bracketGameRule = bracketMatch
+    ? `${bracketMatch[1]}ゲーム先取（ノーアド）`
+    : '6ゲームマッチ（6-6タイブレーク・ノーアド）';
 
   return info;
+}
+
+/** シートの文字を上から順につなげる（空白・改行は除く） */
+function collectSheetText(ws: XLSX.WorkSheet): string {
+  const range = XLSX.utils.decode_range(ws['!ref'] || 'A1:Z50');
+  const parts: string[] = [];
+  for (let r = range.s.r; r <= range.e.r; r++) {
+    for (let c = range.s.c; c <= range.e.c; c++) {
+      const v = cellStr(ws, colLetter(c) + (r + 1));
+      if (v) parts.push(v.replace(/[\s\u3000]+/g, ''));
+    }
+  }
+  return parts.join('');
 }
 
 /** 予選リーグシートからリーグ・チーム情報をパース */
@@ -374,7 +412,7 @@ function parseLeagues(ws: XLSX.WorkSheet): {
 
   // リーグヘッダーを検出（行を走査）
   const leagueRows: { row: number; leagueId: string; courtName: string }[] = [];
-  for (let r = range.s.r; r <= Math.min(range.e.r, 30); r++) {
+  for (let r = range.s.r; r <= range.e.r; r++) {
     const aVal = cellStr(ws, 'A' + (r + 1));
     if (!aVal) continue;
 
@@ -390,7 +428,22 @@ function parseLeagues(ws: XLSX.WorkSheet): {
         const lines = aVal.split('\n');
         if (lines.length > 1) courtName = lines[1].trim();
       }
+      // "A\nリーグ" のように改行で区切っただけのときは、2 行目はコート名ではない
+      if (/^リーグ$/.test(courtName)) courtName = '';
       leagueRows.push({ row: r, leagueId, courtName });
+    }
+  }
+
+  // コート名が見出しに無いとき：同じリーグの欄の A 列にある「コート№」の下の行（例 "１・２" → "1・2番コート"）
+  for (let i = 0; i < leagueRows.length; i++) {
+    const lr = leagueRows[i];
+    if (lr.courtName) continue;
+    const endRow = i + 1 < leagueRows.length ? leagueRows[i + 1].row - 1 : range.e.r;
+    for (let r = lr.row + 1; r <= endRow; r++) {
+      if (!/コート/.test(cellStr(ws, 'A' + (r + 1)))) continue;
+      const v = toHalf(cellStr(ws, 'A' + (r + 2))).replace(/\s+/g, '');
+      if (v && /\d/.test(v)) lr.courtName = /コート/.test(v) ? v : `${v}番コート`;
+      break;
     }
   }
 
@@ -549,6 +602,110 @@ function parseRoster(
       }
     }
   }
+}
+
+/**
+ * 予選リーグの表からメンバーを読む（選手名簿シートが無い形）。
+ * リーグ見出し（A 列の「Aリーグ」）の行に ①〜④ とチーム名、その下の行に選手が並ぶ。
+ * 赤い文字が女子、それ以外は男子（男子は青だがテーマ色のことがあり色の値が取れない）
+ */
+function parseLeagueSheetMembers(
+  ws: XLSX.WorkSheet,
+  leagues: TeamLeague[],
+  colorMap: Map<string, string>,
+) {
+  const range = XLSX.utils.decode_range(ws['!ref'] || 'A1:CZ60');
+  const circledNumbers = '①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳㉑㉒';
+  const headerRows: { row: number; leagueId: string }[] = [];
+  for (let r = range.s.r; r <= range.e.r; r++) {
+    const m = cellStr(ws, 'A' + (r + 1)).match(/([A-ZＡ-Ｚ])\s*リーグ/);
+    if (m) headerRows.push({ row: r, leagueId: toHalf(m[1]).trim() });
+  }
+  for (let i = 0; i < headerRows.length; i++) {
+    const { row, leagueId } = headerRows[i];
+    const league = leagues.find(l => l.leagueId === leagueId);
+    if (!league) continue;
+    const endRow = i + 1 < headerRows.length ? headerRows[i + 1].row - 1 : Math.min(range.e.r, row + 12);
+    // チームの列（丸数字のセル）
+    const teamCols: number[] = [];
+    for (let c = range.s.c + 1; c <= range.e.c; c++) {
+      const v = cellStr(ws, colLetter(c) + (row + 1));
+      if (v && circledNumbers.includes(v.charAt(0))) teamCols.push(c);
+    }
+    teamCols.forEach((col, ti) => {
+      const team = league.teams[ti];
+      if (!team) return;
+      const colEnd = ti + 1 < teamCols.length ? teamCols[ti + 1] - 1 : range.e.c;
+      const members: TeamEntry['members'] = [];
+      const seen = new Set<string>();
+      for (let r = row + 1; r <= endRow; r++) {
+        for (let c = col; c <= colEnd; c++) {
+          const ref = colLetter(c) + (r + 1);
+          const v = cellStr(ws, ref);
+          if (!v || v.length > 20) continue;
+          const name = v.replace(/\n/g, ' ').replace(/[\s\u3000]+/g, '\u3000').trim();
+          if (!name || seen.has(name)) continue;
+          seen.add(name);
+          // 色が取れればそれで（赤＝女子）。取れないときは列で（チームの欄の左の列＝男子、右の列＝女子）
+          const color = colorMap.get(ref);
+          const gender: 'M' | 'F' = color
+            ? (color === 'FF0000' || color === 'FFFF0000' ? 'F' : 'M')
+            : (c === col ? 'M' : 'F');
+          members.push({ player: { name, affiliation: '' }, gender });
+        }
+      }
+      // 男子を先、女子を後に（表の並びと同じ）
+      team.members = [...members.filter(m => m.gender === 'M'), ...members.filter(m => m.gender === 'F')];
+    });
+  }
+}
+
+/**
+ * 決勝トーナメントが別のシート（「決勝T」など）にある形を読む。
+ * 「2位トーナメント」の見出しの下に「Ｂ2 Ａ2 Ｆ2 …」と枠の順に並ぶ。
+ * 1位トーナメントが抽選（枠に 1〜6 の番号だけ）のときは並びを持たない（運営画面で組む）。
+ * 6 チームなら 8 枠の山にし、一番上と一番下のチームを 2 回戦から（BYE）にする（紙のトーナメント表と同じ）
+ */
+function parseBracketSheet(wb: XLSX.WorkBook, info: TeamTournamentInfo) {
+  const sheetName = wb.SheetNames.find(n => /決勝/.test(n));
+  if (!sheetName) return;
+  const ws = wb.Sheets[sheetName];
+  const range = XLSX.utils.decode_range(ws['!ref'] || 'A1:AY60');
+  const keyOf: Record<string, PlacementCategory> = { '1': '1st', '2': '2nd', '3': '3rd', '4': '4th' };
+  const labels: { row: number; key: PlacementCategory }[] = [];
+  for (let r = range.s.r; r <= range.e.r; r++) {
+    for (let c = range.s.c; c <= range.e.c; c++) {
+      const m = toHalf(cellStr(ws, colLetter(c) + (r + 1))).match(/^([1-4])位トーナメント/);
+      if (m) { labels.push({ row: r, key: keyOf[m[1]] }); break; }
+    }
+  }
+  const codeRe = /^([A-ZＡ-Ｚ])\s*([1-5１-５])$/;
+  const orders: NonNullable<TeamTournamentInfo['bracketOrders']> = {};
+  labels.forEach((lb, i) => {
+    const endRow = i + 1 < labels.length ? labels[i + 1].row - 1 : range.e.r;
+    const codes: string[] = [];
+    for (let r = lb.row + 1; r <= endRow; r++) {
+      for (let c = range.s.c; c <= range.e.c; c++) {
+        const m = cellStr(ws, colLetter(c) + (r + 1)).match(codeRe);
+        if (m) codes.push(toHalf(m[1]) + toHalf(m[2]));
+      }
+    }
+    if (codes.length > 0) orders[lb.key] = withStandardByes(codes);
+  });
+  if (Object.keys(orders).length === 0) return;
+  info.bracketOrders = orders;
+  if (orders['4th']) info.bracketLabels = { ...(info.bracketLabels ?? {}), '4th': '4位トーナメント' };
+}
+
+/** 8 枠に満たないとき、上位の枠の相手を BYE にして 8 枠に並べる（6 チーム → 1・8 番目の相手が BYE） */
+function withStandardByes(codes: string[]): string[] {
+  if (codes.length >= 8 || codes.length <= 4) return codes;
+  // 8 枠の山で BYE を入れる順（1 番の相手 → 8 番の相手 → 5 番の相手 → 4 番の相手）
+  const byeSlots = [1, 6, 5, 2].slice(0, 8 - codes.length);
+  const out: string[] = [];
+  let k = 0;
+  for (let i = 0; i < 8; i++) out.push(byeSlots.includes(i) ? 'BYE' : codes[k++]);
+  return out;
 }
 
 /** 成績表からスコアを読み取り */
