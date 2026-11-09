@@ -6,13 +6,19 @@
 //   const { NEWS, SCHEDULE, EVENTS, CARDS, ... } = await siteData(Astro);
 // と受け取る。
 import { getEmDashCollection, getSiteSettingsWithCacheHint } from 'emdash';
-import { buildNews } from '../data/news.js';
+import { buildNews, secondsToNextNewChange } from '../data/news.js';
 import { buildSchedule, secondsToNextSwitch } from '../data/schedule.js';
 import { buildEvents } from '../data/events.js';
 import { buildCards } from '../data/tournaments.js';
 import { buildEventInfo } from '../data/eventinfo.js';
 import { buildSocial } from '../data/social.js';
 import { EXTRA_TOURNAMENTS } from '../data/official-extra.js';
+
+/** 秒数のうち小さいほう（null は無いものとして扱う） */
+const minSeconds = (...xs) => {
+  const v = xs.filter((x) => x !== null && x !== undefined);
+  return v.length ? Math.min(...v) : null;
+};
 
 /** コレクションを全件読む（1 ページ 100 件までなので、続きがあれば読み足す）。 */
 async function readAll(collection, options = {}) {
@@ -46,15 +52,16 @@ async function load(locals) {
   const schedule = buildSchedule(tournaments.rows);
   const events = buildEvents(tournaments.rows, schedule, mediaUrl);
   const cards = buildCards(tournaments.rows, { ...schedule, ...events });
+  const newsData = buildNews(news.rows);
   return {
-    ...buildNews(news.rows),
+    ...newsData,
     ...schedule,
     ...events,
     ...cards,
     ...buildEventInfo(eventInfo.rows),
     ...buildSocial(settings.data?.social),
-    // 大会の状態（開催中・終了・受付終了）が次に切り替わるまでの秒数。ページの保存をその時刻で切らす（siteData）
-    switchIn: secondsToNextSwitch(tournaments.rows),
+    // 大会の状態（開催中・終了・受付終了）か、お知らせの NEW が次に切り替わるまでの秒数。ページの保存をその時刻で切らす（siteData）
+    switchIn: minSeconds(secondsToNextSwitch(tournaments.rows), secondsToNextNewChange(newsData.NEWS)),
     loadedAt: Date.now(),
     hints: [...news.hints, ...tournaments.hints, ...eventInfo.hints, ...(settings.cacheHint ? [settings.cacheHint] : [])],
   };

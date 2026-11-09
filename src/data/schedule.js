@@ -122,14 +122,37 @@ const jstAt = (date, hour) => {
   return Date.UTC(y, m - 1, d, hour, 0, 0) - JST_OFFSET;
 };
 /**
+ * 何日かにわたる大会（「3月21日・28日」「12/27〜2/23」）の最後の日（'YYYY-MM-DD'）。読めなければ null。
+ * 年は開催日（初日）の年。最後の日の月が初日の月より前なら、年をまたいだものとして次の年
+ */
+export function lastDayOf(label, date) {
+  if (!date) return null;
+  const [y, m0] = String(date).split('-').map(Number);
+  let month = m0, day = null;
+  // 「3月21日」「12/27」（月と日）と、「・28日」「〜28日」（日だけ。前の月のまま）を順に読む
+  const re = /(\d{1,2})\s*[月/]\s*(\d{1,2})|[・、,〜~～\-]\s*(\d{1,2})\s*日/g;
+  for (const x of String(label ?? '').matchAll(re)) {
+    if (x[1]) { month = Number(x[1]); day = Number(x[2]); } else { day = Number(x[3]); }
+  }
+  if (day === null) return null;
+  const year = month < m0 ? y + 1 : y;
+  return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+}
+
+/**
  * 開催日の自動の状態。
  *   開催日の 9:00 より前 … 管理画面の状態のまま
  *   9:00〜18:00         … 開催中（管理画面で「終了」にしてあれば終了）
  *   18:00 以降          … 終了（管理画面で「本日開催」を選んであれば、その日のうちは開催中のまま）
  *   開催日の翌日以降     … 終了
+ * 何日かにわたる大会は、最後の日の翌日（0:00）から終了（それまでは管理画面の状態のまま）
  */
 export function liveStatus(status, date, label, now = Date.now()) {
-  if (!date || !isSingleDay(label) || status === 'done') return status;
+  if (!date || status === 'done') return status;
+  if (!isSingleDay(label)) {
+    const last = lastDayOf(label, date);
+    return last && now >= jstAt(last, 24) ? 'done' : status;
+  }
   if (now < jstAt(date, LIVE_FROM)) return status;
   if (now < jstAt(date, LIVE_UNTIL)) return 'live';
   if (now < jstAt(date, 24) && status === 'live') return 'live';
@@ -137,7 +160,7 @@ export function liveStatus(status, date, label, now = Date.now()) {
 }
 /**
  * 表示の状態が次に切り替わるまでの秒数（無ければ null）。ページの保存（1日）を、その時刻で切らすのに使う（src/lib/cms.js）。
- * 切り替わる時刻は、1日の大会の開催日の 9:00・18:00・24:00 と、受付中の大会の締切（20:00）
+ * 切り替わる時刻は、1日の大会の開催日の 9:00・18:00・24:00、何日かにわたる大会の最後の日の 24:00 と、受付中の大会の締切（20:00）
  */
 export function secondsToNextSwitch(rows, now = Date.now()) {
   let next = Infinity;
@@ -146,6 +169,10 @@ export function secondsToNextSwitch(rows, now = Date.now()) {
     if (!date) continue;
     const at = [dueAt(t.due, date)];
     if (isSingleDay(t.label)) at.push(jstAt(date, LIVE_FROM), jstAt(date, LIVE_UNTIL), jstAt(date, 24));
+    else {
+      const last = lastDayOf(t.label, date);
+      if (last) at.push(jstAt(last, 24));
+    }
     for (const x of at) if (x !== null && x > now && x < next) next = x;
   }
   return Number.isFinite(next) ? Math.ceil((next - now) / 1000) : null;

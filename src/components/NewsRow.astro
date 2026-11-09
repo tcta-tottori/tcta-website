@@ -1,6 +1,6 @@
 ---
 // お知らせ1行。src/data/news.js の1件をそのまま受け取る。
-// 左に日付、その隣が NEW の枠（2週間以内のものだけ赤い塗りつぶしバッジの NEW が入る。光沢が一定時間ごとに横に走る）、その隣に種類のバッジ（要項・ドロー・結果・アンケートなど。news.js の newsKind）、
+// 左に日付、その隣が NEW の枠（日付から1週間以内のものだけ赤い塗りつぶしバッジの NEW が入る。光沢が一定時間ごとに横に走る）、その隣に種類のバッジ（要項・ドロー・結果・アンケートなど。news.js の newsKind）、
 // 右にタイトル。タイトルは1行に入り切らないときは折り返す。
 // li の data-kind は、全件表示の絞り込み（main.js の initNewsFilter）に使う。
 import { newsDate, isNew, NEWS_KIND_LABEL, newsKind } from '../data/news.js';

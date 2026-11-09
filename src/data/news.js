@@ -19,7 +19,8 @@
 //   ラベルは表には出さないが、あとで絞り込みを付けるときのために残してある。
 //
 // ■ NEW の付き方
-//   日付が見た時点から2週間以内のものに、赤いバッジの NEW が自動で付く。
+//   日付から1週間（その日を含めて7日間。日本時間の日付で数える）のものに、赤いバッジの NEW が自動で付く。
+//   8日目の 0:00（日本時間）に自動で外れる（ページの保存もその時刻で切らす。src/lib/cms.js）。
 //   手で付け外しはしない（消し忘れが必ず起きるため）。
 //
 // ■ 書くときの約束
@@ -33,8 +34,8 @@ export const NEWS_VISIBLE = 3;
 /** PC（1024px 以上）でトップページに出す件数。4件目・5件目はスマホ・タブレットでは隠す（.news-pc） */
 export const NEWS_VISIBLE_PC = 5;
 
-/** NEW を付ける期間（日） */
-const NEW_DAYS = 14;
+/** NEW を付ける期間（日）。日付の日を1日目として NEW_DAYS 日目まで */
+const NEW_DAYS = 7;
 
 /** お知らせを出す期間（ヶ月）。日付がこれより前のものは表に出ない */
 const NEWS_MONTHS = 3;
@@ -137,12 +138,28 @@ export function newsDate(date) {
   return { day: `${m}.${d}`, year };
 }
 
+/** 日本時間（UTC+9） */
+const JST_OFFSET = 9 * 60 * 60 * 1000;
+/** NEW が外れる時刻（UTC のミリ秒）：日付の NEW_DAYS 日後の 0:00（日本時間） */
+const newUntil = (date) => {
+  const [y, m, d] = String(date).split(/[.-]/).map(Number);
+  return Date.UTC(y, m - 1, d + NEW_DAYS) - JST_OFFSET;
+};
+
 /**
- * 見た時点から NEW_DAYS 以内かどうか。
+ * NEW を付けるか。日付の日から NEW_DAYS 日間（日本時間の日付で数える。Cloudflare 上でも端末でも同じ）。
  * 先の日付（予告として先に書いたもの）も NEW として扱う。
  */
-export function isNew(date, now = new Date()) {
-  const [y, m, d] = date.split('.').map(Number);
-  const days = (now - new Date(y, m - 1, d)) / 86400000;
-  return days < NEW_DAYS;
+export function isNew(date, now = Date.now()) {
+  return Number(now) < newUntil(date);
+}
+
+/** NEW が次に外れるまでの秒数（無ければ null）。ページの保存をその時刻で切らすのに使う（src/lib/cms.js） */
+export function secondsToNextNewChange(news, now = Date.now()) {
+  let next = Infinity;
+  for (const n of news) {
+    const at = newUntil(n.date);
+    if (at > now && at < next) next = at;
+  }
+  return Number.isFinite(next) ? Math.ceil((next - now) / 1000) : null;
 }
