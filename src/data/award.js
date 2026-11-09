@@ -19,6 +19,8 @@ const AWARD_RE = /^(.*?)(総合優勝|優勝|準優勝|第\s*3\s*位|3位|4位|�
 const SUFFIX_RE = /^(.*?)\s*(選手|ペア|ぺあ|チーム|組)?\s*([（(][^（）()]*[）)])?$/;   // 注記はいちばん後ろの（ ）だけ（名前の中の（所属）は名前の一部）
 /** 種目名からダブルスかどうか */
 export const isPairCategory = (category) => /ダブルス|ミックス|ペア/.test(String(category ?? ''));
+/** 種目名からシングルスかどうか（シングルスの名前には「選手」を付ける） */
+export const isSinglesCategory = (category) => /シングルス/.test(String(category ?? ''));
 /** 「安田 彰汰（遊ポート）」→「安田」。空白が無ければ（苗字だけ・区切りの無いフルネーム）そのまま */
 const surname = (s) => s.replace(/[（(][^）)]*[）)]/g, '').trim().split(/[ 　]/)[0];
 /** ペアの名前を苗字だけに。「・」で区切られたそれぞれの人を苗字に */
@@ -42,7 +44,7 @@ export function awardBadge(award) {
 
 /** 「優勝 米本 叶芽 選手」→ 順位・名前・「選手」などに分ける。順位の言葉が無ければ award は '' で全体を name に。
  *  pair … ダブルスの種目か（苗字だけにする判断に使う。後ろに「ペア」が付いていれば種目に関わらずペア） */
-export function parseAward(text, note = '', pair = false) {
+export function parseAward(text, note = '', pair = false, singles = false) {
   const s = norm(text);
   const m = s.match(AWARD_RE);
   const prefix = m ? m[1].trim() : '';
@@ -58,9 +60,11 @@ export function parseAward(text, note = '', pair = false) {
     name = pairSurnames(name);
     if (!suffix) suffix = 'ペア';
   }
+  // シングルスの種目で「選手」などが付いていなければ付ける（写真のラベル「一般男子シングルス 優勝 小山 慶大」→「小山 慶大 選手」）
+  if (singles && name && !suffix && !name.includes('・')) suffix = '選手';
   if (note) n = [n, /^[（(]/.test(note) ? note : `（${note}）`].filter(Boolean).join(' ');
   return { prefix, award, name, suffix, note: n };
 }
 
 /** 成績の1件 { award, name, note } → parseAward と同じ形 */
-export const placeToAward = (p, pair = false) => parseAward(`${p.award ?? ''} ${p.name ?? ''}`, p.note ?? '', pair);
+export const placeToAward = (p, pair = false, singles = false) => parseAward(`${p.award ?? ''} ${p.name ?? ''}`, p.note ?? '', pair, singles);

@@ -5,13 +5,14 @@
 //   items    … 成績の配列 [{ award, name, note }]
 //   texts    … 「優勝 ○○ 選手」の文字列の配列（管理画面のラベルから拾ったもの）
 //   text     … 同じものを「　」でつないだ1本の文字列
-//   category … 種目名（ダブルス／ミックスなら、ペアの名前を苗字だけにする）
-import { parseAward, placeToAward, awardBadge, isPairCategory } from '../data/award.js';
+//   category … 種目名（ダブルス／ミックスなら、ペアの名前を苗字だけにして「ペア」を付ける。シングルスなら「選手」を付ける）
+import { parseAward, placeToAward, awardBadge, isPairCategory, isSinglesCategory } from '../data/award.js';
 const { items = null, texts = null, text = null, category = '' } = Astro.props;
 const pair = isPairCategory(category);
-const list = items ? items.map((p) => placeToAward(p, pair))
-  : texts ? texts.map((t) => parseAward(t, '', pair))
-  : String(text ?? '').split('　').filter(Boolean).map((t) => parseAward(t, '', pair));
+const singles = !pair && isSinglesCategory(category);
+const list = items ? items.map((p) => placeToAward(p, pair, singles))
+  : texts ? texts.map((t) => parseAward(t, '', pair, singles))
+  : String(text ?? '').split('　').filter(Boolean).map((t) => parseAward(t, '', pair, singles));
 const shown = list.filter((a) => a.award || a.name);
 ---
 
