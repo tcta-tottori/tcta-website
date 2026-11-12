@@ -19,15 +19,17 @@ type SlotLike = { position: number; entryId: string | null; seed: number; isBye:
 
 /**
  * リーグ戦の対戦順を生成。
- * 3人・4人は協会の大会の試合順（要項・プログラムの「試合順」）に合わせる：
+ * 3人・4人・5人は協会の大会の試合順（要項・プログラムの「試合順」）に合わせる：
  *   3人: ①-② ②-③ ①-③ / 4人: ①-② ③-④ ①-③ ②-④ ②-③ ①-④
- * 5人以上はサークル法。
+ *   5人: ①-② ③-④ ①-⑤ ②-③ ④-⑤ ①-③ ②-④ ③-⑤ ①-④ ②-⑤（市長杯のプログラムの5名リーグ）
+ * 6人以上はサークル法。
  */
 export function generateLeagueMatchOrder(n: number): [number, number][] {
   if (n < 2) return [];
   if (n === 2) return [[0, 1]];
   if (n === 3) return [[0, 1], [1, 2], [0, 2]];
   if (n === 4) return [[0, 1], [2, 3], [0, 2], [1, 3], [1, 2], [0, 3]];
+  if (n === 5) return [[0, 1], [2, 3], [0, 4], [1, 2], [3, 4], [0, 2], [1, 3], [2, 4], [0, 3], [1, 4]];
   const pairs: [number, number][] = [];
   const isOdd = n % 2 !== 0;
   const total = isOdd ? n + 1 : n; // 奇数の場合ダミー追加
