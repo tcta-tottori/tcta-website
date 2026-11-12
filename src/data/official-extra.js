@@ -12,6 +12,18 @@
 const img = (slug, file, label) => ({ src: `assets/img/events/${slug}/${file}`, label, w: 1241, h: 1754 });
 
 export const EXTRA_MATERIALS = {
+  // 第41回鳥取市市長杯テニス大会（シングルス。11/23）：ドロー（プログラム。2026.11.13 掲載。
+  //   男子A級Cリーグ⑬の選手の所属を、届いた版の「doMe」から「フリー」に直して載せた。2ページ目の画像と PDF）
+  'r8-shicho': {
+    draw: {
+      images: [
+        img('r8-shicho', 'draw-01.webp', 'プログラム（日程・注意事項）'),
+        img('r8-shicho', 'draw-02.webp', '男子A級・男子B級シングルス'),
+        img('r8-shicho', 'draw-03.webp', '男子C級・女子B級・女子C級シングルス'),
+      ],
+      pdfs: [{ src: 'assets/pdf/events/r8-shicho/R8市長杯ドロー.pdf', label: 'R8市長杯 ドロー（プログラム）', kb: 218 }],
+    },
+  },
   // 第62回鳥取市テニス協会会長杯（秋季・ダブルス。11/15）：ドロー（プログラム。2026.11.2 掲載、11.3 訂正版に差し替え：
   //   男子C級の決勝リーグの組み合わせ、試合方式を「6ゲームマッチ・ノーアド（6-6タイブレーク）」に。2ページ目の画像と PDF。
   //   11.5 お問い合わせを受けて、男子B級Cリーグの選手名の誤りを訂正）
@@ -107,6 +119,7 @@ export const EXTRA_CARDS = [
 ];
 
 export const EXTRA_NEWS = [
+  { slug: 'official-20261113-shicho-draw', date: '2026-11-13', createdAt: '2026-11-13T07:55:00+09:00', category: '大会', title: '第41回鳥取市市長杯テニス大会（11/23）のドローを掲載しました', href: 'draw-r8-shicho.html' },
   { slug: 'official-20261105-kaicho-autumn-draw-name-fix', date: '2026-11-05', createdAt: '2026-11-05T14:45:00+09:00', category: '大会', title: '第62回鳥取市テニス協会会長杯（秋季・11/15）のドローを訂正しました（男子B級Cリーグの選手名）', href: 'draw-r8-kaicho-autumn.html' },
   { slug: 'official-20261103-kaicho-autumn-draw-fix', date: '2026-11-03', createdAt: '2026-11-03T11:30:00+09:00', category: '大会', title: '第62回鳥取市テニス協会会長杯（秋季・11/15）のドローを訂正しました（男子C級の組み合わせ・試合方式は6ゲームマッチ）', href: 'draw-r8-kaicho-autumn.html' },
   { slug: 'official-20261102-kaicho-autumn-draw', date: '2026-11-02', createdAt: '2026-11-02T19:15:00+09:00', category: '大会', title: '第62回鳥取市テニス協会会長杯（秋季・11/15）のドローを掲載しました', href: 'draw-r8-kaicho-autumn.html' },
