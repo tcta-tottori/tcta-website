@@ -9,6 +9,7 @@
 //   /api/gemini-tts           … 音声コールの生成（役員だけ。API キーは Worker の secret。ブラウザには渡さない）
 //   /api/catalog・/api/dict  … 大会（ドロー込み）と選手・所属のふりがな辞書（D1。worker/catalog.ts）。/api/schema にその形の説明
 //   /api/data/files…          … 大会データの置き場（D1。worker/data.ts）。役員と、外からデータを送る仕組み（送信用の鍵）だけ
+//   /api/insta/…              … Instagram のストーリーズ告知（協会サイトのお知らせから画像を作り、役員が確かめて投稿。worker/insta.ts）
 //   /api/health               … 動作確認
 //   それ以外                  … アプリ本体（dist/ の静的ファイル。SPA なので未知の URL は index.html）
 //
@@ -21,6 +22,7 @@
 import { handleAuth, handleMe, officerOf, sameOrigin } from './auth';
 import { handleData } from './data';
 import { handleCatalog } from './catalog';
+import { handleInsta } from './insta';
 
 export { SyncRoom } from './sync-room';
 
@@ -42,6 +44,11 @@ export interface Env {
   OFFICER_EMAILS?: string;
   /** 手元の確認だけ 'dev'（localhost のときだけ効く） */
   AUTH_MODE?: string;
+  /** Instagram のストーリーズ投稿（worker/insta.ts）。プロアカウントの ID と長期のアクセストークン（wrangler secret put） */
+  IG_USER_ID?: string;
+  IG_ACCESS_TOKEN?: string;
+  /** 任意。既定 graph.instagram.com（Instagram ログインで作った鍵）。Facebook ログインの鍵なら graph.facebook.com */
+  IG_GRAPH_HOST?: string;
 }
 
 const ROOM_RE = /^[A-Za-z0-9_-]{1,40}$/;
@@ -83,6 +90,10 @@ export default {
 
     if (url.pathname === '/api/data/files' || url.pathname.startsWith('/api/data/files/')) {
       return handleData(request, env, url);
+    }
+
+    if (url.pathname.startsWith('/api/insta/')) {
+      return handleInsta(request, env, url);
     }
 
     if (url.pathname === '/api/health') {
