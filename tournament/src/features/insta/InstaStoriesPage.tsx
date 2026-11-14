@@ -72,6 +72,8 @@ export default function InstaStoriesPage() {
 function TokenBox({ configured, account, onChange }: { configured: boolean; account: { username: string; fromDb: boolean } | null; onChange: () => void }) {
   const [open, setOpen] = useState(false);
   const [token, setToken] = useState('');
+  const [userId, setUserId] = useState('');
+  const [needId, setNeedId] = useState(false);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState('');
   const send = async (method: 'POST' | 'DELETE') => {
@@ -81,11 +83,14 @@ function TokenBox({ configured, account, onChange }: { configured: boolean; acco
       const res = await fetch('/api/insta/token', {
         method, credentials: 'same-origin',
         headers: { 'content-type': 'application/json' },
-        body: method === 'POST' ? JSON.stringify({ token }) : undefined,
+        body: method === 'POST' ? JSON.stringify({ token, userId }) : undefined,
       });
       const body = await res.json();
-      if (!res.ok) throw new Error(body.error || `HTTP ${res.status}`);
-      setToken(''); setOpen(false);
+      if (!res.ok) {
+        if (body.needUserId) setNeedId(true);
+        throw new Error(body.error || `HTTP ${res.status}`);
+      }
+      setToken(''); setUserId(''); setNeedId(false); setOpen(false);
       onChange();
     } catch (e) {
       setMsg((e as Error).message);
@@ -98,7 +103,7 @@ function TokenBox({ configured, account, onChange }: { configured: boolean; acco
       <summary className="cursor-pointer font-bold text-gray-700">Instagram の鍵</summary>
       <div className="mt-2 space-y-2">
         {configured && account?.fromDb && (
-          <p>@{account.username || '（名前不明）'} の鍵が入っています。鍵は 7 日ごとに自動で新しくします（60 日のあいだにこの画面を一度も開かないと切れます）。</p>
+          <p>@{account.username || '（名前不明）'} の鍵が入っています。鍵が切れたら（投稿のときに「鍵が無効」と出たら）、開発者ページでトークンを作り直して入れ直してください。</p>
         )}
         {configured && account && !account.fromDb && <p>Worker の秘密に鍵が入っています。</p>}
         <p className="text-xs text-gray-500">
@@ -111,6 +116,15 @@ function TokenBox({ configured, account, onChange }: { configured: boolean; acco
           <button type="button" disabled={busy || token.trim().length < 20} onClick={() => send('POST')}
             className="px-3 py-1.5 text-xs font-bold text-white bg-primary-600 rounded disabled:opacity-40">{busy ? '確かめています…' : '入れる'}</button>
         </div>
+        {(needId || userId) && (
+          <div className="space-y-1">
+            <p className="text-xs text-gray-600">
+              Instagram のアカウント ID：開発者ページの「API setup with Unified login」の一覧で、tottori.city.tennis の名前の下に出ている数字（1784… で始まる）です。
+            </p>
+            <input inputMode="numeric" value={userId} onChange={(e) => setUserId(e.target.value)} placeholder="例 17841…（数字）"
+              className="w-full border border-gray-300 rounded px-2 py-1.5 text-sm" />
+          </div>
+        )}
         {configured && account?.fromDb && (
           <button type="button" disabled={busy} onClick={() => send('DELETE')} className="text-xs text-red-700 hover:underline">鍵を外す</button>
         )}

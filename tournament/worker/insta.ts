@@ -4,7 +4,8 @@
 //   GET  /api/insta/proxy?u=…    … 協会サイトの画像を、この Worker 経由で返す（画面の canvas に描くため。協会サイトの画像だけ。役員だけ）
 //   POST /api/insta/post         … 画面で作った JPEG を受け取り、Instagram にストーリーズとして投稿する（役員だけ・このサイトの画面からだけ）
 //   GET  /api/insta/img/<id>.jpg … 投稿する画像（Instagram がこの URL を読みに来るので、ログインなしで返す。推測できない id）
-//   POST /api/insta/token        … Instagram の鍵（アクセストークン）を入れる。{ token } を確かめて D1 に置く（役員だけ・このサイトの画面からだけ）
+//   POST /api/insta/token        … Instagram の鍵（アクセストークン）を入れる。{ token, userId? } を確かめて D1 に置く（役員だけ・このサイトの画面からだけ）
+//                                  IG… の鍵（Instagram ログイン）も EAA… の鍵（Facebook 方式・Unified login）も受ける（resolveAccount）
 //   DELETE /api/insta/token      … 鍵を外す
 //
 // 投稿は Instagram API のコンテンツ公開（ストーリーズ。Instagram ログイン。instagram_business_content_publish の権限）。
@@ -65,18 +66,18 @@ export async function handleInsta(request: Request, env: Env, url: URL): Promise
   if (url.pathname === '/api/insta/token') {
     if (!sameOrigin(request, url)) return json({ error: 'このサイトの画面からだけ使えます' }, 403);
     if (request.method === 'DELETE') {
-      await db.prepare(`DELETE FROM insta_meta WHERE k IN ('token', 'user_id', 'username', 'refreshed_at')`).run();
+      await db.prepare(`DELETE FROM insta_meta WHERE k IN ('token', 'user_id', 'username', 'host', 'refreshed_at')`).run();
       return json({ ok: true });
     }
     if (request.method !== 'POST') return json({ error: 'POST で呼んでください' }, 405);
-    const body = await request.json<{ token?: string }>().catch(() => ({} as { token?: string }));
+    const body = await request.json<{ token?: string; userId?: string }>().catch(() => ({} as { token?: string; userId?: string }));
     const token = String(body.token ?? '').trim();
+    const givenId = String(body.userId ?? '').replace(/\D/g, '');
     if (!/^[A-Za-z0-9_\-.|]{20,1000}$/.test(token)) return json({ error: '鍵（アクセストークン）の形が違います' }, 400);
-    const me = await fetch(`https://graph.instagram.com/${GRAPH_VERSION}/me?fields=user_id,username&access_token=${encodeURIComponent(token)}`);
-    const meBody = await me.json<{ user_id?: string; id?: string; username?: string; error?: { message?: string } }>().catch(() => ({} as { user_id?: string; id?: string; username?: string; error?: { message?: string } }));
-    if (!me.ok || meBody.error || !(meBody.user_id || meBody.id)) return json({ error: `Instagram でこの鍵を確かめられませんでした：${meBody.error?.message ?? me.status}` }, 400);
-    await saveMeta(db, { token, user_id: String(meBody.user_id ?? meBody.id), username: meBody.username ?? '', refreshed_at: new Date().toISOString() });
-    return json({ ok: true, username: meBody.username ?? '' });
+    const found = await resolveAccount(token, givenId);
+    if ('error' in found) return json({ error: found.error, needUserId: found.needUserId ?? false }, 400);
+    await saveMeta(db, { token, user_id: found.userId, username: found.username, host: found.host, refreshed_at: new Date().toISOString() });
+    return json({ ok: true, username: found.username });
   }
 
   const creds = await credsOf(env, db);
@@ -137,6 +138,52 @@ export async function handleInsta(request: Request, env: Env, url: URL): Promise
   return json({ error: 'not found' }, 404);
 }
 
+type Found = { userId: string; username: string; host: string } | { error: string; needUserId?: boolean };
+
+/** Graph API の返事（使う項目だけ） */
+type GraphBody = {
+  id?: string; user_id?: string; username?: string; name?: string;
+  error?: { message?: string };
+  data?: { instagram_business_account?: { id?: string; username?: string } }[];
+};
+async function getJson(u: string): Promise<{ ok: boolean; body: GraphBody }> {
+  const res = await fetch(u);
+  const body: GraphBody = await res.json<GraphBody>().catch(() => ({}));
+  return { ok: res.ok && !body.error, body };
+}
+
+/**
+ * 鍵から、投稿する Instagram のアカウント（ID と名前）と、問い合わせ先を調べる。
+ *   IG… で始まる鍵（Instagram ログイン）… graph.instagram.com の /me
+ *   EAA… で始まる鍵（Facebook 方式・Unified login）… graph.facebook.com で
+ *     ① /me が Instagram のアカウントを返せばそれ、② つないだ Facebook ページの Instagram アカウント、
+ *     ③ 画面で入れたアカウント ID（開発者ページの一覧に出ている 1784… の数字）を、この鍵で読めるか確かめる
+ */
+async function resolveAccount(token: string, givenId: string): Promise<Found> {
+  const t = encodeURIComponent(token);
+  const ig = `https://graph.instagram.com/${GRAPH_VERSION}`;
+  const fb = `https://graph.facebook.com/${GRAPH_VERSION}`;
+  if (!/^EAA/.test(token)) {
+    const me = await getJson(`${ig}/me?fields=user_id,username&access_token=${t}`);
+    if (me.ok && (me.body.user_id || me.body.id)) return { userId: String(me.body.user_id ?? me.body.id), username: String(me.body.username ?? ''), host: 'graph.instagram.com' };
+    if (!givenId) return { error: `Instagram でこの鍵を確かめられませんでした：${me.body.error?.message ?? '不明'}` };
+  }
+  if (givenId) {
+    const acc = await getJson(`${fb}/${givenId}?fields=id,username&access_token=${t}`);
+    if (acc.ok && acc.body.id) return { userId: String(acc.body.id), username: String(acc.body.username ?? ''), host: 'graph.facebook.com' };
+    const acc2 = await getJson(`${ig}/${givenId}?fields=id,username&access_token=${t}`);
+    if (acc2.ok && acc2.body.id) return { userId: String(acc2.body.id), username: String(acc2.body.username ?? ''), host: 'graph.instagram.com' };
+    return { error: `アカウント ID ${givenId} をこの鍵で読めませんでした：${acc.body.error?.message ?? acc2.body.error?.message ?? '不明'}`, needUserId: true };
+  }
+  const me = await getJson(`${fb}/me?fields=id,username,name&access_token=${t}`);
+  if (me.ok && me.body.username && me.body.id) return { userId: String(me.body.id), username: String(me.body.username), host: 'graph.facebook.com' };
+  const pages = await getJson(`${fb}/me/accounts?fields=instagram_business_account{id,username}&access_token=${t}`);
+  const linked = (pages.body.data ?? []).map((p) => p.instagram_business_account).find((a) => a?.id);
+  if (linked?.id) return { userId: String(linked.id), username: String(linked.username ?? ''), host: 'graph.facebook.com' };
+  if (!me.ok) return { error: `この鍵を確かめられませんでした：${me.body.error?.message ?? '不明'}` };
+  return { error: 'この鍵から Instagram のアカウントが分かりませんでした。開発者ページの一覧で tottori.city.tennis の下に出ている数字（1784… のアカウント ID）を、下の欄に入れてください', needUserId: true };
+}
+
 type Creds = { token: string; userId: string; username: string; host: string; refreshedAt: string; fromDb: boolean };
 
 /** 投稿に使う鍵。画面で入れたもの（D1）が優先、無ければ Worker の秘密 */
@@ -144,7 +191,7 @@ async function credsOf(env: Env, db: D1Database): Promise<Creds | null> {
   const rows = await db.prepare('SELECT k, v FROM insta_meta').all<{ k: string; v: string }>();
   const m = new Map(rows.results.map((r) => [r.k, r.v]));
   if (m.get('token') && m.get('user_id')) {
-    return { token: m.get('token')!, userId: m.get('user_id')!, username: m.get('username') ?? '', host: 'graph.instagram.com', refreshedAt: m.get('refreshed_at') ?? '', fromDb: true };
+    return { token: m.get('token')!, userId: m.get('user_id')!, username: m.get('username') ?? '', host: m.get('host') || 'graph.instagram.com', refreshedAt: m.get('refreshed_at') ?? '', fromDb: true };
   }
   if (env.IG_USER_ID && env.IG_ACCESS_TOKEN) {
     return { token: env.IG_ACCESS_TOKEN, userId: env.IG_USER_ID, username: '', host: env.IG_GRAPH_HOST || 'graph.instagram.com', refreshedAt: '', fromDb: false };
@@ -160,6 +207,7 @@ async function saveMeta(db: D1Database, values: Record<string, string>) {
 
 /** 長期の鍵は 60 日で切れるので、前に新しくしてから 7 日たっていれば新しくする（Instagram ログインの鍵だけ） */
 async function refreshIfOld(db: D1Database, creds: Creds) {
+  if (creds.host !== 'graph.instagram.com') return; // Facebook 方式の鍵（EAA…）はここでは新しくできない
   const last = Date.parse(creds.refreshedAt || '') || 0;
   if (Date.now() - last < 7 * 86400000) return;
   const res = await fetch(`https://graph.instagram.com/refresh_access_token?grant_type=ig_refresh_token&access_token=${encodeURIComponent(creds.token)}`);
