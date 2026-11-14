@@ -122,12 +122,13 @@ export default function ReviewPage() {
     if (!t) return;
     if (counts.error > 0 && !(await siteConfirm({ title: '直していない所があります', message: `「直さないと運営できません」が ${counts.error} 件あります。このまま運営をはじめますか？`, confirmLabel: 'このまま進む', danger: true }))) return;
     const local = await localCopyOf(t.id);
-    if (local && !(await siteConfirm({ title: '大会を入れ直す', message: `この端末の「${t.name}」の運営データ（受付・試合結果）を消して、確認した内容で入れ直します。`, confirmLabel: '入れ直す', danger: true }))) return;
+    if (local && !(await siteConfirm({ title: '大会を入れ直す', message: `この端末の「${t.name}」の${local.isTest ? 'テスト用の' : ''}運営データ（受付・試合結果）を消して、確認した内容で入れ直します。${local.isTest ? '\n\nテストモードのまま入れ直します。' : ''}`, confirmLabel: '入れ直す', danger: true }))) return;
     const full = dirty ? await save() : t;
     if (!full) return;
     setBusy('端末に入れています');
     try {
-      await importToDevice(full, (p) => setBusy(p.label));
+      // テストモードで入れてあった大会は、入れ直してもテストモードのまま（テスト用のスコア入力が消えないように）
+      await importToDevice(full, (p) => setBusy(p.label), { test: !!local?.isTest });
       navigate('/entry');
     } catch (e) {
       setFlash(`入れられませんでした：${(e as Error).message}`);

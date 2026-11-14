@@ -216,6 +216,7 @@ export function resolveDrawMatchTime(
   draw: {
     matchTimes?: Record<number, string>;
     roundMatchTimes?: Record<string, string>;
+    eventStartTime?: string;
   },
   scheduledByRoundPos?: Map<string, string>,
 ): string | null {
@@ -224,6 +225,8 @@ export function resolveDrawMatchTime(
     ? draw.matchTimes?.[2 * match.matchNumInRound - 1]
     : draw.roundMatchTimes?.[`R${match.round}-${match.matchNumInRound}`];
   if (drawTime) return drawTime;
+  // 試合ごとの時刻は無いが、種目の開始時刻（例「12:00 試合開始予定」）だけ書いてある種目は、1回戦をその時刻にする
+  if (match.round === 1 && draw.eventStartTime && Object.keys(draw.matchTimes || {}).length === 0) return draw.eventStartTime;
   return scheduledByRoundPos?.get(`${match.round}|${match.matchNumInRound}`) || null;
 }
 

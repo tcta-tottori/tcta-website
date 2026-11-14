@@ -11,6 +11,7 @@ import { insertGapAt, isEmptySlot, removeGapAt, swapSlotContents } from '../draw
 import { ChevronLeft, ChevronRight, MapPin, Trophy, Timer, Layers, Eye, EyeOff, Shuffle, ArrowDownToLine, ArrowUpToLine, Undo2, Play, Pencil, Medal, UserPen, ChevronDown, SlidersHorizontal, X } from 'lucide-react';
 import CourtBracketView from './CourtBracketView';
 import RoundRobinRenderer from '../draw/RoundRobinRenderer';
+import { leagueShort } from '../draw/placement';
 import ScoreInputDialog from '../score/ScoreInputDialog';
 import type { ScoreInputMatch } from '../score/ScoreInputDialog';
 import { resolveRequiredGames } from '../score/gameRules';
@@ -489,7 +490,8 @@ export default function CourtBracketPage({ enableScoreInput = true }: CourtBrack
     for (const c of sorted) {
       if (seen.has(c.name)) continue;
       seen.add(c.name);
-      const status = c.isAvailable === false || reservedNames.has(c.name)
+      // 自分のリーグのコートは、ほかのリーグと共用していても選べる（午前と午後で同じコートを使う大会がある）
+      const status = c.isAvailable === false || (ownIds.length === 0 && reservedNames.has(c.name))
         ? 'unavailable'
         : usedNames.has(c.name) ? 'playing' : 'empty';
       list.push({ courtId: c.courtId, name: c.name, status });
@@ -928,6 +930,7 @@ export default function CourtBracketPage({ enableScoreInput = true }: CourtBrack
               slots={slots}
               matchResults={matchResults}
               rankRule={drawData?.leagueRankRule}
+              title={leagueShort(selectedEvent?.name || '') || undefined}
               onCellSelect={enableScoreInput && !nameEditMode ? (round, position) => setSelectedMatchKey(`${round}-${position}`) : undefined}
               onPlayerSelect={enableScoreInput && nameEditMode ? openNameEditor : undefined}
             />
