@@ -11,6 +11,7 @@ import './styles/pages/team-mixed.css'
 import AppLayout from './components/layout/AppLayout'
 import ErrorBoundary from './components/ErrorBoundary'
 import DataManagement from './features/data/DataManagement'
+import InstaStoriesPage from './features/insta/InstaStoriesPage'
 import TournamentHub from './features/catalog/TournamentHub'
 import DictionaryPage from './features/catalog/DictionaryPage'
 import ReviewPage from './features/catalog/ReviewPage'
@@ -119,6 +120,7 @@ createRoot(document.getElementById('root')!).render(
           <Route path="dict" element={<DictionaryPage />} />
           <Route path="data/review/:id" element={<ReviewPage />} />
           <Route path="data-tools" element={<DataManagement />} />
+          <Route path="insta" element={<InstaStoriesPage />} />
           <Route path="entry" element={<EntryRegistration />} />
 
           <Route path="draw-lot" element={<DrawGenerator />} />

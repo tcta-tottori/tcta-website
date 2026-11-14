@@ -3,7 +3,8 @@ import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import {
   Database, Users, Dices, Trophy, Swords,
   ClipboardList, CalendarClock, BarChart2,
-  HelpCircle, Settings, Network, Radio, Printer, MapPin, Calendar, BookOpen, Wrench, ClipboardCheck
+  HelpCircle, Settings, Network, Radio, Printer, MapPin, Calendar, BookOpen, Wrench, ClipboardCheck,
+  Camera,
 } from 'lucide-react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../../db/database';
@@ -57,6 +58,8 @@ const ALL_MAIN_TABS: MainTab[] = [
   // 同期・観戦用ページ・音声・バックアップは設定ページに集約している
   { id: 'S-12', path: '/settings', label: '設定', en: 'SETTINGS', icon: Settings },
   { id: 'S-13', path: '/data-tools', label: 'データ管理', en: 'DATA TOOLS', icon: Wrench },
+  // 協会サイトのお知らせから、Instagram のストーリーズ告知の画像を作って投稿する（大会データが無くても使う）
+  { id: 'S-14', path: '/insta', label: 'Instagram', en: 'INSTAGRAM', icon: Camera },
 ];
 
 /**
@@ -70,7 +73,7 @@ const NAV_GROUPS: { key: string; label: string; en: string; paths: string[] }[] 
   { key: 'run', label: '大会進行', en: 'OPERATION', paths: ['/entry', '/draw-lot', '/draw-table', '/referee', '/schedule-sheet', '/court-bracket', '/score', '/dashboard', '/broadcast'] },
   { key: 'print', label: '印刷', en: 'PRINT', paths: ['/print'] },
   // 選手・所属（ふりがな辞書）はデータ管理と並べて、設定のまとまりに入れる
-  { key: 'settings', label: '設定', en: 'SETTINGS', paths: ['/settings', '/data-tools', '/dict', '/manual'] },
+  { key: 'settings', label: '設定', en: 'SETTINGS', paths: ['/settings', '/data-tools', '/dict', '/manual', '/insta'] },
 ];
 
 /**
@@ -291,7 +294,7 @@ export default function AppLayout() {
     // 大会データ未読み込み時: データ・印刷・マニュアル・設定のみ表示
     if (!currentTournamentId && !isMixedImported && !isTeamImported) {
       // 賞状印刷は大会データが無くても（手入力で）使えるので常に出す
-      return tabs.filter(t => ['/data', '/data/review', '/dict', '/print', '/manual', '/settings', '/data-tools'].includes(t.path));
+      return tabs.filter(t => ['/data', '/data/review', '/dict', '/print', '/manual', '/settings', '/data-tools', '/insta'].includes(t.path));
     }
 
     // ミックスダブルス or 団体戦 読込時: 不要なタブを非表示 + ラベル変更
@@ -401,7 +404,7 @@ export default function AppLayout() {
   const live = activeTickerItems.some(t => t.includes('進行中'));
   // 大会が無いのに試合の画面（受付・対戦順・時間割・ドロー・スコア・配信）を開いたら、大会選択へ戻す
   //（運営データを消したあとに、前の画面が残って見えないように）
-  const needsTournament = !hasTournament && !['/data', '/dict', '/print', '/manual', '/settings', '/data-tools', '/backup'].some(p => location.pathname === p || location.pathname.startsWith(`${p}/`));
+  const needsTournament = !hasTournament && !['/data', '/dict', '/print', '/manual', '/settings', '/data-tools', '/insta', '/backup'].some(p => location.pathname === p || location.pathname.startsWith(`${p}/`));
   useEffect(() => { if (needsTournament) navigate('/data', { replace: true }); }, [needsTournament, navigate]);
 
   const statusBar = (place: 'top' | 'main') => hasTournament ? (
