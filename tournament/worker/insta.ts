@@ -175,12 +175,12 @@ async function resolveAccount(token: string, givenId: string): Promise<Found> {
     if (acc2.ok && acc2.body.id) return { userId: String(acc2.body.id), username: String(acc2.body.username ?? ''), host: 'graph.instagram.com' };
     return { error: `アカウント ID ${givenId} をこの鍵で読めませんでした：${acc.body.error?.message ?? acc2.body.error?.message ?? '不明'}`, needUserId: true };
   }
-  const me = await getJson(`${fb}/me?fields=id,username,name&access_token=${t}`);
-  if (me.ok && me.body.username && me.body.id) return { userId: String(me.body.id), username: String(me.body.username), host: 'graph.facebook.com' };
+  // Facebook の利用者の鍵では /me に username を頼めない（#12 deprecated）ので id だけ聞く。読めれば鍵は有効
+  const me = await getJson(`${fb}/me?fields=id,name&access_token=${t}`);
+  if (!me.ok) return { error: `この鍵を確かめられませんでした：${me.body.error?.message ?? '不明'}` };
   const pages = await getJson(`${fb}/me/accounts?fields=instagram_business_account{id,username}&access_token=${t}`);
   const linked = (pages.body.data ?? []).map((p) => p.instagram_business_account).find((a) => a?.id);
   if (linked?.id) return { userId: String(linked.id), username: String(linked.username ?? ''), host: 'graph.facebook.com' };
-  if (!me.ok) return { error: `この鍵を確かめられませんでした：${me.body.error?.message ?? '不明'}` };
   return { error: 'この鍵から Instagram のアカウントが分かりませんでした。開発者ページの一覧で tottori.city.tennis の下に出ている数字（1784… のアカウント ID）を、下の欄に入れてください', needUserId: true };
 }
 
