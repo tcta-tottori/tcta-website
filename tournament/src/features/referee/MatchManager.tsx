@@ -259,6 +259,12 @@ export default function MatchManager({ readOnly = false }: { readOnly?: boolean 
     const ds = evDraw.drawSize || 0;
     return ds > 0 && (ds & (ds - 1)) !== 0;
   }, [allDraws]);
+  /** 回戦名。リーグ戦（総当たり）には準決勝・決勝が無いので「リーグ戦」と呼ぶ（画面の札・音声コール・ポップアップ共通） */
+  const roundLabelOf = useCallback(
+    (m: { matchId: string; round: number; eventId: string }, totalRounds: number): string =>
+      (isLeagueEvent(m.eventId) ? 'リーグ戦' : labelForMatch(m, totalRounds)),
+    [isLeagueEvent],
+  );
 
   // リーグ戦のコート割り当て（eventId → コートID）。
   // 割り当てのあるリーグはそのコートだけで回し、他の種目はそのコートを使わない。
@@ -561,7 +567,7 @@ export default function MatchManager({ readOnly = false }: { readOnly?: boolean 
     };
 
     const isDoubles = useEvent?.type === 'Doubles';
-    const roundName = labelForMatch(m, useTotalRounds);
+    const roundName = roundLabelOf(m, useTotalRounds);
 
     if (isDoubles) {
       const [fallbackNameA, fallbackPairNameA] = m.player1Name.includes(' / ')
@@ -806,13 +812,19 @@ export default function MatchManager({ readOnly = false }: { readOnly?: boolean 
     // globalSortedMatches は (開始時刻→対戦順) でソート済み。
     const realWaiting = globalSortedMatches.filter(isReal);
     // 記載された開始時刻のうち最も早い時刻（=初回に始めるべき試合の時刻）
-    const finiteTimes = realWaiting.map(m => toMin(m.scheduledTime)).filter(t => Number.isFinite(t));
+    // リーグ戦の試合は時間割に入らず予定時刻を持たないので、種目の開始時刻（ドローの「9:00 試合開始」）で見る
+    const timeOf = (m: Match) => {
+      const t = toMin(m.scheduledTime);
+      if (Number.isFinite(t)) return t;
+      return isLeagueEvent(m.eventId) ? toMin(allDraws.get(m.eventId)?.eventStartTime) : t;
+    };
+    const finiteTimes = realWaiting.map(timeOf).filter(t => Number.isFinite(t));
     const earliest = finiteTimes.length > 0 ? Math.min(...finiteTimes) : null;
     // 初回に起動する対象:
     // - 開始時刻あり: 最早時刻の試合のみ（例: 9:00の試合だけ。9:40はまだ起動しない）
     // - 開始時刻なし（時間割未生成）: 対戦順の上からコート数分
     const candidates = earliest != null
-      ? realWaiting.filter(m => toMin(m.scheduledTime) === earliest)
+      ? realWaiting.filter(m => timeOf(m) === earliest)
       : realWaiting;
 
     // コート割当: 各試合は自分の割当コート(courtId)を優先し、無ければ番号の若い空きコートへ。
@@ -833,15 +845,40 @@ export default function MatchManager({ readOnly = false }: { readOnly?: boolean 
     const nextFreeCourtName = () =>
       [...freeCourtNames].sort((a, b) => (parseInt(a, 10) || 0) - (parseInt(b, 10) || 0))[0];
 
+    // リーグに担当コートがある種目は、その担当コートにだけ入れる（空いていなければ次に回す）。
+    // 担当コートの無い種目は、どのリーグの担当でもないコートから入れる。
+    const leagueCourtNames = new Set<string>();
+    for (const ids of leagueCourtMap.values()) for (const id of ids) { const n = nameById.get(id); if (n) leagueCourtNames.add(n); }
+    const nextOpenCourtName = () =>
+      [...freeCourtNames].filter(n => !leagueCourtNames.has(n)).sort((a, b) => (parseInt(a, 10) || 0) - (parseInt(b, 10) || 0))[0];
+
+    // 同じ選手（ペア）を同時に 2 つのコートへ入れない（2 面使うリーグで ①-② と ②-③ が並ぶ場合など）
+    const busyEntries = new Set<string>();
+    for (const m of allMatchesFlat) {
+      if (m.status !== 'playing') continue;
+      if (m.player1EntryId) busyEntries.add(m.player1EntryId);
+      if (m.player2EntryId) busyEntries.add(m.player2EntryId);
+    }
+
     const assignments: { match: Match & { eventName: string }; court: Court }[] = [];
     for (const m of candidates) {
       if (freeCourtNames.size === 0) break;
+      if ((m.player1EntryId && busyEntries.has(m.player1EntryId)) || (m.player2EntryId && busyEntries.has(m.player2EntryId))) continue;
       const ownName = m.courtId ? nameById.get(m.courtId) : undefined;
-      const name = (ownName && freeCourtNames.has(ownName)) ? ownName : nextFreeCourtName();
+      const leagueNames = (leagueCourtMap.get(m.eventId) || []).map(id => nameById.get(id)).filter((n): n is string => !!n);
+      let name: string | undefined;
+      if (leagueNames.length > 0) {
+        name = (ownName && leagueNames.includes(ownName) && freeCourtNames.has(ownName)) ? ownName : leagueNames.find(n => freeCourtNames.has(n));
+      } else {
+        name = (ownName && freeCourtNames.has(ownName)) ? ownName : (nextOpenCourtName() ?? (leagueCourtNames.size === 0 ? nextFreeCourtName() : undefined));
+      }
+      if (!name) continue;
       const court = courtByName.get(name);
       if (court) {
         assignments.push({ match: m, court });
         freeCourtNames.delete(name);
+        if (m.player1EntryId) busyEntries.add(m.player1EntryId);
+        if (m.player2EntryId) busyEntries.add(m.player2EntryId);
       }
     }
 
@@ -862,7 +899,7 @@ export default function MatchManager({ readOnly = false }: { readOnly?: boolean 
         });
       }
     }
-  }, [courts, globalSortedMatches, allMatchesFlat]);
+  }, [courts, globalSortedMatches, allMatchesFlat, leagueCourtMap, isLeagueEvent, allDraws]);
 
   // 現在試合中のコート名（空きコート判定用）
   const playingCourtNames = useMemo(() => {
@@ -897,7 +934,8 @@ export default function MatchManager({ readOnly = false }: { readOnly?: boolean 
     for (const c of sorted) {
       if (seen.has(c.name)) continue;
       seen.add(c.name);
-      const status = c.isAvailable === false || reservedNames.has(c.name)
+      // 自分のリーグのコートは、ほかのリーグと共用していても選べる（午前と午後で同じコートを使う大会がある）
+      const status = c.isAvailable === false || (ownIds.length === 0 && reservedNames.has(c.name))
         ? 'unavailable'
         : playingCourtNames.has(c.name) ? 'playing' : 'empty';
       list.push({ courtId: c.courtId, name: c.name, status });
@@ -1018,7 +1056,7 @@ export default function MatchManager({ readOnly = false }: { readOnly?: boolean 
         player1Name: m.player1Name,
         player2Name: m.player2Name,
         eventName: evt?.name || '',
-        roundLabel: labelForMatch(m, evTotalRounds),
+        roundLabel: roundLabelOf(m, evTotalRounds),
         callText: text,
       });
     }
@@ -1887,10 +1925,11 @@ ${printableMatches.map(m => {
                     const courtObj = m.courtId ? courts.find(c => c.courtId === m.courtId) : null;
                     const eventDraw = allDraws.get(m.eventId);
                     const evTotalRounds = eventDraw ? Math.log2(eventDraw.drawSize) : Math.max(1, eventMaxRound.get(m.eventId) || 1);
-                    const rName = shortRoundName(m.round, evTotalRounds);
+                    // リーグ戦は回戦の札（SF・F）を付けない（種目名に「○リーグ」が入っている）
+                    const rName = isLeagueEvent(m.eventId) ? '' : shortRoundName(m.round, evTotalRounds);
                     const hasPlayers = !!m.player1Name && !!m.player2Name
                       && m.player1Name !== 'BYE' && m.player2Name !== 'BYE';
-                    const evLabel = `${shortEventName(m.eventName)} ${rName}`;
+                    const evLabel = `${shortEventName(m.eventName)} ${rName}`.trim();
                     const schedTime = m.scheduledTime || '';
                     const sb = standbyInfo.get(matchKey(m));
                     const evColor = getEventColor(m.eventName);
@@ -2454,7 +2493,7 @@ ${printableMatches.map(m => {
         const evt = events.find(e => e.eventId === sm.eventId);
         const evDraw = allDraws.get(sm.eventId);
         const evTotalRounds = evDraw ? Math.log2(evDraw.drawSize) : 1;
-        const roundName = labelForMatch(sm, evTotalRounds);
+        const roundName = roundLabelOf(sm, evTotalRounds);
         const courtName = sm.courtId ? (courtIdToName.get(sm.courtId) || '') : '';
         return (
           <CallStatusPopup
@@ -2510,8 +2549,8 @@ ${printableMatches.map(m => {
             courts={courts.map(c => ({ courtId: c.courtId, name: c.name, isAvailable: c.isAvailable !== false }))}
             onClose={() => setScoreDialogMatchId(null)}
             onMatchUpdate={() => {}}
-            getRoundName={(round) => (isThirdPlaceMatch(sm) ? THIRD_PLACE_LABEL : getRoundName(round, evTotalRounds))}
-            isLeague={false}
+            getRoundName={(round) => (isLeagueEvent(sm.eventId) ? 'リーグ戦' : isThirdPlaceMatch(sm) ? THIRD_PLACE_LABEL : getRoundName(round, evTotalRounds))}
+            isLeague={isLeagueEvent(sm.eventId)}
             gameRuleText={getMatchGameRuleText(evt, sm.round, evTotalRounds)}
             onEditRules={evt ? () => openRuleEditor(evt) : undefined}
             requiredGames={resolveRequiredGames(getMatchGameRuleText(evt, sm.round, evTotalRounds), sm.round, evTotalRounds)}
@@ -2530,7 +2569,7 @@ ${printableMatches.map(m => {
         return (
           <CourtPickDialog
             eventName={shortEventName(evt?.name || pm.eventId)}
-            roundName={labelForMatch(pm, evTotalRounds)}
+            roundName={roundLabelOf(pm, evTotalRounds)}
             player1Name={pm.player1Name}
             player2Name={pm.player2Name}
             courts={buildCourtPickList(pm.eventId)}

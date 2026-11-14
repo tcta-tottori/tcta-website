@@ -4,12 +4,17 @@
 // 動作確認のために、全種目（トーナメント・リーグ）の試合へ 8-4 / 6-4 の
 // スコアを決勝まで入力する。トーナメントは勝者を次の回戦へ繰り上げながら
 // 進めるので、決勝まで埋まった状態になる。
+// リーグの順位で組む種目（順位別トーナメント・決勝リーグ。Draw.slotSources）は、
+// 元のリーグにスコアを入れたあと、その順位で組んで（エントリー受付の「順位を反映して組む」→ 確定 と同じ）
+// 続けてスコアを入れる。
 //
 // ※ 運営画面（データ管理）からのみ実行できる。観戦用ページには出さない。
 // =============================================================================
 
 import { db, type Event, type Draw, type Match } from '../../db/database';
 import { resolveRequiredGames } from './gameRules';
+import { applyPlacement } from '../draw/placement';
+import { rebuildEventMatches } from '../draw/rebuildMatches';
 
 export interface FillTestScoresEventResult {
   eventName: string;
@@ -65,9 +70,10 @@ export async function fillTestScores(tournamentId: string): Promise<FillTestScor
   let filledCount = 0;
   const now = Date.now();
 
-  for (const evt of events) {
+  /** 1 種目ぶんのスコアを入れる（試合が無ければ何もしない） */
+  const fillEvent = async (evt: Event): Promise<void> => {
     const matches = await db.matches.where('eventId').equals(evt.eventId).toArray();
-    if (matches.length === 0) continue;
+    if (matches.length === 0) return;
     const draw = await db.draws.where('eventId').equals(evt.eventId).first();
     const ruleText = gameRuleTextOf(evt);
     const fallbackGames = evt.gameRules?.games ?? DEFAULT_GAMES;
@@ -156,6 +162,29 @@ export async function fillTestScores(tournamentId: string): Promise<FillTestScor
       await db.matches.bulkPut(matches);
     }
     filledCount += filled;
+  };
+
+  for (const evt of events) await fillEvent(evt);
+
+  // リーグの順位で組む種目：元のリーグが埋まったので、順位を入れて組み、続けてスコアを入れる。
+  // 順位別の種目どうしがつながっていても進むよう、組めるものが無くなるまで繰り返す（上限つき）
+  for (let pass = 0; pass < 4; pass++) {
+    let built = 0;
+    for (const evt of events) {
+      const draw = await db.draws.where('eventId').equals(evt.eventId).first();
+      if (!draw?.slotSources?.length) continue;
+      if ((await db.matches.where('eventId').equals(evt.eventId).count()) > 0) continue;
+      try {
+        const { filled } = await applyPlacement(evt.eventId);
+        if (filled === 0) continue;
+        await rebuildEventMatches(evt.eventId);
+        await fillEvent(evt);
+        built++;
+      } catch (err) {
+        console.warn('[テストスコア] 順位別の種目を組めませんでした:', evt.name, err);
+      }
+    }
+    if (built === 0) break;
   }
 
   // 全試合が終了扱いになるため、コートの「進行中の試合」表示をクリアする

@@ -2,6 +2,7 @@ import type { DrawSlotData, MatchResult } from './DrawBoard';
 import { pairDisplayLines } from './pairLabel';
 import { sideScoreText } from '../score/scoreDisplay';
 import { leagueStandings, type RankRule } from './leagueStandings';
+import { generateLeagueMatchOrder } from './rebuildMatches';
 
 /** 星取表の列見出し用に苗字だけにする（ダブルスは「苗字・苗字」） */
 function surnameLabel(name: string): string {
@@ -19,6 +20,8 @@ interface RoundRobinRendererProps {
   onPlayerSelect?: (entryId: string) => void;
   /** 順位の決め方（Draw.leagueRankRule。games＝取得ゲーム率が先）。順位別トーナメントの組み合わせと同じ計算 */
   rankRule?: RankRule;
+  /** 表の左上の見出し（例「Aリーグ」）。無ければ「リーグ」 */
+  title?: string;
 }
 
 /** "8-4" 形式のスコアを [自分のゲーム, 相手のゲーム] に分解（取得できなければ null） */
@@ -29,7 +32,7 @@ function parseScore(score: string | undefined | null): [number, number] | null {
   return [parseInt(m[1], 10), parseInt(m[2], 10)];
 }
 
-export default function RoundRobinRenderer({ slots, matchResults = [], onCellSelect, onPlayerSelect, rankRule = 'wins' }: RoundRobinRendererProps) {
+export default function RoundRobinRenderer({ slots, matchResults = [], onCellSelect, onPlayerSelect, rankRule = 'wins', title = 'リーグ' }: RoundRobinRendererProps) {
   // BYEを除いた実選手のみ
   const players = slots.filter(s => !s.isBye);
   const n = players.length;
@@ -38,13 +41,8 @@ export default function RoundRobinRenderer({ slots, matchResults = [], onCellSel
     return <div className="p-8 text-center text-gray-500">リーグ表示には2人以上の選手が必要です</div>;
   }
 
-  // 対戦順を計算（ラウンドロビンの標準対戦順）
-  const matchOrder: [number, number][] = [];
-  for (let i = 0; i < n; i++) {
-    for (let j = i + 1; j < n; j++) {
-      matchOrder.push([i, j]);
-    }
-  }
+  // 対戦順（実際に組む試合順と同じ。協会のプログラムの順：rebuildMatches.ts）
+  const matchOrder: [number, number][] = generateLeagueMatchOrder(n);
 
   // 試合結果を選手ペアで検索
   const findMatchBetween = (p1: DrawSlotData, p2: DrawSlotData): MatchResult | undefined => {
@@ -121,7 +119,7 @@ export default function RoundRobinRenderer({ slots, matchResults = [], onCellSel
             <thead>
               <tr className="bg-gray-50 border-b-2 border-red-500">
                 <th className="px-2 py-1.5 text-center text-[12px] font-bold text-gray-800 min-w-[132px] sm:min-w-[170px]">
-                  決勝リーグ
+                  {title}
                 </th>
                 {players.map((p, i) => (
                   <th
