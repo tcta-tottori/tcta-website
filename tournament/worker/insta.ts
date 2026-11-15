@@ -57,9 +57,11 @@ export async function handleInsta(request: Request, env: Env, url: URL): Promise
   const img = url.pathname.match(/^\/api\/insta\/img\/([a-f0-9]{32})\.jpg$/);
   if (img) {
     await ensureSchema(db);
-    const row = await db.prepare('SELECT jpeg FROM insta_images WHERE id = ?').bind(img[1]).first<{ jpeg: ArrayBuffer }>();
+    const row = await db.prepare('SELECT jpeg FROM insta_images WHERE id = ?').bind(img[1]).first<{ jpeg: ArrayBuffer | number[] }>();
     if (!row) return new Response('not found', { status: 404 });
-    return new Response(row.jpeg, { headers: { 'content-type': 'image/jpeg', 'cache-control': 'public, max-age=86400' } });
+    // D1 は BLOB を数の配列で返すことがある。そのまま返すと「255,216,…」の文字列になり、Instagram が画像として読めない
+    const bytes = row.jpeg instanceof ArrayBuffer ? new Uint8Array(row.jpeg) : Uint8Array.from(row.jpeg as number[]);
+    return new Response(bytes, { headers: { 'content-type': 'image/jpeg', 'content-length': String(bytes.byteLength), 'cache-control': 'public, max-age=86400' } });
   }
 
   // 役員（ログイン）か、外から送る鍵（scripts/lib/push.mjs の送信用の鍵。Claude などが投稿するとき）。
@@ -185,7 +187,7 @@ export async function handleInsta(request: Request, env: Env, url: URL): Promise
         .bind(key, mediaId, ids[0], new Date().toISOString(), officer.email).run();
       return json({ ok: true, mediaId });
     } catch (e) {
-      return json({ error: `Instagram への投稿に失敗しました：${(e as Error).message}` }, 502);
+      return json({ error: `Instagram への投稿に失敗しました：${(e as Error).message}`, imageUrls: urls }, 502);
     }
   }
 
