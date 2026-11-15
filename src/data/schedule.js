@@ -25,7 +25,7 @@
 //   （荒天中止の大会は日を振り替えないので、予備会場も置かない）。
 //   室内の尾坂杯だけは体育館開催なので、この形に当てはめない。
 
-import { STATE_OVERRIDE } from './official-extra.js';
+import { STATE_OVERRIDE, STATE_FORCE } from './official-extra.js';
 
 /** 管理画面の文言 → コードで使うキー */
 export const STATE_KEY = { '終了': 'done', '受付終了': 'closed', '受付中': 'open', 'まもなく受付': 'soon', '未受付': 'soon', '本日開催': 'live' };
@@ -195,7 +195,8 @@ const externalUrl = (name) => externalOf(name)?.url ?? null;
 const externalResultUrl = (name, nendo) => externalOf(name)?.results?.[String(nendo ?? '')] ?? null;
 
 /** 受付状態。管理画面がまだ「まもなく受付／未受付」で、公式サイトでは受付を始めている大会は、そちらに合わせる（official-extra.js） */
-const stateOf = (t) => (STATE_OVERRIDE[t.slug] && /^(まもなく受付|未受付)?$/.test(t.state ?? '') ? STATE_OVERRIDE[t.slug] : t.state);
+// STATE_FORCE は管理画面の状態にかかわらず優先する（速報を早めに終えて結果を出すときなど）
+const stateOf = (t) => STATE_FORCE[t.slug] ?? (STATE_OVERRIDE[t.slug] && /^(まもなく受付|未受付)?$/.test(t.state ?? '') ? STATE_OVERRIDE[t.slug] : t.state);
 
 /** EmDash の 1 行を、移行前の schedule.json の 1 行と同じ形にする。 */
 export function scheduleRow(t) {

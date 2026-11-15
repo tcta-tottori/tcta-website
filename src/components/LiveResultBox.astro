@@ -10,7 +10,9 @@ import { todayJST } from '../data/schedule.js';
 import { LIVE_DRAW_URL, LIVE_ORDER_URL } from '../data/live.js';
 
 const { e } = Astro.props;
-const show = e.status === 'live' || (e.date === todayJST() && e.status === 'done');
+// 結果を掲載したら（結果の欄に何かあれば）、開催日のうちでも出さない（速報を終えたあと）
+const hasResult = (e.sections ?? []).some((s) => s.key === 'result' && ((s.images?.length ?? 0) + (s.pdfs?.length ?? 0) > 0));
+const show = e.status === 'live' || (e.date === todayJST() && e.status === 'done' && !hasResult);
 ---
 
 {show && (
