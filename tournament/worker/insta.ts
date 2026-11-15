@@ -147,6 +147,15 @@ export async function handleInsta(request: Request, env: Env, url: URL): Promise
     }
   }
 
+  // 最近の投稿（二重投稿の確かめ用）。GET /api/insta/recent
+  if (url.pathname === '/api/insta/recent' && request.method === 'GET') {
+    if (!creds) return json({ error: 'Instagram の鍵が未設定です' }, 409);
+    const r = await fetch(`https://${creds.host}/${GRAPH_VERSION}/${creds.userId}/media?fields=id,media_type,timestamp,caption,permalink&limit=5&access_token=${encodeURIComponent(creds.token)}`);
+    const body = await r.json<{ data?: { id: string; media_type: string; timestamp: string; caption?: string; permalink?: string }[]; error?: { message?: string } }>().catch(() => ({} as { data?: never[]; error?: { message?: string } }));
+    if (!r.ok || body.error) return json({ error: body.error?.message ?? `HTTP ${r.status}` }, 502);
+    return json({ media: (body.data ?? []).map((m) => ({ ...m, caption: (m.caption ?? '').slice(0, 60) })) });
+  }
+
   if (url.pathname === '/api/insta/carousel' && request.method === 'POST') {
     if (!viaPush && !sameOrigin(request, url)) return json({ error: 'このサイトの画面からだけ投稿できます' }, 403);
     if (!configured) return json({ error: 'Instagram の鍵が未設定です。画面の「Instagram の鍵」で入れるか、画像を保存して手で投稿してください' }, 409);
@@ -307,16 +316,28 @@ async function publishCarousel(creds: Creds, imageUrls: string[], caption: strin
       await new Promise((r) => setTimeout(r, 1500));
     }
   };
+  // Instagram の「unknown error」は一時的なことが多いので、少し待って 3 回まで試す。どの段階で止まったかを返す
+  const step = async <T>(name: string, fn: () => Promise<T>): Promise<T> => {
+    let last: Error | null = null;
+    for (let i = 0; i < 3; i++) {
+      try { return await fn(); } catch (e) {
+        last = e as Error;
+        if (!/unknown error|temporar|try again|retry/i.test(last.message)) break;
+        await new Promise((r) => setTimeout(r, 3000 * (i + 1)));
+      }
+    }
+    throw new Error(`${name}：${last?.message ?? '不明'}`);
+  };
   // 1 枚ずつの入れ物 → まとめの入れ物（CAROUSEL）→ 公開
   const children: string[] = [];
-  for (const u of imageUrls) {
-    const c = await call(`${base}/media`, form({ image_url: u, is_carousel_item: 'true' }));
+  for (const [k, u] of imageUrls.entries()) {
+    const c = await step(`${k + 1} 枚目の取り込み`, () => call(`${base}/media`, form({ image_url: u, is_carousel_item: 'true' })));
     children.push(String(c.id));
   }
-  for (const id of children) await waitFinished(id);
-  const parent = await call(`${base}/media`, form({ media_type: 'CAROUSEL', children: children.join(','), caption }));
-  await waitFinished(String(parent.id));
-  const published = await call(`${base}/media_publish`, form({ creation_id: String(parent.id) }));
+  for (const [k, id] of children.entries()) await step(`${k + 1} 枚目の取り込み待ち`, () => waitFinished(id));
+  const parent = await step('まとめ（カルーセル）の作成', () => call(`${base}/media`, form({ media_type: 'CAROUSEL', children: children.join(','), caption })));
+  await step('まとめの取り込み待ち', () => waitFinished(String(parent.id)));
+  const published = await step('公開', () => call(`${base}/media_publish`, form({ creation_id: String(parent.id) })));
   return String(published.id);
 }
 
