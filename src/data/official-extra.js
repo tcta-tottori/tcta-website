@@ -6,6 +6,7 @@
 //   STATE_FORCE     … 管理画面の受付状態にかかわらず、こちらの状態にする（開催日の「開催中・速報」を早めに終えるときなど。schedule.js）
 //   EXTRA_CARDS     … 管理画面で「トップページの大会カードに出す」にチェックが無くても、トップの大会カードに出す大会（tournaments.js）
 //   EXTRA_TOURNAMENTS … 管理画面にまだ無い大会の行（管理画面の「大会」と同じ項目。cms.js が読み込んだ行に足す。同じ slug が管理画面にあればそちらを使う）
+//   EXTRA_WINNERS   … 大会ごとの成績（管理画面の「成績」と同じ形 { category, award, name }。管理画面に成績があればそちらを使う。events.js）
 //   EXTRA_REVISIONS … 大会ごとの訂正の記録（管理画面の「訂正の記録」と同じ形。events.js が管理画面の行に足す）
 //   EXTRA_NEWS      … お知らせに足す行（news.js。同じ日付・同じ題名の行が管理画面にあれば足さない）。
 //                     同じ日付の中で先頭に出したいときは createdAt（'2026-11-02T19:15:00+09:00' の形）に掲載した時刻を書く
@@ -50,6 +51,19 @@ export const EXTRA_MATERIALS = {
       ],
       pdfs: [],
     },
+    // 入賞者の写真（表彰式。明るさとシネマ風の色に整えたもの）。ラベルの先頭の種目名で結果の欄の種目の下に入る
+    photo: {
+      images: [
+        { src: 'assets/img/events/r8-kaicho-autumn/photo-01.webp', label: '男子B級ダブルス 優勝 岸本・安田 ペア', w: 1400, h: 933 },
+        { src: 'assets/img/events/r8-kaicho-autumn/photo-02.webp', label: '男子B級ダブルス 準優勝 北村・山本 ペア', w: 1400, h: 933 },
+        { src: 'assets/img/events/r8-kaicho-autumn/photo-03.webp', label: '女子B級ダブルス 優勝 高木・遠藤 ペア', w: 1400, h: 933 },
+        { src: 'assets/img/events/r8-kaicho-autumn/photo-04.webp', label: '女子B級ダブルス 準優勝 小見山・谷口 ペア', w: 1400, h: 933 },
+        { src: 'assets/img/events/r8-kaicho-autumn/photo-05.webp', label: '女子B級ダブルス 3位 山本・大田 ペア', w: 1400, h: 933 },
+        { src: 'assets/img/events/r8-kaicho-autumn/photo-06.webp', label: '男子C級ダブルス 優勝 難波・米村 ペア', w: 1400, h: 933 },
+        { src: 'assets/img/events/r8-kaicho-autumn/photo-07.webp', label: '男子C級ダブルス 準優勝 中井・吉田 ペア', w: 1400, h: 933 },
+      ],
+      pdfs: [],
+    },
     draw: {
       images: [
         img('r8-kaicho-autumn', 'draw-01.webp', 'プログラム（日程・注意事項）'),
@@ -86,6 +100,19 @@ export const EXTRA_MATERIALS = {
     outline: { images: [img('r8-no18', 'outline-01.webp', '要綱')], pdfs: [] },
     entry: { images: [], pdfs: [{ src: 'assets/pdf/events/r8-no18/令和8年県選ダブルス申込用紙.pdf', label: '申込用紙', kb: 104 }] },
   },
+};
+
+export const EXTRA_WINNERS = {
+  // 第62回会長杯（秋季）：表彰状のとおり（男子B級は 1位・2位トーナメント、女子B級は 1位・2位トーナメントの結果）
+  'r8-kaicho-autumn': [
+    { category: '男子B級ダブルス', award: '優勝', name: '岸本・安田 ペア' },
+    { category: '男子B級ダブルス', award: '準優勝', name: '北村・山本 ペア' },
+    { category: '男子C級ダブルス', award: '優勝', name: '難波・米村 ペア' },
+    { category: '男子C級ダブルス', award: '準優勝', name: '中井・吉田 ペア' },
+    { category: '女子B級ダブルス', award: '優勝', name: '高木・遠藤 ペア' },
+    { category: '女子B級ダブルス', award: '準優勝', name: '小見山・谷口 ペア' },
+    { category: '女子B級ダブルス', award: '3位', name: '山本・大田 ペア' },
+  ],
 };
 
 export const EXTRA_TOURNAMENTS = [
