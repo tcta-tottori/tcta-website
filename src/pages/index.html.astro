@@ -46,13 +46,13 @@ const marqueeHalf = (items) =>
   Array.from({ length: Math.ceil(8 / items.length) }, () => items).flat();
 
 // 大会情報の一覧（HomeTournaments.astro）。トップの大会カードに出す大会のうち、開催日が今日以降のものと、
-// 開催日から HOME_KEEP_DAYS 日以内の終わった大会（結果を見られるように残す）。開催日の古い順（TOURNAMENTS がその順）
-const HOME_KEEP_DAYS = 14;
+// 開催日から HOME_KEEP_DAYS 日たっていない終わった大会（結果を見られるように1週間だけ残す。開催日の7日後に消える）。開催日の古い順（TOURNAMENTS がその順）
+const HOME_KEEP_DAYS = 7;
 const keepFrom = (() => {
   const [y, m, d] = todayJST().split('-').map(Number);
   return new Date(Date.UTC(y, m - 1, d - HOME_KEEP_DAYS)).toISOString().slice(0, 10).replace(/-/g, '.');
 })();
-const HOME_TOURNAMENTS = TOURNAMENTS.filter((t) => t.date >= keepFrom);
+const HOME_TOURNAMENTS = TOURNAMENTS.filter((t) => t.date > keepFrom);
 // トップに出すのは上から HOME_TOURNAMENTS_VISIBLE 件（PC は HOME_TOURNAMENTS_VISIBLE_PC 件）まで。続きがあるときは、
 // お知らせと同じく次の1件を薄く見せ、その右端の VIEW ALL から大会情報のページへ飛ばす
 const HOME_TOURNAMENTS_VISIBLE = 3;
@@ -167,7 +167,7 @@ const HOME_TOURNAMENTS_VISIBLE_PC = 5;
   </section>}
 
   <!-- ============ 大会情報（一覧） ============ -->
-  {/* 開催前の大会と、開催日から2週間以内の終わった大会を、エントリー受付中の大会と同じ行の型で並べる（3件まで＋薄い4件目）
+  {/* 開催前の大会と、開催日から1週間たっていない終わった大会を、エントリー受付中の大会と同じ行の型で並べる（3件まで＋薄い4件目）
       （1行ごとに 要項・ドロー・結果 のボタン。HomeTournaments.astro）。
       以前の写真のカードの横スクロールとカード／一覧の切り替えは、アンケートで「ドローなどの情報が分かりづらい」との声があったのでやめた */}
   <section class="section section--gray" id="tournaments" aria-labelledby="tournaments-title">
