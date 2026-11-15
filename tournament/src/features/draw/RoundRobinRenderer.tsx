@@ -108,6 +108,7 @@ export default function RoundRobinRenderer({ slots, matchResults = [], onCellSel
   // 順位（leagueStandings.ts。順位別トーナメントの組み合わせと同じ計算）
   //   wins  … 勝数 → 同数 2 者は直接対戦、3 者以上は取得ゲーム率
   //   games … 取得ゲーム率 → 同率 2 者は直接対戦
+  const byGames = rankRule === 'games';
   const ids = players.map((p) => p.entryId ?? '');
   const { standings, manual } = leagueStandings(ids, matchResults, rankRule, manualOrder);
   const tiedRows = new Set(standings.filter(s => s.tied).map(s => ids.indexOf(s.entryId)));
@@ -152,12 +153,15 @@ export default function RoundRobinRenderer({ slots, matchResults = [], onCellSel
                     {surnameLabel(p.name)}
                   </th>
                 ))}
-                <th className="border-l border-gray-200 px-1.5 py-1.5 text-center text-[12px] font-bold text-gray-800 min-w-[52px] sm:min-w-[64px]">
-                  勝敗
+                {/* 取得ゲーム率で順位を決める大会は、勝敗の欄に取得ゲーム率を出す（勝率の欄は無し） */}
+                <th className="border-l border-gray-200 px-1.5 py-1.5 text-center text-[12px] font-bold text-gray-800 min-w-[52px] sm:min-w-[64px] whitespace-nowrap">
+                  {byGames ? '取得ゲーム率' : '勝敗'}
                 </th>
+                {!byGames && (
                 <th className="border-l border-gray-200 px-1.5 py-1.5 text-center text-[12px] font-bold text-gray-800 min-w-[44px] sm:min-w-[56px]">
                   勝率
                 </th>
+                )}
                 <th className="border-l border-gray-200 px-1.5 py-1.5 text-center text-[12px] font-bold text-gray-800 min-w-[44px] sm:min-w-[56px]">
                   順位
                 </th>
@@ -224,18 +228,31 @@ export default function RoundRobinRenderer({ slots, matchResults = [], onCellSel
                         </td>
                       );
                     })}
-                    {/* 勝敗 */}
+                    {/* 勝敗（取得ゲーム率で順位を決める大会は、取得ゲーム率と取ったゲーム数） */}
+                    {byGames ? (
+                    <td className="border-t border-l border-gray-200 px-1.5 py-1 text-center font-bold text-gray-800 tabular-nums whitespace-nowrap">
+                      {stats[rowIdx].gamesWon + stats[rowIdx].gamesLost > 0 && (
+                        <>
+                          <span className="block text-[14px] leading-tight">{(Math.round(stats[rowIdx].gameRate * 1000) / 10).toFixed(1)}%</span>
+                          <span className="block text-[10.5px] leading-tight font-medium text-gray-500">{stats[rowIdx].gamesWon}/{stats[rowIdx].gamesWon + stats[rowIdx].gamesLost}ゲーム</span>
+                        </>
+                      )}
+                    </td>
+                    ) : (
                     <td className="border-t border-l border-gray-200 px-1.5 py-1.5 text-center font-bold text-gray-700 tabular-nums whitespace-nowrap">
                       {stats[rowIdx].played > 0
                         ? `${stats[rowIdx].wins}-${stats[rowIdx].losses}`
                         : ''}
                     </td>
+                    )}
                     {/* 勝率（取得ゲーム率） */}
+                    {!byGames && (
                     <td className="border-t border-l border-gray-200 px-1.5 py-1.5 text-center text-[12px] text-gray-500 tabular-nums whitespace-nowrap">
                       {stats[rowIdx].gamesWon + stats[rowIdx].gamesLost > 0
                         ? stats[rowIdx].gameRate.toFixed(3)
                         : ''}
                     </td>
+                    )}
                     {/* 順位（全結果が揃うまで非表示。1位は赤字） */}
                     <td className={`border-t border-l border-gray-200 px-1.5 py-1.5 text-center font-bold whitespace-nowrap ${
                       rank === 1 ? 'text-red-600 text-[14px]' : 'text-gray-600 text-[14px]'
@@ -314,7 +331,7 @@ export default function RoundRobinRenderer({ slots, matchResults = [], onCellSel
         <div className="mt-2 text-[11px] text-gray-500">
           {!allFinished && <span className="text-gray-700 font-medium">※順位は全対戦終了後に表示されます。</span>}
           <span className="block mt-0.5">{rankRule === 'games'
-            ? '勝率＝取得ゲーム率。取得ゲーム率の高い順、同率は直接対戦の勝者が上位。'
+            ? '取得ゲーム率（取ったゲーム ÷ 全ゲーム）の高い順に順位を決めます。同率は直接対戦の勝者が上位。'
             : '勝率＝取得ゲーム率。勝数の多い順、同勝数は「2者なら直接対戦／3者以上なら取得ゲーム率」で順位を決定します。'}</span>
         </div>
 

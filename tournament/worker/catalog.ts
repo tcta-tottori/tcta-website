@@ -318,7 +318,8 @@ export async function handleCatalog(request: Request, env: Env, url: URL): Promi
 interface ResultMatch { winner: string; loser: string; score: string; note?: string }
 /** 組み合わせを固定する枠（順位で組む種目を、大会本部の決めた組に強制する）。name はダブルスなら代表の 1 人 */
 interface ResultPair { position: number; name: string }
-interface ResultEvent { event: string; matches: ResultMatch[]; pairs?: ResultPair[] }
+/** rankRule … リーグの順位の決め方を運営中の端末に合わせる（"games"＝取得ゲーム率が先）。大会の途中で決め方を直すとき */
+interface ResultEvent { event: string; matches: ResultMatch[]; pairs?: ResultPair[]; rankRule?: 'wins' | 'games' }
 interface ResultDoc { version: string; updatedBy: string; source?: string; events: ResultEvent[] }
 
 async function handleResults(request: Request, db: D1Database, id: string, who: string): Promise<Response> {
@@ -342,12 +343,15 @@ async function handleResults(request: Request, db: D1Database, id: string, who: 
   for (const e of cur.events) byEvent.set(keyOf(e.event), new Map(e.matches.map((m) => [pairKey(m.winner, m.loser), m])));
   const names = new Map<string, string>(cur.events.map((e) => [keyOf(e.event), e.event]));
   const pairsOf = new Map<string, ResultPair[]>(cur.events.filter((e) => e.pairs?.length).map((e) => [keyOf(e.event), e.pairs!]));
+  const ruleOf = new Map<string, 'wins' | 'games'>(cur.events.filter((e) => e.rankRule).map((e) => [keyOf(e.event), e.rankRule!]));
   let n = 0;
   for (const e of body.events as Record<string, unknown>[]) {
     const ev = hw(str(e?.event, 80));
-    if (!ev || (!Array.isArray(e.matches) && !Array.isArray(e.pairs))) continue;
+    const rule = e?.rankRule === 'games' || e?.rankRule === 'wins' ? e.rankRule : null;
+    if (!ev || (!Array.isArray(e.matches) && !Array.isArray(e.pairs) && !rule)) continue;
     const k = keyOf(ev);
     names.set(k, names.get(k) ?? ev);
+    if (rule) { ruleOf.set(k, rule); n++; }
     if (Array.isArray(e.pairs)) {
       const ps: ResultPair[] = [];
       for (const x of e.pairs as Record<string, unknown>[]) {
@@ -371,8 +375,9 @@ async function handleResults(request: Request, db: D1Database, id: string, who: 
   }
   const doc: ResultDoc = {
     version: new Date().toISOString(), updatedBy: who, ...(str(body.source, 80) ? { source: str(body.source, 80) } : {}),
-    events: [...new Set([...byEvent.keys(), ...pairsOf.keys()])].map((k) => ({
+    events: [...new Set([...byEvent.keys(), ...pairsOf.keys(), ...ruleOf.keys()])].map((k) => ({
       event: names.get(k) ?? k, matches: [...(byEvent.get(k)?.values() ?? [])], ...(pairsOf.get(k) ? { pairs: pairsOf.get(k) } : {}),
+      ...(ruleOf.get(k) ? { rankRule: ruleOf.get(k) } : {}),
     })),
   };
   await db.prepare('INSERT INTO catalog_meta (k, v, updated_at) VALUES (?, ?, ?) ON CONFLICT (k) DO UPDATE SET v = excluded.v, updated_at = excluded.updated_at')

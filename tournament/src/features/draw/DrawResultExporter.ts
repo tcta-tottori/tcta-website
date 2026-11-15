@@ -14,6 +14,7 @@ import type { Draw, Match, Entry, Player, Event, Tournament } from '../../db/dat
 import type { FontWeight } from './resultCanvasKit';
 import { sideScoreText } from '../score/scoreDisplay';
 import { isThirdPlaceMatch } from './thirdPlace';
+import { leagueStandings } from './leagueStandings';
 import {
   COL,
   clamp,
@@ -1073,6 +1074,27 @@ export async function renderTournamentResultCanvas(opts: ResultExportOptions): P
 
 // ===== Canvas リーグ表描画 (JPEG) =====
 
+/** 取得ゲーム率の表示（58.3%） */
+function rateText(r: number): string {
+  return `${(Math.round(r * 1000) / 10).toFixed(1)}%`;
+}
+
+/** リーグ表の勝敗・取得ゲーム率・順位（leagueStandings.ts と同じ計算。手で決めた順位にも従う） */
+function leagueTable(draw: Draw, playerSlots: { entryId?: string | null }[], matches: Match[]) {
+  const ids = playerSlots.map(p => p.entryId ?? '');
+  const rule = draw.leagueRankRule ?? 'wins';
+  const { standings } = leagueStandings(ids, matches, rule, draw.leagueManualOrder);
+  const byId = new Map(standings.map(s => [s.entryId, s]));
+  const stats = ids.map(id => {
+    const s = byId.get(id)!;
+    // 試合をした（勝ち負けか、引き分け・ゲーム数がある）
+    return { ...s, played: s.wins + s.losses > 0 || s.gamesWon + s.gamesLost > 0 };
+  });
+  const rankMap = new Map<number, number>();
+  ids.forEach((id, i) => rankMap.set(i, byId.get(id)!.rank));
+  return { stats, rankMap, byGames: rule === 'games' };
+}
+
 export async function exportRoundRobinResultAsJpeg(opts: ResultExportOptions): Promise<void> {
   const canvas = await renderRoundRobinResultCanvas(opts);
   if (!canvas) return;
@@ -1131,28 +1153,9 @@ export async function renderRoundRobinResultCanvas(opts: ResultExportOptions): P
     return { text: isWin ? '○' : '●', isWin, played: true };
   };
 
-  // 勝敗集計
-  const stats = playerSlots.map(p => {
-    let wins = 0, losses = 0;
-    for (const other of playerSlots) {
-      if (other.entryId === p.entryId) continue;
-      const m = findMatch(p, other);
-      if (m?.winnerEntryId) {
-        if (m.winnerEntryId === p.entryId) wins++;
-        else losses++;
-      }
-    }
-    return { wins, losses };
-  });
-
-  // 順位
-  const rankings = playerSlots.map((_, i) => i);
-  rankings.sort((a, b) => {
-    if (stats[b].wins !== stats[a].wins) return stats[b].wins - stats[a].wins;
-    return stats[a].losses - stats[b].losses;
-  });
-  const rankMap = new Map<number, number>();
-  rankings.forEach((pi, ri) => rankMap.set(pi, ri + 1));
+  // 勝敗・取得ゲーム率と順位（運営画面・順位別トーナメントの組み合わせと同じ計算。leagueStandings.ts）
+  //   順位の決め方（draw.leagueRankRule）と、運営が手で決めた順位（draw.leagueManualOrder）に従う
+  const { stats, rankMap, byGames } = leagueTable(draw, playerSlots, matches);
 
   // ---- レイアウト ----
   // ダブルスは氏名・所属をペアの1人ずつ2行で表示する（トーナメント表と同じ体裁）
@@ -1296,7 +1299,7 @@ export async function renderRoundRobinResultCanvas(opts: ResultExportOptions): P
     const cx = gridX + NAME_W + i * CELL_W + CELL_W / 2;
     drawText(ctx, surnameLabel(playerSlots[i].name), cx, gridY + HDR_H / 2, 12, 'center', COL.gray800, 'bold', CELL_W - 8);
   }
-  drawText(ctx, '勝敗', statX + STAT_W / 2, gridY + HDR_H / 2, 12, 'center', COL.gray800, 'black');
+  drawText(ctx, byGames ? '取得ゲーム率' : '勝敗', statX + STAT_W / 2, gridY + HDR_H / 2, byGames ? 11 : 12, 'center', COL.gray800, 'black', STAT_W - 6);
   drawText(ctx, '順位', rankX + RANK_W / 2, gridY + HDR_H / 2, 12, 'center', COL.gray800, 'black');
 
   // 罫線（縦）
@@ -1322,7 +1325,7 @@ export async function renderRoundRobinResultCanvas(opts: ResultExportOptions): P
     const p = playerSlots[row];
     const rank = rankMap.get(row);
     const s = stats[row];
-    const played = s.wins > 0 || s.losses > 0;
+    const played = s.played;
     // 優勝（1位）のペア・選手は氏名を赤文字にする
     const isChampion = rank === 1 && played;
 
@@ -1377,8 +1380,11 @@ export async function renderRoundRobinResultCanvas(opts: ResultExportOptions): P
       drawText(ctx, result.text, cx, cy, 14, 'center', result.isWin ? COL.red600 : COL.gray500, result.isWin ? 'black' : 'bold');
     }
 
-    // 勝敗
-    if (played) {
+    // 勝敗（取得ゲーム率で順位を決める大会は、取得ゲーム率と取ったゲーム数）
+    if (played && byGames) {
+      drawText(ctx, rateText(s.gameRate), statX + STAT_W / 2, cy - 7, 14, 'center', COL.gray800, 'black');
+      drawText(ctx, `${s.gamesWon}/${s.gamesWon + s.gamesLost}ゲーム`, statX + STAT_W / 2, cy + 11, 10.5, 'center', COL.gray600, 'medium', STAT_W - 8);
+    } else if (played) {
       drawText(ctx, `${s.wins}-${s.losses}`, statX + STAT_W / 2, cy, 14, 'center', COL.gray700, 'bold');
     }
 
@@ -1534,22 +1540,7 @@ export function exportRoundRobinResultAsExcel(opts: ResultExportOptions): void {
     return m.winnerEntryId === rowP.entryId ? '○' : '●';
   };
 
-  const stats = playerSlots.map(p => {
-    let wins = 0, losses = 0;
-    for (const other of playerSlots) {
-      if (other.entryId === p.entryId) continue;
-      const m = findMatch(p, other);
-      if (m?.winnerEntryId) {
-        if (m.winnerEntryId === p.entryId) wins++; else losses++;
-      }
-    }
-    return { wins, losses };
-  });
-
-  const rankings = playerSlots.map((_, i) => i);
-  rankings.sort((a, b) => stats[b].wins !== stats[a].wins ? stats[b].wins - stats[a].wins : stats[a].losses - stats[b].losses);
-  const rankMap = new Map<number, number>();
-  rankings.forEach((pi, ri) => rankMap.set(pi, ri + 1));
+  const { stats, rankMap, byGames } = leagueTable(draw, playerSlots, matches);
 
   const data: (string | null)[][] = [];
 
@@ -1560,7 +1551,7 @@ export function exportRoundRobinResultAsExcel(opts: ResultExportOptions): void {
   // テーブルヘッダー
   const headerRow: (string | null)[] = [''];
   for (const p of playerSlots) headerRow.push(p.name);
-  headerRow.push('勝　敗', '順　位');
+  headerRow.push(byGames ? '取得ゲーム率' : '勝　敗', '順　位');
   data.push(headerRow);
 
   // データ行
@@ -1571,9 +1562,9 @@ export function exportRoundRobinResultAsExcel(opts: ResultExportOptions): void {
       cells.push(row === col ? '' : getScore(p, playerSlots[col]));
     }
     const s = stats[row];
-    cells.push(s.wins > 0 || s.losses > 0 ? `${s.wins}-${s.losses}` : '');
+    cells.push(!s.played ? '' : byGames ? rateText(s.gameRate) : `${s.wins}-${s.losses}`);
     const rank = rankMap.get(row);
-    cells.push(rank && (s.wins > 0 || s.losses > 0) ? `${rank}位` : '');
+    cells.push(rank && s.played ? `${rank}位` : '');
     data.push(cells);
   }
 
