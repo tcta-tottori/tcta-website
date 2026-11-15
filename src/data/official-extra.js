@@ -190,7 +190,7 @@ export const EXTRA_CARDS = [
 ];
 
 export const EXTRA_NEWS = [
-  { slug: 'official-20261115-kaicho-autumn-result', date: '2026-11-15', createdAt: '2026-11-15T16:45:00+09:00', category: '結果', title: '第62回鳥取市テニス協会会長杯（秋季）の結果を掲載しました', href: 'event-r8-kaicho-autumn.html#result' },
+  { slug: 'official-20261115-kaicho-autumn-result', date: '2026-11-15', createdAt: '2026-11-15T16:45:00+09:00', category: '結果', title: '第62回鳥取市テニス協会会長杯（秋季）の結果を掲載しました', href: 'result-r8-kaicho-autumn.html' },
   { slug: 'official-20261113-shicho-draw', date: '2026-11-13', createdAt: '2026-11-13T07:55:00+09:00', category: '大会', title: '第41回鳥取市市長杯テニス大会（11/23）のドローを掲載しました', href: 'draw-r8-shicho.html' },
   { slug: 'official-20261105-kaicho-autumn-draw-name-fix', date: '2026-11-05', createdAt: '2026-11-05T14:45:00+09:00', category: '大会', title: '第62回鳥取市テニス協会会長杯（秋季・11/15）のドローを訂正しました（男子B級Cリーグの選手名）', href: 'draw-r8-kaicho-autumn.html' },
   { slug: 'official-20261103-kaicho-autumn-draw-fix', date: '2026-11-03', createdAt: '2026-11-03T11:30:00+09:00', category: '大会', title: '第62回鳥取市テニス協会会長杯（秋季・11/15）のドローを訂正しました（男子C級の組み合わせ・試合方式は6ゲームマッチ）', href: 'draw-r8-kaicho-autumn.html' },
