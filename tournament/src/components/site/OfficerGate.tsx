@@ -1,8 +1,8 @@
 // 運営画面の関門。役員としてログインしていなければ、運営画面の代わりにログインの案内を出す。
 // 本当の守りは Worker 側（運営端末としての同期の接続・音声コールは、ログインしていなければ断る）。
 import type { ReactNode } from 'react';
-import { LogIn, Eye, WifiOff, ShieldAlert } from 'lucide-react';
-import { useOfficer, loginHref } from '../../features/auth/officer';
+import { LogIn, Eye, WifiOff, ShieldAlert, KeyRound } from 'lucide-react';
+import { useOfficer, loginHref, signinHref, passwordAction } from '../../features/auth/officer';
 import { SiteHeader, PageHead, SiteFooter, SITE_URL, SYSTEM_LOGO } from './SiteChrome';
 
 export default function OfficerGate({ children }: { children: ReactNode }) {
@@ -33,8 +33,9 @@ export default function OfficerGate({ children }: { children: ReactNode }) {
         return (
           <>
             <h2 className="app-panel__title"><LogIn className="w-5 h-5" />役員の方はログインしてください</h2>
-            <p>この画面（大会運営システム）は、協会の役員だけが使えます。登録したメールアドレスを入れると、6 桁の確認コードがメールで届きます。パスワードはいりません。</p>
-            <p className="note">一度ログインした端末は 7 日間そのまま使えます。大会の結果やドローを見たい方は、観戦ページをご覧ください。</p>
+            <p>この画面（大会運営システム）は、協会の役員だけが使えます。登録したメールアドレスを入れると、6 桁の確認コードがメールで届きます。</p>
+            <p>役員から <b>24 時間パスワード</b> を受け取った方は、下の欄から入れます（発行から 24 時間だけ使えます）。</p>
+            <p className="note">大会の結果やドローを見たい方は、観戦ページをご覧ください。</p>
           </>
         );
     }
@@ -59,10 +60,25 @@ export default function OfficerGate({ children }: { children: ReactNode }) {
               {body}
               <div className="app-panel__actions">
                 {(officer.status === 'login' || officer.status === 'offline') && (
-                  <a className="btn btn--primary" href={loginHref()}>役員としてログイン <span className="aw">→</span></a>
+                  <a className="btn btn--primary" href={loginHref()}>メールでログイン <span className="aw">→</span></a>
                 )}
                 <a className="btn btn--outline" href="/view"><span className="inline-flex items-center gap-2"><Eye className="w-4 h-4" />観戦ページを見る</span></a>
               </div>
+              {officer.status === 'login' && (
+                // 24 時間パスワード（メールでログインした役員が設定の画面で発行したもの）
+                <form className="pass-login" method="post" action={passwordAction()}>
+                  <p className="pass-login__title"><KeyRound className="w-4 h-4" />24 時間パスワードでログイン</p>
+                  <label className="pass-login__field">
+                    <span>パスワード</span>
+                    <input name="password" required autoComplete="off" autoCapitalize="characters" spellCheck={false} placeholder="ABCD-2345" />
+                  </label>
+                  <label className="pass-login__field">
+                    <span>お名前<small>（だれが操作したかの記録に使います）</small></span>
+                    <input name="name" required maxLength={20} placeholder="例 山田" />
+                  </label>
+                  <button type="submit" className="btn btn--primary pass-login__btn">パスワードでログイン</button>
+                </form>
+              )}
             </div>
           </div>
         </div>
@@ -85,7 +101,7 @@ export function OfficerExpiredBar() {
     <div className="officer-expired" role="alert">
       <div className="container officer-expired__inner">
       <span>役員ログインの期限が切れました。同期と音声コールを続けるには、ログインし直してください（入力した内容は端末に残っています）。</span>
-      <a href={loginHref()}>ログインし直す →</a>
+      <a href={signinHref()}>ログインし直す →</a>
       </div>
     </div>
   );

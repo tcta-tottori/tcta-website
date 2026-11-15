@@ -172,6 +172,20 @@ html.is-lite .status-bar .info-ticker { animation: none; padding-left: 0; }
 .app-panel .note { font-size: 13px; color: var(--gray-500); }
 .app-panel code { font: 700 13px/1 var(--flt); letter-spacing: .08em; color: var(--ink); }
 .app-panel__actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 28px; }
+/* 役員ログインの関門：24 時間パスワードの欄 */
+.pass-login { margin-top: 32px; padding-top: 24px; border-top: 1px solid var(--gray-200); display: grid; gap: 14px; max-width: 420px; }
+.pass-login__title { margin: 0; display: flex; align-items: center; gap: 8px; font: 700 15px/1.4 var(--fjp); color: var(--ink); }
+.pass-login__field { display: grid; gap: 6px; font: 500 13px/1.5 var(--fjp); color: var(--ink); }
+.pass-login__field small { margin-left: 4px; font-weight: 400; color: var(--gray-500); }
+.pass-login__field input { width: 100%; min-height: 44px; padding: 8px 12px; border: 1px solid var(--gray-300); border-radius: var(--radius, 4px); font: 500 16px/1.4 var(--fjp); background: #fff; }
+.pass-login__field input[name=password] { font: 700 18px/1.4 var(--flt); letter-spacing: .12em; }
+.pass-login__btn { justify-self: start; }
+/* 設定：24 時間パスワード */
+.pass-card { display: grid; gap: 12px; }
+.pass-card__issued { display: grid; gap: 6px; justify-items: start; padding: 16px; border: 2px solid var(--red); background: #FFF6F6; }
+.pass-card__label { font: 500 12px/1.5 var(--fjp); color: var(--gray-600); }
+.pass-card__pw { font: 700 30px/1.2 var(--flt); letter-spacing: .14em; color: var(--ink); user-select: all; }
+.pass-card__until { font: 500 13px/1.5 var(--fjp); color: var(--red); }
 .officer-expired {
   flex: none;
   position: relative;

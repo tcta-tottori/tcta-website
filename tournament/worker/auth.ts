@@ -16,14 +16,22 @@
 //
 // 手元の確認だけは AUTH_MODE=dev（.dev.vars）で、/auth/login に名前を入れるだけの画面を出す。
 // dev は localhost / 127.0.0.1 のときしか効かない。
+//
+// もう 1 つの入り方：24 時間だけ使えるパスワード（worker/passAuth.ts）。メールでログインした役員が発行し、
+// ログインの画面（アプリの関門・/auth/signin）でパスワードと名前を入れる（POST /auth/password）。
+// パスワードの入口は Access で守らない（/auth/login だけが Access の守り）。
 import type { Env } from './index';
+import { endSession, issuePass, loginWithPass, passStatus, revokePass, sessionOf } from './passAuth';
 
-export interface Officer { email: string; via: 'access' | 'dev' }
+export interface Officer { email: string; via: 'access' | 'dev' | 'password' }
 
 export type AuthMode = 'access' | 'dev' | 'unconfigured';
 
 const COOKIE = '__Host-tcta_officer';
 const DEV_COOKIE = 'tcta_dev_officer';
+/** パスワードでログインした証。手元（http://localhost）では __Host- の Cookie を使えないので名前を変える */
+const passCookieName = (mode: AuthMode) => (mode === 'dev' ? 'tcta_dev_pass' : '__Host-tcta_pass');
+const passCookieAttrs = (mode: AuthMode) => (mode === 'dev' ? 'Path=/; HttpOnly; SameSite=Lax' : 'Path=/; Secure; HttpOnly; SameSite=Lax');
 
 export function authMode(env: Env, url: URL): AuthMode {
   if (env.AUTH_MODE === 'dev' && isLocal(url)) return 'dev';
@@ -46,15 +54,22 @@ function teamOrigin(env: Env): string | null {
 /** リクエストを送ってきたのが役員か。違えば null */
 export async function officerOf(request: Request, env: Env, url: URL): Promise<Officer | null> {
   const mode = authMode(env, url);
+  if (mode === 'unconfigured') return null;
   if (mode === 'dev') {
     const email = cookie(request, DEV_COOKIE);
-    return email && /^[^@\s]+@[^@\s]+$/.test(email) ? { email, via: 'dev' } : null;
+    if (email && /^[^@\s]+@[^@\s]+$/.test(email)) return { email, via: 'dev' };
+  } else {
+    const jwt = cookie(request, COOKIE) ?? request.headers.get('Cf-Access-Jwt-Assertion') ?? undefined;
+    const email = await verifyAccessJwt(env, jwt);
+    if (email && allowed(env, email)) return { email, via: 'access' };
   }
-  if (mode !== 'access') return null;
-  const jwt = cookie(request, COOKIE) ?? request.headers.get('Cf-Access-Jwt-Assertion') ?? undefined;
-  const email = await verifyAccessJwt(env, jwt);
-  if (!email || !allowed(env, email)) return null;
-  return { email, via: 'access' };
+  // 24 時間パスワードでログインした人
+  const token = cookie(request, passCookieName(mode));
+  if (token && env.DATA) {
+    const s = await sessionOf(env.DATA, token).catch(() => null);
+    if (s) return { email: `${s.name}（パスワード）`, via: 'password' };
+  }
+  return null;
 }
 
 function allowed(env: Env, email: string): boolean {
@@ -81,9 +96,49 @@ export async function handleAuth(request: Request, env: Env, url: URL): Promise<
     const headers = new Headers({ 'Cache-Control': 'no-store' });
     headers.append('Set-Cookie', `${COOKIE}=; Path=/; Secure; HttpOnly; SameSite=Lax; Max-Age=0`);
     headers.append('Set-Cookie', `${DEV_COOKIE}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0`);
+    // パスワードでのログインも終える（証を消す）
+    if (mode !== 'unconfigured') {
+      const token = cookie(request, passCookieName(mode));
+      if (token && env.DATA) await endSession(env.DATA, token).catch(() => {});
+      headers.append('Set-Cookie', `${passCookieName(mode)}=; ${passCookieAttrs(mode)}; Max-Age=0`);
+    }
     // Access 側のログインも切る（次に /auth/login を開いたときにコードを聞き直す）
     headers.set('Location', mode === 'access' ? '/cdn-cgi/access/logout' : '/');
     return new Response(null, { status: 302, headers });
+  }
+
+  // ログインの入り方を選ぶ画面（メールのコード／24 時間パスワード）。期限切れの帯などから開く
+  if (url.pathname === '/auth/signin') {
+    if (mode === 'unconfigured') return page('役員ログインが未設定です', '<p>役員ログインの設定が入っていません。</p>', 503);
+    return page('役員ログイン', `<p>登録したメールアドレスでログインするか、役員から受け取った 24 時間パスワードでログインしてください。</p>
+      <p><a class="btn" href="/auth/login?return=${encodeURIComponent(back)}">メールの確認コードでログイン →</a></p>
+      <h2>24 時間パスワードでログイン</h2>
+      ${passForm(back)}`, 200);
+  }
+
+  // 24 時間パスワードでログインする（アプリの関門・/auth/signin のフォームから）
+  if (url.pathname === '/auth/password') {
+    if (request.method !== 'POST') return Response.redirect(new URL(`/auth/signin?return=${encodeURIComponent(back)}`, url).toString(), 302);
+    if (mode === 'unconfigured' || !env.DATA) return page('役員ログインが未設定です', '<p>役員ログインの設定が入っていません。</p>', 503);
+    if (!sameOrigin(request, url)) return page('この画面からはログインできません', '<p>大会運営システムの画面からログインしてください。</p>', 403);
+    const form = await request.formData().catch(() => null);
+    const password = String(form?.get('password') ?? '').slice(0, 40);
+    const name = String(form?.get('name') ?? '').replace(/[\s\u3000]+/g, ' ').trim().slice(0, 20);
+    const retry = `<p><a href="/auth/signin?return=${encodeURIComponent(back)}">入れ直す</a></p>`;
+    if (!password || !name) return page('パスワードと名前を入れてください', retry, 400);
+    const ip = request.headers.get('CF-Connecting-IP') ?? 'local';
+    const r = await loginWithPass(env.DATA, password, name, ip);
+    if (!r.ok) {
+      const msg = r.reason === 'busy' ? '<p>間違いが続いたため、しばらく受け付けません。15 分ほどたってから入れ直してください。</p>'
+        : r.reason === 'none' ? '<p>いま使えるパスワードがありません（発行から 24 時間たった・取り消された）。役員に新しいパスワードを発行してもらってください。</p>'
+        : '<p>パスワードが違います。役員から受け取ったパスワード（例 ABCD-2345）を入れ直してください。</p>';
+      return page('ログインできませんでした', msg + retry, r.reason === 'busy' ? 429 : 401);
+    }
+    const maxAge = Math.max(60, Math.floor((r.expiresAt - Date.now()) / 1000));
+    return new Response(null, {
+      status: 303,
+      headers: { Location: back, 'Set-Cookie': `${passCookieName(mode)}=${r.token}; ${passCookieAttrs(mode)}; Max-Age=${maxAge}`, 'Cache-Control': 'no-store' },
+    });
   }
 
   if (url.pathname === '/auth/login') {
@@ -119,11 +174,41 @@ export async function handleAuth(request: Request, env: Env, url: URL): Promise<
 export async function handleMe(request: Request, env: Env, url: URL): Promise<Response> {
   const mode = authMode(env, url);
   const officer = await officerOf(request, env, url);
-  const body = { authenticated: !!officer, email: officer?.email ?? null, mode };
+  const body = { authenticated: !!officer, email: officer?.email ?? null, via: officer?.via ?? null, mode };
   return new Response(JSON.stringify(body), {
     status: officer ? 200 : 401,
     headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' },
   });
+}
+
+/**
+ * /api/auth/pass … 24 時間パスワード
+ *   GET    今の状態（使えるパスワードがあるか・期限・発行した人・ログイン中の端末の数）。役員なら誰でも
+ *   POST   発行する（前のパスワードは使えなくなる）。メールでログインした役員だけ。発行したパスワードはこの応答にだけ入る
+ *   DELETE 取り消す。メールでログインした役員だけ
+ */
+export async function handlePassApi(request: Request, env: Env, url: URL): Promise<Response> {
+  const res = (body: unknown, status = 200) => new Response(JSON.stringify(body), {
+    status, headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' },
+  });
+  if (!env.DATA) return res({ error: 'データベース（DATA）が設定されていません' }, 503);
+  const officer = await officerOf(request, env, url);
+  if (!officer) return res({ error: '役員ログインが必要です' }, 401);
+  if (request.method === 'GET') return res({ ...(await passStatus(env.DATA)), canIssue: officer.via !== 'password' });
+  if (!sameOrigin(request, url)) return res({ error: 'この画面からは操作できません' }, 403);
+  if (officer.via === 'password') return res({ error: 'パスワードの発行・取り消しは、メールでログインした役員だけができます' }, 403);
+  if (request.method === 'POST') return res(await issuePass(env.DATA, officer.email));
+  if (request.method === 'DELETE') { await revokePass(env.DATA); return res({ ok: true }); }
+  return res({ error: 'GET・POST・DELETE で呼んでください' }, 405);
+}
+
+/** パスワードの入力欄（/auth/signin） */
+function passForm(back: string): string {
+  return `<form method="post" action="/auth/password?return=${encodeURIComponent(back)}">
+      <label>パスワード <input name="password" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="ABCD-2345" required></label>
+      <label>お名前（だれが操作したかの記録に使います） <input name="name" maxlength="20" placeholder="例 山田" required></label>
+      <button type="submit">パスワードでログイン</button>
+    </form>`;
 }
 
 /** 戻り先はこのサイトの中だけ（/ で始まり // で始まらないもの） */
@@ -156,7 +241,7 @@ function page(title: string, body: string, status: number): Response {
 main{max-width:640px;margin:64px auto;padding:32px;background:#fff;border:1px solid #E5E5E5}
 h1{margin:0 0 16px;font-size:22px;color:#1A1A1A;display:flex;gap:12px;align-items:center}
 h1:before{content:"";width:14px;height:14px;background:#D8232A}
-a{color:#D8232A}label{display:block;margin:16px 0}input{display:block;width:100%;margin-top:6px;padding:10px;border:1px solid #C9C9C9;font:inherit;box-sizing:border-box}
+a{color:#D8232A}h2{margin:32px 0 0;font-size:17px;color:#1A1A1A}a.btn{display:inline-block;padding:12px 20px;border:1px solid #1A1A1A;color:#1A1A1A;text-decoration:none;font-weight:700}label{display:block;margin:16px 0}input{display:block;width:100%;margin-top:6px;padding:10px;border:1px solid #C9C9C9;font:inherit;box-sizing:border-box}
 button{padding:12px 28px;border:0;background:#D8232A;color:#fff;font:700 15px/1 inherit;cursor:pointer}</style></head>
 <body><main><h1>${escapeHtml(title)}</h1>${body}<p><a href="/view">観戦ページへ</a></p></main></body></html>`;
   return new Response(html, { status, headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' } });

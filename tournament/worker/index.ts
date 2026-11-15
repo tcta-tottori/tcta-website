@@ -4,6 +4,7 @@
 //                             … 端末どうしの同期と観戦配信の WebSocket。ルームごとに Durable Object（SyncRoom）1 つ。
 //                               運営端末（operator）は役員ログインが要る。観戦端末（viewer）は誰でも
 //   /auth/login・/auth/logout … 役員ログイン（Cloudflare Access。worker/auth.ts）
+//   /auth/signin・/auth/password・/api/auth/pass … 24 時間パスワードでのログイン（worker/passAuth.ts）
 //   /api/me                   … ログイン中の役員（運営画面が最初に確かめる）
 //   /api/gemini-status        … 音声コール（Gemini TTS）が使えるか
 //   /api/gemini-tts           … 音声コールの生成（役員だけ。API キーは Worker の secret。ブラウザには渡さない）
@@ -19,7 +20,7 @@
 // GitHub Pages 版が使っていた Render の中継サーバー（sync-server/server.mjs）と同じ約束事
 // （join / leave / broadcast / cache / ping）をそのまま受けるので、アプリ側の同期処理は変えていない。
 
-import { handleAuth, handleMe, officerOf, sameOrigin } from './auth';
+import { handleAuth, handleMe, handlePassApi, officerOf, sameOrigin } from './auth';
 import { handleData } from './data';
 import { handleCatalog } from './catalog';
 import { handleInsta } from './insta';
@@ -76,8 +77,12 @@ export default {
       return stub.fetch(new Request(request, { headers }));
     }
 
-    if (url.pathname === '/auth/login' || url.pathname === '/auth/logout') {
+    if (url.pathname === '/auth/login' || url.pathname === '/auth/logout' || url.pathname === '/auth/signin' || url.pathname === '/auth/password') {
       return handleAuth(request, env, url);
+    }
+
+    if (url.pathname === '/api/auth/pass') {
+      return handlePassApi(request, env, url);
     }
 
     if (url.pathname === '/api/me') {

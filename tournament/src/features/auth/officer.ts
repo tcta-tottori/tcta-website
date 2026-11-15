@@ -18,6 +18,8 @@ export type OfficerStatus =
 export interface OfficerState {
   status: OfficerStatus;
   email: string | null;
+  /** どう入ったか（access＝メールのコード／password＝24 時間パスワード／dev＝手元の確認）。分からなければ null */
+  via?: 'access' | 'dev' | 'password' | null;
 }
 
 const KEY = 'tcta-officer';
@@ -58,7 +60,7 @@ let started = false;
 let inflight: Promise<void> | null = null;
 
 function set(next: OfficerState) {
-  if (next.status === state.status && next.email === state.email) return;
+  if (next.status === state.status && next.email === state.email && (next.via ?? null) === (state.via ?? null)) return;
   state = next;
   for (const l of listeners) l();
 }
@@ -74,10 +76,10 @@ export function recheckOfficer(): Promise<void> {
       const timer = setTimeout(() => ctrl.abort(), 8000);
       const res = await fetch('/api/me', { cache: 'no-store', credentials: 'same-origin', signal: ctrl.signal });
       clearTimeout(timer);
-      const body = (await res.json()) as { authenticated?: boolean; email?: string | null; mode?: string };
+      const body = (await res.json()) as { authenticated?: boolean; email?: string | null; via?: OfficerState['via']; mode?: string };
       if (res.ok && body.authenticated && body.email) {
         remember(body.email);
-        set({ status: 'ok', email: body.email });
+        set({ status: 'ok', email: body.email, via: body.via ?? null });
       } else if (body.mode === 'unconfigured') {
         remember(null);
         set({ status: 'unconfigured', email: null });
@@ -119,6 +121,18 @@ export function useOfficer(): OfficerState {
 export function loginHref(): string {
   const back = typeof location === 'undefined' ? '/data' : `${location.pathname}${location.search}`;
   return `/auth/login?return=${encodeURIComponent(back)}`;
+}
+
+/** ログインの入り方を選ぶ画面（メールのコード／24 時間パスワード）。戻り先は今の画面 */
+export function signinHref(): string {
+  const back = typeof location === 'undefined' ? '/data' : `${location.pathname}${location.search}`;
+  return `/auth/signin?return=${encodeURIComponent(back)}`;
+}
+
+/** 24 時間パスワードでログインするフォームの送り先 */
+export function passwordAction(): string {
+  const back = typeof location === 'undefined' ? '/data' : `${location.pathname}${location.search}`;
+  return `/auth/password?return=${encodeURIComponent(back)}`;
 }
 
 export function logout(): void {
