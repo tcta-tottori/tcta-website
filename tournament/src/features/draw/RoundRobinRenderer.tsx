@@ -26,7 +26,10 @@ interface RoundRobinRendererProps {
   title?: string;
   /** 運営が手で決めた順位（Draw.leagueManualOrder） */
   manualOrder?: string[];
-  /** 手で決めた順位を保存する（null で自動に戻す）。運営画面だけ渡す（渡すと同率のとき「順位を手で決める」が出る） */
+  /**
+   * 手で決めた順位を保存する（null で自動に戻す）。運営画面だけ渡す。
+   * 渡すと、全試合が終わったリーグの順位の欄を押して選び直せる（選んだ順位にいた人と入れ替え）。同率のときは「順位を手で決める」も出る
+   */
   onSaveManualOrder?: (order: string[] | null) => void | Promise<void>;
 }
 
@@ -237,7 +240,24 @@ export default function RoundRobinRenderer({ slots, matchResults = [], onCellSel
                     <td className={`border-t border-l border-gray-200 px-1.5 py-1.5 text-center font-bold whitespace-nowrap ${
                       rank === 1 ? 'text-red-600 text-[14px]' : 'text-gray-600 text-[14px]'
                     }`}>
-                      {allFinished && rank ? `${rank}位` : ''}
+                      {allFinished && rank && onSaveManualOrder ? (
+                        // 運営画面：順位を押して選び直せる（選んだ順位にいた人と入れ替える。保存すると手で決めた順位になる）
+                        <select
+                          className="rr-rank-select"
+                          value={rank}
+                          aria-label={`${players[rowIdx]?.name ?? ''} の順位`}
+                          onChange={(e) => {
+                            const to = Number(e.target.value);
+                            const order = standings.map(st => st.entryId);
+                            const from = order.indexOf(ids[rowIdx]);
+                            if (from < 0 || to < 1 || to > order.length || to - 1 === from) return;
+                            [order[from], order[to - 1]] = [order[to - 1], order[from]];
+                            void onSaveManualOrder(order);
+                          }}
+                        >
+                          {standings.map((_, k) => <option key={k} value={k + 1}>{k + 1}位</option>)}
+                        </select>
+                      ) : allFinished && rank ? `${rank}位` : ''}
                       {allFinished && rank && tiedRows.has(rowIdx) && <span className="block text-[10px] font-bold text-amber-600">同率</span>}
                     </td>
                   </tr>

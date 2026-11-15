@@ -477,3 +477,13 @@
 .dl-allko__heading { display: flex; align-items: center; gap: 10px; font-size: 18px; font-weight: 900; color: var(--ink, #111); }
 .dl-allko__heading::before { content: ""; width: 12px; height: 12px; background: var(--red, #D8232A); }
 .dl-allko__item { overflow-x: auto; }
+
+/* ---- リーグ表の順位の欄（運営画面）。押して順位を選び直す（RoundRobinRenderer） ---- */
+.rr-rank-select {
+  appearance: none; -webkit-appearance: none;
+  padding: 2px 18px 2px 6px; border: 1px solid var(--gray-300, #ccc); border-radius: 4px;
+  background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23666' stroke-width='1.5'/%3E%3C/svg%3E") no-repeat right 5px center;
+  font: inherit; color: inherit; cursor: pointer;
+}
+.rr-rank-select:hover { border-color: var(--ink, #111); }
+.rr-rank-select:focus-visible { outline: 2px solid var(--red, #D8232A); outline-offset: 1px; }
