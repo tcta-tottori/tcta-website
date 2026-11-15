@@ -32,7 +32,7 @@ const club = clubEventLayout(e);
 const layout = club ? null : eventResultLayout(e);
 const resultSection = e.sections.find((s) => s.key === 'result');
 const photoSection = e.sections.find((s) => s.key === 'photo');
-const hasResultBlock = !!(club || layout);
+const hasResultBlock = !!(club || layout) || !!e.resultHidden; // 結果を一旦非公開の大会も、お知らせを出すため欄は置く
 const restPhotos = club
   ? (club.photosUsed ? [] : photoSection?.images ?? [])
   : layout ? layout.restPhotos : photoSection?.images ?? [];
