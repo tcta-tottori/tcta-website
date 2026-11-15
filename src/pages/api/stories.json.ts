@@ -4,7 +4,8 @@
 //
 // 返すのは、見た時点から STORY_DAYS 日以内のお知らせのうち、要項・受付開始／ドロー／結果のもの（新しい順）。
 // 1件ごとに、行き先の大会ページの情報（大会名・日程・会場・締切・種目）と、画像に使う写真・資料の URL を添える：
-//   結果 … 種目ごとの優勝者の写真（説明つき）と成績
+//   結果 … 種目ごとの優勝者の写真（説明つき）と成績。続けて出すストーリーズ用に、決勝（トーナメント・決勝リーグ）の結果表（finals）と
+//          入賞者の写真すべて（winnerPhotos。種目の順・写真の順）
 //   ドロー・要項 … ドロー・要項の画像の1枚目（当日の写真があればそれも）
 // 中身はどれも公開ページに出ているものだけ。鍵は要らない。
 import type { APIRoute } from 'astro';
@@ -35,13 +36,20 @@ export const GET: APIRoute = async (Astro) => {
       const section = (key: string) => e?.sections?.find((s: any) => s.key === key);
       const firstImage = (key: string): Img | null => section(key)?.images?.[0] ?? null;
       let photos: { src: string | null; category: string; caption: string | null }[] = [];
+      const winnerPhotos: { src: string | null; category: string; caption: string | null }[] = [];
+      let finals: { src: string | null; w?: number; h?: number; label: string }[] = [];
       if (n.kind === 'result' && e) {
         const layout = eventResultLayout(e);
         for (const b of layout?.blocks ?? []) {
           if (!b.photos.length) continue;
           const champ = b.photos.find((p: any) => /^(総合)?優勝/.test(p.caption ?? '')) ?? b.photos[0];
           photos.push({ src: abs(champ.src), category: b.label || '', caption: champ.caption ?? null });
+          for (const p of b.photos) winnerPhotos.push({ src: abs(p.src), category: b.label || '', caption: p.caption ?? null });
         }
+        // 決勝の結果表：ラベルに「トーナメント」「決勝」があるもの（予選リーグの表は除く）
+        finals = (section('result')?.images ?? [])
+          .filter((img: Img) => /トーナメント|決勝/.test(img.label ?? ''))
+          .map((img: Img) => ({ src: abs(img.src), w: img.w, h: img.h, label: img.label ?? '' }));
       }
       const sheetKey = n.kind === 'draw' ? 'draw' : n.kind === 'outline' ? 'outline' : 'result';
       const sheet = firstImage(sheetKey);
@@ -68,6 +76,8 @@ export const GET: APIRoute = async (Astro) => {
           : null,
         winners: e?.winners ?? [],
         photos,
+        winnerPhotos,
+        finals,
         sheet: sheet ? { src: abs(sheet.src), w: sheet.w, h: sheet.h } : null,
         cover: abs(e?.cover ?? null),
       };
