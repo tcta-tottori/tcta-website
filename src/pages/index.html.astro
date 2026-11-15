@@ -10,8 +10,6 @@ import { siteData } from '../lib/cms.js';
 import { todayJST } from '../data/schedule.js';
 import { LINK_ROWS, LINK_GROUPS } from '../data/links.js';
 import { NEWS_VISIBLE, NEWS_VISIBLE_PC, NEWS_KINDS } from '../data/news.js';
-import { COURTS_HOME, CITY_RESERVE } from '../data/courts.js';
-import CourtMap from '../components/CourtMap.astro';
 import ScheduleCalendar from '../components/ScheduleCalendar.astro';
 
 // 大会カード・お知らせは EmDash から（1 リクエストに 1 回だけ読む）
@@ -279,7 +277,6 @@ const HOME_TOURNAMENTS_VISIBLE_PC = 5;
     </div>
   </section>
 
-  <!-- ============ コート案内 ============ -->
   <!-- ============ イベントカレンダー（大会・テニスイベント・水曜テニス） ============ -->
   <section class="section section--gray" id="calendar" aria-labelledby="calendar-title">
     <span class="ghost" aria-hidden="true">CALENDAR</span>
@@ -298,34 +295,6 @@ const HOME_TOURNAMENTS_VISIBLE_PC = 5;
     </div>
   </section>
 
-  <section class="section section--gray" id="courts" aria-labelledby="courts-title">
-    <span class="ghost" aria-hidden="true">COURT GUIDE</span>
-    <div class="container">
-      <div class="sec-bar rv">
-        <div class="sec-head">
-          <div class="sec-head__row">
-            <span class="sec-head__mark" aria-hidden="true"></span>
-            <div>
-              <p class="sec-head__eyebrow">Court Guide</p>
-              <h2 class="sec-head__title" id="courts-title">コート案内</h2>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* 施設ごとの地図。上のボタンで切り替える（緯度経度とコートの輪郭は courts.js / court-shapes.json）。
-          施設の一覧は置かず、VIEW ALL からコート案内のページへ */}
-      <div class="rv embed-wrap mt-32">
-        {/* VIEW ALL（コート案内のページへ）は地図の中の右上に置く（CourtMap の viewAll） */}
-        <CourtMap courts={COURTS_HOME} viewAll="courts.html" />
-        <span class="embed-wrap__square" aria-hidden="true"></span>
-      </div>
-      {/* 地図の下に、市のテニスコートの予約先（鳥取市公共施設予約システム。courts.js の CITY_RESERVE）へのボタン */}
-      <div class="rv mt-24">
-        <a class="btn btn--primary" href={CITY_RESERVE.url} target="_blank" rel="noopener noreferrer">テニスコートの予約はこちら <span class="ln-arrow" aria-hidden="true"></span></a>
-      </div>
-    </div>
-  </section>
   <!-- ============ リンク集 ============ -->
   <section class="section" id="links" aria-labelledby="links-title">
     <span class="ghost" aria-hidden="true">LINKS</span>
