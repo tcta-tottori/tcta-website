@@ -571,12 +571,12 @@ export function drawSlide(canvas: HTMLCanvasElement, item: StoryItem, slide: Sto
 
 /** フィードの投稿の本文（大会名・種目ごとの優勝・準優勝・サイトへの案内・ハッシュタグ） */
 export function feedCaption(item: StoryItem): string {
+  // これまでの投稿と同じ書き方（🎾 大会名 大会結果 🎾 / 📅 日付 / 📍 会場 / 🏆 種目ごとの入賞者）
   const e = item.event;
-  const lines = [`【大会結果】${e?.nendoLabel ? `${e.nendoLabel} ` : ''}${e?.name ?? item.title}`];
-  if (e) lines.push(`${fmtShort(e.date)}　${e.place}`);
-  lines.push('');
+  const lines = [`🎾 ${e?.nendoLabel ? `${e.nendoLabel} ` : ''}${e?.name ?? item.title} 大会結果 🎾`, ''];
+  if (e) lines.push(`📅 ${fmtShort(e.date)}`, `📍 ${e.place}`, '');
   for (const w of item.winners) {
-    lines.push(`■ ${w.category}`);
+    lines.push(`🏆 ${w.category}`);
     for (const p of w.places) lines.push(`　${p.award}　${p.name}`);
   }
   lines.push('', '決勝の結果表・入賞者の写真は、協会サイト（プロフィールのリンク）でご覧いただけます。', '', '#鳥取市テニス協会 #鳥取 #テニス #テニス大会 #tottori #tennis');
