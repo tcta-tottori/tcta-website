@@ -5463,6 +5463,9 @@ body.jsrv .gallery--winners .gallery__item.rv-in.on .gallery__cap > .awards { an
   margin-top: 24px;
 }
 @media (min-width: 768px) { .sheets { grid-template-columns: repeat(2, 1fr); gap: 20px; } }
+/* 結果ページの結果表（リーグ表・ドロー表）は、PC でも 2 列に分けず 1 枚ずつ大きく出す */
+.sheets.sheets--result { grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 768px) { .sheets.sheets--result { grid-template-columns: minmax(0, 1fr); gap: 28px; } }
 /* 横に長いリーグ表・スコア表は、半分の幅に割ると字が潰れる。
    同じ節に縦長の紙と混ざることがあるので、1枚ずつ横いっぱいに広げる。 */
 .sheet--wide { grid-column: 1 / -1; }
