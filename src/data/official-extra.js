@@ -51,16 +51,17 @@ export const EXTRA_MATERIALS = {
       ],
       pdfs: [],
     },
-    // 入賞者の写真（表彰式。明るさとシネマ風の色に整えたもの）。ラベルの先頭の種目名で結果の欄の種目の下に入る
+    // 入賞者の写真（表彰式。明るさとシネマ風の色に整えたもの）。ラベルの先頭の種目名で結果の欄の種目に入り、
+    // after（結果表のファイル名）の表のすぐ下に置く（EventResult.astro）
     photo: {
       images: [
-        { src: 'assets/img/events/r8-kaicho-autumn/photo-01.webp', label: '男子B級ダブルス 優勝 岸本・安田 ペア', w: 1400, h: 933 },
-        { src: 'assets/img/events/r8-kaicho-autumn/photo-02.webp', label: '男子B級ダブルス 準優勝 北村・山本 ペア', w: 1400, h: 933 },
-        { src: 'assets/img/events/r8-kaicho-autumn/photo-03.webp', label: '女子B級ダブルス 優勝 高木・遠藤 ペア', w: 1400, h: 933 },
-        { src: 'assets/img/events/r8-kaicho-autumn/photo-04.webp', label: '女子B級ダブルス 準優勝 小見山・谷口 ペア', w: 1400, h: 933 },
-        { src: 'assets/img/events/r8-kaicho-autumn/photo-05.webp', label: '女子B級ダブルス 3位 山本・大田 ペア', w: 1400, h: 933 },
-        { src: 'assets/img/events/r8-kaicho-autumn/photo-06.webp', label: '男子C級ダブルス 優勝 難波・米村 ペア', w: 1400, h: 933 },
-        { src: 'assets/img/events/r8-kaicho-autumn/photo-07.webp', label: '男子C級ダブルス 準優勝 中井・吉田 ペア', w: 1400, h: 933 },
+        { src: 'assets/img/events/r8-kaicho-autumn/photo-01.webp', label: '男子B級ダブルス 優勝 岸本・安田 ペア', w: 1400, h: 933, after: 'result-08-final' },
+        { src: 'assets/img/events/r8-kaicho-autumn/photo-02.webp', label: '男子B級ダブルス 準優勝 北村・山本 ペア', w: 1400, h: 933, after: 'result-08-final' },
+        { src: 'assets/img/events/r8-kaicho-autumn/photo-03.webp', label: '女子B級ダブルス 優勝 高木・遠藤 ペア', w: 1400, h: 933, after: 'result-13' },
+        { src: 'assets/img/events/r8-kaicho-autumn/photo-04.webp', label: '女子B級ダブルス 準優勝 小見山・谷口 ペア', w: 1400, h: 933, after: 'result-13' },
+        { src: 'assets/img/events/r8-kaicho-autumn/photo-05.webp', label: '女子B級ダブルス 3位 山本・大田 ペア', w: 1400, h: 933, after: 'result-14' },
+        { src: 'assets/img/events/r8-kaicho-autumn/photo-06.webp', label: '男子C級ダブルス 優勝 難波・米村 ペア', w: 1400, h: 933, after: 'result-10' },
+        { src: 'assets/img/events/r8-kaicho-autumn/photo-07.webp', label: '男子C級ダブルス 準優勝 中井・吉田 ペア', w: 1400, h: 933, after: 'result-10' },
       ],
       pdfs: [],
     },

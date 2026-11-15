@@ -48,37 +48,50 @@ let photoNo = 0;
       <section class="division rv" id={anchor(b.label, i)}>
         {/* 見出しは置かない（種目名はリーグ表・ドロー表の画像の中にある）。入賞者の名前は写真1枚ずつの下に */}
         <div class="rblock">
-          {/* 結果表（ドロー表・リーグ表） */}
-          {b.sheets.length > 0 && (
-            <div class:list={['rblock__sheet', b.sheets.length > 1 && 'sheets sheets--result']}>
-              {b.sheets.map((sh) => (
-                <a class="sheet sheet--result" href={sh.src}>
-                  <img src={sh.src} alt={`${e.name} ${b.label || '結果'}${sh.label && sh.label !== b.label ? ' ' + sh.label : ''}`} width={sh.w} height={sh.h} loading="lazy" decoding="async">
-                </a>
-              ))}
-            </div>
-          )}
-          {/* その下に入賞者の写真。写真1枚ずつの下に「種目 ｜ 優勝 ○○」。
-              写真のラベルに名前があればそれ、無ければ成績（優勝 → 準優勝 → …）を写真の順に1つずつ。
-              写真より成績が多いぶん（写真の無い入賞者）は、写真のあとに1行ずつ */}
           {(() => {
+            // 写真1枚ずつの下に「種目 ｜ 優勝 ○○」。写真のラベルに名前があればそれ、無ければ成績（優勝 → 準優勝 → …）を写真の順に1つずつ。
+            // 写真より成績が多いぶん（写真の無い入賞者）は、写真のあとに1行ずつ
             const own = b.photos.some((ph) => ph.caption);
-            const caps = b.photos.map((ph, k) => (own ? ph.caption : b.captions[k]) ?? null);
+            const caps = new Map(b.photos.map((ph, k) => [ph, (own ? ph.caption : b.captions[k]) ?? null]));
             const rest = own ? [] : b.captions.slice(b.photos.length);
+            // 写真に after（結果表のファイル名）があれば、その結果表のすぐ下に置く（「1位・2位トーナメント」の表の下に、その入賞者の写真など）
+            const base = (src) => String(src).replace(/^.*\//, '').replace(/\.\w+$/, '');
+            const placed = new Set();
+            const groups = b.sheets.map((sh) => {
+              const photos = b.photos.filter((ph) => ph.after && ph.after === base(sh.src));
+              photos.forEach((ph) => placed.add(ph));
+              return { sheet: sh, photos };
+            });
+            const tail = b.photos.filter((ph) => !placed.has(ph));
+            const photosOf = (list) => list.length > 0 && (
+              <div class="rblock__photos division__photos rblock__photos--big">
+                <div class="gallery gallery--winners">
+                  {list.map((ph) => (
+                    <a class="gallery__item" href={ph.src}>
+                      <img src={ph.src} alt={`${e.name} ${b.label}${caps.get(ph) ? ' ' + caps.get(ph) : ''} 入賞者の写真 ${++photoNo}`} width={ph.w} height={ph.h} loading="lazy" decoding="async">
+                      {caps.get(ph) && <span class="gallery__cap">{b.label && <span class="rblock__cat">{b.label}</span>}<AwardLine texts={[caps.get(ph)]} category={b.label} /></span>}
+                    </a>
+                  ))}
+                </div>
+              </div>
+            );
+            const sheetsOf = (list) => (
+              <div class:list={['rblock__sheet', list.length > 1 && 'sheets sheets--result']}>
+                {list.map((sh) => (
+                  <a class="sheet sheet--result" href={sh.src}>
+                    <img src={sh.src} alt={`${e.name} ${b.label || '結果'}${sh.label && sh.label !== b.label ? ' ' + sh.label : ''}`} width={sh.w} height={sh.h} loading="lazy" decoding="async">
+                  </a>
+                ))}
+              </div>
+            );
+            const interleave = placed.size > 0;
             return (
               <>
-                {b.photos.length > 0 && (
-                  <div class="rblock__photos division__photos">
-                    <div class="gallery gallery--winners">
-                      {b.photos.map((ph, k) => (
-                        <a class="gallery__item" href={ph.src}>
-                          <img src={ph.src} alt={`${e.name} ${b.label}${caps[k] ? ' ' + caps[k] : ''} 入賞者の写真 ${++photoNo}`} width={ph.w} height={ph.h} loading="lazy" decoding="async">
-                          {caps[k] && <span class="gallery__cap">{b.label && <span class="rblock__cat">{b.label}</span>}<AwardLine texts={[caps[k]]} category={b.label} /></span>}
-                        </a>
-                      ))}
-                    </div>
-                  </div>
-                )}
+                {/* 結果表（ドロー表・リーグ表）。写真の置き場所の指定があれば、表ごとにその下へ写真を入れる */}
+                {interleave
+                  ? groups.map((g) => (<>{sheetsOf([g.sheet])}{photosOf(g.photos)}</>))
+                  : b.sheets.length > 0 && sheetsOf(b.sheets)}
+                {photosOf(tail)}
                 {rest.map((c) => (
                   <p class="rblock__caption">{b.label && <span class="rblock__cat">{b.label}</span>}<AwardLine texts={[c]} category={b.label} /></p>
                 ))}
