@@ -291,7 +291,7 @@ function FeedSeries({ item, configured, onPosted }: { item: Item; configured: bo
 
   const label = (i: number) => {
     const s = plan[i];
-    return s.type === 'cover' ? '表紙' : s.type === 'sheet' ? s.label : s.type === 'sheets2' ? s.items.map((x) => x.label).join('／') : (s.caption ?? '写真');
+    return s.type === 'cover' ? '表紙' : s.type === 'sheet' ? s.label : s.type === 'sheets' ? s.items.map((x) => x.label).join('／') : (s.caption ?? '写真');
   };
 
   const post = async () => {
