@@ -1,0 +1,33 @@
+---
+// 大会当日の「結果速報」の欄（大会ページのいちばん上）。
+// 大会運営システム（tournament/）の観戦ページへ案内する。運営の端末でスコアを入れると、観戦ページのドロー表・リーグ表に数秒で入る。
+// 観戦ページは HP 掲載用の固定の部屋（TCTA01。tournament/src/features/sync/syncStore.ts の PUBLIC_ROOM）を見る。
+// 運営の端末はこの部屋で同期しておく（設定 → 端末どうしの同期）。
+//
+// 出すのは、開催中（開催日の 9:00〜18:00。schedule.js の liveStatus）と、開催日のうちの終わったあと。
+// 翌日からは、結果表・成績（いつもの結果の欄）に任せて出さない。
+import { todayJST } from '../data/schedule.js';
+
+const { e } = Astro.props;
+const VIEW = 'https://tcta-tournament.tcta-admin-worker.workers.dev/view';
+const ROOM = 'TCTA01';
+const show = e.status === 'live' || (e.date === todayJST() && e.status === 'done');
+---
+
+{show && (
+  <section class="live-box rv" id="live" aria-labelledby="live-title">
+    <div class="live-box__head">
+      <span class="live-box__dot" aria-hidden="true"></span>
+      <h2 class="live-box__title" id="live-title">結果速報</h2>
+      <span class="live-box__en">LIVE RESULTS</span>
+    </div>
+    <p class="live-box__lead">
+      試合の結果は、決まりしだい観戦ページのドロー表に入ります（数秒で反映）。
+      すべての試合が終わったあと、このページに結果表と入賞者を掲載します。
+    </p>
+    <div class="live-box__btns">
+      <a class="btn btn--primary" href={`${VIEW}/draw?room=${ROOM}`} target="_blank" rel="noopener">ドロー・結果速報を見る <span class="ln-arrow" aria-hidden="true"></span></a>
+      <a class="btn btn--outline" href={`${VIEW}/order?room=${ROOM}`} target="_blank" rel="noopener">対戦順・進み具合 <span class="ln-arrow" aria-hidden="true"></span></a>
+    </div>
+  </section>
+)}

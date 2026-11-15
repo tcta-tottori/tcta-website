@@ -11,6 +11,7 @@ import Base from '../layouts/Base.astro';
 import EventResult from '../components/EventResult.astro';
 import EventMeta from '../components/EventMeta.astro';
 import RevisionNotice from '../components/RevisionNotice.astro';
+import LiveResultBox from '../components/LiveResultBox.astro';
 import HostBanner from '../components/HostBanner.astro';
 import { siteData } from '../lib/cms.js';
 import { clubEventLayout } from '../data/club-event.js';
@@ -150,6 +151,9 @@ const description = `${e.label}に${e.place}で行われる${e.name}（${e.event
 
       {/* 訂正のお知らせ（要項・ドローなどを直したとき。全部の種類） */}
       <RevisionNotice revisions={e.revisions} />
+
+      {/* 大会当日は、結果速報（運営システムの観戦ページ）への案内をいちばん上に出す */}
+      <LiveResultBox e={e} />
 
       <!-- ============ 開催の概要 ============ -->
       <div class="rv">
