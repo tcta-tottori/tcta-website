@@ -89,7 +89,7 @@ const COLS = compact ? COLS_ALL.filter((c) => !['登録区分', '会場', '予�
 const rows = items.map((t) => {
   const e = eventForSchedule(t);
   // 外部のページへ飛ばす大会は、要項のボタンを「詳細」にしてそのページを開く
-  const buttons = eventButtons(e, { outline: t.externalUrl, result: t.externalResultUrl })
+  const buttons = eventButtons(e, { outline: t.externalUrl, result: t.externalResultUrl }, { status: t.status })
     .map((b) => (!e && t.externalUrl && b.key === 'outline' ? { ...b, label: '詳細' } : b));
   // 拡大表示のカード（トップの大会カードと同じ形。src/data/tournaments.js の buildCards を参照）
   const card = {
@@ -157,7 +157,7 @@ const parts = (text) => String(text ?? '').split(/(?<=[／/・])|(?=（)/);
           {buttons.map((b) => (
             <div class="tlx__cell">
               {b.href
-                ? <a class="btn btn--outline tl-btn tlx__btn" href={b.href} {...(b.external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}>{b.label}</a>
+                ? <a class:list={['btn', b.live ? 'btn--primary tl-btn--live' : 'btn--outline', 'tl-btn', 'tlx__btn']} href={b.href} {...(b.external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}>{b.live && <span class="tl-btn__dot" aria-hidden="true"></span>}{b.label}</a>
                 : <span class="btn tl-btn tl-btn--off tlx__btn" aria-disabled="true" title="準備中">{b.label}</span>}
             </div>
           ))}

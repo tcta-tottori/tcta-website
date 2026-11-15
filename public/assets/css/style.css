@@ -5887,3 +5887,9 @@ html.is-lite body.jsrv .rv, html.is-lite body.jsrv .rv-in { opacity: 1 !importan
 .live-box__btns { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 20px; }
 @media (max-width: 600px) { .live-box { padding: 22px 18px 24px; } .live-box__btns .btn { width: 100%; justify-content: center; } }
 @media (prefers-reduced-motion: reduce) { .live-box__dot { animation: none; } }
+
+/* 開催中の大会の「速報」のボタン（event-buttons.js。結果のボタンの代わり）。赤い塗りに、点滅する白い点 */
+.tl-btn--live { gap: 6px; }
+.tl-btn__dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #fff; animation: live-dot-w 1.6s ease-out infinite; }
+@keyframes live-dot-w { 0% { box-shadow: 0 0 0 0 rgba(255, 255, 255, .7); } 70% { box-shadow: 0 0 0 6px rgba(255, 255, 255, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0); } }
+@media (prefers-reduced-motion: reduce) { .tl-btn__dot { animation: none; } }
