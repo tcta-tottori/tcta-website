@@ -14,7 +14,7 @@
 
 import { nendoLabel, STATUS_LABEL, REG_LABEL, dateCell } from './schedule.js';
 import { splitEntryForms } from './entry-forms.js';
-import { EXTRA_MATERIALS, EXTRA_REVISIONS } from './official-extra.js';
+import { EXTRA_MATERIALS, EXTRA_REVISIONS, EXTRA_WINNERS } from './official-extra.js';
 
 /** 令和8年度の大会日程（PDF）。年度はじめに差し替える。 */
 export const SCHEDULE_PDF = { src: 'assets/pdf/events/r8-schedule.pdf', kb: 86 };
@@ -134,7 +134,8 @@ export function buildEvents(rows, { ROWS }, mediaUrl = () => null) {
     .map((t) => {
       const b = base.get(t.slug);
       const sections = collectMaterials(t, mediaUrl);
-      const winners = groupWinners(t.winners);
+      // 成績は管理画面の行。無ければ official-extra.js の EXTRA_WINNERS
+      const winners = groupWinners(Array.isArray(t.winners) && t.winners.length > 0 ? t.winners : EXTRA_WINNERS[t.slug]);
       const hasResult = (sections.result?.images.length ?? 0) > 0 || (sections.result?.pdfs.length ?? 0) > 0 || winners.length > 0;
       const order = (hasResult ? DONE_ORDER : UPCOMING_ORDER)
         .filter((k) => sections[k] && (sections[k].images.length || sections[k].pdfs.length))
