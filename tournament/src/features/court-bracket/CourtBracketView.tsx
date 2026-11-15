@@ -141,7 +141,8 @@ export default function CourtBracketView({
   const ySpacing = slotH + LEAF_GAP;
   // 所属を省略せず表示しつつ、幅は最適化（広すぎない）
   const slotW = isDoubles ? (isMobile ? 196 : 250) : (isMobile ? 150 : 178);
-  const xSpacing = isMobile ? 18 : 34;
+  // 回戦のあいだの幅。スコアの数字を線と次の回戦の枠のあいだに置くので、数字が枠に重ならない幅を取る
+  const xSpacing = isMobile ? 34 : 60;
   const offsetX = isMobile ? 6 : 12;
   const roundsCount = Math.log2(drawSize);
   const halfSize = drawSize / 2;
@@ -260,6 +261,26 @@ export default function CourtBracketView({
   const visibleColumns = roundsCount - leafRound;
   const containerWidth = offsetX * 2 + visibleColumns * (slotW + xSpacing) + slotW;
   const baseHeight = nextCompactY + slotH + OFFSET_Y;
+
+  // 表示の倍率：0＝画面の幅に全体が収まる大きさ、50＝標準、100＝ZOOM_MAX。あいだはなめらかにつなぐ
+  const wholeScale = boxW > 0 ? Math.min(1, (boxW - 4) / containerWidth) : 1;
+  const stdScale = isMobile ? Math.max(STD_MOBILE, wholeScale) : Math.max(STD_PC_MIN, wholeScale);
+  const minScale = Math.min(wholeScale, stdScale);
+  const scale = boxW <= 0 ? 1
+    : zoom <= 50 ? minScale + (stdScale - minScale) * (zoom / 50)
+    : stdScale + (ZOOM_MAX - stdScale) * ((zoom - 50) / 50);
+  /**
+   * スコアの文字の大きさ（表の中の大きさ。画面では × scale になる）。
+   * 縮めて見るときは大きめ・大きくして見るときは小さめにして、画面での大きさがあまり変わらないようにする。
+   * そのうえで、線（xMid）と次の回戦の枠（xNext）のあいだに収まる大きさまでに抑える（枠に重ねない）
+   */
+  const scoreSizes = (gapW: number, chars: number) => {
+    const base = isMobile ? 20 : 22;
+    const want = Math.min(26, Math.max(12, base * Math.pow(1 / Math.max(scale, 0.1), 0.5)));
+    const fit = (gapW - 14) / (Math.max(chars, 1) * 0.62);
+    const px = Math.max(10, Math.min(want, fit));
+    return { scorePx: px, notePx: Math.max(9, Math.round(px * 0.55)) };
+  };
 
   // entryId → ドロー情報（番号・氏名・所属）。全選手は1回戦スロットに存在するので
   // 2回戦以降でも entryId から氏名・所属を引ける。
@@ -404,10 +425,12 @@ export default function CourtBracketView({
         const raw = matchResult.score.trim();
         // タイブレークの得点は落とした側に "6(4)" のように付き、Ret / W.O は注記として分かれる
         const parts = parseScoreParts(raw);
-        const scorePx = isMobile ? 20 : 22;
-        const notePx = isMobile ? 11 : 12;
+        // 文字の大きさは表示の倍率と、線と次の回戦の枠のあいだの幅で決める（scoreSizes）
+        const stripTbAll = (val: string) => val.replace(/\(\d+\)/g, '');
+        const longest = parts?.hasGames ? Math.max(stripTbAll(parts.p1).length, stripTbAll(parts.p2).length) : 1;
+        const { scorePx, notePx } = scoreSizes(xNext - xMid, longest);
         // 文字が次の回戦のカードに重ならないよう、右端を見て開始位置を決める
-        const estW = (val: string, px: number) => val.length * px * 0.66;
+        const estW = (val: string, px: number) => val.length * px * 0.62;
         if (parts?.hasGames) {
           const topWin = !!winnerIsTop;
           const botWin = !!winnerIsBottom;
@@ -417,7 +440,8 @@ export default function CourtBracketView({
           const p1Main = stripTb(parts.p1);
           const p2Main = stripTb(parts.p2);
           const w = Math.max(estW(p1Main, scorePx), estW(p2Main, scorePx));
-          const sx = Math.min(xMid + 5, xNext - 3 - w);
+          // 線（xMid）と次の回戦の枠（xNext）のあいだの真ん中に置く（どちらにも触れない）
+          const sx = Math.max(xMid + 6, xMid + (xNext - xMid - w) / 2);
           const scoreText = (key: string, y: number, val: string, win: boolean) => (
             <text key={key} x={sx} y={y} fill={win ? WIN_RED : SCORE_GRAY}
               fontSize={scorePx} fontWeight={win ? 900 : 800} textAnchor="start">
@@ -426,7 +450,7 @@ export default function CourtBracketView({
           );
           // 合流点(yMid)を挟んで上に上側選手のスコア、下に下側選手のスコア
           const topBaseY = yMid - 5;
-          const botBaseY = yMid + scorePx + 3;
+          const botBaseY = yMid + scorePx * 0.82 + 4;
           paths.push(scoreText(`sT-${r}-${m}`, topBaseY, p1Main, topWin));
           paths.push(scoreText(`sB-${r}-${m}`, botBaseY, p2Main, botWin));
 
@@ -779,13 +803,6 @@ export default function CourtBracketView({
     ? Math.max(baseHeight, thirdPlaceTop + cardHVs + OFFSET_Y)
     : baseHeight;
 
-  // 表示の倍率：0＝画面の幅に全体が収まる大きさ、50＝標準、100＝ZOOM_MAX。あいだはなめらかにつなぐ
-  const wholeScale = boxW > 0 ? Math.min(1, (boxW - 4) / containerWidth) : 1;
-  const stdScale = isMobile ? Math.max(STD_MOBILE, wholeScale) : Math.max(STD_PC_MIN, wholeScale);
-  const minScale = Math.min(wholeScale, stdScale);
-  const scale = boxW <= 0 ? 1
-    : zoom <= 50 ? minScale + (stdScale - minScale) * (zoom / 50)
-    : stdScale + (ZOOM_MAX - stdScale) * ((zoom - 50) / 50);
 
   return (
     <div ref={boxRef} className="relative overflow-auto court-bracket-scroll" style={{ width: '100%', height: '100%' }}>
