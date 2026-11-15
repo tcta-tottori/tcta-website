@@ -4,8 +4,9 @@ import {
   Database, Users, Dices, Trophy, Swords,
   ClipboardList, CalendarClock, BarChart2,
   HelpCircle, Settings, Network, Radio, Printer, MapPin, Calendar, BookOpen, Wrench, ClipboardCheck,
-  Camera,
+  Camera, LayoutGrid, Medal,
 } from 'lucide-react';
+import { isLeagueKind } from '../../features/court-bracket/leagueKind';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../../db/database';
 import { useAppStore } from '../../stores/appStore';
@@ -51,6 +52,9 @@ const ALL_MAIN_TABS: MainTab[] = [
   { id: 'S-06b', path: '/schedule-sheet', label: 'タイムテーブル', en: 'TIMETABLE', icon: CalendarClock },
   { id: 'S-07', path: '/score', label: 'スコア', en: 'SCORE', icon: Trophy },
   { id: 'S-07b', path: '/court-bracket', label: 'ドロー', en: 'DRAW', icon: Network },
+  // 予選リーグと決勝トーナメントがある大会は、ドローの代わりにこの 2 つのページを出す
+  { id: 'S-07c', path: '/league', label: '予選リーグ', en: 'LEAGUE', icon: LayoutGrid },
+  { id: 'S-07d', path: '/finals', label: '決勝トーナメント', en: 'FINALS', icon: Medal },
   { id: 'S-09', path: '/dashboard', label: 'ダッシュボード', en: 'DASHBOARD', icon: BarChart2 },
   { id: 'S-09b', path: '/broadcast', label: 'ライブ配信', en: 'LIVE', icon: Radio },
   { id: 'S-10', path: '/print', label: '印刷', en: 'PRINT', icon: Printer },
@@ -70,7 +74,7 @@ const ALL_MAIN_TABS: MainTab[] = [
 const NAV_GROUPS: { key: string; label: string; en: string; paths: string[] }[] = [
   { key: 'prep', label: '大会選択', en: 'SELECT', paths: ['/data', '/data/review'] },
   // 試合の当日に使う画面（受付から対戦順・時間割・ドロー・スコア・状況・配信まで）は 1 つのまとまりにする
-  { key: 'run', label: '大会進行', en: 'OPERATION', paths: ['/entry', '/draw-lot', '/draw-table', '/referee', '/schedule-sheet', '/court-bracket', '/score', '/dashboard', '/broadcast'] },
+  { key: 'run', label: '大会進行', en: 'OPERATION', paths: ['/entry', '/draw-lot', '/draw-table', '/referee', '/schedule-sheet', '/court-bracket', '/league', '/finals', '/score', '/dashboard', '/broadcast'] },
   { key: 'print', label: '印刷', en: 'PRINT', paths: ['/print'] },
   // 選手・所属（ふりがな辞書）はデータ管理と並べて、設定のまとまりに入れる
   { key: 'settings', label: '設定', en: 'SETTINGS', paths: ['/settings', '/data-tools', '/dict', '/manual', '/insta'] },
@@ -83,13 +87,13 @@ const NAV_GROUPS: { key: string; label: string; en: string; paths: string[] }[] 
 const FILL_PATHS = ['/print'];
 
 /** 見出しを小さくして、中身（ドロー表）をできるだけ上から見せるページ */
-const COMPACT_PATHS = ['/court-bracket'];
+const COMPACT_PATHS = ['/court-bracket', '/league', '/finals'];
 
 /** 抽選・ドロー表タブを非表示にするパス */
 const DRAW_TAB_PATHS = ['/draw-lot', '/draw-table'];
 
 /** ミックスダブルス/団体戦 読込時に非表示にするパス */
-const MIXED_HIDDEN_PATHS = ['/referee', '/schedule-sheet', '/draw-lot', '/court-bracket'];
+const MIXED_HIDDEN_PATHS = ['/referee', '/schedule-sheet', '/draw-lot', '/court-bracket', '/league', '/finals'];
 
 export default function AppLayout() {
   const isTest = useIsTestMode();
@@ -168,6 +172,15 @@ export default function AppLayout() {
 
   // 全試合データ取得
   const eventIds = useMemo(() => (events ?? []).map(e => e.eventId).sort().join(','), [events]);
+  // 予選リーグと決勝トーナメントの両方がある大会か（あればドローを 2 つのページに分ける）
+  const splitDraw = useLiveQuery(async () => {
+    const ids = eventIds.split(',').filter(Boolean);
+    if (ids.length === 0) return false;
+    const ds = await db.draws.where('eventId').anyOf(ids).toArray();
+    const nameOf = new Map((events ?? []).map(e => [e.eventId, e.name]));
+    const kinds = ds.map(d => isLeagueKind(nameOf.get(d.eventId) ?? '', d.drawType));
+    return kinds.some(k => k) && kinds.some(k => !k);
+  }, [eventIds, events]) ?? false;
   const allMatches = useLiveQuery(async () => {
     const ids = eventIds.split(',').filter(Boolean);
     if (ids.length === 0) return [];
@@ -308,6 +321,8 @@ export default function AppLayout() {
     } else {
       // 通常モード（個人戦）: スコアは廃止し、ドロー画面で入力する
       tabs = tabs.filter((t) => t.path !== '/score');
+      // 予選リーグと決勝トーナメントがある大会は「予選リーグ」「決勝トーナメント」の 2 ページ、ほかは「ドロー」
+      tabs = tabs.filter((t) => (splitDraw ? t.path !== '/court-bracket' : t.path !== '/league' && t.path !== '/finals'));
       // ミックス/団体戦の種目がなければ抽選・ドロー表タブを非表示
       const hasDrawEvents = (events ?? []).some(
         (e) =>
@@ -319,7 +334,7 @@ export default function AppLayout() {
       }
     }
     return tabs;
-  }, [events, isMixedImported, isTeamImported]);
+  }, [events, isMixedImported, isTeamImported, splitDraw]);
 
 
   // 現在のページ（タブ）と、それが入っているまとまり

@@ -1974,7 +1974,7 @@ function NormalEntryRegistration() {
         {placementEventCount > 0 && (
           <p className="ent-plc-note">
             決勝トーナメント・決勝リーグなど、リーグの順位で選手が決まる {placementEventCount} 種目は受付がないので、ここには出していません。
-            リーグが終わったら <Link to="/court-bracket">ドロー</Link> でその種目を開き、「順位を反映して組む」を押してください。
+            リーグが終わったら <Link to="/finals">決勝トーナメント</Link> でその種目を開き、「順位を反映して組む」を押してください。
           </p>
         )}
 
