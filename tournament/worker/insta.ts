@@ -7,6 +7,8 @@
 //   POST /api/insta/token        … Instagram の鍵（アクセストークン）を入れる。{ token, userId? } を確かめて D1 に置く（役員だけ・このサイトの画面からだけ）
 //                                  IG… の鍵（Instagram ログイン）も EAA… の鍵（Facebook 方式・Unified login）も受ける（resolveAccount）
 //   DELETE /api/insta/token      … 鍵を外す
+//   POST /api/insta/carousel?key=… … フィードの投稿（カルーセル。2〜10 枚）。multipart で caption と image（JPEG を並びの順に）を受け取る（役員だけ・このサイトの画面からだけ）
+//                                  記録は「お知らせの key#feed」
 //
 // 投稿は Instagram API のコンテンツ公開（ストーリーズ。Instagram ログイン。instagram_business_content_publish の権限）。
 // 鍵は画面（設定 → Instagram）から入れ、D1 の insta_meta に置く（パソコンで wrangler を使わなくても入れられるように）。
@@ -140,6 +142,39 @@ export async function handleInsta(request: Request, env: Env, url: URL): Promise
     }
   }
 
+  if (url.pathname === '/api/insta/carousel' && request.method === 'POST') {
+    if (!sameOrigin(request, url)) return json({ error: 'このサイトの画面からだけ投稿できます' }, 403);
+    if (!configured) return json({ error: 'Instagram の鍵が未設定です。画面の「Instagram の鍵」で入れるか、画像を保存して手で投稿してください' }, 409);
+    const key = (url.searchParams.get('key') ?? '').slice(0, 300);
+    if (!key) return json({ error: 'key がありません' }, 400);
+    const already = await db.prepare('SELECT media_id FROM insta_posts WHERE story_key = ?').bind(key).first();
+    if (already && url.searchParams.get('again') !== '1') return json({ error: 'この投稿はもう出しています' }, 409);
+    const form = await request.formData().catch(() => null);
+    if (!form) return json({ error: '送り方が違います（multipart）' }, 400);
+    const caption = String(form.get('caption') ?? '').slice(0, 2200);
+    const files = form.getAll('image').filter((x): x is File => typeof x !== 'string');
+    if (files.length < 2 || files.length > 10) return json({ error: '画像は 2〜10 枚にしてください' }, 400);
+    const urls: string[] = [];
+    const ids: string[] = [];
+    for (const file of files) {
+      const jpeg = await file.arrayBuffer();
+      if (jpeg.byteLength === 0 || jpeg.byteLength > MAX_IMAGE_BYTES) return json({ error: '画像の大きさが不正です' }, 413);
+      const id = [...crypto.getRandomValues(new Uint8Array(16))].map((b) => b.toString(16).padStart(2, '0')).join('');
+      await db.prepare('INSERT INTO insta_images (id, story_key, jpeg, created_at) VALUES (?, ?, ?, ?)').bind(id, key, jpeg, new Date().toISOString()).run();
+      ids.push(id);
+      urls.push(`${url.origin}/api/insta/img/${id}.jpg`);
+    }
+    try {
+      const mediaId = await publishCarousel(creds!, urls, caption);
+      await db.prepare(`INSERT INTO insta_posts (story_key, media_id, image_id, posted_at, posted_by) VALUES (?, ?, ?, ?, ?)
+        ON CONFLICT(story_key) DO UPDATE SET media_id = excluded.media_id, image_id = excluded.image_id, posted_at = excluded.posted_at, posted_by = excluded.posted_by`)
+        .bind(key, mediaId, ids[0], new Date().toISOString(), officer.email).run();
+      return json({ ok: true, mediaId });
+    } catch (e) {
+      return json({ error: `Instagram への投稿に失敗しました：${(e as Error).message}` }, 502);
+    }
+  }
+
   return json({ error: 'not found' }, 404);
 }
 
@@ -243,6 +278,40 @@ async function publishStory(creds: Creds, imageUrl: string): Promise<string> {
     await new Promise((r) => setTimeout(r, 2000));
   }
   const published = await call(`${base}/media_publish`, form({ creation_id: String(container.id) }));
+  return String(published.id);
+}
+
+/** フィードにカルーセル（2〜10 枚）を公開して、公開した投稿の ID を返す */
+async function publishCarousel(creds: Creds, imageUrls: string[], caption: string): Promise<string> {
+  const host = creds.host;
+  const base = `https://${host}/${GRAPH_VERSION}/${creds.userId}`;
+  const token = creds.token;
+  type B = { id?: string; status_code?: string; error?: { message?: string } };
+  const call = async (u: string, init?: RequestInit) => {
+    const res = await fetch(u, init);
+    const body = await res.json<B>().catch(() => ({} as B));
+    if (!res.ok || body.error) throw new Error(body.error?.message ?? `HTTP ${res.status}`);
+    return body;
+  };
+  const form = (o: Record<string, string>) => ({ method: 'POST', body: new URLSearchParams({ ...o, access_token: token }) });
+  const waitFinished = async (id: string) => {
+    for (let i = 0; i < 20; i++) {
+      const st = await call(`https://${host}/${GRAPH_VERSION}/${id}?fields=status_code&access_token=${encodeURIComponent(token)}`);
+      if (st.status_code === 'FINISHED') return;
+      if (st.status_code === 'ERROR' || st.status_code === 'EXPIRED') throw new Error(`画像の取り込みに失敗しました（${st.status_code}）`);
+      await new Promise((r) => setTimeout(r, 1500));
+    }
+  };
+  // 1 枚ずつの入れ物 → まとめの入れ物（CAROUSEL）→ 公開
+  const children: string[] = [];
+  for (const u of imageUrls) {
+    const c = await call(`${base}/media`, form({ image_url: u, is_carousel_item: 'true' }));
+    children.push(String(c.id));
+  }
+  for (const id of children) await waitFinished(id);
+  const parent = await call(`${base}/media`, form({ media_type: 'CAROUSEL', children: children.join(','), caption }));
+  await waitFinished(String(parent.id));
+  const published = await call(`${base}/media_publish`, form({ creation_id: String(parent.id) }));
   return String(published.id);
 }
 
