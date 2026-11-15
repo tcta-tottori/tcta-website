@@ -99,6 +99,27 @@ const description = 'リーグ戦（総当たり）の勝敗・取得ゲーム�
           <ol class="lc-log" id="lc-log"></ol>
         </div>
 
+        {/* くじ引き（同率で決まらないとき） */}
+        <div class="lc-box rv" id="lc-lot">
+          <h2 class="lc-h">くじ引き（ルーレット）</h2>
+          <p class="lc-note" style="margin-top:0">同率で直接対決も引き分けなど、ルールで順位が決まらないときに使います。対象のチームを選んで「回す」を押すと、ルーレットで上の順位から 1 チームずつ決めます（同率のチームがあると、最初からそのチームに印が付きます）。</p>
+          <div class="lc-lot__teams" id="lc-lot-teams"></div>
+          <div class="lc-lot__stage">
+            <div class="lc-wheel">
+              <span class="lc-wheel__pin" aria-hidden="true"></span>
+              <canvas id="lc-wheel" width="640" height="640" aria-label="ルーレット"></canvas>
+            </div>
+            <div class="lc-lot__side">
+              <div class="lc-lot__btns">
+                <button type="button" class="btn btn--primary" id="lc-spin">ルーレットを回す</button>
+                <button type="button" class="btn btn--outline" id="lc-lot-reset">やり直す</button>
+              </div>
+              <p class="lc-lot__now" id="lc-lot-now" aria-live="polite"></p>
+              <ol class="lc-lot__result" id="lc-lot-result"></ol>
+            </div>
+          </div>
+        </div>
+
         {ev && <p class="rv"><a class="ghost-link" href={`draw-${ev.slug}.html`}>← {ev.displayName} のドローへ</a></p>}
       </div>
     </div>
@@ -162,6 +183,7 @@ const description = 'リーグ戦（総当たり）の勝敗・取得ゲーム�
     document.querySelectorAll<HTMLElement>('[data-name]').forEach((el) => { el.textContent = nameOf(Number(el.dataset.name)); });
   }
 
+  let tiedGroups: number[][] = [];
   function compute() {
     const r = rule();
     document.querySelectorAll<HTMLElement>('#lc-steps li').forEach((li) => { li.hidden = li.dataset.rule !== r; });
@@ -204,7 +226,8 @@ const description = 'リーグ戦（総当たり）の勝敗・取得ゲーム�
         log.push(`${names_(g)} が並びましたが、直接対決は${played(g[0], g[1]) ? `引き分け（${scores[g[0]][g[1]]}-${scores[g[1]][g[0]]}）な` : 'まだ入っていない'}ので決まりません。`);
       }
       if (keys.length === 0) {
-        log.push(`${names_(g)} は決め方のどれでも並んだままです（くじ引きなどで決めます）。`);
+        tiedGroups.push([...g]);
+        log.push(`${names_(g)} は決め方のどれでも並んだままです（下のくじ引きで決められます）。`);
         g.forEach((i) => { tied.add(i); reason.set(i, reason.get(i) ?? '同率（くじ引きなど）'); });
         return g;
       }
@@ -223,6 +246,7 @@ const description = 'リーグ戦（総当たり）の勝敗・取得ゲーム�
       return sorted.flatMap(([, sg]) => order(sg, rest, depth + 1));
     };
 
+    tiedGroups = [];
     const first = r === 'games' ? 'rate' : 'wins';
     const next = r === 'games' ? ['wins'] : ['rate'];
     log.push(`${keyName[first]}で並べます：${ids.map((i) => `${nameOf(i)} ${fmtKey(first, i)}`).join('、')}。`);
@@ -264,7 +288,114 @@ const description = 'リーグ戦（総当たり）の勝敗・取得ゲーム�
     }).join('');
     document.getElementById('lc-log')!.innerHTML = log.map((s) => `<li>${esc(s)}</li>`).join('')
       + `<li>結果：${ranking.map((i) => `${rankOf.get(i)}位 ${esc(nameOf(i))}`).join('、')}</li>`;
+    lotSync();
   }
+
+  // ---- くじ引き（ルーレット） ----
+  // 当たりは crypto.getRandomValues で決め、その区画が上の針に止まるように回す
+  let lotPick = new Set<number>();   // 対象のチーム
+  let lotDone: number[] = [];        // 決まった順（上の順位から）
+  let lotTouched = false;            // 対象を手で選んだか（選んでいなければ同率のチームに合わせる）
+  let spinning = false;
+  let rot = 0;
+  let lastPool: number[] = [];       // 最後に回したときのチーム（終わったあともルーレットを残す）
+  const COLORS = ['#D8232A', '#1A1A1A', '#8E959C', '#B5683A', '#2F6E5F', '#C9A227', '#4A5D8C'];
+  const wheel = document.getElementById('lc-wheel') as HTMLCanvasElement;
+  const lotPool = () => [...lotPick].filter((i) => i < n && !lotDone.includes(i)).sort((a, b) => a - b);
+  function lotSync() {
+    if (!lotTouched && lotDone.length === 0) lotPick = new Set(tiedGroups.flat());
+    const box = document.getElementById('lc-lot-teams')!;
+    box.innerHTML = Array.from({ length: n }, (_, i) =>
+      `<label class="lc-lot__team"><input type="checkbox" data-i="${i}" ${lotPick.has(i) ? 'checked' : ''} ${lotDone.length || spinning ? 'disabled' : ''}><span>${esc(nameOf(i))}</span></label>`).join('');
+    box.querySelectorAll<HTMLInputElement>('input').forEach((el) => el.addEventListener('change', () => {
+      const i = Number(el.dataset.i);
+      if (el.checked) lotPick.add(i); else lotPick.delete(i);
+      lotTouched = true; drawWheel(); lotStatus();
+    }));
+    drawWheel(); lotStatus();
+  }
+  function lotStatus() {
+    const pool = lotPool();
+    const now = document.getElementById('lc-lot-now')!;
+    const btn = document.getElementById('lc-spin') as HTMLButtonElement;
+    btn.disabled = spinning || pool.length < 2;
+    now.textContent = spinning ? '回っています…'
+      : lotDone.length && pool.length < 2 ? 'くじ引きが終わりました。'
+      : pool.length < 2 ? 'くじ引きをするチームを 2 チーム以上選んでください。'
+      : `${pool.map(nameOf).join('・')} の中から、${lotDone.length + 1} 番目（上の順位）を決めます。`;
+    document.getElementById('lc-lot-result')!.innerHTML = lotDone.map((i, k) => `<li><b>${k + 1}番目</b>　${esc(nameOf(i))}</li>`).join('');
+  }
+  function drawWheel() {
+    const ctx = wheel.getContext('2d')!;
+    const S = wheel.width, c = S / 2, R = S / 2 - 8;
+    ctx.clearRect(0, 0, S, S);
+    const live = lotPool();
+    const pool = live.length >= 2 || lotDone.length === 0 ? live : lastPool;
+    if (pool.length === 0) {
+      ctx.fillStyle = '#f2f2f2'; ctx.beginPath(); ctx.arc(c, c, R, 0, Math.PI * 2); ctx.fill();
+      return;
+    }
+    const seg = (Math.PI * 2) / pool.length;
+    pool.forEach((t, k) => {
+      const a0 = rot + k * seg, a1 = a0 + seg;
+      ctx.beginPath(); ctx.moveTo(c, c); ctx.arc(c, c, R, a0, a1); ctx.closePath();
+      ctx.fillStyle = COLORS[t % COLORS.length]; ctx.fill();
+      ctx.strokeStyle = '#fff'; ctx.lineWidth = 4; ctx.stroke();
+      ctx.save();
+      ctx.translate(c, c); ctx.rotate(a0 + seg / 2);
+      ctx.fillStyle = '#fff'; ctx.font = `700 ${pool.length > 5 ? 30 : 38}px "Noto Sans JP", sans-serif`;
+      ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+      const label = nameOf(t);
+      ctx.fillText(label.length > 6 ? label.slice(0, 6) + '…' : label, R - 24, 0);
+      ctx.restore();
+    });
+    ctx.beginPath(); ctx.arc(c, c, 40, 0, Math.PI * 2); ctx.fillStyle = '#fff'; ctx.fill();
+    ctx.strokeStyle = '#1A1A1A'; ctx.lineWidth = 4; ctx.stroke();
+  }
+  function randInt(max: number) {
+    const a = new Uint32Array(1);
+    const lim = Math.floor(0x100000000 / max) * max;
+    do crypto.getRandomValues(a); while (a[0] >= lim);
+    return a[0] % max;
+  }
+  function spin() {
+    const pool = lotPool();
+    if (spinning || pool.length < 2) return;
+    spinning = true; lastPool = pool; lotSync();
+    const k = randInt(pool.length);
+    const seg = (Math.PI * 2) / pool.length;
+    const jitter = (randInt(1000) / 1000 - 0.5) * seg * 0.7;
+    // 当たりの区画の真ん中が上（-90°）に来る角度。今の角度から 5〜6 回転ぶん先へ
+    const target = -Math.PI / 2 - (k + 0.5) * seg + jitter;
+    const base = rot % (Math.PI * 2);
+    let delta = target - base;
+    while (delta < 0) delta += Math.PI * 2;
+    delta += Math.PI * 2 * (5 + randInt(2));
+    const from = rot, dur = 3600, t0 = performance.now();
+    const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const step = (now: number) => {
+      const p = reduce ? 1 : Math.min(1, (now - t0) / dur);
+      const e = 1 - Math.pow(1 - p, 4);
+      rot = from + delta * e;
+      drawWheel();
+      if (p < 1) { requestAnimationFrame(step); return; }
+      const win = pool[k];
+      lotDone.push(win);
+      // 残りが 1 チームなら、それが最後
+      const rest = lotPool();
+      if (rest.length === 1) lotDone.push(rest[0]);
+      spinning = false;
+      rot = rot % (Math.PI * 2);
+      lotSync();
+      document.getElementById('lc-lot-now')!.textContent = `当たり：${nameOf(win)}（${lotDone.indexOf(win) + 1} 番目）${rest.length === 1 ? `。残りの ${nameOf(rest[0])} が ${lotDone.length} 番目です。` : ''}`;
+    };
+    requestAnimationFrame(step);
+  }
+  document.getElementById('lc-spin')!.addEventListener('click', spin);
+  document.getElementById('lc-lot-reset')!.addEventListener('click', () => {
+    if (spinning) return;
+    lotDone = []; lastPool = []; lotTouched = false; rot = 0; compute();
+  });
 
   document.querySelectorAll<HTMLInputElement>('input[name=lc-n]').forEach((el) => {
     if (Number(el.value) === n) el.checked = true;
