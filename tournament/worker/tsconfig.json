@@ -8,7 +8,9 @@
     "strict": true,
     "noEmit": true,
     "skipLibCheck": true,
-    "isolatedModules": true
+    "isolatedModules": true,
+    // worker/auth.ts を node で直接動かすテスト（scripts/auth.test.mts）のため、拡張子つきの import を許す
+    "allowImportingTsExtensions": true
   },
   "include": ["./**/*.ts"]
 }

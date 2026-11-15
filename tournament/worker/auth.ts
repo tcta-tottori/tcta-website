@@ -21,7 +21,7 @@
 // ログインの画面（アプリの関門・/auth/signin）でパスワードと名前を入れる（POST /auth/password）。
 // パスワードの入口は Access で守らない（/auth/login だけが Access の守り）。
 import type { Env } from './index';
-import { endSession, issuePass, loginWithPass, passStatus, revokePass, sessionOf } from './passAuth';
+import { endSession, issuePass, loginWithPass, passStatus, revokePass, sessionOf } from './passAuth.ts';
 
 export interface Officer { email: string; via: 'access' | 'dev' | 'password' }
 
