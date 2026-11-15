@@ -829,7 +829,7 @@ export async function renderTournamentResultCanvas(opts: ResultExportOptions): P
   ctx.lineCap = 'round';
   for (const s of segs) {
     if (s.win) continue;
-    drawLine(ctx, s.x1, s.y1, s.x2, s.y2, COL.gray300, 1.4);
+    drawLine(ctx, s.x1, s.y1, s.x2, s.y2, COL.gray400, 1.6);
   }
   for (const s of segs) {
     if (!s.win) continue;
@@ -880,7 +880,7 @@ export async function renderTournamentResultCanvas(opts: ResultExportOptions): P
           : cy - ((affLines.length - 1) * NAME_LINE_STEP) / 2;
         affLines.forEach((t, i) => {
           if (!t) return;   // 片方だけ所属が未登録のときは行を空けて位置を揃える
-          drawText(ctx, `（${t}）`, affX, affTop + i * NAME_LINE_STEP + 0.5, AFF_PX, 'left', COL.gray500, 'normal', affMaxW);
+          drawText(ctx, `（${t}）`, affX, affTop + i * NAME_LINE_STEP + 0.5, AFF_PX, 'left', COL.gray700, 'medium', affMaxW);
         });
       }
     }
@@ -923,7 +923,7 @@ export async function renderTournamentResultCanvas(opts: ResultExportOptions): P
     });
     champAffLines.forEach((t, i) => {
       if (!t) return;
-      drawText(ctx, `（${t}）`, centerX, affYs[i], CHAMP_AFF_PX, 'center', COL.gray500, 'normal', CENTER_W - 16);
+      drawText(ctx, `（${t}）`, centerX, affYs[i], CHAMP_AFF_PX, 'center', COL.gray700, 'medium', CENTER_W - 16);
     });
     if (finalScoreText) {
       drawText(ctx, finalScoreText, centerX, scoreY, CHAMP_SCORE_PX, 'center', COL.win, 'black');
@@ -981,7 +981,7 @@ export async function renderTournamentResultCanvas(opts: ResultExportOptions): P
     });
     winnerAffLines.forEach((t, i) => {
       if (!t) return;
-      drawText(ctx, `（${t}）`, centerX, affYs[i], T.affPx, 'center', COL.gray500, 'normal', winnerMaxW);
+      drawText(ctx, `（${t}）`, centerX, affYs[i], T.affPx, 'center', COL.gray700, 'medium', winnerMaxW);
     });
     if (score.main) {
       drawText(ctx, score.main, centerX, scoreY, T.scorePx, 'center', COL.win, 'black');
@@ -1039,7 +1039,7 @@ export async function renderTournamentResultCanvas(opts: ResultExportOptions): P
           : rowCenterY - ((m.affLines.length - 1) * lineStep) / 2;
         m.affLines.forEach((t, i) => {
           if (!t) return;
-          drawText(ctx, `（${t}）`, x + 5, affTop + i * lineStep + 0.5, T.rowAffPx, 'left', COL.gray500, 'normal', m.affW);
+          drawText(ctx, `（${t}）`, x + 5, affTop + i * lineStep + 0.5, T.rowAffPx, 'left', COL.gray700, 'medium', m.affW);
         });
         x += 5 + m.affW;
       }
@@ -1052,9 +1052,9 @@ export async function renderTournamentResultCanvas(opts: ResultExportOptions): P
     // 横線（勝った側は赤・太め）＋ 勝者へ立ち上がる縦線
     ctx.lineCap = 'round';
     drawLine(ctx, leftEndX + 10, rowCenterY, centerX, rowCenterY,
-      leftWins ? COL.win : COL.gray300, leftWins ? 2.6 : 1.4);
+      leftWins ? COL.win : COL.gray400, leftWins ? 2.6 : 1.6);
     drawLine(ctx, centerX, rowCenterY, rightStartX - 10, rowCenterY,
-      leftWins ? COL.gray300 : COL.win, leftWins ? 1.4 : 2.6);
+      leftWins ? COL.gray400 : COL.win, leftWins ? 1.6 : 2.6);
     drawLine(ctx, centerX, rowCenterY, centerX, rowCenterY - T.tick, COL.win, 2.6);
     ctx.lineCap = 'butt';
   }
@@ -1302,14 +1302,14 @@ export async function renderRoundRobinResultCanvas(opts: ResultExportOptions): P
   // 罫線（縦）
   for (let i = 0; i <= n; i++) {
     const x = gridX + NAME_W + i * CELL_W;
-    drawLine(ctx, x, gridY, x, gridY + gridH, COL.gray200, 1);
+    drawLine(ctx, x, gridY, x, gridY + gridH, COL.gray300, 1.2);
   }
-  drawLine(ctx, statX + STAT_W, gridY, statX + STAT_W, gridY + gridH, COL.gray200, 1);
+  drawLine(ctx, statX + STAT_W, gridY, statX + STAT_W, gridY + gridH, COL.gray300, 1.2);
   // 罫線（横）
   drawLine(ctx, gridX, gridY + HDR_H, gridX + gridW, gridY + HDR_H, COL.red500, 1.5);
   for (let row = 1; row < n; row++) {
     const y = gridY + HDR_H + row * ROW_H;
-    drawLine(ctx, gridX, y, gridX + gridW, y, COL.gray200, 1);
+    drawLine(ctx, gridX, y, gridX + gridW, y, COL.gray300, 1.2);
   }
   ctx.restore();
   // 表の枠は外枠そのもの（1本だけ）
@@ -1350,7 +1350,7 @@ export async function renderRoundRobinResultCanvas(opts: ResultExportOptions): P
           : cy - ((affLines.length - 1) * NAME_LINE_STEP) / 2;
         affLines.forEach((t, i) => {
           if (!t) return;
-          drawText(ctx, `（${t}）`, affX, affTop + i * NAME_LINE_STEP + 0.5, 11.5, 'left', COL.gray500, 'normal', affMaxW);
+          drawText(ctx, `（${t}）`, affX, affTop + i * NAME_LINE_STEP + 0.5, 11.5, 'left', COL.gray700, 'medium', affMaxW);
         });
       }
     }
@@ -1362,7 +1362,7 @@ export async function renderRoundRobinResultCanvas(opts: ResultExportOptions): P
       if (row === col) {
         ctx.fillStyle = COL.gray100;
         ctx.fillRect(cellX + 1, y + 1, CELL_W - 2, ROW_H - 2);
-        drawLine(ctx, cellX + 1, y + 1, cellX + CELL_W - 1, y + ROW_H - 1, COL.gray300, 1.2);
+        drawLine(ctx, cellX + 1, y + 1, cellX + CELL_W - 1, y + ROW_H - 1, COL.gray400, 1.2);
         continue;
       }
       const result = getScore(p, playerSlots[col]);

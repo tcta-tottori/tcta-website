@@ -36,21 +36,21 @@ export const EXTRA_MATERIALS = {
     // 結果（2026.11.15。大会運営システムの結果画像。16:49 の全試合終了後の結果で作り直した）
     result: {
       images: [
-        { src: 'assets/img/events/r8-kaicho-autumn/result-01.webp', label: '男子B級ダブルス Aリーグ', w: 1760, h: 872 },
-        { src: 'assets/img/events/r8-kaicho-autumn/result-02.webp', label: '男子B級ダブルス Bリーグ', w: 1760, h: 872 },
-        { src: 'assets/img/events/r8-kaicho-autumn/result-03.webp', label: '男子B級ダブルス Cリーグ', w: 1760, h: 872 },
-        { src: 'assets/img/events/r8-kaicho-autumn/result-04.webp', label: '男子B級ダブルス Dリーグ', w: 1760, h: 872 },
-        { src: 'assets/img/events/r8-kaicho-autumn/result-05.webp', label: '男子B級ダブルス Eリーグ', w: 1760, h: 872 },
-        { src: 'assets/img/events/r8-kaicho-autumn/result-06.webp', label: '男子B級ダブルス Fリーグ', w: 1760, h: 872 },
-        { src: 'assets/img/events/r8-kaicho-autumn/result-07.webp', label: '男子B級ダブルス Gリーグ', w: 1760, h: 872 },
-        { src: 'assets/img/events/r8-kaicho-autumn/result-08-v2.webp', label: '男子B級ダブルス 1位・2位トーナメント', w: 1760, h: 1132 },
-        { src: 'assets/img/events/r8-kaicho-autumn/result-09-v2.webp', label: '男子B級ダブルス 3位・4位トーナメント', w: 1782, h: 1136 },
+        { src: 'assets/img/events/r8-kaicho-autumn/result-01-v2.webp', label: '男子B級ダブルス Aリーグ', w: 1760, h: 872 },
+        { src: 'assets/img/events/r8-kaicho-autumn/result-02-v2.webp', label: '男子B級ダブルス Bリーグ', w: 1760, h: 872 },
+        { src: 'assets/img/events/r8-kaicho-autumn/result-03-v2.webp', label: '男子B級ダブルス Cリーグ', w: 1760, h: 872 },
+        { src: 'assets/img/events/r8-kaicho-autumn/result-04-v2.webp', label: '男子B級ダブルス Dリーグ', w: 1760, h: 872 },
+        { src: 'assets/img/events/r8-kaicho-autumn/result-05-v2.webp', label: '男子B級ダブルス Eリーグ', w: 1760, h: 872 },
+        { src: 'assets/img/events/r8-kaicho-autumn/result-06-v2.webp', label: '男子B級ダブルス Fリーグ', w: 1760, h: 872 },
+        { src: 'assets/img/events/r8-kaicho-autumn/result-07-v2.webp', label: '男子B級ダブルス Gリーグ', w: 1760, h: 872 },
+        { src: 'assets/img/events/r8-kaicho-autumn/result-08-v3.webp', label: '男子B級ダブルス 1位・2位トーナメント', w: 1760, h: 1132 },
+        { src: 'assets/img/events/r8-kaicho-autumn/result-09-v3.webp', label: '男子B級ダブルス 3位・4位トーナメント', w: 1782, h: 1136 },
         // 【一旦非公開】{ src: 'assets/img/events/r8-kaicho-autumn/result-10.webp', label: '男子C級ダブルス 決勝リーグ', w: 1760, h: 872 },
-        { src: 'assets/img/events/r8-kaicho-autumn/result-11.webp', label: '女子B級ダブルス Aリーグ', w: 1760, h: 760 },
-        { src: 'assets/img/events/r8-kaicho-autumn/result-12.webp', label: '女子B級ダブルス Bリーグ', w: 1760, h: 760 },
-        { src: 'assets/img/events/r8-kaicho-autumn/result-13.webp', label: '女子B級ダブルス 1位トーナメント', w: 1760, h: 738 },
-        { src: 'assets/img/events/r8-kaicho-autumn/result-14.webp', label: '女子B級ダブルス 2位トーナメント', w: 1760, h: 738 },
-        { src: 'assets/img/events/r8-kaicho-autumn/result-15.webp', label: '女子B級ダブルス 3位トーナメント', w: 1760, h: 738 },
+        { src: 'assets/img/events/r8-kaicho-autumn/result-11-v2.webp', label: '女子B級ダブルス Aリーグ', w: 1760, h: 760 },
+        { src: 'assets/img/events/r8-kaicho-autumn/result-12-v2.webp', label: '女子B級ダブルス Bリーグ', w: 1760, h: 760 },
+        { src: 'assets/img/events/r8-kaicho-autumn/result-13-v2.webp', label: '女子B級ダブルス 1位トーナメント', w: 1760, h: 738 },
+        { src: 'assets/img/events/r8-kaicho-autumn/result-14-v2.webp', label: '女子B級ダブルス 2位トーナメント', w: 1760, h: 738 },
+        { src: 'assets/img/events/r8-kaicho-autumn/result-15-v2.webp', label: '女子B級ダブルス 3位トーナメント', w: 1760, h: 738 },
       ],
       pdfs: [],
     },
@@ -58,11 +58,11 @@ export const EXTRA_MATERIALS = {
     // after（結果表のファイル名）の表のすぐ下に置く（EventResult.astro）
     photo: {
       images: [
-        { src: 'assets/img/events/r8-kaicho-autumn/photo-01.webp', label: '男子B級ダブルス 1位・2位トーナメント 優勝 岸本・安田 ペア', w: 1400, h: 933, after: 'result-08-v2' },
-        { src: 'assets/img/events/r8-kaicho-autumn/photo-02.webp', label: '男子B級ダブルス 1位・2位トーナメント 準優勝 北村・山本 ペア', w: 1400, h: 933, after: 'result-08-v2' },
-        { src: 'assets/img/events/r8-kaicho-autumn/photo-03.webp', label: '女子B級ダブルス 1位トーナメント 優勝 高木・遠藤 ペア', w: 1400, h: 933, after: 'result-13' },
-        { src: 'assets/img/events/r8-kaicho-autumn/photo-04.webp', label: '女子B級ダブルス 1位トーナメント 準優勝 小見山・谷口 ペア', w: 1400, h: 933, after: 'result-13' },
-        { src: 'assets/img/events/r8-kaicho-autumn/photo-05.webp', label: '女子B級ダブルス 2位トーナメント 優勝 山本・大田 ペア', w: 1400, h: 933, after: 'result-14' },
+        { src: 'assets/img/events/r8-kaicho-autumn/photo-01.webp', label: '男子B級ダブルス 1位・2位トーナメント 優勝 岸本・安田 ペア', w: 1400, h: 933, after: 'result-08-v3' },
+        { src: 'assets/img/events/r8-kaicho-autumn/photo-02.webp', label: '男子B級ダブルス 1位・2位トーナメント 準優勝 北村・山本 ペア', w: 1400, h: 933, after: 'result-08-v3' },
+        { src: 'assets/img/events/r8-kaicho-autumn/photo-03.webp', label: '女子B級ダブルス 1位トーナメント 優勝 高木・遠藤 ペア', w: 1400, h: 933, after: 'result-13-v2' },
+        { src: 'assets/img/events/r8-kaicho-autumn/photo-04.webp', label: '女子B級ダブルス 1位トーナメント 準優勝 小見山・谷口 ペア', w: 1400, h: 933, after: 'result-13-v2' },
+        { src: 'assets/img/events/r8-kaicho-autumn/photo-05.webp', label: '女子B級ダブルス 2位トーナメント 優勝 山本・大田 ペア', w: 1400, h: 933, after: 'result-14-v2' },
         // 【一旦非公開】{ src: 'assets/img/events/r8-kaicho-autumn/photo-06.webp', label: '男子C級ダブルス 優勝 難波・米村 ペア', w: 1400, h: 933, after: 'result-10' },
         // 【一旦非公開】{ src: 'assets/img/events/r8-kaicho-autumn/photo-07.webp', label: '男子C級ダブルス 準優勝 中井・吉田 ペア', w: 1400, h: 933, after: 'result-10' },
       ],
@@ -103,6 +103,14 @@ export const EXTRA_MATERIALS = {
   'r8-no18': {
     outline: { images: [img('r8-no18', 'outline-01.webp', '要綱')], pdfs: [] },
     entry: { images: [], pdfs: [{ src: 'assets/pdf/events/r8-no18/令和8年県選ダブルス申込用紙.pdf', label: '申込用紙', kb: 104 }] },
+  },
+};
+
+// 結果の欄の上に出すお知らせ（notice）と、結果の欄の下に観戦ページへの案内を出すか（live）。EventResult.astro
+export const EXTRA_RESULT_NOTES = {
+  'r8-kaicho-autumn': {
+    notice: '男子C級ダブルスの結果は、内容に不備があったため確認しています。確認が済みしだい掲載します。',
+    live: true,
   },
 };
 

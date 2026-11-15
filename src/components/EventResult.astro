@@ -15,6 +15,7 @@ import SheetList from './SheetList.astro';
 import AwardLine from './AwardLine.astro';
 import { clubEventLayout } from '../data/club-event.js';
 import { eventResultLayout } from '../data/event-result.js';
+import { LIVE_DRAW_URL, LIVE_ORDER_URL } from '../data/live.js';
 
 const { e, restPhotos: showRest = true } = Astro.props;
 const club = Astro.props.club === undefined ? clubEventLayout(e) : Astro.props.club;
@@ -23,7 +24,16 @@ const result = e.sections.find((s) => s.key === 'result');
 const anchor = (label, i) => `blk-${i}-${String(label).replace(/[^0-9A-Za-z぀-ヿ一-鿿]/g, '')}`;
 const rest = layout?.restPhotos ?? [];
 let photoNo = 0;
+const note = e.resultNote ?? null;
 ---
+
+{/* 結果の欄の上のお知らせ（確認中の種目など） */}
+{note?.notice && (
+  <aside class="rev-notice result-notice rv" aria-label="結果についてのお知らせ">
+    <p class="rev-notice__head">お知らせ</p>
+    <p class="result-notice__text">{note.notice}</p>
+  </aside>
+)}
 
 {club && (
   <>
@@ -127,3 +137,18 @@ let photoNo = 0;
 
 {/* 結果の画像も成績も無い（PDF だけなど） */}
 {!club && !layout && result && <div class="rv"><SheetList images={result.images} pdfs={result.pdfs} alt={`${e.name} 結果`} /></div>}
+
+{/* 結果の欄の下に、大会運営システムの観戦ページ（ドロー・対戦順）への案内 */}
+{note?.live && (
+  <section class="live-box result-live rv" aria-labelledby="result-live-title">
+    <div class="live-box__head">
+      <h2 class="live-box__title" id="result-live-title">観戦ページ</h2>
+      <span class="live-box__en">LIVE VIEW</span>
+    </div>
+    <p class="live-box__lead">大会運営システムの観戦ページで、当日のドロー表・リーグ表と対戦順を見られます（次の大会の運営が始まると、その大会の表示に切り替わります）。</p>
+    <div class="live-box__btns">
+      <a class="btn btn--primary" href={LIVE_DRAW_URL} target="_blank" rel="noopener">ドロー・結果を見る <span class="ln-arrow" aria-hidden="true"></span></a>
+      <a class="btn btn--outline" href={LIVE_ORDER_URL} target="_blank" rel="noopener">対戦順・進み具合 <span class="ln-arrow" aria-hidden="true"></span></a>
+    </div>
+  </section>
+)}
