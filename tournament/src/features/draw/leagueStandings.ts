@@ -4,6 +4,7 @@
 //   wins  … 勝数の多い順。同数が 2 者なら対戦の勝者が上、3 者以上なら取得ゲーム率の高い順（その中で 2 者が並べば対戦の勝者）。既定
 //   games … 取得ゲーム率（取ったゲーム ÷ 全ゲーム）の高い順。同率が 2 者なら対戦の勝者が上（男子B級のような「8ゲーム制」の予選）
 // どの決め方でも決まらない並び（同率で対戦も無い・引き分け扱い）は tied に印を付ける（会場でくじ引き）。
+// 引き分け（ゲーム制の 4-4。終了して勝者なし）は勝ち負けに数えず、ゲーム数だけ数える。
 //
 // スコアは試合の score（"8-3" のような player1-player2 の順）から数える。不戦勝（W.O）はゲーム数に入れない。
 import type { Match } from '../../db/database';
@@ -45,10 +46,13 @@ export function leagueStandings(entryIds: string[], matches: LeagueMatch[], rule
     for (let j = i + 1; j < entryIds.length; j++) {
       const a = entryIds[i], b = entryIds[j];
       const m = between(a, b);
-      if (!m?.winnerEntryId) { finished = false; continue; }
-      const w = m.winnerEntryId === a ? a : b, l = w === a ? b : a;
-      stat.get(w)!.wins++;
-      stat.get(l)!.losses++;
+      const isDraw = !!m && !m.winnerEntryId && m.status === 'finished' && !!games(m.score);
+      if (!m || (!m.winnerEntryId && !isDraw)) { finished = false; continue; }
+      if (m.winnerEntryId) {
+        const w = m.winnerEntryId === a ? a : b, l = w === a ? b : a;
+        stat.get(w)!.wins++;
+        stat.get(l)!.losses++;
+      }
       const g = m.status === 'walkover' ? null : games(m.score);
       if (g) {
         const aIsP1 = m.player1EntryId === a;
