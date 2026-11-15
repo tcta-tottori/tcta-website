@@ -12,6 +12,7 @@ import { useSiteReveal } from '../../components/site/useSiteReveal';
 import { SiteHeader, MobileNav, PageHead, StatusBar, SiteFooter, SITE_URL, VIEW_LOGO, type NavLinkItem } from '../../components/site/SiteChrome';
 import { sortEventsByClass } from '../data/eventOrder';
 import { useVisibleLiveScores } from '../livescore/useVisibleLiveScores';
+import { isLeagueKind } from '../court-bracket/leagueKind';
 
 /**
  * 参加者・HP訪問者向け公開ビューのレイアウト（読み取り専用）。
@@ -78,6 +79,15 @@ export default function PublicLayout() {
     [isGroup, activeTournamentId]
   ) || [];
   const eventIds = useMemo(() => events.map(e => e.eventId).sort().join(','), [events]);
+  // リーグとトーナメントの両方がある大会（リーグの順位で組む順位別トーナメントなど）は、メニューに「決勝トーナメント」を出す
+  const hasFinals = useLiveQuery(async () => {
+    const ids = eventIds.split(',').filter(Boolean);
+    if (ids.length === 0) return false;
+    const ds = await db.draws.where('eventId').anyOf(ids).toArray();
+    const nameOf = new Map(events.map(e => [e.eventId, e.name]));
+    const kinds = ds.map(d => isLeagueKind(nameOf.get(d.eventId) ?? '', d.drawType));
+    return kinds.includes(true) && kinds.includes(false);
+  }, [eventIds, events]) ?? false;
   const allMatches = useLiveQuery(async () => {
     const ids = eventIds.split(',').filter(Boolean);
     if (ids.length === 0) return [];
@@ -196,6 +206,8 @@ export default function PublicLayout() {
         ...(liveCount > 0 || location.pathname.startsWith('/view/livescore')
           ? [{ path: '/view/livescore', label: 'ライブスコア', en: 'LIVE SCORE', icon: Activity }] : []),
         { path: '/view/draw', label: 'ドロー', en: 'DRAW', icon: Network },
+        ...(hasFinals || location.pathname.startsWith('/view/finals')
+          ? [{ path: '/view/finals', label: '決勝トーナメント', en: 'FINALS', icon: Trophy }] : []),
         { path: '/view/order', label: '対戦順', en: 'ORDER OF PLAY', icon: ClipboardList },
         { path: '/view/live', label: 'ダッシュボード', en: 'DASHBOARD', icon: Radio },
       ];
@@ -242,7 +254,7 @@ export default function PublicLayout() {
       <main
         ref={mainRef}
         id="main"
-        className={`app-main ${location.pathname.startsWith('/view/draw') ? 'app-main--compact' : ''}`}
+        className={`app-main ${location.pathname.startsWith('/view/draw') || location.pathname.startsWith('/view/finals') ? 'app-main--compact' : ''}`}
         onScroll={(e) => { const y = (e.currentTarget as HTMLElement).scrollTop > 24; if (y !== scrolled) setScrolled(y); }}
       >
         <PageHead

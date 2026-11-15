@@ -86,6 +86,7 @@ import PublicDrawView from './features/view/PublicDrawView';
 import PublicMatchOrderView from './features/view/PublicMatchOrderView';
 import PublicLiveScoreView from './features/view/PublicLiveScoreView';
 import EmbedLiveScoreView from './features/view/EmbedLiveScoreView';
+import PublicFinalsView from './features/view/PublicFinalsView';
 import LiveScorePage from './features/livescore/LiveScorePage';
 // 運営画面は役員だけ（観戦ページ /view・HP 埋め込み /embed は誰でも）
 import OfficerGate from './components/site/OfficerGate';
@@ -109,6 +110,7 @@ createRoot(document.getElementById('root')!).render(
           <Route path="league" element={<PublicLeagueView />} />
           <Route path="bracket" element={<PublicBracketView />} />
           <Route path="draw" element={<PublicDrawView />} />
+          <Route path="finals" element={<PublicFinalsView />} />
           <Route path="order" element={<PublicMatchOrderView />} />
           <Route path="livescore" element={<PublicLiveScoreView />} />
           <Route path="live" element={<PublicLiveView />} />

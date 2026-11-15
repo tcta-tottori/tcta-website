@@ -11,9 +11,10 @@ import { insertGapAt, isEmptySlot, removeGapAt, swapSlotContents } from '../draw
 import { ChevronLeft, ChevronRight, MapPin, Trophy, Timer, Layers, Eye, EyeOff, Shuffle, ArrowDownToLine, ArrowUpToLine, Undo2, Play, Pencil, Medal, UserPen, ChevronDown, SlidersHorizontal, X, LayoutGrid } from 'lucide-react';
 import CourtBracketView from './CourtBracketView';
 import RoundRobinRenderer from '../draw/RoundRobinRenderer';
-import { leagueShort } from '../draw/placement';
+import { leagueShort, sourceLabel } from '../draw/placement';
 import PlacementPanel from '../draw/PlacementPanel';
 import AllLeaguesGrid from './AllLeaguesGrid';
+import AllFinalsList from './AllFinalsList';
 import ScoreInputDialog from '../score/ScoreInputDialog';
 import type { ScoreInputMatch } from '../score/ScoreInputDialog';
 import { resolveRequiredGames } from '../score/gameRules';
@@ -31,16 +32,23 @@ import {
   getGameRuleText, getGameRulesText, getMatchFormat, getRoundName, getShortRoundName,
 } from '../score/roundRules';
 import { siteConfirm } from '../../components/site/siteConfirm';
+import { isLeagueKind } from './leagueKind';
 
 interface CourtBracketPageProps {
   /** スコア入力を有効にするか（公開ビューでは false で読み取り専用） */
   enableScoreInput?: boolean;
+  /**
+   * 出す種目を絞る。'tournament' … トーナメントの種目だけ（リーグの順位で組む順位別トーナメントなど。観戦ページの「決勝トーナメント」）
+   * 省略時はすべての種目
+   */
+  only?: 'tournament';
 }
+
 
 /** 「リーグを全部並べる」表示を選んだかを覚えておく鍵 */
 const ALL_LEAGUES_KEY = 'tcta-draw-all-leagues';
 
-export default function CourtBracketPage({ enableScoreInput = true }: CourtBracketPageProps) {
+export default function CourtBracketPage({ enableScoreInput = true, only }: CourtBracketPageProps) {
   const currentTournamentId = useAppStore(state => state.currentTournamentId);
   const [selectedEventIdx, setSelectedEventIdx] = useState<number>(0);
   // スコア入力対象の試合キー "round-position"
@@ -70,8 +78,20 @@ export default function CourtBracketPage({ enableScoreInput = true }: CourtBrack
       : [],
     [currentTournamentId]
   ) || [];
+  // 種目ごとのドローの種類（リーグかトーナメントか。only で絞るときに使う）
+  const drawTypeByEvent = useLiveQuery(async () => {
+    if (!only || !currentTournamentId) return new Map<string, string | undefined>();
+    const evs = await db.events.where('tournamentId').equals(currentTournamentId).toArray();
+    const ids = evs.map(e => e.eventId);
+    const ds = ids.length > 0 ? await db.draws.where('eventId').anyOf(ids).toArray() : [];
+    return new Map(ds.map(d => [d.eventId, d.drawType as string | undefined]));
+  }, [only, currentTournamentId]);
   // クラスは「男子→女子」「アルファベット→年齢」の順に並べる
-  const events = useMemo(() => sortEventsByClass(rawEvents), [rawEvents]);
+  const events = useMemo(() => {
+    const sorted = sortEventsByClass(rawEvents);
+    if (only !== 'tournament') return sorted;
+    return sorted.filter(e => !isLeagueKind(e.name, drawTypeByEvent?.get(e.eventId)));
+  }, [rawEvents, only, drawTypeByEvent]);
 
   const selectedEventId = events[selectedEventIdx]?.eventId || '';
   const selectedEvent = events[selectedEventIdx];
@@ -166,6 +186,11 @@ export default function CourtBracketPage({ enableScoreInput = true }: CourtBrack
               ? `${p1.affiliation} / ${p2.affiliation}`
               : (p1?.affiliation || '');
           }
+        }
+        // まだ組まれていない順位別トーナメントの枠は「B1位」のように、どのリーグの何位が入るかを出す
+        if (!s.isBye && !s.entryId) {
+          const src = drawData.slotSources?.find(x => x.position === s.position);
+          if (src) name = sourceLabel(src);
         }
         return { position: s.position, entryId: s.entryId, seed: s.seed, isBye: s.isBye, name, affiliation };
       })
@@ -601,7 +626,8 @@ export default function CourtBracketPage({ enableScoreInput = true }: CourtBrack
   };
 
   // 表示の切り替え：1 種目ずつ／リーグを全部並べる（PC は 2 列）。選んだ方はこの端末に覚えておく
-  const leagueCount = allDraws.filter(d => d.drawType === 'roundRobin').length;
+  // トーナメントだけを出すとき（観戦ページの「決勝トーナメント」）は切り替えを出さない
+  const leagueCount = only ? 0 : allDraws.filter(d => d.drawType === 'roundRobin').length;
   const showAll = allLeagues && leagueCount >= 2;
   const setAllLeaguesMode = (on: boolean) => {
     setAllLeagues(on);
@@ -916,6 +942,14 @@ export default function CourtBracketPage({ enableScoreInput = true }: CourtBrack
             events={events}
             editable={enableScoreInput}
             onCellSelect={enableScoreInput && !nameEditMode ? (idx, round, position) => {
+              setSelectedEventIdx(idx);
+              setSelectedMatchKey(`${round}-${position}`);
+            } : undefined}
+          />
+          {/* リーグ表の下に、決勝トーナメント（トーナメントの種目）も並べる */}
+          <AllFinalsList
+            events={events}
+            onMatchSelect={enableScoreInput && !nameEditMode ? (idx, round, position) => {
               setSelectedEventIdx(idx);
               setSelectedMatchKey(`${round}-${position}`);
             } : undefined}

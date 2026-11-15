@@ -471,3 +471,9 @@
 .rr-manual__list button { flex: none; width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--gray-300); border-radius: var(--radius); background: var(--white); color: var(--ink); cursor: pointer; }
 .rr-manual__list button:disabled { opacity: .3; cursor: default; }
 .rr-manual__acts { display: flex; justify-content: flex-end; gap: 8px; }
+
+/* ---- 「リーグを全部並べる」の下の決勝トーナメント（AllFinalsList） ---- */
+.dl-allko { margin-top: 32px; display: flex; flex-direction: column; gap: 20px; }
+.dl-allko__heading { display: flex; align-items: center; gap: 10px; font-size: 18px; font-weight: 900; color: var(--ink, #111); }
+.dl-allko__heading::before { content: ""; width: 12px; height: 12px; background: var(--red, #D8232A); }
+.dl-allko__item { overflow-x: auto; }

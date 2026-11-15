@@ -158,7 +158,9 @@ export default function CourtBracketView({
 
   const isSlotBye = (i: number) => {
     const s = slots[i];
-    return !s || s.isBye || !s.entryId;
+    if (!s || s.isBye) return true;
+    // 選手がまだ入っていない枠でも、順位別トーナメントの「B1位」のように入る人が決まっている枠は空きにしない
+    return !s.entryId && (!s.name || s.name === 'BYE');
   };
 
   /**
