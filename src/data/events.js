@@ -14,7 +14,7 @@
 
 import { nendoLabel, STATUS_LABEL, REG_LABEL, dateCell } from './schedule.js';
 import { splitEntryForms } from './entry-forms.js';
-import { EXTRA_MATERIALS, EXTRA_REVISIONS, EXTRA_WINNERS } from './official-extra.js';
+import { EXTRA_MATERIALS, EXTRA_REVISIONS, EXTRA_WINNERS, EXTRA_RESULT_NOTES } from './official-extra.js';
 
 /** 令和8年度の大会日程（PDF）。年度はじめに差し替える。 */
 export const SCHEDULE_PDF = { src: 'assets/pdf/events/r8-schedule.pdf', kb: 86 };
@@ -159,6 +159,8 @@ export function buildEvents(rows, { ROWS }, mediaUrl = () => null) {
         sections: order,
         /** 訂正の記録（新しい順）。ページの上に日付付きで出す（RevisionNotice.astro） */
         revisions: collectRevisions(t),
+        /** 結果の欄の上のお知らせ・下の観戦ページの案内（official-extra.js の EXTRA_RESULT_NOTES）。無ければ null */
+        resultNote: EXTRA_RESULT_NOTES[t.slug] ?? null,
         /** ページ上部の写真。当日の写真の1枚目を使う。無ければ null。 */
         cover: sections.photo?.images[0]?.src ?? null,
       };

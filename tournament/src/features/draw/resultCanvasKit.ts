@@ -287,7 +287,7 @@ export function drawHeaderRule(
   ctx.stroke();
 }
 
-/** トーナメント表・リーグ表の外枠（淡いグレーの細線） */
+/** トーナメント表・リーグ表の外枠（グレーの線） */
 export function drawResultFrame(
   ctx: CanvasRenderingContext2D,
   x: number,
@@ -296,7 +296,8 @@ export function drawResultFrame(
   h: number,
   r: number,
 ): void {
-  roundRect(ctx, x, y, w, h, r, undefined, COL.gray300, 1.5);
+  // 外枠は見やすいよう濃いめのグレー（以前は gray300 で薄かった）
+  roundRect(ctx, x, y, w, h, r, undefined, COL.gray400, 1.8);
 }
 
 /** 1 → 1st, 2 → 2nd … の序数表記 */
