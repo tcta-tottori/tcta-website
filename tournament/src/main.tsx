@@ -131,6 +131,8 @@ createRoot(document.getElementById('root')!).render(
           <Route path="schedule-sheet" element={<ScheduleSheet />} />
           <Route path="score" element={<Scoreboard />} />
           <Route path="court-bracket" element={<CourtBracketPage />} />
+          <Route path="league" element={<CourtBracketPage only="league" />} />
+          <Route path="finals" element={<CourtBracketPage only="tournament" />} />
           <Route path="schedule" element={<CourtSchedule />} />
           <Route path="dashboard" element={<LiveDashboard />} />
           <Route path="broadcast" element={<LiveBroadcastPage />} />
