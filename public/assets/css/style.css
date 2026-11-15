@@ -1937,7 +1937,7 @@ body.jsrv .ghost.on { opacity: 1; transform: translateY(-50%); }
 }
 .news-cat--outline { background: var(--gray-100); color: var(--ink); border-color: var(--gray-300); }
 .news-cat--draw { background: var(--red-tint); color: var(--red-dark); border-color: rgba(216, 35, 42, .3); }
-.news-cat--result { background: var(--ink); color: #fff; }
+.news-cat--result { background: var(--white); color: var(--red); border-color: var(--red); }  /* 結果：白い地に赤い文字（大会情報の結果のボタンとそろえる） */
 .news-cat--entry { background: var(--white); color: var(--red); border-color: var(--red); }
 .news-cat--survey { background: #E8F6EE; color: #1B6B3E; border-color: rgba(27, 107, 62, .3); }
 .news-cat--event { background: #EAF1FB; color: #1F4E8C; border-color: rgba(31, 78, 140, .3); }
