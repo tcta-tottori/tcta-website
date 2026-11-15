@@ -1,0 +1,280 @@
+---
+// リーグ戦の順位計算（誰でも使える）。ドローのページの下のリンク（league-rules.js に書いた大会）から開く。
+//   league-calc.html?e=<大会の slug>  … その大会の決め方（勝数が先／取得ゲーム率が先）で計算する
+//   league-calc.html                  … 決め方を画面で選ぶ
+// チームは A〜G（3〜7 チーム）。名前は書き換えられる。試合ごとにゲーム数を入れると、勝敗・取得ゲーム率・順位と、
+// その計算式・順位の決め手を出す。計算は大会運営システム（tournament/src/features/draw/leagueStandings.ts）と同じ。
+import Base from '../layouts/Base.astro';
+import { siteData } from '../lib/cms.js';
+import { RULE_TEXT, leagueRuleOf } from '../data/league-rules.js';
+
+const slug = Astro.url.searchParams.get('e') ?? '';
+const site = await siteData(Astro);
+const ev = slug ? site.eventBySlug(slug) : null;
+const conf = ev ? leagueRuleOf(ev.slug) : null;
+const fixedRule = conf?.rule ?? null;
+const nParam = Number(Astro.url.searchParams.get('n'));
+const n0 = Number.isInteger(nParam) && nParam >= 3 && nParam <= 7 ? nParam : 4;
+const title = `リーグ戦の順位計算${ev ? `（${ev.name}）` : ''}｜鳥取市テニス協会`;
+const description = 'リーグ戦（総当たり）の勝敗・取得ゲーム率・順位を、大会のルールに沿って計算するページです。計算式と順位の決め手も確かめられます。';
+---
+
+<Base title={title} description={description} navActive="tournaments" mobileNavActive="tournaments">
+  <section class="page-head">
+    <span class="ghost" aria-hidden="true">LEAGUE</span>
+    <div class="container">
+      <nav class="breadcrumb" aria-label="パンくず">
+        <a href="index.html">ホーム</a><span class="breadcrumb__sep" aria-hidden="true">›</span>
+        <a href="tournaments.html">大会情報</a><span class="breadcrumb__sep" aria-hidden="true">›</span>
+        {ev && <><a href={`draw-${ev.slug}.html`}>{ev.displayName} ドロー</a><span class="breadcrumb__sep" aria-hidden="true">›</span></>}
+        <span aria-current="page">リーグ戦の順位計算</span>
+      </nav>
+      <div class="page-title-row fu">
+        <span class="sec-head__mark" aria-hidden="true"></span>
+        <div>
+          <p class="page-title__en">League Calculator</p>
+          <h1 class="page-title">リーグ戦の順位計算</h1>
+        </div>
+      </div>
+      <p class="page-lead fu" style="animation-delay:.15s">
+        試合ごとのゲーム数を入れると、勝敗・取得ゲーム率・順位を計算します。計算式と、順位が決まった理由も下に出します。
+        {ev && <><br /><b>{ev.name}</b> のルール（{RULE_TEXT[fixedRule].label}）で計算します。</>}
+      </p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container container--result">
+      <div class="lc" id="lc" data-rule={fixedRule ?? ''} data-n={n0}>
+        {/* ルール */}
+        <div class="lc-box rv">
+          <h2 class="lc-h">ルール</h2>
+          {fixedRule ? (
+            <p class="lc-rule"><span class="lc-rule__tag">{RULE_TEXT[fixedRule].label}</span>{ev?.name}</p>
+          ) : (
+            <div class="lc-seg" role="radiogroup" aria-label="順位の決め方">
+              {Object.entries(RULE_TEXT).map(([k, r], i) => (
+                <label class="lc-seg__opt"><input type="radio" name="lc-rule" value={k} checked={i === 0} /><span>{r.label}</span></label>
+              ))}
+            </div>
+          )}
+          <ol class="lc-steps" id="lc-steps">
+            {Object.entries(RULE_TEXT).map(([k, r]) => r.steps.map((s) => <li data-rule={k}>{s}</li>))}
+          </ol>
+          {conf?.note && <p class="lc-note">{conf.note}</p>}
+          <p class="lc-note">取得ゲーム率 ＝ 取ったゲーム数 ÷（取ったゲーム数 ＋ 取られたゲーム数）。引き分け（同じゲーム数）は勝ち負けに数えず、ゲーム数だけ数えます。</p>
+        </div>
+
+        {/* チーム */}
+        <div class="lc-box rv">
+          <h2 class="lc-h">チーム</h2>
+          <div class="lc-seg lc-seg--n" role="radiogroup" aria-label="チームの数">
+            {[3, 4, 5, 6, 7].map((k) => (
+              <label class="lc-seg__opt"><input type="radio" name="lc-n" value={k} checked={k === n0} /><span>{k}チーム</span></label>
+            ))}
+          </div>
+          <div class="lc-names" id="lc-names"></div>
+          <p class="lc-note">名前は書き換えられます（空けておくと A・B・C… のまま）。</p>
+        </div>
+
+        {/* 試合 */}
+        <div class="lc-box rv">
+          <div class="lc-hrow">
+            <h2 class="lc-h">試合の結果（ゲーム数）</h2>
+            <button type="button" class="lc-clear" id="lc-clear">すべて消す</button>
+          </div>
+          <div class="lc-matches" id="lc-matches"></div>
+        </div>
+
+        {/* 結果 */}
+        <div class="lc-box rv">
+          <h2 class="lc-h">順位</h2>
+          <p class="lc-warn" id="lc-warn" hidden></p>
+          <div class="lc-tablewrap"><table class="lc-table" id="lc-table"></table></div>
+          <h3 class="lc-h3">星取表</h3>
+          <div class="lc-tablewrap"><table class="lc-table lc-table--grid" id="lc-grid"></table></div>
+          <h3 class="lc-h3">計算式</h3>
+          <ul class="lc-calc" id="lc-calc"></ul>
+          <h3 class="lc-h3">順位の決め方</h3>
+          <ol class="lc-log" id="lc-log"></ol>
+        </div>
+
+        {ev && <p class="rv"><a class="ghost-link" href={`draw-${ev.slug}.html`}>← {ev.displayName} のドローへ</a></p>}
+      </div>
+    </div>
+  </section>
+</Base>
+
+<script>
+  // ここの計算は大会運営システムの leagueStandings.ts と同じ決め方
+  type Rule = 'wins' | 'games';
+  const root = document.getElementById('lc')!;
+  const LETTERS = 'ABCDEFG';
+  const fixed = (root.dataset.rule || '') as Rule | '';
+  let n = Number(root.dataset.n) || 4;
+  let names: string[] = Array(7).fill('');
+  // scores[i][j] … i 対 j の i 側のゲーム数（文字列。空なら未入力）
+  let scores: string[][] = Array.from({ length: 7 }, () => Array(7).fill(''));
+  const KEY = `tcta-league-calc:${location.search}`;
+  try {
+    const saved = JSON.parse(localStorage.getItem(KEY) || 'null');
+    if (saved && Array.isArray(saved.scores)) { scores = saved.scores; names = saved.names ?? names; n = saved.n ?? n; }
+  } catch { /* 保存できない環境 */ }
+  const save = () => { try { localStorage.setItem(KEY, JSON.stringify({ n, names, scores })); } catch { /* */ } };
+
+  const rule = (): Rule => (fixed || ((document.querySelector('input[name=lc-rule]:checked') as HTMLInputElement)?.value as Rule) || 'wins');
+  const nameOf = (i: number) => names[i].trim() || LETTERS[i];
+  const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]!));
+  const pct = (r: number) => `${(Math.round(r * 1000) / 10).toFixed(1)}%`;
+
+  function renderNames() {
+    const box = document.getElementById('lc-names')!;
+    box.innerHTML = Array.from({ length: n }, (_, i) =>
+      `<label class="lc-name"><span>${LETTERS[i]}</span><input type="text" maxlength="20" data-i="${i}" value="${esc(names[i])}" placeholder="${LETTERS[i]}"></label>`).join('');
+    box.querySelectorAll('input').forEach((el) => el.addEventListener('input', () => {
+      names[Number(el.dataset.i)] = el.value; save(); renderMatchLabels(); compute();
+    }));
+  }
+
+  // 総当たりの組み合わせ
+  const pairs = () => { const p: [number, number][] = []; for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) p.push([i, j]); return p; };
+
+  function renderMatches() {
+    const box = document.getElementById('lc-matches')!;
+    box.innerHTML = pairs().map(([i, j]) => `
+      <div class="lc-match" data-i="${i}" data-j="${j}">
+        <span class="lc-match__name lc-match__name--l" data-name="${i}">${esc(nameOf(i))}</span>
+        <input class="lc-in" inputmode="numeric" maxlength="2" aria-label="${esc(nameOf(i))} のゲーム数" data-a="${i}" data-b="${j}" value="${esc(scores[i][j])}">
+        <span class="lc-match__sep">-</span>
+        <input class="lc-in" inputmode="numeric" maxlength="2" aria-label="${esc(nameOf(j))} のゲーム数" data-a="${j}" data-b="${i}" value="${esc(scores[j][i])}">
+        <span class="lc-match__name" data-name="${j}">${esc(nameOf(j))}</span>
+      </div>`).join('');
+    box.querySelectorAll<HTMLInputElement>('.lc-in').forEach((el) => {
+      el.addEventListener('input', () => {
+        el.value = el.value.replace(/[０-９]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 0xFEE0)).replace(/\D/g, '').slice(0, 2);
+        scores[Number(el.dataset.a)][Number(el.dataset.b)] = el.value;
+        save(); compute();
+      });
+      el.addEventListener('focus', () => el.select());
+    });
+  }
+  function renderMatchLabels() {
+    document.querySelectorAll<HTMLElement>('[data-name]').forEach((el) => { el.textContent = nameOf(Number(el.dataset.name)); });
+  }
+
+  function compute() {
+    const r = rule();
+    document.querySelectorAll<HTMLElement>('#lc-steps li').forEach((li) => { li.hidden = li.dataset.rule !== r; });
+    const ids = Array.from({ length: n }, (_, i) => i);
+    const st = ids.map(() => ({ w: 0, l: 0, d: 0, gw: 0, gl: 0 }));
+    const played = (i: number, j: number) => scores[i][j] !== '' && scores[j][i] !== '';
+    let missing = 0;
+    for (const [i, j] of pairs()) {
+      if (!played(i, j)) { missing++; continue; }
+      const a = Number(scores[i][j]), b = Number(scores[j][i]);
+      st[i].gw += a; st[i].gl += b; st[j].gw += b; st[j].gl += a;
+      if (a > b) { st[i].w++; st[j].l++; } else if (b > a) { st[j].w++; st[i].l++; } else { st[i].d++; st[j].d++; }
+    }
+    const rate = (i: number) => { const t = st[i].gw + st[i].gl; return t > 0 ? st[i].gw / t : 0; };
+    const wins = (i: number) => st[i].w;
+    const h2h = (a: number, b: number) => {
+      if (!played(a, b)) return 0;
+      const x = Number(scores[a][b]), y = Number(scores[b][a]);
+      return x > y ? -1 : y > x ? 1 : 0;
+    };
+    const keyName: Record<string, string> = { rate: '取得ゲーム率', wins: '勝数' };
+    const keyFn: Record<string, (i: number) => number> = { rate, wins };
+    const fmtKey = (k: string, i: number) => (k === 'rate' ? pct(rate(i)) : `${wins(i)}勝`);
+    const names_ = (g: number[]) => g.map(nameOf).join('・');
+    const log: string[] = [];
+    const tied = new Set<number>();
+    const reason = new Map<number, string>();
+
+    const order = (g: number[], keys: string[], depth: number): number[] => {
+      if (g.length <= 1) return g;
+      if (g.length === 2) {
+        const h = h2h(g[0], g[1]);
+        if (h !== 0) {
+          const [win, lose] = h < 0 ? g : [g[1], g[0]];
+          log.push(`${names_(g)} が並んだので、2チームの直接対決で決めます：${nameOf(win)} が ${scores[win][lose]}-${scores[lose][win]} で勝ち → ${nameOf(win)} が上。`);
+          reason.set(win, reason.get(win) ?? `直接対決で${nameOf(lose)}に勝ち`);
+          reason.set(lose, reason.get(lose) ?? `直接対決で${nameOf(win)}に負け`);
+          return [win, lose];
+        }
+        log.push(`${names_(g)} が並びましたが、直接対決は${played(g[0], g[1]) ? `引き分け（${scores[g[0]][g[1]]}-${scores[g[1]][g[0]]}）な` : 'まだ入っていない'}ので決まりません。`);
+      }
+      if (keys.length === 0) {
+        log.push(`${names_(g)} は決め方のどれでも並んだままです（くじ引きなどで決めます）。`);
+        g.forEach((i) => { tied.add(i); reason.set(i, reason.get(i) ?? '同率（くじ引きなど）'); });
+        return g;
+      }
+      const [k, ...rest] = keys;
+      const groups = new Map<number, number[]>();
+      for (const i of g) { const v = Math.round(keyFn[k](i) * 1e9); groups.set(v, [...(groups.get(v) ?? []), i]); }
+      if (groups.size === 1) {
+        if (g.length >= 3) log.push(`${names_(g)} の ${g.length} チームが並んだので、${keyName[k]}で比べます：${g.map((i) => `${nameOf(i)} ${fmtKey(k, i)}`).join('、')}。`);
+        return order(g, rest, depth + 1);
+      }
+      const sorted = [...groups.entries()].sort((a, b) => b[0] - a[0]);
+      if (depth > 0) {
+        log.push(`${names_(g)} を${keyName[k]}で比べます：${g.map((i) => `${nameOf(i)} ${fmtKey(k, i)}`).join('、')}。`);
+        for (const [, sg] of sorted) if (sg.length === 1) reason.set(sg[0], reason.get(sg[0]) ?? keyName[k]);
+      }
+      return sorted.flatMap(([, sg]) => order(sg, rest, depth + 1));
+    };
+
+    const first = r === 'games' ? 'rate' : 'wins';
+    const next = r === 'games' ? ['wins'] : ['rate'];
+    log.push(`${keyName[first]}で並べます：${ids.map((i) => `${nameOf(i)} ${fmtKey(first, i)}`).join('、')}。`);
+    const groups = new Map<number, number[]>();
+    for (const i of ids) { const v = Math.round(keyFn[first](i) * 1e9); groups.set(v, [...(groups.get(v) ?? []), i]); }
+    const top = [...groups.entries()].sort((a, b) => b[0] - a[0]);
+    for (const [, g] of top) if (g.length === 1) reason.set(g[0], keyName[first]);
+    const ranking = top.flatMap(([, g]) => order(g, next, 1));
+
+    // 表示
+    const warn = document.getElementById('lc-warn')!;
+    warn.hidden = missing === 0;
+    warn.textContent = missing ? `まだ入っていない試合が ${missing} 試合あります。入っている試合だけで計算した途中の順位です。` : '';
+
+    const rankOf = new Map<number, number>();
+    ranking.forEach((i, k) => rankOf.set(i, k + 1));
+    const table = document.getElementById('lc-table')!;
+    table.innerHTML = `<thead><tr><th>順位</th><th>チーム</th><th>勝-敗${st.some((s) => s.d) ? '-分' : ''}</th><th>取得</th><th>失</th><th>取得ゲーム率</th><th>決め手</th></tr></thead><tbody>${
+      ranking.map((i) => `<tr class="${rankOf.get(i) === 1 && !missing ? 'is-top' : ''}">
+        <td class="lc-rank">${tied.has(i) ? `${rankOf.get(i)}<small>（同率）</small>` : rankOf.get(i)}位</td>
+        <td class="lc-team">${esc(nameOf(i))}</td>
+        <td>${st[i].w}-${st[i].l}${st.some((s) => s.d) ? `-${st[i].d}` : ''}</td>
+        <td>${st[i].gw}</td><td>${st[i].gl}</td>
+        <td class="lc-rate">${st[i].gw + st[i].gl ? pct(rate(i)) : '—'}</td>
+        <td class="lc-why">${esc(reason.get(i) ?? '')}</td></tr>`).join('')}</tbody>`;
+
+    const grid = document.getElementById('lc-grid')!;
+    grid.innerHTML = `<thead><tr><th></th>${ids.map((j) => `<th>${esc(nameOf(j))}</th>`).join('')}</tr></thead><tbody>${
+      ids.map((i) => `<tr><th>${esc(nameOf(i))}</th>${ids.map((j) => {
+        if (i === j) return '<td class="lc-self"></td>';
+        if (!played(i, j)) return '<td class="lc-none">—</td>';
+        const a = Number(scores[i][j]), b = Number(scores[j][i]);
+        return `<td class="${a > b ? 'is-win' : a < b ? 'is-lose' : 'is-draw'}">${a}-${b}</td>`;
+      }).join('')}</tr>`).join('')}</tbody>`;
+
+    document.getElementById('lc-calc')!.innerHTML = ids.map((i) => {
+      const t = st[i].gw + st[i].gl;
+      return `<li><b>${esc(nameOf(i))}</b>：${st[i].w}勝${st[i].l}敗${st[i].d ? `${st[i].d}分` : ''}　取得ゲーム率 ＝ ${st[i].gw} ÷（${st[i].gw} ＋ ${st[i].gl}）＝ ${t ? `${st[i].gw} ÷ ${t} ＝ ${pct(rate(i))}` : '—（試合なし）'}</li>`;
+    }).join('');
+    document.getElementById('lc-log')!.innerHTML = log.map((s) => `<li>${esc(s)}</li>`).join('')
+      + `<li>結果：${ranking.map((i) => `${rankOf.get(i)}位 ${esc(nameOf(i))}`).join('、')}</li>`;
+  }
+
+  document.querySelectorAll<HTMLInputElement>('input[name=lc-n]').forEach((el) => {
+    if (Number(el.value) === n) el.checked = true;
+    el.addEventListener('change', () => { n = Number(el.value); save(); renderNames(); renderMatches(); compute(); });
+  });
+  document.querySelectorAll<HTMLInputElement>('input[name=lc-rule]').forEach((el) => el.addEventListener('change', compute));
+  document.getElementById('lc-clear')!.addEventListener('click', () => {
+    if (!confirm('入れた試合の結果をすべて消します。よろしいですか？')) return;
+    scores = Array.from({ length: 7 }, () => Array(7).fill(''));
+    save(); renderMatches(); compute();
+  });
+  renderNames(); renderMatches(); compute();
+</script>

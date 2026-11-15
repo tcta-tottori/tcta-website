@@ -5959,3 +5959,57 @@ html.is-lite body.jsrv .rv, html.is-lite body.jsrv .rv-in { opacity: 1 !importan
 .result-notice { margin: 0 0 32px; }
 .result-notice__text { margin: 4px 0 0; font: 500 14px/1.8 var(--fjp); color: var(--ink); }
 .result-live { margin-top: 64px; }
+
+/* ============ リーグ戦の順位計算（league-calc.html）とドローのページの入口 ============ */
+.lc-link { margin-top: 40px; padding: 24px; border: 1px solid var(--gray-200); border-left: 4px solid var(--red); background: var(--white); }
+.lc-link__title { margin: 0 0 6px; font: 700 17px/1.5 var(--fjp); color: var(--ink); }
+.lc-link__text { margin: 0 0 16px; font: 400 14px/1.8 var(--fjp); color: var(--gray-700); }
+.lc { display: grid; gap: 24px; }
+.lc-box { padding: 24px; border: 1px solid var(--gray-200); background: var(--white); }
+@media (max-width: 639px) { .lc-box { padding: 18px 16px; } }
+.lc-h { margin: 0 0 14px; font: 700 18px/1.4 var(--fjp); color: var(--ink); }
+.lc-h3 { margin: 28px 0 10px; font: 700 15px/1.4 var(--fjp); color: var(--ink); }
+.lc-hrow { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+.lc-hrow .lc-h { margin: 0; }
+.lc-clear { border: 1px solid var(--gray-300); background: var(--white); padding: 6px 12px; border-radius: var(--radius); font: 500 13px/1 var(--fjp); color: var(--gray-700); cursor: pointer; }
+.lc-rule { margin: 0 0 12px; font: 700 15px/1.6 var(--fjp); }
+.lc-rule__tag { display: inline-block; margin-right: 10px; padding: 3px 10px; background: var(--red); color: #fff; border-radius: var(--radius); font-size: 13px; }
+.lc-seg { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+.lc-seg__opt input { position: absolute; opacity: 0; pointer-events: none; }
+.lc-seg__opt span { display: inline-flex; align-items: center; min-height: 40px; padding: 0 16px; border: 1px solid var(--gray-300); border-radius: var(--radius); background: var(--white); font: 700 14px/1 var(--fjp); color: var(--ink); cursor: pointer; }
+.lc-seg__opt input:checked + span { background: var(--ink); border-color: var(--ink); color: #fff; }
+.lc-seg__opt input:focus-visible + span { outline: 2px solid var(--red); outline-offset: 2px; }
+.lc-steps { margin: 0; padding-left: 1.4em; font: 400 14px/1.9 var(--fjp); color: var(--gray-800); }
+.lc-note { margin: 10px 0 0; font: 400 13px/1.8 var(--fjp); color: var(--gray-600); }
+.lc-names { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+.lc-name { display: flex; align-items: center; gap: 8px; }
+.lc-name span { flex: none; width: 28px; height: 28px; display: grid; place-items: center; background: var(--red); color: #fff; border-radius: var(--radius); font: 700 14px/1 var(--flt); }
+.lc-name input { flex: 1; min-width: 0; min-height: 40px; padding: 6px 10px; border: 1px solid var(--gray-300); border-radius: var(--radius); font: 500 16px/1.4 var(--fjp); }
+.lc-matches { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 10px; }
+.lc-match { display: grid; grid-template-columns: minmax(0, 1fr) 56px 12px 56px minmax(0, 1fr); align-items: center; gap: 6px; padding: 8px 10px; border: 1px solid var(--gray-200); background: var(--gray-100, #f7f7f7); }
+.lc-match__name { font: 700 14px/1.3 var(--fjp); color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lc-match__name--l { text-align: right; }
+.lc-match__sep { text-align: center; color: var(--gray-500); font-weight: 700; }
+.lc-in { width: 56px; height: 44px; border: 1px solid var(--gray-300); border-radius: var(--radius); text-align: center; font: 700 20px/1 var(--flt); background: var(--white); }
+.lc-in:focus { outline: 2px solid var(--red); outline-offset: 0; border-color: var(--red); }
+.lc-warn { margin: 0 0 12px; padding: 10px 14px; background: #FFF8E5; border-left: 4px solid #D99A00; font: 500 13px/1.7 var(--fjp); color: #6B4E00; }
+.lc-tablewrap { overflow-x: auto; }
+.lc-table { width: 100%; border-collapse: collapse; font: 500 14px/1.5 var(--fjp); white-space: nowrap; }
+.lc-table th, .lc-table td { padding: 10px 12px; border-bottom: 1px solid var(--gray-200); text-align: center; }
+.lc-table thead th { background: var(--gray-100, #f5f5f5); font-weight: 700; font-size: 13px; color: var(--gray-700); }
+.lc-table .lc-team { text-align: left; font-weight: 700; }
+.lc-table .lc-rate { font: 700 15px/1 var(--flt); }
+.lc-table .lc-why { text-align: left; font-size: 12.5px; color: var(--gray-600); white-space: normal; min-width: 140px; }
+.lc-table .lc-rank { font-weight: 700; }
+.lc-table .lc-rank small { font-size: 11px; font-weight: 500; color: var(--gray-500); }
+.lc-table tr.is-top .lc-rank, .lc-table tr.is-top .lc-team { color: var(--red); }
+.lc-table--grid th, .lc-table--grid td { border: 1px solid var(--gray-200); min-width: 64px; }
+.lc-table--grid tbody th { text-align: left; background: var(--gray-100, #f5f5f5); }
+.lc-table--grid .is-win { background: var(--red-tint); color: var(--red); font-weight: 700; }
+.lc-table--grid .is-lose { color: var(--gray-500); }
+.lc-table--grid .is-draw { color: var(--gray-700); }
+.lc-table--grid .lc-self { background: var(--gray-100, #f2f2f2); }
+.lc-table--grid .lc-none { color: var(--gray-300); }
+.lc-calc, .lc-log { margin: 0; padding-left: 1.4em; font: 400 14px/1.9 var(--fjp); color: var(--gray-800); }
+.lc-calc { list-style: none; padding-left: 0; }
+.lc-calc li { padding: 6px 0; border-bottom: 1px dashed var(--gray-200); }
