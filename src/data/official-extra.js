@@ -3,6 +3,7 @@
 //
 //   EXTRA_MATERIALS … 大会ごとに足す素材（種類 → { images, pdfs }）。移行前の素材のあと、管理画面の素材の前に並ぶ（events.js）
 //   STATE_OVERRIDE  … 管理画面の受付状態がまだ「まもなく受付／未受付」のときだけ、こちらの状態にする（schedule.js）
+//   STATE_FORCE     … 管理画面の受付状態にかかわらず、こちらの状態にする（開催日の「開催中・速報」を早めに終えるときなど。schedule.js）
 //   EXTRA_CARDS     … 管理画面で「トップページの大会カードに出す」にチェックが無くても、トップの大会カードに出す大会（tournaments.js）
 //   EXTRA_TOURNAMENTS … 管理画面にまだ無い大会の行（管理画面の「大会」と同じ項目。cms.js が読み込んだ行に足す。同じ slug が管理画面にあればそちらを使う）
 //   EXTRA_REVISIONS … 大会ごとの訂正の記録（管理画面の「訂正の記録」と同じ形。events.js が管理画面の行に足す）
@@ -28,6 +29,27 @@ export const EXTRA_MATERIALS = {
   //   男子C級の決勝リーグの組み合わせ、試合方式を「6ゲームマッチ・ノーアド（6-6タイブレーク）」に。2ページ目の画像と PDF。
   //   11.5 お問い合わせを受けて、男子B級Cリーグの選手名の誤りを訂正）
   'r8-kaicho-autumn': {
+    // 結果（2026.11.15。大会運営システムの結果画像。男子B級の 1位・2位／3位・4位トーナメントの決勝は掲載時点で試合中）
+    result: {
+      images: [
+        { src: 'assets/img/events/r8-kaicho-autumn/result-01.webp', label: '男子B級ダブルス Aリーグ', w: 1760, h: 872 },
+        { src: 'assets/img/events/r8-kaicho-autumn/result-02.webp', label: '男子B級ダブルス Bリーグ', w: 1760, h: 872 },
+        { src: 'assets/img/events/r8-kaicho-autumn/result-03.webp', label: '男子B級ダブルス Cリーグ', w: 1760, h: 872 },
+        { src: 'assets/img/events/r8-kaicho-autumn/result-04.webp', label: '男子B級ダブルス Dリーグ', w: 1760, h: 872 },
+        { src: 'assets/img/events/r8-kaicho-autumn/result-05.webp', label: '男子B級ダブルス Eリーグ', w: 1760, h: 872 },
+        { src: 'assets/img/events/r8-kaicho-autumn/result-06.webp', label: '男子B級ダブルス Fリーグ', w: 1760, h: 872 },
+        { src: 'assets/img/events/r8-kaicho-autumn/result-07.webp', label: '男子B級ダブルス Gリーグ', w: 1760, h: 872 },
+        { src: 'assets/img/events/r8-kaicho-autumn/result-08.webp', label: '男子B級ダブルス 1位・2位トーナメント（決勝は試合中）', w: 1760, h: 1132 },
+        { src: 'assets/img/events/r8-kaicho-autumn/result-09.webp', label: '男子B級ダブルス 3位・4位トーナメント（決勝は試合中）', w: 1760, h: 1132 },
+        { src: 'assets/img/events/r8-kaicho-autumn/result-10.webp', label: '男子C級ダブルス 決勝リーグ', w: 1760, h: 872 },
+        { src: 'assets/img/events/r8-kaicho-autumn/result-11.webp', label: '女子B級ダブルス Aリーグ', w: 1760, h: 760 },
+        { src: 'assets/img/events/r8-kaicho-autumn/result-12.webp', label: '女子B級ダブルス Bリーグ', w: 1760, h: 760 },
+        { src: 'assets/img/events/r8-kaicho-autumn/result-13.webp', label: '女子B級ダブルス 1位トーナメント', w: 1760, h: 738 },
+        { src: 'assets/img/events/r8-kaicho-autumn/result-14.webp', label: '女子B級ダブルス 2位トーナメント', w: 1760, h: 738 },
+        { src: 'assets/img/events/r8-kaicho-autumn/result-15.webp', label: '女子B級ダブルス 3位トーナメント', w: 1760, h: 738 },
+      ],
+      pdfs: [],
+    },
     draw: {
       images: [
         img('r8-kaicho-autumn', 'draw-01.webp', 'プログラム（日程・注意事項）'),
@@ -108,6 +130,10 @@ export const EXTRA_REVISIONS = {
   ],
 };
 
+export const STATE_FORCE = {
+  'r8-kaicho-autumn': '終了', // 第62回会長杯（秋季）：11/15 の速報を終えて結果を掲載
+};
+
 export const STATE_OVERRIDE = {
   'r8-no18': '受付中',
 };
@@ -119,6 +145,7 @@ export const EXTRA_CARDS = [
 ];
 
 export const EXTRA_NEWS = [
+  { slug: 'official-20261115-kaicho-autumn-result', date: '2026-11-15', createdAt: '2026-11-15T16:45:00+09:00', category: '結果', title: '第62回鳥取市テニス協会会長杯（秋季）の結果を掲載しました（男子B級の決勝は試合中のため、決まりしだい更新します）', href: 'event-r8-kaicho-autumn.html#result' },
   { slug: 'official-20261113-shicho-draw', date: '2026-11-13', createdAt: '2026-11-13T07:55:00+09:00', category: '大会', title: '第41回鳥取市市長杯テニス大会（11/23）のドローを掲載しました', href: 'draw-r8-shicho.html' },
   { slug: 'official-20261105-kaicho-autumn-draw-name-fix', date: '2026-11-05', createdAt: '2026-11-05T14:45:00+09:00', category: '大会', title: '第62回鳥取市テニス協会会長杯（秋季・11/15）のドローを訂正しました（男子B級Cリーグの選手名）', href: 'draw-r8-kaicho-autumn.html' },
   { slug: 'official-20261103-kaicho-autumn-draw-fix', date: '2026-11-03', createdAt: '2026-11-03T11:30:00+09:00', category: '大会', title: '第62回鳥取市テニス協会会長杯（秋季・11/15）のドローを訂正しました（男子C級の組み合わせ・試合方式は6ゲームマッチ）', href: 'draw-r8-kaicho-autumn.html' },
