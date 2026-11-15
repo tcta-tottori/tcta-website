@@ -4,6 +4,7 @@
 // ドロー表を読む代わりにデータベースの JSON を使う。入れたあと時間割も自動で作るので、そのままエントリー受付に進める。
 //   ・同じ大会を前に入れていれば、その端末の分（種目・エントリー・ドロー・試合・コート）を消してから入れ直す
 //   ・選手のふりがなは端末の辞書（ログイン時にデータベースから取り込んだもの）から付ける
+import { runLocalOnly } from '../sync/syncEngine';
 import { db, type Tournament } from '../../db/database';
 import { toHalfwidth } from '../../lib/halfwidth';
 import { useAppStore } from '../../stores/appStore';
@@ -26,7 +27,12 @@ export async function localCopyOf(catalogId: string): Promise<Tournament | undef
  * その大会を運営中だったときは、アプリに 1 つだけ持っている時間割（タイムテーブル）も空にする
  * （消したあとも前の試合が時間割に残って見えないように）
  */
-export async function removeLocalTournament(tournamentId: string): Promise<void> {
+/** この端末だけの書き換え（自動で共有しているほかの運営端末へは流さない。sync/syncEngine.ts の runLocalOnly） */
+export function removeLocalTournament(tournamentId: string): Promise<void> {
+  return runLocalOnly(() => removeLocalTournamentImpl(tournamentId));
+}
+
+async function removeLocalTournamentImpl(tournamentId: string): Promise<void> {
   const events = await db.events.where('tournamentId').equals(tournamentId).toArray();
   const eventIds = events.map((e) => e.eventId);
   const store = useAppStore.getState();
@@ -120,7 +126,12 @@ async function writeEvent(
 export interface ImportProgress { step: 'prepare' | 'write' | 'schedule' | 'done'; label: string }
 
 /** 端末に入れて、その大会を選んだ状態にする。戻り値は端末の大会 ID */
-export async function importToDevice(t: CatalogTournamentFull, onProgress?: (p: ImportProgress) => void, opts: { test?: boolean } = {}): Promise<string> {
+/** この端末だけの書き換え（自動で共有しているほかの運営端末へは流さない） */
+export function importToDevice(t: CatalogTournamentFull, onProgress?: (p: ImportProgress) => void, opts: { test?: boolean } = {}): Promise<string> {
+  return runLocalOnly(() => importToDeviceImpl(t, onProgress, opts));
+}
+
+async function importToDeviceImpl(t: CatalogTournamentFull, onProgress?: (p: ImportProgress) => void, opts: { test?: boolean } = {}): Promise<string> {
   if (!t.draw || t.draw.events.length === 0) throw new Error('この大会にはまだドローが入っていません');
   onProgress?.({ step: 'prepare', label: '端末を準備しています' });
 
