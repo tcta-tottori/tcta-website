@@ -128,7 +128,12 @@ export function buildNews(rows, now = new Date()) {
     // 新しい日付が先。同じ日付は、移行時のもの（slug が 20261004-16 の形）は末尾の番号が大きいほど新しく、
     // 管理画面で作ったもの・official-extra.js で時刻（createdAt）を書いたものは、あとから作ったものが先。
     .sort((a, b) => b.date.localeCompare(a.date) || seedNo(b) - seedNo(a) || b.createdAt - a.createdAt || b.slug.localeCompare(a.slug));
-  for (const n of NEWS) n.kind = newsKind(n);
+  for (const n of NEWS) {
+    n.kind = newsKind(n);
+    // 結果のお知らせは、大会のページ（要項・ドローなども並ぶ）ではなく、結果だけのページ（result-○○.html）へ
+    const m = n.kind === 'result' && String(n.href).match(/^event-([a-z0-9-]+)\.html(?:#result)?$/);
+    if (m) n.href = `result-${m[1]}.html`;
+  }
   return { NEWS, IMPORTANT_NEWS: NEWS.filter((n) => n.important) };
 }
 
