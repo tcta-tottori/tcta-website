@@ -7,10 +7,9 @@
 // 出すのは、開催中（開催日の 9:00〜18:00。schedule.js の liveStatus）と、開催日のうちの終わったあと。
 // 翌日からは、結果表・成績（いつもの結果の欄）に任せて出さない。
 import { todayJST } from '../data/schedule.js';
+import { LIVE_DRAW_URL, LIVE_ORDER_URL } from '../data/live.js';
 
 const { e } = Astro.props;
-const VIEW = 'https://tcta-tournament.tcta-admin-worker.workers.dev/view';
-const ROOM = 'TCTA01';
 const show = e.status === 'live' || (e.date === todayJST() && e.status === 'done');
 ---
 
@@ -26,8 +25,8 @@ const show = e.status === 'live' || (e.date === todayJST() && e.status === 'done
       すべての試合が終わったあと、このページに結果表と入賞者を掲載します。
     </p>
     <div class="live-box__btns">
-      <a class="btn btn--primary" href={`${VIEW}/draw?room=${ROOM}`} target="_blank" rel="noopener">ドロー・結果速報を見る <span class="ln-arrow" aria-hidden="true"></span></a>
-      <a class="btn btn--outline" href={`${VIEW}/order?room=${ROOM}`} target="_blank" rel="noopener">対戦順・進み具合 <span class="ln-arrow" aria-hidden="true"></span></a>
+      <a class="btn btn--primary" href={LIVE_DRAW_URL} target="_blank" rel="noopener">ドロー・結果速報を見る <span class="ln-arrow" aria-hidden="true"></span></a>
+      <a class="btn btn--outline" href={LIVE_ORDER_URL} target="_blank" rel="noopener">対戦順・進み具合 <span class="ln-arrow" aria-hidden="true"></span></a>
     </div>
   </section>
 )}

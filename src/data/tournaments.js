@@ -135,7 +135,8 @@ export function buildCards(rows, { ROWS, eventBySlug }) {
       };
       card.action = cardAction(card, e);
       // 要項・ドロー・結果の3つのボタン（大会情報ページの一覧と同じ。申込用紙は要項のページに載せる）
-      card.buttons = eventButtons(e, { outline: card.outlineUrl ?? b.externalUrl, draw: card.drawUrl, result: card.resultUrl });
+      // 開催中は、結果のボタンが「速報」（運営システムの観戦ページ）になる
+      card.buttons = eventButtons(e, { outline: card.outlineUrl ?? b.externalUrl, draw: card.drawUrl, result: card.resultUrl }, { status: b.status, liveUrl: card.liveUrl });
       // 結果の出た大会は、写真の場所で優勝者の写真を順に見せる（TournamentCard.astro）
       card.winners = winnerPhotos(e);
       return card;
