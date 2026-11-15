@@ -19,7 +19,8 @@
 // 投稿の流れ：画像を D1 に置く → /{IG_USER_ID}/media（media_type=STORIES, image_url）でコンテナを作る
 // → 状態が FINISHED になるのを待つ → /{IG_USER_ID}/media_publish で公開 → 投稿ずみとして記録（同じお知らせを二重に出さない）。
 
-import { officerOf, sameOrigin } from './auth';
+import { sameOrigin } from './auth';
+import { caller } from './data';
 import type { Env } from './index';
 
 const SITE = 'https://tottori-city-tennis.com';
@@ -61,12 +62,16 @@ export async function handleInsta(request: Request, env: Env, url: URL): Promise
     return new Response(row.jpeg, { headers: { 'content-type': 'image/jpeg', 'cache-control': 'public, max-age=86400' } });
   }
 
-  const officer = await officerOf(request, env, url);
-  if (!officer) return json({ error: '役員ログインが必要です' }, 401);
+  // 役員（ログイン）か、外から送る鍵（scripts/lib/push.mjs の送信用の鍵。Claude などが投稿するとき）。
+  // 送信用の鍵でできるのは、お知らせの一覧・画像の中継・投稿（ストーリーズ・フィード）だけ。Instagram の鍵の出し入れは役員だけ
+  const who = await caller(request, env, url, false);
+  if (!who) return json({ error: '役員ログインが必要です' }, 401);
+  const viaPush = who === 'push';
+  const officer = { email: viaPush ? '送信用の鍵' : who };
   await ensureSchema(db);
 
   if (url.pathname === '/api/insta/token') {
-    if (!sameOrigin(request, url)) return json({ error: 'このサイトの画面からだけ使えます' }, 403);
+    if (viaPush || !sameOrigin(request, url)) return json({ error: 'このサイトの画面からだけ使えます' }, 403);
     if (request.method === 'DELETE') {
       await db.prepare(`DELETE FROM insta_meta WHERE k IN ('token', 'user_id', 'username', 'host', 'refreshed_at')`).run();
       return json({ ok: true });
@@ -117,7 +122,7 @@ export async function handleInsta(request: Request, env: Env, url: URL): Promise
   }
 
   if (url.pathname === '/api/insta/post' && request.method === 'POST') {
-    if (!sameOrigin(request, url)) return json({ error: 'このサイトの画面からだけ投稿できます' }, 403);
+    if (!viaPush && !sameOrigin(request, url)) return json({ error: 'このサイトの画面からだけ投稿できます' }, 403);
     if (!configured) return json({ error: 'Instagram の鍵が未設定です。画面の「Instagram の鍵」で入れるか、画像を保存して手で投稿してください' }, 409);
     const key = (url.searchParams.get('key') ?? '').slice(0, 300);
     if (!key) return json({ error: 'key がありません' }, 400);
@@ -143,7 +148,7 @@ export async function handleInsta(request: Request, env: Env, url: URL): Promise
   }
 
   if (url.pathname === '/api/insta/carousel' && request.method === 'POST') {
-    if (!sameOrigin(request, url)) return json({ error: 'このサイトの画面からだけ投稿できます' }, 403);
+    if (!viaPush && !sameOrigin(request, url)) return json({ error: 'このサイトの画面からだけ投稿できます' }, 403);
     if (!configured) return json({ error: 'Instagram の鍵が未設定です。画面の「Instagram の鍵」で入れるか、画像を保存して手で投稿してください' }, 409);
     const key = (url.searchParams.get('key') ?? '').slice(0, 300);
     if (!key) return json({ error: 'key がありません' }, 400);
