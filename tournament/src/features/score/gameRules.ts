@@ -38,6 +38,16 @@ export function extractGamesFromText(gameRuleText: string | undefined | null): n
  * @param round 対象回戦（1始まり）
  * @param totalRounds その種目の総回戦数（決勝＝totalRounds）
  */
+/**
+ * 「Nゲーム制」（例「8ゲーム制・ノーアド（4-4打ち切りあり）」）の N。合計 N ゲームを行い、取ったゲームの多い方が勝ち。
+ * N/2 ずつ（4-4）なら引き分け（勝者なし）で、リーグの順位は取得ゲーム率で決める。ゲーム制でなければ null。
+ */
+export function totalGamesOf(gameRuleText: string | undefined | null): number | null {
+  if (!gameRuleText) return null;
+  const m = normalizeJp(gameRuleText).match(/(\d+)\s*ゲーム制/);
+  return m ? parseInt(m[1], 10) : null;
+}
+
 export function resolveRequiredGames(
   gameRuleText: string | undefined | null,
   round: number,

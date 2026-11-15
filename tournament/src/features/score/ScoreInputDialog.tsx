@@ -8,7 +8,7 @@ import { useCallTts } from '../broadcast/useCallTts';
 import type { MatchCall, VoiceSettings } from '../broadcast/types';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db as appDb } from '../../db/database';
-import { extractGamesFromText } from './gameRules';
+import { extractGamesFromText, totalGamesOf } from './gameRules';
 import { refreshBracketProgress } from '../draw/rebuildMatches';
 import {
   X,
@@ -343,11 +343,28 @@ export default function ScoreInputDialog({
     return null;
   }, [sets, match, maxSets, retPlayer, isTwoSetFormat, superTB]);
 
+  // 「Nゲーム制」（合計 N ゲーム。例 男子B級予選の 8ゲーム制・4-4打ち切りあり）。N/2 ずつなら引き分け
+  const totalGames = useMemo(() => totalGamesOf(gameRuleText), [gameRuleText]);
+  const isDrawScore = useMemo(() => {
+    if (!totalGames || retPlayer || isTwoSetFormat) return false;
+    const a = parseInt(sets[0]?.p1), b = parseInt(sets[0]?.p2);
+    return !isNaN(a) && !isNaN(b) && a === b && a + b === totalGames;
+  }, [totalGames, retPlayer, isTwoSetFormat, sets]);
+
   // スコアバリデーション: ルールに基づいてスコアの妥当性を検証
   const scoreValidationError = useMemo(() => {
     if (!match || retPlayer) return null; // W.O時はバリデーション不要
     // 確定済みは編集しないのでチェック不要。未開始（コート未選択）でも入力できるので検証する。
     if (match.status === 'finished' || match.status === 'walkover') return null;
+
+    // ゲーム制：合計がちょうど N ゲームになっているか
+    if (totalGames) {
+      const p1 = parseInt(sets[0]?.p1), p2 = parseInt(sets[0]?.p2);
+      if (isNaN(p1) && isNaN(p2)) return null;
+      if (isNaN(p1) || isNaN(p2)) return ['両方のスコアを入力してください'];
+      if (p1 + p2 !== totalGames) return [`${totalGames}ゲーム制なので、合計が ${totalGames} ゲームになるように入力してください（${p1}-${p2}）`];
+      return null;
+    }
 
     // 規定ゲーム数: 呼び出し側が解決した値を優先。無ければ gameRuleText から抽出
     // （全角数字も拾えるよう正規化）。回戦別ルールの誤判定・全角入力対策。
@@ -388,7 +405,7 @@ export default function ScoreInputDialog({
     }
 
     return errors.length > 0 ? errors : null;
-  }, [sets, tiebreaks, gameRuleText, requiredGamesProp, match, retPlayer, isTwoSetFormat, maxSets]);
+  }, [sets, tiebreaks, gameRuleText, requiredGamesProp, match, retPlayer, isTwoSetFormat, maxSets, totalGames]);
 
   /** ゲームスコアが1つでも入力されているか（棄権の記載を Ret / W.O で切り替える） */
   const hasAnyScore = useMemo(
@@ -439,6 +456,12 @@ export default function ScoreInputDialog({
     setSets(prev => {
       const next = [...prev];
       const cur = { ...next[setIdx], [player]: raw };
+      // ゲーム制：片方を入れたら、もう片方を「合計 − 入れた数」で埋める（3 → 5、4 → 4）
+      if (totalGames && raw !== '' && setIdx === 0) {
+        const num = parseInt(raw);
+        const other = player === 'p1' ? 'p2' : 'p1';
+        if (num <= totalGames && cur[other] === '') cur[other] = String(totalGames - num);
+      } else
       // 団体戦と同じ自動補完: 負け側の数（規定未満）を入れたら勝者側を規定ゲーム数で埋める
       if (requiredGames && raw !== '') {
         const num = parseInt(raw);
@@ -491,6 +514,19 @@ export default function ScoreInputDialog({
     try {
       await db.matches.update(match.dbId, { status: 'playing', updatedAt: Date.now() });
       onMatchUpdate();
+    } finally { setIsProcessing(false); }
+  };
+
+  /** 引き分け（ゲーム制の 4-4 など）で確定する。勝者なし・リーグ戦だけ（次の回戦は無い） */
+  const handleFinishDraw = async () => {
+    if (isProcessing || !match) return;
+    setIsProcessing(true);
+    try {
+      await db.matches.update(match.dbId, {
+        status: 'finished', score: buildScoreString(), winnerEntryId: null, updatedAt: Date.now(),
+      });
+      onMatchUpdate();
+      onClose();
     } finally { setIsProcessing(false); }
   };
 
@@ -1172,6 +1208,11 @@ export default function ScoreInputDialog({
                   <button onClick={() => handleFinishMatch(autoWinner)} disabled={isProcessing}
                     className={`btn btn--primary op-sid__btn op-sid__btn--block op-sid__btn--finish ${keyboardOpen ? 'is-compact' : ''}`}>
                     <Trophy className="w-5 h-5" /> 結果確定（{autoWinner === 1 ? match.player1Name : match.player2Name} 勝利）
+                  </button>
+                ) : isDrawScore && isLeague && !scoreValidationError ? (
+                  <button onClick={() => void handleFinishDraw()} disabled={isProcessing}
+                    className={`btn btn--primary op-sid__btn op-sid__btn--block op-sid__btn--finish ${keyboardOpen ? 'is-compact' : ''}`}>
+                    <Trophy className="w-5 h-5" /> 結果確定（{sets[0].p1}-{sets[0].p2} 引き分け）
                   </button>
                 ) : (
                   <div className={`op-sid__hint ${keyboardOpen ? 'py-2' : 'py-3'}`}>

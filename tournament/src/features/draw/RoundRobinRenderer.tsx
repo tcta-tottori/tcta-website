@@ -24,6 +24,11 @@ interface RoundRobinRendererProps {
   title?: string;
 }
 
+/** 引き分け（終了して勝者なし。ゲーム制の 4-4）か */
+function isDrawMatch(m: MatchResult): boolean {
+  return m.status === 'finished' && !m.winnerEntryId && !!parseScore(m.score);
+}
+
 /** "8-4" 形式のスコアを [自分のゲーム, 相手のゲーム] に分解（取得できなければ null） */
 function parseScore(score: string | undefined | null): [number, number] | null {
   if (!score) return null;
@@ -54,7 +59,7 @@ export default function RoundRobinRenderer({ slots, matchResults = [], onCellSel
 
   // 勝敗・ゲーム数集計（勝率＝取得ゲーム率の算出に使用）
   const stats = players.map((p) => {
-    let wins = 0, losses = 0, gamesWon = 0, gamesLost = 0;
+    let wins = 0, losses = 0, draws = 0, gamesWon = 0, gamesLost = 0;
     for (const other of players) {
       if (other.entryId === p.entryId) continue;
       const match = findMatchBetween(p, other);
@@ -62,6 +67,8 @@ export default function RoundRobinRenderer({ slots, matchResults = [], onCellSel
       if (match.winnerEntryId) {
         if (match.winnerEntryId === p.entryId) wins++;
         else losses++;
+      } else if (isDrawMatch(match)) {
+        draws++;
       }
       // ゲーム数（自分視点）を加算
       const sc = parseScore(match.score);
@@ -72,10 +79,10 @@ export default function RoundRobinRenderer({ slots, matchResults = [], onCellSel
         gamesLost += theirs;
       }
     }
-    const played = wins + losses;
+    const played = wins + losses + draws;
     const totalGames = gamesWon + gamesLost;
     return {
-      wins, losses, gamesWon, gamesLost, played,
+      wins, losses, draws, gamesWon, gamesLost, played,
       // 勝率＝取得ゲーム率（同勝数の並び替えに使用。試合未消化でも算出可能）
       gameRate: totalGames > 0 ? gamesWon / totalGames : 0,
     };
@@ -84,7 +91,7 @@ export default function RoundRobinRenderer({ slots, matchResults = [], onCellSel
   // 全対戦が終了しているか（順位は全結果が揃うまで非表示）
   const allFinished = matchOrder.every(([a, b]) => {
     const match = findMatchBetween(players[a], players[b]);
-    return !!(match && match.winnerEntryId);
+    return !!(match && (match.winnerEntryId || isDrawMatch(match)));
   });
 
   // 順位（leagueStandings.ts。順位別トーナメントの組み合わせと同じ計算）
@@ -96,13 +103,17 @@ export default function RoundRobinRenderer({ slots, matchResults = [], onCellSel
   for (const s of standings) rankMap.set(ids.indexOf(s.entryId), s.rank);
 
   // セル内のスコア表示（行選手視点にそろえる）
-  const getCellContent = (rowIdx: number, colIdx: number): { text: string; isWin: boolean; isLoss: boolean; match?: MatchResult } => {
+  const getCellContent = (rowIdx: number, colIdx: number): { text: string; isWin: boolean; isLoss: boolean; isDraw?: boolean; match?: MatchResult } => {
     if (rowIdx === colIdx) return { text: '', isWin: false, isLoss: false };
     const p1 = players[rowIdx];
     const p2 = players[colIdx];
     const match = findMatchBetween(p1, p2);
     if (!match) return { text: '', isWin: false, isLoss: false };
-    if (!match.winnerEntryId) return { text: '', isWin: false, isLoss: false, match };
+    // 引き分け（ゲーム制の 4-4）は勝ち負けの色を付けずにスコアだけ出す
+    if (!match.winnerEntryId) {
+      if (!isDrawMatch(match)) return { text: '', isWin: false, isLoss: false, match };
+      return { text: sideScoreText(match.score, match.player1EntryId === p1.entryId) || match.score || '△', isWin: false, isLoss: false, isDraw: true, match };
+    }
     const isWin = match.winnerEntryId === p1.entryId;
     // スコアを行選手視点にそろえる（タイブレークの得点・Ret / W.O も残す）
     const aligned = sideScoreText(match.score, match.player1EntryId === p1.entryId);
@@ -190,7 +201,7 @@ export default function RoundRobinRenderer({ slots, matchResults = [], onCellSel
                             </svg>
                           ) : cell.text ? (
                             // バッジにはせず、勝者=赤・敗者=グレーの文字だけで見せる
-                            <span className={`text-[13px] font-bold ${cell.isWin ? 'text-red-600' : 'text-gray-500'}`}>
+                            <span className={`text-[13px] font-bold ${cell.isWin ? 'text-red-600' : cell.isDraw ? 'text-gray-800' : 'text-gray-500'}`}>
                               {cell.text}
                             </span>
                           ) : clickable ? (
@@ -204,7 +215,7 @@ export default function RoundRobinRenderer({ slots, matchResults = [], onCellSel
                     {/* 勝敗 */}
                     <td className="border-t border-l border-gray-200 px-1.5 py-1.5 text-center font-bold text-gray-700 tabular-nums whitespace-nowrap">
                       {stats[rowIdx].played > 0
-                        ? `${stats[rowIdx].wins}-${stats[rowIdx].losses}`
+                        ? `${stats[rowIdx].wins}-${stats[rowIdx].losses}${stats[rowIdx].draws > 0 ? `（分${stats[rowIdx].draws}）` : ''}`
                         : ''}
                     </td>
                     {/* 勝率（取得ゲーム率） */}

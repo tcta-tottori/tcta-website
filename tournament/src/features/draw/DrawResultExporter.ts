@@ -1109,6 +1109,10 @@ export async function renderRoundRobinResultCanvas(opts: ResultExportOptions): P
 
   const getScore = (rowPlayer: SlotInfo, colPlayer: SlotInfo): { text: string; isWin: boolean; played: boolean } => {
     const m = findMatch(rowPlayer, colPlayer);
+    // 引き分け（ゲーム制の 4-4。終了して勝者なし）はスコアだけ出す
+    if (m && !m.winnerEntryId && m.status === 'finished' && m.score) {
+      return { text: sideScoreText(m.score, m.player1EntryId === rowPlayer.entryId) || m.score, isWin: false, played: true };
+    }
     if (!m || !m.winnerEntryId) return { text: '', isWin: false, played: false };
     const isWin = m.winnerEntryId === rowPlayer.entryId;
     // スコアを行プレイヤー視点で表示（タイブレークの得点は落とした側に付き、Ret / W.O も残す）
@@ -1512,7 +1516,7 @@ export function exportRoundRobinResultAsExcel(opts: ResultExportOptions): void {
 
   const getScore = (rowP: SlotInfo, colP: SlotInfo): string => {
     const m = findMatch(rowP, colP);
-    if (!m || !m.winnerEntryId) return '';
+    if (!m || (!m.winnerEntryId && !(m.status === 'finished' && m.score))) return '';
     if (m.score) {
       if (m.player1EntryId === rowP.entryId) return m.score;
       const parts = m.score.split('-');

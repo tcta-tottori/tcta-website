@@ -12,7 +12,7 @@
 // =============================================================================
 
 import { db, type Event, type Draw, type Match } from '../../db/database';
-import { resolveRequiredGames } from './gameRules';
+import { resolveRequiredGames, totalGamesOf } from './gameRules';
 import { applyPlacement } from '../draw/placement';
 import { rebuildEventMatches } from '../draw/rebuildMatches';
 
@@ -83,11 +83,24 @@ export async function fillTestScores(tournamentId: string): Promise<FillTestScor
 
     if (isLeague(evt, draw)) {
       const games = resolveRequiredGames(ruleText, 1, 1) ?? fallbackGames;
+      // ゲーム制（合計 N ゲーム）は 5-3 のように合計 N に、3 試合に 1 つは 4-4 の引き分けも入れる
+      const total = totalGamesOf(ruleText);
       const ordered = [...matches].sort((a, b) => (a.matchOrder || 0) - (b.matchOrder || 0));
       for (const m of ordered) {
         if (!hasPlayer(m.player1Name) || !hasPlayer(m.player2Name)) continue;
-        const p1Wins = turn++ % 2 === 0;
-        m.score = scoreFor(games, p1Wins);
+        const t = turn++;
+        const p1Wins = t % 2 === 0;
+        if (total && t % 3 === 2) {
+          m.score = `${total / 2}-${total / 2}`;
+          m.status = 'finished';
+          m.winnerEntryId = null;
+          m.updatedAt = now;
+          filled++;
+          continue;
+        }
+        const w = total ? Math.ceil(total / 2) + 1 : games;
+        const l = total ? total - w : null;
+        m.score = l != null ? (p1Wins ? `${w}-${l}` : `${l}-${w}`) : scoreFor(games, p1Wins);
         m.status = 'finished';
         m.winnerEntryId = p1Wins ? m.player1EntryId : m.player2EntryId;
         m.updatedAt = now;
