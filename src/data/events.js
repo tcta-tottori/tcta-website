@@ -134,9 +134,13 @@ export function buildEvents(rows, { ROWS }, mediaUrl = () => null) {
     .map((t) => {
       const b = base.get(t.slug);
       const sections = collectMaterials(t, mediaUrl);
+      // 結果を一旦非公開にしている大会（EXTRA_RESULT_NOTES の hidden）は、結果表・写真・成績を出さない。
+      // 結果のページ自体は残し、お知らせと観戦ページの案内だけを出す
+      const resultHidden = !!EXTRA_RESULT_NOTES[t.slug]?.hidden;
+      if (resultHidden) { delete sections.result; delete sections.photo; }
       // 成績は管理画面の行。無ければ official-extra.js の EXTRA_WINNERS
-      const winners = groupWinners(Array.isArray(t.winners) && t.winners.length > 0 ? t.winners : EXTRA_WINNERS[t.slug]);
-      const hasResult = (sections.result?.images.length ?? 0) > 0 || (sections.result?.pdfs.length ?? 0) > 0 || winners.length > 0;
+      const winners = resultHidden ? [] : groupWinners(Array.isArray(t.winners) && t.winners.length > 0 ? t.winners : EXTRA_WINNERS[t.slug]);
+      const hasResult = resultHidden || (sections.result?.images.length ?? 0) > 0 || (sections.result?.pdfs.length ?? 0) > 0 || winners.length > 0;
       const order = (hasResult ? DONE_ORDER : UPCOMING_ORDER)
         .filter((k) => sections[k] && (sections[k].images.length || sections[k].pdfs.length))
         .map((k) => ({ key: k, ...SECTIONS[k], ...sections[k] }));
@@ -161,6 +165,7 @@ export function buildEvents(rows, { ROWS }, mediaUrl = () => null) {
         revisions: collectRevisions(t),
         /** 結果の欄の上のお知らせ・下の観戦ページの案内（official-extra.js の EXTRA_RESULT_NOTES）。無ければ null */
         resultNote: EXTRA_RESULT_NOTES[t.slug] ?? null,
+        resultHidden,
         /** ページ上部の写真。当日の写真の1枚目を使う。無ければ null。 */
         cover: sections.photo?.images[0]?.src ?? null,
       };
