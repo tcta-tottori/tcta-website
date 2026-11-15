@@ -12,6 +12,7 @@ import { ChevronLeft, ChevronRight, MapPin, Trophy, Timer, Layers, Eye, EyeOff, 
 import CourtBracketView from './CourtBracketView';
 import RoundRobinRenderer from '../draw/RoundRobinRenderer';
 import { leagueShort } from '../draw/placement';
+import PlacementPanel from '../draw/PlacementPanel';
 import ScoreInputDialog from '../score/ScoreInputDialog';
 import type { ScoreInputMatch } from '../score/ScoreInputDialog';
 import { resolveRequiredGames } from '../score/gameRules';
@@ -881,6 +882,11 @@ export default function CourtBracketPage({ enableScoreInput = true }: CourtBrack
           </div>
         )}
       </div>
+
+      {/* リーグの順位で選手が決まる種目（決勝トーナメントなど）は、ここで組む（エントリー受付には出さない） */}
+      {enableScoreInput && drawData?.slotSources?.length ? (
+        <div className="dl-plc"><PlacementPanel eventId={selectedEventId} /></div>
+      ) : null}
 
       {/* ブラケット表示 */}
       <div className="dl-canvas">
