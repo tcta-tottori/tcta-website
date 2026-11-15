@@ -6,7 +6,8 @@ import EventMeta from './EventMeta.astro';
 import RevisionNotice from './RevisionNotice.astro';
 
 // revisionKeys … 本文の上に出す訂正の種類（['draw'] など。RevisionNotice.astro）
-const { e, label, en, ghost = en.toUpperCase(), revisionKeys = [] } = Astro.props;
+// badge        … 見出しの下に受付状態のバッジ（受付中・終了など）を出すか。結果のページは出さない（終わった大会なのは分かるため）
+const { e, label, en, ghost = en.toUpperCase(), revisionKeys = [], badge = true } = Astro.props;
 const title = `${e.displayName} ${label}｜大会情報｜鳥取市テニス協会`;
 const description = `${e.label}に${e.place}で行われる${e.name}（${e.event}）の${label}です。`;
 ---
@@ -29,9 +30,11 @@ const description = `${e.label}に${e.place}で行われる${e.name}（${e.event
         </div>
       </div>
       {/* 受付状態のバッジと、日程・会場・種目（大会情報の一覧と同じ形。ピクトグラムは無し） */}
-      <p class="page-lead page-lead--tags fu" style="animation-delay:.15s">
-        <span class={`badge ${e.badge.badge}`}>{e.badge.label}</span>
-      </p>
+      {badge && (
+        <p class="page-lead page-lead--tags fu" style="animation-delay:.15s">
+          <span class={`badge ${e.badge.badge}`}>{e.badge.label}</span>
+        </p>
+      )}
       <div class="fu" style="animation-delay:.2s"><EventMeta e={e} /></div>
     </div>
   </section>
