@@ -6031,34 +6031,45 @@ html.is-lite body.jsrv .rv, html.is-lite body.jsrv .rv-in { opacity: 1 !importan
 .lc-lot__result { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; }
 .lc-lot__result li { padding: 8px 12px; border-left: 4px solid var(--red); background: var(--red-tint); font: 500 15px/1.5 var(--fjp); }
 
-/* リーグ表（マスを押してスコアを入れる） */
+/* リーグ表（マスを押してスコアを入れる）。大会運営システムのリーグ表と同じ体裁：
+   角丸の外枠 1 本・薄い罫線・見出しの下に赤線、自分同士のマスは灰色に斜線、勝った側は淡い赤地に赤字・負けた側は灰色の字、1位は赤字 */
 .lc-note--lead { margin: -4px 0 12px; }
 .lc-tablewrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-.lc-grid { border-collapse: collapse; font: 500 14px/1.4 var(--fjp); white-space: nowrap; min-width: 100%; }
-.lc-grid th, .lc-grid td { border: 1px solid var(--gray-200); text-align: center; padding: 0; height: 48px; }
-.lc-grid thead th { background: var(--gray-100, #f5f5f5); font: 700 12.5px/1.3 var(--fjp); color: var(--gray-700); padding: 6px 8px; }
-.lc-grid__col { min-width: 64px; }
-.lc-grid__name, .lc-grid__corner { position: sticky; left: 0; z-index: 1; background: var(--white); text-align: left !important; padding: 0 10px !important; font: 700 14px/1.3 var(--fjp); color: var(--ink); min-width: 96px; max-width: 150px; overflow: hidden; text-overflow: ellipsis; box-shadow: 1px 0 0 var(--gray-200); }
-.lc-grid thead .lc-grid__corner { background: var(--gray-100, #f5f5f5); }
-.lc-grid__letter { display: inline-grid; place-items: center; width: 20px; height: 20px; margin-right: 6px; background: var(--red); color: #fff; border-radius: 3px; font: 700 11px/1 var(--flt); vertical-align: 1px; }
-.lc-grid__stat { padding: 0 10px !important; min-width: 56px; font-weight: 700; }
-.lc-grid .lc-rate { font: 700 14px/1 var(--flt); }
-.lc-grid .lc-rank small { display: block; font-size: 10px; font-weight: 500; color: var(--gray-500); }
-.lc-grid tr.is-top .lc-grid__name, .lc-grid tr.is-top .lc-rank { color: var(--red); }
-.lc-grid .lc-self { background: repeating-linear-gradient(135deg, var(--gray-100, #f3f3f3) 0 6px, #fff 6px 12px); }
-.lc-cell { display: block; width: 100%; height: 100%; min-height: 46px; border: 0; background: none; font: 700 15px/1 var(--flt); color: inherit; cursor: pointer; }
-.lc-cell:hover, .lc-cell:focus-visible { background: rgba(216, 35, 42, .08); outline: none; }
-.lc-cell--empty { color: var(--gray-300); font-size: 18px; }
-.lc-grid .is-win { background: var(--red-tint); color: var(--red); }
-.lc-grid .is-lose { color: var(--gray-500); }
-.lc-grid .is-draw { color: var(--gray-700); }
+.lc-wait { margin: 0; padding: 14px 16px; background: var(--gray-100, #f5f5f5); font: 500 14px/1.7 var(--fjp); color: var(--gray-700); }
+.lc-grid { border-collapse: separate; border-spacing: 0; min-width: 100%; border: 1px solid var(--gray-200); border-radius: 16px; overflow: hidden; background: #fff; box-shadow: 0 1px 2px rgba(0, 0, 0, .05); font: 500 14px/1.35 var(--fjp); white-space: nowrap; }
+.lc-tablewrap:has(.lc-grid) { border-radius: 16px; }
+.lc-grid thead th { background: #F9FAFB; border-bottom: 2px solid #EF4444; padding: 6px 6px; font: 700 12px/1.3 var(--fjp); color: #1F2937; text-align: center; }
+.lc-grid thead th + th { border-left: 1px solid var(--gray-200); }
+.lc-grid td { border-top: 1px solid var(--gray-200); text-align: center; padding: 0; height: 46px; }
+.lc-grid td + td { border-left: 1px solid var(--gray-200); }
+.lc-grid tbody tr:first-child td { border-top: 0; }
+.lc-grid tbody tr:nth-child(even) td { background-color: rgba(249, 250, 251, .7); }
+.lc-g__title { min-width: 132px; position: sticky; left: 0; z-index: 2; }
+.lc-g__col { min-width: 58px; }
+.lc-g__name { position: sticky; left: 0; z-index: 1; background: #fff; text-align: left !important; padding: 6px 8px !important; box-shadow: 1px 0 0 var(--gray-200); }
+.lc-grid tbody tr:nth-child(even) .lc-g__name { background: #FBFBFC; }
+.lc-g__no { margin-right: 8px; font: 500 11px/1 var(--flt); color: #9CA3AF; }
+.lc-g__team { font: 700 14px/1.25 var(--fjp); color: #1F2937; }
+.lc-g__team.is-champ, .lc-g__rank.is-champ { color: #DC2626; }
+.lc-grid .lc-g__self { background: #F3F4F6 linear-gradient(to top right, transparent calc(50% - .7px), #D1D5DB calc(50% - .7px), #D1D5DB calc(50% + .7px), transparent calc(50% + .7px)) !important; }
+.lc-grid td.is-win { background: #FEF2F2 !important; }
+.lc-cell { display: block; width: 100%; height: 100%; min-height: 44px; border: 0; background: none; font: 700 13px/1 var(--fjp); color: inherit; cursor: pointer; }
+.lc-grid td.is-win .lc-cell { color: #DC2626; }
+.lc-grid td.is-lose .lc-cell { color: #6B7280; }
+.lc-grid td.is-draw .lc-cell { color: #1F2937; }
+.lc-cell:hover, .lc-cell:focus-visible { background: rgba(216, 35, 42, .07); outline: none; }
+.lc-cell--empty { color: #D1D5DB; font-size: 10px; font-weight: 500; }
+.lc-g__stat { min-width: 56px; padding: 4px 6px !important; font: 700 13px/1.25 var(--fjp); color: #374151; }
+.lc-g__stat small { display: block; font: 500 10.5px/1.3 var(--fjp); color: #6B7280; }
+.lc-g__rate { font: 700 14px/1.2 var(--flt); color: #1F2937; }
+.lc-g__sub { font: 400 12px/1 var(--flt) !important; color: #6B7280 !important; }
+.lc-g__rank { font-size: 14px; color: #4B5563; }
 @media (max-width: 639px) {
-  .lc-grid { font-size: 13px; }
-  .lc-grid__col { min-width: 52px; }
-  .lc-grid__name, .lc-grid__corner { min-width: 78px; max-width: 110px; font-size: 13px; padding: 0 6px !important; }
-  .lc-grid__letter { display: none; }
-  .lc-grid__stat { padding: 0 6px !important; min-width: 48px; font-size: 12.5px; }
-  .lc-cell { font-size: 14px; }
+  .lc-g__title { min-width: 96px; }
+  .lc-g__col { min-width: 52px; }
+  .lc-g__name { padding: 6px 6px !important; }
+  .lc-g__team { font-size: 13px; }
+  .lc-g__no { margin-right: 5px; }
   .lc-seg__opt span { min-height: 38px; padding: 0 12px; font-size: 13px; }
   .lc-names { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .lc-steps { font-size: 13.5px; }

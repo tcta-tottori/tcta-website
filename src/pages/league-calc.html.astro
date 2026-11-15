@@ -88,20 +88,23 @@ const description = 'リーグ戦（総当たり）の勝敗・取得ゲーム�
           <div class="lc-tablewrap"><table class="lc-grid" id="lc-grid"></table></div>
         </div>
 
-        {/* 結果 */}
+        {/* 順位（全試合の結果が入ってから出す）と計算式 */}
         <div class="lc-box rv">
-          <h2 class="lc-h">順位</h2>
-          <div class="lc-tablewrap"><table class="lc-table" id="lc-table"></table></div>
+          <div id="lc-rank-box" hidden>
+            <h2 class="lc-h">順位</h2>
+            <div class="lc-tablewrap"><table class="lc-table" id="lc-table"></table></div>
+            <h3 class="lc-h3">順位の決め方</h3>
+            <ol class="lc-log" id="lc-log"></ol>
+          </div>
+          <p class="lc-wait" id="lc-rank-wait">すべての試合の結果が入ると、ここに順位と、順位が決まった理由が出ます。</p>
           <h3 class="lc-h3">計算式</h3>
           <ul class="lc-calc" id="lc-calc"></ul>
-          <h3 class="lc-h3">順位の決め方</h3>
-          <ol class="lc-log" id="lc-log"></ol>
         </div>
 
         {/* くじ引き（同率で決まらないとき） */}
-        <div class="lc-box rv" id="lc-lot">
+        <div class="lc-box" id="lc-lot" hidden>
           <h2 class="lc-h">くじ引き（ルーレット）</h2>
-          <p class="lc-note" style="margin-top:0">同率で直接対決も引き分けなど、ルールで順位が決まらないときに使います。対象のチームを選んで「回す」を押すと、ルーレットで上の順位から 1 チームずつ決めます（同率のチームがあると、最初からそのチームに印が付きます）。</p>
+          <p class="lc-note" style="margin-top:0">ルールで順位が決まらないチーム（同率で直接対決も引き分けなど）があるので、くじ引きで決めます。「ルーレットを回す」を押すと、上の順位から 1 チームずつ決まります。</p>
           <div class="lc-lot__teams" id="lc-lot-teams"></div>
           <div class="lc-lot__stage">
             <div class="lc-wheel">
@@ -293,7 +296,7 @@ const description = 'リーグ戦（総当たり）の勝敗・取得ゲーム�
     // 表示
     const warn = document.getElementById('lc-warn')!;
     warn.hidden = missing === 0;
-    warn.textContent = missing ? `まだ入っていない試合が ${missing} 試合あります。入っている試合だけで計算した途中の順位です。` : '';
+    warn.textContent = missing ? `あと ${missing} 試合の結果が入ると、順位が出ます。` : '';
 
     const rankOf = new Map<number, number>();
     ranking.forEach((i, k) => rankOf.set(i, k + 1));
@@ -307,17 +310,31 @@ const description = 'リーグ戦（総当たり）の勝敗・取得ゲーム�
         <td class="lc-rate">${st[i].gw + st[i].gl ? pct(rate(i)) : '—'}</td>
         <td class="lc-why">${esc(reason.get(i) ?? '')}</td></tr>`).join('')}</tbody>`;
 
-    // リーグ表：対戦のマス（押すとスコアを入れる）と、勝敗・取得ゲーム率・順位
+    // リーグ表：大会運営システムのリーグ表と同じ形（角丸の外枠・見出しの下に赤線・自分同士は斜線・勝ちは淡い赤地に赤字）
+    //   取得ゲーム率が先の大会は「取得ゲーム率」の欄（率と取ったゲーム数）、勝数が先の大会は「勝敗」「勝率」の欄。順位は全試合が入ってから
     const grid = document.getElementById('lc-grid')!;
     const hasDraw = st.some((s) => s.d);
-    grid.innerHTML = `<thead><tr><th class="lc-grid__corner"></th>${ids.map((j) => `<th class="lc-grid__col">${esc(nameOf(j))}</th>`).join('')}<th class="lc-grid__stat">勝敗</th><th class="lc-grid__stat">取得ゲーム率</th><th class="lc-grid__stat">順位</th></tr></thead><tbody>${
-      ids.map((i) => `<tr class="${rankOf.get(i) === 1 && !missing ? 'is-top' : ''}"><th class="lc-grid__name"><span class="lc-grid__letter">${LETTERS[i]}</span>${esc(nameOf(i))}</th>${ids.map((j) => {
-        if (i === j) return '<td class="lc-self"></td>';
-        const label = `${esc(nameOf(i))} 対 ${esc(nameOf(j))}`;
-        if (!played(i, j)) return `<td><button type="button" class="lc-cell lc-cell--empty" data-i="${i}" data-j="${j}" aria-label="${label} のスコアを入れる">＋</button></td>`;
-        const a = Number(scores[i][j]), b = Number(scores[j][i]);
-        return `<td class="${a > b ? 'is-win' : a < b ? 'is-lose' : 'is-draw'}"><button type="button" class="lc-cell" data-i="${i}" data-j="${j}" aria-label="${label} ${a}-${b}（押して直す）">${a}-${b}</button></td>`;
-      }).join('')}<td class="lc-grid__stat">${st[i].w}-${st[i].l}${hasDraw ? `-${st[i].d}` : ''}</td><td class="lc-grid__stat lc-rate">${st[i].gw + st[i].gl ? pct(rate(i)) : '—'}</td><td class="lc-grid__stat lc-rank">${tied.has(i) ? `${rankOf.get(i)}位<small>同率</small>` : `${rankOf.get(i)}位`}</td></tr>`).join('')}</tbody>`;
+    const done = missing === 0;
+    const byGames = r === 'games';
+    const statHead = byGames ? '<th class="lc-g__stat">取得ゲーム率</th>' : '<th class="lc-g__stat">勝敗</th><th class="lc-g__stat">勝率</th>';
+    const statCells = (i: number) => {
+      const t = st[i].gw + st[i].gl;
+      if (byGames) return `<td class="lc-g__stat">${t ? `<b class="lc-g__rate">${pct(rate(i))}</b><small>${st[i].gw}/${t}ゲーム</small>` : ''}</td>`;
+      const pl = st[i].w + st[i].l + st[i].d;
+      return `<td class="lc-g__stat"><b>${pl ? `${st[i].w}-${st[i].l}${hasDraw ? `-${st[i].d}` : ''}` : ''}</b></td><td class="lc-g__stat lc-g__sub">${t ? rate(i).toFixed(3) : ''}</td>`;
+    };
+    grid.innerHTML = `<thead><tr><th class="lc-g__title">リーグ</th>${ids.map((j) => `<th class="lc-g__col">${esc(nameOf(j))}</th>`).join('')}${statHead}<th class="lc-g__stat">順位</th></tr></thead><tbody>${
+      ids.map((i) => {
+        const rk = rankOf.get(i);
+        const champ = done && rk === 1;
+        return `<tr><td class="lc-g__name"><span class="lc-g__no">${i + 1}</span><span class="lc-g__team${champ ? ' is-champ' : ''}">${esc(nameOf(i))}</span></td>${ids.map((j) => {
+          if (i === j) return '<td class="lc-g__self" aria-hidden="true"></td>';
+          const label = `${esc(nameOf(i))} 対 ${esc(nameOf(j))}`;
+          if (!played(i, j)) return `<td><button type="button" class="lc-cell lc-cell--empty" data-i="${i}" data-j="${j}" aria-label="${label} のスコアを入れる">入力</button></td>`;
+          const a = Number(scores[i][j]), b = Number(scores[j][i]);
+          return `<td class="${a > b ? 'is-win' : a < b ? 'is-lose' : 'is-draw'}"><button type="button" class="lc-cell" data-i="${i}" data-j="${j}" aria-label="${label} ${a}-${b}（押して直す）">${a}-${b}</button></td>`;
+        }).join('')}${statCells(i)}<td class="lc-g__stat lc-g__rank${champ ? ' is-champ' : ''}">${done ? (tied.has(i) ? `${rk}位<small>同率</small>` : `${rk}位`) : ''}</td></tr>`;
+      }).join('')}</tbody>`;
     grid.querySelectorAll<HTMLButtonElement>('.lc-cell').forEach((b) => b.addEventListener('click', () => openCell(Number(b.dataset.i), Number(b.dataset.j))));
 
     document.getElementById('lc-calc')!.innerHTML = ids.map((i) => {
@@ -326,6 +343,9 @@ const description = 'リーグ戦（総当たり）の勝敗・取得ゲーム�
     }).join('');
     document.getElementById('lc-log')!.innerHTML = log.map((s) => `<li>${esc(s)}</li>`).join('')
       + `<li>結果：${ranking.map((i) => `${rankOf.get(i)}位 ${esc(nameOf(i))}`).join('、')}</li>`;
+    document.getElementById('lc-rank-box')!.hidden = missing > 0;
+    document.getElementById('lc-rank-wait')!.hidden = missing === 0;
+    lotNeeded = missing === 0 && tiedGroups.length > 0;
     lotSync();
   }
 
@@ -334,6 +354,7 @@ const description = 'リーグ戦（総当たり）の勝敗・取得ゲーム�
   let lotPick = new Set<number>();   // 対象のチーム
   let lotDone: number[] = [];        // 決まった順（上の順位から）
   let lotTouched = false;            // 対象を手で選んだか（選んでいなければ同率のチームに合わせる）
+  let lotNeeded = false;             // くじ引きが要るか（全試合が入っていて、ルールで決まらないチームがある）
   let spinning = false;
   let rot = 0;
   let lastPool: number[] = [];       // 最後に回したときのチーム（終わったあともルーレットを残す）
@@ -341,11 +362,19 @@ const description = 'リーグ戦（総当たり）の勝敗・取得ゲーム�
   const wheel = document.getElementById('lc-wheel') as HTMLCanvasElement;
   const lotPool = () => [...lotPick].filter((i) => i < n && !lotDone.includes(i)).sort((a, b) => a - b);
   function lotSync() {
+    // くじ引きが要るときだけ出す。要らなくなったら（結果を直したなど）やり直しの状態に戻す
+    const box = document.getElementById('lc-lot')!;
+    if (!lotNeeded) {
+      box.hidden = true;
+      if (!spinning) { lotDone = []; lastPool = []; lotTouched = false; lotPick = new Set(); }
+      return;
+    }
+    box.hidden = false;
     if (!lotTouched && lotDone.length === 0) lotPick = new Set(tiedGroups.flat());
-    const box = document.getElementById('lc-lot-teams')!;
-    box.innerHTML = Array.from({ length: n }, (_, i) =>
+    const teamsBox = document.getElementById('lc-lot-teams')!;
+    teamsBox.innerHTML = Array.from({ length: n }, (_, i) =>
       `<label class="lc-lot__team"><input type="checkbox" data-i="${i}" ${lotPick.has(i) ? 'checked' : ''} ${lotDone.length || spinning ? 'disabled' : ''}><span>${esc(nameOf(i))}</span></label>`).join('');
-    box.querySelectorAll<HTMLInputElement>('input').forEach((el) => el.addEventListener('change', () => {
+    teamsBox.querySelectorAll<HTMLInputElement>('input').forEach((el) => el.addEventListener('change', () => {
       const i = Number(el.dataset.i);
       if (el.checked) lotPick.add(i); else lotPick.delete(i);
       lotTouched = true; drawWheel(); lotStatus();
