@@ -57,9 +57,9 @@ export const EXTRA_MATERIALS = {
       images: [
         { src: 'assets/img/events/r8-kaicho-autumn/photo-01.webp', label: '男子B級ダブルス 優勝 岸本・安田 ペア', w: 1400, h: 933, after: 'result-08-final' },
         { src: 'assets/img/events/r8-kaicho-autumn/photo-02.webp', label: '男子B級ダブルス 準優勝 北村・山本 ペア', w: 1400, h: 933, after: 'result-08-final' },
-        { src: 'assets/img/events/r8-kaicho-autumn/photo-03.webp', label: '女子B級ダブルス 優勝 高木・遠藤 ペア', w: 1400, h: 933, after: 'result-13' },
-        { src: 'assets/img/events/r8-kaicho-autumn/photo-04.webp', label: '女子B級ダブルス 準優勝 小見山・谷口 ペア', w: 1400, h: 933, after: 'result-13' },
-        { src: 'assets/img/events/r8-kaicho-autumn/photo-05.webp', label: '女子B級ダブルス 3位 山本・大田 ペア', w: 1400, h: 933, after: 'result-14' },
+        { src: 'assets/img/events/r8-kaicho-autumn/photo-03.webp', label: '女子B級ダブルス 1位トーナメント 優勝 高木・遠藤 ペア', w: 1400, h: 933, after: 'result-13' },
+        { src: 'assets/img/events/r8-kaicho-autumn/photo-04.webp', label: '女子B級ダブルス 1位トーナメント 準優勝 小見山・谷口 ペア', w: 1400, h: 933, after: 'result-13' },
+        { src: 'assets/img/events/r8-kaicho-autumn/photo-05.webp', label: '女子B級ダブルス 2位トーナメント 優勝 山本・大田 ペア', w: 1400, h: 933, after: 'result-14' },
         { src: 'assets/img/events/r8-kaicho-autumn/photo-06.webp', label: '男子C級ダブルス 優勝 難波・米村 ペア', w: 1400, h: 933, after: 'result-10' },
         { src: 'assets/img/events/r8-kaicho-autumn/photo-07.webp', label: '男子C級ダブルス 準優勝 中井・吉田 ペア', w: 1400, h: 933, after: 'result-10' },
       ],
@@ -104,15 +104,19 @@ export const EXTRA_MATERIALS = {
 };
 
 export const EXTRA_WINNERS = {
-  // 第62回会長杯（秋季）：表彰状のとおり（男子B級は 1位・2位トーナメント、女子B級は 1位・2位トーナメントの結果）
+  // 第62回会長杯（秋季）：表彰状のとおり（男子B級は 1位・2位トーナメントの結果）。女子B級は 1位・2位・3位トーナメントごと
   'r8-kaicho-autumn': [
     { category: '男子B級ダブルス', award: '優勝', name: '岸本・安田 ペア' },
     { category: '男子B級ダブルス', award: '準優勝', name: '北村・山本 ペア' },
     { category: '男子C級ダブルス', award: '優勝', name: '難波・米村 ペア' },
     { category: '男子C級ダブルス', award: '準優勝', name: '中井・吉田 ペア' },
-    { category: '女子B級ダブルス', award: '優勝', name: '高木・遠藤 ペア' },
-    { category: '女子B級ダブルス', award: '準優勝', name: '小見山・谷口 ペア' },
-    { category: '女子B級ダブルス', award: '3位', name: '山本・大田 ペア' },
+    // 女子B級は 1位・2位・3位トーナメント（A1 対 B1 など）ごとに出す
+    { category: '女子B級ダブルス 1位トーナメント', award: '優勝', name: '高木・遠藤 ペア' },
+    { category: '女子B級ダブルス 1位トーナメント', award: '準優勝', name: '小見山・谷口 ペア' },
+    { category: '女子B級ダブルス 2位トーナメント', award: '優勝', name: '山本・大田 ペア' },
+    { category: '女子B級ダブルス 2位トーナメント', award: '準優勝', name: '田苗・鳥飼 ペア' },
+    { category: '女子B級ダブルス 3位トーナメント', award: '優勝', name: '米谷・藤田 ペア' },
+    { category: '女子B級ダブルス 3位トーナメント', award: '準優勝', name: '山根・田中 ペア' },
   ],
 };
 

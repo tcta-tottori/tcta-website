@@ -114,6 +114,10 @@ export function eventResultLayout(e) {
     for (const img of b.sheets) (isPrelim(img) ? prelim : keep).push(img);
     b.sheets = keep;
   }
+  // どの種目にも付かなかった予選リーグの表（成績を「女子B級ダブルス 1位トーナメント」のように順位別の種目ごとに書いた大会など）も、予選リーグへ
+  if (!(spec && spec.length) && blocks.some((x) => x.label)) {
+    for (const img of sheetImgs) if (!used.has(baseName(img.src)) && isPrelim(img)) { prelim.push(img); used.add(baseName(img.src)); }
+  }
   blocks = blocks.filter((b) => b.sheets.length || b.photos.length || b.captions.length);
   if (prelim.length) blocks.unshift({ label: '予選リーグ', sheets: prelim, photos: [], places: [], captions: [] });
   blocks = sortByCategory(blocks, (b) => b.label);
