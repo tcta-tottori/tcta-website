@@ -114,6 +114,8 @@ export interface Draw {
   drawType?: 'tournament' | 'roundRobin';
   /** リーグ戦の順位の決め方（wins＝勝数が先・既定／games＝取得ゲーム率が先）。leagueStandings.ts */
   leagueRankRule?: 'wins' | 'games';
+  /** 運営が手で決めた順位（同率でくじ引きなどをしたとき）。リーグの全員の entryId を 1 位から順に。無ければ自動の順位 */
+  leagueManualOrder?: string[];
   /**
    * 順位別トーナメント：枠ごとに入るリーグ（種目名）と順位。リーグが終わったら
    * エントリー受付の「順位を反映して組む」でその順位のペアを枠に入れる（placement.ts）

@@ -1,3 +1,5 @@
+import { useState } from 'react';
+import { ArrowDown, ArrowUp, ListOrdered } from 'lucide-react';
 import type { DrawSlotData, MatchResult } from './DrawBoard';
 import { pairDisplayLines } from './pairLabel';
 import { sideScoreText } from '../score/scoreDisplay';
@@ -22,6 +24,10 @@ interface RoundRobinRendererProps {
   rankRule?: RankRule;
   /** 表の左上の見出し（例「Aリーグ」）。無ければ「リーグ」 */
   title?: string;
+  /** 運営が手で決めた順位（Draw.leagueManualOrder） */
+  manualOrder?: string[];
+  /** 手で決めた順位を保存する（null で自動に戻す）。運営画面だけ渡す（渡すと同率のとき「順位を手で決める」が出る） */
+  onSaveManualOrder?: (order: string[] | null) => void | Promise<void>;
 }
 
 /** 引き分け（終了して勝者なし。ゲーム制の 4-4）か */
@@ -37,10 +43,12 @@ function parseScore(score: string | undefined | null): [number, number] | null {
   return [parseInt(m[1], 10), parseInt(m[2], 10)];
 }
 
-export default function RoundRobinRenderer({ slots, matchResults = [], onCellSelect, onPlayerSelect, rankRule = 'wins', title = 'リーグ' }: RoundRobinRendererProps) {
+export default function RoundRobinRenderer({ slots, matchResults = [], onCellSelect, onPlayerSelect, rankRule = 'wins', title = 'リーグ', manualOrder, onSaveManualOrder }: RoundRobinRendererProps) {
   // BYEを除いた実選手のみ
   const players = slots.filter(s => !s.isBye);
   const n = players.length;
+  // 順位を手で決める（同率でくじ引きをしたときなど）。並べ替え中の並び（entryId）
+  const [orderDraft, setOrderDraft] = useState<string[] | null>(null);
 
   if (n < 2) {
     return <div className="p-8 text-center text-gray-500">リーグ表示には2人以上の選手が必要です</div>;
@@ -98,7 +106,8 @@ export default function RoundRobinRenderer({ slots, matchResults = [], onCellSel
   //   wins  … 勝数 → 同数 2 者は直接対戦、3 者以上は取得ゲーム率
   //   games … 取得ゲーム率 → 同率 2 者は直接対戦
   const ids = players.map((p) => p.entryId ?? '');
-  const { standings } = leagueStandings(ids, matchResults, rankRule);
+  const { standings, manual } = leagueStandings(ids, matchResults, rankRule, manualOrder);
+  const tiedRows = new Set(standings.filter(s => s.tied).map(s => ids.indexOf(s.entryId)));
   const rankMap = new Map<number, number>();
   for (const s of standings) rankMap.set(ids.indexOf(s.entryId), s.rank);
 
@@ -215,7 +224,7 @@ export default function RoundRobinRenderer({ slots, matchResults = [], onCellSel
                     {/* 勝敗 */}
                     <td className="border-t border-l border-gray-200 px-1.5 py-1.5 text-center font-bold text-gray-700 tabular-nums whitespace-nowrap">
                       {stats[rowIdx].played > 0
-                        ? `${stats[rowIdx].wins}-${stats[rowIdx].losses}${stats[rowIdx].draws > 0 ? `（分${stats[rowIdx].draws}）` : ''}`
+                        ? `${stats[rowIdx].wins}-${stats[rowIdx].losses}`
                         : ''}
                     </td>
                     {/* 勝率（取得ゲーム率） */}
@@ -229,6 +238,7 @@ export default function RoundRobinRenderer({ slots, matchResults = [], onCellSel
                       rank === 1 ? 'text-red-600 text-[14px]' : 'text-gray-600 text-[14px]'
                     }`}>
                       {allFinished && rank ? `${rank}位` : ''}
+                      {allFinished && rank && tiedRows.has(rowIdx) && <span className="block text-[10px] font-bold text-amber-600">同率</span>}
                     </td>
                   </tr>
                 );
@@ -236,6 +246,49 @@ export default function RoundRobinRenderer({ slots, matchResults = [], onCellSel
             </tbody>
           </table>
         </div>
+
+        {/* 順位を手で決める（同率のとき・手で決めた順位があるとき。運営画面だけ） */}
+        {allFinished && onSaveManualOrder && (tiedRows.size > 0 || manual) && !orderDraft && (
+          <div className="rr-manual">
+            <span className="rr-manual__msg">
+              {manual ? '順位は手で決めた並びです。' : '同率で決まらない順位があります（くじ引きなどで決めてください）。'}
+            </span>
+            <button type="button" className="rr-manual__btn" onClick={() => setOrderDraft(standings.map(st => st.entryId))}>
+              <ListOrdered className="w-3.5 h-3.5" />順位を手で決める
+            </button>
+            {manual && (
+              <button type="button" className="rr-manual__btn rr-manual__btn--ghost" onClick={() => void onSaveManualOrder(null)}>自動の順位に戻す</button>
+            )}
+          </div>
+        )}
+        {orderDraft && onSaveManualOrder && (
+          <div className="rr-manual rr-manual--edit">
+            <p className="rr-manual__msg">上から 1 位・2 位…の順に並べて「この順位にする」を押してください。</p>
+            <ol className="rr-manual__list">
+              {orderDraft.map((id, i) => {
+                const p = players.find(pl => pl.entryId === id);
+                const move = (d: number) => setOrderDraft(prev => {
+                  if (!prev) return prev;
+                  const next = [...prev];
+                  [next[i], next[i + d]] = [next[i + d], next[i]];
+                  return next;
+                });
+                return (
+                  <li key={id}>
+                    <span className="rr-manual__rank">{i + 1}位</span>
+                    <span className="rr-manual__name">{p?.name ?? id}</span>
+                    <button type="button" aria-label="上へ" disabled={i === 0} onClick={() => move(-1)}><ArrowUp className="w-4 h-4" /></button>
+                    <button type="button" aria-label="下へ" disabled={i === orderDraft.length - 1} onClick={() => move(1)}><ArrowDown className="w-4 h-4" /></button>
+                  </li>
+                );
+              })}
+            </ol>
+            <div className="rr-manual__acts">
+              <button type="button" className="rr-manual__btn rr-manual__btn--ghost" onClick={() => setOrderDraft(null)}>やめる</button>
+              <button type="button" className="rr-manual__btn rr-manual__btn--primary" onClick={async () => { await onSaveManualOrder(orderDraft); setOrderDraft(null); }}>この順位にする</button>
+            </div>
+          </div>
+        )}
 
         {/* 補足: 順位表示条件・並び替えルール */}
         <div className="mt-2 text-[11px] text-gray-500">

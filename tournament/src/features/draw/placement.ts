@@ -48,7 +48,7 @@ export async function previewPlacement(eventId: string): Promise<PlacementRow[]>
       const entries = await db.entries.where('eventId').equals(lev.eventId).toArray();
       const ids = (ldraw?.slots ?? []).filter((s) => s.entryId).sort((a, b) => a.position - b.position).map((s) => s.entryId!);
       const matches = await db.matches.where('eventId').equals(lev.eventId).toArray();
-      const st = leagueStandings(ids, matches, ldraw?.leagueRankRule ?? 'wins');
+      const st = leagueStandings(ids, matches, ldraw?.leagueRankRule ?? 'wins', ldraw?.leagueManualOrder);
       r = { ...st, entries: new Map(entries.map((e) => [e.entryId, e])), ...(matches.length === 0 ? { error: 'リーグがまだ確定していません' } : {}) };
     }
     cache.set(name, r);

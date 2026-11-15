@@ -914,6 +914,7 @@ export default function CourtBracketPage({ enableScoreInput = true }: CourtBrack
         <div className="dl-canvas dl-canvas--all">
           <AllLeaguesGrid
             events={events}
+            editable={enableScoreInput}
             onCellSelect={enableScoreInput && !nameEditMode ? (idx, round, position) => {
               setSelectedEventIdx(idx);
               setSelectedMatchKey(`${round}-${position}`);
@@ -976,6 +977,8 @@ export default function CourtBracketPage({ enableScoreInput = true }: CourtBrack
               matchResults={matchResults}
               rankRule={drawData?.leagueRankRule}
               title={leagueShort(selectedEvent?.name || '') || undefined}
+              manualOrder={drawData?.leagueManualOrder}
+              onSaveManualOrder={enableScoreInput && drawData?.id != null ? async (order) => { await db.draws.update(drawData.id!, { leagueManualOrder: order ?? undefined, updatedAt: Date.now() }); } : undefined}
               onCellSelect={enableScoreInput && !nameEditMode ? (round, position) => setSelectedMatchKey(`${round}-${position}`) : undefined}
               onPlayerSelect={enableScoreInput && nameEditMode ? openNameEditor : undefined}
             />
