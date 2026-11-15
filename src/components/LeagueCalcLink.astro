@@ -1,0 +1,16 @@
+---
+// リーグ戦の順位計算（league-calc.html）への入口。league-rules.js に書いた大会の、要項・ドローのページの下に出す。
+import { leagueRuleOf, RULE_TEXT } from '../data/league-rules.js';
+const { e } = Astro.props;
+const league = e ? leagueRuleOf(e.slug) : null;
+---
+
+{league && (
+  <div class="lc-link rv">
+    <p class="lc-link__title">{league.rule === 'team' ? '予選リーグの順位計算（シミュレーター）' : 'リーグ戦の順位計算'}</p>
+    <p class="lc-link__text">
+      この大会のルール（{RULE_TEXT[league.rule].label}）で、予選リーグの{league.rule === 'team' ? '獲得ゲーム数' : '勝敗・取得ゲーム率'}・順位を計算できます。リーグ表のマスを押してスコアを入れると、計算式と順位の決め手も確かめられます。
+    </p>
+    <a class="btn btn--primary" href={`league-calc.html?e=${e.slug}`}>順位を計算する <span class="ln-arrow" aria-hidden="true"></span></a>
+  </div>
+)}
