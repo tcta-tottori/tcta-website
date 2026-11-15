@@ -54,6 +54,11 @@ async function currentLabel(): Promise<{ name: string; date: string } | null> {
 
 const safe = (s: string) => s.replace(/[\\/:*?"<>|\s\u3000]+/g, '').slice(0, 60) || '大会';
 
+/** 自動保存のファイル名（大会ごとに 1 つ）。大会選択の「最新の状態で入る」もこの名前で探す（日付を空にすると前半だけ） */
+export function autoSaveFileName(name: string, date: string): string {
+  return `自動保存_${safe(name)}_${date ? safe(date.replace(/[/.]/g, '-')) : ''}.json`;
+}
+
 /** 中身の比べ方：作った時刻は毎回変わるので除く */
 function fingerprint(json: string): string {
   return json.replace(/"createdAt":"[^"]*"/g, '');
@@ -79,7 +84,7 @@ async function saveNow(): Promise<void> {
       return;
     }
     setState({ kind: 'saving' });
-    const fileName = `自動保存_${safe(label.name)}_${safe((label.date || new Date().toISOString().slice(0, 10)).replace(/[/.]/g, "-"))}.json`;
+    const fileName = autoSaveFileName(label.name, label.date || new Date().toISOString().slice(0, 10));
     await uploadFile('backup', fileName, json, 'application/json');
     lastSaved = fingerprint(json);
     lastOk = { kind: 'saved', at: Date.now(), fileName };

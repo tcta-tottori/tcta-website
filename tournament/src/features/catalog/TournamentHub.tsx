@@ -6,14 +6,16 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { ArrowRight, BookOpen, ClipboardCheck, Bot, FileSpreadsheet, ListChecks, Loader2, MapPin, RefreshCw, RotateCcw, Users, FlaskConical } from 'lucide-react';
+import { ArrowRight, BookOpen, ClipboardCheck, Bot, FileSpreadsheet, ListChecks, Loader2, MapPin, RefreshCw, RotateCcw, Users, FlaskConical, CloudDownload } from 'lucide-react';
 import { db } from '../../db/database';
 import { useAppStore } from '../../stores/appStore';
 import { useOfficer } from '../auth/officer';
 import { parseDrawExcel } from '../data/drawExcelParser';
 import { cachedCatalog, dateParts, fetchCatalog, fetchTournament, putTournament, todayStart, type CatalogList, type CatalogTournament } from './catalogApi';
 import { importToDevice, switchToLocal } from './deviceImport';
-import { saveSnapshot } from '../backup/autoSave';
+import { saveSnapshot, autoSaveFileName } from '../backup/autoSave';
+import { listFiles, downloadFile, type CloudDataFile } from '../backup/cloudDataApi';
+import { restoreUnifiedBackup, isValidBackup } from '../backup/unifiedBackup';
 import { syncDictionary, useDictSync } from './dictSync';
 import { drawEntry } from './fromExcel';
 import CloudflareLogo from '../../components/ui/CloudflareLogo';
@@ -38,6 +40,8 @@ export default function TournamentHub() {
   const [filter, setFilter] = useState<Filter>('upcoming');
   const [busy, setBusy] = useState<{ id: string; label: string } | null>(null);
   const [error, setError] = useState<{ id: string; message: string } | null>(null);
+  // Cloudflare の自動保存（ほかの端末で運営している大会の、いちばん新しい状態）。大会の id → ファイル
+  const [cloudSaves, setCloudSaves] = useState<Map<string, CloudDataFile>>(new Map());
   const localTournaments = useLiveQuery(() => db.tournaments.toArray(), [], []);
 
   const load = useCallback(async () => {
@@ -51,6 +55,52 @@ export default function TournamentHub() {
   }, []);
 
   useEffect(() => { void load(); }, [load]);
+
+  // ほかの端末（PC など）で運営している大会は、Cloudflare に自動保存がある（autoSave.ts）。
+  // スマホなどから入るとき、その状態のまま入れるようにする（「最新の状態で入る」）
+  useEffect(() => {
+    if (!list?.tournaments.length) return;
+    let stop = false;
+    void listFiles('backup').then((files) => {
+      if (stop) return;
+      const m = new Map<string, CloudDataFile>();
+      for (const t of list.tournaments) {
+        const prefix = autoSaveFileName(t.name, '').replace(/_\.json$/, '_');
+        const f = files.find((x) => x.name.startsWith(prefix));
+        if (f) m.set(t.id, f);
+      }
+      setCloudSaves(m);
+    }).catch(() => { /* 保存が読めなくても大会選択は使える */ });
+    return () => { stop = true; };
+  }, [list]);
+
+  // Cloudflare の自動保存から入る（この端末の運営データは、保存の内容に置き換わる）
+  const enterFromCloud = useCallback(async (t: CatalogTournament, f: CloudDataFile) => {
+    setError(null);
+    const at = new Date(f.modifiedTime).toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+    if (!(await siteConfirm({
+      title: '最新の状態で入る',
+      message: `「${t.name}」を、ほかの端末で運営している最新の状態（${at} に Cloudflare に自動保存）で、この端末に入れます。\n\n受付・試合結果・コートもそのとき入れた内容になります。この端末の今の運営データは置き換わります。`,
+      confirmLabel: '最新の状態で入る',
+    }))) return;
+    setBusy({ id: t.id, label: '最新の状態を読み込んでいます' });
+    try {
+      const text = new TextDecoder().decode(await downloadFile(f.id));
+      const data = JSON.parse(text);
+      if (!isValidBackup(data)) throw new Error('保存の形が正しくありません');
+      const r = await restoreUnifiedBackup(data);
+      if (r.errors.length) throw new Error(r.errors.join('、'));
+      const local = (await db.tournaments.toArray()).find((x) => x.catalogId === t.id);
+      if (!local) throw new Error('保存の中にこの大会が見つかりませんでした');
+      useAppStore.getState().setCurrentTournamentId(null);
+      await switchToLocal(local.tournamentId);
+      // ミックス・団体戦のストアも読み直すため、ページごと開き直す
+      window.location.assign('/entry');
+    } catch (err) {
+      setError({ id: t.id, message: `最新の状態を読み込めませんでした：${(err as Error).message}` });
+      setBusy(null);
+    }
+  }, []);
 
   const localByCatalog = useMemo(() => {
     const m = new Map<string, { tournamentId: string; catalogUpdatedAt?: string; isTest?: boolean }>();
@@ -183,6 +233,8 @@ export default function TournamentHub() {
                     onReset={() => start(t, 'direct')}
                     onTest={() => start(t, 'test')}
                     isTest={!!local?.isTest}
+                    cloud={cloudSaves.get(t.id) ?? null}
+                    onCloud={() => { const f = cloudSaves.get(t.id); if (f) void enterFromCloud(t, f); }}
                   />
                 </li>
               );
@@ -235,10 +287,13 @@ function DictChip({ players, affiliations, status }: { players: number; affiliat
   );
 }
 
-function HubCard({ t, highlight, isCurrent, onDevice, stale, busy, disabled, error, onStart, onResume, onReset, onTest, isTest }: {
+function HubCard({ t, highlight, isCurrent, onDevice, stale, busy, disabled, error, onStart, onResume, onReset, onTest, isTest, cloud, onCloud }: {
   t: CatalogTournament; highlight: boolean; isCurrent: boolean; onDevice: boolean; stale: boolean;
   busy: string | null; disabled: boolean; error: string | null; onStart: () => void; onResume: () => void; onReset: () => void; onTest: () => void; isTest: boolean;
+  /** Cloudflare の自動保存（ほかの端末で運営している最新の状態）。無ければ null */
+  cloud: CloudDataFile | null; onCloud: () => void;
 }) {
+  const cloudAt = cloud ? new Date(cloud.modifiedTime).toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
   const d = dateParts(t.date);
   const badge = STATUS_BADGE[t.status] ?? STATUS_BADGE.planned;
   const isToday = !!d && d.time === todayStart();
@@ -284,6 +339,13 @@ function HubCard({ t, highlight, isCurrent, onDevice, stale, busy, disabled, err
             <button className="btn btn--primary hub-card__btn" onClick={onStart} disabled={disabled}>確認して運営をはじめる<ArrowRight className="w-4 h-4" /></button>
           )}
         </div>
+        {/* ほかの端末（PC など）で運営している最新の状態で入る（スマホから入るときなど） */}
+        {cloud && (t.status === 'ready' || t.status === 'done') && !busy && (
+          <button type="button" className="btn btn--outline hub-card__btn hub-card__btn--cloud" onClick={onCloud} disabled={disabled}
+            title="ほかの端末で運営している最新の状態（Cloudflare の自動保存）をこの端末に入れて、その続きから入ります">
+            <CloudDownload className="w-4 h-4" />最新の状態で入る<small>{cloudAt} 保存</small>
+          </button>
+        )}
         {(t.status === 'ready' || t.status === 'done') && !busy && (
           <Link to={`/data/review/${encodeURIComponent(t.id)}`} className="btn hub-card__btn hub-card__btn--gray"><ClipboardCheck className="w-4 h-4" />ドローを確認・修正</Link>
         )}
