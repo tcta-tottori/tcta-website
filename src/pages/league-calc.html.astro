@@ -89,6 +89,11 @@ const description = 'リーグ戦（総当たり）の勝敗・取得ゲーム�
           <p class="lc-note lc-note--lead">マスを押すと、その試合のスコア（ゲーム数）を入れられます。左の列のチームから見たスコアで入れてください。</p>
           <p class="lc-warn" id="lc-warn" hidden></p>
           <div class="lc-tablewrap"><table class="lc-grid" id="lc-grid"></table></div>
+          <div id="lc-pts-box" hidden>
+            <h3 class="lc-h3">チーム得点</h3>
+            <p class="lc-note lc-note--lead">各チームが MIX・WD・MD で取ったゲーム数と、その合計（得点）。入っている対戦までの数です。</p>
+            <div class="lc-tablewrap"><table class="lc-pts" id="lc-pts"></table></div>
+          </div>
         </div>
 
         {/* 順位（全試合の結果が入ってから出す）と計算式 */}
@@ -148,7 +153,7 @@ const description = 'リーグ戦（総当たり）の勝敗・取得ゲーム�
 
 <script>
   type Rule = 'wins' | 'games' | 'team';
-  type Fmt = { key: string; label: string; total: number | null; matches?: string[] };
+  type Fmt = { key: string; label: string; total: number | null; matches?: string[]; matchNames?: string[] };
   const root = document.getElementById('lc')!;
   const LETTERS = 'ABCDEFG';
   const fixed = (root.dataset.rule || '') as Rule | '';
@@ -178,7 +183,6 @@ const description = 'リーグ戦（総当たり）の勝敗・取得ゲーム�
   const pct = (r: number) => `${(Math.round(r * 1000) / 10).toFixed(1)}%`;
   const digits = (v: string) => v.replace(/[０-９]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 0xFEE0)).replace(/\D/g, '').slice(0, 2);
   const pairs = () => { const p: [number, number][] = []; for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) p.push([i, j]); return p; };
-  const shortMatch = (s: string) => s.replace('ダブルス', '').replace('ミックス', 'ミ').slice(0, 2);
 
   function renderFormats() {
     const box = document.getElementById('lc-fmts')!;
@@ -213,7 +217,7 @@ const description = 'リーグ戦（総当たり）の勝敗・取得ゲーム�
     const labels = f.matches ?? [''];
     rowsBox.innerHTML = labels.map((lb, m) => `
       <div class="lc-dlg__row">
-        ${lb ? `<span class="lc-dlg__mlabel">${esc(lb)}</span>` : ''}
+        ${lb ? `<span class="lc-dlg__mlabel"><b>${esc(lb)}</b>${f.matchNames?.[m] ? `<small>${esc(f.matchNames[m])}</small>` : ''}</span>` : ''}
         <input class="lc-dlg__in" data-m="${m}" data-s="0" inputmode="numeric" maxlength="2" autocomplete="off" aria-label="${esc(lb)} ${esc(nameOf(i))} のゲーム数" value="${esc(sc[m][i][j])}">
         <span class="lc-dlg__sep">-</span>
         <input class="lc-dlg__in" data-m="${m}" data-s="1" inputmode="numeric" maxlength="2" autocomplete="off" aria-label="${esc(lb)} ${esc(nameOf(j))} のゲーム数" value="${esc(sc[m][j][i])}">
@@ -274,18 +278,19 @@ const description = 'リーグ戦（総当たり）の勝敗・取得ゲーム�
     const ids = Array.from({ length: n }, (_, i) => i);
     const played = (i: number, j: number) => { for (let m = 0; m < mm; m++) if (sc[m][i][j] === '' || sc[m][j][i] === '') return false; return true; };
     const tot = (i: number, j: number) => { let s = 0; for (let m = 0; m < mm; m++) s += Number(sc[m][i][j]); return s; };
-    const st = ids.map(() => ({ w: 0, l: 0, d: 0, gw: 0, gl: 0, mix: 0 }));
+    const st = ids.map(() => ({ w: 0, l: 0, d: 0, gw: 0, gl: 0, mix: 0, by: Array(mm).fill(0) as number[] }));
     let missing = 0;
     for (const [i, j] of pairs()) {
       if (!played(i, j)) { missing++; continue; }
       const a = tot(i, j), b = tot(j, i);
       st[i].gw += a; st[i].gl += b; st[j].gw += b; st[j].gl += a;
       st[i].mix += Number(sc[0][i][j]); st[j].mix += Number(sc[0][j][i]);
+      for (let m = 0; m < mm; m++) { st[i].by[m] += Number(sc[m][i][j]); st[j].by[m] += Number(sc[m][j][i]); }
       if (a > b) { st[i].w++; st[j].l++; } else if (b > a) { st[j].w++; st[i].l++; } else { st[i].d++; st[j].d++; }
     }
     const rate = (i: number) => { const t = st[i].gw + st[i].gl; return t > 0 ? st[i].gw / t : 0; };
     const keyFn: Record<string, (i: number) => number> = { rate, wins: (i) => st[i].w, gw: (i) => st[i].gw, mix: (i) => st[i].mix };
-    const keyName: Record<string, string> = { rate: '取得ゲーム率', wins: '勝数', gw: '獲得ゲーム数の合計', mix: f.matches ? `${f.matches[0]}の獲得ゲーム数` : '' };
+    const keyName: Record<string, string> = { rate: '取得ゲーム率', wins: '勝数', gw: '得点（獲得ゲーム数の合計）', mix: f.matches ? `${f.matches[0]}の獲得ゲーム数` : '' };
     const fmtKeyV = (k: string, i: number) => (k === 'rate' ? pct(rate(i)) : k === 'wins' ? `${st[i].w}勝` : `${keyFn[k](i)}ゲーム`);
     const h2h = (a: number, b: number) => { if (!played(a, b)) return 0; const x = tot(a, b), y = tot(b, a); return x > y ? -1 : y > x ? 1 : 0; };
     const names_ = (g: number[]) => g.map(nameOf).join('・');
@@ -348,19 +353,19 @@ const description = 'リーグ戦（総当たり）の勝敗・取得ゲーム�
     // 順位の表
     const table = document.getElementById('lc-table')!;
     table.innerHTML = team
-      ? `<thead><tr><th>順位</th><th>チーム</th><th>獲得ゲーム数の合計</th><th>${esc(f.matches?.[0] ?? '')}</th><th>対戦の勝-敗${hasDraw ? '-分' : ''}</th><th>決め手</th></tr></thead><tbody>${
-        ranking.map((i) => `<tr class="${rankOf.get(i) === 1 ? 'is-top' : ''}"><td class="lc-rank">${tied.has(i) ? `${rankOf.get(i)}<small>（同率）</small>` : rankOf.get(i)}位</td><td class="lc-team">${esc(nameOf(i))}</td><td class="lc-rate">${st[i].gw}</td><td>${st[i].mix}</td><td>${st[i].w}-${st[i].l}${hasDraw ? `-${st[i].d}` : ''}</td><td class="lc-why">${esc(reason.get(i) ?? '')}</td></tr>`).join('')}</tbody>`
+      ? `<thead><tr><th>順位</th><th>チーム</th><th>得点</th>${(f.matches ?? []).map((lb) => `<th>${esc(lb)}</th>`).join('')}<th>決め手</th></tr></thead><tbody>${
+        ranking.map((i) => `<tr class="${rankOf.get(i) === 1 ? 'is-top' : ''}"><td class="lc-rank">${tied.has(i) ? `${rankOf.get(i)}<small>（同率）</small>` : rankOf.get(i)}位</td><td class="lc-team">${esc(nameOf(i))}</td><td class="lc-rate">${st[i].gw}</td>${st[i].by.map((v) => `<td>${v}</td>`).join('')}<td class="lc-why">${esc(reason.get(i) ?? '')}</td></tr>`).join('')}</tbody>`
       : `<thead><tr><th>順位</th><th>チーム</th><th>勝-敗${hasDraw ? '-分' : ''}</th><th>取得</th><th>失</th><th>取得ゲーム率</th><th>決め手</th></tr></thead><tbody>${
         ranking.map((i) => `<tr class="${rankOf.get(i) === 1 ? 'is-top' : ''}"><td class="lc-rank">${tied.has(i) ? `${rankOf.get(i)}<small>（同率）</small>` : rankOf.get(i)}位</td><td class="lc-team">${esc(nameOf(i))}</td><td>${st[i].w}-${st[i].l}${hasDraw ? `-${st[i].d}` : ''}</td><td>${st[i].gw}</td><td>${st[i].gl}</td><td class="lc-rate">${st[i].gw + st[i].gl ? pct(rate(i)) : '—'}</td><td class="lc-why">${esc(reason.get(i) ?? '')}</td></tr>`).join('')}</tbody>`;
 
     // リーグ表：大会運営システムのリーグ表と同じ形（角丸の外枠・見出しの下に赤線・自分同士は斜線・勝ちは淡い赤地に赤字）
     const grid = document.getElementById('lc-grid')!;
     const statHead = team
-      ? `<th class="lc-g__stat">獲得<br>ゲーム</th><th class="lc-g__stat">${esc(f.matches?.[0] ?? '')}</th>`
+      ? '<th class="lc-g__stat">得点</th>'
       : r === 'games' ? '<th class="lc-g__stat">取得ゲーム率</th>' : '<th class="lc-g__stat">勝敗</th><th class="lc-g__stat">勝率</th>';
     const statCells = (i: number) => {
       const t = st[i].gw + st[i].gl;
-      if (team) return `<td class="lc-g__stat"><b class="lc-g__rate">${t ? st[i].gw : ''}</b></td><td class="lc-g__stat lc-g__sub">${t ? st[i].mix : ''}</td>`;
+      if (team) return `<td class="lc-g__stat"><b class="lc-g__pts">${t ? st[i].gw : ''}</b></td>`;
       if (r === 'games') return `<td class="lc-g__stat">${t ? `<b class="lc-g__rate">${pct(rate(i))}</b><small>${st[i].gw}/${t}ゲーム</small>` : ''}</td>`;
       const pl = st[i].w + st[i].l + st[i].d;
       return `<td class="lc-g__stat"><b>${pl ? `${st[i].w}-${st[i].l}${hasDraw ? `-${st[i].d}` : ''}` : ''}</b></td><td class="lc-g__stat lc-g__sub">${t ? rate(i).toFixed(3) : ''}</td>`;
@@ -375,17 +380,34 @@ const description = 'リーグ戦（総当たり）の勝敗・取得ゲーム�
           const label = `${esc(nameOf(i))} 対 ${esc(nameOf(j))}`;
           if (!played(i, j)) return `<td><button type="button" class="lc-cell lc-cell--empty" data-i="${i}" data-j="${j}" aria-label="${label} のスコアを入れる">入力</button></td>`;
           const a = tot(i, j), b = tot(j, i);
-          const detail = team ? `<small class="lc-cell__det">${(f.matches ?? []).map((lb, m) => `${esc(shortMatch(lb))}${sc[m][i][j]}-${sc[m][j][i]}`).join(' ')}</small>` : '';
-          return `<td class="${a > b ? 'is-win' : a < b ? 'is-lose' : 'is-draw'}"><button type="button" class="lc-cell" data-i="${i}" data-j="${j}" aria-label="${label} ${a}-${b}（押して直す）">${a}-${b}${detail}</button></td>`;
+          if (team) {
+            // チーム対抗戦：上に対戦の合計（得点）、下に MIX・WD・MD を 1 行ずつ（取った側を赤字）
+            const rows = (f.matches ?? []).map((lb, m) => {
+              const x = Number(sc[m][i][j]), y = Number(sc[m][j][i]);
+              return `<span class="lc-tie__row ${x > y ? 'is-w' : x < y ? 'is-l' : ''}"><i>${esc(lb)}</i><b>${x}-${y}</b></span>`;
+            }).join('');
+            return `<td class="${a > b ? 'is-win' : a < b ? 'is-lose' : 'is-draw'}"><button type="button" class="lc-cell lc-tie" data-i="${i}" data-j="${j}" aria-label="${label} 合計${a}-${b}（押して直す）"><span class="lc-tie__tot">${a}<small>-</small>${b}</span><span class="lc-tie__rows">${rows}</span></button></td>`;
+          }
+          return `<td class="${a > b ? 'is-win' : a < b ? 'is-lose' : 'is-draw'}"><button type="button" class="lc-cell" data-i="${i}" data-j="${j}" aria-label="${label} ${a}-${b}（押して直す）">${a}-${b}</button></td>`;
         }).join('')}${statCells(i)}<td class="lc-g__stat lc-g__rank${champ ? ' is-champ' : ''}">${done ? (tied.has(i) ? `${rk}位<small>同率</small>` : `${rk}位`) : ''}</td></tr>`;
       }).join('')}</tbody>`;
     grid.querySelectorAll<HTMLButtonElement>('.lc-cell').forEach((b) => b.addEventListener('click', () => openCell(Number(b.dataset.i), Number(b.dataset.j))));
 
+    // チーム得点（チーム対抗戦だけ）：チームごとに MIX・WD・MD・得点。全対戦が入れば順位も
+    const ptsBox = document.getElementById('lc-pts-box')!;
+    ptsBox.hidden = !team;
+    if (team) {
+      const maxBy = (f.matches ?? []).map((_, m) => Math.max(...ids.map((i) => st[i].by[m])));
+      const maxPts = Math.max(...ids.map((i) => st[i].gw));
+      document.getElementById('lc-pts')!.innerHTML = `<thead><tr><th class="lc-pts__team">チーム</th>${(f.matches ?? []).map((lb, m) => `<th>${esc(lb)}<small>${esc(f.matchNames?.[m] ?? '')}</small></th>`).join('')}<th class="lc-pts__sum">得点</th><th>順位</th></tr></thead><tbody>${
+        ids.map((i) => `<tr><td class="lc-pts__team"><span class="lc-g__no">${i + 1}</span>${esc(nameOf(i))}</td>${st[i].by.map((v, m) => `<td class="${v > 0 && v === maxBy[m] ? 'is-max' : ''}">${v}</td>`).join('')}<td class="lc-pts__sum ${st[i].gw > 0 && st[i].gw === maxPts ? 'is-max' : ''}">${st[i].gw}</td><td class="lc-pts__rank ${done && rankOf.get(i) === 1 ? 'is-champ' : ''}">${done ? `${rankOf.get(i)}位` : ''}</td></tr>`).join('')}</tbody>`;
+    }
+
     // 計算式
     document.getElementById('lc-calc')!.innerHTML = ids.map((i) => {
       if (team) {
-        const parts = ids.filter((j) => j !== i && played(i, j)).map((j) => `対${esc(nameOf(j))} ${tot(i, j)}（${(f.matches ?? []).map((lb, m) => `${esc(shortMatch(lb))}${sc[m][i][j]}`).join('＋')}）`);
-        return `<li><b>${esc(nameOf(i))}</b>：獲得ゲーム数の合計 ＝ ${parts.length ? parts.join(' ＋ ') : '—'} ＝ ${st[i].gw}　／　${esc(f.matches?.[0] ?? '')}の合計 ${st[i].mix}</li>`;
+        const parts = ids.filter((j) => j !== i && played(i, j)).map((j) => `対${esc(nameOf(j))} ${tot(i, j)}（${(f.matches ?? []).map((lb, m) => `${esc(lb)} ${sc[m][i][j]}`).join(' ＋ ')}）`);
+        return `<li><b>${esc(nameOf(i))}</b>：得点 ＝ ${parts.length ? parts.join(' ＋ ') : '—'} ＝ <b>${st[i].gw}</b>　（${(f.matches ?? []).map((lb, m) => `${esc(lb)} ${st[i].by[m]}`).join('・')}）</li>`;
       }
       const t = st[i].gw + st[i].gl;
       return `<li><b>${esc(nameOf(i))}</b>：${st[i].w}勝${st[i].l}敗${st[i].d ? `${st[i].d}分` : ''}　取得ゲーム率 ＝ ${st[i].gw} ÷（${st[i].gw} ＋ ${st[i].gl}）＝ ${t ? `${st[i].gw} ÷ ${t} ＝ ${pct(rate(i))}` : '—（試合なし）'}</li>`;
