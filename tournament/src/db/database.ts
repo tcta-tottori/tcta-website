@@ -121,6 +121,8 @@ export interface Draw {
    * エントリー受付の「順位を反映して組む」でその順位のペアを枠に入れる（placement.ts）
    */
   slotSources?: { position: number; league: string; rank: number }[];
+  /** 大会本部が組み合わせを固定した（順位で組まない。受け箱の pairs・大会データで選手を書いた順位別の種目） */
+  slotsForced?: boolean;
   slots: {
     position: number;   // 1-indexed
     entryId: string | null;

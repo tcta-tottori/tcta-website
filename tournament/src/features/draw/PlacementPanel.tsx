@@ -18,7 +18,19 @@ export default function PlacementPanel({ eventId }: { eventId: string }) {
     const draw = await db.draws.where('eventId').equals(eventId).first();
     const matches = await db.matches.where('eventId').equals(eventId).toArray();
     const real = (n?: string | null) => !!n && n !== 'BYE';
+    // 固定された組（枠ごとの名前）
+    let fixed: { position: number; name: string }[] = [];
+    if (draw?.slotsForced) {
+      const entries = await db.entries.where('eventId').equals(eventId).toArray();
+      const players = new Map((await db.players.toArray()).map((p) => [p.playerId, p.name]));
+      fixed = draw.slots.filter((s) => s.entryId).map((s) => {
+        const e = entries.find((x) => x.entryId === s.entryId);
+        return { position: s.position, name: [e && players.get(e.playerId), e?.partnerId && players.get(e.partnerId)].filter(Boolean).join(' / ') };
+      });
+    }
     return {
+      fixed,
+      forced: !!draw?.slotsForced,
       filled: !!draw?.slots.some((s) => s.entryId),
       built: matches.length > 0,
       // 結果が入った・試合を始めた試合がある（組み直すと消えてしまうので、組み直させない）
@@ -28,9 +40,24 @@ export default function PlacementPanel({ eventId }: { eventId: string }) {
   const filled = state?.filled ?? false;
   const built = state?.built ?? false;
   const started = state?.started ?? false;
+  const forced = state?.forced ?? false;
   const [busy, setBusy] = useState(false);
   const problems = rows.filter((r) => r.problem);
   const ready = rows.filter((r) => r.entry).length;
+
+  // 組み合わせが固定されている（大会本部が決めた）ときは、順位で組み直さずに対戦表だけ作る
+  const buildForced = async () => {
+    setBusy(true);
+    try {
+      await rebuildEventMatches(eventId);
+      await reflowScheduleAfterConfirm();
+      await siteAlert('決まっている組み合わせで対戦表を作りました。', '組みました');
+    } catch (e) {
+      await siteAlert((e as Error).message, '組めませんでした');
+    } finally {
+      setBusy(false);
+    }
+  };
 
   const run = async () => {
     const msg = [
@@ -63,13 +90,24 @@ export default function PlacementPanel({ eventId }: { eventId: string }) {
         <ListOrdered className="w-4 h-4" />
         <p className="plc__title">リーグの順位で組む種目<small>{built ? '組みずみ' : 'リーグの順位待ち'}</small></p>
       </div>
+      {forced ? (
+        <p className="plc__lead">大会本部が組み合わせを決めています（リーグの順位では組み直しません）。{built ? '' : '「この組み合わせで対戦表を作る」を押してください。'}</p>
+      ) : (
       <p className="plc__lead">
         {started ? '試合が始まっているので、組み直せません。あたりが違うときは「あたり修正」で直してください。'
           : built ? 'リーグの結果が変わったときは、もう一度押すと組み直せます（試合を始める前まで）。'
           : 'リーグが終わったら「順位を反映して組む」を押してください。受付は要りません。今の順位での見込みを下に出しています。'}
       </p>
+      )}
       <ol className="plc__rows">
-        {rows.map((r) => (
+        {forced && (state?.fixed ?? []).map((r) => (
+          <li key={r.position} className="plc__row">
+            <span className="plc__pos">{r.position}</span>
+            <span className="plc__label">固定</span>
+            <span className="plc__name">{r.name || '—'}</span>
+          </li>
+        ))}
+        {!forced && rows.map((r) => (
           <li key={r.position} className={`plc__row ${r.problem ? 'is-warn' : ''}`}>
             <span className="plc__pos">{r.position}</span>
             <span className="plc__label">{r.label}</span>
@@ -78,7 +116,12 @@ export default function PlacementPanel({ eventId }: { eventId: string }) {
           </li>
         ))}
       </ol>
-      {!started && (
+      {forced && !built && (
+        <button className="btn btn--primary plc__btn" onClick={() => void buildForced()} disabled={busy}>
+          {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <ListOrdered className="w-4 h-4" />}この組み合わせで対戦表を作る
+        </button>
+      )}
+      {!started && !forced && (
         <button className="btn btn--primary plc__btn" onClick={() => void run()} disabled={busy || ready === 0}>
           {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <ListOrdered className="w-4 h-4" />}
           {built ? '順位を反映して組み直す' : '順位を反映して組む'}

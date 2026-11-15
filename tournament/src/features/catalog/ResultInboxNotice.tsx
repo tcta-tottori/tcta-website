@@ -21,7 +21,7 @@ export default function ResultInboxNotice() {
       </div>
       {open && (
         <ul className="inbox-note__list">
-          {r.applied.map((a, i) => <li key={`a${i}`}><b>{a.event}</b> {a.winner} が {a.loser} に {a.score}</li>)}
+          {r.applied.map((a, i) => <li key={`a${i}`}><b>{a.event}</b> {a.loser ? `${a.winner} が ${a.loser} に ${a.score}` : `${a.score}（${a.winner}）`}</li>)}
           {issues.map((a, i) => <li key={`i${i}`} className="is-warn"><b>{a.kind}</b> {a.event}：{a.winner} 対 {a.loser}（{a.reason}）</li>)}
         </ul>
       )}
