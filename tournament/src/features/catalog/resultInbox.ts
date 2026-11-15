@@ -13,7 +13,7 @@ import { useAppStore } from '../../stores/appStore';
 
 export interface InboxMatch { winner: string; loser: string; score: string; note?: string }
 export interface InboxPair { position: number; name: string }
-export interface InboxEvent { event: string; matches: InboxMatch[]; pairs?: InboxPair[] }
+export interface InboxEvent { event: string; matches: InboxMatch[]; pairs?: InboxPair[]; rankRule?: 'wins' | 'games' }
 export interface InboxDoc { version: string; updatedBy?: string; source?: string; events: InboxEvent[] }
 
 export interface ApplyReport {
@@ -56,6 +56,13 @@ export async function applyInbox(tournamentId: string, doc: InboxDoc): Promise<A
     if (!evt) {
       for (const r of ie.matches) report.notFound.push({ event: ie.event, winner: r.winner, loser: r.loser, reason: '種目が見つかりません' });
       continue;
+    }
+    // リーグの順位の決め方を合わせる（大会の途中で「取得ゲーム率が先」に直したときなど）
+    if (ie.rankRule === 'games' || ie.rankRule === 'wins') {
+      const draw = await db.draws.where('eventId').equals(evt.eventId).first();
+      if (draw?.id != null && draw.drawType === 'roundRobin' && (draw.leagueRankRule ?? 'wins') !== ie.rankRule) {
+        await db.draws.update(draw.id, { leagueRankRule: ie.rankRule, updatedAt: now });
+      }
     }
     if (ie.pairs?.length) await applyPairs(evt.eventId, evt.name, evt.tournamentId, ie.pairs, report);
     const matches = await db.matches.where('eventId').equals(evt.eventId).toArray();
