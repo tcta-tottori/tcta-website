@@ -53,7 +53,9 @@ let photoNo = 0;
             // 写真より成績が多いぶん（写真の無い入賞者）は、写真のあとに1行ずつ
             const own = b.photos.some((ph) => ph.caption);
             const caps = new Map(b.photos.map((ph, k) => [ph, (own ? ph.caption : b.captions[k]) ?? null]));
-            const rest = own ? [] : b.captions.slice(b.photos.length);
+            // 写真に名前の説明がある大会（入賞者を写真で見せる大会）は、写真の無い入賞者・種目には文字も出さない
+            const photoCaptioned = layout.blocks.some((x) => x.photos.some((ph) => ph.caption));
+            const rest = own || photoCaptioned ? [] : b.captions.slice(b.photos.length);
             // 写真に after（結果表のファイル名）があれば、その結果表のすぐ下に置く（「1位・2位トーナメント」の表の下に、その入賞者の写真など）
             const base = (src) => String(src).replace(/^.*\//, '').replace(/\.\w+$/, '');
             const placed = new Set();
