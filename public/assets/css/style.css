@@ -5947,6 +5947,9 @@ html.is-lite body.jsrv .rv, html.is-lite body.jsrv .rv-in { opacity: 1 !importan
 @media (prefers-reduced-motion: reduce) { .live-box__dot { animation: none; } }
 
 /* 開催中の大会の「速報」のボタン（event-buttons.js。結果のボタンの代わり）。赤い塗りのボタンそのものを、ゆっくり点滅させる */
+/* 結果のボタン：白い地に赤い文字・赤い枠（ほかの要項・ドローのボタンと見分けやすく）。マウスを載せると薄い赤の地 */
+.btn--outline.tl-btn--result { background: var(--white); color: var(--red); border-color: var(--red); font-weight: 700; }
+.btn--outline.tl-btn--result:hover { background: var(--red-tint); color: var(--red); border-color: var(--red); }
 .tl-btn--live { animation: live-blink 1.4s ease-in-out infinite; }
 .tl-btn--live:hover, .tl-btn--live:focus-visible { animation-play-state: paused; opacity: 1; }
 @keyframes live-blink { 0%, 100% { opacity: 1; } 50% { opacity: .45; } }

@@ -74,7 +74,7 @@ const extAttrs = (href) => (/^https?:/.test(href ?? '') ? { target: '_blank', re
             <span class="entry-row__btns">
               {(t.buttons ?? []).map((b) =>
                 b.href
-                  ? <a class:list={['btn', b.live ? 'btn--primary tl-btn--live' : b.key === 'result' ? 'btn--primary tl-btn--result' : 'btn--outline', 'tl-btn', 'entry-row__btn']} href={b.href} {...(b.external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}>{b.label}</a>
+                  ? <a class:list={['btn', b.live ? 'btn--primary tl-btn--live' : b.key === 'result' ? 'btn--outline tl-btn--result' : 'btn--outline', 'tl-btn', 'entry-row__btn']} href={b.href} {...(b.external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}>{b.label}</a>
                   : <span class="btn tl-btn tl-btn--off entry-row__btn" aria-disabled="true" title="準備中">{b.label}</span>
               )}
             </span>

@@ -61,7 +61,7 @@ const len = eventLabel.length > 10 ? 'long' : 'short';
       <div class="tcard__btns">
         {buttons.map((b) =>
           b.href
-            ? <a class:list={['btn', b.live ? 'btn--primary tl-btn--live' : b.key === 'result' ? 'btn--primary tl-btn--result' : 'btn--outline', 'tl-btn', 'tcard__btn']} href={b.href} {...(b.external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}>{b.label}</a>
+            ? <a class:list={['btn', b.live ? 'btn--primary tl-btn--live' : b.key === 'result' ? 'btn--outline tl-btn--result' : 'btn--outline', 'tl-btn', 'tcard__btn']} href={b.href} {...(b.external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}>{b.label}</a>
             : <span class="btn tl-btn tl-btn--off tcard__btn" aria-disabled="true" title="準備中">{b.label}</span>
         )}
       </div>
