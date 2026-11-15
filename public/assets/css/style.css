@@ -6087,11 +6087,36 @@ html.is-lite body.jsrv .rv, html.is-lite body.jsrv .rv-in { opacity: 1 !importan
 .lc-dlg__rows.is-multi .lc-dlg__heads { margin-left: 92px; }
 .lc-dlg__rows.is-multi .lc-dlg__row { grid-template-columns: 82px 1fr auto 1fr; }
 .lc-dlg__rows.is-multi .lc-dlg__in { height: 52px; font-size: 26px; }
-.lc-dlg__mlabel { justify-self: start; font: 700 13px/1.3 var(--fjp); color: var(--gray-700); }
+.lc-dlg__mlabel { justify-self: start; display: grid; font: 700 15px/1.2 var(--flt); color: var(--ink); }
+.lc-dlg__mlabel small { font: 500 10px/1.3 var(--fjp); color: var(--gray-500); }
 .lc-dlg__heads:has(+ .lc-dlg__rows.is-multi) { padding-left: 92px; }
 .lc-cell__det { display: block; margin-top: 3px; font: 500 9.5px/1.2 var(--fjp); color: var(--gray-500); white-space: nowrap; }
-.lc-grid--team .lc-g__col { min-width: 92px; }
-.lc-grid--team .lc-cell { padding: 4px 2px; }
+.lc-grid--team .lc-g__col { min-width: 96px; }
+/* チーム対抗戦のマス：上に対戦の合計（得点）、下に MIX・WD・MD */
+.lc-tie { padding: 6px 6px 7px !important; display: grid; gap: 4px; justify-items: stretch; }
+.lc-tie__tot { display: block; text-align: center; font: 700 17px/1 var(--flt); }
+.lc-tie__tot small { margin: 0 3px; font-size: 13px; }
+.lc-tie__rows { display: grid; gap: 1px; padding-top: 4px; border-top: 1px dashed rgba(0, 0, 0, .15); }
+.lc-tie__row { display: flex; justify-content: space-between; gap: 6px; font: 500 11.5px/1.35 var(--flt); color: #6B7280; }
+.lc-tie__row i { font-style: normal; font-weight: 700; color: #9CA3AF; letter-spacing: .02em; }
+.lc-tie__row b { font-weight: 700; }
+.lc-tie__row.is-w b { color: #DC2626; }
+.lc-grid td.is-lose .lc-tie__tot { color: #6B7280; }
+.lc-g__pts { font: 700 18px/1 var(--flt); color: #111827; }
+/* チーム得点の表 */
+.lc-pts { width: 100%; border-collapse: separate; border-spacing: 0; border: 1px solid var(--gray-200); border-radius: 14px; overflow: hidden; font: 500 14px/1.4 var(--fjp); white-space: nowrap; }
+.lc-pts th { background: #F9FAFB; border-bottom: 2px solid #EF4444; padding: 8px 10px; font: 700 13px/1.2 var(--flt); color: #1F2937; text-align: center; }
+.lc-pts th small { display: block; margin-top: 2px; font: 500 10px/1.2 var(--fjp); color: #6B7280; }
+.lc-pts td { padding: 10px; border-top: 1px solid var(--gray-200); text-align: center; font: 700 16px/1 var(--flt); color: #374151; }
+.lc-pts tbody tr:first-child td { border-top: 0; }
+.lc-pts th + th, .lc-pts td + td { border-left: 1px solid var(--gray-200); }
+.lc-pts .lc-pts__team { text-align: left; font: 700 14px/1.3 var(--fjp); color: #1F2937; }
+.lc-pts .lc-pts__sum { background: #FEF2F2; color: #111827; font-size: 18px; }
+.lc-pts th.lc-pts__sum { background: #FDE8E8; font-size: 13px; }
+.lc-pts td.is-max { color: #DC2626; }
+.lc-pts .lc-pts__rank { font: 700 14px/1 var(--fjp); color: #4B5563; }
+.lc-pts .lc-pts__rank.is-champ { color: #DC2626; }
+@media (max-width: 639px) { .lc-pts td { padding: 9px 4px; font-size: 15px; } .lc-pts th { padding: 7px 4px; } .lc-pts th small { display: none; } .lc-pts .lc-pts__team { font-size: 13px; padding-left: 8px; } .lc-pts .lc-pts__team .lc-g__no { display: none; } }
 .lc-dlg__side { display: grid; gap: 6px; justify-items: center; font: 700 14px/1.3 var(--fjp); color: var(--ink); text-align: center; min-width: 0; }
 .lc-dlg__side span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .lc-dlg__in { width: 100%; max-width: 120px; height: 64px; border: 2px solid var(--gray-300); border-radius: var(--radius); text-align: center; font: 700 30px/1 var(--flt); }

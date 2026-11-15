@@ -7,7 +7,8 @@
 //   teams   … 最初に出すチームの数（3〜7。省略は 4）
 //   formats … 試合の形式（複数あれば画面で選ぶ）。{ key, label, total, matches }
 //               total   … 1 試合の合計ゲーム数（8 なら、片方を入れるともう片方が 8 − その数で入る）。null は自由に入れる
-//               matches … チーム対抗戦の 1 対戦の試合（['ミックス', '女子ダブルス', '男子ダブルス'] など）。省略は 1 試合
+//               matches … チーム対抗戦の 1 対戦の試合の略称（['MIX', 'WD', 'MD'] など。最初の試合が、合計が並んだときの決め手）。省略は 1 試合
+//               matchNames … その正式な名前（入力の小窓・チーム得点の表に出す）
 //   note    … ページに出す補足
 //
 // 'wins'・'games' は大会運営システム（tournament/src/features/draw/leagueStandings.ts）と同じ決め方。運営システムの大会データの rankRule とそろえる。
@@ -28,7 +29,7 @@ export const LEAGUE_RULES = {
   'r8-prince-open': {
     rule: 'team',
     teams: 3,
-    formats: [{ key: 'team', label: 'チーム対抗戦（3 試合・各 合計8ゲーム）', total: 8, matches: ['ミックス', '女子ダブルス', '男子ダブルス'] }],
+    formats: [{ key: 'team', label: 'チーム対抗戦（3 試合・各 合計8ゲーム）', total: 8, matches: ['MIX', 'WD', 'MD'], matchNames: ['ミックスダブルス', '女子ダブルス', '男子ダブルス'] }],
     note: '予選は 1 ブロック 3 チームのリーグ。1 対戦はミックス・女子ダブルス・男子ダブルスの 3 試合で、各試合は合計 8 ゲーム（ノーアド。4-4 は引き分け）。対戦の勝ち負けではなく、獲得ゲーム数の合計で順位を決めます（昨年のプログラムのルール。今年のルールは当日のプログラムでご確認ください）。',
   },
 };
@@ -67,7 +68,7 @@ export const RULE_TEXT = {
 export const DEFAULT_FORMATS = {
   wins: [{ key: 'free', label: '', total: null }, { key: 't8', label: '1試合 合計8ゲーム', total: 8 }],
   games: [{ key: 'free', label: '', total: null }, { key: 't8', label: '1試合 合計8ゲーム', total: 8 }],
-  team: [{ key: 'team', label: 'チーム対抗戦（3 試合・各 合計8ゲーム）', total: 8, matches: ['ミックス', '女子ダブルス', '男子ダブルス'] }],
+  team: [{ key: 'team', label: 'チーム対抗戦（3 試合・各 合計8ゲーム）', total: 8, matches: ['MIX', 'WD', 'MD'], matchNames: ['ミックスダブルス', '女子ダブルス', '男子ダブルス'] }],
 };
 
 /** その大会のリーグの決め方。書いていなければ null */
