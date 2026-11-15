@@ -4966,8 +4966,41 @@ body.jsrv .year-head.rv.on .year-head__ghost { animation: yh-ghost 1.1s var(--ea
   color: #fff;
   white-space: nowrap;
 }
-.award__badge--1 { background: #C9A227; border-color: #C9A227; }  /* 優勝：金 */
-.award__badge--2 { background: #8E959C; border-color: #8E959C; }  /* 準優勝：銀 */
+/* 優勝・準優勝は金属の質感（金・銀）。斜めの多段グラデーションで磨いた金属の照り返しを作り、上の縁に明るい線・下の縁に影で厚みを出す。
+   文字は刻印のように濃い色に、下へ明るい影。NEW のバッジ（.news-new）と同じ光沢の帯が一定時間ごとに横切る */
+.award__badge--1,
+.award__badge--2 {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .65), inset 0 -1px 0 rgba(0, 0, 0, .22), 0 1px 2px rgba(0, 0, 0, .18);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, .5);
+}
+.award__badge--1 {  /* 優勝：金 */
+  border-color: #9A7514;
+  background: linear-gradient(135deg, #8A6410 0%, #C9A227 16%, #F3D873 32%, #FFF3C2 42%, #E2BC48 52%, #B38B1D 68%, #E9CB6A 86%, #A57D17 100%);
+  color: #3E2B00;
+}
+.award__badge--2 {  /* 準優勝：銀 */
+  border-color: #80878E;
+  background: linear-gradient(135deg, #767D84 0%, #B4BAC0 16%, #E6EAED 32%, #FFFFFF 42%, #C9CED3 54%, #949BA2 70%, #DDE1E4 86%, #858C93 100%);
+  color: #2A2F34;
+}
+.award__badge--1::after,
+.award__badge--2::after {
+  content: "";
+  position: absolute;
+  inset: -2px auto -2px 0;
+  width: 60%;
+  background: linear-gradient(100deg, transparent 0%, rgba(255, 255, 255, .15) 30%, rgba(255, 255, 255, .8) 50%, rgba(255, 255, 255, .15) 70%, transparent 100%);
+  translate: -120% 0;
+  pointer-events: none;
+  animation:
+    news-new-shine-first .5s ease-in-out,
+    news-new-shine 2.5s ease-in-out .5s infinite;
+}
+.award__badge--2::after { animation-delay: .15s, .65s; }  /* 金と銀が並んだとき、銀は少し遅れて光る */
+@media (prefers-reduced-motion: reduce) { .award__badge--1::after, .award__badge--2::after { animation: none; display: none; } }
 .award__badge--3 { background: #B5683A; border-color: #B5683A; }  /* 3位：銅 */
 .award__badge--4 { background: #2F6E5F; border-color: #2F6E5F; }  /* 4位：緑 */
 .award__name { font-weight: 700; }
