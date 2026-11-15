@@ -6,7 +6,7 @@
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Download, Send, RefreshCw, CheckCircle2, AlertTriangle, ExternalLink } from 'lucide-react';
-import { drawSlide, drawStory, feedCaption, loadImage, loadStoryAssets, storyJpeg, storySlides, type SlideFormat, type StoryItem } from './storyCanvas';
+import { drawFeed, drawSlide, drawStory, feedCaption, feedPlan, feedSources, loadImage, loadStoryAssets, storyJpeg, storySlides, type StoryItem } from './storyCanvas';
 
 type Posted = { media_id: string; posted_at: string; posted_by: string } | null;
 type Item = StoryItem & { posted: Posted; postedSlides?: { key: string; posted_at: string }[] };
@@ -224,97 +224,84 @@ function StoryCard({ item, configured, onPosted }: { item: Item; configured: boo
 
 
 /**
- * 結果の続き：決勝の結果表 → 入賞者の写真を 1 枚ずつ大きくした画像。
- *   フィードの投稿（カルーセル・4:5・10 枚まで）… 入れる画像を選び（既定は決勝の表と優勝の写真）、本文を確かめて「フィードに投稿」
- *   ストーリーズ（9:16）                     … 「まとめてストーリーズに出す」で並びの順に 1 枚ずつ（key#番号 で記録）
+ * 結果の続き。
+ *   フィードの投稿（カルーセル・4:5・10 枚まで）… 表紙（大会名・開催日・会場・「大会結果」）→ トーナメントごとに「結果表 → 優勝者の写真」（feedPlan）
+ *   ストーリーズ（9:16）                     … 決勝の結果表 → 入賞者の写真を 1 枚ずつ（key#番号 で記録）
  */
 function SlideSeries({ item, configured, onPosted }: { item: Item; configured: boolean; onPosted: () => void }) {
-  const slides = storySlides(item);
-  const [fmt, setFmt] = useState<SlideFormat>('feed');
+  const [fmt, setFmt] = useState<'feed' | 'story'>('feed');
+  const tab = (v: 'feed' | 'story', label: string) => (
+    <button type="button" onClick={() => setFmt(v)}
+      className={`px-3 py-1.5 text-xs font-bold border ${fmt === v ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-700 border-gray-300'}`}>{label}</button>
+  );
+  return (
+    <div className="bg-white rounded border border-gray-200 p-3 space-y-3 text-sm">
+      <div className="flex items-center gap-2 flex-wrap">
+        <span className="text-xs font-bold text-white bg-primary-600 px-2 py-0.5 rounded-sm">結果・決勝の表と入賞者の写真</span>
+        <span className="font-bold text-gray-800">{item.event?.name ?? item.title}</span>
+      </div>
+      <div className="flex">{tab('feed', 'フィードの投稿（カルーセル）')}{tab('story', 'ストーリーズ')}</div>
+      {fmt === 'feed' ? <FeedSeries item={item} configured={configured} onPosted={onPosted} /> : <StorySeries item={item} configured={configured} onPosted={onPosted} />}
+    </div>
+  );
+}
+
+function saveCanvases(canvases: (HTMLCanvasElement | null)[], name: (i: number) => string) {
+  return (async () => {
+    for (let k = 0; k < canvases.length; k++) {
+      const c = canvases[k];
+      if (!c) continue;
+      const blob = await storyJpeg(c);
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = name(k);
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 1500);
+      await new Promise((r) => setTimeout(r, 400));
+    }
+  })();
+}
+
+/** フィードの投稿：表紙 → トーナメントごとに結果表と優勝者の写真（10 枚まで） */
+function FeedSeries({ item, configured, onPosted }: { item: Item; configured: boolean; onPosted: () => void }) {
+  const plan = feedPlan(item);
   const refs = useRef<(HTMLCanvasElement | null)[]>([]);
-  const imgsRef = useRef<{ logo: HTMLImageElement | null; imgs: (HTMLImageElement | null)[] } | null>(null);
-  const [loaded, setLoaded] = useState(false);
+  const [ready, setReady] = useState(false);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState('');
-  // フィードに入れる画像（10 枚まで）。既定は決勝の表をすべてと、優勝の写真（足りなければ準優勝も）
-  const [picked, setPicked] = useState<boolean[]>(() => {
-    const out = slides.map((s) => s.type === 'sheet');
-    const add = (pred: (i: number) => boolean) => slides.forEach((_, i) => { if (!out[i] && pred(i) && out.filter(Boolean).length < 10) out[i] = true; });
-    add((i) => slides[i].type === 'photo' && /^(総合)?優勝/.test((slides[i] as { caption: string | null }).caption ?? ''));
-    add((i) => slides[i].type === 'photo');
-    while (out.filter(Boolean).length > 10) out[out.lastIndexOf(true)] = false;
-    return out;
-  });
   const [caption, setCaption] = useState(() => feedCaption(item));
   const feedKey = `${item.key}#feed`;
-  const slideKey = (i: number) => `${item.key}#${String(i + 1).padStart(2, '0')}`;
-  const postedKeys = new Set((item.postedSlides ?? []).map((p) => p.key));
   const feedPosted = (item.postedSlides ?? []).find((p) => p.key === feedKey) ?? null;
-  const storyPostedCount = slides.filter((_, i) => postedKeys.has(slideKey(i))).length;
-  const shown = fmt === 'feed' ? slides.map((_, i) => i) : slides.map((_, i) => i);
-  const order = slides.map((_, i) => i).filter((i) => picked[i]); // フィードに入れる並び
 
   useEffect(() => {
     let alive = true;
+    setReady(false);
     void (async () => {
       const logo = await loadImage('/logo-tcta.png', false);
-      const imgs = await Promise.all(slides.map((s) => loadImage(s.src)));
+      const srcs = feedSources(item, plan);
+      const loaded = await Promise.all(srcs.map((s) => loadImage(s)));
       if (!alive) return;
-      imgsRef.current = { logo, imgs };
-      setLoaded(true);
+      const imgs = new Map(srcs.map((s, i) => [s, loaded[i]]));
+      plan.forEach((s, i) => { const c = refs.current[i]; if (c) drawFeed(c, item, s, imgs, logo, i + 1, plan.length); });
+      setReady(true);
     })();
     return () => { alive = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [item]);
 
-  // 形・選んだ画像が変わるたびに描き直す（フィードは選んだ画像の中での何枚目かを入れる）
-  useEffect(() => {
-    const a = imgsRef.current;
-    if (!loaded || !a) return;
-    slides.forEach((s, i) => {
-      const c = refs.current[i];
-      if (!c) return;
-      const no = fmt === 'feed' ? Math.max(1, order.indexOf(i) + 1) : i + 1;
-      const total = fmt === 'feed' ? order.length : slides.length;
-      drawSlide(c, item, s, a.imgs[i], a.logo, no, total, fmt);
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loaded, fmt, picked]);
-
-  const pickedCount = order.length;
-  const toggle = (i: number) => setPicked((p) => {
-    const n = [...p];
-    if (!n[i] && n.filter(Boolean).length >= 10) { setMsg('フィードの投稿は 10 枚までです。ほかの画像を外してから選んでください'); return p; }
-    n[i] = !n[i];
-    setMsg('');
-    return n;
-  });
-
-  const fileName = (i: number) => `${fmt === 'feed' ? '投稿' : 'ストーリーズ'}_${item.event?.name ?? 'お知らせ'}_結果_${String(i + 1).padStart(2, '0')}.jpg`;
-  const saveAll = async () => {
-    const list = fmt === 'feed' ? order : slides.map((_, i) => i);
-    for (let k = 0; k < list.length; k++) {
-      const c = refs.current[list[k]];
-      if (!c) continue;
-      const blob = await storyJpeg(c);
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = fileName(k);
-      a.click();
-      setTimeout(() => URL.revokeObjectURL(a.href), 1500);
-      await new Promise((r) => setTimeout(r, 400));
-    }
+  const label = (i: number) => {
+    const s = plan[i];
+    return s.type === 'cover' ? '表紙' : s.type === 'sheet' ? s.label : s.type === 'sheets2' ? s.items.map((x) => x.label).join('／') : (s.caption ?? '写真');
   };
 
-  const postFeed = async () => {
-    if (pickedCount < 2) { setMsg('2 枚以上選んでください'); return; }
+  const post = async () => {
     const again = !!feedPosted;
-    if (!window.confirm(`${again ? 'もう一度' : ''}選んだ ${pickedCount} 枚を、1 つの投稿（カルーセル）として Instagram のフィードに出します。すぐフォロワーに届きます。よろしいですか？`)) return;
+    if (!window.confirm(`${again ? 'もう一度' : ''}この ${plan.length} 枚を、1 つの投稿（カルーセル）として Instagram のフィードに出します。すぐフォロワーに届きます。よろしいですか？`)) return;
     setBusy(true); setMsg('投稿しています…（1 分ほどかかることがあります）');
     try {
       const fd = new FormData();
       fd.append('caption', caption);
-      for (const i of order) {
+      for (let i = 0; i < plan.length; i++) {
         const c = refs.current[i];
         if (c) fd.append('image', await storyJpeg(c), `${i + 1}.jpg`);
       }
@@ -330,7 +317,66 @@ function SlideSeries({ item, configured, onPosted }: { item: Item; configured: b
     }
   };
 
-  const postStories = async () => {
+  return (
+    <>
+      <p className="text-xs text-gray-500">
+        表紙（大会名・開催日・会場）→ トーナメントごとに結果表と優勝者の写真の順で、1 つの投稿にまとめます（{plan.length} 枚。Instagram は 10 枚まで）。
+        {feedPosted ? `　${new Date(feedPosted.posted_at).toLocaleString('ja-JP', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })} に投稿しました。` : ''}
+      </p>
+      <div className="flex gap-3 overflow-x-auto pb-2">
+        {plan.map((_, i) => (
+          <div key={i} className="shrink-0 flex flex-col items-center gap-1 w-[176px]">
+            <canvas ref={(el) => { refs.current[i] = el; }} className="w-[176px] h-[220px] bg-white shadow border border-gray-100" aria-label={`${i + 1} 枚目 ${label(i)}`} />
+            <span className="text-[11px] text-gray-600 text-center leading-tight line-clamp-2">{i + 1}. {label(i)}</span>
+          </div>
+        ))}
+      </div>
+      <label className="block">
+        <span className="text-xs font-bold text-gray-700">投稿の本文</span>
+        <textarea value={caption} onChange={(e) => setCaption(e.target.value)} rows={10} maxLength={2200}
+          className="mt-1 w-full border border-gray-300 rounded px-2 py-1.5 text-xs leading-relaxed" />
+      </label>
+      {msg && <p className={`text-xs ${/しました$|投稿しています/.test(msg) ? 'text-green-700' : 'text-red-700'}`}>{msg}</p>}
+      <div className="flex gap-2">
+        <button type="button" disabled={!ready} onClick={() => void saveCanvases(refs.current.slice(0, plan.length), (k) => `投稿_${item.event?.name ?? 'お知らせ'}_結果_${String(k + 1).padStart(2, '0')}.jpg`)}
+          className="flex-1 inline-flex items-center justify-center gap-1 py-2 text-xs font-bold border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-40">
+          <Download className="w-4 h-4" />画像を保存
+        </button>
+        <button type="button" disabled={!ready || !configured || busy || plan.length < 2} onClick={() => void post()}
+          className="flex-1 inline-flex items-center justify-center gap-1 py-2 text-xs font-bold text-white bg-primary-600 rounded hover:bg-primary-700 disabled:opacity-40">
+          <Send className="w-4 h-4" />{busy ? '投稿中…' : feedPosted ? 'もう一度フィードに投稿' : 'フィードに投稿'}
+        </button>
+      </div>
+    </>
+  );
+}
+
+/** ストーリーズ：決勝の結果表 → 入賞者の写真を 1 枚ずつ */
+function StorySeries({ item, configured, onPosted }: { item: Item; configured: boolean; onPosted: () => void }) {
+  const slides = storySlides(item);
+  const refs = useRef<(HTMLCanvasElement | null)[]>([]);
+  const [ready, setReady] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState('');
+  const slideKey = (i: number) => `${item.key}#${String(i + 1).padStart(2, '0')}`;
+  const postedKeys = new Set((item.postedSlides ?? []).map((p) => p.key));
+  const postedCount = slides.filter((_, i) => postedKeys.has(slideKey(i))).length;
+
+  useEffect(() => {
+    let alive = true;
+    setReady(false);
+    void (async () => {
+      const logo = await loadImage('/logo-tcta.png', false);
+      const imgs = await Promise.all(slides.map((s) => loadImage(s.src)));
+      if (!alive) return;
+      slides.forEach((s, i) => { const c = refs.current[i]; if (c) drawSlide(c, item, s, imgs[i], logo, i + 1, slides.length, 'story'); });
+      setReady(true);
+    })();
+    return () => { alive = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [item]);
+
+  const postAll = async () => {
     const todo = slides.map((_, i) => i).filter((i) => !postedKeys.has(slideKey(i)));
     if (todo.length === 0) { setMsg('すべて出しています'); return; }
     if (!window.confirm(`決勝の結果表・入賞者の写真 ${todo.length} 枚を、この並びの順にストーリーズに出します。すぐフォロワーに届き、取り消せません。よろしいですか？`)) return;
@@ -357,63 +403,30 @@ function SlideSeries({ item, configured, onPosted }: { item: Item; configured: b
     }
   };
 
-  const tab = (v: SlideFormat, label: string) => (
-    <button type="button" onClick={() => { setFmt(v); setMsg(''); }}
-      className={`px-3 py-1.5 text-xs font-bold border ${fmt === v ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-700 border-gray-300'}`}>{label}</button>
-  );
-
   return (
-    <div className="bg-white rounded border border-gray-200 p-3 space-y-3 text-sm">
-      <div className="flex items-center gap-2 flex-wrap">
-        <span className="text-xs font-bold text-white bg-primary-600 px-2 py-0.5 rounded-sm">結果・決勝の表と入賞者の写真</span>
-        <span className="font-bold text-gray-800">{item.event?.name ?? item.title}</span>
-      </div>
-      <div className="flex">{tab('feed', 'フィードの投稿（カルーセル）')}{tab('story', 'ストーリーズ')}</div>
-      <p className="text-xs text-gray-500">
-        {fmt === 'feed'
-          ? `決勝の結果表 → 入賞者の写真の順で、1 つの投稿にまとめます（4:5・10 枚まで）。入れる画像にチェックを付けてください（いま ${pickedCount} 枚）。${feedPosted ? `　${new Date(feedPosted.posted_at).toLocaleString('ja-JP', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })} に投稿しました。` : ''}`
-          : `決勝の結果表 → 入賞者の写真を 1 枚ずつ、並びの順にストーリーズに出します（${slides.length} 枚）。${storyPostedCount > 0 ? `${storyPostedCount} 枚は出しました。` : ''}`}
-      </p>
+    <>
+      <p className="text-xs text-gray-500">決勝の結果表 → 入賞者の写真を 1 枚ずつ、並びの順にストーリーズに出します（{slides.length} 枚）。{postedCount > 0 ? `${postedCount} 枚は出しました。` : ''}</p>
       <div className="flex gap-3 overflow-x-auto pb-2">
-        {shown.map((i) => {
-          const s = slides[i];
-          const on = fmt === 'story' || picked[i];
-          return (
-            <label key={i} className={`shrink-0 flex flex-col items-center gap-1 ${fmt === 'feed' ? 'cursor-pointer' : ''} ${on ? '' : 'opacity-40'}`}>
-              <canvas ref={(el) => { refs.current[i] = el; }}
-                className={`${fmt === 'feed' ? 'w-[176px] h-[220px]' : 'w-[162px] h-[288px]'} bg-white shadow border border-gray-100`}
-                aria-label={`${i + 1} 枚目 ${s.type === 'sheet' ? s.label : s.caption ?? ''}`} />
-              <span className="text-[11px] text-gray-600 flex items-center gap-1">
-                {fmt === 'feed' && <input type="checkbox" checked={!!picked[i]} onChange={() => toggle(i)} />}
-                {s.type === 'sheet' ? '決勝の表' : (s.caption ?? '写真').split(/\s/)[0]}
-                {fmt === 'story' && postedKeys.has(slideKey(i)) && <span className="text-green-700">（出しました）</span>}
-              </span>
-            </label>
-          );
-        })}
+        {slides.map((s, i) => (
+          <div key={i} className="shrink-0 flex flex-col items-center gap-1">
+            <canvas ref={(el) => { refs.current[i] = el; }} className="w-[162px] h-[288px] bg-white shadow border border-gray-100" aria-label={`${i + 1} 枚目 ${s.type === 'sheet' ? s.label : s.caption ?? ''}`} />
+            <span className={`text-[11px] ${postedKeys.has(slideKey(i)) ? 'text-green-700' : 'text-gray-500'}`}>
+              {i + 1}. {s.type === 'sheet' ? '決勝の表' : (s.caption ?? '写真').split(/\s/)[0]}{postedKeys.has(slideKey(i)) ? '（出しました）' : ''}
+            </span>
+          </div>
+        ))}
       </div>
-      {fmt === 'feed' && (
-        <label className="block">
-          <span className="text-xs font-bold text-gray-700">投稿の本文</span>
-          <textarea value={caption} onChange={(e) => setCaption(e.target.value)} rows={10} maxLength={2200}
-            className="mt-1 w-full border border-gray-300 rounded px-2 py-1.5 text-xs leading-relaxed" />
-        </label>
-      )}
-      {msg && <p className={`text-xs ${/しました$|出しています|投稿しています/.test(msg) ? 'text-green-700' : 'text-red-700'}`}>{msg}</p>}
+      {msg && <p className={`text-xs ${/しました$|出しています/.test(msg) && !/：/.test(msg) ? 'text-green-700' : 'text-red-700'}`}>{msg}</p>}
       <div className="flex gap-2">
-        <button type="button" disabled={!loaded} onClick={() => void saveAll()} className="flex-1 inline-flex items-center justify-center gap-1 py-2 text-xs font-bold border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-40">
-          <Download className="w-4 h-4" />{fmt === 'feed' ? '選んだ画像を保存' : 'まとめて保存'}
+        <button type="button" disabled={!ready} onClick={() => void saveCanvases(refs.current.slice(0, slides.length), (k) => `ストーリーズ_${item.event?.name ?? 'お知らせ'}_結果_${String(k + 1).padStart(2, '0')}.jpg`)}
+          className="flex-1 inline-flex items-center justify-center gap-1 py-2 text-xs font-bold border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-40">
+          <Download className="w-4 h-4" />まとめて保存
         </button>
-        {fmt === 'feed' ? (
-          <button type="button" disabled={!loaded || !configured || busy || pickedCount < 2} onClick={() => void postFeed()} className="flex-1 inline-flex items-center justify-center gap-1 py-2 text-xs font-bold text-white bg-primary-600 rounded hover:bg-primary-700 disabled:opacity-40">
-            <Send className="w-4 h-4" />{busy ? '投稿中…' : feedPosted ? 'もう一度フィードに投稿' : 'フィードに投稿'}
-          </button>
-        ) : (
-          <button type="button" disabled={!loaded || !configured || busy || storyPostedCount === slides.length} onClick={() => void postStories()} className="flex-1 inline-flex items-center justify-center gap-1 py-2 text-xs font-bold text-white bg-primary-600 rounded hover:bg-primary-700 disabled:opacity-40">
-            <Send className="w-4 h-4" />{busy ? '投稿中…' : storyPostedCount === slides.length ? 'すべて出しました' : storyPostedCount > 0 ? '残りをストーリーズに出す' : 'まとめてストーリーズに出す'}
-          </button>
-        )}
+        <button type="button" disabled={!ready || !configured || busy || postedCount === slides.length} onClick={() => void postAll()}
+          className="flex-1 inline-flex items-center justify-center gap-1 py-2 text-xs font-bold text-white bg-primary-600 rounded hover:bg-primary-700 disabled:opacity-40">
+          <Send className="w-4 h-4" />{busy ? '投稿中…' : postedCount === slides.length ? 'すべて出しました' : postedCount > 0 ? '残りをストーリーズに出す' : 'まとめてストーリーズに出す'}
+        </button>
       </div>
-    </div>
+    </>
   );
 }
