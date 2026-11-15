@@ -30,6 +30,8 @@ export interface ZustandSnapshotPayload {
 
 /** スナップショット応答（全データ） */
 export interface SnapshotResponsePayload {
+  /** 送った端末の大会（大会データベースの id）と、データの新しさ（試合・受付・ドローの更新時刻のいちばん新しいもの） */
+  meta?: { catalogId: string | null; dataVersion: number };
   dexie: {
     table: string;
     rows: Record<string, unknown>[];

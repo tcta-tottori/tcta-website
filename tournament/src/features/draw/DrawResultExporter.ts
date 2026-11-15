@@ -729,6 +729,8 @@ export async function renderTournamentResultCanvas(opts: ResultExportOptions): P
     return swap ? { top: b, bot: a } : { top: a, bot: b };
   };
 
+  // 準決勝の縦線を、決勝の横線の高さ（apexY）でそのまま合流させた山（決勝のところで段差をつなぐ縦線を足さない）
+  const joinedAtApex: Record<Side, boolean> = { L: false, R: false };
   for (const side of ['L', 'R'] as Side[]) {
     for (let r = 1; r <= halfRounds; r++) {
       const half = halfSlots / 2 ** r;           // 片側のこのラウンドの試合数
@@ -742,7 +744,13 @@ export async function renderTournamentResultCanvas(opts: ResultExportOptions): P
         const emptyBot = isEmptyNode(r - 1, 2 * gIdx + 1);
         const yTop = nodeY(r - 1, 2 * gIdx);
         const yBot = nodeY(r - 1, 2 * gIdx + 1);
-        const yMid = nodeY(r, gIdx);
+        let yMid = nodeY(r, gIdx);
+        // 決勝へ向かう最終列は、決勝の横線の高さで合流させる。合流点を準決勝の中間に置いたままだと、
+        // 決勝の線との段差をつなぐ縦線が足され、勝った側の赤線が合流点を越えて余計に伸びて見えていた
+        if (r === halfRounds && apexY > Math.min(yTop, yBot) && apexY < Math.max(yTop, yBot)) {
+          yMid = apexY;
+          joinedAtApex[side] = true;
+        }
 
         const parent = resolve(r, gIdx);
         const top = resolve(r - 1, 2 * gIdx);
@@ -807,11 +815,11 @@ export async function renderTournamentResultCanvas(opts: ResultExportOptions): P
   const xFinR = joinX('R', halfRounds);
   // 片側がすべて BYE のときは、その山からの線は引かない
   if (!emptyFinL) {
-    if (yL !== apexY) segs.push({ x1: xFinL, y1: yL, x2: xFinL, y2: apexY, win: winL });
+    if (yL !== apexY && !joinedAtApex.L) segs.push({ x1: xFinL, y1: yL, x2: xFinL, y2: apexY, win: winL });
     segs.push({ x1: xFinL, y1: apexY, x2: centerX, y2: apexY, win: winL });
   }
   if (!emptyFinR) {
-    if (yR !== apexY) segs.push({ x1: xFinR, y1: yR, x2: xFinR, y2: apexY, win: winR });
+    if (yR !== apexY && !joinedAtApex.R) segs.push({ x1: xFinR, y1: yR, x2: xFinR, y2: apexY, win: winR });
     segs.push({ x1: xFinR, y1: apexY, x2: centerX, y2: apexY, win: winR });
   }
   // 優勝者へ立ち上がる縦線

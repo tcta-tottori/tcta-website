@@ -24,6 +24,24 @@ import type {
 /** リモートから適用中の変更を再ブロードキャストしないためのフラグ */
 let isApplyingRemote = false;
 
+/** この端末だけで行う大きな書き換え（大会を入れる・入れ直す・消す・バックアップから戻す）の最中。ほかの端末へは流さない */
+let localOnlyDepth = 0;
+
+/**
+ * この端末だけの書き換えとして実行する（ほかの運営端末へ配信しない）。
+ * 大会を端末に入れる・入れ直す・運営データを消す・バックアップから戻すときに使う。
+ * これを通さないと、自動で共有している相手の端末でも同じ行が足されたり消えたりする
+ */
+export async function runLocalOnly<T>(fn: () => Promise<T>): Promise<T> {
+  localOnlyDepth++;
+  try {
+    return await fn();
+  } finally {
+    // Dexie のフックは書き込みの直後に呼ばれるので、少し待ってから戻す
+    setTimeout(() => { localOnlyDepth = Math.max(0, localOnlyDepth - 1); }, 0);
+  }
+}
+
 /**
  * サーバーキャッシュ登録の最大待ち時間。
  * ライブスコアのように変更が続く間もこの間隔では必ず登録する。
@@ -205,6 +223,11 @@ class SyncEngine {
     if (this.viewerMode) this.startViewerRetry();
   }
 
+  /** 今入っている部屋 */
+  currentRoom(): string {
+    return this.roomCode;
+  }
+
   /** 観戦モードかどうか */
   isViewerMode(): boolean {
     return this.viewerMode;
@@ -307,7 +330,7 @@ class SyncEngine {
 
   /** Dexie の変更をブロードキャスト */
   broadcastDexieChange(payload: DexieChangePayload): void {
-    if (!this.active || isApplyingRemote) return;
+    if (!this.active || isApplyingRemote || localOnlyDepth > 0) return;
     const store = useSyncStore.getState();
     this.broadcast({
       type: 'dexie-change',
@@ -326,7 +349,7 @@ class SyncEngine {
 
   /** Zustand のスナップショットをブロードキャスト */
   broadcastZustandSnapshot(storeName: 'mixed' | 'team' | 'app', state: Record<string, unknown>): void {
-    if (!this.active || isApplyingRemote) return;
+    if (!this.active || isApplyingRemote || localOnlyDepth > 0) return;
     const syncStore = useSyncStore.getState();
     this.broadcast({
       type: 'zustand-snapshot',
@@ -497,7 +520,22 @@ class SyncEngine {
     return rows[0] as Record<string, unknown> | undefined;
   }
 
+  /** 運営端末どうしで、新しく足された行がこの端末の大会のものか（ほかの大会の行で散らからないように） */
+  private async belongsHere(payload: DexieChangePayload): Promise<boolean> {
+    if (this.viewerMode || payload.operation !== 'create' || !payload.data) return true;
+    const tid = useAppStore.getState().currentTournamentId;
+    if (!tid) return true; // 大会が入っていない端末は、そのまま受け取る
+    const d = payload.data;
+    if (typeof d.tournamentId === 'string') return d.tournamentId === tid;
+    if (typeof d.eventId === 'string') {
+      const ev = await db.events.where('eventId').equals(d.eventId).first();
+      return ev?.tournamentId === tid;
+    }
+    return true; // 選手・ふりがななど、大会に属さない行
+  }
+
   private async applyDexieChange(payload: DexieChangePayload): Promise<void> {
+    if (!(await this.belongsHere(payload))) return;
     isApplyingRemote = true;
     try {
       const table = db.table(payload.table);
@@ -661,7 +699,8 @@ class SyncEngine {
         useMixedStore.setState(payload.state);
       } else if (payload.store === 'team') {
         useTeamStore.setState(payload.state);
-      } else if (payload.store === 'app') {
+      } else if (payload.store === 'app' && this.viewerMode) {
+        // 選んでいる大会は観戦端末だけが合わせる（運営端末どうしで、ほかの端末の大会に切り替えられないように）
         useAppStore.setState({ currentTournamentId: (payload.state.currentTournamentId as string | null) ?? null });
       }
     } catch (err) {
@@ -676,8 +715,21 @@ class SyncEngine {
   // フルスナップショット（初回同期）
   // ===========================
 
+  /** この端末の大会（大会データベースの id）と、データの新しさ（運営端末どうしで古いデータに上書きされないように比べる） */
+  private async localMeta(): Promise<{ catalogId: string | null; dataVersion: number; hasTournament: boolean }> {
+    const tid = useAppStore.getState().currentTournamentId;
+    const t = tid ? await db.tournaments.where('tournamentId').equals(tid).first() : undefined;
+    let dataVersion = 0;
+    for (const name of ['matches', 'entries', 'draws']) {
+      const rows = (await db.table(name).toArray()) as { updatedAt?: number }[];
+      for (const r of rows) if (typeof r.updatedAt === 'number' && r.updatedAt > dataVersion) dataVersion = r.updatedAt;
+    }
+    return { catalogId: t?.catalogId ?? null, dataVersion, hasTournament: !!t };
+  }
+
   /** 現在の全データからスナップショット応答メッセージを構築 */
   private async buildSnapshotMessage(): Promise<SyncMessage> {
+    const meta = await this.localMeta();
     const dexieData = await this.exportDexieData();
     const zustandData = this.exportZustandData();
     const store = useSyncStore.getState();
@@ -688,6 +740,7 @@ class SyncEngine {
       roomCode: this.roomCode,
       timestamp: Date.now(),
       payload: {
+        meta: { catalogId: meta.catalogId, dataVersion: meta.dataVersion },
         dexie: dexieData,
         zustand: zustandData,
       } as SnapshotResponsePayload,
@@ -783,6 +836,16 @@ class SyncEngine {
   }
 
   private async applyFullSnapshot(payload: SnapshotResponsePayload): Promise<void> {
+    // 運営端末どうし（ログインした端末は自動で同じ部屋に入る。autoSync.ts）では、
+    // 同じ大会で、この端末より新しいデータのときだけ入れる（古い端末・別の大会のデータで上書きしない）。
+    // この端末に大会が無いとき（はじめて入るスマホなど）は、そのまま入れる。観戦端末はいつも入れる
+    if (!this.viewerMode) {
+      const local = await this.localMeta();
+      if (local.hasTournament) {
+        const m = payload.meta;
+        if (!m || m.catalogId !== local.catalogId || m.dataVersion <= local.dataVersion) return;
+      }
+    }
     isApplyingRemote = true;
     try {
       // Dexie データのインポート。

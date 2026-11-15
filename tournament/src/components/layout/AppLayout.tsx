@@ -7,6 +7,7 @@ import {
   Camera, LayoutGrid, Medal,
 } from 'lucide-react';
 import { isLeagueKind } from '../../features/court-bracket/leagueKind';
+import { useAutoSync } from '../../features/sync/autoSync';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../../db/database';
 import { useAppStore } from '../../stores/appStore';
@@ -127,6 +128,8 @@ export default function AppLayout() {
 
   // 試合結果の受け箱（手描きのドロー表を Claude が読み取った結果など）を少しおきに取りに行き、運営中の試合に反映する
   useResultInbox(officer.status === 'ok');
+  // ログインした運営端末どうしは、自動で同じ部屋に入って受付・結果を共有する（テストモードは共有しない。autoSync.ts）
+  useAutoSync(officer.status === 'ok' && (!!currentTournamentId || isMixedImported || isTeamImported) && !isTest);
 
   // 運営中のデータを Cloudflare に自動で保存する（変わったら少し待ってまとめて保存）
   useEffect(() => {

@@ -1,6 +1,7 @@
 // 大会の運営データ（端末の IndexedDB ＋ ミックス・団体戦）をまとめた 1 つの JSON（統合バックアップ）を作る・戻す。
 // バックアップの画面（BackupPage.tsx）と、Cloudflare への自動保存（autoSave.ts）で使う。
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { runLocalOnly } from '../sync/syncEngine';
 import { exportFullBackup, importFullBackup, validateBackupData } from './backupEngine';
 
 const MIXED_STORAGE_KEY = 'mixed-tournament-storage';
@@ -45,7 +46,12 @@ export async function buildUnifiedBackup() {
 }
 
 /** 統合バックアップを復元 */
-export async function restoreUnifiedBackup(data: any): Promise<{ imported: number; errors: string[] }> {
+/** この端末だけの書き換え（自動で共有しているほかの運営端末へは流さない。sync/syncEngine.ts の runLocalOnly） */
+export function restoreUnifiedBackup(data: any): Promise<{ imported: number; errors: string[] }> {
+  return runLocalOnly(() => restoreUnifiedBackupImpl(data));
+}
+
+async function restoreUnifiedBackupImpl(data: any): Promise<{ imported: number; errors: string[] }> {
   const errors: string[] = [];
   let imported = 0;
 
