@@ -45,16 +45,20 @@ interface CourtBracketPageProps {
 }
 
 
-/** 「リーグを全部並べる」表示を選んだかを覚えておく鍵 */
+/** ドローの表示（1 種目ずつ／予選リーグを全部／決勝トーナメントを全部）を覚えておく鍵 */
 const ALL_LEAGUES_KEY = 'tcta-draw-all-leagues';
+type DrawViewMode = 'one' | 'leagues' | 'finals';
 
 export default function CourtBracketPage({ enableScoreInput = true, only }: CourtBracketPageProps) {
   const currentTournamentId = useAppStore(state => state.currentTournamentId);
   const [selectedEventIdx, setSelectedEventIdx] = useState<number>(0);
   // スコア入力対象の試合キー "round-position"
   const [selectedMatchKey, setSelectedMatchKey] = useState<string | null>(null);
-  const [allLeagues, setAllLeagues] = useState<boolean>(() => {
-    try { return localStorage.getItem(ALL_LEAGUES_KEY) === '1'; } catch { return false; }
+  const [viewMode, setViewMode] = useState<DrawViewMode>(() => {
+    try {
+      const v = localStorage.getItem(ALL_LEAGUES_KEY);
+      return v === '1' || v === 'leagues' ? 'leagues' : v === 'finals' ? 'finals' : 'one';
+    } catch { return 'one'; }
   });
   /** クラス名をタップして開くクラス一覧 */
   const [classListOpen, setClassListOpen] = useState(false);
@@ -625,13 +629,18 @@ export default function CourtBracketPage({ enableScoreInput = true, only }: Cour
     setCourtPickKey(`${match.round}-${match.position}`);
   };
 
-  // 表示の切り替え：1 種目ずつ／リーグを全部並べる（PC は 2 列）。選んだ方はこの端末に覚えておく
+  // 表示の切り替え：1 種目ずつ／予選リーグ（リーグを全部並べる。PC は 2 列）／決勝トーナメント（トーナメントを全部並べる）。
+  // 予選リーグと決勝トーナメントは別のページに分ける。選んだ方はこの端末に覚えておく。
   // トーナメントだけを出すとき（観戦ページの「決勝トーナメント」）は切り替えを出さない
   const leagueCount = only ? 0 : allDraws.filter(d => d.drawType === 'roundRobin').length;
-  const showAll = allLeagues && leagueCount >= 2;
-  const setAllLeaguesMode = (on: boolean) => {
-    setAllLeagues(on);
-    try { localStorage.setItem(ALL_LEAGUES_KEY, on ? '1' : '0'); } catch { /* 保存できない環境 */ }
+  const finalsCount = only ? 0 : allDraws.filter(d => d.drawType !== 'roundRobin').length;
+  const canShowAll = leagueCount >= 2;
+  const showLeagues = canShowAll && viewMode === 'leagues';
+  const showFinals = canShowAll && finalsCount > 0 && viewMode === 'finals';
+  const showAll = showLeagues || showFinals;
+  const setDrawViewMode = (m: DrawViewMode) => {
+    setViewMode(m);
+    try { localStorage.setItem(ALL_LEAGUES_KEY, m); } catch { /* 保存できない環境 */ }
   };
 
   if (!currentTournamentId) {
@@ -653,12 +662,17 @@ export default function CourtBracketPage({ enableScoreInput = true, only }: Cour
         {/* 表示の切り替え（リーグ戦が 2 つ以上あるときだけ） */}
         {leagueCount >= 2 && (
           <div className="dl-viewmode" role="tablist" aria-label="ドローの表示">
-            <button role="tab" aria-selected={!showAll} className={!showAll ? 'is-on' : ''} onClick={() => setAllLeaguesMode(false)}>
+            <button role="tab" aria-selected={!showAll} className={!showAll ? 'is-on' : ''} onClick={() => setDrawViewMode('one')}>
               <Trophy />1種目ずつ
             </button>
-            <button role="tab" aria-selected={showAll} className={showAll ? 'is-on' : ''} onClick={() => setAllLeaguesMode(true)}>
-              <LayoutGrid />リーグを全部並べる<small>{leagueCount}</small>
+            <button role="tab" aria-selected={showLeagues} className={showLeagues ? 'is-on' : ''} onClick={() => setDrawViewMode('leagues')}>
+              <LayoutGrid />予選リーグ<small>{leagueCount}</small>
             </button>
+            {finalsCount > 0 && (
+              <button role="tab" aria-selected={showFinals} className={showFinals ? 'is-on' : ''} onClick={() => setDrawViewMode('finals')}>
+                <Medal />決勝トーナメント<small>{finalsCount}</small>
+              </button>
+            )}
           </div>
         )}
         <div className="dl-bar__row">
@@ -935,25 +949,25 @@ export default function CourtBracketPage({ enableScoreInput = true, only }: Cour
         )}
       </div>
 
-      {/* リーグを全部並べる表示 */}
+      {/* 予選リーグ／決勝トーナメントを全部並べる表示（別々のページ） */}
       {showAll && (
         <div className="dl-canvas dl-canvas--all">
-          <AllLeaguesGrid
+          {showLeagues && <AllLeaguesGrid
             events={events}
             editable={enableScoreInput}
             onCellSelect={enableScoreInput && !nameEditMode ? (idx, round, position) => {
               setSelectedEventIdx(idx);
               setSelectedMatchKey(`${round}-${position}`);
             } : undefined}
-          />
-          {/* リーグ表の下に、決勝トーナメント（トーナメントの種目）も並べる */}
-          <AllFinalsList
+          />}
+          {/* 決勝トーナメント（トーナメントの種目）は別のページ */}
+          {showFinals && <AllFinalsList
             events={events}
             onMatchSelect={enableScoreInput && !nameEditMode ? (idx, round, position) => {
               setSelectedEventIdx(idx);
               setSelectedMatchKey(`${round}-${position}`);
             } : undefined}
-          />
+          />}
         </div>
       )}
 
