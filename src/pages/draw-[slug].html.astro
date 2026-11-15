@@ -3,14 +3,24 @@
 import EventSection from '../components/EventSection.astro';
 import SheetList from '../components/SheetList.astro';
 import { siteData } from '../lib/cms.js';
+import { leagueRuleOf, RULE_TEXT } from '../data/league-rules.js';
 
 const { eventBySlug } = await siteData(Astro);
 const e = eventBySlug(Astro.params.slug);
 const draw = e?.sections.find((s) => s.key === 'draw');
 if (!e || !draw) return Astro.rewrite('/404');
+// リーグ戦のある大会（league-rules.js に書いた大会）は、ドローの下にリーグ戦の順位計算へのリンク
+const league = leagueRuleOf(e.slug);
 ---
 
 <EventSection e={e} label="ドロー" en="Draw" revisionKeys={['draw']}>
   <p class="note rv" style="margin-bottom:0">{draw.lead}</p>
   <div class="rv"><SheetList images={draw.images} pdfs={draw.pdfs} alt={`${e.name} ドロー`} /></div>
+  {league && (
+    <div class="lc-link rv">
+      <p class="lc-link__title">リーグ戦の順位計算</p>
+      <p class="lc-link__text">この大会のルール（{RULE_TEXT[league.rule].label}）で、リーグ戦の勝敗・取得ゲーム率・順位を計算できます。計算式と順位の決め手も確かめられます。</p>
+      <a class="btn btn--primary" href={`league-calc.html?e=${e.slug}`}>順位を計算する <span class="ln-arrow" aria-hidden="true"></span></a>
+    </div>
+  )}
 </EventSection>
