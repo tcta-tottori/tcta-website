@@ -14,9 +14,11 @@ interface Props {
   events: Event[];
   /** セルをタップしたとき（運営画面のみ）。events の何番目か・試合の回戦と位置 */
   onCellSelect?: (eventIdx: number, round: number, position: number) => void;
+  /** 運営画面か（同率のとき順位を手で決められる） */
+  editable?: boolean;
 }
 
-export default function AllLeaguesGrid({ events, onCellSelect }: Props) {
+export default function AllLeaguesGrid({ events, onCellSelect, editable = false }: Props) {
   const ids = useMemo(() => events.map(e => e.eventId), [events]);
   const data = useLiveQuery(async () => {
     if (ids.length === 0) return null;
@@ -96,6 +98,8 @@ export default function AllLeaguesGrid({ events, onCellSelect }: Props) {
             rankRule={l.draw.leagueRankRule}
             title={leagueShort(l.evt.name) || undefined}
             onCellSelect={onCellSelect ? (round, position) => onCellSelect(l.idx, round, position) : undefined}
+            manualOrder={l.draw.leagueManualOrder}
+            onSaveManualOrder={editable && l.draw.id != null ? async (order) => { await db.draws.update(l.draw.id!, { leagueManualOrder: order ?? undefined, updatedAt: Date.now() }); } : undefined}
           />
         </section>
       ))}

@@ -456,3 +456,18 @@
 .dl-allrr__meta .is-live { color: var(--red); }
 .dl-allrr__item > .overflow-auto { padding: 10px 12px 12px; }
 .dl-allrr__empty { padding: 32px; text-align: center; color: var(--gray-500); }
+
+/* ---- リーグ表：同率のとき順位を手で決める（RoundRobinRenderer） ---- */
+.rr-manual { margin-top: 10px; padding: 10px 12px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; border: 1px solid #f3d27a; border-radius: var(--radius); background: #fffaf0; }
+.rr-manual__msg { margin: 0; flex: 1 1 220px; font: 700 12px/1.6 var(--fjp); color: var(--gray-700); }
+.rr-manual__btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border: 1px solid var(--ink); border-radius: var(--radius); background: var(--white); font: 700 12px/1 var(--fjp); color: var(--ink); cursor: pointer; white-space: nowrap; }
+.rr-manual__btn--primary { background: var(--red); border-color: var(--red); color: var(--white); }
+.rr-manual__btn--ghost { border-color: var(--gray-300); color: var(--gray-600); }
+.rr-manual--edit { display: block; }
+.rr-manual__list { margin: 8px 0; padding: 0; list-style: none; }
+.rr-manual__list li { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-top: 1px solid #f1e3bd; }
+.rr-manual__rank { flex: none; width: 34px; font: 700 13px/1 var(--flt); color: var(--red); }
+.rr-manual__name { flex: 1 1 auto; min-width: 0; font: 700 13px/1.4 var(--fjp); color: var(--ink); }
+.rr-manual__list button { flex: none; width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--gray-300); border-radius: var(--radius); background: var(--white); color: var(--ink); cursor: pointer; }
+.rr-manual__list button:disabled { opacity: .3; cursor: default; }
+.rr-manual__acts { display: flex; justify-content: flex-end; gap: 8px; }
