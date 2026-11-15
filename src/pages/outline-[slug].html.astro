@@ -7,6 +7,7 @@ import EventSection from '../components/EventSection.astro';
 import SheetList from '../components/SheetList.astro';
 import EntryForms from '../components/EntryForms.astro';
 import HostBanner from '../components/HostBanner.astro';
+import LeagueCalcLink from '../components/LeagueCalcLink.astro';
 import { siteData } from '../lib/cms.js';
 
 const { eventBySlug } = await siteData(Astro);
@@ -35,4 +36,6 @@ if (!e || (!outline && !entry)) return Astro.rewrite('/404');
       <EntryForms e={e} section={entry} />
     </div>
   )}
+  {/* リーグ戦のある大会（league-rules.js）は、予選リーグの順位計算への入口 */}
+  <LeagueCalcLink e={e} />
 </EventSection>
