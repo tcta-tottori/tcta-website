@@ -745,8 +745,10 @@ html.is-lite [class~="fixed"][class~="inset-0"] > [class*="bg-white"][class*="ma
 @media (hover: hover) { .app-main .hub-card__btn--test:hover { background: #A84B00; border-color: #A84B00; color: #fff; } }
 .app-main .hub-card__btn--test:disabled { opacity: .5; cursor: not-allowed; }
 /* 最新の状態で入る（ほかの端末で運営している大会の Cloudflare の自動保存から） */
-.app-main .hub-card__btn--cloud { width: 100%; min-height: 44px; padding: 8px 12px; gap: 8px; justify-content: center; flex-wrap: wrap; border-color: var(--ink); color: var(--ink); font-size: 13.5px; }
-.app-main .hub-card__btn--cloud small { width: 100%; font: 400 11px/1.3 var(--flt); color: var(--gray-500); text-align: center; }
+/* 「最新の状態で入る」と保存時刻を上下 2 段に。高さは中身に合わせる（保存時刻が枠からはみ出さない） */
+.app-main .hub-card__btn--cloud { width: 100%; height: auto; min-height: 52px; padding: 8px 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; border-color: var(--ink); color: var(--ink); font-size: 13.5px; line-height: 1.3; }
+.app-main .hub-card__cloud-main { display: inline-flex; align-items: center; gap: 8px; }
+.app-main .hub-card__btn--cloud small { display: block; font: 400 11px/1.3 var(--flt); color: var(--gray-500); text-align: center; }
 .app-main .hub-card__btn--cloud:disabled { opacity: .5; cursor: not-allowed; }
 .hub-card__btn--gray + .hub-card__btn--test { margin-top: -2px; }
 
