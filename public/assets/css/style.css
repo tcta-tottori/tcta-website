@@ -2177,6 +2177,10 @@ a.entry-row:hover .sqbtn { background: var(--red); border-color: var(--red); col
    .news-pc は PC だけ、.news-sp はスマホ・タブレットだけに出す行（index.html.astro） */
 @media (max-width: 1023px) { #news .news-pc { display: none; } }
 @media (min-width: 1024px) { #news .news-sp { display: none; } }
+/* トップの直近大会情報も同じく、スマホ・タブレットが3件（＋薄い4件目）、PC が5件（＋薄い6件目）。
+   .tl-pc は PC だけ、.tl-sp はスマホ・タブレットだけに出す（index.html.astro・HomeTournaments.astro） */
+@media (max-width: 1023px) { #tournaments .tl-pc { display: none; } }
+@media (min-width: 1024px) { #tournaments .tl-sp { display: none; } }
 
 /* コート案内の施設一覧の4件目。お知らせの4件目（.news-list--peek）と同じ見せ方で、1件ぶんの高さに切る。
    全施設は「すべての施設を見る」で全画面のパネル（.news-all）に開く。 */

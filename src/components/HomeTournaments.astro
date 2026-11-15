@@ -20,7 +20,8 @@ import Icon from './Icon.astro';
 import Venue from './Venue.astro';
 import { STATUS, dateChip } from '../data/tournaments.js';
 
-const { items = [], caption = '開催前と終わったばかりの大会', reveal = true, showEmpty = true } = Astro.props;
+// pcFrom … この番号（0 から）以降の行は PC だけに出す（.tl-pc。トップでスマホ・タブレットは3件、PC は5件にするため）
+const { items = [], caption = '開催前と終わったばかりの大会', reveal = true, showEmpty = true, pcFrom = Infinity } = Astro.props;
 
 /** 大会名の折り返してよい位置（EntryOpen.astro・TournamentList.astro と同じ） */
 const nameParts = (name) =>
@@ -37,7 +38,7 @@ const extAttrs = (href) => (/^https?:/.test(href ?? '') ? { target: '_blank', re
       const badge = STATUS[t.status] ?? STATUS.soon;
       const href = t.action?.href ?? null;
       return (
-        <li data-tags={t.tags}>
+        <li data-tags={t.tags} class={i >= pcFrom ? 'tl-pc' : undefined}>
           <div class:list={['entry-row', 'entry-row--tl', reveal && 'rv', t.status === 'past' && 'entry-row--past']} style={reveal ? `transition-delay:${0.1 + Math.min(i, 8) * 0.06}s` : undefined}>
             <span class="entry-row__date">
               <span class="entry-row__label">開催日</span>
