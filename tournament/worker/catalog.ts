@@ -316,7 +316,9 @@ export async function handleCatalog(request: Request, env: Env, url: URL): Promi
 // 名前は全角の英数字を半角にし、空白の違いは同じ人として扱う。スコアは勝った人から見た形（例 8-3、6-1 RET）
 // ---------------------------------------------------------------------------
 interface ResultMatch { winner: string; loser: string; score: string; note?: string }
-interface ResultEvent { event: string; matches: ResultMatch[] }
+/** 組み合わせを固定する枠（順位で組む種目を、大会本部の決めた組に強制する）。name はダブルスなら代表の 1 人 */
+interface ResultPair { position: number; name: string }
+interface ResultEvent { event: string; matches: ResultMatch[]; pairs?: ResultPair[] }
 interface ResultDoc { version: string; updatedBy: string; source?: string; events: ResultEvent[] }
 
 async function handleResults(request: Request, db: D1Database, id: string, who: string): Promise<Response> {
@@ -339,12 +341,23 @@ async function handleResults(request: Request, db: D1Database, id: string, who: 
   const byEvent = new Map<string, Map<string, ResultMatch>>();
   for (const e of cur.events) byEvent.set(keyOf(e.event), new Map(e.matches.map((m) => [pairKey(m.winner, m.loser), m])));
   const names = new Map<string, string>(cur.events.map((e) => [keyOf(e.event), e.event]));
+  const pairsOf = new Map<string, ResultPair[]>(cur.events.filter((e) => e.pairs?.length).map((e) => [keyOf(e.event), e.pairs!]));
   let n = 0;
   for (const e of body.events as Record<string, unknown>[]) {
     const ev = hw(str(e?.event, 80));
-    if (!ev || !Array.isArray(e.matches)) continue;
+    if (!ev || (!Array.isArray(e.matches) && !Array.isArray(e.pairs))) continue;
     const k = keyOf(ev);
     names.set(k, names.get(k) ?? ev);
+    if (Array.isArray(e.pairs)) {
+      const ps: ResultPair[] = [];
+      for (const x of e.pairs as Record<string, unknown>[]) {
+        const position = Number(x?.position), name = hw(str(x?.name, 60));
+        if (Number.isInteger(position) && position >= 1 && position <= 256 && name) ps.push({ position, name });
+      }
+      if (ps.length) pairsOf.set(k, ps.sort((a, b) => a.position - b.position)); else pairsOf.delete(k);
+      n += ps.length;
+    }
+    if (!Array.isArray(e.matches)) { if (!byEvent.has(k)) byEvent.set(k, new Map()); continue; }
     const m = byEvent.get(k) ?? new Map<string, ResultMatch>();
     for (const x of e.matches as Record<string, unknown>[]) {
       const winner = hw(str(x?.winner, 60)), loser = hw(str(x?.loser, 60));
@@ -358,7 +371,9 @@ async function handleResults(request: Request, db: D1Database, id: string, who: 
   }
   const doc: ResultDoc = {
     version: new Date().toISOString(), updatedBy: who, ...(str(body.source, 80) ? { source: str(body.source, 80) } : {}),
-    events: [...byEvent.entries()].map(([k, m]) => ({ event: names.get(k) ?? k, matches: [...m.values()] })),
+    events: [...new Set([...byEvent.keys(), ...pairsOf.keys()])].map((k) => ({
+      event: names.get(k) ?? k, matches: [...(byEvent.get(k)?.values() ?? [])], ...(pairsOf.get(k) ? { pairs: pairsOf.get(k) } : {}),
+    })),
   };
   await db.prepare('INSERT INTO catalog_meta (k, v, updated_at) VALUES (?, ?, ?) ON CONFLICT (k) DO UPDATE SET v = excluded.v, updated_at = excluded.updated_at')
     .bind(key, JSON.stringify(doc), doc.version).run();

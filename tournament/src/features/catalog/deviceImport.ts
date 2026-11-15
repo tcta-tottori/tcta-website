@@ -108,6 +108,8 @@ async function writeEvent(
     eventStartTime: ev.eventStartTime || undefined,
     ...(ev.isRoundRobin && ev.rankRule ? { leagueRankRule: ev.rankRule } : {}),
     ...(ev.sources?.length ? { slotSources: ev.sources } : {}),
+    // 順位で組む種目に選手まで書いてあれば、大会本部が組み合わせを固定したもの（順位で組み直さない）
+    ...(ev.sources?.length && ev.players.length ? { slotsForced: true } : {}),
     // リーグ戦の専用コート（大会データにコート名で書いてあれば、そのリーグのコートに固定する）
     ...(ev.isRoundRobin && ev.leagueCourts?.length
       ? { leagueCourtIds: ev.leagueCourts.map((n) => courtIdByName.get(n)).filter((x): x is string => !!x).slice(0, 2) } : {}),

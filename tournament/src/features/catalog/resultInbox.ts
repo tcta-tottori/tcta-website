@@ -8,10 +8,12 @@
 //   ・端末の側ですでに別の結果が入っている試合は上書きしない（食い違いとして知らせる）
 import { useEffect, useSyncExternalStore } from 'react';
 import { db, type Match } from '../../db/database';
+import { rebuildEventMatches } from '../draw/rebuildMatches';
 import { useAppStore } from '../../stores/appStore';
 
 export interface InboxMatch { winner: string; loser: string; score: string; note?: string }
-export interface InboxEvent { event: string; matches: InboxMatch[] }
+export interface InboxPair { position: number; name: string }
+export interface InboxEvent { event: string; matches: InboxMatch[]; pairs?: InboxPair[] }
 export interface InboxDoc { version: string; updatedBy?: string; source?: string; events: InboxEvent[] }
 
 export interface ApplyReport {
@@ -55,6 +57,7 @@ export async function applyInbox(tournamentId: string, doc: InboxDoc): Promise<A
       for (const r of ie.matches) report.notFound.push({ event: ie.event, winner: r.winner, loser: r.loser, reason: '種目が見つかりません' });
       continue;
     }
+    if (ie.pairs?.length) await applyPairs(evt.eventId, evt.name, evt.tournamentId, ie.pairs, report);
     const matches = await db.matches.where('eventId').equals(evt.eventId).toArray();
     const byKey = new Map<string, Match>(matches.map((m) => [`${m.round}|${m.position}`, m]));
     const changed = new Set<Match>();
@@ -116,6 +119,58 @@ export async function applyInbox(tournamentId: string, doc: InboxDoc): Promise<A
     for (const c of courts) if (c.id != null && touchedCourts.has(c.courtId) && c.currentMatchId) await db.courts.update(c.id, { currentMatchId: null });
   }
   return report;
+}
+
+/**
+ * 組み合わせを固定する（順位で組む種目を、大会本部の決めた組に強制する）。
+ * 名前（ダブルスは代表の 1 人）で大会の選手を探し、その人が出ているエントリー（ペア）をこの種目の枠に入れて対戦表を作る。
+ * すでに同じ組なら何もしない。試合が始まっている（結果が入っている）ときは入れ替えない。
+ */
+async function applyPairs(eventId: string, eventName: string, tournamentId: string, pairs: InboxPair[], report: ApplyReport): Promise<void> {
+  const draw = await db.draws.where('eventId').equals(eventId).first();
+  if (!draw?.id) return;
+  const players = await db.players.toArray();
+  const evIds = (await db.events.where('tournamentId').equals(tournamentId).toArray()).map((e) => e.eventId);
+  const allEntries = await db.entries.where('eventId').anyOf(evIds).toArray();
+  const label = pairs.map((p) => `${p.position}:${p.name}`).join(' / ');
+
+  const picked = new Map<number, { playerId: string; partnerId?: string }>();
+  for (const p of pairs) {
+    const pl = players.find((x) => keyOf(x.name) === keyOf(p.name));
+    const src = pl && (allEntries.find((e) => e.playerId === pl.playerId && e.eventId !== eventId) ?? allEntries.find((e) => e.partnerId === pl.playerId && e.eventId !== eventId));
+    if (!pl || !src) { report.notFound.push({ event: eventName, winner: p.name, loser: '', reason: '組み合わせの固定：その名前の選手が見つかりません' }); return; }
+    picked.set(p.position, { playerId: src.playerId, ...(src.partnerId ? { partnerId: src.partnerId } : {}) });
+  }
+
+  const entries = await db.entries.where('eventId').equals(eventId).toArray();
+  const byId = new Map(entries.map((e) => [e.entryId, e]));
+  const same = draw.slotsForced && [...picked].every(([pos, v]) => {
+    const s = draw.slots.find((x) => x.position === pos);
+    const e = s?.entryId ? byId.get(s.entryId) : undefined;
+    return !!e && e.playerId === v.playerId && (e.partnerId ?? '') === (v.partnerId ?? '');
+  });
+  const matches = await db.matches.where('eventId').equals(eventId).toArray();
+  if (same && matches.length > 0) return;
+  if (matches.some((m) => m.score || m.status === 'finished' || m.status === 'playing')) {
+    report.conflicts.push({ event: eventName, winner: label, loser: '', reason: '試合が始まっているので、組み合わせを固定できませんでした' });
+    return;
+  }
+
+  await db.transaction('rw', [db.entries, db.draws, db.matches], async () => {
+    const old = entries.filter((e) => e.entryId.startsWith(`${eventId}-P`) || e.entryId.startsWith(`${eventId}-F`));
+    if (old.length) await db.entries.bulkDelete(old.map((e) => e.id!).filter((x) => x != null));
+    if (matches.length) await db.matches.bulkDelete(matches.map((m) => m.id!).filter((x) => x != null));
+    const ids = new Map<number, string>();
+    for (const [pos, v] of picked) {
+      const entryId = `${eventId}-F${pos}`;
+      await db.entries.add({ eventId, entryId, playerId: v.playerId, ...(v.partnerId ? { partnerId: v.partnerId } : {}), rankPoint: 0, status: 'active' });
+      ids.set(pos, entryId);
+    }
+    const slots = draw.slots.map((s) => (ids.has(s.position) ? { ...s, entryId: ids.get(s.position)!, isBye: false } : s));
+    await db.draws.update(draw.id!, { slots, slotsForced: true, updatedAt: Date.now() });
+  });
+  await rebuildEventMatches(eventId);
+  report.applied.push({ event: eventName, winner: label, loser: '', score: '組み合わせを固定' });
 }
 
 // ---------------------------------------------------------------------------
