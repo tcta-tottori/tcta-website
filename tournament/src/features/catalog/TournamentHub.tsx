@@ -343,7 +343,8 @@ function HubCard({ t, highlight, isCurrent, onDevice, stale, busy, disabled, err
         {cloud && (t.status === 'ready' || t.status === 'done') && !busy && (
           <button type="button" className="btn btn--outline hub-card__btn hub-card__btn--cloud" onClick={onCloud} disabled={disabled}
             title="ほかの端末で運営している最新の状態（Cloudflare の自動保存）をこの端末に入れて、その続きから入ります">
-            <CloudDownload className="w-4 h-4" />最新の状態で入る<small>{cloudAt} 保存</small>
+            <span className="hub-card__cloud-main"><CloudDownload className="w-4 h-4" />最新の状態で入る</span>
+            <small>{cloudAt} 保存</small>
           </button>
         )}
         {(t.status === 'ready' || t.status === 'done') && !busy && (
