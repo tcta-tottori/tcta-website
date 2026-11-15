@@ -280,6 +280,8 @@ Claude Code が Cloudflare を操作するための鍵（API トークン）を�
 - 画像は JPEG（画面が自動で JPEG にして送る）
 - 24 時間に投稿できる数には上限がある（ふつうの使い方では届かない）
 
+外から送る鍵（`scripts/lib/push.mjs` の送信用の鍵）でも、お知らせの一覧（`GET /api/insta/stories`）・ストーリーズ（`POST /api/insta/post`）・フィードの投稿（`POST /api/insta/carousel`）ができます（Claude が代わりに投稿するとき）。Instagram の鍵の出し入れ（`/api/insta/token`）は役員の画面からだけです。
+
 ## 構成
 
 ```
