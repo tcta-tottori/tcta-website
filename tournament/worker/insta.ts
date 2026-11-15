@@ -93,7 +93,12 @@ export async function handleInsta(request: Request, env: Env, url: URL): Promise
     return json({
       configured,
       account: creds ? { username: creds.username, fromDb: creds.fromDb } : null,
-      items: data.items.map((it) => ({ ...it, posted: byKey.get(it.key) ?? null })),
+      // 続けて出すストーリーズ（結果の決勝の表・入賞者の写真）は、1枚ずつ「お知らせの key#番号」で記録する
+      items: data.items.map((it) => ({
+        ...it,
+        posted: byKey.get(it.key) ?? null,
+        postedSlides: posted.results.filter((p) => p.story_key.startsWith(`${it.key}#`)).map((p) => ({ key: p.story_key, posted_at: p.posted_at })),
+      })),
     });
   }
 

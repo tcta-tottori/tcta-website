@@ -6,10 +6,10 @@
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Download, Send, RefreshCw, CheckCircle2, AlertTriangle, ExternalLink } from 'lucide-react';
-import { drawStory, loadStoryAssets, storyJpeg, type StoryItem } from './storyCanvas';
+import { drawSlide, drawStory, loadImage, loadStoryAssets, storyJpeg, storySlides, type StoryItem } from './storyCanvas';
 
 type Posted = { media_id: string; posted_at: string; posted_by: string } | null;
-type Item = StoryItem & { posted: Posted };
+type Item = StoryItem & { posted: Posted; postedSlides?: { key: string; posted_at: string }[] };
 
 const KIND_LABEL: Record<StoryItem['kind'], string> = { outline: '要項・受付開始', draw: 'ドロー', result: '結果' };
 
@@ -64,6 +64,11 @@ export default function InstaStoriesPage() {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {items?.map((it) => <StoryCard key={it.key} item={it} configured={configured} onPosted={load} />)}
       </div>
+
+      {/* 結果は、決勝の結果表 → 入賞者の写真を 1 枚ずつ大きくした続きのストーリーズも作る */}
+      {items?.filter((it) => storySlides(it).length > 0).map((it) => (
+        <SlideSeries key={`${it.key}-slides`} item={it} configured={configured} onPosted={load} />
+      ))}
     </div>
   );
 }
@@ -212,6 +217,108 @@ function StoryCard({ item, configured, onPosted }: { item: Item; configured: boo
             <Send className="w-4 h-4" />{busy ? '投稿中…' : item.posted ? 'もう一度出す' : 'ストーリーズに出す'}
           </button>
         </div>
+      </div>
+    </div>
+  );
+}
+
+
+/**
+ * 結果の続きのストーリーズ（決勝の結果表 → 入賞者の写真を 1 枚ずつ大きく）。
+ * 「まとめてストーリーズに出す」で、並びの順に 1 枚ずつ投稿する（1 枚ずつ「お知らせの key#番号」で記録し、出した分は二重に出さない）。
+ */
+function SlideSeries({ item, configured, onPosted }: { item: Item; configured: boolean; onPosted: () => void }) {
+  const slides = storySlides(item);
+  const refs = useRef<(HTMLCanvasElement | null)[]>([]);
+  const [ready, setReady] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState('');
+  const slideKey = (i: number) => `${item.key}#${String(i + 1).padStart(2, '0')}`;
+  const postedKeys = new Set((item.postedSlides ?? []).map((p) => p.key));
+  const postedCount = slides.filter((_, i) => postedKeys.has(slideKey(i))).length;
+
+  useEffect(() => {
+    let alive = true;
+    setReady(false);
+    void (async () => {
+      const logo = await loadImage('/logo-tcta.png', false);
+      const imgs = await Promise.all(slides.map((s) => loadImage(s.src)));
+      if (!alive) return;
+      slides.forEach((s, i) => { const c = refs.current[i]; if (c) drawSlide(c, item, s, imgs[i], logo, i + 1, slides.length); });
+      setReady(true);
+    })();
+    return () => { alive = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [item]);
+
+  const fileName = (i: number) => `ストーリーズ_${item.event?.name ?? 'お知らせ'}_結果_${String(i + 1).padStart(2, '0')}.jpg`;
+  const saveAll = async () => {
+    for (let i = 0; i < slides.length; i++) {
+      const c = refs.current[i];
+      if (!c) continue;
+      const blob = await storyJpeg(c);
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = fileName(i);
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 1500);
+      await new Promise((r) => setTimeout(r, 400));
+    }
+  };
+
+  const postAll = async () => {
+    const todo = slides.map((_, i) => i).filter((i) => !postedKeys.has(slideKey(i)));
+    if (todo.length === 0) { setMsg('すべて出しています'); return; }
+    if (!window.confirm(`決勝の結果表・入賞者の写真 ${todo.length} 枚を、この並びの順にストーリーズに出します。すぐフォロワーに届き、取り消せません。よろしいですか？`)) return;
+    setBusy(true); setMsg('');
+    let done = 0;
+    try {
+      for (const i of todo) {
+        setMsg(`${done + 1} / ${todo.length} 枚目を出しています…`);
+        const c = refs.current[i];
+        if (!c) continue;
+        const blob = await storyJpeg(c);
+        const res = await fetch(`/api/insta/post?key=${encodeURIComponent(slideKey(i))}`, {
+          method: 'POST', credentials: 'same-origin', headers: { 'content-type': 'image/jpeg' }, body: blob,
+        });
+        const body = await res.json();
+        if (!res.ok) throw new Error(`${i + 1} 枚目：${body.error || `HTTP ${res.status}`}`);
+        done++;
+      }
+      setMsg(`${done} 枚をストーリーズに出しました`);
+    } catch (e) {
+      setMsg(`${(e as Error).message}（${done} 枚は出しました。もう一度押すと、残りから出します）`);
+    } finally {
+      setBusy(false);
+      onPosted();
+    }
+  };
+
+  return (
+    <div className="bg-white rounded border border-gray-200 p-3 space-y-3 text-sm">
+      <div className="flex items-center gap-2 flex-wrap">
+        <span className="text-xs font-bold text-white bg-primary-600 px-2 py-0.5 rounded-sm">結果・続きのストーリーズ</span>
+        <span className="font-bold text-gray-800">{item.event?.name ?? item.title}</span>
+        <span className="text-xs text-gray-500">決勝の結果表 → 入賞者の写真（{slides.length} 枚）{postedCount > 0 ? `・${postedCount} 枚は出しました` : ''}</span>
+      </div>
+      <div className="flex gap-3 overflow-x-auto pb-2">
+        {slides.map((s, i) => (
+          <div key={i} className="shrink-0 flex flex-col items-center gap-1">
+            <canvas ref={(el) => { refs.current[i] = el; }} className="w-[162px] h-[288px] bg-white shadow border border-gray-100" aria-label={`${i + 1} 枚目 ${s.type === 'sheet' ? s.label : s.caption ?? ''}`} />
+            <span className={`text-[11px] ${postedKeys.has(slideKey(i)) ? 'text-green-700' : 'text-gray-500'}`}>
+              {i + 1}. {s.type === 'sheet' ? '決勝の表' : '写真'}{postedKeys.has(slideKey(i)) ? '（出しました）' : ''}
+            </span>
+          </div>
+        ))}
+      </div>
+      {msg && <p className={`text-xs ${/出しました|出しています/.test(msg) && !/：/.test(msg) ? 'text-green-700' : 'text-red-700'}`}>{msg}</p>}
+      <div className="flex gap-2">
+        <button type="button" disabled={!ready} onClick={() => void saveAll()} className="flex-1 inline-flex items-center justify-center gap-1 py-2 text-xs font-bold border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-40">
+          <Download className="w-4 h-4" />まとめて保存
+        </button>
+        <button type="button" disabled={!ready || !configured || busy || postedCount === slides.length} onClick={() => void postAll()} className="flex-1 inline-flex items-center justify-center gap-1 py-2 text-xs font-bold text-white bg-primary-600 rounded hover:bg-primary-700 disabled:opacity-40">
+          <Send className="w-4 h-4" />{busy ? '投稿中…' : postedCount === slides.length ? 'すべて出しました' : postedCount > 0 ? '残りをストーリーズに出す' : 'まとめてストーリーズに出す'}
+        </button>
       </div>
     </div>
   );

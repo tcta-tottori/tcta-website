@@ -8,6 +8,9 @@
  *   要項・受付開始 … 赤い帯は「申込締切」の日付。行は 日程・会場・種目
  *   ドロー        … 赤い帯は「開催日」。行は 日程・会場・種目
  *   結果          … 写真は種目ごとの優勝者を横に並べる。赤い帯は「開催日」。行は種目ごとの優勝者
+ *
+ * 結果は、続けて出す複数枚のストーリーズにもする（storySlides・drawSlide）：
+ *   決勝の結果表（トーナメント・決勝リーグ）を 1 枚ずつ大きく → 入賞者の写真を 1 枚ずつ大きく（種目と順位・名前を添える）
  */
 
 export type StoryKind = 'outline' | 'draw' | 'result';
@@ -24,8 +27,25 @@ export interface StoryItem {
   } | null;
   winners: { category: string; places: { award: string; name: string }[] }[];
   photos: { src: string | null; category: string; caption: string | null }[];
+  /** 結果：入賞者の写真すべて（種目の順・写真の順） */
+  winnerPhotos?: { src: string | null; category: string; caption: string | null }[];
+  /** 結果：決勝（トーナメント・決勝リーグ）の結果表 */
+  finals?: { src: string | null; w?: number; h?: number; label: string }[];
   sheet: { src: string | null; w?: number; h?: number } | null;
   cover: string | null;
+}
+
+/** 続けて出すストーリーズの 1 枚（決勝の結果表か、入賞者の写真） */
+export type StorySlide =
+  | { type: 'sheet'; src: string; label: string }
+  | { type: 'photo'; src: string; category: string; caption: string | null };
+
+/** 結果のお知らせから、続けて出すストーリーズの並び（決勝の結果表 → 入賞者の写真）。結果以外・材料が無ければ空 */
+export function storySlides(item: StoryItem): StorySlide[] {
+  if (item.kind !== 'result') return [];
+  const sheets: StorySlide[] = (item.finals ?? []).filter((s) => s.src).map((s) => ({ type: 'sheet', src: s.src!, label: s.label }));
+  const photos: StorySlide[] = (item.winnerPhotos ?? []).filter((p) => p.src).map((p) => ({ type: 'photo', src: p.src!, category: p.category, caption: p.caption }));
+  return [...sheets, ...photos];
 }
 
 export const STORY_W = 1080;
@@ -394,4 +414,134 @@ function fitText(ctx: CanvasRenderingContext2D, s: string, width: number): strin
 /** canvas を JPEG に */
 export function storyJpeg(canvas: HTMLCanvasElement): Promise<Blob> {
   return new Promise((resolve, reject) => canvas.toBlob((b) => (b ? resolve(b) : reject(new Error('画像を作れませんでした'))), 'image/jpeg', 0.92));
+}
+
+
+// ---------------------------------------------------------------------------
+// 続けて出すストーリーズ（結果）：決勝の結果表・入賞者の写真を 1 枚ずつ大きく
+// ---------------------------------------------------------------------------
+
+/** 1 枚ずつのストーリーズを描く。img はその結果表・写真、logo は協会ロゴ。no / total は何枚目か */
+export function drawSlide(canvas: HTMLCanvasElement, item: StoryItem, slide: StorySlide, img: HTMLImageElement | null, logo: HTMLImageElement | null, no: number, total: number) {
+  canvas.width = STORY_W;
+  canvas.height = STORY_H;
+  const ctx = canvas.getContext('2d')!;
+  const e = item.event;
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, STORY_W, STORY_H);
+  ctx.textBaseline = 'alphabetic';
+
+  // 上の飾り
+  deco(ctx, 'cubeW', 120, 120, 110, 110, -12);
+  deco(ctx, 'dots', 560, 70, 180, 120, 14, .7);
+  deco(ctx, 'cubeR', 930, 70, 90, 90, 16);
+  deco(ctx, 'line', 800, 160, 70, 70, 14);
+
+  // ヘッダー：ロゴ・小見出し・大会名・何枚目か
+  if (logo) {
+    const w = 190, h = (logo.naturalHeight / logo.naturalWidth) * w;
+    ctx.drawImage(logo, 64, 290, w, h);
+  }
+  ctx.fillStyle = INK;
+  ctx.font = font(700, 24);
+  ctx.textAlign = 'right';
+  ctx.fillText(`${no} / ${total}`, STORY_W - 64, 330);
+  ctx.textAlign = 'left';
+  const eyebrow = slide.type === 'sheet' ? 'F I N A L   ·   R E S U L T S' : 'W I N N E R S';
+  ctx.fillStyle = RED;
+  ctx.fillRect(66, 404, 60, 4);
+  ctx.fillStyle = INK;
+  ctx.font = font(500, 16);
+  ctx.fillText(eyebrow, 146, 412);
+  const name = `${e?.nendoLabel ?? ''} ${e?.name ?? item.title}`.trim();
+  ctx.font = font(700, fitPx(ctx, name, 700, 40, 26, 952));
+  ctx.fillText(name, 64, 470);
+
+  if (slide.type === 'sheet') {
+    // 結果表を横いっぱい（左右 24px あけて）に。縦は 520〜1560 に収める
+    const top = 520, maxH = 1040, maxW = STORY_W - 48;
+    if (img) {
+      const s = Math.min(maxW / img.naturalWidth, maxH / img.naturalHeight);
+      const w = img.naturalWidth * s, h = img.naturalHeight * s;
+      const x = (STORY_W - w) / 2, y = top + (maxH - h) / 2;
+      ctx.save();
+      ctx.shadowColor = 'rgba(0,0,0,.16)'; ctx.shadowBlur = 28; ctx.shadowOffsetY = 8;
+      ctx.fillStyle = '#fff'; ctx.fillRect(x, y, w, h);
+      ctx.restore();
+      ctx.drawImage(img, x, y, w, h);
+    }
+    // 種目（黒い帯）
+    const label = slide.label || '決勝';
+    ctx.font = font(700, fitPx(ctx, label, 700, 32, 22, 900));
+    const lw = ctx.measureText(label).width + 64;
+    ctx.fillStyle = INK;
+    ctx.fillRect(66, 1588, lw, 60);
+    ctx.fillStyle = '#fff';
+    ctx.fillText(label, 98, 1630);
+  } else {
+    // 写真を横いっぱいに大きく（上下を斜めに切る）。縦は 520〜1300
+    const PY = 520, PH = 780;
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(0, PY + 28); ctx.lineTo(STORY_W, PY); ctx.lineTo(STORY_W, PY + PH - 28); ctx.lineTo(0, PY + PH); ctx.closePath();
+    ctx.clip();
+    ctx.fillStyle = '#f2f2f2';
+    ctx.fillRect(0, PY, STORY_W, PH);
+    if (img) drawCover(ctx, img, 0, PY, STORY_W, PH, 0.4);
+    ctx.restore();
+    // 種目（赤い帯）
+    const cat = shortCategory(slide.category);
+    ctx.font = font(700, fitPx(ctx, cat, 700, 30, 20, 900));
+    const cw = ctx.measureText(cat).width + 48;
+    ctx.fillStyle = RED;
+    ctx.fillRect(66, 1336, cw, 54);
+    ctx.fillStyle = '#fff';
+    ctx.fillText(cat, 90, 1374);
+    // 順位と名前（「優勝 岸本・安田 ペア」→ 順位を大きな枠に、名前を大きく）
+    const cap = String(slide.caption ?? '').trim();
+    const m = cap.match(/^(総合優勝|優勝|準優勝|第?\d+位|ベスト\d+)\s*(.*)$/);
+    const award = m ? m[1] : '';
+    const rest = (m ? m[2] : cap).replace(/\s*(選手|ペア)$/, '');
+    const suffix = /ペア$/.test(cap) ? 'ペア' : /選手$/.test(cap) ? '選手' : '';
+    let x = 66;
+    const baseY = 1500;
+    if (award) {
+      ctx.font = font(700, 44);
+      const aw = ctx.measureText(award).width + 40;
+      const gold = /^(総合)?優勝$/.test(award);
+      const g = ctx.createLinearGradient(x, baseY - 62, x + aw, baseY + 14);
+      if (gold) { g.addColorStop(0, '#9A7514'); g.addColorStop(.35, '#F3D873'); g.addColorStop(.5, '#FFF3C2'); g.addColorStop(.7, '#C9A227'); g.addColorStop(1, '#8A6410'); }
+      else { g.addColorStop(0, '#767D84'); g.addColorStop(.35, '#E6EAED'); g.addColorStop(.5, '#FFFFFF'); g.addColorStop(.7, '#B4BAC0'); g.addColorStop(1, '#5B6268'); }
+      ctx.fillStyle = g;
+      ctx.fillRect(x, baseY - 62, aw, 78);
+      ctx.fillStyle = gold ? '#3E2B00' : '#262B30';
+      ctx.fillText(award, x + 20, baseY - 6);
+      x += aw + 28;
+    }
+    ctx.fillStyle = INK;
+    ctx.font = font(700, fitPx(ctx, rest, 700, 76, 40, STORY_W - x - 160));
+    ctx.fillText(rest, x, baseY);
+    if (suffix) {
+      const w = ctx.measureText(rest).width;
+      ctx.font = font(500, 34);
+      ctx.fillText(suffix, x + w + 14, baseY);
+    }
+    deco(ctx, 'cubeR', 920, 1540, 60, 60, 14);
+    deco(ctx, 'dots', 640, 1560, 160, 60, 0, .6);
+  }
+
+  // 下の帯
+  ctx.fillStyle = INK;
+  ctx.font = font(700, 26);
+  const pre = '結果表・写真は ';
+  ctx.fillText(pre, 66, 1720);
+  let fx = 66 + ctx.measureText(pre).width;
+  ctx.fillStyle = RED; ctx.fillText('プロフィールのリンク', fx, 1720); fx += ctx.measureText('プロフィールのリンク').width;
+  ctx.fillStyle = INK; ctx.fillText(' から ▶', fx, 1720);
+  ctx.fillStyle = RED; ctx.fillRect(66, 1782, 52, 3);
+  ctx.fillStyle = INK; ctx.font = font(500, 13);
+  ctx.fillText('T O T T O R I   T E N N I S   A S S O C I A T I O N', 140, 1788);
+  deco(ctx, 'glass', 760, 1800, 80, 80, -12);
+  deco(ctx, 'cubeW', 120, 1830, 54, 54, -10);
+  deco(ctx, 'cubeR', 900, 1820, 40, 40, 16);
 }
