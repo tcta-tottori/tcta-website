@@ -1,5 +1,5 @@
 // =============================================================================
-// 印刷メニュー（賞状印刷）
+// 印刷メニュー（賞状印刷／リーグ表・審判用紙。上の切り替えで選ぶ。リーグ表・審判用紙は SheetPrint.tsx）
 //
 // 決勝トーナメント画面の賞状印刷は「決勝が終わったクラス」でしか開けなかったため、
 // 表彰式の準備を前もって進められなかった。この画面は大会の進行状況に関係なく
@@ -34,6 +34,7 @@ import {
 } from './certificateCandidates';
 import { siteConfirm } from '../../components/site/siteConfirm';
 import { sortEventsByClass } from '../data/eventOrder';
+import SheetPrint from './SheetPrint';
 
 /** 賞位のよく使う選択肢（自由入力も可） */
 const RANK_PRESETS = ['優勝', '準優勝', '第3位', '第4位', '第5位', 'ベスト8', '敢闘賞', '3位'];
@@ -96,7 +97,26 @@ function loadEntries(): CertEntry[] {
 
 type SourceId = 'mixed' | 'team' | 'individual';
 
+/** 印刷メニュー：上で「賞状」と「リーグ表・審判用紙」を切り替える（選んだ方をこの端末に覚える） */
 export default function PrintCenter() {
+  const [tab, setTab] = useState<'cert' | 'sheet'>(() => {
+    try { return localStorage.getItem('printCenter.tab') === 'sheet' ? 'sheet' : 'cert'; } catch { return 'cert'; }
+  });
+  const choose = (t: 'cert' | 'sheet') => { setTab(t); try { localStorage.setItem('printCenter.tab', t); } catch { /* */ } };
+  return (
+    <div className="absolute inset-0 flex flex-col">
+      <div className="pc-tabs" role="tablist" aria-label="印刷するもの">
+        <button type="button" role="tab" aria-selected={tab === 'cert'} className={tab === 'cert' ? 'is-on' : ''} onClick={() => choose('cert')}><Award className="w-4 h-4" />賞状</button>
+        <button type="button" role="tab" aria-selected={tab === 'sheet'} className={tab === 'sheet' ? 'is-on' : ''} onClick={() => choose('sheet')}><Printer className="w-4 h-4" />リーグ表・審判用紙</button>
+      </div>
+      <div className="relative flex-1 min-h-0">
+        {tab === 'cert' ? <CertificatePrint /> : <div className="absolute inset-0 overflow-y-auto"><SheetPrint /></div>}
+      </div>
+    </div>
+  );
+}
+
+function CertificatePrint() {
   const [entries, setEntries] = useState<CertEntry[]>(loadEntries);
   const [layout, setLayout] = useState<CertLayout>(loadLayout);
   const [previewId, setPreviewId] = useState<string | null>(null);
