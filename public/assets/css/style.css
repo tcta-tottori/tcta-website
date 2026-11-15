@@ -6013,3 +6013,19 @@ html.is-lite body.jsrv .rv, html.is-lite body.jsrv .rv-in { opacity: 1 !importan
 .lc-calc, .lc-log { margin: 0; padding-left: 1.4em; font: 400 14px/1.9 var(--fjp); color: var(--gray-800); }
 .lc-calc { list-style: none; padding-left: 0; }
 .lc-calc li { padding: 6px 0; border-bottom: 1px dashed var(--gray-200); }
+/* くじ引き（ルーレット） */
+.lc-lot__teams { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0 18px; }
+.lc-lot__team input { position: absolute; opacity: 0; pointer-events: none; }
+.lc-lot__team span { display: inline-flex; align-items: center; min-height: 38px; padding: 0 14px; border: 1px solid var(--gray-300); border-radius: var(--radius); font: 700 14px/1 var(--fjp); cursor: pointer; background: var(--white); }
+.lc-lot__team input:checked + span { background: var(--red); border-color: var(--red); color: #fff; }
+.lc-lot__team input:disabled + span { cursor: default; opacity: .7; }
+.lc-lot__stage { display: grid; grid-template-columns: minmax(0, 320px) minmax(0, 1fr); gap: 28px; align-items: center; }
+@media (max-width: 639px) { .lc-lot__stage { grid-template-columns: 1fr; justify-items: center; } }
+.lc-wheel { position: relative; width: 100%; max-width: 320px; aspect-ratio: 1; }
+.lc-wheel canvas { width: 100%; height: 100%; display: block; }
+.lc-wheel__pin { position: absolute; left: 50%; top: -6px; z-index: 1; width: 0; height: 0; margin-left: -14px; border-left: 14px solid transparent; border-right: 14px solid transparent; border-top: 26px solid var(--ink); filter: drop-shadow(0 2px 2px rgba(0,0,0,.25)); }
+.lc-lot__side { width: 100%; }
+.lc-lot__btns { display: flex; flex-wrap: wrap; gap: 10px; }
+.lc-lot__now { margin: 14px 0 8px; font: 700 15px/1.7 var(--fjp); color: var(--ink); min-height: 1.7em; }
+.lc-lot__result { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; }
+.lc-lot__result li { padding: 8px 12px; border-left: 4px solid var(--red); background: var(--red-tint); font: 500 15px/1.5 var(--fjp); }
