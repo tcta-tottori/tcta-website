@@ -16,7 +16,7 @@ import {
 } from './catalogApi';
 import { generateLeagueMatchOrder } from '../draw/rebuildMatches';
 import { checkDraw, pairsOf, secondRoundOpponent, type DrawIssue, type IssueLevel } from './drawCheck';
-import { importToDevice, localCopyOf } from './deviceImport';
+import { importToDevice, localCopyOf, mergeImportToDevice, planMergeImport } from './deviceImport';
 import { syncDictionary } from './dictSync';
 
 const KANA = /^[ぁ-ゖー\s\u3000]+$/;
@@ -122,12 +122,44 @@ export default function ReviewPage() {
     if (!t) return;
     if (counts.error > 0 && !(await siteConfirm({ title: '直していない所があります', message: `「直さないと運営できません」が ${counts.error} 件あります。このまま運営をはじめますか？`, confirmLabel: 'このまま進む', danger: true }))) return;
     const local = await localCopyOf(t.id);
-    if (local && !(await siteConfirm({ title: '大会を入れ直す', message: `この端末の「${t.name}」の${local.isTest ? 'テスト用の' : ''}運営データ（受付・試合結果）を消して、確認した内容で入れ直します。${local.isTest ? '\n\nテストモードのまま入れ直します。' : ''}`, confirmLabel: '入れ直す', danger: true }))) return;
-    const full = dirty ? await save() : t;
-    if (!full) return;
+    const full0 = dirty ? await save() : t;
+    if (!full0) return;
+    if (local) {
+      // 端末に入っている大会は、結果を残して、変わった種目だけ入れ直す（全部消して最初からは、大会選択の「クリアして最初から」）
+      const plan = await planMergeImport(full0);
+      if (plan) {
+        const lines = [
+          plan.replace.length ? `入れ直す種目（その種目の受付・結果は消えます）：\n・${plan.replace.join('\n・')}` : '',
+          plan.add.length ? `新しく足す種目：\n・${plan.add.join('\n・')}` : '',
+          plan.remove.length ? `端末から消す種目（データベースに無くなった種目）：\n・${plan.remove.join('\n・')}` : '',
+        ].filter(Boolean);
+        if (lines.length === 0) {
+          await siteConfirm({ title: '変わった種目はありません', message: `この端末の「${t.name}」は、データベースと同じ種目の組み方です。受付・試合結果はそのまま使えます。`, confirmLabel: 'OK' });
+          await mergeImportToDevice(full0);
+          navigate('/entry');
+          return;
+        }
+        const danger = plan.replace.length > 0 || plan.remove.length > 0;
+        if (!(await siteConfirm({
+          title: '変わった種目だけ入れ直す',
+          message: `この端末の「${t.name}」の受付・試合結果は残したまま、変わった種目だけ入れ直します。\n\n${lines.join('\n\n')}\n\nそのままの種目：${plan.keep.length} 種目（受付・結果を残します）`,
+          confirmLabel: '入れ直す', danger,
+        }))) return;
+        setBusy('端末に入れています');
+        try {
+          await mergeImportToDevice(full0, (p) => setBusy(p.label));
+          navigate('/entry');
+        } catch (e) {
+          setFlash(`入れられませんでした：${(e as Error).message}`);
+        } finally {
+          setBusy('');
+        }
+        return;
+      }
+    }
+    const full = full0;
     setBusy('端末に入れています');
     try {
-      // テストモードで入れてあった大会は、入れ直してもテストモードのまま（テスト用のスコア入力が消えないように）
       await importToDevice(full, (p) => setBusy(p.label), { test: !!local?.isTest });
       navigate('/entry');
     } catch (e) {
