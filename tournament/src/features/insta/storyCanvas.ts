@@ -421,49 +421,65 @@ export function storyJpeg(canvas: HTMLCanvasElement): Promise<Blob> {
 // 続けて出すストーリーズ（結果）：決勝の結果表・入賞者の写真を 1 枚ずつ大きく
 // ---------------------------------------------------------------------------
 
-/** 1 枚ずつのストーリーズを描く。img はその結果表・写真、logo は協会ロゴ。no / total は何枚目か */
-export function drawSlide(canvas: HTMLCanvasElement, item: StoryItem, slide: StorySlide, img: HTMLImageElement | null, logo: HTMLImageElement | null, no: number, total: number) {
+/** 1 枚ずつの画像の形。story＝ストーリーズ（1080×1920）、feed＝フィードの投稿（1080×1350・4:5） */
+export type SlideFormat = 'story' | 'feed';
+export const FEED_H = 1350;
+
+/** 形ごとの置き場所 */
+const LAYOUT = {
+  story: { H: STORY_H, logoY: 290, logoW: 190, countY: 330, eyebrowY: 404, nameY: 470, top: 520, sheetH: 1040, labelY: 1588, photoH: 780, catY: 1336, nameBase: 1500, footY: 1720, deco: true },
+  feed:  { H: FEED_H,  logoY: 44,  logoW: 170, countY: 80,  eyebrowY: 140, nameY: 196, top: 236, sheetH: 900,  labelY: 1162, photoH: 740, catY: 1004, nameBase: 1150, footY: 1300, deco: false },
+} as const;
+
+/** 1 枚ずつの画像を描く（決勝の結果表か、入賞者の写真）。img はその結果表・写真、logo は協会ロゴ。no / total は何枚目か */
+export function drawSlide(canvas: HTMLCanvasElement, item: StoryItem, slide: StorySlide, img: HTMLImageElement | null, logo: HTMLImageElement | null, no: number, total: number, fmt: SlideFormat = 'story') {
+  const L = LAYOUT[fmt];
   canvas.width = STORY_W;
-  canvas.height = STORY_H;
+  canvas.height = L.H;
   const ctx = canvas.getContext('2d')!;
   const e = item.event;
   ctx.fillStyle = '#ffffff';
-  ctx.fillRect(0, 0, STORY_W, STORY_H);
+  ctx.fillRect(0, 0, STORY_W, L.H);
   ctx.textBaseline = 'alphabetic';
 
-  // 上の飾り
-  deco(ctx, 'cubeW', 120, 120, 110, 110, -12);
-  deco(ctx, 'dots', 560, 70, 180, 120, 14, .7);
-  deco(ctx, 'cubeR', 930, 70, 90, 90, 16);
-  deco(ctx, 'line', 800, 160, 70, 70, 14);
+  // 上の飾り（ストーリーズだけ。フィードは 4:5 いっぱいに中身を置く）
+  if (L.deco) {
+    deco(ctx, 'cubeW', 120, 120, 110, 110, -12);
+    deco(ctx, 'dots', 560, 70, 180, 120, 14, .7);
+    deco(ctx, 'cubeR', 930, 70, 90, 90, 16);
+    deco(ctx, 'line', 800, 160, 70, 70, 14);
+  } else {
+    deco(ctx, 'dots', 600, 40, 150, 70, 10, .6);
+    deco(ctx, 'cubeR', 800, 50, 34, 34, 14);
+  }
 
   // ヘッダー：ロゴ・小見出し・大会名・何枚目か
   if (logo) {
-    const w = 190, h = (logo.naturalHeight / logo.naturalWidth) * w;
-    ctx.drawImage(logo, 64, 290, w, h);
+    const h = (logo.naturalHeight / logo.naturalWidth) * L.logoW;
+    ctx.drawImage(logo, 64, L.logoY, L.logoW, h);
   }
   ctx.fillStyle = INK;
   ctx.font = font(700, 24);
   ctx.textAlign = 'right';
-  ctx.fillText(`${no} / ${total}`, STORY_W - 64, 330);
+  ctx.fillText(`${no} / ${total}`, STORY_W - 64, L.countY);
   ctx.textAlign = 'left';
   const eyebrow = slide.type === 'sheet' ? 'F I N A L   ·   R E S U L T S' : 'W I N N E R S';
   ctx.fillStyle = RED;
-  ctx.fillRect(66, 404, 60, 4);
+  ctx.fillRect(66, L.eyebrowY - 8, 60, 4);
   ctx.fillStyle = INK;
   ctx.font = font(500, 16);
-  ctx.fillText(eyebrow, 146, 412);
+  ctx.fillText(eyebrow, 146, L.eyebrowY);
   const name = `${e?.nendoLabel ?? ''} ${e?.name ?? item.title}`.trim();
   ctx.font = font(700, fitPx(ctx, name, 700, 40, 26, 952));
-  ctx.fillText(name, 64, 470);
+  ctx.fillText(name, 64, L.nameY);
 
   if (slide.type === 'sheet') {
-    // 結果表を横いっぱい（左右 24px あけて）に。縦は 520〜1560 に収める
-    const top = 520, maxH = 1040, maxW = STORY_W - 48;
+    // 結果表を横いっぱい（左右 24px あけて）に
+    const maxW = STORY_W - 48;
     if (img) {
-      const s = Math.min(maxW / img.naturalWidth, maxH / img.naturalHeight);
+      const s = Math.min(maxW / img.naturalWidth, L.sheetH / img.naturalHeight);
       const w = img.naturalWidth * s, h = img.naturalHeight * s;
-      const x = (STORY_W - w) / 2, y = top + (maxH - h) / 2;
+      const x = (STORY_W - w) / 2, y = L.top + (L.sheetH - h) / 2;
       ctx.save();
       ctx.shadowColor = 'rgba(0,0,0,.16)'; ctx.shadowBlur = 28; ctx.shadowOffsetY = 8;
       ctx.fillStyle = '#fff'; ctx.fillRect(x, y, w, h);
@@ -475,12 +491,12 @@ export function drawSlide(canvas: HTMLCanvasElement, item: StoryItem, slide: Sto
     ctx.font = font(700, fitPx(ctx, label, 700, 32, 22, 900));
     const lw = ctx.measureText(label).width + 64;
     ctx.fillStyle = INK;
-    ctx.fillRect(66, 1588, lw, 60);
+    ctx.fillRect(66, L.labelY, lw, 60);
     ctx.fillStyle = '#fff';
-    ctx.fillText(label, 98, 1630);
+    ctx.fillText(label, 98, L.labelY + 42);
   } else {
-    // 写真を横いっぱいに大きく（上下を斜めに切る）。縦は 520〜1300
-    const PY = 520, PH = 780;
+    // 写真を横いっぱいに大きく（上下を斜めに切る）
+    const PY = L.top, PH = L.photoH;
     ctx.save();
     ctx.beginPath();
     ctx.moveTo(0, PY + 28); ctx.lineTo(STORY_W, PY); ctx.lineTo(STORY_W, PY + PH - 28); ctx.lineTo(0, PY + PH); ctx.closePath();
@@ -494,17 +510,17 @@ export function drawSlide(canvas: HTMLCanvasElement, item: StoryItem, slide: Sto
     ctx.font = font(700, fitPx(ctx, cat, 700, 30, 20, 900));
     const cw = ctx.measureText(cat).width + 48;
     ctx.fillStyle = RED;
-    ctx.fillRect(66, 1336, cw, 54);
+    ctx.fillRect(66, L.catY, cw, 54);
     ctx.fillStyle = '#fff';
-    ctx.fillText(cat, 90, 1374);
-    // 順位と名前（「優勝 岸本・安田 ペア」→ 順位を大きな枠に、名前を大きく）
+    ctx.fillText(cat, 90, L.catY + 38);
+    // 順位と名前（「優勝 岸本・安田 ペア」→ 順位を金・銀の枠に、名前を大きく）
     const cap = String(slide.caption ?? '').trim();
     const m = cap.match(/^(総合優勝|優勝|準優勝|第?\d+位|ベスト\d+)\s*(.*)$/);
     const award = m ? m[1] : '';
     const rest = (m ? m[2] : cap).replace(/\s*(選手|ペア)$/, '');
     const suffix = /ペア$/.test(cap) ? 'ペア' : /選手$/.test(cap) ? '選手' : '';
     let x = 66;
-    const baseY = 1500;
+    const baseY = L.nameBase;
     if (award) {
       ctx.font = font(700, 44);
       const aw = ctx.measureText(award).width + 40;
@@ -526,22 +542,43 @@ export function drawSlide(canvas: HTMLCanvasElement, item: StoryItem, slide: Sto
       ctx.font = font(500, 34);
       ctx.fillText(suffix, x + w + 14, baseY);
     }
-    deco(ctx, 'cubeR', 920, 1540, 60, 60, 14);
-    deco(ctx, 'dots', 640, 1560, 160, 60, 0, .6);
+    if (L.deco) {
+      deco(ctx, 'cubeR', 920, 1540, 60, 60, 14);
+      deco(ctx, 'dots', 640, 1560, 160, 60, 0, .6);
+    }
   }
 
   // 下の帯
   ctx.fillStyle = INK;
-  ctx.font = font(700, 26);
+  ctx.font = font(700, fmt === 'feed' ? 22 : 26);
   const pre = '結果表・写真は ';
-  ctx.fillText(pre, 66, 1720);
+  ctx.fillText(pre, 66, L.footY);
   let fx = 66 + ctx.measureText(pre).width;
-  ctx.fillStyle = RED; ctx.fillText('プロフィールのリンク', fx, 1720); fx += ctx.measureText('プロフィールのリンク').width;
-  ctx.fillStyle = INK; ctx.fillText(' から ▶', fx, 1720);
-  ctx.fillStyle = RED; ctx.fillRect(66, 1782, 52, 3);
-  ctx.fillStyle = INK; ctx.font = font(500, 13);
-  ctx.fillText('T O T T O R I   T E N N I S   A S S O C I A T I O N', 140, 1788);
-  deco(ctx, 'glass', 760, 1800, 80, 80, -12);
-  deco(ctx, 'cubeW', 120, 1830, 54, 54, -10);
-  deco(ctx, 'cubeR', 900, 1820, 40, 40, 16);
+  const link = fmt === 'feed' ? '協会サイト' : 'プロフィールのリンク';
+  ctx.fillStyle = RED; ctx.fillText(link, fx, L.footY); fx += ctx.measureText(link).width;
+  ctx.fillStyle = INK; ctx.fillText(fmt === 'feed' ? ' へ（プロフィールのリンク）' : ' から ▶', fx, L.footY);
+  if (L.deco) {
+    ctx.fillStyle = RED; ctx.fillRect(66, 1782, 52, 3);
+    ctx.fillStyle = INK; ctx.font = font(500, 13);
+    ctx.fillText('T O T T O R I   T E N N I S   A S S O C I A T I O N', 140, 1788);
+    deco(ctx, 'glass', 760, 1800, 80, 80, -12);
+    deco(ctx, 'cubeW', 120, 1830, 54, 54, -10);
+    deco(ctx, 'cubeR', 900, 1820, 40, 40, 16);
+  } else {
+    deco(ctx, 'cubeR', 980, 1268, 40, 40, 14);
+  }
+}
+
+/** フィードの投稿の本文（大会名・種目ごとの優勝・準優勝・サイトへの案内・ハッシュタグ） */
+export function feedCaption(item: StoryItem): string {
+  const e = item.event;
+  const lines = [`【大会結果】${e?.nendoLabel ? `${e.nendoLabel} ` : ''}${e?.name ?? item.title}`];
+  if (e) lines.push(`${fmtShort(e.date)}　${e.place}`);
+  lines.push('');
+  for (const w of item.winners) {
+    lines.push(`■ ${w.category}`);
+    for (const p of w.places) lines.push(`　${p.award}　${p.name}`);
+  }
+  lines.push('', '決勝の結果表・入賞者の写真は、協会サイト（プロフィールのリンク）でご覧いただけます。', '', '#鳥取市テニス協会 #鳥取 #テニス #テニス大会 #tottori #tennis');
+  return lines.join('\n');
 }
