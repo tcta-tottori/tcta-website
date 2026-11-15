@@ -591,13 +591,21 @@ export function feedCaption(item: StoryItem): string {
 export type FeedSlide =
   | { type: 'cover' }
   | StorySlide
-  | { type: 'sheets2'; items: { src: string; label: string }[] };
+  | { type: 'sheets'; items: { src: string; label: string }[] };
 
 const catKey = (s: string) => String(s ?? '').replace(/\s+/g, '');
 
+/** 種目のまとまり（「女子B級ダブルス 1位トーナメント」→「女子B級ダブルス」） */
+const baseCategory = (label: string) => {
+  const t = String(label ?? '').trim();
+  const m = t.match(/^(.*?(?:ダブルス|シングルス|ミックス|団体))/);
+  return catKey(m ? m[1] : t.split(/\s+/)[0]);
+};
+
 /**
  * 結果のフィードの投稿の並び。表紙のあと、決勝の結果表ごとに、その種目の優勝者の写真を続ける。
- * 10 枚を超えるときは、写真の無い結果表を 2 つずつ 1 枚にまとめて最後に回す（それでも超える分は入れない）
+ * 10 枚を超えるときは、同じ種目（女子B級ダブルスの 1位・2位・3位トーナメントなど）の結果表を 1 枚にまとめ、
+ * そのあとにその種目の優勝者の写真を続ける。結果表の多い種目からまとめる（それでも超える分は入れない）
  */
 export function feedPlan(item: StoryItem): FeedSlide[] {
   if (item.kind !== 'result') return [];
@@ -607,16 +615,28 @@ export function feedPlan(item: StoryItem): FeedSlide[] {
     const champ = photos.find((p) => /^(総合)?優勝/.test(p.caption ?? '') && (k.startsWith(catKey(p.category)) || catKey(p.category).startsWith(k)));
     return { sheet: { type: 'sheet' as const, src: f.src!, label: f.label }, photo: champ ? { type: 'photo' as const, src: champ.src!, category: champ.category, caption: champ.caption } : null };
   });
-  const flat = (gs: typeof groups): FeedSlide[] => gs.flatMap((g) => (g.photo ? [g.sheet, g.photo] : [g.sheet]));
-  let slides: FeedSlide[] = [{ type: 'cover' }, ...flat(groups)];
-  if (slides.length > 10) {
-    const withPhoto = groups.filter((g) => g.photo);
-    const lone = groups.filter((g) => !g.photo).map((g) => g.sheet);
-    const pairs: FeedSlide[] = [];
-    for (let i = 0; i < lone.length; i += 2) {
-      pairs.push(lone[i + 1] ? { type: 'sheets2', items: [{ src: lone[i].src, label: lone[i].label }, { src: lone[i + 1].src, label: lone[i + 1].label }] } : lone[i]);
+  // 種目のまとまりごとに並べる（結果表の順のまま）
+  const bases: { base: string; groups: typeof groups }[] = [];
+  for (const g of groups) {
+    const b = baseCategory(g.sheet.label);
+    const hit = bases.find((x) => x.base === b);
+    if (hit) hit.groups.push(g); else bases.push({ base: b, groups: [g] });
+  }
+  const merged = new Set<string>();
+  const build = (): FeedSlide[] => [{ type: 'cover' }, ...bases.flatMap((b) => {
+    if (merged.has(b.base) && b.groups.length > 1) {
+      const photos = b.groups.map((g) => g.photo).filter((x): x is NonNullable<typeof x> => !!x);
+      return [{ type: 'sheets' as const, items: b.groups.map((g) => ({ src: g.sheet.src, label: g.sheet.label })) }, ...photos];
     }
-    slides = [{ type: 'cover' }, ...flat(withPhoto), ...pairs];
+    return b.groups.flatMap((g): FeedSlide[] => (g.photo ? [g.sheet, g.photo] : [g.sheet]));
+  })];
+  let slides = build();
+  // 結果表の多い種目から 1 枚にまとめていく（3 つまで。多すぎると小さくて読めない）
+  const order = [...bases].filter((b) => b.groups.length > 1 && b.groups.length <= 3).sort((a, b) => b.groups.length - a.groups.length);
+  for (const b of order) {
+    if (slides.length <= 10) break;
+    merged.add(b.base);
+    slides = build();
   }
   return slides.slice(0, 10);
 }
@@ -626,7 +646,7 @@ export function feedSources(item: StoryItem, plan: FeedSlide[]): string[] {
   const s = new Set<string>();
   for (const f of plan) {
     if (f.type === 'sheet' || f.type === 'photo') s.add(f.src);
-    if (f.type === 'sheets2') f.items.forEach((x) => s.add(x.src));
+    if (f.type === 'sheets') f.items.forEach((x) => s.add(x.src));
     if (f.type === 'cover') (item.photos ?? []).forEach((p) => p.src && s.add(p.src));
   }
   return [...s];
@@ -646,24 +666,18 @@ export function drawFeed(canvas: HTMLCanvasElement, item: StoryItem, slide: Feed
   ctx.fillRect(0, 0, STORY_W, FEED_H);
   ctx.textBaseline = 'alphabetic';
 
-  if (slide.type === 'sheets2') {
-    // ヘッダーは結果表の 1 枚と同じ。結果表を上下に 2 つ
+  if (slide.type === 'sheets') {
+    // ヘッダーは結果表の 1 枚と同じ。結果表を上下に並べる（2〜3 つ）
     drawSlide(canvas, item, { type: 'sheet', src: '', label: '' }, null, logo, no, total, 'feed');
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(0, 226, STORY_W, 1050);
     const maxW = STORY_W - 48;
     let y = 240;
-    const blockH = 510;
+    const blockH = Math.floor(1030 / Math.max(1, slide.items.length));
     for (const it of slide.items) {
-      const label = it.label;
-      ctx.font = font(700, fitPx(ctx, label, 700, 26, 18, 900));
-      const lw = ctx.measureText(label).width + 44;
-      ctx.fillStyle = INK;
-      ctx.fillRect(66, y, lw, 46);
-      ctx.fillStyle = '#fff';
-      ctx.fillText(label, 88, y + 32);
+      // 種目名は結果表の中にあるので、帯は付けずに表を大きく
       const img = imgs.get(it.src) ?? null;
-      const top = y + 56, maxH = blockH - 66;
+      const top = y + 8, maxH = blockH - 18;
       if (img) {
         const s = Math.min(maxW / img.naturalWidth, maxH / img.naturalHeight);
         const w = img.naturalWidth * s, h = img.naturalHeight * s;
