@@ -8,8 +8,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
   Wifi, WifiOff, Loader2, AlertTriangle, Eye, Volume2,
-  ExternalLink, Copy, Check, Shield, ChevronRight, ChevronDown,
+  ExternalLink, Copy, Check, Shield, ChevronRight, ChevronDown, KeyRound,
 } from 'lucide-react';
+import PassLoginCard from './PassLoginCard';
 import { useSyncStore, DEFAULT_SERVER_URL, PUBLIC_ROOM } from '../sync/syncStore';
 import SyncPanel from '../sync/SyncPanel';
 import VoiceSettingsDialog from '../../components/ui/VoiceSettingsDialog';
@@ -213,6 +214,17 @@ export default function SettingsPage() {
             <span className="ps-status__text">{voiceText}</span>
           </div>
           <OpenButton label="音声設定を開く" onClick={() => setVoiceOpen(true)} />
+        </SectionCard>
+
+        {/* ログイン用の 24 時間パスワード（メールのコードのほかの入り方） */}
+        <SectionCard
+          icon={<KeyRound className="w-5 h-5" />}
+          en="PASSWORD"
+          title="ログイン用パスワード（24時間）"
+          description="メールのコードのかわりに入れる、24 時間だけのパスワード"
+          defaultOpen={sectionOpen}
+        >
+          <PassLoginCard />
         </SectionCard>
 
         {/* バックアップ（バックアップ画面をそのまま取り込む） */}
