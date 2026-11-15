@@ -684,11 +684,10 @@ export default function CourtBracketView({
             ? 'border-2 border-gray-700 bg-gray-50 enter-court-blink'
             : isStandby
               ? 'border-2 border-gray-400 bg-white enter-card-blink'
-              : isReady
-                ? 'border border-gray-400 bg-gray-50'
-                : isVs
-                  ? 'border border-gray-300 bg-white'
-                  : `border border-dashed ${isFinal ? 'border-gray-400' : 'border-gray-300'} bg-white`;
+              // 対戦する2組がそろって、まだスコアの入っていない試合（スコアを入れるところ）は赤い枠で見せる
+              : isReady || isVs
+                ? 'border-2 border-primary-500 bg-white'
+                : `border border-dashed ${isFinal ? 'border-gray-400' : 'border-gray-300'} bg-white`;
 
       let content: React.ReactNode;
       if (isFinished) {
