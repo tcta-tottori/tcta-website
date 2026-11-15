@@ -1148,3 +1148,10 @@ button.esh-slot:active { transform: scale(.985); }
 @keyframes mqt-run { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 @media (prefers-reduced-motion: reduce) { .mqt.is-run .mqt__track { animation: none; } }
 html.is-lite .mqt.is-run .mqt__track { animation: none; }
+
+/* エントリー受付：リーグの順位で選手が決まる種目は出していない、の案内（EntryRegistration） */
+.ent-plc-note { margin: 0 0 14px; padding: 10px 14px; border-left: 3px solid var(--gray-300); background: var(--gray-050, #fafafa); font: 400 12.5px/1.7 var(--fjp); color: var(--gray-600); }
+.ent-plc-note a { color: var(--red, #D8232A); font-weight: 700; text-decoration: underline; }
+/* ドロー画面：リーグの順位で組む欄（PlacementPanel） */
+.dl-plc { padding: 12px 16px 0; }
+.dl-plc .plc { margin: 0; }

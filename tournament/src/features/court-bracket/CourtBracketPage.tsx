@@ -8,10 +8,12 @@ import {
   buildMatchesFromDraw, findResetMatches, isLeagueEvent, rebuildEventMatches,
 } from '../draw/rebuildMatches';
 import { insertGapAt, isEmptySlot, removeGapAt, swapSlotContents } from '../draw/drawSlotOps';
-import { ChevronLeft, ChevronRight, MapPin, Trophy, Timer, Layers, Eye, EyeOff, Shuffle, ArrowDownToLine, ArrowUpToLine, Undo2, Play, Pencil, Medal, UserPen, ChevronDown, SlidersHorizontal, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, MapPin, Trophy, Timer, Layers, Eye, EyeOff, Shuffle, ArrowDownToLine, ArrowUpToLine, Undo2, Play, Pencil, Medal, UserPen, ChevronDown, SlidersHorizontal, X, LayoutGrid } from 'lucide-react';
 import CourtBracketView from './CourtBracketView';
 import RoundRobinRenderer from '../draw/RoundRobinRenderer';
 import { leagueShort } from '../draw/placement';
+import PlacementPanel from '../draw/PlacementPanel';
+import AllLeaguesGrid from './AllLeaguesGrid';
 import ScoreInputDialog from '../score/ScoreInputDialog';
 import type { ScoreInputMatch } from '../score/ScoreInputDialog';
 import { resolveRequiredGames } from '../score/gameRules';
@@ -35,11 +37,17 @@ interface CourtBracketPageProps {
   enableScoreInput?: boolean;
 }
 
+/** 「リーグを全部並べる」表示を選んだかを覚えておく鍵 */
+const ALL_LEAGUES_KEY = 'tcta-draw-all-leagues';
+
 export default function CourtBracketPage({ enableScoreInput = true }: CourtBracketPageProps) {
   const currentTournamentId = useAppStore(state => state.currentTournamentId);
   const [selectedEventIdx, setSelectedEventIdx] = useState<number>(0);
   // スコア入力対象の試合キー "round-position"
   const [selectedMatchKey, setSelectedMatchKey] = useState<string | null>(null);
+  const [allLeagues, setAllLeagues] = useState<boolean>(() => {
+    try { return localStorage.getItem(ALL_LEAGUES_KEY) === '1'; } catch { return false; }
+  });
   /** クラス名をタップして開くクラス一覧 */
   const [classListOpen, setClassListOpen] = useState(false);
   /** 右下の編集ボタンで開くメニュー（あたり修正・名前修正など） */
@@ -592,6 +600,14 @@ export default function CourtBracketPage({ enableScoreInput = true }: CourtBrack
     setCourtPickKey(`${match.round}-${match.position}`);
   };
 
+  // 表示の切り替え：1 種目ずつ／リーグを全部並べる（PC は 2 列）。選んだ方はこの端末に覚えておく
+  const leagueCount = allDraws.filter(d => d.drawType === 'roundRobin').length;
+  const showAll = allLeagues && leagueCount >= 2;
+  const setAllLeaguesMode = (on: boolean) => {
+    setAllLeagues(on);
+    try { localStorage.setItem(ALL_LEAGUES_KEY, on ? '1' : '0'); } catch { /* 保存できない環境 */ }
+  };
+
   if (!currentTournamentId) {
     return (
       <div className="p-6 text-center text-gray-500">
@@ -604,10 +620,21 @@ export default function CourtBracketPage({ enableScoreInput = true }: CourtBrack
     <div className="flex flex-col h-full">
       {/* ヘッダー: 種目選択 + ルール（上部固定・スワイプ切替） */}
       <div
-        className="dl-bar"
-        onTouchStart={onSwipeStart}
-        onTouchEnd={(e) => handleSwipeEnd(e)}
+        className={`dl-bar ${showAll ? 'is-all' : ''}`}
+        onTouchStart={showAll ? undefined : onSwipeStart}
+        onTouchEnd={showAll ? undefined : (e) => handleSwipeEnd(e)}
       >
+        {/* 表示の切り替え（リーグ戦が 2 つ以上あるときだけ） */}
+        {leagueCount >= 2 && (
+          <div className="dl-viewmode" role="tablist" aria-label="ドローの表示">
+            <button role="tab" aria-selected={!showAll} className={!showAll ? 'is-on' : ''} onClick={() => setAllLeaguesMode(false)}>
+              <Trophy />1種目ずつ
+            </button>
+            <button role="tab" aria-selected={showAll} className={showAll ? 'is-on' : ''} onClick={() => setAllLeaguesMode(true)}>
+              <LayoutGrid />リーグを全部並べる<small>{leagueCount}</small>
+            </button>
+          </div>
+        )}
         <div className="dl-bar__row">
           <button onClick={gotoPrevEvent} className="dl-arrow" aria-label="前の種目">
             <ChevronLeft />
@@ -882,8 +909,26 @@ export default function CourtBracketPage({ enableScoreInput = true }: CourtBrack
         )}
       </div>
 
+      {/* リーグを全部並べる表示 */}
+      {showAll && (
+        <div className="dl-canvas dl-canvas--all">
+          <AllLeaguesGrid
+            events={events}
+            onCellSelect={enableScoreInput && !nameEditMode ? (idx, round, position) => {
+              setSelectedEventIdx(idx);
+              setSelectedMatchKey(`${round}-${position}`);
+            } : undefined}
+          />
+        </div>
+      )}
+
+      {/* リーグの順位で選手が決まる種目（決勝トーナメントなど）は、ここで組む（エントリー受付には出さない） */}
+      {!showAll && enableScoreInput && drawData?.slotSources?.length ? (
+        <div className="dl-plc"><PlacementPanel eventId={selectedEventId} /></div>
+      ) : null}
+
       {/* ブラケット表示 */}
-      <div className="dl-canvas">
+      <div className="dl-canvas" hidden={showAll}>
         {drawSize > 0 && !isRoundRobin ? (
           <CourtBracketView
             slots={viewSlots}
@@ -1014,7 +1059,7 @@ export default function CourtBracketPage({ enableScoreInput = true }: CourtBrack
           onClose={() => setSelectedMatchKey(null)}
           onMatchUpdate={() => {}}
           getRoundName={(round) => (
-            isThirdPlaceMatch(selectedMatch) ? THIRD_PLACE_LABEL : getRoundName(round, totalRounds)
+            isRoundRobin ? 'リーグ戦' : isThirdPlaceMatch(selectedMatch) ? THIRD_PLACE_LABEL : getRoundName(round, totalRounds)
           )}
           isLeague={isRoundRobin}
           gameRuleText={getGameRuleText(selectedEvent, selectedMatch.round, totalRounds)}

@@ -433,3 +433,26 @@
 .dls-choice.is-on { border-color: var(--ink); background: var(--ink); color: #fff; }
 .dls-choice:disabled { opacity: .4; }
 @media (hover: hover) { .dls-choice:not(.is-on):not(:disabled):hover { border-color: var(--red); color: var(--red); } }
+
+/* ---- 表示の切り替え：1種目ずつ／リーグを全部並べる（CourtBracketPage・AllLeaguesGrid） ---- */
+.dl-viewmode { display: flex; justify-content: center; gap: 0; margin: 0 auto 6px; width: max-content; max-width: 100%; border: 1px solid var(--gray-200); border-radius: var(--radius); overflow: hidden; background: var(--white); }
+.dl-viewmode button { display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; border: 0; background: none; font: 700 12.5px/1 var(--fjp); color: var(--gray-600); cursor: pointer; white-space: nowrap; }
+.dl-viewmode button + button { border-left: 1px solid var(--gray-200); }
+.dl-viewmode button svg { width: 14px; height: 14px; }
+.dl-viewmode button small { font: 700 11px/1 var(--flt); color: var(--gray-400); }
+.dl-viewmode button.is-on { background: var(--ink); color: var(--white); }
+.dl-viewmode button.is-on small { color: rgba(255, 255, 255, .7); }
+/* 全部並べるときは、1 種目ずつの見出し・操作は出さない */
+.dl-bar.is-all > :not(.dl-viewmode) { display: none; }
+.dl-bar.is-all .dl-viewmode { margin-bottom: 0; }
+
+.dl-allrr { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; padding: 12px; }
+/* PC は画面の半分に 1 リーグ（2 列） */
+@media (min-width: 1024px) { .dl-allrr { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; padding: 16px; } }
+.dl-allrr__item { min-width: 0; background: var(--white); border: 1px solid var(--gray-200); border-top: 3px solid var(--ink); border-radius: var(--radius); }
+.dl-allrr__head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 12px; padding: 10px 14px 0; }
+.dl-allrr__title { margin: 0; font: 700 15px/1.4 var(--fjp); color: var(--ink); }
+.dl-allrr__meta { display: flex; flex-wrap: wrap; gap: 4px 10px; font: 700 11.5px/1.4 var(--fjp); color: var(--gray-500); }
+.dl-allrr__meta .is-live { color: var(--red); }
+.dl-allrr__item > .overflow-auto { padding: 10px 12px 12px; }
+.dl-allrr__empty { padding: 32px; text-align: center; color: var(--gray-500); }
