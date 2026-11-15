@@ -5027,6 +5027,9 @@ body.jsrv .gallery--winners .gallery__item.rv-in.on .gallery__cap > .awards { an
 .rblock__sheet.sheets { margin-top: 0; gap: 12px; }
 /* 優勝クラブの写真は、リーグ表の下に（横に並べない）。全幅だと大きすぎるので幅を抑える */
 .division__photos { max-width: 560px; margin-top: 16px; }
+/* 大会の結果の欄（EventResult.astro）の入賞者の写真は、結果表の下に中央そろえで大きく 1 枚ずつ */
+.division__photos.rblock__photos--big { max-width: 880px; margin: 24px auto 0; }
+.rblock__photos--big .gallery.gallery--winners .gallery__item { flex: 1 1 100%; }
 .division__photos .gallery.gallery--winners { margin-top: 0; }
 
 /* ギャラリーの入口（結果ページの下部）。写真を少し見せて、別ページへ */
