@@ -109,11 +109,8 @@ export const EXTRA_MATERIALS = {
 // hidden: true … 結果（結果表・入賞者の写真・成績）を一旦すべて出さず、お知らせと観戦ページの案内だけにする（events.js）。
 //               結果の画像・データは消さずに残しているので、hidden を外せば元の結果に戻る
 export const EXTRA_RESULT_NOTES = {
-  'r8-kaicho-autumn': {
-    // 2026.11.15 夕方に結果全体を一旦非公開（hidden）にし、男子C級のスコアの誤りと順位（取得ゲーム率）を直して再び公開。
-    // お知らせ（notice）は出さず、結果の下の観戦ページの案内だけ残す
-    live: true,
-  },
+  // 'r8-kaicho-autumn'：2026.11.15 夕方に結果全体を一旦非公開（hidden）にし、男子C級のスコアの誤りと順位（取得ゲーム率）を
+  //   直して再び公開。お知らせ・観戦ページの案内はどちらも外した
 };
 
 export const EXTRA_WINNERS = {
