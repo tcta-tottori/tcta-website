@@ -253,6 +253,18 @@ export default function ScoreInputDialog({
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, [match?.matchId, match?.status, match?.updatedAt]);
 
+  // 開いたらすぐスコアを打てるよう、最初のセットの左の欄を選んだ状態にする（終わった試合は除く）。
+  // ポップアップの開くアニメーションのあとに合わせる
+  useEffect(() => {
+    if (!match || match.status === 'finished' || match.status === 'walkover') return;
+    const id = setTimeout(() => {
+      const el = inputRefs.current[0];
+      if (el && !el.disabled && !bodyRef.current?.contains(document.activeElement)) focusAndSelect(el);
+    }, 120);
+    return () => clearTimeout(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [match?.matchId]);
+
   // キーボードが開いたら、入力中の欄（無ければスコア入力ブロック）を見える位置へスクロール
   useEffect(() => {
     if (!keyboardOpen) return;
