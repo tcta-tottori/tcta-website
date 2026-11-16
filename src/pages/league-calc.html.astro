@@ -47,7 +47,7 @@ const description = 'リーグ戦（総当たり）の勝敗・取得ゲーム�
 
   <section class="section">
     <div class="container container--result">
-      <div class="lc" id="lc" data-rule={fixedRule ?? ''} data-n={n0} data-slug={ev?.slug ?? ''} data-formats={formats}>
+      <div class="lc" id="lc" data-tour={ev?.name ?? ''} data-rule={fixedRule ?? ''} data-n={n0} data-slug={ev?.slug ?? ''} data-formats={formats}>
         {/* ルール */}
         <div class="lc-box rv">
           <h2 class="lc-h">ルール</h2>
@@ -77,14 +77,23 @@ const description = 'リーグ戦（総当たり）の勝敗・取得ゲーム�
             ))}
           </div>
           <div class="lc-names" id="lc-names"></div>
-          <p class="lc-note">名前は書き換えられます（空けておくと A・B・C… のまま）。</p>
+          <p class="lc-note">実際のチーム名・ペア名に書き換えられます（空けておくと A・B・C… のまま）。リーグ表のチーム名を押しても直せます。</p>
+          <details class="lc-bulk">
+            <summary>チーム名をまとめて入れる</summary>
+            <p class="lc-note">1 行に 1 チームずつ、リーグの順（1 番から）に入れてください。行の数がチームの数になります（3〜7）。</p>
+            <textarea id="lc-bulk" rows="5" placeholder={'谷口・近藤\n加藤・酒本\n長谷川・高木\n前田・住吉'}></textarea>
+            <button type="button" class="btn btn--outline" id="lc-bulk-ok">この名前で入れる</button>
+          </details>
         </div>
 
         {/* リーグ表（マスを押してスコアを入れる。大会運営システムのリーグ表と同じ形） */}
         <div class="lc-box rv">
           <div class="lc-hrow">
             <h2 class="lc-h">リーグ表</h2>
-            <button type="button" class="lc-clear" id="lc-clear">すべて消す</button>
+            <div class="lc-hbtns">
+              <button type="button" class="lc-clear lc-print-open" id="lc-print-open">印刷用のリーグ表を見る</button>
+              <button type="button" class="lc-clear" id="lc-clear">すべて消す</button>
+            </div>
           </div>
           <p class="lc-note lc-note--lead">マスを押すと、その試合のスコア（ゲーム数）を入れられます。左の列のチームから見たスコアで入れてください。</p>
           <p class="lc-warn" id="lc-warn" hidden></p>
@@ -132,6 +141,38 @@ const description = 'リーグ戦（総当たり）の勝敗・取得ゲーム�
         </div>
 
         {ev && <p class="rv"><a class="ghost-link" href={ev.url}>← {ev.displayName} のページへ</a></p>}
+
+        {/* チーム名を直す小窓（リーグ表のチーム名を押すと開く） */}
+        <dialog class="lc-dlg lc-namedlg" id="lc-name-dlg" aria-labelledby="lc-name-title">
+          <form method="dialog" class="lc-dlg__form" id="lc-name-form">
+            <p class="lc-dlg__title" id="lc-name-title">チーム名を直す</p>
+            <input class="lc-namedlg__in" id="lc-name-in" maxlength="20" autocomplete="off" />
+            <p class="lc-dlg__hint">空けておくと A・B・C… の表示になります。</p>
+            <div class="lc-dlg__btns lc-dlg__btns--2">
+              <button type="button" class="btn btn--outline" id="lc-name-cancel">やめる</button>
+              <button type="submit" class="btn btn--primary">決定</button>
+            </div>
+          </form>
+        </dialog>
+
+        {/* 印刷用のリーグ表のプレビュー（紙のリーグ表と同じ形） */}
+        <dialog class="lc-pv" id="lc-pv" aria-labelledby="lc-pv-title">
+          <div class="lc-pv__bar">
+            <p class="lc-pv__title" id="lc-pv-title" tabindex="-1" autofocus>印刷用のリーグ表</p>
+            <div class="lc-pv__fields">
+              <label>種目<input id="pv-title" maxlength="40" placeholder="例 男子B級ダブルス" /></label>
+              <label>リーグ<input id="pv-league" maxlength="6" placeholder="A" /></label>
+              <label>コート<input id="pv-court" maxlength="20" placeholder="例 No.1 コート" /></label>
+              <label>大会名<input id="pv-tour" maxlength="60" /></label>
+              <label>用紙<select id="pv-paper"><option value="297x210">A4 横</option><option value="210x297">A4 縦</option><option value="257x182">B5 横</option><option value="364x257">B4 横</option></select></label>
+            </div>
+            <div class="lc-pv__btns">
+              <button type="button" class="btn btn--primary" id="pv-print">印刷する</button>
+              <button type="button" class="btn btn--outline" id="pv-close">閉じる</button>
+            </div>
+          </div>
+          <div class="lc-pv__stage" id="pv-stage"></div>
+        </dialog>
 
         {/* スコアを入れる小窓 */}
         <dialog class="lc-dlg" id="lc-dlg" aria-labelledby="lc-dlg-title">
@@ -287,6 +328,143 @@ const description = 'リーグ戦（総当たり）の勝敗・取得ゲーム�
   dlg.addEventListener('close', () => { dlg.style.top = ''; dlg.style.maxHeight = ''; });
   dlg.addEventListener('click', (ev) => { if (ev.target === dlg) dlg.close(); });
 
+  // ---- チーム名：リーグ表から直す・まとめて入れる ----
+  const nameDlg = document.getElementById('lc-name-dlg') as HTMLDialogElement;
+  const nameIn = document.getElementById('lc-name-in') as HTMLInputElement;
+  let nameIdx = -1;
+  function openName(i: number) {
+    nameIdx = i;
+    document.getElementById('lc-name-title')!.textContent = `${LETTERS[i]}（${i + 1}番）のチーム名`;
+    nameIn.value = names[i];
+    nameIn.placeholder = LETTERS[i];
+    nameDlg.showModal();
+    setTimeout(() => { nameIn.focus(); nameIn.select(); }, 30);
+  }
+  document.getElementById('lc-name-form')!.addEventListener('submit', () => {
+    if (nameIdx < 0) return;
+    names[nameIdx] = nameIn.value.trim();
+    save(); renderNames(); compute();
+  });
+  document.getElementById('lc-name-cancel')!.addEventListener('click', () => nameDlg.close());
+  document.getElementById('lc-bulk-ok')!.addEventListener('click', () => {
+    const lines = (document.getElementById('lc-bulk') as HTMLTextAreaElement).value.split('\n').map((s) => s.trim()).filter(Boolean).slice(0, 7);
+    if (lines.length === 0) return;
+    names = Array.from({ length: 7 }, (_, i) => lines[i] ?? '');
+    if (lines.length >= 3) {
+      n = lines.length;
+      document.querySelectorAll<HTMLInputElement>('input[name=lc-n]').forEach((el) => { el.checked = Number(el.value) === n; });
+    }
+    save(); renderNames(); compute();
+    (document.querySelector('.lc-bulk') as HTMLDetailsElement).open = false;
+  });
+
+  // ---- 印刷用のリーグ表（紙のリーグ表と同じ形）----
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let last: any = null;
+  const pv = document.getElementById('lc-pv') as HTMLDialogElement;
+  const PV_KEY = `${KEY}:print`;
+  const pvIds = ['pv-title', 'pv-league', 'pv-court', 'pv-tour', 'pv-paper'];
+  const pvEl = (id: string) => document.getElementById(id) as HTMLInputElement;
+  try {
+    const sv = JSON.parse(localStorage.getItem(PV_KEY) || 'null');
+    if (sv) pvIds.forEach((id) => { if (sv[id] != null) pvEl(id).value = sv[id]; });
+  } catch { /* */ }
+  if (!pvEl('pv-tour').value) pvEl('pv-tour').value = root.dataset.tour || '';
+  if (!pvEl('pv-league').value) pvEl('pv-league').value = 'A';
+  pvIds.forEach((id) => pvEl(id).addEventListener('input', () => {
+    try { localStorage.setItem(PV_KEY, JSON.stringify(Object.fromEntries(pvIds.map((k) => [k, pvEl(k).value])))); } catch { /* */ }
+    renderPreview();
+  }));
+  // 試合順（運営システムの generateLeagueMatchOrder と同じ）
+  function matchOrder(k: number): [number, number][] {
+    if (k === 3) return [[0, 1], [1, 2], [0, 2]];
+    if (k === 4) return [[0, 1], [2, 3], [0, 2], [1, 3], [1, 2], [0, 3]];
+    if (k === 5) return [[0, 1], [2, 3], [0, 4], [1, 2], [3, 4], [0, 2], [1, 3], [2, 4], [0, 3], [1, 4]];
+    const out: [number, number][] = [];
+    const odd = k % 2 !== 0, total = odd ? k + 1 : k;
+    const rot = Array.from({ length: total - 1 }, (_, i) => i + 1);
+    for (let r = 0; r < total - 1; r++) {
+      if (rot[0] < k) out.push([0, rot[0]]);
+      for (let i = 1; i <= (total - 2) / 2; i++) {
+        const a = rot[i], b = rot[total - 1 - i];
+        if (a < k && b < k) out.push([Math.min(a, b), Math.max(a, b)]);
+      }
+      rot.unshift(rot.pop()!);
+    }
+    return out;
+  }
+  const CIRC = ['①', '②', '③', '④', '⑤', '⑥', '⑦'];
+  function sheetHtml(W: number, H: number): string {
+    if (!last) return '';
+    const L = last;
+    const s = Math.min(W / 281, H / 194);
+    const u = (v: number) => `${(v * s).toFixed(2)}mm`;
+    const k = L.ids.length;
+    const steps = [...document.querySelectorAll<HTMLElement>('#lc-steps li')].filter((li) => !li.hidden).map((li, x) => `（${x + 1}）${li.textContent}`);
+    const footLines = 2 + steps.length;
+    const headH = 22 * s, footH = (footLines * 3.5 * 1.5 + 4) * s, tableH = H - headH - footH;
+    const hdrH = Math.min(14 * s, tableH * 0.16), rowH = (tableH - hdrH) / k;
+    const nameW = W * 0.27, resW = W * 0.13, rankW = W * 0.075, cellW = (W - nameW - resW - rankW) / k;
+    const fmtNote = L.team ? `${(L.f.matches ?? []).join('・')} 各 合計${L.f.total}ゲーム` : L.f.total ? `1試合 合計${L.f.total}ゲーム` : '';
+    const td = 'border:0.35mm solid #000;padding:0;text-align:center;vertical-align:middle;';
+    const B = (x: string) => esc(x);
+    const head = `<tr style="height:${(hdrH).toFixed(2)}mm"><th style="${td}text-align:left;padding:0 ${u(3)};font-weight:400"><span style="font-size:${u(9)}">${B(pvEl('pv-league').value)}</span><span style="font-size:${u(5)};margin-left:${u(1.5)}">リーグ</span><span style="float:right;font-size:${u(4)};margin-top:${u(3)}">${B(pvEl('pv-court').value)}</span></th>${
+      L.ids.map((j: number) => `<th style="${td}font-weight:400;font-size:${u(Math.min(4.2, 30 / Math.max(5, nameOf(j).length)))}">${B(nameOf(j))}</th>`).join('')}<th style="${td}font-weight:400;font-size:${u(4.8)};letter-spacing:.4em">成績</th><th style="${td}font-weight:400;font-size:${u(4.8)};letter-spacing:.2em">順位</th></tr>`;
+    const rows = L.ids.map((i: number) => {
+      const cells = L.ids.map((j: number) => {
+        if (i === j) return `<td style="${td}background:linear-gradient(to top right,transparent calc(50% - .2mm),#000 calc(50% - .2mm),#000 calc(50% + .2mm),transparent calc(50% + .2mm))"></td>`;
+        if (!L.played(i, j)) return `<td style="${td}"></td>`;
+        const a = L.tot(i, j), b = L.tot(j, i);
+        const det = L.team ? `<div style="font-size:${u(2.8)};margin-top:${u(0.8)};color:#333">${(L.f.matches ?? []).map((lb: string, m: number) => `${B(lb)} ${L.sc[m][i][j]}-${L.sc[m][j][i]}`).join('<br>')}</div>` : '';
+        return `<td style="${td}"><div style="font-size:${u(L.team ? 5 : 5.6)}">${a}-${b}</div>${det}</td>`;
+      }).join('');
+      const t = L.st[i].gw + L.st[i].gl;
+      const res = L.team
+        ? `<div style="font-size:${u(5.5)}">${t ? L.st[i].gw : ''}</div><div style="font-size:${u(2.8)}">${t ? '得点' : ''}</div>`
+        : t ? `<div style="font-size:${u(4.4)}">${L.st[i].w}-${L.st[i].l}${L.hasDraw ? `-${L.st[i].d}` : ''}</div><div style="font-size:${u(3.2)};margin-top:${u(0.8)}">${L.r === 'games' ? `${pct(L.rate(i))}（${L.st[i].gw}-${L.st[i].gl}）` : `${L.st[i].gw}-${L.st[i].gl}`}</div>` : '';
+      const rk = L.done ? `${L.rankOf.get(i)}${L.tied.has(i) ? '<div style="font-size:' + u(2.6) + '">同率</div>' : ''}` : '';
+      const whyTxt = L.showWhy && L.why.get(i) ? `<div style="font-size:${u(2.4)};margin-top:${u(0.6)}">${B(L.why.get(i))}</div>` : '';
+      return `<tr style="height:${rowH.toFixed(2)}mm"><td style="${td}text-align:left;padding:0 ${u(2.5)}"><span style="font-size:${u(4.2)};margin-right:${u(3)}">${i + 1}</span><span style="font-size:${u(Math.min(5.2, 52 / Math.max(8, nameOf(i).length)))};letter-spacing:.12em">${B(nameOf(i))}</span></td>${cells}<td style="${td}">${res}</td><td style="${td}font-size:${u(6)}">${rk}${whyTxt}</td></tr>`;
+    }).join('');
+    const order = matchOrder(k).map(([a, b]) => `${CIRC[a]}-${CIRC[b]}`).join(' ');
+    return `<div style="width:${W}mm;height:${H}mm;font-family:'BIZ UDPGothic','Yu Gothic','Hiragino Sans','Meiryo',sans-serif;color:#000;overflow:hidden">
+      <div style="height:${headH.toFixed(2)}mm;display:flex;align-items:flex-end;justify-content:space-between;padding-bottom:${u(2)}">
+        <span style="font-size:${u(11)};font-weight:700;line-height:1">${B(pvEl('pv-title').value || (L.team ? 'チーム対抗戦' : 'リーグ戦'))}</span>
+        <span style="text-align:right;line-height:1.25"><span style="display:block;font-size:${u(5)}">${B(pvEl('pv-tour').value)}</span><span style="display:block;font-size:${u(4.4)}">${B(fmtNote)}</span></span>
+      </div>
+      <table style="width:${(W - 0.8).toFixed(2)}mm;height:${tableH.toFixed(2)}mm;border-collapse:collapse;table-layout:fixed;border:0.6mm solid #000">
+        <colgroup><col style="width:${nameW.toFixed(2)}mm">${L.ids.map(() => `<col style="width:${cellW.toFixed(2)}mm">`).join('')}<col style="width:${resW.toFixed(2)}mm"><col style="width:${rankW.toFixed(2)}mm"></colgroup>
+        <thead>${head}</thead><tbody>${rows}</tbody>
+      </table>
+      <div style="padding-top:${u(2)};font-size:${u(3.5)};line-height:1.5">
+        <div>① 試合順：${order}　　1番目のチームが進行管理をお願いします。</div>
+        <div>② リーグ戦の順位決定方法</div>
+        ${steps.map((x) => `<div style="padding-left:${u(6)}">${B(x)}</div>`).join('')}
+      </div>
+    </div>`;
+  }
+  const paperSize = () => { const [w, h] = pvEl('pv-paper').value.split('x').map(Number); return { w, h }; };
+  function renderPreview() {
+    const { w, h } = paperSize();
+    const stage = document.getElementById('pv-stage')!;
+    const avail = stage.clientWidth - 24;
+    const scale = Math.min(1, avail / (w * 96 / 25.4));
+    stage.innerHTML = `<div class="lc-pv__wrap" style="width:${(w * 96 / 25.4 * scale).toFixed(1)}px;height:${(h * 96 / 25.4 * scale).toFixed(1)}px"><div class="lc-pv__page" style="width:${w}mm;height:${h}mm;padding:8mm;transform:scale(${scale})">${sheetHtml(w - 16, h - 16)}</div></div>`;
+  }
+  document.getElementById('lc-print-open')!.addEventListener('click', () => {
+    if (!pvEl('pv-title').value && root.dataset.tour) pvEl('pv-title').placeholder = '例 男子B級ダブルス';
+    pv.showModal(); renderPreview();
+  });
+  document.getElementById('pv-close')!.addEventListener('click', () => pv.close());
+  window.addEventListener('resize', () => { if (pv.open) renderPreview(); });
+  document.getElementById('pv-print')!.addEventListener('click', () => {
+    const { w, h } = paperSize();
+    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>リーグ表</title><style>@page{size:${w}mm ${h}mm;margin:8mm;}*{box-sizing:border-box;margin:0;padding:0;}body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}</style></head><body>${sheetHtml(w - 16, h - 16.6)}<script>window.onload=function(){setTimeout(function(){window.print();},300);};<\/script></body></html>`;
+    const win = window.open('', '_blank');
+    if (!win) { alert('印刷の窓を開けませんでした。ポップアップを許可してください。'); return; }
+    win.document.open(); win.document.write(html); win.document.close();
+  });
+
   let tiedGroups: number[][] = [];
   function compute() {
     renderFormats();
@@ -405,7 +583,7 @@ const description = 'リーグ戦（総当たり）の勝敗・取得ゲーム�
       ids.map((i) => {
         const rk = rankOf.get(i);
         const champ = done && rk === 1;
-        return `<tr><td class="lc-g__name"><span class="lc-g__no">${i + 1}</span><span class="lc-g__team${champ ? ' is-champ' : ''}">${esc(nameOf(i))}</span></td>${ids.map((j) => {
+        return `<tr><td class="lc-g__name"><span class="lc-g__no">${i + 1}</span><button type="button" class="lc-g__team lc-namebtn${champ ? ' is-champ' : ''}" data-name="${i}" aria-label="${esc(nameOf(i))}（押して名前を直す）">${esc(nameOf(i))}</button></td>${ids.map((j) => {
           if (i === j) return '<td class="lc-g__self" aria-hidden="true"></td>';
           const label = `${esc(nameOf(i))} 対 ${esc(nameOf(j))}`;
           if (!played(i, j)) return `<td><button type="button" class="lc-cell lc-cell--empty" data-i="${i}" data-j="${j}" aria-label="${label} のスコアを入れる">入力</button></td>`;
@@ -422,6 +600,9 @@ const description = 'リーグ戦（総当たり）の勝敗・取得ゲーム�
         }).join('')}${statCells(i)}${showWhy ? `<td class="lc-g__stat lc-g__why">${esc(why.get(i) ?? '')}</td>` : ''}<td class="lc-g__stat lc-g__rank${champ ? ' is-champ' : ''}">${done ? (tied.has(i) ? `${rk}位<small>同率</small>` : `${rk}位`) : ''}</td></tr>`;
       }).join('')}</tbody>`;
     grid.querySelectorAll<HTMLButtonElement>('.lc-cell').forEach((b) => b.addEventListener('click', () => openCell(Number(b.dataset.i), Number(b.dataset.j))));
+    grid.querySelectorAll<HTMLButtonElement>('.lc-namebtn').forEach((b) => b.addEventListener('click', () => openName(Number(b.dataset.name))));
+    last = { ids, st, rankOf, tied, done, team, f, sc, played, tot, rate, hasDraw, r, why, showWhy };
+    if (pv.open) renderPreview();
     const whyNote = document.getElementById('lc-why-note')!;
     whyNote.hidden = !showWhy;
     whyNote.innerHTML = h2hCells.size ? '<span class="lc-why-key"></span>オレンジの枠は、順位を決めるのに使った直接対決の試合です。「決め手」の列に、並んだチームの順位の決め方を出しています。' : '「決め手」の列に、並んだチームの順位の決め方を出しています。';
