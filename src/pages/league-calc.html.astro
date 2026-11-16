@@ -145,12 +145,30 @@ const description = 'リーグ戦（総当たり）の勝敗・取得ゲーム�
         {/* ルールの詳細（下に） */}
         <div class="lc-box rv" id="lc-rules">
           <h2 class="lc-h">ルール（順位の決め方）</h2>
-          {fixedRule && <p class="lc-rule"><span class="lc-rule__tag">{RULE_TEXT[fixedRule].label}</span>{ev?.name}</p>}
-          <ol class="lc-steps" id="lc-steps">
-            {Object.entries(RULE_TEXT).map(([k, r]) => r.steps.map((s) => <li data-rule={k}>{s}</li>))}
+          {fixedRule && <p class="lc-rule lc-rule--head"><span class="lc-rule__tag">{RULE_TEXT[fixedRule].label}</span><span class="lc-rule__ev">{ev?.name}</span></p>}
+          {/* 順位の決め方の流れ（上から順に当てはめる）。番号は見えている行だけで数える（CSS の counter） */}
+          <ol class="lc-steps lc-flow" id="lc-steps">
+            {Object.entries(RULE_TEXT).map(([k, r]) => r.steps.map((s, i, arr) => (
+              <li data-rule={k} class:list={['lc-flow__step', i === arr.length - 1 && 'lc-flow__step--last']}>
+                <span class="lc-flow__label">{i === 0 ? '順位の基本' : i === arr.length - 1 ? '最後に' : 'それでも並んだら'}</span>
+                <span class="lc-flow__text">{s}</span>
+              </li>
+            )))}
           </ol>
-          {conf?.note && <p class="lc-note">{conf.note}</p>}
-          <p class="lc-note" id="lc-rate-note">取得ゲーム率 ＝ 取ったゲーム数 ÷（取ったゲーム数 ＋ 取られたゲーム数）。引き分け（同じゲーム数）は勝ち負けに数えず、ゲーム数だけ数えます。</p>
+          {conf?.note && (
+            <div class="lc-callout">
+              <p class="lc-callout__head">この大会の決まり</p>
+              <p class="lc-callout__text">{conf.note}</p>
+            </div>
+          )}
+          <div class="lc-formula" id="lc-rate-note">
+            <p class="lc-formula__head">取得ゲーム率の計算</p>
+            <div class="lc-formula__eq" aria-label="取得ゲーム率 ＝ 取ったゲーム数 ÷（取ったゲーム数 ＋ 取られたゲーム数）">
+              <span class="lc-formula__lhs">取得ゲーム率</span><span class="lc-formula__op">＝</span>
+              <span class="lc-frac"><span class="lc-frac__num">取ったゲーム数</span><span class="lc-frac__den">取ったゲーム数 ＋ 取られたゲーム数</span></span>
+            </div>
+            <p class="lc-formula__note">引き分け（同じゲーム数）は勝ち負けに数えず、ゲーム数だけ数えます。</p>
+          </div>
         </div>
 
         {ev && <p class="rv"><a class="ghost-link" href={ev.url}>← {ev.displayName} のページへ</a></p>}
@@ -474,7 +492,7 @@ const description = 'リーグ戦（総当たり）の勝敗・取得ゲーム�
     const s = Math.min(W / 281, H / 194);
     const u = (v: number) => `${(v * s).toFixed(2)}mm`;
     const k = L.ids.length;
-    const steps = [...document.querySelectorAll<HTMLElement>('#lc-steps li')].filter((li) => !li.hidden).map((li, x) => `（${x + 1}）${li.textContent}`);
+    const steps = [...document.querySelectorAll<HTMLElement>('#lc-steps li')].filter((li) => !li.hidden).map((li, x) => `（${x + 1}）${(li.querySelector('.lc-flow__text') ?? li).textContent}`);
     const footLines = 2 + steps.length + (k >= 6 ? 1 : 0); // 6 チーム以上は試合順が 2 行になる
     const headH = 22 * s, footH = (footLines * 3.5 * 1.5 + 4) * s, tableH = H - headH - footH;
     const hdrH = Math.min(14 * s, tableH * 0.16), rowH = (tableH - hdrH) / k;
