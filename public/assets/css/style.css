@@ -6140,3 +6140,11 @@ html.is-lite body.jsrv .rv, html.is-lite body.jsrv .rv-in { opacity: 1 !importan
   .lc-dlg__hint { margin-top: 8px; font-size: 11.5px; }
   .lc-dlg__btns { position: sticky; bottom: 0; margin: 10px -14px 0; padding: 10px 14px calc(10px + env(safe-area-inset-bottom)); background: #fff; box-shadow: 0 -6px 12px -8px rgba(0, 0, 0, .25); }
 }
+
+/* リーグ表の「決め手」の列と、順位を決めるのに使った直接対決のマス */
+.lc-grid td.is-h2h { box-shadow: inset 0 0 0 3px #F59E0B; }
+.lc-g__why { min-width: 92px; max-width: 132px; white-space: normal !important; font: 700 11.5px/1.35 var(--fjp) !important; color: #B45309 !important; }
+.lc-grid thead th.lc-g__why { color: #B45309 !important; background: #FFFBEB; }
+.lc-grid tbody td.lc-g__why { background: #FFFBEB !important; }
+.lc-why-note { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
+.lc-why-key { flex: none; width: 18px; height: 14px; border: 3px solid #F59E0B; border-radius: 2px; }
