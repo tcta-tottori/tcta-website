@@ -6209,3 +6209,39 @@ html.is-lite body.jsrv .rv, html.is-lite body.jsrv .rv-in { opacity: 1 !importan
   .lc-g__col .lc-mq { width: 45px; }
   .lc-grid--team .lc-g__col .lc-mq { width: 70px; }
 }
+/* ===== リーグ戦の順位計算：ルール（順位の決め方）の箱 ===== */
+.lc-rule--head { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; padding: 12px 14px; margin: 0 0 18px; background: linear-gradient(90deg, var(--red-tint), #fff); border-radius: var(--radius); }
+.lc-rule--head .lc-rule__tag { margin: 0; }
+.lc-rule__ev { font: 700 15px/1.5 var(--fjp); color: var(--ink); }
+/* 流れ：番号の丸を縦の線でつなぐ */
+.lc-flow { counter-reset: lcstep; list-style: none; padding: 0; margin: 0; display: grid; gap: 0; }
+.lc-flow__step { counter-increment: lcstep; position: relative; display: grid; gap: 2px; padding: 0 0 16px 50px; }
+.lc-flow__step[hidden] { display: none; }
+.lc-flow__step::before { content: counter(lcstep); position: absolute; left: 0; top: 0; width: 34px; height: 34px; display: grid; place-items: center; border-radius: 50%; background: var(--red); color: #fff; font: 700 16px/1 var(--flt); box-shadow: 0 0 0 4px var(--red-tint); }
+.lc-flow__step::after { content: ''; position: absolute; left: 16px; top: 40px; bottom: 4px; width: 2px; background: repeating-linear-gradient(to bottom, rgba(216, 35, 42, .35) 0 4px, transparent 4px 8px); }
+.lc-flow__step--last { padding-bottom: 0; }
+.lc-flow__step--last::after { display: none; }
+.lc-flow__step--last::before { background: var(--gray-600); box-shadow: 0 0 0 4px var(--gray-100, #F3F4F6); }
+.lc-flow__label { font: 700 11.5px/1.4 var(--fjp); letter-spacing: .08em; color: var(--red); padding-top: 1px; }
+.lc-flow__step--last .lc-flow__label { color: var(--gray-600); }
+.lc-flow__text { font: 500 14.5px/1.75 var(--fjp); color: var(--ink); }
+/* この大会の決まり */
+.lc-callout { margin-top: 20px; padding: 14px 16px; background: #FFFBEB; border: 1px solid #FDE68A; border-left: 4px solid #F59E0B; border-radius: var(--radius); }
+.lc-callout__head { margin: 0 0 4px; font: 700 13px/1.4 var(--fjp); color: #B45309; }
+.lc-callout__text { margin: 0; font: 400 13.5px/1.85 var(--fjp); color: #3F3F46; }
+/* 取得ゲーム率の式 */
+.lc-formula { margin-top: 16px; padding: 14px 16px; background: #F9FAFB; border: 1px solid var(--gray-200); border-radius: var(--radius); }
+.lc-formula[hidden] { display: none; }
+.lc-formula__head { margin: 0 0 10px; font: 700 13px/1.4 var(--fjp); color: var(--gray-700, #374151); }
+.lc-formula__eq { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px 10px; padding: 10px 8px; background: #fff; border-radius: var(--radius); font: 700 14px/1.4 var(--fjp); color: var(--ink); }
+.lc-formula__lhs { color: var(--red); }
+.lc-formula__op { color: var(--gray-500); }
+.lc-frac { display: inline-grid; text-align: center; }
+.lc-frac__num { padding: 0 6px 4px; border-bottom: 2px solid var(--ink); }
+.lc-frac__den { padding: 4px 6px 0; }
+.lc-formula__note { margin: 10px 0 0; font: 400 12.5px/1.7 var(--fjp); color: var(--gray-600); }
+@media (max-width: 639px) {
+  .lc-flow__step { padding-left: 46px; }
+  .lc-flow__text { font-size: 14px; }
+  .lc-formula__eq { font-size: 13px; }
+}
