@@ -62,8 +62,10 @@ const description = 'リーグ戦（総当たり）の勝敗・取得ゲーム�
           )}
           {/* 実際のリーグを選べる大会は、チーム名・チームの数が入る */}
           <div class="lc-league" id="lc-league-box" hidden>
-            <label class="lc-league__label" for="lc-league">リーグを選ぶ</label>
-            <select id="lc-league" class="lc-league__sel"></select>
+            <p class="lc-league__label" id="lc-league-label">リーグを選ぶ</p>
+            {/* リーグごとのカード（リーグ名とその中のチーム名）。押すとそのリーグになる。選んだ値は隠した select に持つ */}
+            <div class="lc-lgs" id="lc-lgs" role="radiogroup" aria-labelledby="lc-league-label"></div>
+            <select id="lc-league" class="lc-league__sel" hidden aria-hidden="true" tabindex="-1"></select>
             <p class="lc-note" id="lc-league-note"></p>
           </div>
           <div class="lc-seg lc-seg--fmt" id="lc-fmts" role="radiogroup" aria-label="試合の形式"></div>
@@ -881,14 +883,40 @@ const description = 'リーグ戦（総当たり）の勝敗・取得ゲーム�
     document.querySelectorAll<HTMLInputElement>('input[name=lc-n]').forEach((el) => { el.checked = Number(el.value) === n; });
     const note = document.getElementById('lc-league-note')!;
     note.textContent = L ? `${L.name}：${L.players.length} チーム。チーム名は${fromDraw ? 'ドロー（プログラム）' : '大会運営システムの組み合わせ'}から入れています（直すこともできます）。入れた結果はリーグごとにこの端末に残ります。` : 'チーム名とチームの数を自分で入れます。';
+    markLeague();
     save(); renderNames(); compute();
   }
   let fromDraw = false;
+  const lgs = document.getElementById('lc-lgs')!;
+  /** カードの選ばれている印をそろえる */
+  function markLeague() {
+    lgs.querySelectorAll<HTMLButtonElement>('.lc-lg').forEach((b) => {
+      const on = b.dataset.league === league;
+      b.classList.toggle('is-on', on);
+      b.setAttribute('aria-checked', String(on));
+    });
+  }
+  function renderLeagueCards() {
+    const short = (nm: string) => nm.replace(/^.*?[\s　]+(?=\S*リーグ$)/, '');
+    lgs.innerHTML = leagues.map((l) => `<button type="button" class="lc-lg" role="radio" data-league="${esc(l.name)}">
+        <span class="lc-lg__head"><b>${esc(short(l.name))}</b><small>${l.players.length}チーム</small></span>
+        ${short(l.name) !== l.name ? `<span class="lc-lg__ev">${esc(l.name.slice(0, l.name.length - short(l.name).length).trim())}</span>` : ''}
+        <ol class="lc-lg__teams">${l.players.map((p) => `<li>${esc(teamName(p, l.type === 'Doubles'))}</li>`).join('')}</ol>
+      </button>`).join('') + '<button type="button" class="lc-lg lc-lg--free" role="radio" data-league=""><span class="lc-lg__head"><b>自分で入れる</b></span><span class="lc-lg__ev">チーム名 A・B・C…</span></button>';
+    lgs.querySelectorAll<HTMLButtonElement>('.lc-lg').forEach((b) => b.addEventListener('click', () => {
+      const v = b.dataset.league ?? '';
+      if (v === league) return;
+      sel.value = v;
+      applyLeague(v, !byLeague[v]);
+    }));
+    markLeague();
+  }
   function showLeagues(list: LeagueData[]) {
     leagues = list;
     if (!leagues.length) return;
     sel.innerHTML = `<option value="">自分で入れる（A・B・C…）</option>${leagues.map((l) => `<option value="${esc(l.name)}">${esc(l.name)}（${l.players.length}チーム）</option>`).join('')}`;
     sel.value = leagues.some((l) => l.name === league) ? league : '';
+    renderLeagueCards();
     document.getElementById('lc-league-box')!.hidden = false;
     document.getElementById('lc-league-note')!.textContent = league ? '' : 'リーグを選ぶと、チーム名とチームの数が入ります。';
     if (league) applyLeague(league, false);
