@@ -82,8 +82,13 @@ const description = 'リーグ戦（総当たり）の勝敗・取得ゲーム�
           <div class="lc-hrow">
             <h2 class="lc-h">リーグ表</h2>
             <div class="lc-hbtns">
-              <button type="button" class="lc-clear lc-print-open" id="lc-print-open">印刷用のリーグ表を見る</button>
-              <button type="button" class="lc-clear" id="lc-clear">すべて消す</button>
+              {/* 印刷用のリーグ表を見る／入れた結果をすべて消す（アイコンだけのボタン。名前は aria-label と title） */}
+              <button type="button" class="lc-ibtn lc-ibtn--print" id="lc-print-open" aria-label="印刷用のリーグ表を見る" title="印刷用のリーグ表を見る">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9V3h12v6" /><rect x="3" y="9" width="18" height="8" rx="2" /><path d="M6 14h12v7H6z" /><circle cx="17.5" cy="12" r=".6" fill="currentColor" /></svg>
+              </button>
+              <button type="button" class="lc-ibtn lc-ibtn--clear" id="lc-clear" aria-label="入れた結果をすべて消す" title="すべて消す">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
+              </button>
             </div>
           </div>
           <p class="lc-note lc-note--lead">マスを押すと、その試合のスコア（ゲーム数）を入れられます。左の列のチームから見たスコアで入れてください。</p>
