@@ -37,7 +37,7 @@ const extAttrs = (href) => (/^https?:/.test(href ?? '') ? { target: '_blank', re
       const chip = dateChip(t.date);
       const badge = STATUS[t.status] ?? STATUS.soon;
       const href = t.action?.href ?? null;
-      // 受付終了の大会は、バッジを「受付終了」ではなく開催日までの残りの日数（「開催まで あと6日」「明日開催」）にする
+      // 受付終了の大会は、バッジを「受付終了」ではなく開催日までの残りの日数（「開催まで あと6日」「明日開催」）にする。赤の塗りつぶしに白文字（受付中と同じ色）
       const left = t.status === 'closed' ? closedLeftText(t.date) : null;
       return (
         <li data-tags={t.tags} class={i >= pcFrom ? 'tl-pc' : undefined}>
@@ -73,7 +73,7 @@ const extAttrs = (href) => (/^https?:/.test(href ?? '') ? { target: '_blank', re
               )}
             </span>
             <span class="entry-row__status"><span class="visually-hidden">状態：</span>{left
-              ? <span class={`badge ${badge.badge}`}>{left}</span>
+              ? <span class="badge badge--open badge--count">{left}</span>
               : <span class={`badge ${badge.badge}`}>{badge.label}</span>}</span>
             <span class="entry-row__btns">
               {(t.buttons ?? []).map((b) =>
