@@ -82,7 +82,7 @@ export function daysUntil(date) {
   if (!y || !m || !d) return null;
   return Math.round((Date.UTC(y, m - 1, d) - Date.UTC(ty, tm - 1, td)) / 86400000);
 }
-/** 受付終了のバッジの下の段（「あと 6 日」「明日開催」）。開催日を過ぎていれば null */
+/** 受付終了の大会のバッジの文言（「開催まで あと6日」「明日開催」）。開催日を過ぎていれば null */
 export function closedLeftText(date) {
   const n = daysUntil(date);
   if (n === null || n < 0) return null;
