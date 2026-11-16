@@ -129,8 +129,8 @@ const description = 'リーグ戦（総当たり）の勝敗・取得ゲーム�
           </div>
         </div>
 
-        {/* チーム名 */}
-        <div class="lc-box rv">
+        {/* チーム名の入力欄（画面には出さない。名前はリーグ表のチーム名を押して直す。保存・まとめ入力の仕組みはそのまま） */}
+        <div class="lc-box rv" hidden>
           <h2 class="lc-h">チーム名</h2>
           <div class="lc-names" id="lc-names"></div>
           <p class="lc-note">実際のチーム名・ペア名に書き換えられます（空けておくと A・B・C… のまま）。リーグ表のチーム名を押しても直せます。</p>
@@ -413,18 +413,56 @@ const description = 'リーグ戦（総当たり）の勝敗・取得ゲーム�
     }
     return out;
   }
-  // リーグ表のチーム名：列の幅は一定にし、収まらない名前は左右に流して全部読めるようにする
+  // リーグ表のチーム名
+  //   上の段（横軸）… 列の幅は一定。収まらない名前は右から左へ流す（後ろに写しを付けて途切れずに回す）
+  //   左の列        … 6 文字までそのまま、12 文字までは文字の幅を縮めて 1 行に、13 文字からは切りのよいところで 2 行に（各行も縮めて収める）
   const mq = (name: string) => `<span class="lc-mq"><span class="lc-mq__in">${esc(name)}</span></span>`;
+  /** 13 文字以上の名前を 2 行に分ける位置（真ん中に近い区切り：空白・・・／・）の後ろ、カタカナと漢字の境目。無ければ真ん中） */
+  function splitName(name: string): [string, string] {
+    const ch = Array.from(name.trim());
+    const mid = ch.length / 2;
+    const kind = (c: string) => (/[゠-ヿ]/.test(c) ? 'k' : /[぀-ゟ]/.test(c) ? 'h' : /[一-鿿]/.test(c) ? 'c' : /[A-Za-z0-9Ａ-Ｚａ-ｚ０-９]/.test(c) ? 'a' : 'o');
+    let best = -1, score = Infinity;
+    for (let k = 3; k <= ch.length - 3; k++) {
+      const a = ch[k - 1], b = ch[k];
+      const sep = /[\s　・･／/、,]/.test(a) || /[\s　（(]/.test(b) ? 0 : kind(a) !== kind(b) ? 2 : null;
+      if (sep === null) continue;
+      const v = Math.abs(k - mid) + sep;
+      if (v < score) { score = v; best = k; }
+    }
+    const k = best > 0 && Math.abs(best - mid) <= ch.length / 4 ? best : Math.ceil(mid);
+    return [ch.slice(0, k).join('').trim(), ch.slice(k).join('').trim()];
+  }
+  const fitName = (name: string) => {
+    const n = Array.from(name.trim()).length;
+    const lines = n >= 13 ? splitName(name) : [name];
+    return `<span class="lc-fit${lines.length > 1 ? ' lc-fit--2' : ''}">${lines.map((l) => `<span class="lc-fit__line"><span class="lc-fit__in" data-n="${Array.from(l).length}">${esc(l)}</span></span>`).join('')}</span>`;
+  };
   function fitMarquee(scope: HTMLElement) {
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const GAP = 24, SPEED = 30; // 文字と写しの間（px）、流れる速さ（px／秒）
     scope.querySelectorAll<HTMLElement>('.lc-mq').forEach((box) => {
-      const inner = box.firstElementChild as HTMLElement;
-      box.classList.remove('is-scroll');
-      const over = inner.scrollWidth - box.clientWidth;
-      if (over <= 1) return;
-      box.classList.add(reduce ? 'is-cut' : 'is-scroll');
-      box.style.setProperty('--lc-shift', `${-over}px`);
-      box.style.setProperty('--lc-dur', `${(2.4 + over / 28).toFixed(2)}s`);
+      box.querySelectorAll('.lc-mq__clone').forEach((c) => c.remove());
+      box.classList.remove('is-scroll', 'is-cut');
+      const inner = box.querySelector('.lc-mq__in') as HTMLElement;
+      const w = inner.getBoundingClientRect().width;
+      if (w <= box.clientWidth + 1) return;
+      if (reduce) { box.classList.add('is-cut'); return; }
+      const clone = inner.cloneNode(true) as HTMLElement;
+      clone.classList.add('lc-mq__clone');
+      clone.setAttribute('aria-hidden', 'true');
+      box.appendChild(clone);
+      box.style.setProperty('--lc-shift', `${-(w + GAP)}px`);
+      box.style.setProperty('--lc-dur', `${((w + GAP) / SPEED / 0.8).toFixed(2)}s`);
+      box.classList.add('is-scroll');
+    });
+    // 左の列：7 文字以上（行ごと）は、はみ出す分だけ文字の幅を縮める
+    scope.querySelectorAll<HTMLElement>('.lc-fit__in').forEach((el) => {
+      el.style.transform = '';
+      if (Number(el.dataset.n) <= 6) return;
+      const room = (el.parentElement as HTMLElement).clientWidth;
+      const w = el.getBoundingClientRect().width;
+      if (w > room + 0.5) el.style.transform = `scaleX(${(room / w).toFixed(3)})`;
     });
   }
   let mqTimer = 0;
@@ -621,7 +659,7 @@ const description = 'リーグ戦（総当たり）の勝敗・取得ゲーム�
       ids.map((i) => {
         const rk = rankOf.get(i);
         const champ = done && rk === 1;
-        return `<tr><td class="lc-g__name"><span class="lc-g__no">${i + 1}</span><button type="button" class="lc-g__team lc-namebtn${champ ? ' is-champ' : ''}" data-name="${i}" aria-label="${esc(nameOf(i))}（押して名前を直す）">${mq(nameOf(i))}</button></td>${ids.map((j) => {
+        return `<tr><td class="lc-g__name"><span class="lc-g__no">${i + 1}</span><button type="button" class="lc-g__team lc-namebtn${champ ? ' is-champ' : ''}" data-name="${i}" aria-label="${esc(nameOf(i))}（押して名前を直す）">${fitName(nameOf(i))}</button></td>${ids.map((j) => {
           if (i === j) return '<td class="lc-g__self" aria-hidden="true"></td>';
           const label = `${esc(nameOf(i))} 対 ${esc(nameOf(j))}`;
           if (!played(i, j)) return `<td><button type="button" class="lc-cell lc-cell--empty" data-i="${i}" data-j="${j}" aria-label="${label} のスコアを入れる">入力</button></td>`;

@@ -6188,19 +6188,24 @@ html.is-lite body.jsrv .rv, html.is-lite body.jsrv .rv-in { opacity: 1 !importan
 .lc-box--top .lc-seg + .lc-seg, .lc-box--top .lc-league + .lc-seg { margin-top: 12px; }
 .lc-note--more { margin: 12px 0 0; }
 .lc-note--more a { color: var(--gray-700, #555); text-decoration: underline; text-underline-offset: 3px; }
-/* リーグ表のチーム名：列の幅は一定（名前の長さで変わらない）。収まらない名前は左右に流す（league-calc の fitMarquee） */
-.lc-mq { display: block; overflow: hidden; white-space: nowrap; }
-.lc-mq__in { display: inline-block; }
-.lc-mq.is-scroll .lc-mq__in { animation: lc-mq var(--lc-dur, 5s) ease-in-out infinite alternate; }
-.lc-mq.is-cut { text-overflow: ellipsis; }
-@keyframes lc-mq { 0%, 18% { transform: translateX(0); } 82%, 100% { transform: translateX(var(--lc-shift, 0)); } }
-.lc-g__col .lc-mq { width: 64px; margin: 0 auto; }
-.lc-grid--team .lc-g__col .lc-mq { width: 96px; }
-.lc-g__team { display: inline-block; vertical-align: middle; max-width: 100%; }
-.lc-g__team .lc-mq { width: 132px; text-align: left; }
-.lc-g__col, .lc-g__title { min-width: 0; }
+/* リーグ表のチーム名（league-calc の fitMarquee）
+   上の段：列の幅は一定。収まらない名前は右から左へ流す（写しを後ろに付けて途切れずに回る）
+   左の列：幅は 6 文字分。7〜12 文字は文字の幅を縮めて 1 行、13 文字からは 2 行（各行も縮める） */
+.lc-mq { display: flex; gap: 24px; overflow: hidden; white-space: nowrap; }
+.lc-mq__in { flex: none; }
+.lc-mq:not(.is-scroll) { justify-content: center; }
+.lc-mq.is-scroll .lc-mq__in { animation: lc-mq var(--lc-dur, 6s) linear infinite; }
+.lc-mq.is-cut { display: block; text-overflow: ellipsis; }
+@keyframes lc-mq { 0%, 20% { transform: translateX(0); } 100% { transform: translateX(var(--lc-shift, 0)); } }
+.lc-g__col .lc-mq { width: 51px; margin: 0 auto; }
+.lc-grid--team .lc-g__col .lc-mq { width: 77px; }
+.lc-g__col, .lc-g__title, .lc-grid--team .lc-g__col { min-width: 0; }
+.lc-g__team { display: inline-block; vertical-align: middle; }
+.lc-fit { display: block; width: 6.1em; line-height: 1.2; text-align: left; }
+.lc-fit__line { display: block; overflow: hidden; white-space: nowrap; }
+.lc-fit__in { display: inline-block; transform-origin: 0 50%; }
+.lc-fit--2 { font-size: .94em; }
 @media (max-width: 639px) {
-  .lc-g__col .lc-mq { width: 56px; }
-  .lc-grid--team .lc-g__col .lc-mq { width: 88px; }
-  .lc-g__team .lc-mq { width: 92px; }
+  .lc-g__col .lc-mq { width: 45px; }
+  .lc-grid--team .lc-g__col .lc-mq { width: 70px; }
 }
