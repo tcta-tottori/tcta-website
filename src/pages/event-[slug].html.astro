@@ -91,10 +91,13 @@ const eventLd = {
   // 出場者（Search Console で「項目 performer がありません」と出たため）。選手の名前は大会前には決まらないので、
   // 「出場選手（種目）」のまとまりとして入れる
   performer: { '@type': 'PerformingGroup', name: `出場選手（${e.event || 'テニス'}）` },
-  // 参加料と申込み（要項に書かれた金額。src/data/entry-fees.js）。金額の分からない大会は申込み先と受付状況だけ
-  // 締切は「11/27（金）20:00」のように曜日・時刻が付いていても、先頭の「月/日」だけを読む
-  offers: eventOffer(e, Astro.site ?? Astro.url, dueDate(String(e.due ?? '').match(/^\d{1,2}\/\d{1,2}(?!\d)/)?.[0], e.date)),
 };
+// 参加料と申込み（要項に書かれた金額。src/data/entry-fees.js）。金額の分からない大会は offers を出さない
+// 締切は「11/27（金）20:00」のように曜日・時刻が付いていても、先頭の「月/日」だけを読む
+{
+  const offer = eventOffer(e, Astro.site ?? Astro.url, dueDate(String(e.due ?? '').match(/^\d{1,2}\/\d{1,2}(?!\d)/)?.[0], e.date));
+  if (offer) eventLd.offers = offer;
+}
 
 const title = `${e.displayName}｜大会情報｜鳥取市テニス協会`;
 const description = `${e.label}に${e.place}で行われる${e.name}（${e.event}）のページです。`

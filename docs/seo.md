@@ -9,6 +9,7 @@
 | SNS で共有したときの表示（OGP） | 同上 | タイトル・説明・画像。画像は共通の `public/assets/img/ogp.jpg`（1200×630）、大会ページは当日の写真があればそれ |
 | 構造化データ（JSON-LD） | 同上・`src/pages/event-[slug].html.astro` | 全ページに協会（SportsOrganization。SNS の公式アカウントつき）、トップにサイト（WebSite）、大会ページに大会（SportsEvent。日付・会場と住所・主催） |
 | サイトマップ | `src/pages/sitemap.xml.ts` → `/sitemap.xml` | 固定のページ、大会のページ・結果のページ、令和6年度までの結果、テニス祭りの各回 |
+| PDF の代表ページ | `public/_headers` | `/assets/pdf/events/<大会>/` の PDF は `event-<大会>.html`、`/assets/pdf/membership/` は `membership.html` を Link ヘッダーで代表にする |
 | robots.txt | `src/pages/robots.txt.ts` → `/robots.txt` | 全体を許可。管理画面（`/_emdash/`）と `/api/` は除く（管理画面から上げた画像・PDF の `/_emdash/api/media/file/` は許可）。サイトマップの場所 |
 | 同じページの別アドレスの転送（301） | `src/worker.ts` | www 付き → www 無し、http → https、末尾に / が付いた .html（`/about.html/`）→ / 無し |
 | 検索に出さない | `Base.astro` の `noindex` | 404 のページ。また、公開アドレス以外（独自ドメインに移ったあとの workers.dev など）で見られたページ |
@@ -46,4 +47,5 @@
 | ページにリダイレクトがあります | www 付き、http のアドレス | 意図どおり（http も 301 にした） |
 | noindex タグによって除外されました | 404 のページ、アンケートの送信ページ（survey.html） | 意図どおり |
 | 重複しています。ユーザーにより、正規ページとして選択されていません | `/about.html/` のように末尾に / が付いたアドレス・http のアドレス（同じページが 200 で返っていた） | 301 で転送するようにした |
+| 同（2026/11 の検証で残った分） | 前年度と今年度の申込用紙・要項など、中身がほとんど同じ PDF（PDF には canonical タグを書けない） | `public/_headers` で PDF に `Link: <…>; rel="canonical"` を付け、代表を載せているページ（大会の PDF → `event-<大会>.html`、入会の PDF → `membership.html`）にした |
 | robots.txt によりブロックされました | 管理画面（`/_emdash/`）・`/api/` | 意図どおり。上げた画像・PDF だけ許可した |
