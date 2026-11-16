@@ -9,6 +9,7 @@
 //               total   … 1 試合の合計ゲーム数（8 なら、片方を入れるともう片方が 8 − その数で入る）。null は自由に入れる
 //               matches … チーム対抗戦の 1 対戦の試合の略称（['MIX', 'WD', 'MD'] など。最初の試合が、合計が並んだときの決め手）。省略は 1 試合
 //               matchNames … その正式な名前（入力の小窓・チーム得点の表に出す）
+//               for     … リーグを選んだとき、種目名にこの文字があればこの形式にする（「男子B級」など）
 //   note    … ページに出す補足
 //
 // 'wins'・'games' は大会運営システム（tournament/src/features/draw/leagueStandings.ts）と同じ決め方。運営システムの大会データの rankRule とそろえる。
@@ -16,7 +17,7 @@ export const LEAGUE_RULES = {
   'r8-kaicho-autumn': {
     rule: 'games',
     formats: [
-      { key: 'b8', label: '男子B級（1試合 合計8ゲーム）', total: 8 },
+      { key: 'b8', label: '男子B級（1試合 合計8ゲーム）', total: 8, for: '男子B級' },
       { key: 'free', label: '女子B級・男子C級', total: null },
     ],
     note: '予選リーグは取得ゲーム率で順位を決めます。男子B級は 1 試合が合計 8 ゲーム（4-4 は引き分け）なので、片方のゲーム数を入れると、もう片方は自動で入ります。',

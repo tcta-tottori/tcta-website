@@ -426,3 +426,38 @@ const SCHEMA = {
   player: { name: '氏名', furigana: 'ひらがな（姓と名の間に空白）', affiliation: '所属（任意）', note: '確認メモ（任意。読みに自信がないときなど）' },
   affiliation: { name: '所属名（表記ゆれは別の行に）', furigana: 'ひらがな' },
 };
+
+
+// ---------------------------------------------------------------------------
+// GET /api/public/leagues/<id> … 公開してよいリーグの組み合わせ（協会サイトのリーグ戦の順位計算 league-calc.html が読む）
+//   運営できる大会・終わった大会（status が ready / done）の、リーグ戦の種目だけ：種目名・順位の決め方・選手（ペア）の名前と所属。
+//   観戦ページでも公開している内容。協会サイトから読めるよう CORS を許す。ログインは要らない
+// ---------------------------------------------------------------------------
+const PUBLIC_ORIGINS = ['https://tottori-city-tennis.com', 'http://localhost:4321', 'http://127.0.0.1:8790', 'http://localhost:8790'];
+export async function handlePublicLeagues(request: Request, env: Env, url: URL): Promise<Response> {
+  const origin = request.headers.get('Origin') ?? '';
+  const cors: Record<string, string> = PUBLIC_ORIGINS.includes(origin) ? { 'Access-Control-Allow-Origin': origin, Vary: 'Origin' } : {};
+  const out = (body: unknown, status = 200) => new Response(JSON.stringify(body), {
+    status, headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'public, max-age=120', ...cors },
+  });
+  if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: { ...cors, 'Access-Control-Allow-Methods': 'GET', 'Access-Control-Max-Age': '86400' } });
+  if (request.method !== 'GET') return out({ error: 'GET で呼んでください' }, 405);
+  const db = env.DATA;
+  if (!db) return out({ error: 'データベースがつながっていません' }, 503);
+  const id = decodeURIComponent(url.pathname.slice('/api/public/leagues/'.length));
+  if (!ID_RE.test(id)) return out({ error: 'id が不正です' }, 400);
+  await ensureSchema(db);
+  const r = await db.prepare('SELECT name, status, draw FROM catalog_tournaments WHERE id = ?').bind(id).first<{ name: string; status: string; draw: string | null }>();
+  if (!r || (r.status !== 'ready' && r.status !== 'done') || !r.draw) return out({ id, name: r?.name ?? '', leagues: [] });
+  const draw = JSON.parse(r.draw) as { events?: DrawEvent[] };
+  const leagues = (draw.events ?? []).filter((e) => e.isRoundRobin).map((e) => ({
+    name: e.eventName,
+    type: e.type,
+    rankRule: e.rankRule ?? 'wins',
+    players: [...e.players].sort((a, b) => a.position - b.position).map((p) => ({
+      position: p.position, name: p.name, affiliation: p.affiliation,
+      ...(p.partnerName ? { partnerName: p.partnerName, partnerAffiliation: p.partnerAffiliation ?? '' } : {}),
+    })),
+  }));
+  return out({ id, name: r.name, leagues });
+}
