@@ -22,7 +22,7 @@
 
 import { handleAuth, handleMe, handlePassApi, officerOf, sameOrigin } from './auth';
 import { handleData } from './data';
-import { handleCatalog } from './catalog';
+import { handleCatalog, handlePublicLeagues } from './catalog';
 import { handleInsta } from './insta';
 
 export { SyncRoom } from './sync-room';
@@ -87,6 +87,10 @@ export default {
 
     if (url.pathname === '/api/me') {
       return handleMe(request, env, url);
+    }
+
+    if (url.pathname.startsWith('/api/public/leagues/')) {
+      return handlePublicLeagues(request, env, url);
     }
 
     if (url.pathname === '/api/catalog' || url.pathname.startsWith('/api/catalog/') || url.pathname === '/api/dict' || url.pathname === '/api/schema') {

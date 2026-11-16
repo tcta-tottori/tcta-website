@@ -7,3 +7,6 @@ export const LIVE_VIEW = 'https://tcta-tournament.tcta-admin-worker.workers.dev/
 export const LIVE_DRAW_URL = `${LIVE_VIEW}/draw?room=${LIVE_ROOM}`;
 /** 対戦順・進み具合のページ */
 export const LIVE_ORDER_URL = `${LIVE_VIEW}/order?room=${LIVE_ROOM}`;
+
+/** 大会運営システム（公開のリーグの組み合わせ /api/public/leagues/<大会> を、リーグ戦の順位計算のページが読む） */
+export const TOURNAMENT_APP = 'https://tcta-tournament.tcta-admin-worker.workers.dev';

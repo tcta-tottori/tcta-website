@@ -8,6 +8,7 @@
 import Base from '../layouts/Base.astro';
 import { siteData } from '../lib/cms.js';
 import { RULE_TEXT, DEFAULT_FORMATS, leagueRuleOf } from '../data/league-rules.js';
+import { TOURNAMENT_APP } from '../data/live.js';
 
 const slug = Astro.url.searchParams.get('e') ?? '';
 const site = await siteData(Astro);
@@ -47,7 +48,7 @@ const description = 'リーグ戦（総当たり）の勝敗・取得ゲーム�
 
   <section class="section">
     <div class="container container--result">
-      <div class="lc" id="lc" data-tour={ev?.name ?? ''} data-rule={fixedRule ?? ''} data-n={n0} data-slug={ev?.slug ?? ''} data-formats={formats}>
+      <div class="lc" id="lc" data-api={ev && conf ? TOURNAMENT_APP : ''} data-tour={ev?.name ?? ''} data-rule={fixedRule ?? ''} data-n={n0} data-slug={ev?.slug ?? ''} data-formats={formats}>
         {/* ルール */}
         <div class="lc-box rv">
           <h2 class="lc-h">ルール</h2>
@@ -71,6 +72,12 @@ const description = 'リーグ戦（総当たり）の勝敗・取得ゲーム�
         {/* チーム */}
         <div class="lc-box rv">
           <h2 class="lc-h">チーム</h2>
+          {/* 大会運営システムに組み合わせがある大会は、実際のリーグを選べる（チーム名・チームの数が入る） */}
+          <div class="lc-league" id="lc-league-box" hidden>
+            <label class="lc-league__label" for="lc-league">リーグを選ぶ</label>
+            <select id="lc-league" class="lc-league__sel"></select>
+            <p class="lc-note" id="lc-league-note"></p>
+          </div>
           <div class="lc-seg lc-seg--n" role="radiogroup" aria-label="チームの数">
             {[3, 4, 5, 6, 7].map((k) => (
               <label class="lc-seg__opt"><input type="radio" name="lc-n" value={k} checked={k === n0} /><span>{k}チーム</span></label>
@@ -195,7 +202,8 @@ const description = 'リーグ戦（総当たり）の勝敗・取得ゲーム�
 
 <script>
   type Rule = 'wins' | 'games' | 'team';
-  type Fmt = { key: string; label: string; total: number | null; matches?: string[]; matchNames?: string[] };
+  type Fmt = { key: string; label: string; total: number | null; matches?: string[]; matchNames?: string[]; for?: string };
+  type LeagueData = { name: string; type: string; rankRule: string; players: { position: number; name: string; affiliation: string; partnerName?: string; partnerAffiliation?: string }[] };
   const root = document.getElementById('lc')!;
   const LETTERS = 'ABCDEFG';
   const fixed = (root.dataset.rule || '') as Rule | '';
@@ -207,11 +215,17 @@ const description = 'リーグ戦（総当たり）の勝敗・取得ゲーム�
   let data: Record<string, string[][][]> = {};
   const KEY = `tcta-league-calc2:${root.dataset.slug || 'free'}`;
   let savedRule: Rule | '' = '';
+  // 選んでいるリーグ（大会運営システムの種目名。空なら自分で入れる）と、リーグごとのチーム名・チームの数
+  let league = '';
+  let byLeague: Record<string, { n: number; names: string[] }> = {};
   try {
     const s = JSON.parse(localStorage.getItem(KEY) || 'null');
-    if (s) { n = s.n ?? n; names = s.names ?? names; fmtKey = s.fmt ?? ''; data = s.data ?? {}; savedRule = s.rule ?? ''; }
+    if (s) { n = s.n ?? n; names = s.names ?? names; fmtKey = s.fmt ?? ''; data = s.data ?? {}; savedRule = s.rule ?? ''; league = s.league ?? ''; byLeague = s.byLeague ?? {}; }
   } catch { /* 保存できない環境 */ }
-  const save = () => { try { localStorage.setItem(KEY, JSON.stringify({ n, names, fmt: fmtKey, data, rule: rule() })); } catch { /* */ } };
+  const save = () => {
+    byLeague[league] = { n, names: [...names] };
+    try { localStorage.setItem(KEY, JSON.stringify({ n, names, fmt: fmtKey, data, rule: rule(), league, byLeague })); } catch { /* */ }
+  };
 
   if (!fixed && savedRule) { const el = document.querySelector<HTMLInputElement>(`input[name=lc-rule][value=${savedRule}]`); if (el) el.checked = true; }
   const rule = (): Rule => (fixed || ((document.querySelector('input[name=lc-rule]:checked') as HTMLInputElement)?.value as Rule) || 'wins');
@@ -219,7 +233,7 @@ const description = 'リーグ戦（総当たり）の勝敗・取得ゲーム�
   const fmt = (): Fmt => formats().find((x) => x.key === fmtKey) ?? formats()[0];
   const M = () => fmt().matches?.length ?? 1;
   const blank = () => Array.from({ length: 6 }, () => Array.from({ length: 7 }, () => Array(7).fill('')));
-  const S = () => (data[fmt().key] ??= blank());
+  const S = () => (data[(league ? `${league}|` : '') + fmt().key] ??= blank());
   const nameOf = (i: number) => names[i].trim() || LETTERS[i];
   const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]!));
   const pct = (r: number) => `${(Math.round(r * 1000) / 10).toFixed(1)}%`;
@@ -757,8 +771,51 @@ const description = 'リーグ戦（総当たり）の勝敗・取得ゲーム�
   document.querySelectorAll<HTMLInputElement>('input[name=lc-rule]').forEach((el) => el.addEventListener('change', () => { fmtKey = ''; save(); compute(); }));
   document.getElementById('lc-clear')!.addEventListener('click', () => {
     if (!confirm('入れた試合の結果をすべて消します。よろしいですか？')) return;
-    data[fmt().key] = blank();
+    data[(league ? `${league}|` : '') + fmt().key] = blank();
     save(); compute();
   });
+  // ---- 実際のリーグを選ぶ（大会運営システムの公開の組み合わせを読む）----
+  const sel = document.getElementById('lc-league') as HTMLSelectElement;
+  let leagues: LeagueData[] = [];
+  const sur = (s: string) => String(s ?? '').trim().split(/[\s　]+/)[0] ?? '';
+  const teamName = (p: LeagueData['players'][number], doubles: boolean) => (doubles && p.partnerName ? `${sur(p.name)}・${sur(p.partnerName)}` : p.name);
+  function applyLeague(name: string, fresh: boolean) {
+    save();
+    league = name;
+    const L = leagues.find((x) => x.name === name);
+    const keep = byLeague[name];
+    if (L && (fresh || !keep)) {
+      const ps = L.players.slice(0, 7);
+      n = Math.max(3, Math.min(7, ps.length));
+      names = Array.from({ length: 7 }, (_, i) => (ps[i] ? teamName(ps[i], L.type === 'Doubles') : ''));
+    } else if (keep) { n = keep.n; names = [...keep.names]; }
+    if (L) {
+      const fs = formats();
+      fmtKey = (fs.find((x) => x.for && L.name.includes(x.for)) ?? fs.find((x) => !x.for) ?? fs[0]).key;
+      // 印刷用の見出し（種目とリーグ）
+      const m = L.name.match(/^(.*?)[\s　]*([A-Za-zＡ-Ｚ0-9]+)\s*リーグ$/);
+      pvEl('pv-title').value = m ? m[1] : L.name;
+      pvEl('pv-league').value = m ? m[2].normalize('NFKC') : '';
+    }
+    document.querySelectorAll<HTMLInputElement>('input[name=lc-n]').forEach((el) => { el.checked = Number(el.value) === n; });
+    const note = document.getElementById('lc-league-note')!;
+    note.textContent = L ? `${L.name}：${L.players.length} チーム。チーム名は大会運営システムの組み合わせから入れています（直すこともできます）。入れた結果はリーグごとにこの端末に残ります。` : 'チーム名とチームの数を自分で入れます。';
+    save(); renderNames(); compute();
+  }
+  if (root.dataset.api && root.dataset.slug) {
+    fetch(`${root.dataset.api}/api/public/leagues/${encodeURIComponent(root.dataset.slug)}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        leagues = (d?.leagues ?? []) as LeagueData[];
+        if (!leagues.length) return;
+        sel.innerHTML = `<option value="">自分で入れる（A・B・C…）</option>${leagues.map((l) => `<option value="${esc(l.name)}">${esc(l.name)}（${l.players.length}チーム）</option>`).join('')}`;
+        sel.value = leagues.some((l) => l.name === league) ? league : '';
+        document.getElementById('lc-league-box')!.hidden = false;
+        document.getElementById('lc-league-note')!.textContent = league ? '' : 'リーグを選ぶと、チーム名とチームの数が入ります。';
+        if (league) applyLeague(league, false);
+      })
+      .catch(() => { /* 読めないときは自分で入れる */ });
+    sel.addEventListener('change', () => applyLeague(sel.value, !byLeague[sel.value]));
+  }
   renderNames(); compute();
 </script>
