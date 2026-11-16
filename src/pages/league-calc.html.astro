@@ -48,10 +48,9 @@ const description = 'リーグ戦（総当たり）の勝敗・取得ゲーム�
 
   <section class="section">
     <div class="container container--result">
-      <div class="lc" id="lc" data-api={ev && conf ? TOURNAMENT_APP : ''} data-tour={ev?.name ?? ''} data-rule={fixedRule ?? ''} data-n={n0} data-slug={ev?.slug ?? ''} data-formats={formats}>
-        {/* ルール */}
-        <div class="lc-box rv">
-          <h2 class="lc-h">ルール</h2>
+      <div class="lc" id="lc" data-api={ev && conf ? TOURNAMENT_APP : ''} data-tour={ev?.name ?? ''} data-rule={fixedRule ?? ''} data-n={n0} data-slug={ev?.slug ?? ''} data-formats={formats} data-leagues={JSON.stringify(conf?.leagues ?? [])}>
+        {/* 大会・リーグ・試合の形式（上にまとめて小さく） */}
+        <div class="lc-box lc-box--top rv">
           {fixedRule ? (
             <p class="lc-rule"><span class="lc-rule__tag">{RULE_TEXT[fixedRule].label}</span>{ev?.name}</p>
           ) : (
@@ -61,36 +60,19 @@ const description = 'リーグ戦（総当たり）の勝敗・取得ゲーム�
               ))}
             </div>
           )}
-          <div class="lc-seg lc-seg--fmt" id="lc-fmts" role="radiogroup" aria-label="試合の形式"></div>
-          <ol class="lc-steps" id="lc-steps">
-            {Object.entries(RULE_TEXT).map(([k, r]) => r.steps.map((s) => <li data-rule={k}>{s}</li>))}
-          </ol>
-          {conf?.note && <p class="lc-note">{conf.note}</p>}
-          <p class="lc-note" id="lc-rate-note">取得ゲーム率 ＝ 取ったゲーム数 ÷（取ったゲーム数 ＋ 取られたゲーム数）。引き分け（同じゲーム数）は勝ち負けに数えず、ゲーム数だけ数えます。</p>
-        </div>
-
-        {/* チーム */}
-        <div class="lc-box rv">
-          <h2 class="lc-h">チーム</h2>
-          {/* 大会運営システムに組み合わせがある大会は、実際のリーグを選べる（チーム名・チームの数が入る） */}
+          {/* 実際のリーグを選べる大会は、チーム名・チームの数が入る */}
           <div class="lc-league" id="lc-league-box" hidden>
             <label class="lc-league__label" for="lc-league">リーグを選ぶ</label>
             <select id="lc-league" class="lc-league__sel"></select>
             <p class="lc-note" id="lc-league-note"></p>
           </div>
+          <div class="lc-seg lc-seg--fmt" id="lc-fmts" role="radiogroup" aria-label="試合の形式"></div>
           <div class="lc-seg lc-seg--n" role="radiogroup" aria-label="チームの数">
             {[3, 4, 5, 6, 7].map((k) => (
               <label class="lc-seg__opt"><input type="radio" name="lc-n" value={k} checked={k === n0} /><span>{k}チーム</span></label>
             ))}
           </div>
-          <div class="lc-names" id="lc-names"></div>
-          <p class="lc-note">実際のチーム名・ペア名に書き換えられます（空けておくと A・B・C… のまま）。リーグ表のチーム名を押しても直せます。</p>
-          <details class="lc-bulk">
-            <summary>チーム名をまとめて入れる</summary>
-            <p class="lc-note">1 行に 1 チームずつ、リーグの順（1 番から）に入れてください。行の数がチームの数になります（3〜7）。</p>
-            <textarea id="lc-bulk" rows="5" placeholder={'谷口・近藤\n加藤・酒本\n長谷川・高木\n前田・住吉'}></textarea>
-            <button type="button" class="btn btn--outline" id="lc-bulk-ok">この名前で入れる</button>
-          </details>
+          <p class="lc-note lc-note--more"><a href="#lc-rules">順位の決め方（詳しいルール）は下にあります ↓</a></p>
         </div>
 
         {/* リーグ表（マスを押してスコアを入れる。大会運営システムのリーグ表と同じ形） */}
@@ -145,6 +127,30 @@ const description = 'リーグ戦（総当たり）の勝敗・取得ゲーム�
               <ol class="lc-lot__result" id="lc-lot-result"></ol>
             </div>
           </div>
+        </div>
+
+        {/* チーム名 */}
+        <div class="lc-box rv">
+          <h2 class="lc-h">チーム名</h2>
+          <div class="lc-names" id="lc-names"></div>
+          <p class="lc-note">実際のチーム名・ペア名に書き換えられます（空けておくと A・B・C… のまま）。リーグ表のチーム名を押しても直せます。</p>
+          <details class="lc-bulk">
+            <summary>チーム名をまとめて入れる</summary>
+            <p class="lc-note">1 行に 1 チームずつ、リーグの順（1 番から）に入れてください。行の数がチームの数になります（3〜7）。</p>
+            <textarea id="lc-bulk" rows="5" placeholder={'谷口・近藤\n加藤・酒本\n長谷川・高木\n前田・住吉'}></textarea>
+            <button type="button" class="btn btn--outline" id="lc-bulk-ok">この名前で入れる</button>
+          </details>
+        </div>
+
+        {/* ルールの詳細（下に） */}
+        <div class="lc-box rv" id="lc-rules">
+          <h2 class="lc-h">ルール（順位の決め方）</h2>
+          {fixedRule && <p class="lc-rule"><span class="lc-rule__tag">{RULE_TEXT[fixedRule].label}</span>{ev?.name}</p>}
+          <ol class="lc-steps" id="lc-steps">
+            {Object.entries(RULE_TEXT).map(([k, r]) => r.steps.map((s) => <li data-rule={k}>{s}</li>))}
+          </ol>
+          {conf?.note && <p class="lc-note">{conf.note}</p>}
+          <p class="lc-note" id="lc-rate-note">取得ゲーム率 ＝ 取ったゲーム数 ÷（取ったゲーム数 ＋ 取られたゲーム数）。引き分け（同じゲーム数）は勝ち負けに数えず、ゲーム数だけ数えます。</p>
         </div>
 
         {ev && <p class="rv"><a class="ghost-link" href={ev.url}>← {ev.displayName} のページへ</a></p>}
@@ -799,23 +805,30 @@ const description = 'リーグ戦（総当たり）の勝敗・取得ゲーム�
     }
     document.querySelectorAll<HTMLInputElement>('input[name=lc-n]').forEach((el) => { el.checked = Number(el.value) === n; });
     const note = document.getElementById('lc-league-note')!;
-    note.textContent = L ? `${L.name}：${L.players.length} チーム。チーム名は大会運営システムの組み合わせから入れています（直すこともできます）。入れた結果はリーグごとにこの端末に残ります。` : 'チーム名とチームの数を自分で入れます。';
+    note.textContent = L ? `${L.name}：${L.players.length} チーム。チーム名は${fromDraw ? 'ドロー（プログラム）' : '大会運営システムの組み合わせ'}から入れています（直すこともできます）。入れた結果はリーグごとにこの端末に残ります。` : 'チーム名とチームの数を自分で入れます。';
     save(); renderNames(); compute();
   }
-  if (root.dataset.api && root.dataset.slug) {
+  let fromDraw = false;
+  function showLeagues(list: LeagueData[]) {
+    leagues = list;
+    if (!leagues.length) return;
+    sel.innerHTML = `<option value="">自分で入れる（A・B・C…）</option>${leagues.map((l) => `<option value="${esc(l.name)}">${esc(l.name)}（${l.players.length}チーム）</option>`).join('')}`;
+    sel.value = leagues.some((l) => l.name === league) ? league : '';
+    document.getElementById('lc-league-box')!.hidden = false;
+    document.getElementById('lc-league-note')!.textContent = league ? '' : 'リーグを選ぶと、チーム名とチームの数が入ります。';
+    if (league) applyLeague(league, false);
+  }
+  sel.addEventListener('change', () => applyLeague(sel.value, !byLeague[sel.value]));
+  // ドロー（プログラム）のチーム名をページに持っている大会（団体戦など）はそれを使う。無ければ運営システムの公開の組み合わせを読む
+  const own = JSON.parse(root.dataset.leagues || '[]') as { name: string; teams: string[] }[];
+  if (own.length) {
+    fromDraw = true;
+    showLeagues(own.map((l) => ({ name: l.name, type: 'Team', rankRule: '', players: l.teams.map((t, i) => ({ position: i + 1, name: t, affiliation: '' })) })));
+  } else if (root.dataset.api && root.dataset.slug) {
     fetch(`${root.dataset.api}/api/public/leagues/${encodeURIComponent(root.dataset.slug)}`)
       .then((r) => (r.ok ? r.json() : null))
-      .then((d) => {
-        leagues = (d?.leagues ?? []) as LeagueData[];
-        if (!leagues.length) return;
-        sel.innerHTML = `<option value="">自分で入れる（A・B・C…）</option>${leagues.map((l) => `<option value="${esc(l.name)}">${esc(l.name)}（${l.players.length}チーム）</option>`).join('')}`;
-        sel.value = leagues.some((l) => l.name === league) ? league : '';
-        document.getElementById('lc-league-box')!.hidden = false;
-        document.getElementById('lc-league-note')!.textContent = league ? '' : 'リーグを選ぶと、チーム名とチームの数が入ります。';
-        if (league) applyLeague(league, false);
-      })
+      .then((d) => showLeagues((d?.leagues ?? []) as LeagueData[]))
       .catch(() => { /* 読めないときは自分で入れる */ });
-    sel.addEventListener('change', () => applyLeague(sel.value, !byLeague[sel.value]));
   }
   renderNames(); compute();
 </script>
