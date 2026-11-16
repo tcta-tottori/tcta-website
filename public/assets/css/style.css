@@ -6188,9 +6188,6 @@ html.is-lite body.jsrv .rv, html.is-lite body.jsrv .rv-in { opacity: 1 !importan
 .lc-box--top .lc-seg + .lc-seg, .lc-box--top .lc-league + .lc-seg { margin-top: 12px; }
 .lc-note--more { margin: 12px 0 0; }
 .lc-note--more a { color: var(--gray-700, #555); text-decoration: underline; text-underline-offset: 3px; }
-/* 受付終了のバッジの下の段に、開催日までの残りの日数（HomeTournaments.astro） */
-.badge--left { flex-direction: column; gap: 3px; height: auto; min-height: 26px; padding: 5px 10px; line-height: 1; }
-.badge__left { font-size: 11px; font-weight: 700; letter-spacing: .02em; padding-top: 3px; border-top: 1px solid rgba(216, 35, 42, .3); }
 /* リーグ表のチーム名：列の幅は一定（名前の長さで変わらない）。収まらない名前は左右に流す（league-calc の fitMarquee） */
 .lc-mq { display: block; overflow: hidden; white-space: nowrap; }
 .lc-mq__in { display: inline-block; }
