@@ -7,7 +7,7 @@
 //   開催日が今日以降のものと、開催日から HOME_KEEP_DAYS 日以内の終わった大会（結果を見られるように残す）。開催日の古い順。
 //   開催日（複数日の大会は初日）で決める（管理画面の受付状態を「終了」にし忘れていても、2週間で消える）。
 //
-// 1行：開催日（「11.15」＋曜日）｜大会名（押すと大会のページ）・種目・会場｜状態のバッジ｜要項・ドロー・結果
+// 1行：開催日（「11.15」＋曜日）｜大会名（押すと大会のページ）・種目・会場｜状態のバッジ（受付終了は下の段に「開催まで あと N 日」）｜要項・ドロー・結果
 //   スマホは 開催日｜状態 の段、その下に大会名、種目｜会場（中央で分けて左揃え）、いちばん下に3つのボタン。
 //   大会名・種目・会場が1行に収まらないスマホでは横に流す（main.js の initEntryMarquee。エントリー受付中と同じ）。
 //   ボタンの行き先は大会情報ページの一覧・大会カードと同じ（src/data/event-buttons.js。素材の無いものは灰色で押せない）。
@@ -18,7 +18,7 @@
 //   各大会の tags … 絞り込み（main.js の initFilters）の印。li の data-tags に入れる
 import Icon from './Icon.astro';
 import Venue from './Venue.astro';
-import { STATUS, dateChip } from '../data/tournaments.js';
+import { STATUS, dateChip, closedLeftText } from '../data/tournaments.js';
 
 // pcFrom … この番号（0 から）以降の行は PC だけに出す（.tl-pc。トップでスマホ・タブレットは3件、PC は5件にするため）
 const { items = [], caption = '開催前と終わったばかりの大会', reveal = true, showEmpty = true, pcFrom = Infinity } = Astro.props;
@@ -37,6 +37,8 @@ const extAttrs = (href) => (/^https?:/.test(href ?? '') ? { target: '_blank', re
       const chip = dateChip(t.date);
       const badge = STATUS[t.status] ?? STATUS.soon;
       const href = t.action?.href ?? null;
+      // 受付終了の大会は、バッジの下の段に開催日までの残りの日数（「開催まで あと6日」「明日開催」）
+      const left = t.status === 'closed' ? closedLeftText(t.date) : null;
       return (
         <li data-tags={t.tags} class={i >= pcFrom ? 'tl-pc' : undefined}>
           <div class:list={['entry-row', 'entry-row--tl', reveal && 'rv', t.status === 'past' && 'entry-row--past']} style={reveal ? `transition-delay:${0.1 + Math.min(i, 8) * 0.06}s` : undefined}>
@@ -70,7 +72,9 @@ const extAttrs = (href) => (/^https?:/.test(href ?? '') ? { target: '_blank', re
                 </span>
               )}
             </span>
-            <span class="entry-row__status"><span class="visually-hidden">状態：</span><span class={`badge ${badge.badge}`}>{badge.label}</span></span>
+            <span class="entry-row__status"><span class="visually-hidden">状態：</span>{left
+              ? <span class={`badge ${badge.badge} badge--left`}><span>{badge.label}</span><span class="badge__left">{left}</span></span>
+              : <span class={`badge ${badge.badge}`}>{badge.label}</span>}</span>
             <span class="entry-row__btns">
               {(t.buttons ?? []).map((b) =>
                 b.href

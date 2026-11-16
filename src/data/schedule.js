@@ -173,6 +173,8 @@ export function secondsToNextSwitch(rows, now = Date.now()) {
       const last = lastDayOf(t.label, date);
       if (last) at.push(jstAt(last, 24));
     }
+    // 開催前の大会は、受付終了のバッジの「開催まで あと N 日」が毎日 0:00 に変わる
+    if (date > todayJST(now)) at.push(jstAt(todayJST(now), 24));
     for (const x of at) if (x !== null && x > now && x < next) next = x;
   }
   return Number.isFinite(next) ? Math.ceil((next - now) / 1000) : null;

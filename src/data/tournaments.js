@@ -72,6 +72,23 @@ export const CARD_STATUS = { done: 'past', closed: 'closed', open: 'open', soon:
 const DOW = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
 
 /** '2026.08.16' → { md: '08.16', dow: 'SUN' }（カード左上の日程チップ用） */
+/**
+ * 開催日まであと何日か（日本時間の今日から。'YYYY.MM.DD'）。受付終了のバッジに「あと N 日」を出す（HomeTournaments.astro など）
+ * 今日なら 0、過ぎていれば負の数
+ */
+export function daysUntil(date) {
+  const [y, m, d] = String(date ?? '').split('.').map(Number);
+  const [ty, tm, td] = today().split('.').map(Number);
+  if (!y || !m || !d) return null;
+  return Math.round((Date.UTC(y, m - 1, d) - Date.UTC(ty, tm - 1, td)) / 86400000);
+}
+/** 受付終了のバッジの下の段（「あと 6 日」「明日開催」）。開催日を過ぎていれば null */
+export function closedLeftText(date) {
+  const n = daysUntil(date);
+  if (n === null || n < 0) return null;
+  return n === 0 ? '本日開催' : n === 1 ? '明日開催' : `開催まで あと${n}日`;
+}
+
 export function dateChip(date) {
   const [y, m, d] = date.split('.').map(Number);
   return {
