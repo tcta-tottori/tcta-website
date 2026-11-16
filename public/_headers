@@ -1,0 +1,10 @@
+# 静的ファイルに付ける HTTP ヘッダー（Cloudflare Workers の静的アセット）。
+# PDF には canonical タグを書けないので、Link ヘッダーで代表のページを伝える（Search Console の
+# 「重複しています。ユーザーにより、正規ページとして選択されていません」対策。前年度と今年度の申込用紙・要項など、
+# 中身がほとんど同じ PDF を Google が重複とみなすため）。代表は、その PDF を載せている大会・入会案内のページ。
+# ビルドのとき、Astro が /_astro/* の行をこの前に足す。
+/assets/pdf/events/:slug/*
+  Link: <https://tottori-city-tennis.com/event-:slug.html>; rel="canonical"
+
+/assets/pdf/membership/*
+  Link: <https://tottori-city-tennis.com/membership.html>; rel="canonical"
