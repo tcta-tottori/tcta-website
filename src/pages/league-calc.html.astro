@@ -244,9 +244,14 @@ const description = 'リーグ戦（総当たり）の勝敗・取得ゲーム�
           if (next) { next.focus(); next.select(); } else (document.getElementById('lc-dlg-ok') as HTMLButtonElement).focus();
         }
       });
-      el.addEventListener('focus', () => el.select());
+      el.addEventListener('focus', () => {
+        el.select();
+        // キーボードが出たあとに、入力中の欄が見える位置へ（小窓の中だけ動かす）
+        setTimeout(() => el.scrollIntoView({ block: 'nearest', inline: 'nearest' }), 120);
+      });
     });
     dlg.showModal();
+    fitDialog();
     setTimeout(() => { ins[0]?.focus(); ins[0]?.select(); }, 30);
   }
   document.getElementById('lc-dlg-form')!.addEventListener('submit', (ev) => {
@@ -266,6 +271,19 @@ const description = 'リーグ戦（総当たり）の勝敗・取得ゲーム�
     save(); compute(); dlg.close();
   });
   document.getElementById('lc-dlg-cancel')!.addEventListener('click', () => dlg.close());
+  // スマホでキーボードが出たら、見えている範囲（visualViewport）に小窓を収める：上に寄せ、高さを縮めて中をスクロール
+  function fitDialog() {
+    const vv = window.visualViewport;
+    if (!dlg.open) return;
+    if (!vv || window.innerWidth >= 640) { dlg.style.top = ''; dlg.style.maxHeight = ''; return; }
+    dlg.style.top = `${Math.round(vv.offsetTop + 8)}px`;
+    dlg.style.maxHeight = `${Math.round(vv.height - 16)}px`;
+    const active = document.activeElement as HTMLElement | null;
+    if (active && dlg.contains(active)) active.scrollIntoView({ block: 'nearest' });
+  }
+  window.visualViewport?.addEventListener('resize', fitDialog);
+  window.visualViewport?.addEventListener('scroll', fitDialog);
+  dlg.addEventListener('close', () => { dlg.style.top = ''; dlg.style.maxHeight = ''; });
   dlg.addEventListener('click', (ev) => { if (ev.target === dlg) dlg.close(); });
 
   let tiedGroups: number[][] = [];
