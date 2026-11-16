@@ -89,6 +89,7 @@ const description = 'リーグ戦（総当たり）の勝敗・取得ゲーム�
           <p class="lc-note lc-note--lead">マスを押すと、その試合のスコア（ゲーム数）を入れられます。左の列のチームから見たスコアで入れてください。</p>
           <p class="lc-warn" id="lc-warn" hidden></p>
           <div class="lc-tablewrap"><table class="lc-grid" id="lc-grid"></table></div>
+          <p class="lc-note lc-why-note" id="lc-why-note" hidden></p>
           <div id="lc-pts-box" hidden>
             <h3 class="lc-h3">チーム得点</h3>
             <p class="lc-note lc-note--lead">各チームが MIX・WD・MD で取ったゲーム数と、その合計（得点）。入っている対戦までの数です。</p>
@@ -315,6 +316,11 @@ const description = 'リーグ戦（総当たり）の勝敗・取得ゲーム�
     const log: string[] = [];
     const tied = new Set<number>();
     const reason = new Map<number, string>();
+    // リーグ表の「決め手」の列（短く）と、順位を決めるのに使った直接対決のマス
+    const why = new Map<number, string>();
+    const h2hCells = new Set<string>();
+    const drew = new Set<number>();   // 直接対決が引き分けで、次の決め方に回ったチーム
+    const shortKey: Record<string, string> = { rate: '取得率', wins: '勝数', gw: '得点', mix: f.matches?.[0] ?? '' };
 
     const order = (g: number[], keys: string[], depth: number): number[] => {
       if (g.length <= 1) return g;
@@ -325,14 +331,18 @@ const description = 'リーグ戦（総当たり）の勝敗・取得ゲーム�
           log.push(`${names_(g)} が並んだので、2チームの直接対決で決めます：${nameOf(win)} が ${tot(win, lose)}-${tot(lose, win)} で上回る → ${nameOf(win)} が上。`);
           reason.set(win, reason.get(win) ?? `直接対決で${nameOf(lose)}に勝ち`);
           reason.set(lose, reason.get(lose) ?? `直接対決で${nameOf(win)}に負け`);
+          why.set(win, why.get(win) ?? `直接対決 ○ 対${nameOf(lose)}`);
+          why.set(lose, why.get(lose) ?? `直接対決 ● 対${nameOf(win)}`);
+          h2hCells.add(`${win}-${lose}`); h2hCells.add(`${lose}-${win}`);
           return [win, lose];
         }
+        if (played(g[0], g[1])) { h2hCells.add(`${g[0]}-${g[1]}`); h2hCells.add(`${g[1]}-${g[0]}`); drew.add(g[0]); drew.add(g[1]); }
         log.push(`${names_(g)} が並びましたが、直接対決は${played(g[0], g[1]) ? `同じゲーム数（${tot(g[0], g[1])}-${tot(g[1], g[0])}）な` : 'まだ入っていない'}ので決まりません。`);
       }
       if (keys.length === 0) {
         tiedGroups.push([...g]);
         log.push(`${names_(g)} は決め方のどれでも並んだままです（下のくじ引きで決めます）。`);
-        g.forEach((i) => { tied.add(i); reason.set(i, reason.get(i) ?? '同率（くじ引き）'); });
+        g.forEach((i) => { tied.add(i); reason.set(i, reason.get(i) ?? '同率（くじ引き）'); why.set(i, why.get(i) ?? `${drew.has(i) ? '直接対決 △ → ' : ''}抽選`); });
         return g;
       }
       const [k, ...rest] = keys;
@@ -346,6 +356,7 @@ const description = 'リーグ戦（総当たり）の勝敗・取得ゲーム�
       if (depth > 0) {
         log.push(`${names_(g)} を${keyName[k]}で比べます：${g.map((i) => `${nameOf(i)} ${fmtKeyV(k, i)}`).join('、')}。`);
         for (const [, sg] of sorted) if (sg.length === 1) reason.set(sg[0], reason.get(sg[0]) ?? keyName[k]);
+        for (const i of g) why.set(i, why.get(i) ?? `${drew.has(i) ? '直接対決 △ → ' : ''}${shortKey[k]} ${fmtKeyV(k, i)}`);
       }
       return sorted.flatMap(([, sg]) => order(sg, rest, depth + 1));
     };
@@ -389,7 +400,8 @@ const description = 'リーグ戦（総当たり）の勝敗・取得ゲーム�
       return `<td class="lc-g__stat"><b>${pl ? `${st[i].w}-${st[i].l}${hasDraw ? `-${st[i].d}` : ''}` : ''}</b></td><td class="lc-g__stat lc-g__sub">${t ? rate(i).toFixed(3) : ''}</td>`;
     };
     grid.classList.toggle('lc-grid--team', team);
-    grid.innerHTML = `<thead><tr><th class="lc-g__title">リーグ</th>${ids.map((j) => `<th class="lc-g__col">${esc(nameOf(j))}</th>`).join('')}${statHead}<th class="lc-g__stat">順位</th></tr></thead><tbody>${
+    const showWhy = done && why.size > 0;
+    grid.innerHTML = `<thead><tr><th class="lc-g__title">リーグ</th>${ids.map((j) => `<th class="lc-g__col">${esc(nameOf(j))}</th>`).join('')}${statHead}${showWhy ? '<th class="lc-g__stat lc-g__why">決め手</th>' : ''}<th class="lc-g__stat">順位</th></tr></thead><tbody>${
       ids.map((i) => {
         const rk = rankOf.get(i);
         const champ = done && rk === 1;
@@ -404,12 +416,15 @@ const description = 'リーグ戦（総当たり）の勝敗・取得ゲーム�
               const x = Number(sc[m][i][j]), y = Number(sc[m][j][i]);
               return `<span class="lc-tie__row ${x > y ? 'is-w' : x < y ? 'is-l' : ''}"><i>${esc(lb)}</i><b>${x}-${y}</b></span>`;
             }).join('');
-            return `<td class="${a > b ? 'is-win' : a < b ? 'is-lose' : 'is-draw'}"><button type="button" class="lc-cell lc-tie" data-i="${i}" data-j="${j}" aria-label="${label} 合計${a}-${b}（押して直す）"><span class="lc-tie__tot">${a}<small>-</small>${b}</span><span class="lc-tie__rows">${rows}</span></button></td>`;
+            return `<td class="${a > b ? 'is-win' : a < b ? 'is-lose' : 'is-draw'}${showWhy && h2hCells.has(`${i}-${j}`) ? ' is-h2h' : ''}"><button type="button" class="lc-cell lc-tie" data-i="${i}" data-j="${j}" aria-label="${label} 合計${a}-${b}（押して直す）"><span class="lc-tie__tot">${a}<small>-</small>${b}</span><span class="lc-tie__rows">${rows}</span></button></td>`;
           }
-          return `<td class="${a > b ? 'is-win' : a < b ? 'is-lose' : 'is-draw'}"><button type="button" class="lc-cell" data-i="${i}" data-j="${j}" aria-label="${label} ${a}-${b}（押して直す）">${a}-${b}</button></td>`;
-        }).join('')}${statCells(i)}<td class="lc-g__stat lc-g__rank${champ ? ' is-champ' : ''}">${done ? (tied.has(i) ? `${rk}位<small>同率</small>` : `${rk}位`) : ''}</td></tr>`;
+          return `<td class="${a > b ? 'is-win' : a < b ? 'is-lose' : 'is-draw'}${showWhy && h2hCells.has(`${i}-${j}`) ? ' is-h2h' : ''}"><button type="button" class="lc-cell" data-i="${i}" data-j="${j}" aria-label="${label} ${a}-${b}（押して直す）">${a}-${b}</button></td>`;
+        }).join('')}${statCells(i)}${showWhy ? `<td class="lc-g__stat lc-g__why">${esc(why.get(i) ?? '')}</td>` : ''}<td class="lc-g__stat lc-g__rank${champ ? ' is-champ' : ''}">${done ? (tied.has(i) ? `${rk}位<small>同率</small>` : `${rk}位`) : ''}</td></tr>`;
       }).join('')}</tbody>`;
     grid.querySelectorAll<HTMLButtonElement>('.lc-cell').forEach((b) => b.addEventListener('click', () => openCell(Number(b.dataset.i), Number(b.dataset.j))));
+    const whyNote = document.getElementById('lc-why-note')!;
+    whyNote.hidden = !showWhy;
+    whyNote.innerHTML = h2hCells.size ? '<span class="lc-why-key"></span>オレンジの枠は、順位を決めるのに使った直接対決の試合です。「決め手」の列に、並んだチームの順位の決め方を出しています。' : '「決め手」の列に、並んだチームの順位の決め方を出しています。';
 
     // チーム得点（チーム対抗戦だけ）：チームごとに MIX・WD・MD・得点。全対戦が入れば順位も
     const ptsBox = document.getElementById('lc-pts-box')!;
