@@ -9,7 +9,10 @@
 //   2チーム分の金額がある大会（クラブ対抗の男子・女子など）は、高いほうの基本の金額を入れる。
 //   新しい年度の要項が出たら、ここに足すこと。
 export const ENTRY_FEES = {
-  // 令和7年度（要項の PDF から）
+  // 令和7年度（要項の PDF から。東部選手権・サマーミックスは要項が無いので役員に聞いた金額）
+  'r7-tobu-singles': { price: 2000, per: '1人' },
+  'r7-tobu-doubles': { price: 3000, per: '1ペア' },
+  'r7-summer-mix': { price: 3000, per: '1組' },
   'r7-sasaki': { price: 3000, per: '1ペア' },
   'r7-kaicho-spring': { price: 3000, per: '1ペア' },
   'r7-club-taiko-1': { price: 10000, per: '男子1チーム（女子は7,000円）' },
