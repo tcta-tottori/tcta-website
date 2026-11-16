@@ -413,6 +413,22 @@ const description = 'リーグ戦（総当たり）の勝敗・取得ゲーム�
     }
     return out;
   }
+  // リーグ表のチーム名：列の幅は一定にし、収まらない名前は左右に流して全部読めるようにする
+  const mq = (name: string) => `<span class="lc-mq"><span class="lc-mq__in">${esc(name)}</span></span>`;
+  function fitMarquee(scope: HTMLElement) {
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    scope.querySelectorAll<HTMLElement>('.lc-mq').forEach((box) => {
+      const inner = box.firstElementChild as HTMLElement;
+      box.classList.remove('is-scroll');
+      const over = inner.scrollWidth - box.clientWidth;
+      if (over <= 1) return;
+      box.classList.add(reduce ? 'is-cut' : 'is-scroll');
+      box.style.setProperty('--lc-shift', `${-over}px`);
+      box.style.setProperty('--lc-dur', `${(2.4 + over / 28).toFixed(2)}s`);
+    });
+  }
+  let mqTimer = 0;
+  window.addEventListener('resize', () => { clearTimeout(mqTimer); mqTimer = window.setTimeout(() => fitMarquee(document.getElementById('lc-grid')!), 150); });
   const CIRC = ['①', '②', '③', '④', '⑤', '⑥', '⑦'];
   function sheetHtml(W: number, H: number): string {
     if (!last) return '';
@@ -601,11 +617,11 @@ const description = 'リーグ戦（総当たり）の勝敗・取得ゲーム�
     };
     grid.classList.toggle('lc-grid--team', team);
     const showWhy = done && why.size > 0;
-    grid.innerHTML = `<thead><tr><th class="lc-g__title">リーグ</th>${ids.map((j) => `<th class="lc-g__col">${esc(nameOf(j))}</th>`).join('')}${statHead}${showWhy ? '<th class="lc-g__stat lc-g__why">決め手</th>' : ''}<th class="lc-g__stat">順位</th></tr></thead><tbody>${
+    grid.innerHTML = `<thead><tr><th class="lc-g__title">リーグ</th>${ids.map((j) => `<th class="lc-g__col">${mq(nameOf(j))}</th>`).join('')}${statHead}${showWhy ? '<th class="lc-g__stat lc-g__why">決め手</th>' : ''}<th class="lc-g__stat">順位</th></tr></thead><tbody>${
       ids.map((i) => {
         const rk = rankOf.get(i);
         const champ = done && rk === 1;
-        return `<tr><td class="lc-g__name"><span class="lc-g__no">${i + 1}</span><button type="button" class="lc-g__team lc-namebtn${champ ? ' is-champ' : ''}" data-name="${i}" aria-label="${esc(nameOf(i))}（押して名前を直す）">${esc(nameOf(i))}</button></td>${ids.map((j) => {
+        return `<tr><td class="lc-g__name"><span class="lc-g__no">${i + 1}</span><button type="button" class="lc-g__team lc-namebtn${champ ? ' is-champ' : ''}" data-name="${i}" aria-label="${esc(nameOf(i))}（押して名前を直す）">${mq(nameOf(i))}</button></td>${ids.map((j) => {
           if (i === j) return '<td class="lc-g__self" aria-hidden="true"></td>';
           const label = `${esc(nameOf(i))} 対 ${esc(nameOf(j))}`;
           if (!played(i, j)) return `<td><button type="button" class="lc-cell lc-cell--empty" data-i="${i}" data-j="${j}" aria-label="${label} のスコアを入れる">入力</button></td>`;
@@ -621,6 +637,7 @@ const description = 'リーグ戦（総当たり）の勝敗・取得ゲーム�
           return `<td class="${a > b ? 'is-win' : a < b ? 'is-lose' : 'is-draw'}${showWhy && h2hCells.has(`${i}-${j}`) ? ' is-h2h' : ''}"><button type="button" class="lc-cell" data-i="${i}" data-j="${j}" aria-label="${label} ${a}-${b}（押して直す）">${a}-${b}</button></td>`;
         }).join('')}${statCells(i)}${showWhy ? `<td class="lc-g__stat lc-g__why">${esc(why.get(i) ?? '')}</td>` : ''}<td class="lc-g__stat lc-g__rank${champ ? ' is-champ' : ''}">${done ? (tied.has(i) ? `${rk}位<small>同率</small>` : `${rk}位`) : ''}</td></tr>`;
       }).join('')}</tbody>`;
+    fitMarquee(grid);
     grid.querySelectorAll<HTMLButtonElement>('.lc-cell').forEach((b) => b.addEventListener('click', () => openCell(Number(b.dataset.i), Number(b.dataset.j))));
     grid.querySelectorAll<HTMLButtonElement>('.lc-namebtn').forEach((b) => b.addEventListener('click', () => openName(Number(b.dataset.name))));
     last = { ids, st, rankOf, tied, done, team, f, sc, played, tot, rate, hasDraw, r, why, showWhy };

@@ -6191,3 +6191,19 @@ html.is-lite body.jsrv .rv, html.is-lite body.jsrv .rv-in { opacity: 1 !importan
 /* 受付終了のバッジの下の段に、開催日までの残りの日数（HomeTournaments.astro） */
 .badge--left { flex-direction: column; gap: 3px; height: auto; min-height: 26px; padding: 5px 10px; line-height: 1; }
 .badge__left { font-size: 11px; font-weight: 700; letter-spacing: .02em; padding-top: 3px; border-top: 1px solid rgba(216, 35, 42, .3); }
+/* リーグ表のチーム名：列の幅は一定（名前の長さで変わらない）。収まらない名前は左右に流す（league-calc の fitMarquee） */
+.lc-mq { display: block; overflow: hidden; white-space: nowrap; }
+.lc-mq__in { display: inline-block; }
+.lc-mq.is-scroll .lc-mq__in { animation: lc-mq var(--lc-dur, 5s) ease-in-out infinite alternate; }
+.lc-mq.is-cut { text-overflow: ellipsis; }
+@keyframes lc-mq { 0%, 18% { transform: translateX(0); } 82%, 100% { transform: translateX(var(--lc-shift, 0)); } }
+.lc-g__col .lc-mq { width: 64px; margin: 0 auto; }
+.lc-grid--team .lc-g__col .lc-mq { width: 96px; }
+.lc-g__team { display: inline-block; vertical-align: middle; max-width: 100%; }
+.lc-g__team .lc-mq { width: 132px; text-align: left; }
+.lc-g__col, .lc-g__title { min-width: 0; }
+@media (max-width: 639px) {
+  .lc-g__col .lc-mq { width: 56px; }
+  .lc-grid--team .lc-g__col .lc-mq { width: 88px; }
+  .lc-g__team .lc-mq { width: 92px; }
+}
