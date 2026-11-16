@@ -421,9 +421,10 @@ const description = 'リーグ戦（総当たり）の勝敗・取得ゲーム�
     const u = (v: number) => `${(v * s).toFixed(2)}mm`;
     const k = L.ids.length;
     const steps = [...document.querySelectorAll<HTMLElement>('#lc-steps li')].filter((li) => !li.hidden).map((li, x) => `（${x + 1}）${li.textContent}`);
-    const footLines = 2 + steps.length;
+    const footLines = 2 + steps.length + (k >= 6 ? 1 : 0); // 6 チーム以上は試合順が 2 行になる
     const headH = 22 * s, footH = (footLines * 3.5 * 1.5 + 4) * s, tableH = H - headH - footH;
     const hdrH = Math.min(14 * s, tableH * 0.16), rowH = (tableH - hdrH) / k;
+    const rh = rowH / s; // 1 行の高さ（基準の大きさ）
     const nameW = W * 0.27, resW = W * 0.13, rankW = W * 0.075, cellW = (W - nameW - resW - rankW) / k;
     const fmtNote = L.team ? `${(L.f.matches ?? []).join('・')} 各 合計${L.f.total}ゲーム` : L.f.total ? `1試合 合計${L.f.total}ゲーム` : '';
     const td = 'border:0.35mm solid #000;padding:0;text-align:center;vertical-align:middle;';
@@ -435,16 +436,16 @@ const description = 'リーグ戦（総当たり）の勝敗・取得ゲーム�
         if (i === j) return `<td style="${td}background:linear-gradient(to top right,transparent calc(50% - .2mm),#000 calc(50% - .2mm),#000 calc(50% + .2mm),transparent calc(50% + .2mm))"></td>`;
         if (!L.played(i, j)) return `<td style="${td}"></td>`;
         const a = L.tot(i, j), b = L.tot(j, i);
-        const det = L.team ? `<div style="font-size:${u(2.8)};margin-top:${u(0.8)};color:#333">${(L.f.matches ?? []).map((lb: string, m: number) => `${B(lb)} ${L.sc[m][i][j]}-${L.sc[m][j][i]}`).join('<br>')}</div>` : '';
-        return `<td style="${td}"><div style="font-size:${u(L.team ? 5 : 5.6)}">${a}-${b}</div>${det}</td>`;
+        const det = L.team ? `<div style="font-size:${u(Math.min(4.2, rh * 0.135))};line-height:1.2;margin-top:${u(0.8)};color:#222">${(L.f.matches ?? []).map((lb: string, m: number) => `${B(lb)} ${L.sc[m][i][j]}-${L.sc[m][j][i]}`).join('<br>')}</div>` : '';
+        return `<td style="${td}"><div style="font-size:${u(L.team ? Math.min(7.5, rh * 0.24) : Math.min(8, rh * 0.32))};font-weight:700;line-height:1.1">${a}-${b}</div>${det}</td>`;
       }).join('');
       const t = L.st[i].gw + L.st[i].gl;
       const res = L.team
-        ? `<div style="font-size:${u(5.5)}">${t ? L.st[i].gw : ''}</div><div style="font-size:${u(2.8)}">${t ? '得点' : ''}</div>`
+        ? `<div style="font-size:${u(Math.min(8, rh * 0.26))};font-weight:700;line-height:1.1">${t ? L.st[i].gw : ''}</div><div style="font-size:${u(3.2)}">${t ? '得点' : ''}</div>`
         : t ? `<div style="font-size:${u(4.4)}">${L.st[i].w}-${L.st[i].l}${L.hasDraw ? `-${L.st[i].d}` : ''}</div><div style="font-size:${u(3.2)};margin-top:${u(0.8)}">${L.r === 'games' ? `${pct(L.rate(i))}（${L.st[i].gw}-${L.st[i].gl}）` : `${L.st[i].gw}-${L.st[i].gl}`}</div>` : '';
       const rk = L.done ? `${L.rankOf.get(i)}${L.tied.has(i) ? '<div style="font-size:' + u(2.6) + '">同率</div>' : ''}` : '';
       const whyTxt = L.showWhy && L.why.get(i) ? `<div style="font-size:${u(2.4)};margin-top:${u(0.6)}">${B(L.why.get(i))}</div>` : '';
-      return `<tr style="height:${rowH.toFixed(2)}mm"><td style="${td}text-align:left;padding:0 ${u(2.5)}"><span style="font-size:${u(4.2)};margin-right:${u(3)}">${i + 1}</span><span style="font-size:${u(Math.min(5.2, 52 / Math.max(8, nameOf(i).length)))};letter-spacing:.12em">${B(nameOf(i))}</span></td>${cells}<td style="${td}">${res}</td><td style="${td}font-size:${u(6)}">${rk}${whyTxt}</td></tr>`;
+      return `<tr style="height:${rowH.toFixed(2)}mm"><td style="${td}text-align:left;padding:0 ${u(2.5)}"><span style="font-size:${u(4.2)};margin-right:${u(3)}">${i + 1}</span><span style="font-size:${u(Math.min(5.2, 52 / Math.max(8, nameOf(i).length)))};letter-spacing:.12em">${B(nameOf(i))}</span></td>${cells}<td style="${td}">${res}</td><td style="${td}font-size:${u(Math.min(8, rh * 0.26))};font-weight:700">${rk}${whyTxt}</td></tr>`;
     }).join('');
     const order = matchOrder(k).map(([a, b]) => `${CIRC[a]}-${CIRC[b]}`).join(' ');
     return `<div style="width:${W}mm;height:${H}mm;font-family:'BIZ UDPGothic','Yu Gothic','Hiragino Sans','Meiryo',sans-serif;color:#000;overflow:hidden">
@@ -452,10 +453,11 @@ const description = 'リーグ戦（総当たり）の勝敗・取得ゲーム�
         <span style="font-size:${u(11)};font-weight:700;line-height:1">${B(pvEl('pv-title').value || (L.team ? 'チーム対抗戦' : 'リーグ戦'))}</span>
         <span style="text-align:right;line-height:1.25"><span style="display:block;font-size:${u(5)}">${B(pvEl('pv-tour').value)}</span><span style="display:block;font-size:${u(4.4)}">${B(fmtNote)}</span></span>
       </div>
-      <table style="width:${(W - 0.8).toFixed(2)}mm;height:${tableH.toFixed(2)}mm;border-collapse:collapse;table-layout:fixed;border:0.6mm solid #000">
-        <colgroup><col style="width:${nameW.toFixed(2)}mm">${L.ids.map(() => `<col style="width:${cellW.toFixed(2)}mm">`).join('')}<col style="width:${resW.toFixed(2)}mm"><col style="width:${rankW.toFixed(2)}mm"></colgroup>
+      <div style="width:${W}mm;height:${tableH.toFixed(2)}mm;box-sizing:border-box;border:0.6mm solid #000;border-radius:${u(3)};overflow:hidden">
+      <table style="width:100%;height:100%;border-collapse:collapse;table-layout:fixed;border-style:hidden">
+        <colgroup><col style="width:${(nameW / W * 100).toFixed(3)}%">${L.ids.map(() => `<col style="width:${(cellW / W * 100).toFixed(3)}%">`).join('')}<col style="width:${(resW / W * 100).toFixed(3)}%"><col style="width:${(rankW / W * 100).toFixed(3)}%"></colgroup>
         <thead>${head}</thead><tbody>${rows}</tbody>
-      </table>
+      </table></div>
       <div style="padding-top:${u(2)};font-size:${u(3.5)};line-height:1.5">
         <div>① 試合順：${order}　　1番目のチームが進行管理をお願いします。</div>
         <div>② リーグ戦の順位決定方法</div>
