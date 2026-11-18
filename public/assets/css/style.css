@@ -6315,3 +6315,29 @@ html.is-lite body.jsrv .rv, html.is-lite body.jsrv .rv-in { opacity: 1 !importan
   .sh-print { margin-left: 0; width: 100%; justify-content: center; }
 }
 .sh-lg__names span { white-space: nowrap; }
+/* ===== トップ：区画の見出しをヘッダーに出す（main.js の initHomeSecTitle） =====
+   エントリー受付中の区画がヘッダーまで来たら、ロゴを消して今見ている区画の見出しを出し、ヘッダーを固定する（引っ込めない）。
+   スマホ・タブレットはふだん帯を出さないので、このあいだだけ白い帯を敷いて見出しを読めるようにする */
+.site-header__sec { display: none; }
+.site-header.is-sec .site-header__sec {
+  position: absolute; left: var(--gutter); top: 0; bottom: 0;
+  display: flex; align-items: center; gap: 12px; color: var(--ink); text-decoration: none; pointer-events: auto;
+}
+@media (min-width: 1024px) { .site-header.is-sec .site-header__sec { left: max(var(--gutter), calc((100vw - var(--container-max)) / 2 + var(--gutter))); } }
+.site-header__inner { position: relative; }
+.site-header__sec-mark { width: 10px; height: 34px; background: var(--red); flex: none; }
+.site-header__sec-txt { display: grid; gap: 2px; line-height: 1.2; }
+.site-header__sec-en { font: 700 11px/1 var(--flt); letter-spacing: .22em; text-transform: uppercase; color: var(--red); }
+.site-header__sec-title { font: 900 20px/1.2 var(--fjp); white-space: nowrap; }
+.site-header__sec.is-swap .site-header__sec-txt { animation: sec-swap .35s var(--ease) both; }
+@keyframes sec-swap { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.site-header__logo { transition: opacity .25s ease; }
+.site-header.is-sec .site-header__logo { opacity: 0; pointer-events: none !important; }
+.site-header.is-sec.site-header--hidden { transform: none; }
+@media (max-width: 1023px) {
+  .site-header { transition: transform .35s var(--ease), background-color .25s ease, box-shadow .25s ease; }
+  .site-header.is-sec { background: rgba(255, 255, 255, .96); border-bottom: 1px solid rgba(26, 26, 26, .12); box-shadow: 0 2px 12px rgba(26, 26, 26, .08); }
+  .site-header.is-sec .site-header__sec { top: 12px; }
+  .site-header__sec-title { font-size: 19px; }
+}
+@media (prefers-reduced-motion: reduce) { .site-header__sec.is-swap .site-header__sec-txt { animation: none; } }

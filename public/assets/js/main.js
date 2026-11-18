@@ -1549,6 +1549,45 @@
   }
 
   /* ---------- ヘッダー（スクロールで出し入れ・モバイルメニュー） ---------- */
+  /* ---------- トップ：区画の見出しをヘッダーに出す ----------
+     エントリー受付中の区画（無ければ最初の区画）の上端がヘッダーの下端まで来たら、ヘッダーのロゴを消し、
+     代わりに今見ている区画の見出し（英字の小見出し＋題名）を出す。上へ戻してエントリー受付中の区画より上に来たらロゴに戻す。
+     今見ている区画＝上端がヘッダーの下端より上にある区画のうち、いちばん下のもの */
+  function initHomeSecTitle() {
+    var header = document.querySelector('.site-header');
+    var box = header && header.querySelector('[data-sec-title]');
+    if (!box) return;
+    var secs = [].slice.call(document.querySelectorAll('#main > section[id]')).filter(function (s) { return s.querySelector('.sec-head__title'); });
+    if (!secs.length) return;
+    var start = document.getElementById('entry') || secs[0];
+    var enEl = box.querySelector('.site-header__sec-en');
+    var titleEl = box.querySelector('.site-header__sec-title');
+    var cur = null;
+    var ticking = false;
+    var update = function () {
+      ticking = false;
+      var line = header.offsetHeight + 1; // 引っ込めていても、出したときの下端で見る
+      var on = start.getBoundingClientRect().top <= line;
+      header.classList.toggle('is-sec', on);
+      document.documentElement.classList.toggle('home-sec', on);
+      if (!on) { cur = null; return; }
+      var now = start;
+      secs.forEach(function (s) { if (s.getBoundingClientRect().top <= line) now = s; });
+      if (now === cur) return;
+      cur = now;
+      var en = now.querySelector('.sec-head__eyebrow');
+      enEl.textContent = en ? en.textContent.trim() : '';
+      titleEl.textContent = now.querySelector('.sec-head__title').textContent.trim();
+      box.setAttribute('href', '#' + now.id);
+      box.classList.remove('is-swap');
+      void box.offsetWidth; // 切り替わるたびに下から出し直す
+      box.classList.add('is-swap');
+    };
+    window.addEventListener('scroll', function () { if (!ticking) { ticking = true; requestAnimationFrame(update); } }, { passive: true });
+    window.addEventListener('resize', update);
+    update();
+  }
+
   function initHeader() {
     var header = document.querySelector('.site-header');
     if (!header) return;
@@ -1567,7 +1606,8 @@
       header.classList.toggle('hsh', y > 100);
 
       var menuOpen = toggle && toggle.getAttribute('aria-expanded') === 'true';
-      if (menuOpen || y <= header.offsetHeight) {
+      // トップで区画の見出しを出しているあいだは引っ込めない（initHomeSecTitle）
+      if (menuOpen || y <= header.offsetHeight || header.classList.contains('is-sec')) {
         header.classList.remove('site-header--hidden');
       } else if (Math.abs(y - lastY) > THRESHOLD) {
         header.classList.toggle('site-header--hidden', y > lastY);
@@ -2830,6 +2870,7 @@
     initMarquee();
     initLinksLeave();
     initHeader();
+    initHomeSecTitle();
     initRipple();
     initPressed();
     initHScroll();
