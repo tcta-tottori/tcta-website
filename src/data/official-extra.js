@@ -118,14 +118,15 @@ export const EXTRA_MATERIALS = {
   // 鳥取県テニス選手権 ダブルス：要項と申込用紙（2026.10.26。11/13 締切）
   'r8-no18': {
     outline: { images: [img('r8-no18', 'outline-01.webp', '要綱')], pdfs: [] },
-    // ドロー（2026.11.18 掲載。12面。表紙・注意事項／一般男子・男子45歳以上／男子65歳以上・一般女子・女子45歳以上）
+    // ドロー（2026.11.18 掲載。12面。表紙・注意事項／一般男子・男子45歳以上／男子65歳以上・一般女子・女子45歳以上）。
+    //   11.19 お問い合わせを受けて、男子65歳以上ダブルス④ 梶 松寿さんの所属を「フリー」→「アスペック」に訂正（3ページ目の画像と PDF）
     draw: {
       images: [
         img('r8-no18', 'draw-01.webp', '表紙・注意事項'),
         img('r8-no18', 'draw-02.webp', '一般男子・男子45歳以上ダブルス'),
-        img('r8-no18', 'draw-03.webp', '男子65歳以上・一般女子・女子45歳以上ダブルス'),
+        img('r8-no18', 'draw-03-v2.webp', '男子65歳以上・一般女子・女子45歳以上ダブルス（訂正）'),
       ],
-      pdfs: [{ src: 'assets/pdf/events/r8-no18/R8県選ダブルスドロー.pdf', label: 'R8県選ダブルス ドロー', kb: 124 }],
+      pdfs: [{ src: 'assets/pdf/events/r8-no18/R8県選ダブルスドロー（訂正版）.pdf', label: 'R8県選ダブルス ドロー（訂正版）', kb: 128 }],
     },
     entry: { images: [], pdfs: [{ src: 'assets/pdf/events/r8-no18/令和8年県選ダブルス申込用紙.pdf', label: '申込用紙', kb: 104 }] },
   },
@@ -205,6 +206,9 @@ export const EXTRA_TOURNAMENTS = [
 ];
 
 export const EXTRA_REVISIONS = {
+  'r8-no18': [
+    { date: '2026-11-19', section: 'ドロー', text: '男子65歳以上ダブルス④ 梶 松寿さんの所属を「フリー」から「アスペック」に訂正しました。ドローは訂正版に差し替えています。' },
+  ],
   'r8-prince-open': [
     { date: '2026-11-18', section: 'ドロー', text: '注意事項⑨を「各順位別トーナメント優勝・準優勝チームに賞品を進呈」、⑩を「各順位別トーナメント1・2回戦敗退チームに抽選でプレゼントを進呈」に訂正しました。あわせて選手名簿に追加・変更がありました（Bリーグ はっぴ～♪ばうわ、Cリーグ カペリス、Eリーグ 湖山池TC、Fリーグ プラセール レト）。ドローは訂正版に差し替えています。' },
   ],
@@ -235,6 +239,7 @@ export const EXTRA_CARDS = [
 ];
 
 export const EXTRA_NEWS = [
+  { slug: 'official-20261119-kensen-d-draw-fix', date: '2026-11-19', createdAt: '2026-11-19T08:00:00+09:00', category: '大会', title: '鳥取県テニス選手権ダブルス（11/29）のドローを訂正しました（男子65歳以上ダブルスの選手の所属）', href: 'draw-r8-no18.html' },
   { slug: 'official-20261119-prince-filming', date: '2026-11-19', createdAt: '2026-11-19T07:00:00+09:00', category: '大会', title: '2026 プリンスオープン チーム対抗戦（11/22）当日の動画撮影についてのお知らせ', href: 'draw-r8-prince-open.html#filming' },
   { slug: 'official-20261118-kensen-d-draw', date: '2026-11-18', createdAt: '2026-11-18T14:40:00+09:00', category: '大会', title: '鳥取県テニス選手権ダブルス（11/29）のドローを掲載しました', href: 'draw-r8-no18.html' },
   { slug: 'official-20261118-prince-draw-fix', date: '2026-11-18', createdAt: '2026-11-18T14:30:00+09:00', category: '大会', title: '2026 プリンスオープン チーム対抗戦（11/22）のドローを訂正しました（注意事項⑨⑩・選手名簿の追加）', href: 'draw-r8-prince-open.html' },
