@@ -6298,3 +6298,6 @@ html.is-lite body.jsrv .rv, html.is-lite body.jsrv .rv-in { opacity: 1 !importan
 .sec-head > .ghost { right: calc((100% - 100vw) / 2 - 8px); top: 50%; z-index: -1; transition: opacity .8s var(--ease) .3s, transform 1.15s var(--ease) .3s, font-size .3s var(--ease); }
 .sec-head.is-stuck { clip-path: inset(-14px -100vw -14px -100vw); }
 .sec-head.is-stuck > .ghost { font-size: clamp(44px, 9vw, 92px); }
+/* 見出しが止まっているあいだは、見出しの上（画面の上端まで。スマホではロゴの裏）も区画の色で塗り、流れていく項目を見せない */
+.section.is-long > .container > .sec-head::before { top: calc(-1 * var(--sec-top) - 14px); }
+.sec-head.is-stuck { clip-path: inset(calc(-1 * var(--sec-top) - 14px) -100vw -14px -100vw); }
