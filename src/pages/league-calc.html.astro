@@ -8,7 +8,7 @@
 import Base from '../layouts/Base.astro';
 import { siteData } from '../lib/cms.js';
 import { RULE_TEXT, DEFAULT_FORMATS, leagueRuleOf } from '../data/league-rules.js';
-import { TOURNAMENT_APP } from '../data/live.js';
+import { TOURNAMENT_APP, catalogIdOf } from '../data/live.js';
 
 const slug = Astro.url.searchParams.get('e') ?? '';
 const site = await siteData(Astro);
@@ -48,7 +48,7 @@ const description = 'リーグ戦（総当たり）の勝敗・取得ゲーム�
 
   <section class="section">
     <div class="container container--result">
-      <div class="lc" id="lc" data-api={ev ? TOURNAMENT_APP : ''} data-tour={ev?.name ?? ''} data-rule={fixedRule ?? ''} data-n={n0} data-slug={ev?.slug ?? ''} data-formats={formats} data-leagues={JSON.stringify(conf?.leagues ?? [])}>
+      <div class="lc" id="lc" data-api={ev ? TOURNAMENT_APP : ''} data-tour={ev?.name ?? ''} data-rule={fixedRule ?? ''} data-n={n0} data-slug={ev ? catalogIdOf(ev.slug) : ''} data-formats={formats} data-leagues={JSON.stringify(conf?.leagues ?? [])}>
         {/* 大会・リーグ・試合の形式（上にまとめて小さく） */}
         <div class="lc-box lc-box--top rv">
           {fixedRule ? (
