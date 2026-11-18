@@ -13,7 +13,7 @@ if (!e || !draw) return Astro.rewrite('/404');
 const notices = EXTRA_DRAW_NOTICES[e.slug] ?? [];
 ---
 
-<EventSection e={e} label="ドロー" en="Draw" revisionKeys={['draw']}>
+<EventSection e={e} label="ドロー" en="Draw" revisionKeys={['draw']} countdown>
   {/* 大会からのお知らせ（当日の動画撮影など。official-extra.js の EXTRA_DRAW_NOTICES） */}
   {notices.map((n) => (
     <aside class="rev-notice result-notice draw-notice rv" id={n.id} aria-label={n.head}>
