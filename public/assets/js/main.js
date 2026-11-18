@@ -1561,6 +1561,11 @@
       return head && head.querySelector('.sec-head__title') ? { sec: sec, head: head } : null;
     }).filter(Boolean);
     if (!items.length) return;
+    // 背景の大きな英字（.ghost）も見出しといっしょに止まるよう、見出しの中へ移す（位置は style.css の .sec-head > .ghost で見出しの中心に合わせる）
+    items.forEach(function (it) {
+      var g = it.sec.querySelector(':scope > .ghost');
+      if (g) it.head.appendChild(g);
+    });
     var ticking = false;
     var update = function () {
       ticking = false;
