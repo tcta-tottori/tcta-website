@@ -14,6 +14,23 @@
 const img = (slug, file, label) => ({ src: `assets/img/events/${slug}/${file}`, label, w: 1241, h: 1754 });
 
 export const EXTRA_MATERIALS = {
+  // 2026 プリンスオープン チーム対抗戦（11/22）：ドローの訂正版（2026.11.18）。注意事項⑨⑩の訂正と、選手名簿への追加・変更
+  //   （B はっぴ～♪ばうわ 橋本 恵子・C カペリス 前田 良枝・E 湖山池TC 中浜 拓真・F プラセール レト 奥山 恵介）。
+  //   管理画面の 1・2 ページ目（プログラム・予選リーグ）と PDF が古いので、replace で管理画面のドローを出さず、ここの 4 枚と PDF だけを出す
+  //   （3・4 ページ目のオーダー・オブ・プレーと順位別決勝トーナメントは変わっていないので、管理画面の画像を写して置いた）。
+  //   管理画面のドローを訂正版に差し替えたら、この行は消す
+  'r8-prince-open': {
+    draw: {
+      replace: true,
+      images: [
+        { src: 'assets/img/events/r8-prince-open/draw-01-v2.webp', label: 'プログラム・注意事項（訂正版）', w: 1272, h: 1800 },
+        { src: 'assets/img/events/r8-prince-open/draw-02-v2.webp', label: '予選リーグ（訂正版）', w: 1272, h: 1800 },
+        { src: 'assets/img/events/r8-prince-open/draw-03.webp', label: 'オーダー・オブ・プレー', w: 1272, h: 1800 },
+        { src: 'assets/img/events/r8-prince-open/draw-04.webp', label: '順位別決勝トーナメント', w: 1272, h: 1800 },
+      ],
+      pdfs: [{ src: 'assets/pdf/events/r8-prince-open/R8プリンスオープンチーム対抗戦ドロー（訂正版）.pdf', label: 'R8プリンスオープンチーム対抗戦ドロー（訂正版）', kb: 945 }],
+    },
+  },
   // 第41回鳥取市市長杯テニス大会（シングルス。11/23）：ドロー（プログラム。2026.11.13 掲載。
   //   男子A級Cリーグ⑬の選手の所属を、届いた版の「doMe」から「フリー」に直して載せた。2ページ目の画像と PDF）
   'r8-shicho': {
@@ -101,6 +118,15 @@ export const EXTRA_MATERIALS = {
   // 鳥取県テニス選手権 ダブルス：要項と申込用紙（2026.10.26。11/13 締切）
   'r8-no18': {
     outline: { images: [img('r8-no18', 'outline-01.webp', '要綱')], pdfs: [] },
+    // ドロー（2026.11.18 掲載。12面。表紙・注意事項／一般男子・男子45歳以上／男子65歳以上・一般女子・女子45歳以上）
+    draw: {
+      images: [
+        img('r8-no18', 'draw-01.webp', '表紙・注意事項'),
+        img('r8-no18', 'draw-02.webp', '一般男子・男子45歳以上ダブルス'),
+        img('r8-no18', 'draw-03.webp', '男子65歳以上・一般女子・女子45歳以上ダブルス'),
+      ],
+      pdfs: [{ src: 'assets/pdf/events/r8-no18/R8県選ダブルスドロー.pdf', label: 'R8県選ダブルス ドロー', kb: 124 }],
+    },
     entry: { images: [], pdfs: [{ src: 'assets/pdf/events/r8-no18/令和8年県選ダブルス申込用紙.pdf', label: '申込用紙', kb: 104 }] },
   },
 };
@@ -163,6 +189,9 @@ export const EXTRA_TOURNAMENTS = [
 ];
 
 export const EXTRA_REVISIONS = {
+  'r8-prince-open': [
+    { date: '2026-11-18', section: 'ドロー', text: '注意事項⑨を「各順位別トーナメント優勝・準優勝チームに賞品を進呈」、⑩を「各順位別トーナメント1・2回戦敗退チームに抽選でプレゼントを進呈」に訂正しました。あわせて選手名簿に追加・変更がありました（Bリーグ はっぴ～♪ばうわ、Cリーグ カペリス、Eリーグ 湖山池TC、Fリーグ プラセール レト）。ドローは訂正版に差し替えています。' },
+  ],
   'r8-kaicho-autumn': [
     { date: '2026-11-05', section: 'ドロー', text: '男子B級ダブルス Cリーグの選手名の誤りを訂正しました。' },
     { date: '2026-11-03', section: 'ドロー', text: '男子C級ダブルスの決勝リーグの組み合わせを差し替え、試合方式を「6ゲームマッチ・ノーアド（6-6タイブレーク）」に訂正しました（注意事項の記載のとおりです）。' },
@@ -190,6 +219,8 @@ export const EXTRA_CARDS = [
 ];
 
 export const EXTRA_NEWS = [
+  { slug: 'official-20261118-kensen-d-draw', date: '2026-11-18', createdAt: '2026-11-18T14:40:00+09:00', category: '大会', title: '鳥取県テニス選手権ダブルス（11/29）のドローを掲載しました', href: 'draw-r8-no18.html' },
+  { slug: 'official-20261118-prince-draw-fix', date: '2026-11-18', createdAt: '2026-11-18T14:30:00+09:00', category: '大会', title: '2026 プリンスオープン チーム対抗戦（11/22）のドローを訂正しました（注意事項⑨⑩・選手名簿の追加）', href: 'draw-r8-prince-open.html' },
   { slug: 'official-20261115-kaicho-autumn-result', date: '2026-11-15', createdAt: '2026-11-15T16:45:00+09:00', category: '結果', title: '第62回鳥取市テニス協会会長杯（秋季）の結果を掲載しました', href: 'result-r8-kaicho-autumn.html' },
   { slug: 'official-20261113-shicho-draw', date: '2026-11-13', createdAt: '2026-11-13T07:55:00+09:00', category: '大会', title: '第41回鳥取市市長杯テニス大会（11/23）のドローを掲載しました', href: 'draw-r8-shicho.html' },
   { slug: 'official-20261105-kaicho-autumn-draw-name-fix', date: '2026-11-05', createdAt: '2026-11-05T14:45:00+09:00', category: '大会', title: '第62回鳥取市テニス協会会長杯（秋季・11/15）のドローを訂正しました（男子B級Cリーグの選手名）', href: 'draw-r8-kaicho-autumn.html' },
