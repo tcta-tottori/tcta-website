@@ -31,9 +31,9 @@
 import { EXTRA_NEWS } from './official-extra.js';
 /** トップページに出す件数（スマホ・タブレット）。次の1件は薄く重ねて「続きがある」ことだけ見せ、全部は VIEW ALL の中に出る。
  *  ヘッダーに区画の見出しが出るようになったので、スクロールしても迷わないぶん多めに出す */
-export const NEWS_VISIBLE = 6;
+export const NEWS_VISIBLE = 5;
 /** PC（1024px 以上）でトップページに出す件数（NEWS_VISIBLE より多いぶんはスマホ・タブレットでは隠す .news-pc） */
-export const NEWS_VISIBLE_PC = 6;
+export const NEWS_VISIBLE_PC = 5;
 
 /** NEW を付ける期間（日）。日付の日を1日目として NEW_DAYS 日目まで */
 const NEW_DAYS = 7;
