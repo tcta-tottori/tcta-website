@@ -4,14 +4,24 @@ import EventSection from '../components/EventSection.astro';
 import SheetList from '../components/SheetList.astro';
 import { siteData } from '../lib/cms.js';
 import LeagueCalcLink from '../components/LeagueCalcLink.astro';
+import { EXTRA_DRAW_NOTICES } from '../data/official-extra.js';
 
 const { eventBySlug } = await siteData(Astro);
 const e = eventBySlug(Astro.params.slug);
 const draw = e?.sections.find((s) => s.key === 'draw');
 if (!e || !draw) return Astro.rewrite('/404');
+const notices = EXTRA_DRAW_NOTICES[e.slug] ?? [];
 ---
 
 <EventSection e={e} label="ドロー" en="Draw" revisionKeys={['draw']}>
+  {/* 大会からのお知らせ（当日の動画撮影など。official-extra.js の EXTRA_DRAW_NOTICES） */}
+  {notices.map((n) => (
+    <aside class="rev-notice result-notice draw-notice rv" id={n.id} aria-label={n.head}>
+      <p class="rev-notice__head">{n.head}</p>
+      {n.lines.map((l) => <p class="result-notice__text">{l}</p>)}
+      {n.link && <p class="result-notice__text"><a class="text-link" href={n.link.href}>{n.link.label} <span aria-hidden="true">→</span></a></p>}
+    </aside>
+  ))}
   <p class="note rv" style="margin-bottom:0">{draw.lead}</p>
   <div class="rv"><SheetList images={draw.images} pdfs={draw.pdfs} alt={`${e.name} ドロー`} /></div>
   <LeagueCalcLink e={e} />

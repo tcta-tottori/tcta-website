@@ -6303,3 +6303,7 @@ body.jsrv .section.is-long > .container > .sec-head.rv { transition: opacity .7s
 /* 見出しが止まっているあいだは、見出しの上（画面の上端まで。スマホではロゴの裏）も区画の色で塗り、流れていく項目を見せない */
 .section.is-long > .container > .sec-head::before { top: calc(-1 * var(--sec-top) - 14px); }
 .sec-head.is-stuck { clip-path: inset(calc(-1 * var(--sec-top) - 14px) -100vw -14px -100vw); }
+/* ドローのページの上のお知らせ（当日の動画撮影など。draw-[slug].html.astro） */
+.draw-notice { scroll-margin-top: calc(var(--header-h) + 16px); }
+.draw-notice .result-notice__text + .result-notice__text { margin-top: 6px; }
+.draw-notice a { color: var(--red); font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
