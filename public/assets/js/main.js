@@ -1550,38 +1550,28 @@
 
   /* ---------- ヘッダー（スクロールで出し入れ・モバイルメニュー） ---------- */
   /* ---------- トップ：画面に収まらない区画の見出しを、ヘッダーの下に固定する ----------
-     区画（お知らせ・直近大会情報など）の高さが画面より大きいときだけ、見出しが画面の上へ抜けたら、
-     ヘッダーのすぐ下に細い見出しの帯（.sec-stick）を出して固定する。区画が終わると帯は区画といっしょに上へ流れていく
-     （帯は区画の .container の先頭に置いた position:sticky の箱。高さぶん下の余白を負にして、本文の並びは変えない）。
-     ヘッダー（協会ロゴ）はそのまま。PC でヘッダーが引っ込んでいるあいだは、帯は画面の上端に付く（--sec-top。initHeader が入れる） */
+     区画（お知らせ・直近大会情報など）の高さが画面より大きいときだけ、その区画の見出し（.sec-head）そのものを
+     position:sticky でヘッダーのすぐ下に止める（区画に .is-long）。区画の終わりまで来ると、見出しは区画といっしょに上へ流れる。
+     止まっているあいだは見出しの裏に区画と同じ色の帯を敷き、下に薄い線を引く（.is-stuck）。
+     ヘッダー（協会ロゴ）はそのまま。PC でヘッダーが引っ込んでいるあいだは、見出しは画面の上端に付く（--sec-top。initHeader が入れる） */
   function initHomeSecStick() {
     if (!document.querySelector('.hero')) return;
-    var secs = [].slice.call(document.querySelectorAll('#main > section[id]')).filter(function (s) { return s.querySelector(':scope > .container > .sec-head .sec-head__title'); });
-    if (!secs.length) return;
-    var items = secs.map(function (sec) {
+    var items = [].slice.call(document.querySelectorAll('#main > section[id]')).map(function (sec) {
       var head = sec.querySelector(':scope > .container > .sec-head');
-      var en = head.querySelector('.sec-head__eyebrow');
-      var bar = document.createElement('div');
-      bar.className = 'sec-stick';
-      bar.setAttribute('aria-hidden', 'true');
-      bar.innerHTML = '<a class="sec-stick__bar" tabindex="-1" href="#' + sec.id + '"><span class="sec-stick__mark"></span>' +
-        (en ? '<span class="sec-stick__en"></span>' : '') + '<span class="sec-stick__title"></span></a>';
-      if (en) bar.querySelector('.sec-stick__en').textContent = en.textContent.trim();
-      bar.querySelector('.sec-stick__title').textContent = head.querySelector('.sec-head__title').textContent.trim();
-      head.parentNode.insertBefore(bar, head);
-      return { sec: sec, head: head, bar: bar };
-    });
+      return head && head.querySelector('.sec-head__title') ? { sec: sec, head: head } : null;
+    }).filter(Boolean);
+    if (!items.length) return;
     var ticking = false;
     var update = function () {
       ticking = false;
       var top = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--sec-top')) || 0;
       var room = window.innerHeight - top;
       items.forEach(function (it) {
-        var r = it.sec.getBoundingClientRect();
-        var h = it.head.getBoundingClientRect();
-        // 区画が画面に収まらず、見出しが帯の位置より上へ抜けていて、区画の終わりがまだ帯より下にあるとき
-        var on = r.height > room && h.bottom < top + 8 && r.bottom > top + 48;
-        it.bar.classList.toggle('is-on', on);
+        var long = it.sec.offsetHeight > room;
+        it.sec.classList.toggle('is-long', long);
+        var r = it.head.getBoundingClientRect();
+        // 見出しがヘッダーの下に止まっている（区画の先頭はもう上へ抜けている）とき
+        it.head.classList.toggle('is-stuck', long && Math.abs(r.top - top) < 2 && it.sec.getBoundingClientRect().top < top - 4);
       });
     };
     var req = function () { if (!ticking) { ticking = true; requestAnimationFrame(update); } };
