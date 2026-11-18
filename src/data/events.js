@@ -46,7 +46,9 @@ function collectMaterials(t, mediaUrl) {
   }
   // 要項に混ざっている領収証つきの申込用紙を、申込用紙（ボタン）へ分け直す（entry-forms.js）
   splitEntryForms(t.slug, out);
-  // 公式サイトに先に載った素材（管理画面に入るまでの補い。official-extra.js）。同じ画像・PDF は重ねない
+  // 公式サイトに先に載った素材（管理画面に入るまでの補い。official-extra.js）。同じ画像・PDF は重ねない。
+  // replace: true の種類は、管理画面の同じ種類の素材を出さない（訂正版に差し替えたいが、管理画面がまだ古いとき）
+  const replaced = new Set(Object.entries(EXTRA_MATERIALS[t.slug] ?? {}).filter(([, s]) => s.replace).map(([k]) => k));
   for (const [key, s] of Object.entries(EXTRA_MATERIALS[t.slug] ?? {})) {
     if (!SECTIONS[key]) continue;
     const has = new Set([...sec(key).images, ...sec(key).pdfs].map((x) => x.src));
@@ -55,7 +57,7 @@ function collectMaterials(t, mediaUrl) {
   }
   for (const b of Array.isArray(t.materials) ? t.materials : []) {
     const key = SECTION_KEY[b.section];
-    if (!key) continue;
+    if (!key || replaced.has(key)) continue;
     if (b._type === 'material_image' && b.image) {
       // 管理画面・API で入れた画像は src を持たず、R2 の storageKey だけが残る（EmDash が保存時に src を落とす）
       const img = b.image;
