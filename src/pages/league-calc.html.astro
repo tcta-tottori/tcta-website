@@ -233,8 +233,8 @@ const description = 'リーグ戦（総当たり）の勝敗・取得ゲーム�
 
 <script>
   type Rule = 'wins' | 'games' | 'team';
-  type Fmt = { key: string; label: string; total: number | null; matches?: string[]; matchNames?: string[]; for?: string };
-  type LeagueData = { name: string; type: string; rankRule: string; players: { position: number; name: string; affiliation: string; partnerName?: string; partnerAffiliation?: string }[] };
+  type Fmt = { key: string; label: string; total: number | null; matches?: string[]; matchNames?: string[]; for?: string; win?: 'match' | 'first'; games?: number; forN?: number };
+  type LeagueData = { name: string; type: string; rankRule: string; format?: string; players: { position: number; name: string; affiliation: string; partnerName?: string; partnerAffiliation?: string }[] };
   const root = document.getElementById('lc')!;
   const LETTERS = 'ABCDEFG';
   const fixed = (root.dataset.rule || '') as Rule | '';
@@ -275,7 +275,10 @@ const description = 'リーグ戦（総当たり）の勝敗・取得ゲーム�
     const box = document.getElementById('lc-fmts')!;
     const list = formats();
     if (!list.some((x) => x.key === fmtKey)) fmtKey = list[0].key;
-    box.hidden = list.length < 2;
+    // リーグの人数で試合の形式が決まる大会（市長杯：5 名のリーグは 6 ゲーム先取）は、人数に合わせて自動で選ぶ（選ぶ欄は出さない）
+    const byN = list.some((x) => x.forN);
+    if (byN) fmtKey = (list.find((x) => x.forN === n) ?? list.find((x) => !x.forN) ?? list[0]).key;
+    box.hidden = list.length < 2 || byN;
     box.innerHTML = list.map((x) => `<label class="lc-seg__opt"><input type="radio" name="lc-fmt" value="${x.key}" ${x.key === fmtKey ? 'checked' : ''}><span>${esc(x.label || 'ゲーム数を入れる')}</span></label>`).join('');
     box.querySelectorAll<HTMLInputElement>('input').forEach((el) => el.addEventListener('change', () => { fmtKey = el.value; save(); compute(); }));
   }
@@ -310,23 +313,34 @@ const description = 'リーグ戦（総当たり）の勝敗・取得ゲーム�
         <input class="lc-dlg__in" data-m="${m}" data-s="1" inputmode="numeric" maxlength="2" autocomplete="off" aria-label="${esc(lb)} ${esc(nameOf(j))} のゲーム数" value="${esc(sc[m][j][i])}">
       </div>`).join('');
     rowsBox.classList.toggle('is-multi', labels.length > 1);
+    const g = f.games ?? 6;
     document.getElementById('lc-dlg-hint')!.textContent = f.total
       ? `1 試合は合計 ${f.total} ゲームです。片方を入れると、もう片方は自動で入ります（${f.total / 2}-${f.total / 2} は引き分け）。`
-      : '同じゲーム数（4-4 など）は引き分けです。';
+      : f.win === 'first'
+        ? `${g}ゲーム先取・ノーアドです。負けた側のゲーム数（0〜${g - 1}）を入れると、勝った側に ${g} が自動で入ります。`
+        : f.win === 'match'
+          ? `${g}ゲームマッチ・ノーアド（${g}-${g} タイブレーク）です。負けた側のゲーム数を入れると、勝った側が自動で入ります（${g - 1} なら ${g + 1}-${g - 1}、${g} なら ${g + 1}-${g} のタイブレーク）。`
+          : '同じゲーム数（4-4 など）は引き分けです。';
     const ins = dlgInputs();
     ins.forEach((el, k) => {
       el.addEventListener('input', () => {
         el.value = digits(el.value);
         const partner = ins[k % 2 === 0 ? k + 1 : k - 1];
-        const total = fmt().total;
-        if (total != null && el.value !== '' && Number(el.value) <= total) {
-          partner.value = String(total - Number(el.value));
+        const ff = fmt(), total = ff.total;
+        // 勝った側のゲーム数（負けた側を入れたとき）。6ゲーム先取は 6、6ゲームマッチは 0〜4→6・5→7（7-5）・6→7（7-6 タイブレーク）
+        const gg = ff.games ?? 6, x = Number(el.value);
+        const winScore = el.value === '' ? null
+          : ff.win === 'first' ? (x < gg ? gg : null)
+          : ff.win === 'match' ? (x <= gg - 2 ? gg : x <= gg ? gg + 1 : null)
+          : null;
+        if ((total != null && el.value !== '' && x <= total) || winScore != null) {
+          partner.value = String(winScore ?? (total! - x));
           // その試合は決まったので、次の試合の左の欄（最後なら「決定」）へ
           const next = ins[(Math.floor(k / 2) + 1) * 2];
           if (next) { next.focus(); next.select(); } else (document.getElementById('lc-dlg-ok') as HTMLButtonElement).focus();
           return;
         }
-        if (total == null && (el.value.length >= 2 || (el.value.length === 1 && el.value !== '1'))) {
+        if (total == null && !ff.win && (el.value.length >= 2 || (el.value.length === 1 && el.value !== '1'))) {
           const next = ins[k + 1];
           if (next) { next.focus(); next.select(); } else (document.getElementById('lc-dlg-ok') as HTMLButtonElement).focus();
         }
@@ -505,7 +519,7 @@ const description = 'リーグ戦（総当たり）の勝敗・取得ゲーム�
     const hdrH = Math.min(14 * s, tableH * 0.16), rowH = (tableH - hdrH) / k;
     const rh = rowH / s; // 1 行の高さ（基準の大きさ）
     const nameW = W * 0.27, resW = W * 0.13, rankW = W * 0.075, cellW = (W - nameW - resW - rankW) / k;
-    const fmtNote = L.team ? `${(L.f.matches ?? []).join('・')} 各 合計${L.f.total}ゲーム` : L.f.total ? `1試合 合計${L.f.total}ゲーム` : '';
+    const fmtNote = L.team ? `${(L.f.matches ?? []).join('・')} 各 合計${L.f.total}ゲーム` : L.f.total ? `1試合 合計${L.f.total}ゲーム` : L.f.win === 'first' ? `${L.f.games ?? 6}ゲーム先取・ノーアド` : L.f.win === 'match' ? `${L.f.games ?? 6}ゲームマッチ・ノーアド（${L.f.games ?? 6}-${L.f.games ?? 6}タイブレーク）` : '';
     const td = 'border:0.35mm solid #000;padding:0;text-align:center;vertical-align:middle;';
     const B = (x: string) => esc(x);
     const head = `<tr style="height:${(hdrH).toFixed(2)}mm"><th style="${td}text-align:left;padding:0 ${u(3)};font-weight:400"><span style="font-size:${u(9)}">${B(pvEl('pv-league').value)}</span><span style="font-size:${u(5)};margin-left:${u(1.5)}">リーグ</span><span style="float:right;font-size:${u(4)};margin-top:${u(3)}">${B(pvEl('pv-court').value)}</span></th>${
@@ -884,7 +898,10 @@ const description = 'リーグ戦（総当たり）の勝敗・取得ゲーム�
     }
     if (L) {
       const fs = formats();
-      fmtKey = (fs.find((x) => x.for && L.name.includes(x.for)) ?? fs.find((x) => !x.for) ?? fs[0]).key;
+      // 運営システムの試合方式（「6ゲーム先取」「6ゲームマッチ」など）に合う形式があればそれ、無ければ種目名（for）で選ぶ
+      const fm = String(L.format ?? '').normalize('NFKC').match(/(\d+)\s*ゲーム\s*(先取|マッチ)/);
+      const byFormat = fm ? fs.find((x) => x.win === (fm[2] === '先取' ? 'first' : 'match') && (x.games ?? 6) === Number(fm[1]) && !x.forN) : undefined;
+      fmtKey = (byFormat ?? fs.find((x) => x.for && L.name.includes(x.for)) ?? fs.find((x) => !x.for) ?? fs[0]).key;
       // 印刷用の見出し（種目とリーグ）
       const m = L.name.match(/^(.*?)[\s　]*([A-Za-zＡ-Ｚ0-9]+)\s*リーグ$/);
       pvEl('pv-title').value = m ? m[1] : L.name;
