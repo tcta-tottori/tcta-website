@@ -1,9 +1,9 @@
 ---
-// 大会の要項・ドローのページの下に出す、大会で使う道具への入口。
+// 大会の要項・ドローのページの下に出す、リーグ戦の順位計算への入口。
+// （リーグ表・審判用紙の印刷は大会運営システムだけの機能。サイトには置かない）
 //   ・リーグ戦の順位計算（league-calc.html）… league-rules.js に書いた大会はいつも出す。
 //     書いていない大会（これからの大会など）は、大会運営システムの公開の組み合わせ（/api/public/leagues/<slug>）に
 //     リーグが入っていれば出す（そのときの決め方は運営システムのリーグの rankRule）
-//   ・リーグ表・審判用紙（sheets.html。印刷・PDF で保存）… どの大会にも出す
 import { leagueRuleOf, RULE_TEXT } from '../data/league-rules.js';
 import { TOURNAMENT_APP, catalogIdOf } from '../data/live.js';
 const { e } = Astro.props;
@@ -21,13 +21,6 @@ const league = e ? leagueRuleOf(e.slug) : null;
         リーグ表のマスを押してスコアを入れると、計算式と順位の決め手も確かめられます。
       </p>
       <a class="btn btn--primary" href={`league-calc.html?e=${e.slug}`}>順位を計算する <span class="ln-arrow" aria-hidden="true"></span></a>
-    </div>
-    <div class="lc-link lc-link--sheets">
-      <p class="lc-link__title">リーグ表・審判用紙（印刷・PDF）</p>
-      <p class="lc-link__text">
-        大会で使うリーグ表と審判用紙を、印刷したり PDF でダウンロードしたりできます。組み合わせが入っていれば、リーグごと・試合ごとに名前入りで作れます。
-      </p>
-      <a class="btn btn--outline" href={`sheets.html?e=${e.slug}`}>用紙をダウンロード <span class="ln-arrow" aria-hidden="true"></span></a>
     </div>
   </div>
 )}
