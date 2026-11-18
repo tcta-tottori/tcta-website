@@ -5,13 +5,13 @@
 //     リーグが入っていれば出す（そのときの決め方は運営システムのリーグの rankRule）
 //   ・リーグ表・審判用紙（sheets.html。印刷・PDF で保存）… どの大会にも出す
 import { leagueRuleOf, RULE_TEXT } from '../data/league-rules.js';
-import { TOURNAMENT_APP } from '../data/live.js';
+import { TOURNAMENT_APP, catalogIdOf } from '../data/live.js';
 const { e } = Astro.props;
 const league = e ? leagueRuleOf(e.slug) : null;
 ---
 
 {e && (
-  <div class="ev-tools rv" data-ev-tools data-api={league ? '' : TOURNAMENT_APP} data-slug={e.slug}>
+  <div class="ev-tools rv" data-ev-tools data-api={league ? '' : TOURNAMENT_APP} data-slug={catalogIdOf(e.slug)}>
     <div class="lc-link" data-calc hidden={!league}>
       <p class="lc-link__title">{league?.rule === 'team' ? '予選リーグの順位計算（シミュレーター）' : 'リーグ戦の順位計算'}</p>
       <p class="lc-link__text">

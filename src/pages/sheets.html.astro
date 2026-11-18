@@ -9,7 +9,7 @@
 import Base from '../layouts/Base.astro';
 import { siteData } from '../lib/cms.js';
 import { RULE_TEXT, leagueRuleOf } from '../data/league-rules.js';
-import { TOURNAMENT_APP } from '../data/live.js';
+import { TOURNAMENT_APP, catalogIdOf } from '../data/live.js';
 
 const slug = Astro.url.searchParams.get('e') ?? '';
 const site = await siteData(Astro);
@@ -17,7 +17,7 @@ const ev = slug ? site.eventBySlug(slug) : null;
 const conf = ev ? leagueRuleOf(ev.slug) : null;
 const cfg = {
   api: ev ? TOURNAMENT_APP : '',
-  slug: ev?.slug ?? '',
+  slug: ev ? catalogIdOf(ev.slug) : '',
   tournament: ev?.name ?? '',
   date: String(ev?.date ?? '').slice(0, 10),
   rule: conf?.rule ?? '',
