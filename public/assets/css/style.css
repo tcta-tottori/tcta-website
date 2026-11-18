@@ -6278,30 +6278,22 @@ html.is-lite body.jsrv .rv, html.is-lite body.jsrv .rv-in { opacity: 1 !importan
 .ev-tools .lc-link { margin-top: 0; display: flex; flex-direction: column; }
 .ev-tools .lc-link[hidden] { display: none; }
 .ev-tools .lc-link .btn { margin-top: auto; align-self: flex-start; }
-/* ===== トップ：区画の見出しをヘッダーに出す（main.js の initHomeSecTitle） =====
-   エントリー受付中の区画がヘッダーまで来たら、ロゴを消して今見ている区画の見出しを出し、ヘッダーを固定する（引っ込めない）。
-   スマホ・タブレットはふだん帯を出さないので、このあいだだけ白い帯を敷いて見出しを読めるようにする */
-.site-header__sec { display: none; }
-.site-header.is-sec .site-header__sec {
-  position: absolute; left: var(--gutter); top: 0; bottom: 0;
-  display: flex; align-items: center; gap: 12px; color: var(--ink); text-decoration: none; pointer-events: auto;
+/* ===== トップ：画面に収まらない区画の見出しを、ヘッダーの下に固定する（main.js の initHomeSecStick） =====
+   .sec-stick は区画の .container の先頭に置く sticky の箱（高さ 0 ではなく帯の高さを持たせ、同じだけ下の余白を負にして本文を押さない）。
+   見出しが画面の上へ抜けたら（.is-on）帯を出す。区画が終わると、箱は .container の中に留まるので帯ごと上へ流れる */
+:root { --sec-top: 76px; }
+@media (min-width: 1024px) { :root { --sec-top: 76px; } }
+.sec-stick { position: sticky; top: var(--sec-top); z-index: 20; height: 48px; margin-bottom: -48px; pointer-events: none; transition: top .35s var(--ease); }
+.sec-stick__bar {
+  position: absolute; left: 50%; top: 0; width: 100vw; height: 48px; transform: translateX(-50%) translateY(-6px);
+  display: flex; align-items: center; gap: 10px; padding-inline: max(var(--gutter), calc((100vw - var(--container-max)) / 2 + var(--gutter)));
+  background: rgba(255, 255, 255, .96); border-bottom: 1px solid rgba(26, 26, 26, .12); box-shadow: 0 4px 12px rgba(26, 26, 26, .06);
+  color: var(--ink); text-decoration: none; opacity: 0; transition: opacity .2s ease, transform .25s var(--ease);
 }
-@media (min-width: 1024px) { .site-header.is-sec .site-header__sec { left: max(var(--gutter), calc((100vw - var(--container-max)) / 2 + var(--gutter))); } }
-.site-header__inner { position: relative; }
-.site-header__sec-mark { width: 10px; height: 34px; background: var(--red); flex: none; }
-.site-header__sec-txt { display: grid; gap: 2px; line-height: 1.2; }
-.site-header__sec-en { font: 700 11px/1 var(--flt); letter-spacing: .22em; text-transform: uppercase; color: var(--red); }
-.site-header__sec-title { font: 900 20px/1.2 var(--fjp); white-space: nowrap; }
-.site-header__sec.is-swap .site-header__sec-txt { animation: sec-swap .35s var(--ease) both; }
-@keyframes sec-swap { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
-.site-header__logo { transition: opacity .25s ease; }
-.site-header.is-sec .site-header__logo { opacity: 0; pointer-events: none !important; }
-.site-header.is-sec.site-header--hidden { transform: none; }
-@media (max-width: 1023px) {
-  .site-header { transition: transform .35s var(--ease), background-color .25s ease, box-shadow .25s ease; }
-  .site-header.is-sec { background: rgba(255, 255, 255, .96); border-bottom: 1px solid rgba(26, 26, 26, .12); box-shadow: 0 2px 12px rgba(26, 26, 26, .08); }
-  .site-header.is-sec .site-header__sec { top: 12px; }
-  .site-header__sec-title { font-size: 19px; }
-}
-@media (prefers-reduced-motion: reduce) { .site-header__sec.is-swap .site-header__sec-txt { animation: none; } }
+.section--gray .sec-stick__bar { background: rgba(247, 247, 247, .97); }
+.sec-stick.is-on .sec-stick__bar { opacity: 1; transform: translateX(-50%); pointer-events: auto; }
+.sec-stick__mark { width: 10px; height: 10px; background: var(--red); flex: none; }
+.sec-stick__en { font: 700 11px/1 var(--flt); letter-spacing: .14em; text-transform: uppercase; color: var(--red); }
+.sec-stick__title { font: 700 16px/1.2 var(--fjp); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+@media (prefers-reduced-motion: reduce) { .sec-stick, .sec-stick__bar { transition: none; } }
 .ev-tools:has(> .lc-link[hidden]:only-child) { display: none; }
