@@ -139,6 +139,22 @@ export const EXTRA_RESULT_NOTES = {
   //   直して再び公開。お知らせ・観戦ページの案内はどちらも外した
 };
 
+// ドローのページの上に出すお知らせ（draw-<slug>.html。id はページ内の位置 #id に使う。お知らせのリンク先に #id を付ける）
+export const EXTRA_DRAW_NOTICES = {
+  // 2026 プリンスオープン（11/22）：当日の動画撮影（SNS・ホームページ用）。大会運営委員の了承を得て 2026.11.19 に告知
+  'r8-prince-open': [
+    {
+      id: 'filming',
+      head: '当日の動画撮影について',
+      lines: [
+        '当日は、SNS（Instagram など）やホームページで大会の様子をお伝えするため、会場で動画を撮影します。撮影することは、当日も会場の放送でお知らせします。',
+        '映りたくない方は、事前にお問い合わせフォームからご連絡いただくか、当日、大会本部または撮影担当にお声がけください。',
+      ],
+      link: { href: 'contact.html', label: 'お問い合わせフォーム' },
+    },
+  ],
+};
+
 export const EXTRA_WINNERS = {
   // 第62回会長杯（秋季）：表彰状のとおり（男子B級は 1位・2位トーナメントの結果）。女子B級は 1位・2位・3位トーナメントごと
   'r8-kaicho-autumn': [
@@ -219,6 +235,7 @@ export const EXTRA_CARDS = [
 ];
 
 export const EXTRA_NEWS = [
+  { slug: 'official-20261119-prince-filming', date: '2026-11-19', createdAt: '2026-11-19T07:00:00+09:00', category: '大会', title: '2026 プリンスオープン チーム対抗戦（11/22）当日の動画撮影についてのお知らせ', href: 'draw-r8-prince-open.html#filming' },
   { slug: 'official-20261118-kensen-d-draw', date: '2026-11-18', createdAt: '2026-11-18T14:40:00+09:00', category: '大会', title: '鳥取県テニス選手権ダブルス（11/29）のドローを掲載しました', href: 'draw-r8-no18.html' },
   { slug: 'official-20261118-prince-draw-fix', date: '2026-11-18', createdAt: '2026-11-18T14:30:00+09:00', category: '大会', title: '2026 プリンスオープン チーム対抗戦（11/22）のドローを訂正しました（注意事項⑨⑩・選手名簿の追加）', href: 'draw-r8-prince-open.html' },
   { slug: 'official-20261115-kaicho-autumn-result', date: '2026-11-15', createdAt: '2026-11-15T16:45:00+09:00', category: '結果', title: '第62回鳥取市テニス協会会長杯（秋季）の結果を掲載しました', href: 'result-r8-kaicho-autumn.html' },
