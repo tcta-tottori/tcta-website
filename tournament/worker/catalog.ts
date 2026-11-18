@@ -447,17 +447,20 @@ export async function handlePublicLeagues(request: Request, env: Env, url: URL):
   const id = decodeURIComponent(url.pathname.slice('/api/public/leagues/'.length));
   if (!ID_RE.test(id)) return out({ error: 'id が不正です' }, 400);
   await ensureSchema(db);
-  const r = await db.prepare('SELECT name, status, draw FROM catalog_tournaments WHERE id = ?').bind(id).first<{ name: string; status: string; draw: string | null }>();
-  if (!r || (r.status !== 'ready' && r.status !== 'done') || !r.draw) return out({ id, name: r?.name ?? '', leagues: [] });
+  const r = await db.prepare('SELECT name, date, status, draw FROM catalog_tournaments WHERE id = ?').bind(id).first<{ name: string; date: string | null; status: string; draw: string | null }>();
+  if (!r || (r.status !== 'ready' && r.status !== 'done') || !r.draw) return out({ id, name: r?.name ?? '', date: r?.date ?? '', leagues: [] });
   const draw = JSON.parse(r.draw) as { events?: DrawEvent[] };
   const leagues = (draw.events ?? []).filter((e) => e.isRoundRobin).map((e) => ({
     name: e.eventName,
     type: e.type,
     rankRule: e.rankRule ?? 'wins',
+    // 試合方式（例 6ゲームマッチ・ノーアド（6-6タイブレーク））と専用コート。サイトのリーグ表・審判用紙（sheets.html）に出す
+    format: e.roundGameRules?.[0]?.ruleText || e.matchFormat || '',
+    courts: e.leagueCourts ?? [],
     players: [...e.players].sort((a, b) => a.position - b.position).map((p) => ({
       position: p.position, name: p.name, affiliation: p.affiliation,
       ...(p.partnerName ? { partnerName: p.partnerName, partnerAffiliation: p.partnerAffiliation ?? '' } : {}),
     })),
   }));
-  return out({ id, name: r.name, leagues });
+  return out({ id, name: r.name, date: r.date ?? '', leagues });
 }

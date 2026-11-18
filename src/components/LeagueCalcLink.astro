@@ -1,16 +1,45 @@
 ---
-// リーグ戦の順位計算（league-calc.html）への入口。league-rules.js に書いた大会の、要項・ドローのページの下に出す。
+// 大会の要項・ドローのページの下に出す、大会で使う道具への入口。
+//   ・リーグ戦の順位計算（league-calc.html）… league-rules.js に書いた大会はいつも出す。
+//     書いていない大会（これからの大会など）は、大会運営システムの公開の組み合わせ（/api/public/leagues/<slug>）に
+//     リーグが入っていれば出す（そのときの決め方は運営システムのリーグの rankRule）
+//   ・リーグ表・審判用紙（sheets.html。印刷・PDF で保存）… どの大会にも出す
 import { leagueRuleOf, RULE_TEXT } from '../data/league-rules.js';
+import { TOURNAMENT_APP } from '../data/live.js';
 const { e } = Astro.props;
 const league = e ? leagueRuleOf(e.slug) : null;
 ---
 
-{league && (
-  <div class="lc-link rv">
-    <p class="lc-link__title">{league.rule === 'team' ? '予選リーグの順位計算（シミュレーター）' : 'リーグ戦の順位計算'}</p>
-    <p class="lc-link__text">
-      この大会のルール（{RULE_TEXT[league.rule].label}）で、予選リーグの{league.rule === 'team' ? '獲得ゲーム数' : '勝敗・取得ゲーム率'}・順位を計算できます。リーグ表のマスを押してスコアを入れると、計算式と順位の決め手も確かめられます。
-    </p>
-    <a class="btn btn--primary" href={`league-calc.html?e=${e.slug}`}>順位を計算する <span class="ln-arrow" aria-hidden="true"></span></a>
+{e && (
+  <div class="ev-tools rv" data-ev-tools data-api={league ? '' : TOURNAMENT_APP} data-slug={e.slug}>
+    <div class="lc-link" data-calc hidden={!league}>
+      <p class="lc-link__title">{league?.rule === 'team' ? '予選リーグの順位計算（シミュレーター）' : 'リーグ戦の順位計算'}</p>
+      <p class="lc-link__text">
+        {league
+          ? <>この大会のルール（{RULE_TEXT[league.rule].label}）で、予選リーグの{league.rule === 'team' ? '獲得ゲーム数' : '勝敗・取得ゲーム率'}・順位を計算できます。</>
+          : <>この大会のルールで、予選リーグの勝敗・取得ゲーム率・順位を計算できます。</>}
+        リーグ表のマスを押してスコアを入れると、計算式と順位の決め手も確かめられます。
+      </p>
+      <a class="btn btn--primary" href={`league-calc.html?e=${e.slug}`}>順位を計算する <span class="ln-arrow" aria-hidden="true"></span></a>
+    </div>
+    <div class="lc-link lc-link--sheets">
+      <p class="lc-link__title">リーグ表・審判用紙（印刷・PDF）</p>
+      <p class="lc-link__text">
+        大会で使うリーグ表と審判用紙を、印刷したり PDF でダウンロードしたりできます。組み合わせが入っていれば、リーグごと・試合ごとに名前入りで作れます。
+      </p>
+      <a class="btn btn--outline" href={`sheets.html?e=${e.slug}`}>用紙をダウンロード <span class="ln-arrow" aria-hidden="true"></span></a>
+    </div>
   </div>
 )}
+
+<script>
+  // ルールを書いていない大会：運営システムにリーグが入っていれば、順位計算の入口を出す
+  document.querySelectorAll<HTMLElement>('[data-ev-tools]').forEach((box) => {
+    const calc = box.querySelector<HTMLElement>('[data-calc]');
+    if (!calc || !calc.hidden || !box.dataset.api || !box.dataset.slug) return;
+    fetch(`${box.dataset.api}/api/public/leagues/${encodeURIComponent(box.dataset.slug)}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if ((d?.leagues ?? []).some((l: { players: unknown[] }) => l.players.length >= 2)) calc.hidden = false; })
+      .catch(() => { /* 入口を出さないだけ */ });
+  });
+</script>
