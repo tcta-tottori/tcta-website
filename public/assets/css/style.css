@@ -6293,3 +6293,8 @@ html.is-lite body.jsrv .rv, html.is-lite body.jsrv .rv-in { opacity: 1 !importan
 .section.is-long > .container > .sec-head.is-stuck::before { opacity: 1; }
 @media (prefers-reduced-motion: reduce) { .section.is-long > .container > .sec-head { transition: none; } }
 .ev-tools:has(> .lc-link[hidden]:only-child) { display: none; }
+/* 背景の大きな英字を見出しの中へ移したとき（main.js の initHomeSecStick）：見出しの中心に合わせ、右端は画面の右端から 8px はみ出す位置。
+   見出しが止まっているあいだは、帯の高さに収まる大きさに縮め、帯の外は切る（下の本文に重ならないように） */
+.sec-head > .ghost { right: calc((100% - 100vw) / 2 - 8px); top: 50%; z-index: -1; transition: opacity .8s var(--ease) .3s, transform 1.15s var(--ease) .3s, font-size .3s var(--ease); }
+.sec-head.is-stuck { clip-path: inset(-14px -100vw -14px -100vw); }
+.sec-head.is-stuck > .ghost { font-size: clamp(44px, 9vw, 92px); }
