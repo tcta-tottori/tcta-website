@@ -24,14 +24,6 @@ const resolve = (href: string) =>
       <img class="site-header__logo-img" src="assets/img/logo-cut.png" alt="鳥取市テニス協会 TOTTORI-CITY TENNIS ASSOCIATION" width="679" height="217">
       <img class="site-header__logo-w" src="assets/img/logo-cut-white.png" alt="" width="679" height="217">
     </a>
-    {/* トップページだけ：エントリー受付中の区画がヘッダーまで来たら、ロゴの代わりに今見ている区画の見出しを出す（main.js の initHomeSecTitle）。
-        押すとその区画の先頭へ */}
-    {onHome && (
-      <a class="site-header__sec" href="#main" aria-hidden="true" tabindex="-1" data-sec-title>
-        <span class="site-header__sec-mark"></span>
-        <span class="site-header__sec-txt"><span class="site-header__sec-en"></span><span class="site-header__sec-title"></span></span>
-      </a>
-    )}
     <nav class="nav" aria-label="グローバルナビゲーション">
       {NAV.map((item) => (
         <a

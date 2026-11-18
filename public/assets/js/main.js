@@ -1549,42 +1549,44 @@
   }
 
   /* ---------- ヘッダー（スクロールで出し入れ・モバイルメニュー） ---------- */
-  /* ---------- トップ：区画の見出しをヘッダーに出す ----------
-     エントリー受付中の区画（無ければ最初の区画）の上端がヘッダーの下端まで来たら、ヘッダーのロゴを消し、
-     代わりに今見ている区画の見出し（英字の小見出し＋題名）を出す。上へ戻してエントリー受付中の区画より上に来たらロゴに戻す。
-     今見ている区画＝上端がヘッダーの下端より上にある区画のうち、いちばん下のもの */
-  function initHomeSecTitle() {
-    var header = document.querySelector('.site-header');
-    var box = header && header.querySelector('[data-sec-title]');
-    if (!box) return;
-    var secs = [].slice.call(document.querySelectorAll('#main > section[id]')).filter(function (s) { return s.querySelector('.sec-head__title'); });
+  /* ---------- トップ：画面に収まらない区画の見出しを、ヘッダーの下に固定する ----------
+     区画（お知らせ・直近大会情報など）の高さが画面より大きいときだけ、見出しが画面の上へ抜けたら、
+     ヘッダーのすぐ下に細い見出しの帯（.sec-stick）を出して固定する。区画が終わると帯は区画といっしょに上へ流れていく
+     （帯は区画の .container の先頭に置いた position:sticky の箱。高さぶん下の余白を負にして、本文の並びは変えない）。
+     ヘッダー（協会ロゴ）はそのまま。PC でヘッダーが引っ込んでいるあいだは、帯は画面の上端に付く（--sec-top。initHeader が入れる） */
+  function initHomeSecStick() {
+    if (!document.querySelector('.hero')) return;
+    var secs = [].slice.call(document.querySelectorAll('#main > section[id]')).filter(function (s) { return s.querySelector(':scope > .container > .sec-head .sec-head__title'); });
     if (!secs.length) return;
-    var start = document.getElementById('entry') || secs[0];
-    var enEl = box.querySelector('.site-header__sec-en');
-    var titleEl = box.querySelector('.site-header__sec-title');
-    var cur = null;
+    var items = secs.map(function (sec) {
+      var head = sec.querySelector(':scope > .container > .sec-head');
+      var en = head.querySelector('.sec-head__eyebrow');
+      var bar = document.createElement('div');
+      bar.className = 'sec-stick';
+      bar.setAttribute('aria-hidden', 'true');
+      bar.innerHTML = '<a class="sec-stick__bar" tabindex="-1" href="#' + sec.id + '"><span class="sec-stick__mark"></span>' +
+        (en ? '<span class="sec-stick__en"></span>' : '') + '<span class="sec-stick__title"></span></a>';
+      if (en) bar.querySelector('.sec-stick__en').textContent = en.textContent.trim();
+      bar.querySelector('.sec-stick__title').textContent = head.querySelector('.sec-head__title').textContent.trim();
+      head.parentNode.insertBefore(bar, head);
+      return { sec: sec, head: head, bar: bar };
+    });
     var ticking = false;
     var update = function () {
       ticking = false;
-      var line = header.offsetHeight + 1; // 引っ込めていても、出したときの下端で見る
-      var on = start.getBoundingClientRect().top <= line;
-      header.classList.toggle('is-sec', on);
-      document.documentElement.classList.toggle('home-sec', on);
-      if (!on) { cur = null; return; }
-      var now = start;
-      secs.forEach(function (s) { if (s.getBoundingClientRect().top <= line) now = s; });
-      if (now === cur) return;
-      cur = now;
-      var en = now.querySelector('.sec-head__eyebrow');
-      enEl.textContent = en ? en.textContent.trim() : '';
-      titleEl.textContent = now.querySelector('.sec-head__title').textContent.trim();
-      box.setAttribute('href', '#' + now.id);
-      box.classList.remove('is-swap');
-      void box.offsetWidth; // 切り替わるたびに下から出し直す
-      box.classList.add('is-swap');
+      var top = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--sec-top')) || 0;
+      var room = window.innerHeight - top;
+      items.forEach(function (it) {
+        var r = it.sec.getBoundingClientRect();
+        var h = it.head.getBoundingClientRect();
+        // 区画が画面に収まらず、見出しが帯の位置より上へ抜けていて、区画の終わりがまだ帯より下にあるとき
+        var on = r.height > room && h.bottom < top + 8 && r.bottom > top + 48;
+        it.bar.classList.toggle('is-on', on);
+      });
     };
-    window.addEventListener('scroll', function () { if (!ticking) { ticking = true; requestAnimationFrame(update); } }, { passive: true });
-    window.addEventListener('resize', update);
+    var req = function () { if (!ticking) { ticking = true; requestAnimationFrame(update); } };
+    window.addEventListener('scroll', req, { passive: true });
+    window.addEventListener('resize', req);
     update();
   }
 
@@ -1606,13 +1608,15 @@
       header.classList.toggle('hsh', y > 100);
 
       var menuOpen = toggle && toggle.getAttribute('aria-expanded') === 'true';
-      // トップで区画の見出しを出しているあいだは引っ込めない（initHomeSecTitle）
-      if (menuOpen || y <= header.offsetHeight || header.classList.contains('is-sec')) {
+      if (menuOpen || y <= header.offsetHeight) {
         header.classList.remove('site-header--hidden');
       } else if (Math.abs(y - lastY) > THRESHOLD) {
         header.classList.toggle('site-header--hidden', y > lastY);
       }
       if (Math.abs(y - lastY) > THRESHOLD) lastY = y;
+      // 区画の見出しの帯（initHomeSecStick）を付ける高さ：ヘッダーが出ていればその下、引っ込んでいれば画面の上端
+      var hidden = header.classList.contains('site-header--hidden') && getComputedStyle(header).transform !== 'none';
+      document.documentElement.style.setProperty('--sec-top', (hidden ? 0 : header.offsetHeight) + 'px');
     };
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
@@ -2870,7 +2874,7 @@
     initMarquee();
     initLinksLeave();
     initHeader();
-    initHomeSecTitle();
+    initHomeSecStick();
     initRipple();
     initPressed();
     initHScroll();
