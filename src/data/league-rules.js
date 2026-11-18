@@ -10,6 +10,9 @@
 //               matches … チーム対抗戦の 1 対戦の試合の略称（['MIX', 'WD', 'MD'] など。最初の試合が、合計が並んだときの決め手）。省略は 1 試合
 //               matchNames … その正式な名前（入力の小窓・チーム得点の表に出す）
 //               for     … リーグを選んだとき、種目名にこの文字があればこの形式にする（「男子B級」など）
+//               win, games … 勝ち負けの決まる形式。'first'＝games ゲーム先取、'match'＝games ゲームマッチ（games-games タイブレーク）。
+//                         負けた側のゲーム数を入れると、勝った側が自動で入る（先取は games、マッチは games−2 まで→games、games−1→games+1、games→games+1）
+//               forN    … この人数のリーグはこの形式にする（人数で自動で選び、選ぶ欄は出さない）
 //   note    … ページに出す補足
 //   sheetNote … リーグ表（印刷）の試合順の横に書く進行の担当（省略は「1番目の選手（ペア）が進行管理をお願いします。」）
 //   leagues … 実際のリーグとチーム名（[{ name, teams: [...] }]。ドローの順）。大会運営システムのデータベースから読めない大会（団体戦など）用。
@@ -28,9 +31,13 @@ export const LEAGUE_RULES = {
   },
   'r8-shicho': {
     rule: 'wins',
-    formats: [{ key: 'free', label: '', total: null }],
+    // 5 名のリーグ（男子A級C・男子C級D）は 6 ゲーム先取、ほかは 6 ゲームマッチ（6-6 タイブレーク）。人数で自動で選ぶ
+    formats: [
+      { key: 'm6', label: '6ゲームマッチ・ノーアド（6-6タイブレーク）', total: null, win: 'match', games: 6 },
+      { key: 'f6', label: '6ゲーム先取・ノーアド（5名のリーグ）', total: null, win: 'first', games: 6, forN: 5 },
+    ],
     sheetNote: '各リーグの2番目の選手が進行責任者です。',
-    note: '予選リーグは 6 ゲームマッチ・ノーアド（6-6 タイブレーク。5 名のリーグは 6 ゲーム先取・ノーアド）。順位は勝数の多い順で、同じ勝数が 2 名なら直接対決の勝者、3 名なら取得ゲーム率で決めます。不戦勝は 6-0、リタイアは勝者が残りのゲームをすべて取ったものとして記録します。タイブレークは 7-6 のように入れてください。',
+    note: '予選リーグは 6 ゲームマッチ・ノーアド（6-6 タイブレーク。5 名のリーグは 6 ゲーム先取・ノーアド）。順位は勝数の多い順で、同じ勝数が 2 名なら直接対決の勝者、3 名なら取得ゲーム率で決めます。不戦勝は 6-0、リタイアは勝者が残りのゲームをすべて取ったものとして記録します。負けた側のゲーム数を入れると、勝った側は自動で入ります（6 ゲームマッチは 5 なら 7-5、6 なら 7-6）。',
   },
   'r8-prince-open': {
     rule: 'team',
@@ -82,8 +89,8 @@ export const RULE_TEXT = {
 
 /** 大会を決めずに開いたときの形式 */
 export const DEFAULT_FORMATS = {
-  wins: [{ key: 'free', label: '', total: null }, { key: 't8', label: '1試合 合計8ゲーム', total: 8 }],
-  games: [{ key: 'free', label: '', total: null }, { key: 't8', label: '1試合 合計8ゲーム', total: 8 }],
+  wins: [{ key: 'free', label: '', total: null }, { key: 'm6', label: '6ゲームマッチ', total: null, win: 'match', games: 6 }, { key: 'f6', label: '6ゲーム先取', total: null, win: 'first', games: 6 }, { key: 'm8', label: '8ゲームマッチ', total: null, win: 'match', games: 8 }, { key: 't8', label: '1試合 合計8ゲーム', total: 8 }],
+  games: [{ key: 'free', label: '', total: null }, { key: 'm6', label: '6ゲームマッチ', total: null, win: 'match', games: 6 }, { key: 'f6', label: '6ゲーム先取', total: null, win: 'first', games: 6 }, { key: 'm8', label: '8ゲームマッチ', total: null, win: 'match', games: 8 }, { key: 't8', label: '1試合 合計8ゲーム', total: 8 }],
   team: [{ key: 'team', label: 'チーム対抗戦（3 試合・各 合計8ゲーム）', total: 8, matches: ['MIX', 'WD', 'MD'], matchNames: ['ミックスダブルス', '女子ダブルス', '男子ダブルス'] }],
 };
 
