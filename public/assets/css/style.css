@@ -6284,7 +6284,9 @@ html.is-lite body.jsrv .rv, html.is-lite body.jsrv .rv-in { opacity: 1 !importan
 :root { --sec-top: 76px; }
 .section { --sec-bg: var(--white); }
 .section--gray { --sec-bg: var(--gray-050); }
-.section.is-long > .container > .sec-head { position: sticky; top: var(--sec-top); z-index: 20; transition: top .35s var(--ease); }
+.section.is-long > .container > .sec-head { position: sticky; top: var(--sec-top); z-index: 20; }
+/* 初めて画面に入ったときの出方（.rv：下からふわっと）を消さないよう、固定の位置の動き（top）と並べて書く */
+body.jsrv .section.is-long > .container > .sec-head.rv { transition: opacity .7s var(--ease), transform .7s var(--ease), top .35s var(--ease); }
 .section.is-long > .container > .sec-head::before {
   content: ''; position: absolute; z-index: -1; left: 50%; width: 100vw; top: -14px; bottom: -14px; transform: translateX(-50%);
   background: var(--sec-bg); border-bottom: 1px solid rgba(26, 26, 26, .12); box-shadow: 0 6px 14px rgba(26, 26, 26, .06);
