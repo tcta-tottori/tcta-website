@@ -454,7 +454,7 @@ export async function handlePublicLeagues(request: Request, env: Env, url: URL):
     name: e.eventName,
     type: e.type,
     rankRule: e.rankRule ?? 'wins',
-    // 試合方式（例 6ゲームマッチ・ノーアド（6-6タイブレーク））と専用コート。サイトのリーグ表・審判用紙（sheets.html）に出す
+    // 試合方式（例 6ゲームマッチ・ノーアド（6-6タイブレーク））と専用コート。サイトの順位計算（league-calc.html）が試合の形式を選ぶのに使う
     format: e.roundGameRules?.[0]?.ruleText || e.matchFormat || '',
     courts: e.leagueCourts ?? [],
     players: [...e.players].sort((a, b) => a.position - b.position).map((p) => ({
