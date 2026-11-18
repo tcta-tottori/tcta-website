@@ -4,10 +4,23 @@
 import Base from '../layouts/Base.astro';
 import EventMeta from './EventMeta.astro';
 import RevisionNotice from './RevisionNotice.astro';
+import { todayJST } from '../data/schedule.js';
 
 // revisionKeys … 本文の上に出す訂正の種類（['draw'] など。RevisionNotice.astro）
 // badge        … 見出しの下に受付状態のバッジ（受付中・終了など）を出すか。結果のページは出さない（終わった大会なのは分かるため）
-const { e, label, en, ghost = en.toUpperCase(), revisionKeys = [], badge = true } = Astro.props;
+// countdown    … 受付状態の代わりに、開催前は「開催まで あと N 日」（前日は「明日開催」、当日は「本日開催」）、終わったら「終了」を出す（ドローのページ）
+const { e, label, en, ghost = en.toUpperCase(), revisionKeys = [], badge = true, countdown = false } = Astro.props;
+const shown = (() => {
+  if (!countdown) return e.badge;
+  if (e.status === 'done') return { label: '終了', badge: 'badge--muted' };
+  if (e.status === 'live') return e.badge;
+  const [y, m, d] = String(e.date ?? '').slice(0, 10).split('-').map(Number);
+  const [ty, tm, td] = todayJST().split('-').map(Number);
+  if (!y) return e.badge;
+  const n = Math.round((Date.UTC(y, m - 1, d) - Date.UTC(ty, tm - 1, td)) / 86400000);
+  if (n < 0) return { label: '終了', badge: 'badge--muted' };
+  return { label: n === 0 ? '本日開催' : n === 1 ? '明日開催' : `開催まで あと${n}日`, badge: 'badge--open badge--count' };
+})();
 const title = `${e.displayName} ${label}｜大会情報｜鳥取市テニス協会`;
 const description = `${e.label}に${e.place}で行われる${e.name}（${e.event}）の${label}です。`;
 ---
@@ -32,7 +45,7 @@ const description = `${e.label}に${e.place}で行われる${e.name}（${e.event
       {/* 受付状態のバッジと、日程・会場・種目（大会情報の一覧と同じ形。ピクトグラムは無し） */}
       {badge && (
         <p class="page-lead page-lead--tags fu" style="animation-delay:.15s">
-          <span class={`badge ${e.badge.badge}`}>{e.badge.label}</span>
+          <span class={`badge ${shown.badge}`}>{shown.label}</span>
         </p>
       )}
       <div class="fu" style="animation-delay:.2s"><EventMeta e={e} /></div>
