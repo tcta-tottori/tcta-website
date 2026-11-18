@@ -6273,3 +6273,45 @@ html.is-lite body.jsrv .rv, html.is-lite body.jsrv .rv-in { opacity: 1 !importan
 .lc-ibtn--print:hover { background: var(--red); color: #fff; }
 .lc-ibtn--clear:hover { border-color: var(--gray-600); background: var(--gray-600); color: #fff; }
 .lc-hbtns { flex-wrap: nowrap; }
+/* 大会の要項・ドローのページの下の道具の入口（LeagueCalcLink.astro）：順位計算とリーグ表・審判用紙 */
+.ev-tools { margin-top: 40px; display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+.ev-tools .lc-link { margin-top: 0; display: flex; flex-direction: column; }
+.ev-tools .lc-link[hidden] { display: none; }
+.ev-tools .lc-link .btn { margin-top: auto; align-self: flex-start; }
+.lc-link--sheets { border-left-color: var(--ink); }
+/* ===== リーグ表・審判用紙（sheets.html） ===== */
+.sh-h { display: flex; align-items: center; gap: 10px; }
+.sh-h__ico { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 50%; background: var(--red-tint); color: var(--red); flex: none; }
+.sh-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 12px; }
+.sh-bar__text { margin: 0; font: 500 13px/1.5 var(--fjp); color: var(--gray-700); }
+.sh-bar__btns { display: flex; gap: 6px; }
+.sh-mini { border: 1px solid var(--gray-300); background: #fff; padding: 6px 10px; border-radius: var(--radius); font: 500 12px/1 var(--fjp); color: var(--gray-700); cursor: pointer; }
+.sh-groups { display: grid; gap: 16px; }
+.sh-group__title { margin: 0 0 8px; padding-left: 10px; border-left: 3px solid var(--red); font: 700 14px/1.4 var(--fjp); color: var(--ink); }
+.sh-lgs { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 8px; }
+.sh-lg { position: relative; display: grid; gap: 4px; padding: 10px 12px 10px 38px; border: 1.5px solid var(--gray-200); border-radius: var(--radius); background: #fff; cursor: pointer; transition: border-color .15s, box-shadow .15s; }
+.sh-lg input { position: absolute; left: 12px; top: 12px; width: 18px; height: 18px; accent-color: var(--red); }
+.sh-lg.is-on { border-color: var(--red); box-shadow: 0 0 0 3px rgba(216, 35, 42, .12); }
+.sh-lg__head { display: flex; align-items: baseline; gap: 6px; white-space: nowrap; }
+.sh-lg__head b { font: 700 14.5px/1.3 var(--fjp); color: var(--ink); }
+.sh-lg.is-on .sh-lg__head b { color: var(--red); }
+.sh-lg__head small { font: 500 11px/1 var(--fjp); color: var(--gray-500); }
+.sh-lg__names { font: 500 12px/1.55 var(--fjp); color: #4B5563; }
+.sh-lg__names i { font-style: normal; color: #D1D5DB; margin: 0 2px; }
+.sh-empty { margin: 0 0 12px; padding: 12px 14px; background: #F9FAFB; border-radius: var(--radius); font: 400 13.5px/1.8 var(--fjp); color: var(--gray-700); }
+.sh-blank { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; margin-top: 16px; padding: 12px 14px; border: 1px dashed var(--gray-300); border-radius: var(--radius); }
+.sh-check { display: inline-flex; align-items: center; gap: 8px; font: 700 13.5px/1.4 var(--fjp); color: var(--ink); cursor: pointer; }
+.sh-check input { width: 18px; height: 18px; accent-color: var(--red); }
+.sh-inline { display: inline-flex; align-items: center; gap: 6px; font: 700 13px/1.3 var(--fjp); color: var(--gray-700); }
+.sh-inline select { min-height: 40px; padding: 4px 8px; border: 1px solid var(--gray-300); border-radius: var(--radius); font: 500 14px/1.3 var(--fjp); background: #fff; }
+.sh-inline[hidden] { display: none; }
+.sh-go { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px; margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--gray-200); }
+.sh-print { display: inline-flex; align-items: center; gap: 8px; margin-left: auto; }
+.sh-mode { margin-bottom: 4px; }
+.lc-seg__opt.is-off { opacity: .45; pointer-events: none; }
+.sh-how__list { margin: 0; padding-left: 1.4em; font: 400 14px/1.9 var(--fjp); color: var(--gray-800); }
+@media (max-width: 639px) {
+  .sh-lgs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .sh-print { margin-left: 0; width: 100%; justify-content: center; }
+}
+.sh-lg__names span { white-space: nowrap; }

@@ -48,7 +48,7 @@ const description = 'リーグ戦（総当たり）の勝敗・取得ゲーム�
 
   <section class="section">
     <div class="container container--result">
-      <div class="lc" id="lc" data-api={ev && conf ? TOURNAMENT_APP : ''} data-tour={ev?.name ?? ''} data-rule={fixedRule ?? ''} data-n={n0} data-slug={ev?.slug ?? ''} data-formats={formats} data-leagues={JSON.stringify(conf?.leagues ?? [])}>
+      <div class="lc" id="lc" data-api={ev ? TOURNAMENT_APP : ''} data-tour={ev?.name ?? ''} data-rule={fixedRule ?? ''} data-n={n0} data-slug={ev?.slug ?? ''} data-formats={formats} data-leagues={JSON.stringify(conf?.leagues ?? [])}>
         {/* 大会・リーグ・試合の形式（上にまとめて小さく） */}
         <div class="lc-box lc-box--top rv">
           {fixedRule ? (
@@ -877,6 +877,11 @@ const description = 'リーグ戦（総当たり）の勝敗・取得ゲーム�
       n = Math.max(3, Math.min(7, ps.length));
       names = Array.from({ length: 7 }, (_, i) => (ps[i] ? teamName(ps[i], L.type === 'Doubles') : ''));
     } else if (keep) { n = keep.n; names = [...keep.names]; }
+    if (L && !fixed && (L.rankRule === 'wins' || L.rankRule === 'games')) {
+      // ルールを書いていない大会（これからの大会など）は、運営システムのリーグの決め方（rankRule）に合わせる
+      const radio = document.querySelector<HTMLInputElement>(`input[name=lc-rule][value=${L.rankRule}]`);
+      if (radio && !radio.checked) { radio.checked = true; fmtKey = ''; }
+    }
     if (L) {
       const fs = formats();
       fmtKey = (fs.find((x) => x.for && L.name.includes(x.for)) ?? fs.find((x) => !x.for) ?? fs[0]).key;
@@ -935,7 +940,7 @@ const description = 'リーグ戦（総当たり）の勝敗・取得ゲーム�
   } else if (root.dataset.api && root.dataset.slug) {
     fetch(`${root.dataset.api}/api/public/leagues/${encodeURIComponent(root.dataset.slug)}`)
       .then((r) => (r.ok ? r.json() : null))
-      .then((d) => showLeagues((d?.leagues ?? []) as LeagueData[]))
+      .then((d) => showLeagues(((d?.leagues ?? []) as LeagueData[]).filter((l) => l.players.length >= 2)))
       .catch(() => { /* 読めないときは自分で入れる */ });
   }
   renderNames(); compute();
