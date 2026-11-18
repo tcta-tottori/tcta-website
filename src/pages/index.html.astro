@@ -50,11 +50,9 @@ const keepFrom = (() => {
   const [y, m, d] = todayJST().split('-').map(Number);
   return new Date(Date.UTC(y, m - 1, d - HOME_KEEP_DAYS)).toISOString().slice(0, 10).replace(/-/g, '.');
 })();
-const HOME_TOURNAMENTS = TOURNAMENTS.filter((t) => t.date > keepFrom);
-// トップに出すのは上から HOME_TOURNAMENTS_VISIBLE 件（PC は HOME_TOURNAMENTS_VISIBLE_PC 件）まで。続きがあるときは、
-// お知らせと同じく次の1件を薄く見せ、その右端の VIEW ALL から大会情報のページへ飛ばす
-const HOME_TOURNAMENTS_VISIBLE = 3;
-const HOME_TOURNAMENTS_VISIBLE_PC = 5;
+// そのうち要項が出ている大会（要項のボタンに行き先がある。速報中のものも）は、件数で切らずにすべて出す（VIEW ALL は置かない）
+const HOME_TOURNAMENTS = TOURNAMENTS.filter((t) => t.date > keepFrom)
+  .filter((t) => (t.buttons ?? []).some((b) => (b.key === 'outline' && b.href) || b.live));
 ---
 
 <Base
@@ -165,7 +163,7 @@ const HOME_TOURNAMENTS_VISIBLE_PC = 5;
   </section>}
 
   <!-- ============ 大会情報（一覧） ============ -->
-  {/* 開催前の大会と、開催日から1週間たっていない終わった大会を、エントリー受付中の大会と同じ行の型で並べる（3件まで＋薄い4件目）
+  {/* 開催前の大会と、開催日から1週間たっていない終わった大会のうち、要項の出ているものを、エントリー受付中の大会と同じ行の型ですべて並べる
       （1行ごとに 要項・ドロー・結果 のボタン。HomeTournaments.astro）。
       以前の写真のカードの横スクロールとカード／一覧の切り替えは、アンケートで「ドローなどの情報が分かりづらい」との声があったのでやめた */}
   <section class="section section--gray" id="tournaments" aria-labelledby="tournaments-title">
@@ -180,33 +178,8 @@ const HOME_TOURNAMENTS_VISIBLE_PC = 5;
           </div>
         </div>
       </div>
-      {/* 上から3件（PC は5件。HOME_TOURNAMENTS_VISIBLE / HOME_TOURNAMENTS_VISIBLE_PC）だけ出す。4件目・5件目は PC だけの行（.tl-pc）。
-          続きがあるときは、お知らせと同じく次の1件（スマホ・タブレットは4件目 .tl-sp、PC は6件目 .tl-pc）を薄くフェードさせ、
-          その右端の VIEW ALL で大会情報のページへ（「開催前」で絞り込み、一覧表示（要項・ドロー・結果のボタン付き）で開く）。
-          続きが無いときは一覧の下の右端に VIEW ALL */}
-      <HomeTournaments items={HOME_TOURNAMENTS.slice(0, HOME_TOURNAMENTS_VISIBLE_PC)} pcFrom={HOME_TOURNAMENTS_VISIBLE} />
-      {HOME_TOURNAMENTS.length > HOME_TOURNAMENTS_VISIBLE && (
-        <div class:list={['news-peek', 'tl-peek', 'rv', HOME_TOURNAMENTS.length <= HOME_TOURNAMENTS_VISIBLE_PC && 'tl-sp']}>
-          <div class="tl-peek__rows" aria-hidden="true" inert>
-            <div class="tl-sp"><HomeTournaments items={[HOME_TOURNAMENTS[HOME_TOURNAMENTS_VISIBLE]]} reveal={false} showEmpty={false} /></div>
-            {HOME_TOURNAMENTS.length > HOME_TOURNAMENTS_VISIBLE_PC && (
-              <div class="tl-pc"><HomeTournaments items={[HOME_TOURNAMENTS[HOME_TOURNAMENTS_VISIBLE_PC]]} reveal={false} showEmpty={false} /></div>
-            )}
-          </div>
-          <div class="news-peek__more">
-            <a class="view-all" href="tournaments.html?filter=upcoming&view=list" aria-label={`大会情報をすべて見る（${HOME_TOURNAMENTS.length}件）`}>
-              <span class="view-all__label">VIEW ALL</span><span class="ln-arrow" aria-hidden="true"></span>
-            </a>
-          </div>
-        </div>
-      )}
-      {HOME_TOURNAMENTS.length <= HOME_TOURNAMENTS_VISIBLE_PC && (
-        <div class:list={['sec-more', 'rv', HOME_TOURNAMENTS.length > HOME_TOURNAMENTS_VISIBLE && 'tl-pc']}>
-          <a class="view-all" href="tournaments.html?filter=upcoming&view=list">
-            <span class="view-all__label">VIEW ALL</span><span class="ln-arrow" aria-hidden="true"></span>
-          </a>
-        </div>
-      )}
+      {/* 要項の出ている大会をすべて並べる（件数で切らない。VIEW ALL も置かない） */}
+      <HomeTournaments items={HOME_TOURNAMENTS} />
     </div>
   </section>
 
