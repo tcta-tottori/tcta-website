@@ -4,6 +4,8 @@
 //   GET  /api/insta/proxy?u=…    … 協会サイトの画像を、この Worker 経由で返す（画面の canvas に描くため。協会サイトの画像だけ。役員だけ）
 //   POST /api/insta/post         … 画面で作った JPEG を受け取り、Instagram にストーリーズとして投稿する（役員だけ・このサイトの画面からだけ）
 //   GET  /api/insta/img/<id>.jpg … 投稿する画像（Instagram がこの URL を読みに来るので、ログインなしで返す。推測できない id）
+//   GET  /api/insta/vid/<id>.mp4 … 投稿する動画（同じく Instagram が読みに来る。insta_images に置く。D1 の1行の上限があるので 1.9MB まで）
+//   POST /api/insta/story-video?key=… … MP4（縦長）を受け取り、ストーリーズに動画で投稿する（役員・送信用の鍵）
 //   POST /api/insta/token        … Instagram の鍵（アクセストークン）を入れる。{ token, userId? } を確かめて D1 に置く（役員だけ・このサイトの画面からだけ）
 //                                  IG… の鍵（Instagram ログイン）も EAA… の鍵（Facebook 方式・Unified login）も受ける（resolveAccount）
 //   DELETE /api/insta/token      … 鍵を外す
@@ -27,6 +29,8 @@ const SITE = 'https://tottori-city-tennis.com';
 const GRAPH_VERSION = 'v24.0';
 /** 受け取る画像の大きさの上限（JPEG） */
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
+/** 受け取る動画の大きさの上限（MP4。D1 の1行の上限 2MB に収める） */
+const MAX_VIDEO_BYTES = 1_900_000;
 
 let schemaReady: Promise<unknown> | null = null;
 function ensureSchema(db: D1Database): Promise<unknown> {
@@ -62,6 +66,16 @@ export async function handleInsta(request: Request, env: Env, url: URL): Promise
     // D1 は BLOB を数の配列で返すことがある。そのまま返すと「255,216,…」の文字列になり、Instagram が画像として読めない
     const bytes = row.jpeg instanceof ArrayBuffer ? new Uint8Array(row.jpeg) : Uint8Array.from(row.jpeg as number[]);
     return new Response(bytes, { headers: { 'content-type': 'image/jpeg', 'content-length': String(bytes.byteLength), 'cache-control': 'public, max-age=86400' } });
+  }
+
+  // Instagram が読みに来る動画（ログインなし）
+  const vid = url.pathname.match(/^\/api\/insta\/vid\/([a-f0-9]{32})\.mp4$/);
+  if (vid) {
+    await ensureSchema(db);
+    const row = await db.prepare('SELECT jpeg FROM insta_images WHERE id = ?').bind(vid[1]).first<{ jpeg: ArrayBuffer | number[] }>();
+    if (!row) return new Response('not found', { status: 404 });
+    const bytes = row.jpeg instanceof ArrayBuffer ? new Uint8Array(row.jpeg) : Uint8Array.from(row.jpeg as number[]);
+    return new Response(bytes, { headers: { 'content-type': 'video/mp4', 'content-length': String(bytes.byteLength), 'accept-ranges': 'none', 'cache-control': 'public, max-age=86400' } });
   }
 
   // 役員（ログイン）か、外から送る鍵（scripts/lib/push.mjs の送信用の鍵。Claude などが投稿するとき）。
@@ -140,6 +154,30 @@ export async function handleInsta(request: Request, env: Env, url: URL): Promise
 
     try {
       const mediaId = await publishStory(creds!, imageUrl);
+      await db.prepare(`INSERT INTO insta_posts (story_key, media_id, image_id, posted_at, posted_by) VALUES (?, ?, ?, ?, ?)
+        ON CONFLICT(story_key) DO UPDATE SET media_id = excluded.media_id, image_id = excluded.image_id, posted_at = excluded.posted_at, posted_by = excluded.posted_by`)
+        .bind(key, mediaId, id, new Date().toISOString(), officer.email).run();
+      return json({ ok: true, mediaId });
+    } catch (e) {
+      return json({ error: `Instagram への投稿に失敗しました：${(e as Error).message}` }, 502);
+    }
+  }
+
+  // ストーリーズに動画で投稿する。POST /api/insta/story-video?key=…（本文は MP4）
+  if (url.pathname === '/api/insta/story-video' && request.method === 'POST') {
+    if (!viaPush && !sameOrigin(request, url)) return json({ error: 'このサイトの画面からだけ投稿できます' }, 403);
+    if (!configured) return json({ error: 'Instagram の鍵が未設定です' }, 409);
+    const key = (url.searchParams.get('key') ?? '').slice(0, 300);
+    if (!key) return json({ error: 'key がありません' }, 400);
+    if (request.headers.get('content-type') !== 'video/mp4') return json({ error: 'MP4 で送ってください' }, 415);
+    const already = await db.prepare('SELECT media_id FROM insta_posts WHERE story_key = ?').bind(key).first();
+    if (already && url.searchParams.get('again') !== '1') return json({ error: 'この動画はもう投稿しています' }, 409);
+    const mp4 = await request.arrayBuffer();
+    if (mp4.byteLength === 0 || mp4.byteLength > MAX_VIDEO_BYTES) return json({ error: `動画は ${MAX_VIDEO_BYTES} バイトまでにしてください` }, 413);
+    const id = [...crypto.getRandomValues(new Uint8Array(16))].map((b) => b.toString(16).padStart(2, '0')).join('');
+    await db.prepare('INSERT INTO insta_images (id, story_key, jpeg, created_at) VALUES (?, ?, ?, ?)').bind(id, key, mp4, new Date().toISOString()).run();
+    try {
+      const mediaId = await publishStory(creds!, `${url.origin}/api/insta/vid/${id}.mp4`, true);
       await db.prepare(`INSERT INTO insta_posts (story_key, media_id, image_id, posted_at, posted_by) VALUES (?, ?, ?, ?, ?)
         ON CONFLICT(story_key) DO UPDATE SET media_id = excluded.media_id, image_id = excluded.image_id, posted_at = excluded.posted_at, posted_by = excluded.posted_by`)
         .bind(key, mediaId, id, new Date().toISOString(), officer.email).run();
@@ -273,7 +311,7 @@ async function refreshIfOld(db: D1Database, creds: Creds) {
 }
 
 /** ストーリーズを1枚公開して、公開した投稿の ID を返す */
-async function publishStory(creds: Creds, imageUrl: string): Promise<string> {
+async function publishStory(creds: Creds, imageUrl: string, video = false): Promise<string> {
   const host = creds.host;
   const base = `https://${host}/${GRAPH_VERSION}/${creds.userId}`;
   const token = creds.token;
@@ -285,9 +323,9 @@ async function publishStory(creds: Creds, imageUrl: string): Promise<string> {
   };
   const form = (o: Record<string, string>) => ({ method: 'POST', body: new URLSearchParams({ ...o, access_token: token }) });
 
-  const container = await call(`${base}/media`, form({ media_type: 'STORIES', image_url: imageUrl }));
-  // 画像の取り込みが終わるのを待つ（ふつうは数秒）
-  for (let i = 0; i < 15; i++) {
+  const container = await call(`${base}/media`, form(video ? { media_type: 'STORIES', video_url: imageUrl } : { media_type: 'STORIES', image_url: imageUrl }));
+  // 画像・動画の取り込みが終わるのを待つ（画像はふつう数秒、動画は数十秒）
+  for (let i = 0; i < (video ? 45 : 15); i++) {
     const st = await call(`https://${host}/${GRAPH_VERSION}/${String(container.id)}?fields=status_code&access_token=${encodeURIComponent(token)}`);
     if (st.status_code === 'FINISHED') break;
     if (st.status_code === 'ERROR' || st.status_code === 'EXPIRED') throw new Error(`画像の取り込みに失敗しました（${st.status_code}）`);
