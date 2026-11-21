@@ -32,15 +32,16 @@ export const EXTRA_MATERIALS = {
     },
   },
   // 第41回鳥取市市長杯テニス大会（シングルス。11/23）：ドロー（プログラム。2026.11.13 掲載。
-  //   男子A級Cリーグ⑬の選手の所属を、届いた版の「doMe」から「フリー」に直して載せた。2ページ目の画像と PDF）
+  //   男子A級Cリーグ⑬の選手の所属を、届いた版の「doMe」から「フリー」に直して載せた。2ページ目の画像と PDF。
+  //   11.21 男子A級Bリーグ⑥ 伊藤 啓介さんが欠場、Cリーグ⑬の細川 善貴さんが⑥へ移動（2ページ目の画像と PDF を訂正）
   'r8-shicho': {
     draw: {
       images: [
         img('r8-shicho', 'draw-01.webp', 'プログラム（日程・注意事項）'),
-        img('r8-shicho', 'draw-02.webp', '男子A級・男子B級シングルス'),
+        img('r8-shicho', 'draw-02-v2.webp', '男子A級・男子B級シングルス（訂正）'),
         img('r8-shicho', 'draw-03.webp', '男子C級・女子B級・女子C級シングルス'),
       ],
-      pdfs: [{ src: 'assets/pdf/events/r8-shicho/R8市長杯ドロー.pdf', label: 'R8市長杯 ドロー（プログラム）', kb: 218 }],
+      pdfs: [{ src: 'assets/pdf/events/r8-shicho/R8市長杯ドロー（訂正版）.pdf', label: 'R8市長杯 ドロー（プログラム・訂正版）', kb: 332 }],
     },
   },
   // 第62回鳥取市テニス協会会長杯（秋季・ダブルス。11/15）：ドロー（プログラム。2026.11.2 掲載、11.3 訂正版に差し替え：
@@ -206,6 +207,9 @@ export const EXTRA_TOURNAMENTS = [
 ];
 
 export const EXTRA_REVISIONS = {
+  'r8-shicho': [
+    { date: '2026-11-21', section: 'ドロー', text: '男子A級シングルス Bリーグ⑥の伊藤 啓介さんが欠場のため、Cリーグ⑬の細川 善貴さんがBリーグ⑥に入ります。ドローは訂正版に差し替えています（当日のプログラムは印刷済みのため訂正前のままです）。' },
+  ],
   'r8-no18': [
     { date: '2026-11-19', section: 'ドロー', text: '男子65歳以上ダブルス④ 梶 松寿さんの所属を「フリー」から「アスペック」に訂正しました。ドローは訂正版に差し替えています。' },
   ],
@@ -239,6 +243,7 @@ export const EXTRA_CARDS = [
 ];
 
 export const EXTRA_NEWS = [
+  { slug: 'official-20261121-shicho-draw-fix', date: '2026-11-21', createdAt: '2026-11-21T10:00:00+09:00', category: '大会', title: '第41回鳥取市市長杯テニス大会（11/23）のドローを訂正しました（男子A級シングルスの選手の変更）', href: 'draw-r8-shicho.html' },
   { slug: 'official-20261119-kensen-d-draw-fix', date: '2026-11-19', createdAt: '2026-11-19T08:00:00+09:00', category: '大会', title: '鳥取県テニス選手権ダブルス（11/29）のドローを訂正しました（男子65歳以上ダブルスの選手の所属）', href: 'draw-r8-no18.html' },
   { slug: 'official-20261119-prince-filming', date: '2026-11-19', createdAt: '2026-11-19T07:00:00+09:00', category: '大会', title: '2026 プリンスオープン チーム対抗戦（11/22）当日の動画撮影についてのお知らせ', href: 'draw-r8-prince-open.html#filming' },
   { slug: 'official-20261118-kensen-d-draw', date: '2026-11-18', createdAt: '2026-11-18T14:40:00+09:00', category: '大会', title: '鳥取県テニス選手権ダブルス（11/29）のドローを掲載しました', href: 'draw-r8-no18.html' },
