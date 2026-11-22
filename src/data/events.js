@@ -14,7 +14,7 @@
 
 import { nendoLabel, STATUS_LABEL, REG_LABEL, dateCell } from './schedule.js';
 import { splitEntryForms } from './entry-forms.js';
-import { EXTRA_MATERIALS, EXTRA_REVISIONS, EXTRA_WINNERS, EXTRA_RESULT_NOTES } from './official-extra.js';
+import { EXTRA_MATERIALS, EXTRA_REVISIONS, EXTRA_WINNERS, EXTRA_RESULT_NOTES, EXTRA_HIDE_MATERIALS } from './official-extra.js';
 
 /** 令和8年度の大会日程（PDF）。年度はじめに差し替える。 */
 export const SCHEDULE_PDF = { src: 'assets/pdf/events/r8-schedule.pdf', kb: 86 };
@@ -74,6 +74,9 @@ function collectMaterials(t, mediaUrl) {
       sec(key).pdfs.push({ src, label: b.label || f.filename || 'PDF', kb: Math.round(bytes / 1024) });
     }
   }
+  // サイトに出さない画像・PDF（official-extra.js の EXTRA_HIDE_MATERIALS）を外す
+  const hide = new Set(EXTRA_HIDE_MATERIALS[t.slug] ?? []);
+  if (hide.size) for (const s of Object.values(out)) { s.images = s.images.filter((x) => !hide.has(x.src)); s.pdfs = s.pdfs.filter((x) => !hide.has(x.src)); }
   return out;
 }
 
