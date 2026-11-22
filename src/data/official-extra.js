@@ -13,6 +13,12 @@
 
 const img = (slug, file, label) => ({ src: `assets/img/events/${slug}/${file}`, label, w: 1241, h: 1754 });
 
+// 管理画面（移行前の素材を含む）に残っているが、サイトに出さない画像・PDF（大会の slug → src の一覧）。events.js が素材を集めたあとに外す
+export const EXTRA_HIDE_MATERIALS = {
+  // 第53回尾坂杯（令和7年度）：当日の写真のうち 1 枚（男子B級シングルス優勝の写真）を外す（2026.11.22 依頼）
+  'r7-osaka': ['assets/img/events/r7-osaka/photo-06.webp'],
+};
+
 export const EXTRA_MATERIALS = {
   // 2026 プリンスオープン チーム対抗戦（11/22）：ドローの訂正版（2026.11.18）。注意事項⑨⑩の訂正と、選手名簿への追加・変更
   //   （B はっぴ～♪ばうわ 橋本 恵子・C カペリス 前田 良枝・E 湖山池TC 中浜 拓真・F プラセール レト 奥山 恵介）。
