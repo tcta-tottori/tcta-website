@@ -16,7 +16,8 @@ const img = (slug, file, label) => ({ src: `assets/img/events/${slug}/${file}`, 
 // 管理画面（移行前の素材を含む）に残っているが、サイトに出さない画像・PDF（大会の slug → src の一覧）。events.js が素材を集めたあとに外す
 export const EXTRA_HIDE_MATERIALS = {
   // 第53回尾坂杯（令和7年度）：当日の写真のうち 1 枚（男子B級シングルス優勝の写真）を外す（2026.11.22 依頼）
-  'r7-osaka': ['assets/img/events/r7-osaka/photo-06.webp'],
+  //   あわせて男子A級ダブルス準優勝の写真（photo-12）も外す（2026.11.22 依頼）
+  'r7-osaka': ['assets/img/events/r7-osaka/photo-06.webp', 'assets/img/events/r7-osaka/photo-12.webp'],
 };
 
 export const EXTRA_MATERIALS = {
