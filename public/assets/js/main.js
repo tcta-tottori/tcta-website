@@ -2882,7 +2882,7 @@
     initViewportHeight();
     initIdleAnims();
     initCardSlides();
-    initFooterDeco();
+    // initFooterDeco(); フッターの四角は動かさない（重さの原因になっていたため。2026.11.22）
     initLogoFooter();
     initHeroVideo();
     initStickyHero();
