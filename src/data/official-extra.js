@@ -27,6 +27,32 @@ export const EXTRA_MATERIALS = {
   //   （3・4 ページ目のオーダー・オブ・プレーと順位別決勝トーナメントは変わっていないので、管理画面の画像を写して置いた）。
   //   管理画面のドローを訂正版に差し替えたら、この行は消す
   'r8-prince-open': {
+    // 結果（2026.11.23）。予選リーグは選手名の無い成績表（スコアのみ）、順位別トーナメントは結果の 3〜6 ページ目。
+    //   PDF も同じ構成（予選リーグ成績表 6 ページ＋順位別トーナメント 4 ページ）。選手名入りのリーグ成績表は載せない
+    result: {
+      images: [
+        ...['A', 'B', 'C', 'D', 'E', 'F'].map((l, i) => ({ src: `assets/img/events/r8-prince-open/result-0${i + 1}.webp`, label: `予選 ${l}リーグ 成績表`, w: 1754, h: 1241 })),
+        { src: 'assets/img/events/r8-prince-open/result-07.webp', label: '1位トーナメント', w: 1754, h: 893 },
+        { src: 'assets/img/events/r8-prince-open/result-08.webp', label: '2位トーナメント', w: 1754, h: 893 },
+        { src: 'assets/img/events/r8-prince-open/result-09.webp', label: '3位トーナメント', w: 1754, h: 893 },
+        { src: 'assets/img/events/r8-prince-open/result-10.webp', label: '4位トーナメント', w: 1754, h: 893 },
+      ],
+      pdfs: [{ src: 'assets/pdf/events/r8-prince-open/R8プリンスオープン結果.pdf', label: 'R8プリンスオープン チーム対抗戦 結果', kb: 1459 }],
+    },
+    // 入賞チームの写真（表彰式）
+    photo: {
+      images: [
+        { src: 'assets/img/events/r8-prince-open/photo-01.webp', label: '1位トーナメント 優勝 楠瀬翔子絶対王政', w: 1400, h: 933, after: 'result-07' },
+        { src: 'assets/img/events/r8-prince-open/photo-02.webp', label: '1位トーナメント 準優勝 ENJOY！', w: 1400, h: 933, after: 'result-07' },
+        { src: 'assets/img/events/r8-prince-open/photo-03.webp', label: '2位トーナメント 優勝 エール！', w: 1400, h: 933, after: 'result-08' },
+        { src: 'assets/img/events/r8-prince-open/photo-04.webp', label: '2位トーナメント 準優勝 すぷらとぅーん', w: 1400, h: 933, after: 'result-08' },
+        { src: 'assets/img/events/r8-prince-open/photo-05.webp', label: '3位トーナメント 優勝 SUPER☆細ぴー', w: 1400, h: 933, after: 'result-09' },
+        { src: 'assets/img/events/r8-prince-open/photo-06.webp', label: '3位トーナメント 準優勝 湖山池TC', w: 1400, h: 933, after: 'result-09' },
+        { src: 'assets/img/events/r8-prince-open/photo-07.webp', label: '4位トーナメント 優勝 TUES Tennis Team', w: 1400, h: 933, after: 'result-10' },
+        { src: 'assets/img/events/r8-prince-open/photo-08.webp', label: '4位トーナメント 準優勝 ウルトラマリン', w: 1400, h: 933, after: 'result-10' },
+      ],
+      pdfs: [],
+    },
     draw: {
       replace: true,
       images: [
@@ -166,6 +192,17 @@ export const EXTRA_DRAW_NOTICES = {
 };
 
 export const EXTRA_WINNERS = {
+  // 2026 プリンスオープン チーム対抗戦（11/22）：順位別トーナメントごとの優勝・準優勝（結果のトーナメント表のとおり）
+  'r8-prince-open': [
+    { category: '1位トーナメント', award: '優勝', name: '楠瀬翔子絶対王政' },
+    { category: '1位トーナメント', award: '準優勝', name: 'ENJOY！' },
+    { category: '2位トーナメント', award: '優勝', name: 'エール！' },
+    { category: '2位トーナメント', award: '準優勝', name: 'すぷらとぅーん' },
+    { category: '3位トーナメント', award: '優勝', name: 'SUPER☆細ぴー' },
+    { category: '3位トーナメント', award: '準優勝', name: '湖山池TC' },
+    { category: '4位トーナメント', award: '優勝', name: 'TUES Tennis Team' },
+    { category: '4位トーナメント', award: '準優勝', name: 'ウルトラマリン' },
+  ],
   // 第62回会長杯（秋季）：表彰状のとおり（男子B級は 1位・2位トーナメントの結果）。女子B級は 1位・2位・3位トーナメントごと
   'r8-kaicho-autumn': [
     // 男子B級も 1位・2位／3位・4位トーナメントごとに出す
@@ -257,6 +294,7 @@ export const EXTRA_CARDS = [
 ];
 
 export const EXTRA_NEWS = [
+  { slug: 'official-20261123-prince-result', date: '2026-11-23', createdAt: '2026-11-23T20:30:00+09:00', category: '大会', title: '2026 プリンスオープン チーム対抗戦（11/22）の結果を掲載しました', href: 'event-r8-prince-open.html#result' },
   { slug: 'official-20261123-kensen-d-draw-time', date: '2026-11-23', createdAt: '2026-11-23T09:00:00+09:00', category: '大会', title: '鳥取県テニス選手権ダブルス（11/29）のドローを訂正しました（一般男子・男子45歳以上の試合時間の変更）', href: 'draw-r8-no18.html' },
   { slug: 'official-20261121-shicho-draw-fix', date: '2026-11-21', createdAt: '2026-11-21T10:00:00+09:00', category: '大会', title: '第41回鳥取市市長杯テニス大会（11/23）のドローを訂正しました（男子A級シングルスの選手の変更）', href: 'draw-r8-shicho.html' },
   { slug: 'official-20261119-kensen-d-draw-fix', date: '2026-11-19', createdAt: '2026-11-19T08:00:00+09:00', category: '大会', title: '鳥取県テニス選手権ダブルス（11/29）のドローを訂正しました（男子65歳以上ダブルスの選手の所属）', href: 'draw-r8-no18.html' },
