@@ -237,6 +237,11 @@ export const EXTRA_REVISIONS = {
   ],
 };
 
+// 開催日でも「速報」（観戦ページへのボタン・大会ページの結果速報の欄）を出さない大会（event-buttons.js・LiveResultBox.astro）
+export const NO_LIVE = [
+  'r8-shicho', // 第41回市長杯（11/23）：観戦ページに会長杯の速報が出てしまったため、速報自体を取りやめ
+];
+
 export const STATE_FORCE = {
   'r8-kaicho-autumn': '終了', // 第62回会長杯（秋季）：11/15 の速報を終えて結果を掲載
 };

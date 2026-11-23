@@ -8,12 +8,14 @@
 // 翌日からは、結果表・成績（いつもの結果の欄）に任せて出さない。
 import { todayJST } from '../data/schedule.js';
 import { LIVE_DRAW_URL, LIVE_ORDER_URL } from '../data/live.js';
+import { NO_LIVE } from '../data/official-extra.js';
 
 const { e } = Astro.props;
 // 結果を掲載したら（結果の欄に何かあれば）、開催日のうちでも出さない（速報を終えたあと）
 const hasResult = (e.sections ?? []).some((s) => s.key === 'result' && ((s.images?.length ?? 0) + (s.pdfs?.length ?? 0) > 0));
 // 結果の欄に観戦ページの案内を出す大会（EXTRA_RESULT_NOTES の live）は、ここでは出さない（二重になるため）
-const show = !e.resultNote?.live && (e.status === 'live' || (e.date === todayJST() && e.status === 'done' && !hasResult));
+// 速報を取りやめた大会（official-extra.js の NO_LIVE）は出さない
+const show = !NO_LIVE.includes(e.slug) && !e.resultNote?.live && (e.status === 'live' || (e.date === todayJST() && e.status === 'done' && !hasResult));
 ---
 
 {show && (

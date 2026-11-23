@@ -28,7 +28,7 @@
 
 import { eventButtons } from './event-buttons.js';
 import { winnerPhotos } from './event-result.js';
-import { EXTRA_CARDS } from './official-extra.js';
+import { EXTRA_CARDS, NO_LIVE } from './official-extra.js';
 import { dueText } from './schedule.js';
 
 /** カルーセル中央の「TODAY」マーカーの日付。見た日の日本時間。 */
@@ -105,7 +105,7 @@ export function dateChip(date) {
 export function cardAction(t, e) {
   if (e) {
     const href = e.url;
-    if (t.status === 'live') return { label: '速報・ドローを見る', href: t.liveUrl || href };
+    if (t.status === 'live' && !NO_LIVE.includes(t.slug)) return { label: '速報・ドローを見る', href: t.liveUrl || href };
     if (e.hasResult) return { label: '結果を見る', href };
     if (e.sections.some((s) => s.key === 'draw')) return { label: 'ドローを見る', href };
     return { label: '要項を見る', href };
@@ -115,7 +115,7 @@ export function cardAction(t, e) {
       ? { label: '結果を見る', href: t.resultUrl }
       : { label: '結果は準備中', href: null };
   }
-  if (t.status === 'live' && (t.liveUrl || t.drawUrl)) {
+  if (t.status === 'live' && !NO_LIVE.includes(t.slug) && (t.liveUrl || t.drawUrl)) {
     return { label: '速報・ドローを見る', href: t.liveUrl || t.drawUrl };
   }
   if (t.drawUrl) return { label: 'ドローを見る', href: t.drawUrl };
