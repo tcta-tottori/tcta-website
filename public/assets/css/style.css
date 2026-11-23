@@ -6307,5 +6307,7 @@ body.jsrv .section.is-long > .container > .sec-head.rv { transition: opacity .7s
 .draw-notice { scroll-margin-top: calc(var(--header-h) + 16px); }
 .draw-notice .result-notice__text + .result-notice__text { margin-top: 6px; }
 .draw-notice a { color: var(--red); font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
-/* フッターの背景の四角は動かさない（漂う動き・スクロールでの上下をやめる。スマホで重さの原因になっていたため） */
-.site-footer .footer-dot { animation: none; translate: none; will-change: auto; }
+/* 背景の四角は動かさない（フッター・スマホのメニューとも。漂う動き・スクロールでの上下・開くときの追いつきをやめる。スマホで重さの原因になっていたため） */
+.site-footer .footer-dot,
+.mobile-nav .footer-dot,
+.mobile-nav.is-open .mobile-nav__deco .footer-dot { animation: none; translate: none; transition: none; will-change: auto; }
