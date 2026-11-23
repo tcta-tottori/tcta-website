@@ -9,6 +9,7 @@
 // 開催中（開催日の 9:00〜18:00。schedule.js の liveStatus）は、結果のボタンを「速報」にして、運営システムの観戦ページ（結果速報）を開く。
 // 管理画面に速報の URL（live_url）があればそちらを使う。
 import { LIVE_DRAW_URL } from './live.js';
+import { NO_LIVE } from './official-extra.js';
 
 /**
  * @param {object|null} e 大会ページの情報（cms.js の eventForSchedule / eventBySlug）
@@ -17,7 +18,8 @@ import { LIVE_DRAW_URL } from './live.js';
  */
 export function eventButtons(e, urls = {}, state = {}) {
   const buttons = baseButtons(e, urls);
-  if (state.status !== 'live') return buttons;
+  // 速報を取りやめた大会（official-extra.js の NO_LIVE）は、開催中でも結果のボタンのまま
+  if (state.status !== 'live' || (e && NO_LIVE.includes(e.slug))) return buttons;
   return buttons.map((b) => (b.key === 'result'
     ? { key: 'live', label: '速報', href: state.liveUrl || LIVE_DRAW_URL, external: true, live: true }
     : b));
