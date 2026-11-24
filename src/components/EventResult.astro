@@ -16,6 +16,7 @@ import AwardLine from './AwardLine.astro';
 import { clubEventLayout } from '../data/club-event.js';
 import { eventResultLayout } from '../data/event-result.js';
 import { LIVE_DRAW_URL, LIVE_ORDER_URL } from '../data/live.js';
+import { EXTRA_RESULT_VIDEOS } from '../data/official-extra.js';
 
 const { e, restPhotos: showRest = true } = Astro.props;
 const club = Astro.props.club === undefined ? clubEventLayout(e) : Astro.props.club;
@@ -25,7 +26,18 @@ const anchor = (label, i) => `blk-${i}-${String(label).replace(/[^0-9A-Za-z぀-�
 const rest = layout?.restPhotos ?? [];
 let photoNo = 0;
 const note = e.resultNote ?? null;
+const video = EXTRA_RESULT_VIDEOS[e.slug] ?? null;
 ---
+
+{/* 結果の欄のいちばん上：大会の動画（YouTube） */}
+{video && (
+  <div class="result-video rv">
+    <div class="video-embed">
+      <iframe src={`https://www.youtube-nocookie.com/embed/${video.id}`} title={`${video.title}（YouTube）`} loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>
+    </div>
+    <p class="note">※ 動画は協会の YouTube チャンネルで公開しています。<a href={`https://youtu.be/${video.id}`} target="_blank" rel="noopener">YouTube で見る</a></p>
+  </div>
+)}
 
 {/* 結果の欄の上のお知らせ（確認中の種目など） */}
 {note?.notice && (

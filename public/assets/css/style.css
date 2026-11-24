@@ -6311,3 +6311,7 @@ body.jsrv .section.is-long > .container > .sec-head.rv { transition: opacity .7s
 .site-footer .footer-dot,
 .mobile-nav .footer-dot,
 .mobile-nav.is-open .mobile-nav__deco .footer-dot { animation: none; translate: none; transition: none; will-change: auto; }
+/* 結果の欄のいちばん上の大会の動画（EventResult.astro） */
+.result-video { margin-bottom: 40px; }
+.result-video .video-embed { border-radius: 12px; }
+.result-video .note a { color: var(--red); font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
