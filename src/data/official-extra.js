@@ -179,6 +179,12 @@ export const EXTRA_RESULT_NOTES = {
   //   直して再び公開。お知らせ・観戦ページの案内はどちらも外した
 };
 
+// 結果の欄のいちばん上に置く YouTube の動画（大会の slug → { id, title }。EventResult.astro。大会ページと結果だけのページの両方に出る）
+export const EXTRA_RESULT_VIDEOS = {
+  // 2026 プリンスオープン（11/22）：当日の様子の動画（協会の YouTube チャンネル。2026.11.25 7:00 公開）
+  'r8-prince-open': { id: 'ziZ1lDW5_iI', title: '2026 プリンスオープン チーム対抗戦 大会の様子' },
+};
+
 // ドローのページの上に出すお知らせ（draw-<slug>.html。id はページ内の位置 #id に使う。お知らせのリンク先に #id を付ける）
 export const EXTRA_DRAW_NOTICES = {
   // 2026 プリンスオープン（11/22）：当日の動画撮影（SNS・ホームページ用）。大会運営委員の了承を得て 2026.11.19 に告知
@@ -298,6 +304,7 @@ export const EXTRA_CARDS = [
 ];
 
 export const EXTRA_NEWS = [
+  { slug: 'official-20261125-prince-youtube', date: '2026-11-25', createdAt: '2026-11-25T07:00:00+09:00', category: '大会', title: '2026 プリンスオープン チーム対抗戦（11/22）の動画を YouTube で公開しました', href: 'event-r8-prince-open.html#result' },
   { slug: 'official-20261123-prince-result', date: '2026-11-23', createdAt: '2026-11-23T20:30:00+09:00', category: '大会', title: '2026 プリンスオープン チーム対抗戦（11/22）の結果を掲載しました', href: 'event-r8-prince-open.html#result' },
   { slug: 'official-20261123-kensen-d-draw-time', date: '2026-11-23', createdAt: '2026-11-23T09:00:00+09:00', category: '大会', title: '鳥取県テニス選手権ダブルス（11/29）のドローを訂正しました（一般男子・男子45歳以上の試合時間の変更）', href: 'draw-r8-no18.html' },
   { slug: 'official-20261121-shicho-draw-fix', date: '2026-11-21', createdAt: '2026-11-21T10:00:00+09:00', category: '大会', title: '第41回鳥取市市長杯テニス大会（11/23）のドローを訂正しました（男子A級シングルスの選手の変更）', href: 'draw-r8-shicho.html' },
