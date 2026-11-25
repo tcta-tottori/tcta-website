@@ -72,6 +72,44 @@ export const EXTRA_MATERIALS = {
   //   男子A級Cリーグ⑬の選手の所属を、届いた版の「doMe」から「フリー」に直して載せた。2ページ目の画像と PDF。
   //   11.21 男子A級Bリーグ⑥ 伊藤 啓介さんが欠場、Cリーグ⑬の細川 善貴さんが⑥へ移動（2ページ目の画像と PDF を訂正）
   'r8-shicho': {
+    // 結果（2026.11.25。当日の対戦成績表・ドローの手書きの記録を、協会で表に清書したもの。速報は取りやめたため運営システムの結果画像は無い）
+    result: {
+      images: [
+        { src: 'assets/img/events/r8-shicho/result-01.webp', label: '男子A級シングルス 予選 Aリーグ', w: 1760, h: 768 },
+        { src: 'assets/img/events/r8-shicho/result-02.webp', label: '男子A級シングルス 予選 Bリーグ', w: 1760, h: 768 },
+        { src: 'assets/img/events/r8-shicho/result-03.webp', label: '男子A級シングルス 予選 Cリーグ', w: 1760, h: 768 },
+        { src: 'assets/img/events/r8-shicho/result-04.webp', label: '男子A級シングルス 決勝リーグ', w: 1760, h: 736 },
+        { src: 'assets/img/events/r8-shicho/result-05.webp', label: '男子B級シングルス 予選 Aリーグ', w: 1760, h: 768 },
+        { src: 'assets/img/events/r8-shicho/result-06.webp', label: '男子B級シングルス 予選 Bリーグ', w: 1760, h: 768 },
+        { src: 'assets/img/events/r8-shicho/result-07.webp', label: '男子B級シングルス 予選 Cリーグ', w: 1760, h: 768 },
+        { src: 'assets/img/events/r8-shicho/result-08.webp', label: '男子B級シングルス 予選 Dリーグ', w: 1760, h: 768 },
+        { src: 'assets/img/events/r8-shicho/result-09.webp', label: '男子B級シングルス 予選 Eリーグ', w: 1760, h: 768 },
+        { src: 'assets/img/events/r8-shicho/result-10.webp', label: '男子B級シングルス 予選 Fリーグ', w: 1760, h: 768 },
+        { src: 'assets/img/events/r8-shicho/result-11.webp', label: '男子B級シングルス 予選 Gリーグ', w: 1760, h: 768 },
+        { src: 'assets/img/events/r8-shicho/result-12.webp', label: '男子B級シングルス 決勝トーナメント', w: 1760, h: 1289 },
+        { src: 'assets/img/events/r8-shicho/result-13.webp', label: '男子C級シングルス 予選 Aリーグ', w: 1760, h: 768 },
+        { src: 'assets/img/events/r8-shicho/result-14.webp', label: '男子C級シングルス 予選 Bリーグ', w: 1760, h: 768 },
+        { src: 'assets/img/events/r8-shicho/result-15.webp', label: '男子C級シングルス 予選 Cリーグ', w: 1760, h: 768 },
+        { src: 'assets/img/events/r8-shicho/result-16.webp', label: '男子C級シングルス 予選 Dリーグ', w: 1760, h: 872 },
+        { src: 'assets/img/events/r8-shicho/result-17.webp', label: '男子C級シングルス 決勝トーナメント', w: 1760, h: 809 },
+        { src: 'assets/img/events/r8-shicho/result-18.webp', label: '女子B級シングルス 予選 Aリーグ', w: 1760, h: 664 },
+        { src: 'assets/img/events/r8-shicho/result-19.webp', label: '女子B級シングルス 予選 Bリーグ', w: 1760, h: 664 },
+        { src: 'assets/img/events/r8-shicho/result-20.webp', label: '女子B級シングルス 順位決定戦', w: 1760, h: 717 },
+        { src: 'assets/img/events/r8-shicho/result-21.webp', label: '女子C級シングルス 決勝', w: 1760, h: 393 },
+      ],
+      pdfs: [{ src: 'assets/pdf/events/r8-shicho/R8市長杯結果.pdf', label: 'R8市長杯 結果', kb: 2102 }],
+    },
+    // 優勝者の写真（表彰状を持って）
+    photo: {
+      images: [
+        { src: 'assets/img/events/r8-shicho/photo-01.webp', label: '男子A級シングルス 優勝 小川 拓', w: 1050, h: 1400, after: 'result-04' },
+        { src: 'assets/img/events/r8-shicho/photo-02.webp', label: '男子B級シングルス 優勝 戸杉 和博', w: 1050, h: 1400, after: 'result-12' },
+        { src: 'assets/img/events/r8-shicho/photo-03.webp', label: '男子C級シングルス 優勝 入江 愛斗', w: 1050, h: 1400, after: 'result-17' },
+        { src: 'assets/img/events/r8-shicho/photo-04.webp', label: '女子B級シングルス 優勝 谷口 恵子', w: 1050, h: 1400, after: 'result-20' },
+        { src: 'assets/img/events/r8-shicho/photo-05.webp', label: '女子C級シングルス 優勝 岩本 郁江', w: 1050, h: 1400, after: 'result-21' },
+      ],
+      pdfs: [],
+    },
     draw: {
       images: [
         img('r8-shicho', 'draw-01.webp', 'プログラム（日程・注意事項）'),
@@ -202,6 +240,21 @@ export const EXTRA_DRAW_NOTICES = {
 };
 
 export const EXTRA_WINNERS = {
+  // 第41回市長杯（11/23）：対戦成績表・ドローの記録のとおり（男子A級・女子B級は3位まで）
+  'r8-shicho': [
+    { category: '男子A級シングルス', award: '優勝', name: '小川 拓' },
+    { category: '男子A級シングルス', award: '準優勝', name: '中瀬 麻琴' },
+    { category: '男子A級シングルス', award: '3位', name: '岡墻 篤典' },
+    { category: '男子B級シングルス', award: '優勝', name: '戸杉 和博' },
+    { category: '男子B級シングルス', award: '準優勝', name: '田中 佑樹' },
+    { category: '男子C級シングルス', award: '優勝', name: '入江 愛斗' },
+    { category: '男子C級シングルス', award: '準優勝', name: '松尾 慶輔' },
+    { category: '女子B級シングルス', award: '優勝', name: '谷口 恵子' },
+    { category: '女子B級シングルス', award: '準優勝', name: '岡田 友子' },
+    { category: '女子B級シングルス', award: '3位', name: '山下 萌花' },
+    { category: '女子C級シングルス', award: '優勝', name: '岩本 郁江' },
+    { category: '女子C級シングルス', award: '準優勝', name: '金藤 裕子' },
+  ],
   // 2026 プリンスオープン チーム対抗戦（11/22）：順位別トーナメントごとの優勝・準優勝（結果のトーナメント表のとおり）
   'r8-prince-open': [
     { category: '1位トーナメント', award: '優勝', name: '楠瀬翔子絶対王政' },
@@ -304,6 +357,7 @@ export const EXTRA_CARDS = [
 ];
 
 export const EXTRA_NEWS = [
+  { slug: 'official-20261125-shicho-result', date: '2026-11-25', createdAt: '2026-11-25T09:15:00+09:00', category: '大会', title: '第41回鳥取市長杯テニス大会（11/23）の結果を掲載しました', href: 'event-r8-shicho.html#result' },
   { slug: 'official-20261125-prince-youtube', date: '2026-11-25', createdAt: '2026-11-25T07:00:00+09:00', category: '大会', title: '2026 プリンスオープン チーム対抗戦（11/22）の動画を YouTube で公開しました', href: 'event-r8-prince-open.html#result' },
   { slug: 'official-20261123-prince-result', date: '2026-11-23', createdAt: '2026-11-23T20:30:00+09:00', category: '大会', title: '2026 プリンスオープン チーム対抗戦（11/22）の結果を掲載しました', href: 'event-r8-prince-open.html#result' },
   { slug: 'official-20261123-kensen-d-draw-time', date: '2026-11-23', createdAt: '2026-11-23T09:00:00+09:00', category: '大会', title: '鳥取県テニス選手権ダブルス（11/29）のドローを訂正しました（一般男子・男子45歳以上の試合時間の変更）', href: 'draw-r8-no18.html' },
