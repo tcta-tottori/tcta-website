@@ -136,6 +136,12 @@ function getSlotRow(round: number, index: number): number {
   return (getSlotRow(round - 1, index * 2) + getSlotRow(round - 1, index * 2 + 1)) / 2;
 }
 
+/** 結果画像に出る文字（和文フォントを読み込むため） */
+function resultText(opts: ResultExportOptions): string {
+  return [opts.tournament.name, opts.tournament.venue, opts.event.name, opts.championName ?? '',
+    ...opts.players.map((p) => p.name + p.affiliation)].join('');
+}
+
 // ===== Canvas トーナメント描画 (JPEG) =====
 
 /** Canvas を JPEG としてダウンロードさせる */
@@ -259,7 +265,7 @@ function bracketScoreParts(
  */
 export async function renderTournamentResultCanvas(opts: ResultExportOptions): Promise<HTMLCanvasElement> {
   const { tournament, event, draw, entries, players, matches } = opts;
-  const logos = await loadResultLogos();
+  const logos = await loadResultLogos(resultText(opts));
   const showLogo = (opts.showAssociationLogo ?? getAssociationLogoEnabled()) && !!logos.tcta;
 
   const slotMap = buildSlotMap(draw, entries, players);
@@ -323,8 +329,8 @@ export async function renderTournamentResultCanvas(opts: ResultExportOptions): P
   // ---- 事前計測（選手名の最大幅からネーム列の幅を決める） ----
   const meas = document.createElement('canvas').getContext('2d')!;
   // 選手名は縮小して見られることが多いので、はっきり読める大きさにする
-  const NAME_PX = 16;
-  const AFF_PX = 12;
+  const NAME_PX = 25;
+  const AFF_PX = 15;
   let maxNameW = 0;
   for (let p = 1; p <= drawSize; p++) {
     const s = slotMap.get(p);
@@ -347,10 +353,10 @@ export async function renderTournamentResultCanvas(opts: ResultExportOptions): P
   );
   const NUM_W = 24;                        // ドロー番号の幅
   // 選手名を大きくしたぶん横に伸びやすいので、余白と上限を詰めて相殺する
-  const NAME_W = Math.round(clamp(maxNameW + NUM_W + 10, 210, isDoubles ? 440 : 350) * widthScale);
+  const NAME_W = Math.round(clamp(maxNameW + NUM_W + 14, 240, isDoubles ? 400 : 420) * widthScale);
 
   // 行の高さはドローサイズに応じて調整（大きいドローでも縦に伸びすぎないように）
-  const ROW_H_BASE = halfSlots >= 24 ? 36 : halfSlots >= 16 ? 42 : 46;
+  const ROW_H_BASE = halfSlots >= 24 ? 46 : halfSlots >= 16 ? 54 : 64;
   /** 氏名を2行で出すときの行送り */
   const NAME_LINE_STEP = NAME_PX + 3;
   // ダブルスは氏名が2行になるぶん、行の高さに余裕を持たせる
@@ -362,11 +368,11 @@ export async function renderTournamentResultCanvas(opts: ResultExportOptions): P
   // オフセットを固定する（1回戦のラインからの距離＝SCORE_LINE_GAP と一致する）。
   const SCORE_LINE_GAP = clamp(ROW_H / 2 - 8, 7, 13);
   // スコアの文字サイズ（大きめに出して結果を読み取りやすくする）
-  const SCORE_PX = 16;
+  const SCORE_PX = 24;
   // 上下のスコアが重ならないよう、文字サイズ分の間隔は必ず確保する
   const SCORE_OFFSET = Math.max(SCORE_PX * 0.62, ROW_H / 2 - SCORE_LINE_GAP);
   // タイブレーク得点・Ret / W.O の注記（負けた側のスコアの外側に添える）
-  const NOTE_PX = 13;
+  const NOTE_PX = 16;
   const NOTE_GAP = 15;
 
   // ---- 1ラウンド分の横幅 ----
@@ -397,7 +403,7 @@ export async function renderTournamentResultCanvas(opts: ResultExportOptions): P
     }
     return w;
   })();
-  const COL_W = Math.round(clamp(Math.ceil(scoreTokenW) + 14, 38, 60) * widthScale);
+  const COL_W = Math.round(clamp(Math.ceil(scoreTokenW) + 8, 36, 48) * widthScale);
 
   // ---- 選手行の割り当て（BYE の空きを詰める） ----
   // BYE のスロットにも1行ずつ確保すると、ドロー表どおりに並べたときに
@@ -480,8 +486,8 @@ export async function renderTournamentResultCanvas(opts: ResultExportOptions): P
   const champName = champNode && !champNode.isBye ? champNode.name : '';
   const champAff = champEntryId ? (affById.get(champEntryId) || '') : '';
   const champAffParts = champEntryId ? affPartsById.get(champEntryId) : undefined;
-  const CHAMP_NAME_PX = 20;
-  const CHAMP_SCORE_PX = 19;
+  const CHAMP_NAME_PX = 28;
+  const CHAMP_SCORE_PX = 27;
 
   // 決勝スコアは「左山の獲得ゲーム − 右山の獲得ゲーム」の並びで表示する
   // （例: 右山の選手が 8-4 で勝った場合は「4-8」）
@@ -496,7 +502,7 @@ export async function renderTournamentResultCanvas(opts: ResultExportOptions): P
     : [];
   const champAffLines = joinedAffiliation(champAff, champAffParts);
   const CHAMP_LINE_STEP = CHAMP_NAME_PX + 3;
-  const CHAMP_AFF_PX = 12;
+  const CHAMP_AFF_PX = 15;
   const CHAMP_AFF_STEP = CHAMP_AFF_PX + 3;
   const champNameH = champLines.length > 0
     ? champLines.length * CHAMP_NAME_PX + (champLines.length - 1) * 3
@@ -830,7 +836,7 @@ export async function renderTournamentResultCanvas(opts: ResultExportOptions): P
   ctx.lineCap = 'round';
   for (const s of segs) {
     if (s.win) continue;
-    drawLine(ctx, s.x1, s.y1, s.x2, s.y2, COL.gray400, 1.6);
+    drawLine(ctx, s.x1, s.y1, s.x2, s.y2, '#9a9a9a', 1.8);
   }
   for (const s of segs) {
     if (!s.win) continue;
@@ -840,7 +846,7 @@ export async function renderTournamentResultCanvas(opts: ResultExportOptions): P
 
   // スコア
   for (const t of tags) {
-    drawText(ctx, t.text, t.x, t.y, t.size ?? SCORE_PX, t.align, t.win ? COL.win : COL.gray500,
+    drawText(ctx, t.text, t.x, t.y, t.size ?? SCORE_PX, t.align, t.win ? COL.win : '#3a3a3a',
       t.win ? 'black' : t.size ? 'medium' : 'bold');
   }
 
@@ -855,7 +861,7 @@ export async function renderTournamentResultCanvas(opts: ResultExportOptions): P
     const x0 = side === 'L' ? leftNameX : rightNameEndX;
 
     // 番号
-    drawText(ctx, String(pos), x0 + 20, cy, 11, 'right', COL.gray400, 'medium');
+    drawText(ctx, String(pos), x0 + 20, cy, 14, 'right', COL.gray500, 'bold');
 
     const nameX = x0 + NUM_W;
     const nameMaxW = NAME_W - NUM_W - 12;
@@ -1116,7 +1122,7 @@ export async function generateEventResultDataUrl(opts: ResultExportOptions): Pro
 /** リーグ表の結果を Canvas に描画して返す（選手が2人未満なら null） */
 export async function renderRoundRobinResultCanvas(opts: ResultExportOptions): Promise<HTMLCanvasElement | null> {
   const { tournament, event, draw, matches, entries, players } = opts;
-  const logos = await loadResultLogos();
+  const logos = await loadResultLogos(resultText(opts));
   const showLogo = (opts.showAssociationLogo ?? getAssociationLogoEnabled()) && !!logos.tcta;
   const slotMap = buildSlotMap(draw, entries, players);
 
@@ -1164,22 +1170,22 @@ export async function renderRoundRobinResultCanvas(opts: ResultExportOptions): P
   let maxNameW = 0;
   for (const p of playerSlots) {
     const lines = pairNameLines(p.name, isDoubles);
-    meas.font = fontOf('bold', 14);
+    meas.font = fontOf('bold', 21);
     let w = Math.max(...lines.map(t => meas.measureText(t).width));
     const affLines = pairAffiliationLines(p.affiliation, p.affiliationParts, lines.length);
     if (affLines.length > 0) {
-      meas.font = fontOf('normal', 11.5);
+      meas.font = fontOf('normal', 15);
       w += 5 + Math.max(...affLines.map(t => meas.measureText(`（${t}）`).width));
     }
     if (w > maxNameW) maxNameW = w;
   }
 
-  const CELL_W = 96;
-  const NAME_PX = 14;
+  const CELL_W = 116;
+  const NAME_PX = 21;
   const NAME_LINE_STEP = NAME_PX + 3;
-  const ROW_H = isDoubles ? 56 : 46;
-  const STAT_W = 88;
-  const RANK_W = 72;
+  const ROW_H = isDoubles ? 76 : 66;
+  const STAT_W = 100;
+  const RANK_W = 88;
 
   const paddingX = 30;
   const paddingY = 26;
@@ -1194,7 +1200,7 @@ export async function renderRoundRobinResultCanvas(opts: ResultExportOptions): P
   // 協会ロゴはリーグ表の左上（選手名列のヘッダー）の中に入れる。
   // ロゴが入る分だけヘッダー行を高くする。
   const cornerLogo = showLogo ? fitLogo(logos.tcta, NAME_W - 28, 46) : { w: 0, h: 0 };
-  const HDR_H = Math.max(44, Math.ceil(cornerLogo.h + 12));
+  const HDR_H = Math.max(56, Math.ceil(cornerLogo.h + 12));
 
   const headerScale = headerScaleOf(tableW);
   const CARD_R = 18;
@@ -1297,10 +1303,10 @@ export async function renderRoundRobinResultCanvas(opts: ResultExportOptions): P
   // ヘッダーテキスト（列名 = 選手名）
   for (let i = 0; i < n; i++) {
     const cx = gridX + NAME_W + i * CELL_W + CELL_W / 2;
-    drawText(ctx, surnameLabel(playerSlots[i].name), cx, gridY + HDR_H / 2, 12, 'center', COL.gray800, 'bold', CELL_W - 8);
+    drawText(ctx, surnameLabel(playerSlots[i].name), cx, gridY + HDR_H / 2, 18, 'center', '#111111', 'bold', CELL_W - 8);
   }
-  drawText(ctx, byGames ? '取得ゲーム率' : '勝敗', statX + STAT_W / 2, gridY + HDR_H / 2, byGames ? 11 : 12, 'center', COL.gray800, 'black', STAT_W - 6);
-  drawText(ctx, '順位', rankX + RANK_W / 2, gridY + HDR_H / 2, 12, 'center', COL.gray800, 'black');
+  drawText(ctx, byGames ? '取得ゲーム率' : '勝敗', statX + STAT_W / 2, gridY + HDR_H / 2, byGames ? 14 : 17, 'center', '#111111', 'black', STAT_W - 6);
+  drawText(ctx, '順位', rankX + RANK_W / 2, gridY + HDR_H / 2, 17, 'center', '#111111', 'black');
 
   // 罫線（縦）
   for (let i = 0; i <= n; i++) {
@@ -1330,7 +1336,7 @@ export async function renderRoundRobinResultCanvas(opts: ResultExportOptions): P
     const isChampion = rank === 1 && played;
 
     // 番号
-    drawText(ctx, String(row + 1), gridX + 20, cy, 11, 'right', COL.gray400, 'medium');
+    drawText(ctx, String(row + 1), gridX + 22, cy, 15, 'right', COL.gray500, 'bold');
     // 選手名 + 所属（ダブルスは1人ずつ2行）
     const nameX = gridX + 28;
     const nameMaxW = NAME_W - 40;
@@ -1340,7 +1346,7 @@ export async function renderRoundRobinResultCanvas(opts: ResultExportOptions): P
     const topY = cy - ((lines.length - 1) * NAME_LINE_STEP) / 2;
     lines.forEach((line, i) => {
       drawText(ctx, line, nameX, topY + i * NAME_LINE_STEP, NAME_PX, 'left',
-        isChampion ? COL.red600 : COL.gray800, isChampion ? 'black' : 'bold', nameMaxW);
+        isChampion ? COL.red600 : '#111111', isChampion ? 'black' : 'bold', nameMaxW);
     });
     const affLines = pairAffiliationLines(p.affiliation, p.affiliationParts, lines.length);
     if (affLines.length > 0) {
@@ -1353,7 +1359,7 @@ export async function renderRoundRobinResultCanvas(opts: ResultExportOptions): P
           : cy - ((affLines.length - 1) * NAME_LINE_STEP) / 2;
         affLines.forEach((t, i) => {
           if (!t) return;
-          drawText(ctx, `（${t}）`, affX, affTop + i * NAME_LINE_STEP + 0.5, 11.5, 'left', COL.gray700, 'medium', affMaxW);
+          drawText(ctx, `（${t}）`, affX, affTop + i * NAME_LINE_STEP + 1, 15, 'left', '#444444', 'medium', affMaxW);
         });
       }
     }
@@ -1377,7 +1383,7 @@ export async function renderRoundRobinResultCanvas(opts: ResultExportOptions): P
       // 勝った側は淡い赤地に赤文字、負けた側は白地にグレー文字。
       ctx.fillStyle = result.isWin ? COL.red50 : COL.white;
       ctx.fillRect(cellX + 1, y + 1, CELL_W - 2, ROW_H - 2);
-      drawText(ctx, result.text, cx, cy, 14, 'center', result.isWin ? COL.red600 : COL.gray500, result.isWin ? 'black' : 'bold');
+      drawText(ctx, result.text, cx, cy, 23, 'center', result.isWin ? COL.red600 : '#2b2b2b', result.isWin ? 'black' : 'bold');
     }
 
     // 勝敗（取得ゲーム率で順位を決める大会は、取得ゲーム率と取ったゲーム数）
@@ -1385,14 +1391,14 @@ export async function renderRoundRobinResultCanvas(opts: ResultExportOptions): P
       drawText(ctx, rateText(s.gameRate), statX + STAT_W / 2, cy - 7, 14, 'center', COL.gray800, 'black');
       drawText(ctx, `${s.gamesWon}/${s.gamesWon + s.gamesLost}ゲーム`, statX + STAT_W / 2, cy + 11, 10.5, 'center', COL.gray600, 'medium', STAT_W - 8);
     } else if (played) {
-      drawText(ctx, `${s.wins}-${s.losses}`, statX + STAT_W / 2, cy, 14, 'center', COL.gray700, 'bold');
+      drawText(ctx, `${s.wins}-${s.losses}`, statX + STAT_W / 2, cy, 22, 'center', '#111111', 'black');
     }
 
     // 順位（バッジは付けず、文字だけで表示する）
     if (rank && played) {
       const isTop = rank === 1;
-      drawText(ctx, `${rank}位`, rankX + RANK_W / 2, cy, isTop ? 15 : 14, 'center',
-        isTop ? COL.red600 : COL.gray600, isTop ? 'black' : 'bold');
+      drawText(ctx, `${rank}位`, rankX + RANK_W / 2, cy, isTop ? 24 : 22, 'center',
+        isTop ? COL.red600 : '#111111', 'black');
     }
   }
 
