@@ -43,7 +43,7 @@ export function drawVenueBadge(ctx: CanvasRenderingContext2D, opts: VenueBadgeOp
     // ［ロゴ］ 鳥取大学テニスコート  の並びで、全体を rightX に右揃えする。
     const label = '鳥取大学テニスコート';
     const fontPx = Math.round(16 * scale);
-    ctx.font = `700 ${fontPx}px "Inter", "Hiragino Sans", "Yu Gothic", sans-serif`;
+    ctx.font = `700 ${fontPx}px "Inter", "Hiragino Sans", "Noto Sans JP", "Yu Gothic", sans-serif`;
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
     const textW = ctx.measureText(label).width;

@@ -13,7 +13,7 @@ import { drawVenueBadge } from '../team/venueBadge';
 import { splitBigSmall, measureMixed, drawMixed } from '../team/mixedSizeText';
 
 /** 結果画像共通のフォントファミリー（団体戦と同じ） */
-export const FF = '"Inter", "Hiragino Sans", "Yu Gothic", sans-serif';
+export const FF = '"Inter", "Hiragino Sans", "Noto Sans JP", "Yu Gothic", sans-serif';
 
 /**
  * 見出しの英字（背後に敷くストライプ文字）のフォント。
@@ -181,7 +181,11 @@ export interface ResultLogos {
 }
 
 /** 結果画像で使うロゴをまとめて読み込む */
-export async function loadResultLogos(): Promise<ResultLogos> {
+export async function loadResultLogos(text = ''): Promise<ResultLogos> {
+  // 和文の Noto Sans JP（index.html で読み込み）を、描く前に読み込んでおく。
+  // Canvas は読み込み前のフォントを使えず、和文フォントの無い端末（Android など）では
+  // 別のフォントで描かれてしまうため（Mac はヒラギノを使う）
+  await loadResultFonts(text);
   const base = import.meta.env.BASE_URL;
   const [tcta, venue, tottori] = await Promise.all([
     tryLoadImage(`${base}logo-tcta.png`),
@@ -189,6 +193,21 @@ export async function loadResultLogos(): Promise<ResultLogos> {
     tryLoadImage(`${base}logo-tottori-univ.png`),
   ]);
   return { tcta, venue, tottori };
+}
+
+/**
+ * 結果画像の和文フォントを読み込む（失敗しても描画は続ける）。
+ * Google Fonts の Noto Sans JP は文字ごとに分かれて配られるので、画像に出す文字（大会名・選手名・所属など）を渡して、
+ * その文字の分まで読み込む。
+ */
+async function loadResultFonts(text: string): Promise<void> {
+  try {
+    if (typeof document === 'undefined' || !document.fonts) return;
+    const sample = [...new Set(`男子女子級シングルスダブルス予選リーグ決勝トーナメント勝敗順位優勝取得ゲーム率（）・0123456789${text}`)].join('');
+    await Promise.all(['400', '500', '700'].map((w) => document.fonts.load(`${w} 20px "Noto Sans JP"`, sample)));
+  } catch {
+    // 読み込めないときは端末のフォントで描く
+  }
 }
 
 /** 協会ロゴを結果画像に入れるかどうかの保存キー */

@@ -4,7 +4,7 @@
 //     「予選会 1位・2位決定戦」→ 1,2 だけ大きく、他は小さく
 // =============================================
 
-const FONT_FAMILY = '"Inter", "Hiragino Sans", "Yu Gothic", sans-serif';
+const FONT_FAMILY = '"Inter", "Hiragino Sans", "Noto Sans JP", "Yu Gothic", sans-serif';
 
 export interface SizedRun {
   text: string;
