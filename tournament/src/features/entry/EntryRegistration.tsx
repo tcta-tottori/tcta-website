@@ -149,6 +149,10 @@ function NormalEntryRegistration() {
   const placementEventCount = placementEventIds?.size ?? 0;
 
   const eventIds = useMemo(() => events.map(e => e.eventId), [events]);
+  // ドロー・要項に記載のある熱中症警戒時の試合形式（無ければ熱中症の欄を出さない）
+  const heatTexts = useMemo(() => [...new Set(events.flatMap(e => (e.roundGameRules ?? [])
+    .filter(r => r.heatRuleText || r.heatGames)
+    .map(r => (r.heatRuleText || `${r.heatGames}ゲームマッチ`).trim())))], [events]);
 
   const allEntries = useLiveQuery(
     () => eventIds.length > 0
@@ -453,7 +457,8 @@ function NormalEntryRegistration() {
     // 熱中症警戒時の試合形式を指定している場合は種目の回戦ルールへ付与する
     if (heatRulePattern.enabled) {
       const evForHeat = await db.events.where('eventId').equals(eventId).first();
-      if (evForHeat?.id != null) {
+      // ドロー・要項に熱中症時の記載がある種目だけ（記載の無い種目には付けない）
+      if (evForHeat?.id != null && evForHeat.roundGameRules?.some(r => r.heatRuleText || r.heatGames)) {
         const defaultGames = evForHeat.roundGameRules?.[0]?.games ?? evForHeat.gameRules?.games ?? 6;
         const nextRules = applyHeatToRules(evForHeat.roundGameRules, defaultGames, heatRulePattern);
         await db.events.update(evForHeat.id, { roundGameRules: nextRules });
@@ -1925,8 +1930,13 @@ function NormalEntryRegistration() {
                   </>
                 )}
 
-                {/* 熱中症警戒時の試合形式（確定時に各種目へ付与） */}
-                <HeatRulePatternInput value={heatRulePattern} onChange={setHeatRulePattern} />
+                {/* 熱中症警戒時の試合形式（確定時に各種目へ付与）。ドロー・要項に記載のある大会だけ出す */}
+                {heatTexts.length > 0 && (
+                  <>
+                    <p className="ent-heat-note">ドロー・要項の記載：{heatTexts.join(' ／ ')}</p>
+                    <HeatRulePatternInput value={heatRulePattern} onChange={setHeatRulePattern} />
+                  </>
+                )}
               </div>
             </div>
           </div>

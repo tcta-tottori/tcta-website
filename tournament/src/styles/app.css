@@ -1182,3 +1182,5 @@ html.is-lite .mqt.is-run .mqt__track { animation: none; }
 .zp__box--static.is-expandable { cursor: zoom-in; }
 .zp__box--static .zp__content { will-change: auto; }
 .zp__expand { position: absolute; top: 6px; right: 6px; z-index: 2; display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; border: 1px solid var(--gray-200); border-radius: var(--radius); background: rgba(255, 255, 255, .94); color: var(--ink); cursor: pointer; }
+/* エントリー受付：ドロー・要項に記載のある熱中症警戒時の試合形式 */
+.ent-heat-note { margin: 10px 0 6px; font: 700 12px/1.6 var(--fjp); color: #B42318; }

@@ -144,7 +144,9 @@ async function importToDeviceImpl(t: CatalogTournamentFull, onProgress?: (p: Imp
   onProgress?.({ step: 'write', label: `${t.draw.events.length} 種目・${t.players} 人を入れています` });
   const now = Date.now();
   const tournamentId = `T-${t.id}-${String(now).slice(-6)}`;
-  const heat = useAppStore.getState().heatRulePattern;
+  // 熱中症警戒時の試合形式は、大会データ（ドロー・要項の記載から入れた roundGameRules の heatRuleText）にあるものだけを使う。
+  // 端末に残っている一括指定（エントリー画面の欄）は、入れるときには付けない
+  const heat = { ...useAppStore.getState().heatRulePattern, enabled: false };
   const courtNames = t.settings.courtNames?.length ? t.settings.courtNames : STANDARD_COURTS.split(',');
   const startTime = t.settings.startTime || t.draw.earliestStartTime || '09:00';
   // コートの ID は先に決めておく（リーグ戦の専用コート leagueCourts をコート名から引くため）
@@ -263,7 +265,9 @@ export async function mergeImportToDevice(t: CatalogTournamentFull, onProgress?:
 
   onProgress?.({ step: 'write', label: `${newIdx.length} 種目を入れ直しています` });
   const now = Date.now();
-  const heat = useAppStore.getState().heatRulePattern;
+  // 熱中症警戒時の試合形式は、大会データ（ドロー・要項の記載から入れた roundGameRules の heatRuleText）にあるものだけを使う。
+  // 端末に残っている一括指定（エントリー画面の欄）は、入れるときには付けない
+  const heat = { ...useAppStore.getState().heatRulePattern, enabled: false };
   const localCourts = (await db.courts.where('tournamentId').equals(tournamentId).toArray()).sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
   const courtIdByName = new Map(localCourts.map((c) => [c.name, c.courtId]));
   const dict = new Map((await db.furiganaDict.toArray()).map((d) => [d.name, d.furigana]));

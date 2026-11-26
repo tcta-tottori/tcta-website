@@ -515,13 +515,16 @@ interface DataImportProps {
 export default function DataImport({ externalTournamentExcel, externalScheduleExcel, wizardAutoImport, onAutoImportComplete }: DataImportProps) {
   const setCurrentTournamentId = useAppStore(state => state.setCurrentTournamentId);
   const currentTournamentId = useAppStore(state => state.currentTournamentId);
-  const heatRulePattern = useAppStore(state => state.heatRulePattern);
+  const heatRulePatternStore = useAppStore(state => state.heatRulePattern);
   const setHeatRulePattern = useAppStore(state => state.setHeatRulePattern);
   const persistedImportedSchedule = useAppStore(state => state.importedSchedule);
   const persistedScheduleFileName = useAppStore(state => state.scheduleFileName);
   const [parsedData, setParsedData] = useState<ParsedData | null>(null);
   const [summary, setSummary] = useState<ImportSummary | null>(null);
   const [parsedExcel, setParsedExcel] = useState<ParsedDrawFile | null>(null);
+  // 熱中症警戒時の試合形式は、ドロー表に「※熱中症〜」の記載があるときだけ出し・付ける
+  const drawHasHeat = !!parsedExcel?.events.some(e => e.roundGameRules.some(r => r.heatRuleText || r.heatGames));
+  const heatRulePattern = drawHasHeat ? heatRulePatternStore : { ...heatRulePatternStore, enabled: false };
   const [isImporting, setIsImporting] = useState(false);
   const [importResult, setImportResult] = useState<{ success: boolean; message: string } | null>(null);
   const [selectedTournament, setSelectedTournament] = useState<number | null>(null);
@@ -2052,8 +2055,8 @@ export default function DataImport({ externalTournamentExcel, externalScheduleEx
             </div>
           )}
 
-          {/* 熱中症警戒時の試合形式 */}
-          <HeatRulePatternInput value={heatRulePattern} onChange={setHeatRulePattern} />
+          {/* 熱中症警戒時の試合形式（ドロー表に「※熱中症〜」の記載があるときだけ） */}
+          {drawHasHeat && <HeatRulePatternInput value={heatRulePatternStore} onChange={setHeatRulePattern} />}
 
           {/* アクションボタン */}
           <div className="flex gap-2">
