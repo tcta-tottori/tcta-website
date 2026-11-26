@@ -6315,3 +6315,25 @@ body.jsrv .section.is-long > .container > .sec-head.rv { transition: opacity .7s
 .result-video { margin-bottom: 40px; }
 .result-video .video-embed { border-radius: 12px; }
 .result-video .note a { color: var(--red); font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
+
+/* 要項・ドロー・結果だけのページの下：大会のページへ戻るカード ＋ 大会一覧・大会結果のボタン（EventSection.astro） */
+.back-nav { margin-top: 72px; padding-top: 40px; border-top: 1px solid var(--gray-200); }
+.back-card {
+  display: flex; align-items: center; gap: 18px;
+  padding: 20px 22px; border: 1px solid var(--gray-200); border-left: 4px solid var(--red); border-radius: 12px;
+  background: var(--white); box-shadow: 0 6px 20px rgba(0,0,0,.05);
+  transition: border-color .25s ease, box-shadow .25s ease, transform .25s ease;
+}
+.back-card:hover { border-color: var(--red); box-shadow: 0 10px 28px rgba(216,35,42,.12); transform: translateY(-2px); }
+.back-card__arrow {
+  flex: none; display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%;
+  background: var(--red-tint); color: var(--red); font: 700 20px/1 var(--fjp); transition: transform .25s ease;
+}
+.back-card:hover .back-card__arrow { transform: translateX(-4px); }
+.back-card__body { min-width: 0; }
+.back-card__dir { display: block; font: 700 12px/1.6 var(--fjp); letter-spacing: .08em; color: var(--red); }
+.back-card__title { display: block; margin-top: 2px; font: 700 17px/1.5 var(--fjp); color: var(--ink); }
+.back-nav__btns { margin-top: 20px; }
+@media (min-width: 640px) {
+  .back-nav__btns { flex-direction: row; }
+}
