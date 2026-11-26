@@ -56,10 +56,19 @@ const description = `${e.label}に${e.place}で行われる${e.name}（${e.event
     <div class="container container--result">
       <RevisionNotice revisions={e.revisions} keys={revisionKeys} />
       <slot />
-      <nav class="page-nav rv" aria-label="大会のページへ">
-        <a class="page-nav__link" href={e.url}><span class="page-nav__dir">← 大会のページ</span><span class="page-nav__title">{e.displayName}</span></a>
-        <a class="ghost-link" href="tournaments.html">大会一覧へ</a>
-        <span></span>
+      {/* ページ下部の行き先：大会のページへ戻るカード ＋ 大会一覧・大会結果のボタン（大会のページの下と同じボタン） */}
+      <nav class="back-nav rv" aria-label="ほかのページへ">
+        <a class="back-card" href={e.url}>
+          <span class="back-card__arrow" aria-hidden="true">←</span>
+          <span class="back-card__body">
+            <span class="back-card__dir">大会のページへ戻る</span>
+            <span class="back-card__title">{e.displayName}</span>
+          </span>
+        </a>
+        <div class="btn-stack back-nav__btns">
+          <a class="btn btn--outline" href="tournaments.html">大会一覧へ <span class="ln-arrow" aria-hidden="true"></span></a>
+          <a class="btn btn--primary" href="results.html">大会結果へ <span class="ln-arrow" aria-hidden="true"></span></a>
+        </div>
       </nav>
     </div>
   </section>
