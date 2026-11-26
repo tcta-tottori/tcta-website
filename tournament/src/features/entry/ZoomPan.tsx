@@ -179,3 +179,44 @@ export default function ZoomPan({ width, height, children, label, fill = false }
     </div>
   );
 }
+
+/**
+ * 画面の幅に合わせて縮めて出すだけの表示枠（ズーム・移動はしない。ページはふつうにスクロールできる）。
+ * 中のボタン（選手の枠）以外の所をタップすると onExpand（全画面で開く）。
+ */
+export function FitStatic({ width, height, children, label, onExpand }: {
+  width: number;
+  height: number;
+  children: ReactNode;
+  label: string;
+  onExpand?: () => void;
+}) {
+  const box = useRef<HTMLDivElement>(null);
+  const [w, setW] = useState(0);
+  useLayoutEffect(() => {
+    const el = box.current;
+    if (!el) return;
+    const ro = new ResizeObserver(([e]) => setW(e.contentRect.width));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+  const s = w ? Math.min(1, w / width) : 1;
+  return (
+    <div className="zp zp--static">
+      <div
+        ref={box}
+        className={`zp__box zp__box--static ${onExpand ? 'is-expandable' : ''}`}
+        role="group"
+        aria-label={label}
+        style={{ height: Math.round(height * s) + 2 }}
+        onClick={(e) => { if (onExpand && !(e.target as HTMLElement).closest('button')) onExpand(); }}
+      >
+        <div className="zp__content" style={{ width, height, transform: `scale(${s})` }}>{children}</div>
+        {onExpand && (
+          <button type="button" className="zp__expand" onClick={onExpand} aria-label="このクラスを全画面で開く"><Maximize className="w-4 h-4" /></button>
+        )}
+      </div>
+      {onExpand && <p className="zp__hint">選手をタップで受付。それ以外の所をタップすると、このクラスを全画面で開きます</p>}
+    </div>
+  );
+}

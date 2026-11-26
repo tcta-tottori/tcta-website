@@ -5,7 +5,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { db, type Draw, type Entry } from '../../db/database';
 import { useAppStore } from '../../stores/appStore';
 import HeatRulePatternInput, { applyHeatToRules } from '../data/HeatRulePatternInput';
-import { UserCheck, UserPlus, Search, Eye, List, AlertCircle, ChevronDown, GitBranch, ZoomIn, RotateCcw, Lock, Ban, Unlock, X, Check, Clock, Shuffle, ArrowDownToLine, ArrowUpToLine, ChevronLeft, ChevronRight } from 'lucide-react';
+import { UserCheck, UserPlus, Search, Eye, List, AlertCircle, ChevronDown, GitBranch, ZoomIn, RotateCcw, Lock, Ban, Unlock, X, Check, Clock, Shuffle, ArrowDownToLine, ArrowUpToLine } from 'lucide-react';
 import ProcessingModal, { type ProcessingStep } from '../../components/ui/ProcessingModal';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import { regenerateAutoSchedule, recalculateGlobalMatchOrder as recalcGlobalMatchOrder } from '../schedule/reflowAfterConfirm';
@@ -83,8 +83,8 @@ function NormalEntryRegistration() {
   const [collapsedEvents, setCollapsedEvents] = useState<Set<string>>(new Set());
   const [stickyEventName, setStickyEventName] = useState('');
   /** 選手の並べ方：一覧（細い罫の行）かドロー図か。スマホは一覧、PC はドロー図から。
-   *  「対戦表」はこの切り替えではなく、全画面で開く（sheetEventId。サイトのドロー表の形でズームし、タップで受付・種目も切り替えられる） */
-  const [viewMode, setViewMode] = useState<'list' | 'draw'>(
+   *  「対戦表」はサイトのドロー表の形で種目ごとに並べる（選手をタップで受付）。選手以外の所をタップすると、そのクラスだけ全画面（sheetEventId。ズーム・移動） */
+  const [viewMode, setViewMode] = useState<'list' | 'draw' | 'sheet'>(
     typeof window !== 'undefined' && window.innerWidth < 1024 ? 'list' : 'draw'
   );
 
@@ -803,11 +803,7 @@ function NormalEntryRegistration() {
     );
   };
 
-  // ===== 全画面の対戦表（サイトのドロー表の形。ズーム・スワイプで動かし、選手をタップで受付。上の札で種目を切り替える） =====
-  const openSheet = () => {
-    const byNav = events.find(e => e.name === activeNavName)?.eventId;
-    setSheetEventId((!showAllEvents && selectedEventId) || byNav || events[0]?.eventId || null);
-  };
+  // ===== 全画面の対戦表（一覧の対戦表で選手以外の所をタップしたクラスだけ。ズーム・スワイプで動かし、選手をタップで受付） =====
   const renderSheetScreen = () => {
     if (!sheetEventId) return null;
     const idx = Math.max(0, events.findIndex(e => e.eventId === sheetEventId));
@@ -815,32 +811,14 @@ function NormalEntryRegistration() {
     if (!ev) return null;
     const slots = buildSlotsForEvent(ev.eventId);
     const stats = computeStats(slots);
-    const go = (d: number) => { const n = events[(idx + d + events.length) % events.length]; if (n) setSheetEventId(n.eventId); };
     return createPortal(
       <div className="ent-ss" role="dialog" aria-modal="true" aria-label="対戦表で受付">
         <div className="ent-ss__head">
           <div className="ent-ss__ttl">
-            <span className="ent-ss__en">ENTRY ・ 対戦表</span>
+            <span className="ent-ss__en">{ev.name}</span>
             <span className="ent-ss__tally"><b>{stats.checkedIn}</b>/{stats.total} 受付{stats.absent > 0 && <em> ・ DEF {stats.absent}</em>} ・ 未受付 {stats.remaining}</span>
           </div>
           <button type="button" className="ent-ss__x" onClick={() => setSheetEventId(null)} aria-label="対戦表を閉じる"><X className="w-5 h-5" /></button>
-        </div>
-        <div className="ent-ss__nav">
-          <button type="button" className="ent-ss__arrow" onClick={() => go(-1)} aria-label="前の種目"><ChevronLeft className="w-5 h-5" /></button>
-          <div className="ent-ss__chips" role="tablist" aria-label="種目">
-            {events.map(e => {
-              const st = computeStats(buildSlotsForEvent(e.eventId));
-              const on = e.eventId === ev.eventId;
-              return (
-                <button key={e.eventId} role="tab" aria-selected={on} className={`ent-ss__chip ${on ? 'is-on' : ''} ${confirmedEventsSet.has(e.eventId) ? 'is-done' : ''}`}
-                  ref={on ? (el) => el?.scrollIntoView({ block: 'nearest', inline: 'center' }) : undefined}
-                  onClick={() => setSheetEventId(e.eventId)}>
-                  {confirmedEventsSet.has(e.eventId) && <Lock className="w-3 h-3" />}{e.name}<small>{st.checkedIn}/{st.total}</small>
-                </button>
-              );
-            })}
-          </div>
-          <button type="button" className="ent-ss__arrow" onClick={() => go(1)} aria-label="次の種目"><ChevronRight className="w-5 h-5" /></button>
         </div>
         <div className="ent-ss__body">{renderSheet(ev.eventId, slots)}</div>
       </div>,
@@ -849,7 +827,8 @@ function NormalEntryRegistration() {
   };
 
   // ===== 対戦表（サイトのドロー表の形。ズームして、選手をタップすると確認ダイアログ） =====
-  const renderSheet = (eventId: string, slots: CheckInSlot[]) => {
+  /** inline … 一覧に並べる表示（縮めて出すだけ。選手以外の所をタップでそのクラスを全画面） */
+  const renderSheet = (eventId: string, slots: CheckInSlot[], inline = false) => {
     const draw = drawMap.get(eventId);
     const event = events.find(e => e.eventId === eventId);
     if (slots.length === 0) return <div className="ent-none">ドローデータがありません</div>;
@@ -867,10 +846,11 @@ function NormalEntryRegistration() {
       state: s.entry?.status === 'withdrawn' ? 'def' : s.entryId && confirmedIds.has(s.entryId) ? 'checked' : 'none',
     }));
     return (
-      <div className="ent-ss__sheet">
+      <div className={inline ? 'ent-sheet' : 'ent-ss__sheet'}>
         <EntrySheet
           key={eventId}
-          fill
+          fill={!inline}
+          onExpand={inline ? () => setSheetEventId(eventId) : undefined}
           eventName={event?.name || ''}
           drawSize={ds}
           isLeague={isLeague}
@@ -886,6 +866,8 @@ function NormalEntryRegistration() {
   // ===== SVG Bracket-based draw view =====
   const renderDrawTable = (eventId: string, slots: CheckInSlot[]) => {
     const draw = drawMap.get(eventId);
+    // 対戦表（サイトのドロー表の形）を一覧のように並べる。あたり修正中の種目はドロー図で確かめる
+    if (viewMode === 'sheet' && drawEdit?.eventId !== eventId) return renderSheet(eventId, slots, true);
     const searchMatches = getSearchMatchSet(slots);
 
     const event = events.find(e => e.eventId === eventId);
@@ -1887,7 +1869,7 @@ function NormalEntryRegistration() {
                     <button onClick={() => setViewMode('draw')} className={`hub-filter__btn ${viewMode === 'draw' ? 'is-on' : ''}`}>
                       <GitBranch className="w-3.5 h-3.5" />ドロー図
                     </button>
-                    <button onClick={openSheet} className={`hub-filter__btn ${sheetEventId ? 'is-on' : ''}`} title="全画面で開く。サイトのドロー表と同じ形でズーム・スワイプし、選手をタップで受付。種目も切り替えられる">
+                    <button onClick={() => setViewMode('sheet')} className={`hub-filter__btn ${viewMode === 'sheet' ? 'is-on' : ''}`} title="サイトのドロー表と同じ形で種目ごとに並べる。選手をタップで受付、それ以外の所をタップでそのクラスを全画面">
                       <ZoomIn className="w-3.5 h-3.5" />対戦表
                     </button>
                   </div>

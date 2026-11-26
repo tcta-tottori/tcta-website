@@ -1175,3 +1175,10 @@ html.is-lite .mqt.is-run .mqt__track { animation: none; }
 /* ドロー画面：リーグの順位で組む欄（PlacementPanel） */
 .dl-plc { padding: 12px 16px 0; }
 .dl-plc .plc { margin: 0; }
+
+/* 対戦表を一覧に並べる表示（ZoomPan.tsx の FitStatic）。画面幅に縮めて出すだけで、ページはふつうにスクロールできる */
+.zp__box--static { touch-action: auto; user-select: auto; -webkit-user-select: auto; cursor: default; background: var(--white); }
+.zp__box--static:active { cursor: default; }
+.zp__box--static.is-expandable { cursor: zoom-in; }
+.zp__box--static .zp__content { will-change: auto; }
+.zp__expand { position: absolute; top: 6px; right: 6px; z-index: 2; display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; border: 1px solid var(--gray-200); border-radius: var(--radius); background: rgba(255, 255, 255, .94); color: var(--ink); cursor: pointer; }

@@ -5,7 +5,7 @@
 //   ・枠の色：受付済＝墨の塗り＋チェック、DEF＝赤の取り消し線、未受付＝白。BYE は灰色で押せない
 //   ・ズーム・全体表示・全画面は ZoomPan.tsx
 import { Check } from 'lucide-react';
-import ZoomPan from './ZoomPan';
+import ZoomPan, { FitStatic } from './ZoomPan';
 import { generateLeagueMatchOrder } from '../draw/rebuildMatches';
 
 export type SheetSlot = {
@@ -29,9 +29,11 @@ const ROUND_W = 34;
 const CENTER_W = 44;
 const PAD = 16;
 
-export default function EntrySheet({ eventName, drawSize, isLeague, doubles, slots, matchTimes, leagueCourts, onTap, fill = false }: {
+export default function EntrySheet({ eventName, drawSize, isLeague, doubles, slots, matchTimes, leagueCourts, onTap, fill = false, onExpand }: {
   /** 親の高さいっぱいに広げる（全画面の対戦表） */
   fill?: boolean;
+  /** 一覧に並べる表示：画面の幅に縮めて出し（ズームなし）、選手以外の所をタップすると onExpand（全画面で開く） */
+  onExpand?: () => void;
   eventName: string;
   drawSize: number;
   isLeague: boolean;
@@ -44,6 +46,11 @@ export default function EntrySheet({ eventName, drawSize, isLeague, doubles, slo
 }) {
   const byPos = new Map(slots.map((s) => [s.position, s]));
   const rowH = doubles ? 58 : 44;
+  // 一覧では縮めて出すだけ（タップで全画面）、全画面ではズーム・移動
+  // （コンポーネントを中で作ると描き直しのたびに作り直されてズームの状態が消えるので、関数で包む）
+  const frame = (width: number, height: number, label: string, children: React.ReactNode) => (onExpand
+    ? <FitStatic width={width} height={height} label={label} onExpand={onExpand}>{children}</FitStatic>
+    : <ZoomPan width={width} height={height} label={label} fill={fill}>{children}</ZoomPan>);
 
   if (isLeague) {
     const list = slots.filter((s) => s.hasEntry).sort((a, b) => a.position - b.position);
@@ -56,7 +63,7 @@ export default function EntrySheet({ eventName, drawSize, isLeague, doubles, slo
     const height = PAD * 2 + headH + rowH * lines + 18 + 40;
     const order = generateLeagueMatchOrder(list.length).map(([a, b]) => `${CIRCLED[a] ?? a + 1}-${CIRCLED[b] ?? b + 1}`).join('  ');
     return (
-      <ZoomPan width={width} height={height} label={`${eventName}の対戦表`} fill={fill}>
+      <>{frame(width, height, `${eventName}の対戦表`, (<>
         <div className="esh" style={{ width, height, padding: PAD }}>
           <p className="esh__title" style={{ height: headH }}>{eventName}</p>
           <div className={`esh-league ${narrow ? 'is-narrow' : ''}`} style={{ gridTemplateColumns: `${labelW}px repeat(${cols}, ${cellW}px)`, gridTemplateRows: `repeat(${lines}, ${rowH}px)` }}>
@@ -68,7 +75,7 @@ export default function EntrySheet({ eventName, drawSize, isLeague, doubles, slo
           </div>
           <p className="esh-league__order">試合順：{order}</p>
         </div>
-      </ZoomPan>
+      </>))}</>
     );
   }
 
@@ -111,7 +118,7 @@ export default function EntrySheet({ eventName, drawSize, isLeague, doubles, slo
   const right = split ? lines(perSide, true) : null;
 
   return (
-    <ZoomPan width={width} height={height} label={`${eventName}の対戦表`} fill={fill}>
+    <>{frame(width, height, `${eventName}の対戦表`, (<>
       <div className="esh" style={{ width, height }}>
         <p className="esh__title" style={{ position: 'absolute', left: PAD, top: PAD, height: headH }}>{eventName}<small>{size} ドロー</small></p>
         <svg className="esh__lines" width={width} height={height} aria-hidden="true">
@@ -131,7 +138,7 @@ export default function EntrySheet({ eventName, drawSize, isLeague, doubles, slo
           );
         })}
       </div>
-    </ZoomPan>
+    </>))}</>
   );
 }
 
