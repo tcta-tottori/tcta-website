@@ -17,6 +17,7 @@ export const TOURNAMENT_APP = 'https://tcta-tournament.tcta-admin-worker.workers
  */
 export const CATALOG_IDS = {
   'r8-no18': 'r8-kensen-doubles', // 鳥取県テニス選手権 ダブルス
+  'r8-no19': 'r8-osaka-indoor', // 尾坂杯鳥取室内テニス大会
 };
 /** サイトの slug → 運営システムの大会 id */
 export const catalogIdOf = (slug) => CATALOG_IDS[slug] ?? slug;

@@ -29,6 +29,7 @@ export const ENTRY_FEES = {
   'r7-tottori-univ-singles': { price: 1500, per: '1人' },
   'r7-osaka': { price: 2500, per: '1人（シングルス。ダブルスは3,500円）' },
   // 令和8年度
+  'r8-no19': { price: 2500, per: '1人（シングルス。ダブルスは1組3,500円。県協会非登録者は倍額）' },
   'r8-tobu-singles': { price: 2000, per: '1人' },
   'r8-tobu-doubles': { price: 3000, per: '1組' },
   'r8-club-taiko-1': { price: 10000, per: '男子1チーム（女子は7,000円）' },
