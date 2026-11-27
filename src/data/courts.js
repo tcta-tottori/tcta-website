@@ -230,7 +230,7 @@ export const COURTS = [
     pageOnly: true, // コート案内のページだけ（トップの地図には出さない）
     note: '屋内・鳥取市天神町50-2（0857-24-2815）',
     lat: 35.49177, lng: 134.22134, // OpenStreetMap の施設の位置
-    image: 'assets/img/courts/sangyo-gym.webp',
+    image: 'assets/img/courts/sangyo-gym-v2.webp',
     surface: '屋内（体育館）', courts: 0,
     desc: '県立の屋内体育館。尾坂杯鳥取室内テニス選手権の会場の一つです。',
     address: '鳥取県鳥取市天神町50-2',
