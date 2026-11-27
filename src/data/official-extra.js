@@ -21,6 +21,25 @@ export const EXTRA_HIDE_MATERIALS = {
 };
 
 export const EXTRA_MATERIALS = {
+  // 第54回尾坂杯鳥取室内テニス大会（令和8年度。前期 12/27・1/3・1/9 ダブルス、後期 2/20・2/23 シングルス）：要項と申込用紙（2026.11.27 掲載）。
+  //   締切 前期 12/11（ドロー会議 12/12）、後期 2/5（ドロー会議 2/6）
+  'r8-no19': {
+    outline: {
+      images: [
+        img('r8-no19', 'outline-01.webp', '要項'),
+        img('r8-no19', 'outline-02.webp', 'シングルス申込用紙（後期）'),
+        img('r8-no19', 'outline-03.webp', 'ダブルス申込用紙（前期）'),
+      ],
+      pdfs: [{ src: 'assets/pdf/events/r8-no19/令和8年度尾坂杯要項.pdf', label: '令和8年度 尾坂杯 要項・申込用紙', kb: 388 }],
+    },
+    entry: {
+      images: [],
+      pdfs: [
+        { src: 'assets/pdf/events/r8-no19/尾坂杯ダブルス申込用紙.pdf', label: 'ダブルス申込用紙（前期・12/11締切）', kb: 108 },
+        { src: 'assets/pdf/events/r8-no19/尾坂杯シングルス申込用紙.pdf', label: 'シングルス申込用紙（後期・2/5締切）', kb: 88 },
+      ],
+    },
+  },
   // 第53回尾坂杯（令和7年度）：男子B級シングルス優勝 細川 善貴さんの写真を、ご本人の依頼で差し替えた写真（旧サイトの差し替え後の写真。2026.11.23）
   'r7-osaka': {
     photo: { images: [{ src: 'assets/img/events/r7-osaka/photo-06-v2.webp', label: '男子B級シングルス 優勝 細川 善貴', w: 1050, h: 1400 }], pdfs: [] },
@@ -351,16 +370,19 @@ export const STATE_FORCE = {
 };
 
 export const STATE_OVERRIDE = {
+  'r8-no19': '受付中', // 第54回尾坂杯（前期 12/11・後期 2/5 締切）
   'r8-no18': '受付中',
 };
 
 export const EXTRA_CARDS = [
+  'r8-no19', // 第54回尾坂杯（受付中。前期 12/11・後期 2/5 締切）
   'r8-no18', // 鳥取県テニス選手権 ダブルス（受付中。11/13 締切）
   'r8-tottori-univ-winter', // 鳥大オープンテニス大会（12/6。受付中。11/27 締切）
   'r8-kyotango-mixed', // 京丹後市オープンミックスダブルス（12/6。受付中。11/27 締切）
 ];
 
 export const EXTRA_NEWS = [
+  { slug: 'official-20261127-osaka-outline', date: '2026-11-27', createdAt: '2026-11-27T12:00:00+09:00', category: '大会', title: '第54回尾坂杯鳥取室内テニス大会の要項を掲載しました（前期ダブルス 12/11・後期シングルス 2/5 締切）', href: 'event-r8-no19.html' },
   { slug: 'official-20261125-shicho-result', date: '2026-11-25', createdAt: '2026-11-25T09:15:00+09:00', category: '大会', title: '第41回鳥取市長杯テニス大会（11/23）の結果を掲載しました', href: 'event-r8-shicho.html#result' },
   { slug: 'official-20261125-prince-youtube', date: '2026-11-25', createdAt: '2026-11-25T07:00:00+09:00', category: '大会', title: '2026 プリンスオープン チーム対抗戦（11/22）の動画を YouTube で公開しました', href: 'event-r8-prince-open.html#result' },
   { slug: 'official-20261123-prince-result', date: '2026-11-23', createdAt: '2026-11-23T20:30:00+09:00', category: '大会', title: '2026 プリンスオープン チーム対抗戦（11/22）の結果を掲載しました', href: 'event-r8-prince-open.html#result' },
