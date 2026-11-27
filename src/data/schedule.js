@@ -25,7 +25,7 @@
 //   （荒天中止の大会は日を振り替えないので、予備会場も置かない）。
 //   室内の尾坂杯だけは体育館開催なので、この形に当てはめない。
 
-import { STATE_OVERRIDE, STATE_FORCE } from './official-extra.js';
+import { STATE_OVERRIDE, STATE_FORCE, DUE_OVERRIDE } from './official-extra.js';
 
 /** 管理画面の文言 → コードで使うキー */
 export const STATE_KEY = { '終了': 'done', '受付終了': 'closed', '受付中': 'open', 'まもなく受付': 'soon', '未受付': 'soon', '本日開催': 'live' };
@@ -203,6 +203,7 @@ const stateOf = (t) => STATE_FORCE[t.slug] ?? (STATE_OVERRIDE[t.slug] && /^(ま�
 /** EmDash の 1 行を、移行前の schedule.json の 1 行と同じ形にする。 */
 export function scheduleRow(t) {
   const date = String(t.date ?? '').slice(0, 10);
+  const due = DUE_OVERRIDE[t.slug] ?? t.due;
   return {
     slug: t.slug,
     nendo: String(t.nendo ?? ''),
@@ -216,8 +217,8 @@ export function scheduleRow(t) {
     name: t.name,
     event: t.event || '',
     place: t.place || '',
-    due: t.due || '',
-    status: liveStatus(autoStatus(STATE_KEY[stateOf(t)] ?? 'soon', t.due, date), date, t.label || ''),
+    due: due || '',
+    status: liveStatus(autoStatus(STATE_KEY[stateOf(t)] ?? 'soon', due, date), date, t.label || ''),
     reg: REG_KEY[t.reg] ?? 'free',
     externalUrl: externalUrl(t.name),
     externalResultUrl: externalResultUrl(t.name, t.nendo),
