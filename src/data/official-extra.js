@@ -85,7 +85,7 @@ export const EXTRA_MATERIALS = {
         { src: 'assets/img/events/r8-shicho/result-07-v5.webp', label: '男子B級シングルス 予選 Cリーグ', w: 1943, h: 976 },
         { src: 'assets/img/events/r8-shicho/result-08-v5.webp', label: '男子B級シングルス 予選 Dリーグ', w: 2021, h: 988 },
         { src: 'assets/img/events/r8-shicho/result-09-v5.webp', label: '男子B級シングルス 予選 Eリーグ', w: 2063, h: 992 },
-        { src: 'assets/img/events/r8-shicho/result-10-v5.webp', label: '男子B級シングルス 予選 Fリーグ', w: 2033, h: 988 },
+        { src: 'assets/img/events/r8-shicho/result-10-v6.webp', label: '男子B級シングルス 予選 Fリーグ', w: 2033, h: 988 },
         { src: 'assets/img/events/r8-shicho/result-11-v5.webp', label: '男子B級シングルス 予選 Gリーグ', w: 1771, h: 822 },
         { src: 'assets/img/events/r8-shicho/result-12-v5.webp', label: '男子B級シングルス 決勝トーナメント', w: 1888, h: 906 },
         { src: 'assets/img/events/r8-shicho/result-13-v5.webp', label: '男子C級シングルス 予選 Aリーグ', w: 1961, h: 980 },
@@ -100,7 +100,7 @@ export const EXTRA_MATERIALS = {
         { src: 'assets/img/events/r8-shicho/result-22-v5.webp', label: '女子B級シングルス 5・6位決定戦', w: 1760, h: 776 },
         { src: 'assets/img/events/r8-shicho/result-23-v5.webp', label: '女子C級シングルス 決勝', w: 1760, h: 776 },
       ],
-      pdfs: [{ src: 'assets/pdf/events/r8-shicho/R8市長杯結果.pdf', label: 'R8市長杯 結果', kb: 2688 }],
+      pdfs: [{ src: 'assets/pdf/events/r8-shicho/R8市長杯結果.pdf', label: 'R8市長杯 結果', kb: 2689 }],
     },
     // 優勝者の写真（表彰状を持って）
     photo: {
@@ -319,6 +319,7 @@ export const EXTRA_TOURNAMENTS = [
 
 export const EXTRA_REVISIONS = {
   'r8-shicho': [
+    { date: '2026-11-27', section: '結果', text: '男子B級シングルス Fリーグの田中 憲一さんの試合のスコアを訂正しました（成川 速大さんとは5-6、田中 達也さんとは3-6）。順位に変わりはありません。' },
     { date: '2026-11-21', section: 'ドロー', text: '男子A級シングルス Bリーグ⑥の伊藤 啓介さんが欠場のため、Cリーグ⑬の細川 善貴さんがBリーグ⑥に入ります。ドローは訂正版に差し替えています（当日のプログラムは印刷済みのため訂正前のままです）。' },
   ],
   'r8-no18': [
