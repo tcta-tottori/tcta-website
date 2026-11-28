@@ -956,9 +956,12 @@
       }
       var items = m.querySelectorAll('.cal__item');
       for (var q = 0; q < items.length; q++) items[q].style.setProperty('--i', String(q));
-      for (var r = 0; r < months.length; r++) months[r].classList.remove('is-enter');
+      for (var r = 0; r < months.length; r++) months[r].classList.remove('is-enter', 'is-bg');
+      // 背景の大きな月（.cal__bg）は、マスと下の一覧の動きが終わってから中央の縦線から左右へ開く（style.css の .cal__month.is-bg）
+      var cellsEnd = 0.26 + 0.5, itemsEnd = items.length ? 0.18 + (items.length - 1) * 0.07 + 0.55 : 0;
+      m.style.setProperty('--bg-delay', Math.min(Math.max(cellsEnd, itemsEnd), 1.6).toFixed(2) + 's');
       void m.offsetWidth; // 付け直しで動きを最初からやり直す
-      m.classList.add('is-enter');
+      m.classList.add('is-enter', 'is-bg');
       if (label) label.classList.add('is-flip');
     };
 
@@ -978,6 +981,21 @@
       prev.disabled = at === 0;
       next.disabled = at === months.length - 1;
     };
+
+    // 最初に見えたとき：カレンダーが画面に入って、出てくる動き（.rv）が終わってから背景の大きな月を開く
+    if (reduce || !('IntersectionObserver' in window)) {
+      for (var b = 0; b < months.length; b++) months[b].classList.add('is-bg');
+    } else {
+      var bgIo = new IntersectionObserver(function (ents) {
+        if (!ents.some(function (en) { return en.isIntersecting; })) return;
+        bgIo.disconnect();
+        var cur = months[at];
+        if (cur.classList.contains('is-bg')) return;
+        cur.style.setProperty('--bg-delay', '.9s');
+        cur.classList.add('is-bg');
+      }, { threshold: 0.3 });
+      bgIo.observe(root);
+    }
 
     prev.addEventListener('click', function () { closePop(); show(at - 1, true); });
     next.addEventListener('click', function () { closePop(); show(at + 1, true); });
