@@ -3260,7 +3260,7 @@ body.jsrv .cfac.rv.on.cfac--vt .cfac__name, body.jsrv .cfac.rv.on.cfac--vt .cfac
 .cfac__hero .badge--open { background: var(--red); border-color: var(--red); }
 .cfac__hero .badge--light { background: #D99A00; border-color: #D99A00; }
 .cfac__hero .badge--img { background: none; border: 0; backdrop-filter: none; -webkit-backdrop-filter: none; text-shadow: none; box-shadow: 0 1px 3px rgba(0, 0, 0, .35); }
-.cfac__body { padding-top: 44px; } /* 写真と説明のあいだ（スマホ・タブレット） */
+.cfac__body { padding-top: 64px; } /* 写真と説明のあいだ（スマホ・タブレット） */
 .cfac__desc { margin: 0; font: 400 15px/1.9 var(--fjp); color: var(--gray-800); }
 .cfac .deflist { margin-top: 20px; }
 .cfac__tbd { color: var(--gray-500); }
@@ -3294,7 +3294,7 @@ body.jsrv .cfac.rv.on.cfac--vt .cfac__name, body.jsrv .cfac.rv.on.cfac--vt .cfac
   .cfac .cfac__body {
     max-width: none;
     margin: 0;
-    padding: 8px max(var(--gutter), calc((100vw - var(--container-max)) / 2 + var(--gutter))) 0 80px; /* 左の写真とのあいだは 80px */
+    padding: 8px max(var(--gutter), calc((100vw - var(--container-max)) / 2 + var(--gutter))) 0 112px; /* 左の写真とのあいだは 112px */
   }
   .cfac__head { display: block; margin-bottom: 24px; }
   .cfac__head .cfac__name { font-size: clamp(26px, 2.4vw, 34px); color: var(--ink); text-shadow: none; }
