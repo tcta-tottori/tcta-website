@@ -62,6 +62,7 @@ if (extras) {
 }
 
 const DOW = ['日', '月', '火', '水', '木', '金', '土'];
+const MONTH_FULL = ['JANUARY', 'FEBRUARY', 'MARCH', 'APRIL', 'MAY', 'JUNE', 'JULY', 'AUGUST', 'SEPTEMBER', 'OCTOBER', 'NOVEMBER', 'DECEMBER'];
 
 // 締切・ドロー会議を日付ごとにまとめる（日付 → 大会の一覧）
 const dues = new Map();
@@ -175,6 +176,12 @@ const countText = (m) => (m.evCount ? `${m.count}大会・${m.evCount}イベン�
       {/* マス目と一覧はそれぞれ .cal__pane に入れる。トップの PC はこの2つを別々の枠で囲む（style.css の .cal--compact） */}
       <div class="cal__pane cal__pane--grid">
       <div class="cal__grid" role="presentation">
+        {/* 背景の大きな月（月〜金の5列の幅に中央ぞろえ。横縞の入った薄いグレーの文字。.ghost と同じ色と縞） */}
+        <div class="cal__bg" aria-hidden="true">
+          <span class="cal__bg-en">{MONTH_FULL[m.month - 1]}</span>
+          <span class="cal__bg-num">{m.month}</span>
+          <span class="cal__bg-year">{m.year}</span>
+        </div>
         {DOW.map((d, j) => (
           <span class:list={['cal__dow', j === 0 && 'is-sun', j === 6 && 'is-sat']}>{d}</span>
         ))}
