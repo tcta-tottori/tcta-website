@@ -6357,7 +6357,7 @@ body.jsrv .section.is-long > .container > .sec-head.rv { transition: opacity .7s
   -webkit-mask-image: repeating-linear-gradient(180deg, #000 0 7.6%, transparent 7.6% 9%);
   mask-image: repeating-linear-gradient(180deg, #000 0 7.6%, transparent 7.6% 9%);
 }
-.cal__bg-en { font-size: 10.5cqw; letter-spacing: .04em; }
+.cal__bg-en { font-size: 15cqw; letter-spacing: .08em; } /* 月名は3文字（JAN・FEB…） */
 .cal__bg-num { font-size: 52cqw; letter-spacing: -.02em; margin: 1cqw 0 1.5cqw; }
 .cal__bg-year { font-size: 11cqw; letter-spacing: .08em; }
 .cal__dow, .cal__cell { position: relative; }
