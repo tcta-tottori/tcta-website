@@ -175,15 +175,23 @@ export default function AppLayout() {
 
   // 全試合データ取得
   const eventIds = useMemo(() => (events ?? []).map(e => e.eventId).sort().join(','), [events]);
-  // 予選リーグと決勝トーナメントの両方がある大会か（あればドローを 2 つのページに分ける）
+  // 予選リーグの順位で組む決勝トーナメント（順位別トーナメント）がある大会か（あればドローを 2 つのページに分ける）。
+  // リーグの種目とトーナメントの種目が別々にあるだけの大会（県選ダブルスなど。リーグは予選ではない）は 1 ページの「ドロー」
   const splitDraw = useLiveQuery(async () => {
     const ids = eventIds.split(',').filter(Boolean);
-    if (ids.length === 0) return false;
+    // 種目を読み終わるまでは決めない（undefined）。決める前に「分けない」としてページを移さないため
+    if (ids.length === 0) return undefined;
     const ds = await db.draws.where('eventId').anyOf(ids).toArray();
+    if (ds.length === 0) return undefined;
     const nameOf = new Map((events ?? []).map(e => [e.eventId, e.name]));
     const kinds = ds.map(d => isLeagueKind(nameOf.get(d.eventId) ?? '', d.drawType));
-    return kinds.some(k => k) && kinds.some(k => !k);
-  }, [eventIds, events]) ?? false;
+    const hasFinals = ds.some(d => (d.slotSources?.length ?? 0) > 0 || /決勝トーナメント|位.*トーナメント|順位別/.test(nameOf.get(d.eventId) ?? ''));
+    return hasFinals && kinds.some(k => k) && kinds.some(k => !k);
+  }, [eventIds, events]);
+  // 分けない大会で「予選リーグ」「決勝トーナメント」のページを開いていたら、1 ページの「ドロー」へ
+  useEffect(() => {
+    if (splitDraw === false && (location.pathname === '/league' || location.pathname === '/finals')) navigate('/court-bracket', { replace: true });
+  }, [splitDraw, location.pathname, navigate]);
   const allMatches = useLiveQuery(async () => {
     const ids = eventIds.split(',').filter(Boolean);
     if (ids.length === 0) return [];
@@ -325,7 +333,7 @@ export default function AppLayout() {
       // 通常モード（個人戦）: スコアは廃止し、ドロー画面で入力する
       tabs = tabs.filter((t) => t.path !== '/score');
       // 予選リーグと決勝トーナメントがある大会は「予選リーグ」「決勝トーナメント」の 2 ページ、ほかは「ドロー」
-      tabs = tabs.filter((t) => (splitDraw ? t.path !== '/court-bracket' : t.path !== '/league' && t.path !== '/finals'));
+      tabs = tabs.filter((t) => (splitDraw === true ? t.path !== '/court-bracket' : t.path !== '/league' && t.path !== '/finals'));
       // ミックス/団体戦の種目がなければ抽選・ドロー表タブを非表示
       const hasDrawEvents = (events ?? []).some(
         (e) =>
