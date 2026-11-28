@@ -1,5 +1,5 @@
 import React from 'react';
-import { Trophy, Play } from 'lucide-react';
+import { Trophy } from 'lucide-react';
 import type { DrawSlotData, MatchResult } from '../draw/DrawBoard';
 import { parseScoreParts } from '../score/scoreDisplay';
 import { pairDisplayLines } from '../draw/pairLabel';
@@ -585,37 +585,21 @@ export default function CourtBracketView({
     );
   };
 
-  // 控え（順番待ち）を左端にグレーで表示（対戦順シートと共通の控え番号）
-  const standbyColumn = (label: string) => {
-    const num = label.match(/(\d+)/)?.[1] ?? '';
-    return (
-      <div className="flex flex-col items-center justify-center shrink-0 text-white bg-gray-400" style={{ width: 34 }}>
-        <span className="text-[8px] font-bold leading-none opacity-85">控え</span>
-        <span className="text-base font-black leading-none mt-0.5">{num}</span>
-      </div>
-    );
-  };
-
-  // 空きコートが出て入れる状態の左端。どのコートに入れるかはタップ後に選ぶので、
-  // コート番号は表示しない（運営＝赤でタップしてコート選択、観戦用＝グレーの案内）。
-  const enterColumn = (interactive: boolean) => (
-    <div
-      className={`flex flex-col items-center justify-center shrink-0 text-white ${interactive ? 'bg-primary-600' : 'bg-gray-600'}`}
-      style={{ width: 34 }}
-    >
-      {interactive ? (
-        <>
-          <Play className="w-4 h-4" />
-          <span className="text-[8px] font-bold leading-none opacity-90 mt-0.5">コート</span>
-          <span className="text-[8px] font-bold leading-none opacity-90">選択</span>
-        </>
-      ) : (
-        <>
-          <span className="text-[9px] font-bold leading-none opacity-90">次に</span>
-          <span className="text-[9px] font-bold leading-none opacity-90 mt-0.5">入ります</span>
-        </>
-      )}
-    </div>
+  /**
+   * コートの札（テニスコートの絵の上に数字）。対戦カードの左の外側に、カードの左端にかかるように重ねる。
+   * カードの中身（番号・氏名・所属）は札が無いカードと同じ位置のまま。
+   *   court   … 試合中：赤地にコート番号
+   *   enter   … 空きコートに入れる：コートの絵だけ（運営は赤でタップしてコートを選ぶ、観戦はグレー）
+   *   standby … 控え（順番待ち）：グレー地に控えの番号
+   */
+  const courtBadge = (kind: 'court' | 'enter' | 'standby', label: string, interactive: boolean) => (
+    <span className={`cbv-court cbv-court--${kind} ${interactive ? 'is-tap' : ''}`} aria-hidden="true">
+      <svg className="cbv-court__bg" viewBox="0 0 30 30">
+        <rect x="7" y="4" width="16" height="22" />
+        <path d="M9.5 4v22M20.5 4v22M7 15h16M9.5 9.5h11M9.5 20.5h11M15 9.5v11" />
+      </svg>
+      {label && <span className="cbv-court__no">{label}</span>}
+    </span>
   );
 
   // --- 対戦ノード（2回戦以降・3位決定戦）---
@@ -695,23 +679,15 @@ export default function CourtBracketView({
           </div>
         );
       } else if (isVs) {
-        // vs表示：試合中のコート番号はカードの中ではなく、カードの左端の中央に重ねる札で出す（courtBadge。カードの中身はそのまま）。
-        // 控え・空きコートに入れる状態の印はこれまでどおり左端の列
+        // vs表示：試合中のコート番号・空きコートに入れる印・控えは、カードの中ではなく左の外側の札で出す（courtBadge）。
+        // カードの中身はどのカードも同じ並び（番号・氏名・所属の位置がずれない）
         const dim = !isPlaying && !isReady;
-        const withCol = !isPlaying && (!!matchResult!.enterCourtName || !!matchResult!.standbyLabel);
         content = (
           <div className="flex items-stretch w-full h-full min-w-0">
-            {isPlaying
-              ? null
-              : matchResult!.enterCourtName
-                ? enterColumn(!!onEnterCourt)
-                : matchResult!.standbyLabel
-                  ? standbyColumn(matchResult!.standbyLabel)
-                  : null}
-            <div className={`flex-1 flex flex-col justify-center min-w-0 ${isPlaying ? 'pl-6 pr-2' : 'px-2'} gap-0.5`}>
-              {playerRow(matchResult!.player1EntryId, matchResult!.player1Name, 'p1', dim, withCol)}
+            <div className="flex-1 flex flex-col justify-center min-w-0 px-2 gap-0.5">
+              {playerRow(matchResult!.player1EntryId, matchResult!.player1Name, 'p1', dim)}
               <div className="border-t border-gray-200" />
-              {playerRow(matchResult!.player2EntryId, matchResult!.player2Name, 'p2', dim, withCol)}
+              {playerRow(matchResult!.player2EntryId, matchResult!.player2Name, 'p2', dim)}
             </div>
           </div>
         );
@@ -732,8 +708,12 @@ export default function CourtBracketView({
         );
       }
 
-      // 試合中のコート番号の札：カードの左端の中央にまたがせて上から重ねる（カードの外に置くので、カードの表示は変わらない）
-      const courtNo = isPlaying && isVs ? ((matchResult!.courtName || '').replace(/[^0-9]/g, '') || matchResult!.courtName) : '';
+      // コートの札：カードの左の外側に置き、カードの左端に少しかけて重ねる（カードの中身の位置は変わらない）
+      const badge = !isVs || !matchResult ? null
+        : isPlaying ? { kind: 'court' as const, label: (matchResult.courtName || '').replace(/[^0-9]/g, '') || matchResult.courtName, aria: `${matchResult.courtName}番コートで試合中` }
+          : matchResult.enterCourtName ? { kind: 'enter' as const, label: '', aria: onEnterCourt ? 'タップして入れるコートを選ぶ' : '次にコートに入ります' }
+            : matchResult.standbyLabel ? { kind: 'standby' as const, label: `控${matchResult.standbyLabel.match(/(\d+)/)?.[1] ?? ''}`, aria: matchResult.standbyLabel }
+              : null;
       return (
         <React.Fragment key={key}>
           <div
@@ -746,10 +726,9 @@ export default function CourtBracketView({
           >
             {content}
           </div>
-          {courtNo && (
-            <div className="cbv-court" style={{ left: x - 19, top: top + cardH / 2 - 19 }} aria-label={`${courtNo}番コート`} {...clickProps}>
-              <span className="cbv-court__lb">コート</span>
-              <span className="cbv-court__no">{courtNo}</span>
+          {badge && (
+            <div className="cbv-court-pos" style={{ left: x - 30, top: top + cardH / 2 - 16 }} title={badge.aria} aria-label={badge.aria} {...clickProps}>
+              {courtBadge(badge.kind, badge.label, badge.kind === 'enter' && !!onEnterCourt)}
             </div>
           )}
         </React.Fragment>
