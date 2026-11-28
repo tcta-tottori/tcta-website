@@ -78,6 +78,8 @@ interface ScoreInputDialogProps {
    * 省略時は gameRuleText から抽出（全角数字は正規化）してフォールバックする。
    */
   requiredGames?: number | null;
+  /** 開いたらすぐ最初のスコア欄を選ぶ（キーボードが出る）。false なら選ばず全体を見せる（ドローでコート未定の試合をタップしたとき） */
+  autoFocusInput?: boolean;
   /** 試合方式（省略時='game'） */
   matchFormat?: MatchFormatType;
 }
@@ -131,6 +133,7 @@ export default function ScoreInputDialog({
   onEditRules,
   requiredGames: requiredGamesProp,
   matchFormat = 'game',
+  autoFocusInput = true,
 }: ScoreInputDialogProps) {
   // twoSetsSuper10 の場合: 2セット + ファイナルSTB（計3入力欄）
   const isTwoSetFormat = matchFormat === 'twoSetsSuper10';
@@ -256,7 +259,7 @@ export default function ScoreInputDialog({
   // 開いたらすぐスコアを打てるよう、最初のセットの左の欄を選んだ状態にする（終わった試合は除く）。
   // ポップアップの開くアニメーションのあとに合わせる
   useEffect(() => {
-    if (!match || match.status === 'finished' || match.status === 'walkover') return;
+    if (!match || match.status === 'finished' || match.status === 'walkover' || !autoFocusInput) return;
     const id = setTimeout(() => {
       const el = inputRefs.current[0];
       if (el && !el.disabled && !bodyRef.current?.contains(document.activeElement)) focusAndSelect(el);

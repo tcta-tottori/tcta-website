@@ -1144,6 +1144,8 @@ export default function CourtBracketPage({ enableScoreInput = true, only }: Cour
           onEditRules={selectedEvent ? () => setRulesDialogOpen(true) : undefined}
           requiredGames={resolveRequiredGames(getGameRuleText(selectedEvent, selectedMatch.round, totalRounds), selectedMatch.round, totalRounds)}
           matchFormat={getMatchFormat(selectedEvent, selectedMatch.round, totalRounds)}
+          // コートがまだ決まっていない試合は、キーボードを出さずにまず全体を見せる
+          autoFocusInput={!!selectedMatch.courtId}
         />
       )}
 

@@ -584,18 +584,6 @@ export default function CourtBracketView({
       </div>
     );
   };
-  // コート番号を大きく表示する左側ブロック（カード左端・全高）。
-  const courtColumn = (court: string, tone: 'playing' | 'ready' | 'idle') => {
-    const num = (court || '').replace(/[^0-9]/g, '') || court;
-    if (!num) return null;
-    const bg = tone === 'playing' ? 'bg-primary-600' : tone === 'ready' ? 'bg-gray-600' : 'bg-gray-400';
-    return (
-      <div className={`flex flex-col items-center justify-center shrink-0 text-white ${bg}`} style={{ width: 34 }}>
-        <span className="text-[8px] font-bold leading-none opacity-85">コート</span>
-        <span className="text-lg font-black leading-none mt-0.5">{num}</span>
-      </div>
-    );
-  };
 
   // 控え（順番待ち）を左端にグレーで表示（対戦順シートと共通の控え番号）
   const standbyColumn = (label: string) => {
@@ -707,19 +695,20 @@ export default function CourtBracketView({
           </div>
         );
       } else if (isVs) {
-        // vs表示：実際に試合中のもののみ左端にコート番号を表示（控えは時間割上の仮割当のため非表示）。
+        // vs表示：試合中のコート番号はカードの中ではなく、カードの左端の中央に重ねる札で出す（courtBadge。カードの中身はそのまま）。
+        // 控え・空きコートに入れる状態の印はこれまでどおり左端の列
         const dim = !isPlaying && !isReady;
-        const withCol = isPlaying || !!matchResult!.enterCourtName || !!matchResult!.standbyLabel;
+        const withCol = !isPlaying && (!!matchResult!.enterCourtName || !!matchResult!.standbyLabel);
         content = (
           <div className="flex items-stretch w-full h-full min-w-0">
             {isPlaying
-              ? courtColumn(matchResult!.courtName, 'playing')
+              ? null
               : matchResult!.enterCourtName
                 ? enterColumn(!!onEnterCourt)
                 : matchResult!.standbyLabel
                   ? standbyColumn(matchResult!.standbyLabel)
                   : null}
-            <div className="flex-1 flex flex-col justify-center min-w-0 px-2 gap-0.5">
+            <div className={`flex-1 flex flex-col justify-center min-w-0 ${isPlaying ? 'pl-6 pr-2' : 'px-2'} gap-0.5`}>
               {playerRow(matchResult!.player1EntryId, matchResult!.player1Name, 'p1', dim, withCol)}
               <div className="border-t border-gray-200" />
               {playerRow(matchResult!.player2EntryId, matchResult!.player2Name, 'p2', dim, withCol)}
@@ -743,17 +732,27 @@ export default function CourtBracketView({
         );
       }
 
+      // 試合中のコート番号の札：カードの左端の中央にまたがせて上から重ねる（カードの外に置くので、カードの表示は変わらない）
+      const courtNo = isPlaying && isVs ? ((matchResult!.courtName || '').replace(/[^0-9]/g, '') || matchResult!.courtName) : '';
       return (
-        <div key={key}
-          {...clickProps}
-          className={`absolute flex items-center overflow-hidden rounded transition-all${clickCls} ${cardClass}${
-            // 修正モード中は「保存前の古い対戦」であることが分かるよう薄く表示する
-            editMode ? ' opacity-40' : ''
-          }`}
-          style={{ left: x, top, width: slotW, height: cardH }}
-        >
-          {content}
-        </div>
+        <React.Fragment key={key}>
+          <div
+            {...clickProps}
+            className={`absolute flex items-center overflow-hidden rounded transition-all${clickCls} ${cardClass}${
+              // 修正モード中は「保存前の古い対戦」であることが分かるよう薄く表示する
+              editMode ? ' opacity-40' : ''
+            }`}
+            style={{ left: x, top, width: slotW, height: cardH }}
+          >
+            {content}
+          </div>
+          {courtNo && (
+            <div className="cbv-court" style={{ left: x - 19, top: top + cardH / 2 - 19 }} aria-label={`${courtNo}番コート`} {...clickProps}>
+              <span className="cbv-court__lb">コート</span>
+              <span className="cbv-court__no">{courtNo}</span>
+            </div>
+          )}
+        </React.Fragment>
       );
     }
   };
