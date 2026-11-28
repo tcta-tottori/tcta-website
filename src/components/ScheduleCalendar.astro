@@ -14,6 +14,7 @@
 //   水曜テニス … 水曜テニス教室（毎週水曜 18:00〜21:00・井原公園）。水曜のマスに緑の点。マスの下の一覧には月の頭に1行だけ
 import { siteData } from '../lib/cms.js';
 import { STATUS_LABEL, monthGrid, todayJST, dueDate, drawMeetingDate, DRAW_MEETING } from '../data/schedule.js';
+import { CALENDAR_DAYS } from '../data/official-extra.js';
 
 interface Props {
   /** テニスイベントと水曜テニスも載せる（トップページ） */
@@ -24,9 +25,15 @@ const { SCHEDULE: MAIN, ROWS = [], EVENT_INFO = [], eventForSchedule } = await s
 // extras（トップ）は、協会主催の大会に加えて、同じ年度の預かりの大会（鳥大オープンなど）も載せる。
 // 預かりの大会には協会のドロー会議は付けない（締切は付ける）
 const nendo = MAIN[0]?.nendo;
-const SCHEDULE = extras
+const BASE = extras
   ? [...MAIN, ...ROWS.filter((t) => t.kind === 'extra' && t.nendo === nendo)].sort((a, b) => a.date.localeCompare(b.date))
   : MAIN;
+// 何日かにわたる大会（尾坂杯など。official-extra.js の CALENDAR_DAYS）は、開催日ごとの行に分ける
+const SCHEDULE = BASE.flatMap((t) => {
+  const cd = CALENDAR_DAYS[t.slug];
+  if (!cd?.days?.length) return [t];
+  return cd.days.map((d, i) => ({ ...t, date: d.date, event: d.event, place: d.place, dayLabel: d.label, dayIndex: i }));
+}).sort((a, b) => a.date.localeCompare(b.date));
 // 大会の行き先：大会のページ（要項・ドロー・結果がまとまっている）。ページの無い大会は外のページ（市民体育祭など）
 const goOf = (t) => {
   const e = eventForSchedule?.(t);
@@ -60,7 +67,11 @@ const DOW = ['日', '月', '火', '水', '木', '金', '土'];
 const dues = new Map();
 const draws = new Map();
 const push = (map, iso, t) => { if (!map.has(iso)) map.set(iso, []); map.get(iso).push(t); };
-for (const t of SCHEDULE) {
+for (const t of BASE) {
+  for (const x of CALENDAR_DAYS[t.slug]?.more ?? []) {
+    if (x.due) push(dues, x.due, t);
+    if (x.draw && t.kind === 'main') push(draws, x.draw, t);
+  }
   const due = dueDate(t.due, t.date);
   if (!due) continue;
   push(dues, due, t);
@@ -230,7 +241,7 @@ const countText = (m) => (m.evCount ? `${m.count}大会・${m.evCount}イベン�
               <li class:list={['cal__item', g && 'cal__item--go']} data-date={x.iso}>
                 <span class="cal__item-day">{day(x.iso)}</span>
                 <span class="cal__item-body">
-                  <span class="cal__item-name">{g ? <a class="cal__item-link cal__item-link--go" href={g.href} {...extAttrs(g)}>{x.t.name}</a> : x.t.name}</span>
+                  <span class="cal__item-name">{g ? <a class="cal__item-link cal__item-link--go" href={g.href} {...extAttrs(g)}>{x.t.name}{x.t.dayLabel && `（${x.t.dayLabel}）`}</a> : <>{x.t.name}{x.t.dayLabel && `（${x.t.dayLabel}）`}</>}</span>
                   <span class="cal__item-sub">{x.t.event}／{x.t.place}</span>
                 </span>
                 <span class={`badge ${STATUS_LABEL[x.t.status].badge} cal__item-badge`}>{STATUS_LABEL[x.t.status].label}</span>
