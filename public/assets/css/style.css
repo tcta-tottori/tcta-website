@@ -6361,3 +6361,14 @@ body.jsrv .section.is-long > .container > .sec-head.rv { transition: opacity .7s
 .cal__bg-num { font-size: 52cqw; letter-spacing: -.02em; margin: 1cqw 0 1.5cqw; }
 .cal__bg-year { font-size: 11cqw; letter-spacing: .08em; }
 .cal__dow, .cal__cell { position: relative; }
+/* 背景の大きな月は、ほかの動きが終わってから中央の縦線から左右へ開く（緩急つき。main.js が .is-bg と --bg-delay を付ける）。
+   JS が無いとき・動きを減らす設定のときは最初から見せる */
+body.jsrv .cal__bg { clip-path: inset(0 50% 0 50%); }
+body.jsrv .cal__month.is-bg .cal__bg { animation: cal-bg 1.3s cubic-bezier(.77, 0, .18, 1) var(--bg-delay, 0s) both; }
+@keyframes cal-bg {
+  from { clip-path: inset(0 50% 0 50%); }
+  to   { clip-path: inset(0 0 0 0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  body.jsrv .cal__bg, body.jsrv .cal__month.is-bg .cal__bg { clip-path: none; animation: none; }
+}
