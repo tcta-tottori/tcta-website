@@ -8,6 +8,8 @@ import { db, type Event } from '../../db/database';
 import RoundRobinRenderer from '../draw/RoundRobinRenderer';
 import type { DrawSlotData, MatchResult } from '../draw/DrawBoard';
 import { leagueShort } from '../draw/placement';
+import AllEventTools from './AllEventTools';
+import { getGameRulesText } from '../score/roundRules';
 
 interface Props {
   /** 大会の全種目（並び順のまま）。この中のリーグ戦だけを出す */
@@ -16,9 +18,13 @@ interface Props {
   onCellSelect?: (eventIdx: number, round: number, position: number) => void;
   /** 運営画面か（同率のとき順位を手で決められる） */
   editable?: boolean;
+  /** ルールの表示をタップしたとき（events の何番目か） */
+  onEditRules?: (eventIdx: number) => void;
+  /** 修正メニュー（events の何番目か） */
+  onOpenTools?: (eventIdx: number) => void;
 }
 
-export default function AllLeaguesGrid({ events, onCellSelect, editable = false }: Props) {
+export default function AllLeaguesGrid({ events, onCellSelect, editable = false, onEditRules, onOpenTools }: Props) {
   const ids = useMemo(() => events.map(e => e.eventId), [events]);
   const data = useLiveQuery(async () => {
     if (ids.length === 0) return null;
@@ -89,9 +95,14 @@ export default function AllLeaguesGrid({ events, onCellSelect, editable = false 
             <span className="dl-allrr__meta">
               {l.courts.length > 0 && <span>{l.courts.join('・')}番コート</span>}
               {l.playing.length > 0 && <span className="is-live">{l.playing.join('・')}番で試合中</span>}
-              <span>{l.done}/{l.total} 試合</span>
             </span>
           </header>
+          <AllEventTools
+            rulesText={getGameRulesText(l.evt)}
+            onEditRules={onEditRules ? () => onEditRules(l.idx) : undefined}
+            progress={{ finished: l.matchResults.filter(m => m.status === 'finished').length, total: l.matchResults.filter(m => m.player1Name && m.player2Name && m.status !== 'walkover').length, playing: l.matchResults.filter(m => m.status === 'playing').length }}
+            onOpenTools={onOpenTools ? () => onOpenTools(l.idx) : undefined}
+          />
           <RoundRobinRenderer
             slots={l.slots}
             matchResults={l.matchResults}

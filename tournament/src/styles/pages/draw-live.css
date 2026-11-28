@@ -504,3 +504,9 @@
 .cbv-court { position: absolute; z-index: 3; display: flex; flex-direction: column; align-items: center; justify-content: center; width: 38px; height: 38px; border: 2px solid #fff; border-radius: 6px; background: var(--red); color: #fff; box-shadow: 0 2px 6px rgba(26, 26, 26, .25); cursor: pointer; }
 .cbv-court__lb { font: 700 8px/1 var(--fjp); opacity: .9; }
 .cbv-court__no { margin-top: 2px; font: 900 17px/1 var(--flt); }
+
+/* すべて表示・全部並べるの各クラスの見出しの下の道具（AllEventTools.tsx）。1 種目ずつの表示の上の帯と同じ部品 */
+.dl-alltools { padding: 6px 12px 8px; border-bottom: 1px solid var(--gray-100); }
+.dl-alltools__rules { display: block; width: 100%; margin: 0 0 6px; padding: 0; border: 0; background: none; text-align: left; font: 400 12.5px/1.5 var(--fjp); color: var(--gray-600); }
+button.dl-alltools__rules { cursor: pointer; text-decoration: underline; text-decoration-color: var(--gray-300); text-underline-offset: 3px; }
+.dl-alltools__row { padding: 0; }

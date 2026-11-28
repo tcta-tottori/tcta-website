@@ -646,6 +646,13 @@ export default function CourtBracketPage({ enableScoreInput = true, only }: Cour
     setViewMode(m);
     try { localStorage.setItem(only ? `${ALL_LEAGUES_KEY}:${only}` : ALL_LEAGUES_KEY, m); } catch { /* 保存できない環境 */ }
   };
+  /** すべて表示から：そのクラスを 1 種目ずつの表示で開き、修正メニュー（あたり・名前など）を出す */
+  const openToolsFor = (idx: number) => {
+    setSelectedEventIdx(idx);
+    setDrawViewMode('one');
+    setEditMenuOpen(true);
+    window.scrollTo({ top: 0 });
+  };
 
   if (!currentTournamentId) {
     return (
@@ -967,6 +974,8 @@ export default function CourtBracketPage({ enableScoreInput = true, only }: Cour
           {showLeagues && <AllLeaguesGrid
             events={events}
             editable={enableScoreInput}
+            onEditRules={enableScoreInput ? (idx) => { setSelectedEventIdx(idx); setRulesDialogOpen(true); } : undefined}
+            onOpenTools={enableScoreInput ? openToolsFor : undefined}
             onCellSelect={enableScoreInput && !nameEditMode ? (idx, round, position) => {
               setSelectedEventIdx(idx);
               setSelectedMatchKey(`${round}-${position}`);
@@ -981,15 +990,19 @@ export default function CourtBracketPage({ enableScoreInput = true, only }: Cour
                   setSelectedMatchKey(`${round}-${position}`);
                 } : undefined;
                 const d = allDraws.find(x => x.eventId === e.eventId);
+                const rules = enableScoreInput ? () => { setSelectedEventIdx(i); setRulesDialogOpen(true); } : undefined;
+                const tools = enableScoreInput ? () => openToolsFor(i) : undefined;
                 return d?.drawType === 'roundRobin'
-                  ? <AllLeaguesGrid key={e.eventId} events={[e]} editable={enableScoreInput} onCellSelect={pick} />
-                  : <AllFinalsList key={e.eventId} events={[e]} bare onMatchSelect={pick} />;
+                  ? <AllLeaguesGrid key={e.eventId} events={[e]} editable={enableScoreInput} onCellSelect={pick} onEditRules={rules} onOpenTools={tools} />
+                  : <AllFinalsList key={e.eventId} events={[e]} bare onMatchSelect={pick} onEditRules={rules} onOpenTools={tools} />;
               })}
             </div>
           )}
           {/* 決勝トーナメント（トーナメントの種目）は別のページ */}
           {showFinals && <AllFinalsList
             events={events}
+            onEditRules={enableScoreInput ? (idx) => { setSelectedEventIdx(idx); setRulesDialogOpen(true); } : undefined}
+            onOpenTools={enableScoreInput ? openToolsFor : undefined}
             onMatchSelect={enableScoreInput && !nameEditMode ? (idx, round, position) => {
               setSelectedEventIdx(idx);
               setSelectedMatchKey(`${round}-${position}`);
