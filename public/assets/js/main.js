@@ -982,6 +982,7 @@
       next.disabled = at === months.length - 1;
     };
 
+
     // 最初に見えたとき：カレンダーが画面に入って、出てくる動き（.rv）が終わりかけたところで背景の大きな月を開く
     if (reduce || !('IntersectionObserver' in window)) {
       for (var b = 0; b < months.length; b++) months[b].classList.add('is-bg');
