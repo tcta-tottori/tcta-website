@@ -24,9 +24,10 @@ export type SheetSlot = {
 const CIRCLED = '①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯';
 
 // 寸法（px）。ズームで拡大して読むので、等倍でもはっきり読める大きさにする
-const NAME_W = 236;
-const ROUND_W = 34;
-const CENTER_W = 44;
+// 線（回戦ごとの幅・中央）は短くして、その分を名前に回す（縮めて出したときも名前が読めるように）
+const NAME_W = 250;
+const ROUND_W = 18;
+const CENTER_W = 20;
 const PAD = 16;
 
 export default function EntrySheet({ eventName, drawSize, isLeague, doubles, slots, matchTimes, leagueCourts, onTap, fill = false, onExpand }: {
@@ -45,7 +46,7 @@ export default function EntrySheet({ eventName, drawSize, isLeague, doubles, slo
   onTap: (position: number) => void;
 }) {
   const byPos = new Map(slots.map((s) => [s.position, s]));
-  const rowH = doubles ? 58 : 44;
+  const rowH = doubles ? 70 : 52;
   // 一覧では縮めて出すだけ（タップで全画面）、全画面ではズーム・移動
   // （コンポーネントを中で作ると描き直しのたびに作り直されてズームの状態が消えるので、関数で包む）
   const frame = (width: number, height: number, label: string, children: React.ReactNode) => (onExpand

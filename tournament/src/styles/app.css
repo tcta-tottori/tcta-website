@@ -1067,15 +1067,15 @@ button.esh-slot:active { transform: scale(.985); }
 .esh-slot__no { flex: none; min-width: 20px; font: 700 12px/1 var(--flt); color: var(--gray-500); text-align: center; }
 .esh-slot__seed { flex: none; display: inline-flex; align-items: center; justify-content: center; min-width: 18px; height: 18px; padding: 0 4px; border-radius: 9px; background: var(--red); color: #fff; font: 700 10.5px/1 var(--flt); }
 .esh-slot__body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
-.esh-slot__name { font: 700 14px/1.25 var(--fjp); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.esh-slot__aff { font: 400 11px/1.2 var(--fjp); color: var(--gray-500); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.esh-slot__name { font: 700 17px/1.25 var(--fjp); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.esh-slot__aff { font: 400 12px/1.2 var(--fjp); color: var(--gray-500); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .esh-slot__mark { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); display: inline-flex; font: 700 10px/1 var(--flt); letter-spacing: .04em; }
 .esh-slot.is-checked { background: var(--ink); border-color: var(--ink); color: #fff; }
 .esh-slot.is-checked .esh-slot__no, .esh-slot.is-checked .esh-slot__aff { color: rgba(255, 255, 255, .7); }
 .esh-slot.is-def { background: var(--red-tint); border-color: var(--red); color: var(--red); }
 .esh-slot.is-def .esh-slot__name { text-decoration: line-through; }
 .esh-slot.is-def .esh-slot__mark { color: var(--red); }
-.esh-slot.is-bye { background: var(--gray-050); border-style: dashed; color: var(--gray-400); cursor: default; }
+.esh-slot.is-bye { background: var(--gray-050); border-style: dashed; color: var(--gray-300); cursor: default; }
 
 /* リーグの表 */
 .esh-league { display: grid; gap: 0; border: 1.4px solid var(--ink); }
@@ -1130,7 +1130,7 @@ button.esh-slot:active { transform: scale(.985); }
 .rvw-src { margin: 6px 0 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 4px 12px; }
 .rvw-src li { display: flex; gap: 8px; padding: 6px 4px; border-bottom: 1px solid var(--gray-100); font: 400 13px/1.4 var(--fjp); }
 .rvw-src li b { min-width: 22px; font: 700 12px/1.4 var(--flt); color: var(--gray-500); }
-.rvw-src li.is-bye { color: var(--gray-400); }
+.rvw-src li.is-bye { color: var(--gray-300); }
 
 /* 全画面の対戦表（EntryRegistration.tsx の renderSheetScreen）。上に受付の数と種目の札、下いっぱいに対戦表 */
 .ent-ss { position: fixed; inset: 0; z-index: 390; display: flex; flex-direction: column; background: var(--white); padding-top: env(safe-area-inset-top); }
@@ -1181,6 +1181,12 @@ html.is-lite .mqt.is-run .mqt__track { animation: none; }
 .zp__box--static:active { cursor: default; }
 .zp__box--static.is-expandable { cursor: zoom-in; }
 .zp__box--static .zp__content { will-change: auto; }
-.zp__expand { position: absolute; top: 6px; right: 6px; z-index: 2; display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; border: 1px solid var(--gray-200); border-radius: var(--radius); background: rgba(255, 255, 255, .94); color: var(--ink); cursor: pointer; }
+.zp__bar { display: flex; justify-content: flex-end; margin: 0 0 6px; }
+.zp__expand { display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 40px; padding: 0 12px; font: 700 13px/1 var(--fjp); border: 1px solid var(--gray-200); border-radius: var(--radius); background: rgba(255, 255, 255, .94); color: var(--ink); cursor: pointer; }
 /* エントリー受付：ドロー・要項に記載のある熱中症警戒時の試合形式 */
 .ent-heat-note { margin: 10px 0 6px; font: 700 12px/1.6 var(--fjp); color: #B42318; }
+
+/* リーグの区切り線（選手の枠を透明にする指定より後ろに置く）。スマホは縦 1 列なので横の線、PC は横並びなので縦の線 */
+.esh-league > .esh-slot { border-radius: 0; }
+.esh-league.is-narrow > .esh-slot + .esh-slot { box-shadow: inset 0 1px 0 var(--gray-300); }
+.esh-league:not(.is-narrow) > .esh-slot + .esh-slot { box-shadow: inset 1px 0 0 var(--ink); }
