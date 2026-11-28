@@ -493,3 +493,9 @@
 @media (min-width: 1024px) { .dl-allev { gap: 16px; padding: 16px; } }
 .dl-allev .dl-allrr { grid-template-columns: minmax(0, 1fr); padding: 0; }
 .dl-allev .dl-allko { padding: 0; margin-top: 0; }
+
+/* 表示の切り替え（すべて表示／個別表示など）は押しやすい大きさに。スマホは横いっぱい */
+.dl-viewmode { width: min(100%, 440px); }
+.dl-viewmode button { flex: 1 1 0; justify-content: center; min-height: 46px; padding: 10px 14px; font-size: 15px; gap: 8px; }
+.dl-viewmode button svg { width: 18px; height: 18px; }
+.dl-viewmode button small { font-size: 12px; }

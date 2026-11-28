@@ -8,7 +8,7 @@ import {
   buildMatchesFromDraw, findResetMatches, isLeagueEvent, rebuildEventMatches,
 } from '../draw/rebuildMatches';
 import { insertGapAt, isEmptySlot, removeGapAt, swapSlotContents } from '../draw/drawSlotOps';
-import { ChevronLeft, ChevronRight, MapPin, Trophy, Timer, Layers, Eye, EyeOff, Shuffle, ArrowDownToLine, ArrowUpToLine, Undo2, Play, Pencil, Medal, UserPen, ChevronDown, SlidersHorizontal, X, LayoutGrid } from 'lucide-react';
+import { ChevronLeft, ChevronRight, MapPin, Trophy, Timer, Layers, Eye, EyeOff, Shuffle, ArrowDownToLine, ArrowUpToLine, Undo2, Play, Pencil, Medal, UserPen, ChevronDown, SlidersHorizontal, X, LayoutGrid, Network } from 'lucide-react';
 import CourtBracketView from './CourtBracketView';
 import RoundRobinRenderer from '../draw/RoundRobinRenderer';
 import { leagueShort, sourceLabel } from '../draw/placement';
@@ -57,8 +57,10 @@ export default function CourtBracketPage({ enableScoreInput = true, only }: Cour
   const [viewMode, setViewMode] = useState<DrawViewMode>(() => {
     try {
       const v = localStorage.getItem(only ? `${ALL_LEAGUES_KEY}:${only}` : ALL_LEAGUES_KEY);
+      // ドローのページ（only なし）は、まだ選んでいなければ「すべて表示」から
+      if (!v && !only) return 'all';
       return v === '1' || v === 'leagues' ? 'leagues' : v === 'finals' ? 'finals' : v === 'all' ? 'all' : 'one';
-    } catch { return 'one'; }
+    } catch { return only ? 'one' : 'all'; }
   });
   /** クラス名をタップして開くクラス一覧 */
   const [classListOpen, setClassListOpen] = useState(false);
@@ -664,8 +666,14 @@ export default function CourtBracketPage({ enableScoreInput = true, only }: Cour
         {/* 表示の切り替え（並べる種目が 2 つ以上あるときだけ） */}
         {canShowAll && (
           <div className="dl-viewmode" role="tablist" aria-label="ドローの表示">
+            {/* ドローのページは「すべて表示」を左に */}
+            {!only && (
+              <button role="tab" aria-selected={showEvery} className={showEvery ? 'is-on' : ''} onClick={() => setDrawViewMode('all')}>
+                <LayoutGrid />すべて表示<small>{events.length}</small>
+              </button>
+            )}
             <button role="tab" aria-selected={!showAll} className={!showAll ? 'is-on' : ''} onClick={() => setDrawViewMode('one')}>
-              <Trophy />{only ? '1種目ずつ' : '個別表示'}
+              {only ? <><Trophy />1種目ずつ</> : <><Network />個別表示</>}
             </button>
             {only === 'league' && (
               <button role="tab" aria-selected={showLeagues} className={showLeagues ? 'is-on' : ''} onClick={() => setDrawViewMode('leagues')}>
@@ -675,11 +683,6 @@ export default function CourtBracketPage({ enableScoreInput = true, only }: Cour
             {only === 'tournament' && (
               <button role="tab" aria-selected={showFinals} className={showFinals ? 'is-on' : ''} onClick={() => setDrawViewMode('finals')}>
                 <Medal />トーナメントを全部並べる<small>{finalsCount}</small>
-              </button>
-            )}
-            {!only && (
-              <button role="tab" aria-selected={showEvery} className={showEvery ? 'is-on' : ''} onClick={() => setDrawViewMode('all')}>
-                <LayoutGrid />すべて表示<small>{events.length}</small>
               </button>
             )}
           </div>
