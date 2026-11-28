@@ -9,7 +9,7 @@ import CourtBracketView from './CourtBracketView';
 import type { DrawSlotData, MatchResult } from '../draw/DrawBoard';
 import { sourceLabel } from '../draw/placement';
 import { isLeagueKind } from './leagueKind';
-import AllEventTools from './AllEventTools';
+import AllEventTools, { ClassHead } from './AllEventTools';
 import { getGameRulesText, getShortRoundName } from '../score/roundRules';
 
 interface Props {
@@ -96,12 +96,12 @@ export default function AllFinalsList({ events, onMatchSelect, bare = false, onE
       {!bare && <h2 className="dl-allko__heading">決勝トーナメント</h2>}
       {finals.map(f => (
         <section key={f.evt.eventId} className="dl-allrr__item dl-allko__item">
-          <header className="dl-allrr__head">
-            <h3 className="dl-allrr__title">{f.evt.name}</h3>
-            <span className="dl-allrr__meta">
-              {f.total > 0 ? null : f.draw.slotSources?.length ? <span>リーグの順位が決まると組まれます</span> : <span>確定すると試合が出ます</span>}
-            </span>
-          </header>
+          <ClassHead
+            en={`TOURNAMENT ・ ${f.draw.drawSize} DRAW`}
+            title={f.evt.name}
+            finished={f.done} total={f.total} playing={f.playing}
+            note={f.total > 0 ? undefined : f.draw.slotSources?.length ? 'リーグの順位が決まると組まれます' : '確定すると試合が出ます'}
+          />
           {(() => {
             const max = Math.max(0, f.totalRounds - 1);
             const start = Math.min(roundOverride[f.evt.eventId] ?? f.autoStart, max);
