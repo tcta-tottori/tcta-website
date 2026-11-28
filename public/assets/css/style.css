@@ -6340,3 +6340,24 @@ body.jsrv .section.is-long > .container > .sec-head.rv { transition: opacity .7s
 /* カレンダーの月送り（← →）：送れるときは赤、それ以上送れないときはグレー（main.js の initCalendar が disabled を付け外し） */
 .circle-btn--solid:disabled,
 .circle-btn--solid:disabled:hover { background: var(--gray-200); border-color: var(--gray-200); color: var(--gray-500); cursor: default; }
+
+/* カレンダーの背景の大きな月（月名・月の数字・西暦を縦に3段。月〜金の5列の幅に中央ぞろえ。横縞の入った薄いグレー。ScheduleCalendar.astro）。
+   マス目より後ろに置く（.cal__bg が先に並ぶので、マスと日付はその上に描かれる） */
+.cal__grid { container-type: inline-size; }
+.cal__bg {
+  position: absolute; z-index: 0;
+  left: calc((100% - 24px) / 7 + 4px); width: calc((100% - 24px) / 7 * 5 + 16px);
+  top: 18px; bottom: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  color: var(--ghost); font-family: var(--flt); font-weight: 700; line-height: .86;
+  pointer-events: none; user-select: none; white-space: nowrap; overflow: hidden;
+}
+.cal__bg > span {
+  display: block;
+  -webkit-mask-image: repeating-linear-gradient(180deg, #000 0 7.6%, transparent 7.6% 9%);
+  mask-image: repeating-linear-gradient(180deg, #000 0 7.6%, transparent 7.6% 9%);
+}
+.cal__bg-en { font-size: 10.5cqw; letter-spacing: .04em; }
+.cal__bg-num { font-size: 52cqw; letter-spacing: -.02em; margin: 1cqw 0 1.5cqw; }
+.cal__bg-year { font-size: 11cqw; letter-spacing: .08em; }
+.cal__dow, .cal__cell { position: relative; }
