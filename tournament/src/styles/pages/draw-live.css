@@ -487,3 +487,9 @@
 }
 .rr-rank-select:hover { border-color: var(--ink, #111); }
 .rr-rank-select:focus-visible { outline: 2px solid var(--red, #D8232A); outline-offset: 1px; }
+
+/* ドローのページの「すべて表示」：リーグもトーナメントも、種目の並び順に 1 列で縦に並べる（CourtBracketPage.tsx） */
+.dl-allev { display: flex; flex-direction: column; gap: 12px; padding: 12px; }
+@media (min-width: 1024px) { .dl-allev { gap: 16px; padding: 16px; } }
+.dl-allev .dl-allrr { grid-template-columns: minmax(0, 1fr); padding: 0; }
+.dl-allev .dl-allko { padding: 0; margin-top: 0; }

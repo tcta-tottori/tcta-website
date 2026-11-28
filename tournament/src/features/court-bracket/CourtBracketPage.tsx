@@ -47,7 +47,7 @@ interface CourtBracketPageProps {
 
 /** ドローの表示（1 種目ずつ／予選リーグを全部／決勝トーナメントを全部）を覚えておく鍵 */
 const ALL_LEAGUES_KEY = 'tcta-draw-all-leagues';
-type DrawViewMode = 'one' | 'leagues' | 'finals';
+type DrawViewMode = 'one' | 'leagues' | 'finals' | 'all';
 
 export default function CourtBracketPage({ enableScoreInput = true, only }: CourtBracketPageProps) {
   const currentTournamentId = useAppStore(state => state.currentTournamentId);
@@ -57,7 +57,7 @@ export default function CourtBracketPage({ enableScoreInput = true, only }: Cour
   const [viewMode, setViewMode] = useState<DrawViewMode>(() => {
     try {
       const v = localStorage.getItem(only ? `${ALL_LEAGUES_KEY}:${only}` : ALL_LEAGUES_KEY);
-      return v === '1' || v === 'leagues' ? 'leagues' : v === 'finals' ? 'finals' : 'one';
+      return v === '1' || v === 'leagues' ? 'leagues' : v === 'finals' ? 'finals' : v === 'all' ? 'all' : 'one';
     } catch { return 'one'; }
   });
   /** クラス名をタップして開くクラス一覧 */
@@ -632,13 +632,14 @@ export default function CourtBracketPage({ enableScoreInput = true, only }: Cour
   // 表示の切り替え：1 種目ずつ／全部並べる（リーグ表は PC で 2 列）。選んだ方はこの端末に、ページごとに覚えておく。
   //   予選リーグのページ（only=league）… 1種目ずつ／リーグを全部並べる
   //   決勝トーナメントのページ（only=tournament）… 1種目ずつ／トーナメントを全部並べる
-  //   ドローのページ（すべての種目）… 1種目ずつ／予選リーグ／決勝トーナメント
+  //   ドローのページ（すべての種目）… 個別表示／すべて表示（リーグもトーナメントも種目の順に縦に並べる）
   const leagueCount = only === 'tournament' ? 0 : allDraws.filter(d => d.drawType === 'roundRobin').length;
   const finalsCount = only === 'league' ? 0 : allDraws.filter(d => d.drawType !== 'roundRobin').length;
-  const canShowAll = only === 'tournament' ? finalsCount >= 2 : leagueCount >= 2;
-  const showLeagues = canShowAll && only !== 'tournament' && viewMode === 'leagues';
-  const showFinals = canShowAll && only !== 'league' && finalsCount > 0 && viewMode === 'finals';
-  const showAll = showLeagues || showFinals;
+  const canShowAll = only === 'tournament' ? finalsCount >= 2 : only === 'league' ? leagueCount >= 2 : events.length >= 2;
+  const showLeagues = canShowAll && only === 'league' && viewMode === 'leagues';
+  const showFinals = canShowAll && only === 'tournament' && viewMode === 'finals';
+  const showEvery = canShowAll && !only && viewMode === 'all';
+  const showAll = showLeagues || showFinals || showEvery;
   const setDrawViewMode = (m: DrawViewMode) => {
     setViewMode(m);
     try { localStorage.setItem(only ? `${ALL_LEAGUES_KEY}:${only}` : ALL_LEAGUES_KEY, m); } catch { /* 保存できない環境 */ }
@@ -664,16 +665,21 @@ export default function CourtBracketPage({ enableScoreInput = true, only }: Cour
         {canShowAll && (
           <div className="dl-viewmode" role="tablist" aria-label="ドローの表示">
             <button role="tab" aria-selected={!showAll} className={!showAll ? 'is-on' : ''} onClick={() => setDrawViewMode('one')}>
-              <Trophy />1種目ずつ
+              <Trophy />{only ? '1種目ずつ' : '個別表示'}
             </button>
-            {only !== 'tournament' && (
+            {only === 'league' && (
               <button role="tab" aria-selected={showLeagues} className={showLeagues ? 'is-on' : ''} onClick={() => setDrawViewMode('leagues')}>
-                <LayoutGrid />{only === 'league' ? 'リーグを全部並べる' : '予選リーグ'}<small>{leagueCount}</small>
+                <LayoutGrid />リーグを全部並べる<small>{leagueCount}</small>
               </button>
             )}
-            {only !== 'league' && finalsCount > 0 && (
+            {only === 'tournament' && (
               <button role="tab" aria-selected={showFinals} className={showFinals ? 'is-on' : ''} onClick={() => setDrawViewMode('finals')}>
-                <Medal />{only === 'tournament' ? 'トーナメントを全部並べる' : '決勝トーナメント'}<small>{finalsCount}</small>
+                <Medal />トーナメントを全部並べる<small>{finalsCount}</small>
+              </button>
+            )}
+            {!only && (
+              <button role="tab" aria-selected={showEvery} className={showEvery ? 'is-on' : ''} onClick={() => setDrawViewMode('all')}>
+                <LayoutGrid />すべて表示<small>{events.length}</small>
               </button>
             )}
           </div>
@@ -963,6 +969,21 @@ export default function CourtBracketPage({ enableScoreInput = true, only }: Cour
               setSelectedMatchKey(`${round}-${position}`);
             } : undefined}
           />}
+          {/* ドローのページの「すべて表示」：リーグもトーナメントも、種目の並び順に縦に並べる */}
+          {showEvery && (
+            <div className="dl-allev">
+              {events.map((e, i) => {
+                const pick = enableScoreInput && !nameEditMode ? (_idx: number, round: number, position: number) => {
+                  setSelectedEventIdx(i);
+                  setSelectedMatchKey(`${round}-${position}`);
+                } : undefined;
+                const d = allDraws.find(x => x.eventId === e.eventId);
+                return d?.drawType === 'roundRobin'
+                  ? <AllLeaguesGrid key={e.eventId} events={[e]} editable={enableScoreInput} onCellSelect={pick} />
+                  : <AllFinalsList key={e.eventId} events={[e]} bare onMatchSelect={pick} />;
+              })}
+            </div>
+          )}
           {/* 決勝トーナメント（トーナメントの種目）は別のページ */}
           {showFinals && <AllFinalsList
             events={events}

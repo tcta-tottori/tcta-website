@@ -15,9 +15,11 @@ interface Props {
   events: Event[];
   /** 試合をタップしたとき（運営画面のみ）。events の何番目か・試合の回戦と位置 */
   onMatchSelect?: (eventIdx: number, round: number, position: number) => void;
+  /** 「決勝トーナメント」の見出しを出さない（ドローの「すべて表示」で種目ごとに並べるとき） */
+  bare?: boolean;
 }
 
-export default function AllFinalsList({ events, onMatchSelect }: Props) {
+export default function AllFinalsList({ events, onMatchSelect, bare = false }: Props) {
   const ids = useMemo(() => events.map(e => e.eventId), [events]);
   const data = useLiveQuery(async () => {
     if (ids.length === 0) return null;
@@ -77,13 +79,13 @@ export default function AllFinalsList({ events, onMatchSelect }: Props) {
 
   return (
     <div className="dl-allko">
-      <h2 className="dl-allko__heading">決勝トーナメント</h2>
+      {!bare && <h2 className="dl-allko__heading">決勝トーナメント</h2>}
       {finals.map(f => (
         <section key={f.evt.eventId} className="dl-allrr__item dl-allko__item">
           <header className="dl-allrr__head">
             <h3 className="dl-allrr__title">{f.evt.name}</h3>
             <span className="dl-allrr__meta">
-              {f.total > 0 ? <span>{f.done}/{f.total} 試合</span> : <span>リーグの順位が決まると組まれます</span>}
+              {f.total > 0 ? <span>{f.done}/{f.total} 試合</span> : f.draw.slotSources?.length ? <span>リーグの順位が決まると組まれます</span> : <span>確定すると試合が出ます</span>}
             </span>
           </header>
           <CourtBracketView
