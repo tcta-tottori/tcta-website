@@ -589,7 +589,7 @@ export default function CourtBracketView({
    * コートの札（テニスコートの絵の上に数字）。対戦カードの左の外側に、カードの左端にかかるように重ねる。
    * カードの中身（番号・氏名・所属）は札が無いカードと同じ位置のまま。
    *   court   … 試合中：赤地にコート番号
-   *   enter   … 空きコートに入れる：コートの絵だけ（運営は赤でタップしてコートを選ぶ、観戦はグレー）
+   *   enter   … 空きコートに入れる（控え）：グレーのコートの絵だけ（運営はタップしてコートを選ぶ）
    *   standby … 控え（順番待ち）：グレー地に控えの番号
    */
   const courtBadge = (kind: 'court' | 'enter' | 'standby', label: string, interactive: boolean) => (

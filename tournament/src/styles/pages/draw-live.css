@@ -510,8 +510,9 @@
 .cbv-court--standby .cbv-court__no { font-size: 11px; letter-spacing: -.02em; }
 .cbv-court--enter { background: var(--gray-600); }
 .cbv-court--enter .cbv-court__bg rect, .cbv-court--enter .cbv-court__bg path { stroke: rgba(255, 255, 255, .95); stroke-width: 1.5; }
-.cbv-court--enter.is-tap { background: var(--red); animation: cbv-court-blink 1.2s ease-in-out infinite; }
-@keyframes cbv-court-blink { 50% { box-shadow: 0 0 0 4px rgba(216, 35, 42, .25); } }
+/* 控え（空きコートに入れる順番待ち）はグレー。運営画面ではタップしてコートを選べるので、ゆっくり点滅させて知らせる */
+.cbv-court--enter.is-tap { background: var(--gray-600); animation: cbv-court-blink 1.2s ease-in-out infinite; }
+@keyframes cbv-court-blink { 50% { box-shadow: 0 0 0 4px rgba(26, 26, 26, .18); } }
 html.is-lite .cbv-court--enter.is-tap { animation: none; }
 
 /* すべて表示・全部並べるの各クラスの見出しの下の道具（AllEventTools.tsx）。1 種目ずつの表示の上の帯と同じ部品 */
