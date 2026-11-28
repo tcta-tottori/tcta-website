@@ -6337,3 +6337,6 @@ body.jsrv .section.is-long > .container > .sec-head.rv { transition: opacity .7s
 @media (min-width: 640px) {
   .back-nav__btns { flex-direction: row; }
 }
+/* カレンダーの月送り（← →）：送れるときは赤、それ以上送れないときはグレー（main.js の initCalendar が disabled を付け外し） */
+.circle-btn--solid:disabled,
+.circle-btn--solid:disabled:hover { background: var(--gray-200); border-color: var(--gray-200); color: var(--gray-500); cursor: default; }

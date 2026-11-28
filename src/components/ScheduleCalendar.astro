@@ -139,7 +139,7 @@ const countText = (m) => (m.evCount ? `${m.count}大会・${m.evCount}イベン�
 
 <div class:list={['cal', extras && 'cal--compact']} data-calendar data-cal-initial={initial} data-cal-from={extras ? 'prev' : undefined}>
   <div class="cal__bar">
-    <button class="circle-btn" type="button" data-cal-prev aria-label="前の月へ" disabled>←</button>
+    <button class="circle-btn circle-btn--solid" type="button" data-cal-prev aria-label="前の月へ" disabled>←</button>
     <p class="cal__label" data-cal-label aria-live="polite">
       <span class="cal__num">{String(first.month).padStart(2, '0')}</span>
       <span class="cal__meta">
