@@ -959,7 +959,7 @@
       for (var r = 0; r < months.length; r++) months[r].classList.remove('is-enter', 'is-bg');
       // 背景の大きな月（.cal__bg）は、マスの動きが終わりかけたところ（最後のマスが出はじめたころ）から中央の縦線から左右へ開く
       // （style.css の .cal__month.is-bg）。マスの動きは最後のマスで 0.26 秒後に始まり 0.5 秒かかる
-      m.style.setProperty('--bg-delay', '.42s');
+      m.style.setProperty('--bg-delay', '.22s');
       void m.offsetWidth; // 付け直しで動きを最初からやり直す
       m.classList.add('is-enter', 'is-bg');
       if (label) label.classList.add('is-flip');
@@ -991,7 +991,7 @@
         bgIo.disconnect();
         var cur = months[at];
         if (cur.classList.contains('is-bg')) return;
-        cur.style.setProperty('--bg-delay', '.5s');
+        cur.style.setProperty('--bg-delay', '.3s');
         cur.classList.add('is-bg');
       }, { threshold: 0.3 });
       bgIo.observe(root);
