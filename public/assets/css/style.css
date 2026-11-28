@@ -6361,14 +6361,16 @@ body.jsrv .section.is-long > .container > .sec-head.rv { transition: opacity .7s
 .cal__bg-num { font-size: 52cqw; letter-spacing: -.02em; margin: 1cqw 0 1.5cqw; }
 .cal__bg-year { font-size: 11cqw; letter-spacing: .08em; }
 .cal__dow, .cal__cell { position: relative; }
-/* 背景の大きな月は、ほかの動きが終わりかけたところで中央の縦線から左右へ開く（緩急つき。main.js が .is-bg と --bg-delay を付ける）。
+/* 背景の大きな月の出かた：マス（cal-pop）と同じく、送った向きから縮んだ状態で弾むように出る（main.js が .is-bg・--bg-delay を付ける）。
+   数字の「1」の旗の分の偏りは ScheduleCalendar.astro が --ink-x で戻す（translate）。
    JS が無いとき・動きを減らす設定のときは最初から見せる */
-body.jsrv .cal__bg { clip-path: inset(0 50% 0 50%); }
-body.jsrv .cal__month.is-bg .cal__bg { animation: cal-bg 1.3s cubic-bezier(.77, 0, .18, 1) var(--bg-delay, 0s) both; }
+.cal__bg > span { translate: var(--ink-x, 0) 0; }
+body.jsrv .cal__bg { opacity: 0; }
+body.jsrv .cal__month.is-bg .cal__bg { animation: cal-bg .6s cubic-bezier(.34, 1.56, .64, 1) var(--bg-delay, 0s) both; }
 @keyframes cal-bg {
-  from { clip-path: inset(0 50% 0 50%); }
-  to   { clip-path: inset(0 0 0 0); }
+  from { opacity: 0; transform: translateX(calc(var(--cal-dir, 1) * 24px)) scale(.8); }
+  to   { opacity: 1; transform: none; }
 }
 @media (prefers-reduced-motion: reduce) {
-  body.jsrv .cal__bg, body.jsrv .cal__month.is-bg .cal__bg { clip-path: none; animation: none; }
+  body.jsrv .cal__bg, body.jsrv .cal__month.is-bg .cal__bg { opacity: 1; animation: none; }
 }
